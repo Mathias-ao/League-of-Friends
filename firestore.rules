@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function currentPlayerQuery() {
+      return get(/databases/$(database)/documents/players/$(request.auth.uid));
+    }
+
+    function isActiveMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid))
+        && currentPlayerQuery().data.membershipStatus == 'ACTIVE';
+    }
+
+    function isAdmin() {
+      return isActiveMember()
+        && currentPlayerQuery().data.role == 'ADMIN';
+    }
+
+    // League-facing data is readable to authenticated active members.
+    // Authoritative writes are intentionally server-only in Version 1.
+    match /{document=**} {
+      allow read: if isActiveMember();
+      allow write: if false;
+    }
+  }
+}
