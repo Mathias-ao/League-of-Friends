@@ -16,7 +16,6 @@ export interface EntityRef {
 }
 
 export interface Player {
-  authUid: string;
   steamName: string;
   steamNameNormalized: string;
   discordName: string | null;
@@ -26,6 +25,10 @@ export interface Player {
   currentPowerRating: number | null;
   provisionalRating: boolean;
   goldBalance: number;
+}
+
+export interface AuthLink {
+  playerId: string;
 }
 
 export interface MatchPlanningConfig {
