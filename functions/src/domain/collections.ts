@@ -1,5 +1,6 @@
 export const collections = {
   leagueState: "leagueState",
+  authLinks: "authLinks",
   players: "players",
   seasons: "seasons",
   events: "events",
