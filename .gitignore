@@ -1,0 +1,22 @@
+# Node / TypeScript
+functions/node_modules/
+functions/lib/
+*.tsbuildinfo
+
+# Firebase local state
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.local
+*service-account*.json
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
