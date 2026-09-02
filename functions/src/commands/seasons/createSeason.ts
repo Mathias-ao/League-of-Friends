@@ -39,16 +39,8 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(async (request) => {
   const seasonRef = db.collection(collections.seasons).doc();
 
   await db.runTransaction(async (transaction) => {
-    await reserveIdempotencyKey(
-      transaction,
-      input.requestId,
-      "adminCreateSeason",
-      actor.authUid,
-    );
-
-    // The league is intentionally single-competition: seasons may not overlap.
-    // The collection is tiny, so preserving the invariant clearly is preferable
-    // to prematurely optimizing this check.
+    // Firestore transactions must perform reads before writes. Validate the
+    // existing Season set before reserving the idempotency key.
     const seasonsSnapshot = await transaction.get(db.collection(collections.seasons));
 
     const overlapping = seasonsSnapshot.docs.some((document) => {
@@ -68,6 +60,13 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(async (request) => {
       throw new HttpsError("failed-precondition", "Season dates overlap an existing season.");
     }
 
+    await reserveIdempotencyKey(
+      transaction,
+      input.requestId,
+      "adminCreateSeason",
+      actor.authUid,
+    );
+
     const now = Timestamp.now();
     const season = {
       name,
@@ -79,9 +78,6 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(async (request) => {
         profileVersion: 1,
         rules: {},
       },
-      // Finals/playoff rules are intentionally configurable. The domain supports
-      // regular-season leader and finals champion as distinct outcomes, but the
-      // exact championship weighting is not frozen yet.
       championshipConfig: {
         version: 1,
         mode: "UNCONFIGURED",
