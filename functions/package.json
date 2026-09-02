@@ -1,6 +1,7 @@
 {
   "name": "league-of-friends-functions",
   "private": true,
+  "type": "module",
   "engines": {
     "node": "22"
   },
@@ -11,10 +12,10 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "firebase-admin": "latest",
-    "firebase-functions": "latest"
+    "firebase-admin": "14.3.0",
+    "firebase-functions": "7.3.2"
   },
   "devDependencies": {
-    "typescript": "latest"
+    "typescript": "7.0.2"
   }
 }
