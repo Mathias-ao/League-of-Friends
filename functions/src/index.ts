@@ -5,6 +5,7 @@ export { requestLeagueMembership } from "./commands/players/requestMembership.js
 export { adminSetMembershipStatus } from "./commands/players/setMembershipStatus.js";
 export { adminCreateSeason } from "./commands/seasons/createSeason.js";
 export { adminActivateSeason } from "./commands/seasons/activateSeason.js";
+export { adminCreateEvent } from "./commands/events/createEvent.js";
 
 export const backendHealth = onCall(async (request) => {
   const actor = await requireLeaguePlayer(request);
