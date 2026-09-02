@@ -11,6 +11,10 @@ export interface AuthenticatedPlayer {
   player: Player;
 }
 
+interface AuthLink {
+  playerId: string;
+}
+
 export function requireAuth(request: CallableRequest<unknown>): string {
   const uid = request.auth?.uid;
   if (!uid) {
@@ -22,18 +26,19 @@ export function requireAuth(request: CallableRequest<unknown>): string {
 export async function requireLeaguePlayer(request: CallableRequest<unknown>): Promise<AuthenticatedPlayer> {
   const uid = requireAuth(request);
 
-  const snapshot = await db
-    .collection(collections.players)
-    .where("authUid", "==", uid)
-    .limit(1)
-    .get();
-
-  if (snapshot.empty) {
+  const authLinkDocument = await db.collection(collections.authLinks).doc(uid).get();
+  if (!authLinkDocument.exists) {
     throw new HttpsError("permission-denied", "No league player is linked to this account.");
   }
 
-  const document = snapshot.docs[0];
-  const player = document.data() as Player;
+  const { playerId } = authLinkDocument.data() as AuthLink;
+  const playerDocument = await db.collection(collections.players).doc(playerId).get();
+
+  if (!playerDocument.exists) {
+    throw new HttpsError("internal", "The authenticated player link is invalid.");
+  }
+
+  const player = playerDocument.data() as Player;
 
   if (player.membershipStatus === "SUSPENDED") {
     throw new HttpsError("permission-denied", "This league membership is suspended.");
@@ -44,7 +49,7 @@ export async function requireLeaguePlayer(request: CallableRequest<unknown>): Pr
   }
 
   return {
-    playerId: document.id,
+    playerId,
     authUid: uid,
     role: player.role,
     player
