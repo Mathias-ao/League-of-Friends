@@ -5,19 +5,36 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function currentPlayerQuery() {
-      return get(/databases/$(database)/documents/players/$(request.auth.uid));
+    function authLinkPath() {
+      return /databases/$(database)/documents/authLinks/$(request.auth.uid);
+    }
+
+    function hasAuthLink() {
+      return signedIn() && exists(authLinkPath());
+    }
+
+    function currentPlayerId() {
+      return get(authLinkPath()).data.playerId;
+    }
+
+    function currentPlayerPath() {
+      return /databases/$(database)/documents/players/$(currentPlayerId());
     }
 
     function isActiveMember() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/players/$(request.auth.uid))
-        && currentPlayerQuery().data.membershipStatus == 'ACTIVE';
+      return hasAuthLink()
+        && exists(currentPlayerPath())
+        && get(currentPlayerPath()).data.membershipStatus == 'ACTIVE';
     }
 
     function isAdmin() {
       return isActiveMember()
-        && currentPlayerQuery().data.role == 'ADMIN';
+        && get(currentPlayerPath()).data.role == 'ADMIN';
+    }
+
+    // Authentication mappings are private implementation data.
+    match /authLinks/{uid} {
+      allow read, write: if false;
     }
 
     // League-facing data is readable to authenticated active members.
