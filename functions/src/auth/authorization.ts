@@ -2,17 +2,13 @@ import { HttpsError } from "firebase-functions/v2/https";
 import type { CallableRequest } from "firebase-functions/v2/https";
 import { db } from "../config/firebase.js";
 import { collections } from "../domain/collections.js";
-import type { Player, PlayerRole } from "../domain/types.js";
+import type { AuthLink, Player, PlayerRole } from "../domain/types.js";
 
 export interface AuthenticatedPlayer {
   playerId: string;
   authUid: string;
   role: PlayerRole;
   player: Player;
-}
-
-interface AuthLink {
-  playerId: string;
 }
 
 export function requireAuth(request: CallableRequest<unknown>): string {
@@ -52,7 +48,7 @@ export async function requireLeaguePlayer(request: CallableRequest<unknown>): Pr
     playerId,
     authUid: uid,
     role: player.role,
-    player
+    player,
   };
 }
 
