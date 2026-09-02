@@ -46,21 +46,16 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(async (request) => {
       actor.authUid,
     );
 
-    // This league is intentionally small and permits no overlapping seasons.
-    // Reading the season collection keeps this invariant straightforward and
-    // avoids prematurely optimizing around a large multi-league workload.
+    // The league is intentionally single-competition: seasons may not overlap.
+    // The collection is tiny, so preserving the invariant clearly is preferable
+    // to prematurely optimizing this check.
     const seasonsSnapshot = await transaction.get(db.collection(collections.seasons));
 
     const overlapping = seasonsSnapshot.docs.some((document) => {
       const season = document.data() as {
-        status?: string;
         startsAt?: Timestamp;
         endsAt?: Timestamp;
       };
-
-      if (season.status === "ARCHIVED") {
-        // Archived seasons still occupy their historical date range.
-      }
 
       if (!(season.startsAt instanceof Timestamp) || !(season.endsAt instanceof Timestamp)) {
         return false;
@@ -84,11 +79,12 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(async (request) => {
         profileVersion: 1,
         rules: {},
       },
+      // Finals/playoff rules are intentionally configurable. The domain supports
+      // regular-season leader and finals champion as distinct outcomes, but the
+      // exact championship weighting is not frozen yet.
       championshipConfig: {
         version: 1,
-        regularSeasonWeight: 0.4,
-        finalsWeight: 0.6,
-        tiebreakerMethod: "MATCH",
+        mode: "UNCONFIGURED",
       },
       finalSnapshot: null,
       createdBy: actor.playerId,
