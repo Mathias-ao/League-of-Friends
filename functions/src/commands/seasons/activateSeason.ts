@@ -2,6 +2,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
+import { callableOptions } from "../../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../../domain/collections.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
@@ -11,7 +12,7 @@ interface ActivateSeasonInput {
   seasonId: string;
 }
 
-export const adminActivateSeason = onCall<ActivateSeasonInput>(async (request) => {
+export const adminActivateSeason = onCall<ActivateSeasonInput>(callableOptions, async (request) => {
   const actor = await requireAdmin(request);
   const { requestId, seasonId } = request.data;
 
