@@ -102,6 +102,26 @@ export interface GamePlayer extends MatchParticipant {
   position: string | null;
 }
 
+export type GameOutcome =
+  | {
+      type: "TEAM_WIN";
+      winnerTeam: number;
+      winnerPlayerId: null;
+    }
+  | {
+      type: "PLAYER_WIN";
+      winnerTeam: null;
+      winnerPlayerId: string;
+    };
+
+export interface CanonicalGameResult extends GameOutcome {
+  winningPlayerIds: string[];
+  source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED";
+  submissionId: string;
+  submittedBy: string;
+  confirmedBy: string | null;
+}
+
 export interface SeriesRule {
   maxGames: number;
   gamesRequiredToWin: number;
