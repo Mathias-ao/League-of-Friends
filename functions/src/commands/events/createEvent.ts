@@ -2,6 +2,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
+import { callableOptions } from "../../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../../domain/collections.js";
 import type {
   CompetitionStyle,
@@ -54,7 +55,7 @@ function assertIntegerOrNull(value: number | null | undefined, fieldName: string
   }
 }
 
-export const adminCreateEvent = onCall<CreateEventInput>(async (request) => {
+export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async (request) => {
   const actor = await requireAdmin(request);
   const input = request.data;
 
