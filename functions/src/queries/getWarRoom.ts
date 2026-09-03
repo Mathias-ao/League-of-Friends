@@ -31,15 +31,18 @@ interface RivalryDocument {
 }
 
 interface ChallengeDocument {
+  challengeRevision?: number;
   seasonId?: string | null;
+  pairId?: string | null;
   challengerPlayerId?: string;
   challengedPlayerId?: string;
   status?: string;
   createdAt?: Timestamp | null;
   respondedAt?: Timestamp | null;
-  scheduledAt?: Timestamp | null;
+  completedAt?: Timestamp | null;
   sourceRivalryId?: string | null;
   matchId?: string | null;
+  winningPlayerIds?: string[];
 }
 
 export const getWarRoom = onCall(callableOptions, async (request) => {
@@ -56,17 +59,20 @@ export const getWarRoom = onCall(callableOptions, async (request) => {
       visible: false,
       status: "CLOSED",
       activeSeason: null,
+      leaderboard: [],
       rivalries: [],
       viewer: { playerId: actor.playerId, canChallenge: false, qualifiedRivals: [] },
       challenges: [],
+      viewerChallenges: [],
     };
   }
 
   const seasonRef = db.collection(collections.seasons).doc(activeSeasonId);
-  const [seasonSnapshot, rivalriesSnapshot, challengesSnapshot, playersSnapshot] = await Promise.all([
+  const [seasonSnapshot, rivalriesSnapshot, challengesSnapshot, standingsSnapshot, playersSnapshot] = await Promise.all([
     seasonRef.get(),
     seasonRef.collection("rivalries").get(),
     db.collection(collections.challenges).where("seasonId", "==", activeSeasonId).get(),
+    seasonRef.collection("warRoomStandings").get(),
     db.collection(collections.players).get(),
   ]);
 
@@ -98,24 +104,38 @@ export const getWarRoom = onCall(callableOptions, async (request) => {
     .filter((rivalry) => rivalry.status === "QUALIFIED")
     .map((rivalry) => rivalry.playerOne.playerId === actor.playerId ? rivalry.playerTwo : rivalry.playerOne);
 
+  const leaderboard = standingsSnapshot.docs
+    .map((document) => ({
+      player: publicPlayer(document.id, players.get(document.id)),
+      warRoomPoints: Number(document.data()?.warRoomPoints ?? 0),
+    }))
+    .sort((left, right) => right.warRoomPoints - left.warRoomPoints || left.player.steamName.localeCompare(right.player.steamName))
+    .map((standing, index) => ({ rank: index + 1, ...standing }));
+
   const challenges = challengesSnapshot.docs
     .map((document) => ({ challengeId: document.id, ...document.data() as ChallengeDocument }))
     .map((challenge) => ({
       challengeId: challenge.challengeId,
+      challengeRevision: Number(challenge.challengeRevision ?? 1),
+      pairId: challenge.pairId ?? null,
       challenger: publicPlayer(challenge.challengerPlayerId ?? "UNKNOWN", players.get(challenge.challengerPlayerId ?? "")),
       challenged: publicPlayer(challenge.challengedPlayerId ?? "UNKNOWN", players.get(challenge.challengedPlayerId ?? "")),
       status: challenge.status ?? "UNKNOWN",
       sourceRivalryId: challenge.sourceRivalryId ?? null,
       matchId: challenge.matchId ?? null,
+      winners: (challenge.winningPlayerIds ?? []).map((playerId) => publicPlayer(playerId, players.get(playerId))),
       createdAt: iso(challenge.createdAt),
       respondedAt: iso(challenge.respondedAt),
-      scheduledAt: iso(challenge.scheduledAt),
+      completedAt: iso(challenge.completedAt),
     }))
     .sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")) || left.challengeId.localeCompare(right.challengeId));
 
   const viewerChallenges = challenges.filter((challenge) => (
     challenge.challenger.playerId === actor.playerId || challenge.challenged.playerId === actor.playerId
   ));
+  const pendingIncomingChallenge = viewerChallenges.find((challenge) => (
+    challenge.status === "PENDING" && challenge.challenged.playerId === actor.playerId
+  )) ?? null;
 
   return {
     schemaVersion: "WAR_ROOM_V1",
@@ -129,12 +149,14 @@ export const getWarRoom = onCall(callableOptions, async (request) => {
       openedByRivalryId: season.warRoom?.openedByRivalryId ?? null,
       engineVersion: season.warRoom?.engineVersion ?? null,
     },
+    leaderboard: open ? leaderboard : [],
     rivalries: open ? rivalries : [],
     viewer: {
       playerId: actor.playerId,
       canChallenge: open && qualifiedRivals.length > 0,
       qualifiedRivals,
       rivalries: open ? viewerRivalries : [],
+      pendingIncomingChallenge: open ? pendingIncomingChallenge : null,
     },
     challenges: open ? challenges : [],
     viewerChallenges: open ? viewerChallenges : [],
