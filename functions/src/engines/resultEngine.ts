@@ -1,5 +1,16 @@
-import { HttpsError } from "firebase-functions/v2/https";
 import type { GameOutcome, MatchFormat, MatchParticipant } from "../domain/types.js";
+
+export type ResultValidationCode = "INVALID_ARGUMENT" | "PERMISSION_DENIED" | "FAILED_PRECONDITION";
+
+export class ResultValidationError extends Error {
+  constructor(
+    public readonly code: ResultValidationCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ResultValidationError";
+  }
+}
 
 export interface SubmittedOutcomeInput {
   winnerTeam?: number | null;
@@ -13,7 +24,7 @@ function participantById(participants: MatchParticipant[], playerId: string): Ma
 export function assertMatchParticipant(participants: MatchParticipant[], playerId: string): MatchParticipant {
   const participant = participantById(participants, playerId);
   if (!participant) {
-    throw new HttpsError("permission-denied", "Only Match participants can perform this action.");
+    throw new ResultValidationError("PERMISSION_DENIED", "Only Match participants can perform this action.");
   }
   return participant;
 }
@@ -26,7 +37,7 @@ export function normalizeOutcome(
   if (format === "FFA") {
     const winnerPlayerId = input.winnerPlayerId?.trim();
     if (!winnerPlayerId || !participantById(participants, winnerPlayerId)) {
-      throw new HttpsError("invalid-argument", "FFA results require a winning Match participant.");
+      throw new ResultValidationError("INVALID_ARGUMENT", "FFA results require a winning Match participant.");
     }
 
     return {
@@ -37,12 +48,12 @@ export function normalizeOutcome(
   }
 
   if (!Number.isInteger(input.winnerTeam)) {
-    throw new HttpsError("invalid-argument", "Team results require winnerTeam.");
+    throw new ResultValidationError("INVALID_ARGUMENT", "Team results require winnerTeam.");
   }
 
   const winnerTeam = input.winnerTeam as number;
   if (!participants.some((participant) => participant.team === winnerTeam)) {
-    throw new HttpsError("invalid-argument", "winnerTeam does not exist in this Match.");
+    throw new ResultValidationError("INVALID_ARGUMENT", "winnerTeam does not exist in this Match.");
   }
 
   return {
@@ -71,12 +82,12 @@ export function assertIndependentConfirmation(
   const confirmer = assertMatchParticipant(participants, confirmedBy);
 
   if (submittedBy === confirmedBy) {
-    throw new HttpsError("failed-precondition", "A player cannot confirm their own result submission.");
+    throw new ResultValidationError("FAILED_PRECONDITION", "A player cannot confirm their own result submission.");
   }
 
   if (submitter.team != null && confirmer.team === submitter.team) {
-    throw new HttpsError(
-      "failed-precondition",
+    throw new ResultValidationError(
+      "FAILED_PRECONDITION",
       "A team result must be confirmed by a participant on the opposing side.",
     );
   }
