@@ -58,6 +58,9 @@ export interface ReplayApmMinuteBucket {
 export interface ReplayPlayerAnalysis {
   playerId: string;
   replaySlot: number;
+  sourceName: string | null;
+  civilizationId: number | null;
+  totalActions: number;
   averageRawApm: number;
   peak30sRawApm: PeakApmResult | null;
   peak60sRawApm: PeakApmResult | null;
@@ -261,6 +264,9 @@ export function analyzeReplayStats(
     players: facts.players.map((player) => ({
       playerId: player.playerId,
       replaySlot: player.replaySlot,
+      sourceName: player.sourceName,
+      civilizationId: player.civilizationId,
+      totalActions: player.totalActions,
       averageRawApm: averageRawApm(player, facts.durationSeconds),
       peak30sRawApm: peakApm(player.actionSeconds, facts.durationSeconds, 30),
       peak60sRawApm: peakApm(player.actionSeconds, facts.durationSeconds, 60),
