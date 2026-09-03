@@ -7,11 +7,15 @@ import { collections, leagueStateDocumentId } from "../../domain/collections.js"
 import type { CanonicalGameResult, MatchFormat, MatchParticipant } from "../../domain/types.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+import {
+  adminResultProcessingActor,
+  type ResultProcessingActor,
+} from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId } from "../results/resultSupport.js";
 
 export const RESULT_ACTIVITY_VERSION = "RESULT_ACTIVITY_V1";
 
-interface ProcessActivityInput {
+export interface ProcessActivityInput {
   requestId: string;
   matchId: string;
 }
@@ -43,9 +47,11 @@ function activityAt(match: MatchForActivity): Timestamp {
   return Timestamp.now();
 }
 
-export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions, async (request) => {
-  const actor = await requireAdmin(request);
-  const { requestId, matchId } = request.data;
+export async function processActivity(
+  input: ProcessActivityInput,
+  actor: ResultProcessingActor,
+) {
+  const { requestId, matchId } = input;
   if (!requestId || !matchId) throw new HttpsError("invalid-argument", "requestId and matchId are required.");
 
   const matchRef = db.collection(collections.matches).doc(matchId);
@@ -122,7 +128,9 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
       ]);
     }
 
-    await reserveIdempotencyKey(transaction, requestId, "adminProcessActivity", actor.authUid);
+    if (actor.source === "ADMIN") {
+      await reserveIdempotencyKey(transaction, requestId, "adminProcessActivity", actor.authUid);
+    }
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("ACTIVITY");
     completedSteps.add("ACTIVITY");
@@ -229,6 +237,7 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
         activityId: feedRef.id,
         challengeId: currentMatch.challengeId ?? null,
         eventCompleted,
+        processingSource: actor.source,
       },
     });
 
@@ -245,4 +254,9 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
     eventCompleted: result.eventCompleted,
     remainingSteps: result.pendingSteps,
   };
+}
+
+export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions, async (request) => {
+  const actor = await requireAdmin(request);
+  return processActivity(request.data, adminResultProcessingActor(actor));
 });
