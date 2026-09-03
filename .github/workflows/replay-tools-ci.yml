@@ -6,12 +6,14 @@ on:
       - "replay-tools/**"
       - "scripts/ingest-replay-file.mjs"
       - "scripts/summarize-replay-output.mjs"
+      - "scripts/smoke-test-replay-analysis.mjs"
       - ".github/workflows/replay-tools-ci.yml"
   pull_request:
     paths:
       - "replay-tools/**"
       - "scripts/ingest-replay-file.mjs"
       - "scripts/summarize-replay-output.mjs"
+      - "scripts/smoke-test-replay-analysis.mjs"
       - ".github/workflows/replay-tools-ci.yml"
 
 jobs:
@@ -40,3 +42,4 @@ jobs:
         run: |
           node --check scripts/ingest-replay-file.mjs
           node --check scripts/summarize-replay-output.mjs
+          node --check scripts/smoke-test-replay-analysis.mjs
