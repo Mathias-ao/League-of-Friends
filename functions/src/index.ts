@@ -13,6 +13,9 @@ export { setEventRsvp } from "./commands/events/setRsvp.js";
 export { checkInToEvent } from "./commands/events/checkIn.js";
 export { adminGenerateMatchPlan } from "./commands/events/generateMatchPlan.js";
 export { adminApproveMatchPlan } from "./commands/events/approveMatchPlan.js";
+export { submitGameResult } from "./commands/results/submitGameResult.js";
+export { respondToGameResult } from "./commands/results/respondToGameResult.js";
+export { adminResolveGameResult } from "./commands/results/adminResolveGameResult.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
