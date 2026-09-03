@@ -12,6 +12,7 @@ export { adminPublishEvent } from "./commands/events/publishEvent.js";
 export { setEventRsvp } from "./commands/events/setRsvp.js";
 export { checkInToEvent } from "./commands/events/checkIn.js";
 export { adminGenerateMatchPlan } from "./commands/events/generateMatchPlan.js";
+export { adminApproveMatchPlan } from "./commands/events/approveMatchPlan.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
