@@ -58,9 +58,18 @@ async function callCallable(functionName, idToken, data) {
   return payload.result;
 }
 
-async function readLeagueState() {
+async function readLeagueState(idToken, allowMissing = false) {
   const url = `http://127.0.0.1:${firestorePort}/v1/projects/${projectId}/databases/(default)/documents/leagueState/singleton`;
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      authorization: `Bearer ${idToken}`,
+    },
+  });
+
+  if (response.status === 404 && allowMissing) {
+    return null;
+  }
+
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(`Could not read leagueState from Firestore emulator: ${JSON.stringify(payload)}`);
@@ -72,8 +81,46 @@ function readStringField(fields, name) {
   return fields?.[name]?.stringValue ?? null;
 }
 
+function verifyLeagueState(leagueState, expectedSeasonId = null) {
+  const fields = leagueState?.fields ?? {};
+  const warRoomFields = fields.warRoom?.mapValue?.fields ?? {};
+  const activeSeasonId = readStringField(fields, "activeSeasonId");
+  const warRoomStatus = readStringField(warRoomFields, "status");
+  const warRoomSeasonId = readStringField(warRoomFields, "seasonId");
+
+  console.log("Verified league state:");
+  console.log(`  activeSeasonId: ${activeSeasonId}`);
+  console.log(`  warRoom.status: ${warRoomStatus}`);
+  console.log(`  warRoom.seasonId: ${warRoomSeasonId}`);
+
+  if (!activeSeasonId) {
+    throw new Error("Verification failed: activeSeasonId is missing.");
+  }
+  if (expectedSeasonId && activeSeasonId !== expectedSeasonId) {
+    throw new Error("Verification failed: activeSeasonId does not match the created Season.");
+  }
+  if (warRoomStatus !== "CLOSED") {
+    throw new Error("Verification failed: War Room is not CLOSED.");
+  }
+  if (warRoomSeasonId !== activeSeasonId) {
+    throw new Error("Verification failed: War Room Season does not match the active Season.");
+  }
+
+  return activeSeasonId;
+}
+
 try {
   const idToken = await signIn();
+
+  const existingLeagueState = await readLeagueState(idToken, true);
+  const existingActiveSeasonId = readStringField(existingLeagueState?.fields ?? {}, "activeSeasonId");
+
+  if (existingActiveSeasonId) {
+    console.log("An active Season already exists; verifying the existing state instead of creating a duplicate.");
+    verifyLeagueState(existingLeagueState);
+    console.log("Season 1 emulator smoke test passed.");
+    process.exit(0);
+  }
 
   console.log(`Creating ${name}...`);
   const created = await callCallable("adminCreateSeason", idToken, {
@@ -92,21 +139,8 @@ try {
 
   console.log("Activated:", JSON.stringify(activated));
 
-  const leagueState = await readLeagueState();
-  const fields = leagueState.fields ?? {};
-  const warRoomFields = fields.warRoom?.mapValue?.fields ?? {};
-
-  console.log("Verified league state:");
-  console.log(`  activeSeasonId: ${readStringField(fields, "activeSeasonId")}`);
-  console.log(`  warRoom.status: ${readStringField(warRoomFields, "status")}`);
-  console.log(`  warRoom.seasonId: ${readStringField(warRoomFields, "seasonId")}`);
-
-  if (readStringField(fields, "activeSeasonId") !== created.seasonId) {
-    throw new Error("Verification failed: activeSeasonId does not match the created Season.");
-  }
-  if (readStringField(warRoomFields, "status") !== "CLOSED") {
-    throw new Error("Verification failed: War Room is not CLOSED.");
-  }
+  const leagueState = await readLeagueState(idToken);
+  verifyLeagueState(leagueState, created.seasonId);
 
   console.log("Season 1 emulator smoke test passed.");
 } catch (error) {
