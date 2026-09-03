@@ -6,6 +6,7 @@ const inputPath = path.resolve(process.argv[2] ?? "replay-output.json");
 const factsEnginePath = path.resolve("functions/lib/engines/replayDerivedStats.js");
 const analysisEnginePath = path.resolve("functions/lib/engines/replayAnalysis.js");
 const aggregateEnginePath = path.resolve("functions/lib/engines/replayPlayerAggregates.js");
+const recordsEnginePath = path.resolve("functions/lib/engines/replayRecords.js");
 
 function seconds(ms) {
   return ms == null ? "-" : `${Math.round(ms / 1000)}s`;
@@ -27,6 +28,7 @@ try {
   const factsEngine = await import(pathToFileURL(factsEnginePath).href);
   const analysisEngine = await import(pathToFileURL(analysisEnginePath).href);
   const aggregateEngine = await import(pathToFileURL(aggregateEnginePath).href);
+  const recordsEngine = await import(pathToFileURL(recordsEnginePath).href);
 
   const sourcePlayers = Array.isArray(parsed.sourcePlayers) ? parsed.sourcePlayers : [];
   const playerMapping = sourcePlayers.map((player, index) => ({
@@ -34,6 +36,7 @@ try {
     replaySlot: player.replaySlot,
     sourceName: player.sourceName ?? null,
   }));
+  const sourceNameByPlayerId = new Map(playerMapping.map((item) => [item.playerId, item.sourceName ?? item.playerId]));
 
   const facts = factsEngine.normalizeReplayDerivedStats({
     adapterSchemaVersion: parsed.schemaVersion,
@@ -50,6 +53,7 @@ try {
     durationSeconds: analysis.durationSeconds,
     players: analysis.players,
   }]);
+  const records = recordsEngine.rebuildReplayRecords(aggregate);
 
   if (facts.schemaVersion !== "REPLAY_DERIVED_STATS_V2") {
     throw new Error(`Expected REPLAY_DERIVED_STATS_V2, got ${facts.schemaVersion}.`);
@@ -69,12 +73,16 @@ try {
   if (aggregate.lifetime.length !== facts.players.length || aggregate.seasonal.length !== facts.players.length) {
     throw new Error("Replay aggregate player count does not match normalized facts.");
   }
+  if (records.schemaVersion !== "REPLAY_RECORDS_V1" || records.lifetime.length !== 5) {
+    throw new Error("Replay records projection did not produce the V1 record catalogue.");
+  }
 
   console.log("Replay Level 1 + Level 2 smoke test");
   console.log(`adapter: ${parsed.schemaVersion}`);
   console.log(`facts: ${facts.schemaVersion} (${facts.eventDetailLevel})`);
   console.log(`analysis: ${analysis.schemaVersion}`);
   console.log(`aggregates: ${aggregate.schemaVersion}`);
+  console.log(`records: ${records.schemaVersion}`);
   console.log(`duration: ${facts.durationSeconds}s`);
   console.log(`players: ${facts.playerCount}`);
 
@@ -112,6 +120,14 @@ try {
       `    aggregate projection: games=${playerAggregate.gamesAnalyzed} weightedAvgAPM=${playerAggregate.weightedAverageRawApm} ` +
       `best30=${playerAggregate.highestPeak30sRawApm?.value ?? "n/a"} best60=${playerAggregate.highestPeak60sRawApm?.value ?? "n/a"}`,
     );
+  }
+
+  console.log("  replay records:");
+  for (const record of records.lifetime) {
+    const holders = record.holders.length
+      ? record.holders.map((holder) => `${sourceNameByPlayerId.get(holder.playerId) ?? holder.playerId} (${holder.value})`).join(", ")
+      : "no holder";
+    console.log(`    ${record.code}: ${holders}`);
   }
 
   console.log("Replay Level 1 + Level 2 smoke test passed.");
