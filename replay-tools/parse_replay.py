@@ -14,7 +14,7 @@ from mgz.fast import meta, operation
 from mgz.fast.enums import Action, Operation
 from mgz.fast.header import parse as parse_header
 
-ADAPTER_SCHEMA_VERSION = "LOF_MGZ_FAST_ADAPTER_V1"
+ADAPTER_SCHEMA_VERSION = "LOF_MGZ_FAST_ADAPTER_V2"
 PARSER_DISTRIBUTION = "mgz-fast"
 
 
@@ -42,6 +42,8 @@ def file_sha256(path: Path) -> str:
 
 def integer(value: Any) -> int | None:
     try:
+        if isinstance(value, bytes):
+            return int.from_bytes(value, "little")
         return int(value) if value is not None else None
     except (TypeError, ValueError):
         return None
@@ -106,10 +108,19 @@ def extract_players(header: dict[str, Any], warnings: list[str]) -> list[dict[st
     return players
 
 
+def compact_event(slot: int, elapsed_ms: int, **fields: Any) -> dict[str, Any]:
+    return {"replaySlot": slot, "atMs": elapsed_ms, **fields}
+
+
 def parse_body(path: Path, players: list[dict[str, Any]], warnings: list[str]) -> dict[str, Any]:
     action_counts: dict[int, Counter[str]] = defaultdict(Counter)
+    action_seconds: dict[int, Counter[int]] = defaultdict(Counter)
     build_counts: dict[int, Counter[str]] = defaultdict(Counter)
+    build_events: list[dict[str, Any]] = []
+    production_events: list[dict[str, Any]] = []
     research_events: list[dict[str, Any]] = []
+    market_events: list[dict[str, Any]] = []
+    tribute_events: list[dict[str, Any]] = []
     resignations: list[dict[str, Any]] = []
     elapsed_ms = 0
     total_actions = 0
@@ -140,27 +151,68 @@ def parse_body(path: Path, players: list[dict[str, Any]], warnings: list[str]) -
             action_type, action_data = payload
             total_actions += 1
             action_name = enum_name(action_type) or "UNKNOWN"
-            player_id = integer(action_data.get("player_id")) if isinstance(action_data, dict) else None
+            action_data = action_data if isinstance(action_data, dict) else {}
+            player_id = integer(action_data.get("player_id"))
 
             if player_id in valid_slots:
                 action_counts[player_id][action_name] += 1
+                action_seconds[player_id][elapsed_ms // 1000] += 1
 
             if action_type == Action.RESIGN and player_id in valid_slots:
-                resignations.append({
-                    "replaySlot": player_id,
-                    "atMs": elapsed_ms,
-                })
+                resignations.append(compact_event(player_id, elapsed_ms))
+
             elif action_type == Action.RESEARCH and player_id in valid_slots:
-                technology_id = integer(action_data.get("technology_id"))
-                research_events.append({
-                    "replaySlot": player_id,
-                    "technologyId": technology_id,
-                    "atMs": elapsed_ms,
-                })
+                research_events.append(compact_event(
+                    player_id,
+                    elapsed_ms,
+                    technologyId=integer(action_data.get("technology_id")),
+                ))
+
             elif action_type == Action.BUILD and player_id in valid_slots:
                 building_id = integer(action_data.get("building_id"))
                 if building_id is not None:
                     build_counts[player_id][str(building_id)] += 1
+                build_events.append(compact_event(
+                    player_id,
+                    elapsed_ms,
+                    buildingId=building_id,
+                    x=finite_number(action_data.get("x")),
+                    y=finite_number(action_data.get("y")),
+                ))
+
+            elif action_type in (Action.DE_QUEUE, Action.QUEUE, Action.MULTIQUEUE, Action.MAKE) and player_id in valid_slots:
+                amount = integer(action_data.get("amount"))
+                production_events.append(compact_event(
+                    player_id,
+                    elapsed_ms,
+                    commandType=action_name,
+                    unitId=integer(action_data.get("unit_id")),
+                    amount=amount if amount is not None and amount > 0 else 1,
+                    buildingId=integer(action_data.get("building_id")),
+                ))
+
+            elif action_type in (Action.BUY, Action.SELL) and player_id in valid_slots:
+                market_events.append(compact_event(
+                    player_id,
+                    elapsed_ms,
+                    type=action_name,
+                    resourceId=integer(action_data.get("resource_id")),
+                    amount=finite_number(action_data.get("amount")),
+                ))
+
+            elif action_type in (Action.TRIBUTE, Action.DE_TRIBUTE) and player_id in valid_slots:
+                tribute_events.append(compact_event(
+                    player_id,
+                    elapsed_ms,
+                    targetReplaySlot=integer(action_data.get("target_player_id"))
+                    or integer(action_data.get("player_id_to")),
+                    resourceId=integer(action_data.get("resource_id")),
+                    amount=finite_number(action_data.get("amount")),
+                    food=finite_number(action_data.get("food")),
+                    wood=finite_number(action_data.get("wood")),
+                    gold=finite_number(action_data.get("gold")),
+                    stone=finite_number(action_data.get("stone")),
+                ))
 
     if total_syncs == 0:
         warnings.append("Replay body contained no SYNC operations; duration may be unavailable.")
@@ -173,11 +225,22 @@ def parse_body(path: Path, players: list[dict[str, Any]], warnings: list[str]) -
             str(slot): dict(sorted(counter.items()))
             for slot, counter in sorted(action_counts.items())
         },
+        "actionSecondsByPlayer": {
+            str(slot): [
+                {"second": second, "count": count}
+                for second, count in sorted(counter.items())
+            ]
+            for slot, counter in sorted(action_seconds.items())
+        },
         "buildCountsByPlayer": {
             str(slot): dict(sorted(counter.items(), key=lambda item: int(item[0])))
             for slot, counter in sorted(build_counts.items())
         },
+        "buildEvents": build_events,
+        "productionEvents": production_events,
         "researchEvents": research_events,
+        "marketEvents": market_events,
+        "tributeEvents": tribute_events,
         "resignations": resignations,
     }
 
@@ -205,6 +268,7 @@ def build_payload(path: Path) -> dict[str, Any]:
             "fileSizeBytes": path.stat().st_size,
         },
         "settings": {
+            # Kept as raw evidence. Some modern DE replays currently return suspicious zero values here.
             "mapId": integer(scenario.get("map_id")),
             "difficultyId": integer(scenario.get("difficulty_id")),
             "mapSize": integer(lobby.get("map_size")),
