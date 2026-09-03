@@ -4,7 +4,7 @@ import { requireLeaguePlayer } from "../auth/authorization.js";
 import { db } from "../config/firebase.js";
 import { callableOptions } from "../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../domain/collections.js";
-import type { Player } from "../domain/types.js";
+import { iso, playerMap, publicPlayer } from "./querySupport.js";
 
 interface LeagueStateDocument {
   activeSeasonId?: string | null;
@@ -43,7 +43,6 @@ interface EventDocument {
 }
 
 interface EventParticipantDocument {
-  playerId?: string;
   rsvp?: string;
   signupState?: string;
   attendanceStatus?: string;
@@ -60,15 +59,24 @@ interface RivalryDocument {
   playerOneId?: string;
   playerTwoId?: string;
   encounters?: number;
-  playerOneWins?: number;
-  playerTwoWins?: number;
   rivalryScore?: number;
   status?: string;
+}
+
+interface ChallengeDocument {
+  challengeRevision?: number;
+  challengerPlayerId?: string;
+  challengedPlayerId?: string;
+  status?: string;
+  matchId?: string | null;
+  sourceRivalryId?: string | null;
+  createdAt?: Timestamp | null;
 }
 
 interface ActivityDocument {
   type?: string;
   matchId?: string;
+  challengeId?: string;
   seasonId?: string | null;
   eventId?: string | null;
   format?: string;
@@ -76,20 +84,6 @@ interface ActivityDocument {
   winningPlayerIds?: string[];
   resultRevision?: number;
   occurredAt?: Timestamp | null;
-}
-
-function iso(value: Timestamp | null | undefined): string | null {
-  return value instanceof Timestamp ? value.toDate().toISOString() : null;
-}
-
-function publicPlayer(playerId: string, player: Player | undefined) {
-  return {
-    playerId,
-    steamName: player?.steamName ?? playerId,
-    avatarUrl: player?.avatarUrl ?? null,
-    currentPowerRating: player?.currentPowerRating ?? null,
-    provisionalRating: player?.provisionalRating ?? true,
-  };
 }
 
 function eventSummary(eventId: string, event: EventDocument) {
@@ -119,9 +113,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
     db.collection(collections.activity).orderBy("occurredAt", "desc").limit(12).get(),
   ]);
 
-  const playerById = new Map<string, Player>(
-    playersSnapshot.docs.map((document) => [document.id, document.data() as Player]),
-  );
+  const players = playerMap(playersSnapshot);
   const leagueState = leagueStateSnapshot.exists
     ? leagueStateSnapshot.data() as LeagueStateDocument
     : {};
@@ -135,13 +127,14 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       activityId: document.id,
       type: data.type ?? "UNKNOWN",
       matchId: data.matchId ?? null,
+      challengeId: data.challengeId ?? null,
       seasonId: data.seasonId ?? null,
       eventId: data.eventId ?? null,
       format: data.format ?? null,
       resultRevision: Number(data.resultRevision ?? 1),
       occurredAt: iso(data.occurredAt),
-      players: playerIds.map((playerId) => publicPlayer(playerId, playerById.get(playerId))),
-      winners: winningPlayerIds.map((playerId) => publicPlayer(playerId, playerById.get(playerId))),
+      players: playerIds.map((playerId) => publicPlayer(playerId, players.get(playerId))),
+      winners: winningPlayerIds.map((playerId) => publicPlayer(playerId, players.get(playerId))),
     };
   });
 
@@ -150,7 +143,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       schemaVersion: "LEAGUE_BOOTSTRAP_V1",
       generatedAt: new Date().toISOString(),
       viewer: {
-        ...publicPlayer(actor.playerId, playerById.get(actor.playerId)),
+        ...publicPlayer(actor.playerId, players.get(actor.playerId)),
         role: actor.role,
         goldBalance: actor.player.goldBalance,
       },
@@ -163,16 +156,19 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
         status: "CLOSED",
         canChallenge: false,
         qualifiedRivals: [],
+        viewerRivalries: [],
+        pendingIncomingChallenge: null,
       },
     };
   }
 
   const seasonRef = db.collection(collections.seasons).doc(activeSeasonId);
-  const [seasonSnapshot, eventsSnapshot, standingsSnapshot, rivalriesSnapshot] = await Promise.all([
+  const [seasonSnapshot, eventsSnapshot, standingsSnapshot, rivalriesSnapshot, challengesSnapshot] = await Promise.all([
     seasonRef.get(),
     db.collection(collections.events).where("seasonId", "==", activeSeasonId).get(),
     seasonRef.collection("standings").get(),
     seasonRef.collection("rivalries").get(),
+    db.collection(collections.challenges).where("seasonId", "==", activeSeasonId).get(),
   ]);
 
   const season = seasonSnapshot.exists ? seasonSnapshot.data() as SeasonDocument : {};
@@ -225,7 +221,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
         respondedAt: iso(viewerParticipation?.respondedAt),
       },
       roster: rosterVisible
-        ? confirmed.map((participant) => publicPlayer(participant.id, playerById.get(participant.id)))
+        ? confirmed.map((participant) => publicPlayer(participant.id, players.get(participant.id)))
         : null,
     };
   }
@@ -235,7 +231,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       const standing = document.data() as StandingDocument;
       const playerId = standing.playerId ?? document.id;
       return {
-        ...publicPlayer(playerId, playerById.get(playerId)),
+        ...publicPlayer(playerId, players.get(playerId)),
         leaguePoints: Number(standing.leaguePoints ?? 0),
       };
     })
@@ -255,7 +251,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
         : rivalry.playerOneId!;
       return {
         pairId: rivalry.pairId,
-        rival: publicPlayer(rivalPlayerId, playerById.get(rivalPlayerId)),
+        rival: publicPlayer(rivalPlayerId, players.get(rivalPlayerId)),
         encounters: Number(rivalry.encounters ?? 0),
         rivalryScore: Number(rivalry.rivalryScore ?? 0),
         status: rivalry.status ?? "EMERGING",
@@ -265,12 +261,26 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
 
   const qualifiedRivals = viewerRivalries.filter((rivalry) => rivalry.status === "QUALIFIED");
   const warRoomOpen = season.warRoom?.status === "OPEN";
+  const pendingIncomingChallengeDocument = challengesSnapshot.docs
+    .map((document) => ({ challengeId: document.id, data: document.data() as ChallengeDocument }))
+    .find(({ data }) => data.status === "PENDING" && data.challengedPlayerId === actor.playerId) ?? null;
+  const pendingIncomingChallenge = pendingIncomingChallengeDocument ? {
+    challengeId: pendingIncomingChallengeDocument.challengeId,
+    challengeRevision: Number(pendingIncomingChallengeDocument.data.challengeRevision ?? 1),
+    challenger: publicPlayer(
+      pendingIncomingChallengeDocument.data.challengerPlayerId ?? "UNKNOWN",
+      players.get(pendingIncomingChallengeDocument.data.challengerPlayerId ?? ""),
+    ),
+    sourceRivalryId: pendingIncomingChallengeDocument.data.sourceRivalryId ?? null,
+    matchId: pendingIncomingChallengeDocument.data.matchId ?? null,
+    createdAt: iso(pendingIncomingChallengeDocument.data.createdAt),
+  } : null;
 
   return {
     schemaVersion: "LEAGUE_BOOTSTRAP_V1",
     generatedAt: new Date().toISOString(),
     viewer: {
-      ...publicPlayer(actor.playerId, playerById.get(actor.playerId)),
+      ...publicPlayer(actor.playerId, players.get(actor.playerId)),
       role: actor.role,
       goldBalance: actor.player.goldBalance,
     },
@@ -293,6 +303,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       canChallenge: warRoomOpen && qualifiedRivals.length > 0,
       qualifiedRivals,
       viewerRivalries,
+      pendingIncomingChallenge: warRoomOpen ? pendingIncomingChallenge : null,
     },
   };
 });
