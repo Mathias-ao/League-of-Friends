@@ -23,6 +23,8 @@ export interface Player {
   membershipStatus: MembershipStatus;
   role: PlayerRole;
   currentPowerRating: number | null;
+  powerRatingGames: number;
+  powerRatingAlgorithmVersion: string | null;
   provisionalRating: boolean;
   goldBalance: number;
 }
