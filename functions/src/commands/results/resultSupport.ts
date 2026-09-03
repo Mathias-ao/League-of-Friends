@@ -30,11 +30,14 @@ export interface MatchForResult {
     affectsLeaguePoints?: boolean;
     affectsGold?: boolean;
   } | null;
+  activeResultDisputeId?: string | null;
+  processingState?: string | null;
 }
 
 export interface GameForResult {
   status?: string;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
+  activeResultDisputeId?: string | null;
 }
 
 export interface ResultSubmissionDocument {
