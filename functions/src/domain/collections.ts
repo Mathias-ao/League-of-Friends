@@ -15,6 +15,7 @@ export const collections = {
   scoringProfiles: "scoringProfiles",
   powerRatingProfiles: "powerRatingProfiles",
   replayAnalysisProfiles: "replayAnalysisProfiles",
+  leagueRecords: "leagueRecords",
   activity: "activity",
   stories: "stories",
   adminAudit: "adminAudit",
