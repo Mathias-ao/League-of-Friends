@@ -2,6 +2,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAuth } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
+import { callableOptions } from "../../config/runtime.js";
 import { collections } from "../../domain/collections.js";
 
 interface RequestMembershipInput {
@@ -13,7 +14,7 @@ function normalizeSteamName(value: string): string {
   return value.trim().toLocaleLowerCase("en-US");
 }
 
-export const requestLeagueMembership = onCall<RequestMembershipInput>(async (request) => {
+export const requestLeagueMembership = onCall<RequestMembershipInput>(callableOptions, async (request) => {
   const authUid = requireAuth(request);
   const steamName = request.data.steamName?.trim();
   const discordName = request.data.discordName?.trim() || null;
