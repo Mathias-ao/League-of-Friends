@@ -23,6 +23,7 @@ export { adminResolveCanonicalResultDispute } from "./commands/results/adminReso
 export { adminIngestReplayStats } from "./commands/statistics/ingestReplayStats.js";
 export { adminProcessReplayDerivedStats } from "./commands/statistics/processReplayDerivedStats.js";
 export { adminProcessReplayAnalysis } from "./commands/statistics/processReplayAnalysis.js";
+export { adminRebuildReplayPlayerStatistics } from "./commands/statistics/rebuildReplayPlayerStatistics.js";
 export { adminProcessMatchRewards } from "./commands/processing/processMatchRewards.js";
 export { adminProcessPowerRatings } from "./commands/processing/processPowerRatings.js";
 export { adminProcessStatistics } from "./commands/processing/processStatistics.js";
