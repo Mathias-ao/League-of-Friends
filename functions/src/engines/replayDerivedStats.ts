@@ -1,6 +1,12 @@
 export const REPLAY_DERIVED_STATS_VERSION = "REPLAY_DERIVED_STATS_V1";
 export const SUPPORTED_REPLAY_ADAPTER_SCHEMA = "LOF_MGZ_FAST_ADAPTER_V1";
 
+const AGE_TECHNOLOGY_IDS = {
+  feudal: 101,
+  castle: 102,
+  imperial: 103,
+} as const;
+
 export interface RawReplayPlayerMapping {
   playerId: string;
   replaySlot: number;
@@ -10,6 +16,12 @@ export interface RawReplayPlayerMapping {
 export interface ReplayDerivedResearchEvent {
   technologyId: number;
   atMs: number;
+}
+
+export interface ReplayAgeResearchStarts {
+  feudalAtMs: number | null;
+  castleAtMs: number | null;
+  imperialAtMs: number | null;
 }
 
 export interface ReplayDerivedPlayerStats {
@@ -25,6 +37,7 @@ export interface ReplayDerivedPlayerStats {
   buildCountsByBuildingId: Record<string, number>;
   researchEventCount: number;
   researchEvents: ReplayDerivedResearchEvent[];
+  ageResearchStartedAt: ReplayAgeResearchStarts;
   resigned: boolean;
   resignedAtMs: number | null;
 }
@@ -85,6 +98,10 @@ function sumCounts(counts: Record<string, number>): number {
 function playerSlot(value: unknown): number | null {
   const slot = nullableInteger(value);
   return slot != null && slot >= 1 && slot <= 8 ? slot : null;
+}
+
+function firstResearchAt(events: ReplayDerivedResearchEvent[], technologyId: number): number | null {
+  return events.find((event) => event.technologyId === technologyId)?.atMs ?? null;
 }
 
 export function normalizeReplayDerivedStats(input: {
@@ -163,6 +180,11 @@ export function normalizeReplayDerivedStats(input: {
       buildCountsByBuildingId: buildCounts,
       researchEventCount: playerResearchEvents.length,
       researchEvents: playerResearchEvents,
+      ageResearchStartedAt: {
+        feudalAtMs: firstResearchAt(playerResearchEvents, AGE_TECHNOLOGY_IDS.feudal),
+        castleAtMs: firstResearchAt(playerResearchEvents, AGE_TECHNOLOGY_IDS.castle),
+        imperialAtMs: firstResearchAt(playerResearchEvents, AGE_TECHNOLOGY_IDS.imperial),
+      },
       resigned: resignationTimes.length > 0,
       resignedAtMs: resignationTimes[0] ?? null,
     });
