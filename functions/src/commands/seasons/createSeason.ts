@@ -2,6 +2,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
+import { callableOptions } from "../../config/runtime.js";
 import { collections } from "../../domain/collections.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
@@ -21,7 +22,7 @@ function parseDate(value: string, fieldName: string): Date {
   return date;
 }
 
-export const adminCreateSeason = onCall<CreateSeasonInput>(async (request) => {
+export const adminCreateSeason = onCall<CreateSeasonInput>(callableOptions, async (request) => {
   const actor = await requireAdmin(request);
   const input = request.data;
 
@@ -39,8 +40,6 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(async (request) => {
   const seasonRef = db.collection(collections.seasons).doc();
 
   await db.runTransaction(async (transaction) => {
-    // Firestore transactions must perform reads before writes. Validate the
-    // existing Season set before reserving the idempotency key.
     const seasonsSnapshot = await transaction.get(db.collection(collections.seasons));
 
     const overlapping = seasonsSnapshot.docs.some((document) => {
