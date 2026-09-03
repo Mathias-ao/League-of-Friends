@@ -22,13 +22,24 @@ const authBase = "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1";
 const functionsBase = `http://127.0.0.1:5001/${projectId}/europe-west1`;
 const firestoreBase = `http://127.0.0.1:${firestorePort}/v1/projects/${projectId}/databases/(default)/documents`;
 
+async function parseResponse(response, label) {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`${label} returned non-JSON (${response.status}): ${text}`);
+  }
+}
+
 async function signIn() {
   const response = await fetch(`${authBase}/accounts:signInWithPassword?key=fake-api-key`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email, password, returnSecureToken: true }),
   });
-  const payload = await response.json();
+  const payload = await parseResponse(response, "Admin sign-in");
   if (!response.ok) throw new Error(`Admin sign-in failed: ${JSON.stringify(payload)}`);
   return payload.idToken;
 }
@@ -42,7 +53,7 @@ async function callCallable(name, token, data) {
     },
     body: JSON.stringify({ data }),
   });
-  const payload = await response.json();
+  const payload = await parseResponse(response, name);
   if (!response.ok || payload.error) throw new Error(`${name} failed: ${JSON.stringify(payload)}`);
   return payload.result;
 }
@@ -51,7 +62,7 @@ async function readDocument(path, token) {
   const response = await fetch(`${firestoreBase}/${path}`, {
     headers: { authorization: `Bearer ${token}` },
   });
-  const payload = await response.json();
+  const payload = await parseResponse(response, `Firestore read ${path}`);
   if (!response.ok) throw new Error(`Firestore read failed for ${path}: ${JSON.stringify(payload)}`);
   return payload;
 }
