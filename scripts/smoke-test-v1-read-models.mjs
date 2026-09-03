@@ -72,11 +72,12 @@ try {
   if (!eventId) throw new Error("Synthetic Match has no eventId; cannot verify Event detail.");
   if (!players.length) throw new Error("Synthetic Match has no participants; cannot verify Player profile.");
 
-  const [bootstrap, eventDetail, playerProfile, warRoom] = await Promise.all([
+  const [bootstrap, eventDetail, playerProfile, warRoom, matchDetail] = await Promise.all([
     callCallable("getLeagueBootstrap", token),
     callCallable("getEventDetail", token, { eventId }),
     callCallable("getPlayerProfile", token, { playerId: players[0] }),
     callCallable("getWarRoom", token),
+    callCallable("getMatchDetail", token, { matchId }),
   ]);
 
   if (bootstrap.schemaVersion !== "LEAGUE_BOOTSTRAP_V1") {
@@ -94,12 +95,19 @@ try {
   if (warRoom.schemaVersion !== "WAR_ROOM_V1") {
     throw new Error(`Unexpected War Room schema ${warRoom.schemaVersion}.`);
   }
+  if (matchDetail.schemaVersion !== "MATCH_DETAIL_V1" || matchDetail.match.matchId !== matchId) {
+    throw new Error("Match detail did not return the requested Match.");
+  }
+  if (!matchDetail.games.length || !matchDetail.games.some((game) => game.gameId === "G1")) {
+    throw new Error("Match detail did not expose the synthetic Game.");
+  }
 
   console.log("V1 read models:");
   console.log(`  viewer: ${bootstrap.viewer.steamName} (${bootstrap.viewer.playerId})`);
   console.log(`  active season: ${bootstrap.activeSeason?.name ?? "none"}`);
   console.log(`  event: ${eventDetail.event.title} (${eventId})`);
   console.log(`  event matches: ${eventDetail.matches.length}`);
+  console.log(`  match: ${matchDetail.match.matchId}; games=${matchDetail.games.map((game) => game.gameId).join(", ")}`);
   console.log(`  profile: ${playerProfile.player.steamName} (${players[0]})`);
   console.log(`  profile lifetime matches: ${playerProfile.lifetime.competition?.matchesPlayed ?? 0}`);
   console.log(`  War Room: ${warRoom.status}; leaderboard rows=${warRoom.leaderboard.length}`);
