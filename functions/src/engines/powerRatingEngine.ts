@@ -1,13 +1,34 @@
 import type { CanonicalGameResult, MatchFormat, MatchParticipant } from "../domain/types.js";
 
 export const POWER_RATING_ALGORITHM = "LEAGUE_POWER_ELO";
-export const POWER_RATING_VERSION = "POWER_RATING_V1";
-export const DEFAULT_POWER_RATING = 1000;
-export const PROVISIONAL_MATCH_COUNT = 5;
+export const POWER_RATING_ENGINE_VERSION = "POWER_RATING_ENGINE_V1";
 
-const PROVISIONAL_K = 48;
-const ESTABLISHED_K = 24;
-const TEAM_SIZE_RATING_BONUS = 200;
+export type PowerRatingRounding = "NEAREST_INTEGER";
+export type PowerRatingFfaMode = "WINNER_VS_FIELD_ZERO_SUM";
+
+export interface PowerRatingConfig {
+  baseRating: number;
+  provisionalMatchCount: number;
+  provisionalK: number;
+  establishedK: number;
+  ratingScale: number;
+  teamSizeBonus: number;
+  minimumRating: number | null;
+  rounding: PowerRatingRounding;
+  ffaMode: PowerRatingFfaMode;
+}
+
+export const DEFAULT_POWER_RATING_CONFIG: PowerRatingConfig = {
+  baseRating: 1000,
+  provisionalMatchCount: 5,
+  provisionalK: 48,
+  establishedK: 24,
+  ratingScale: 400,
+  teamSizeBonus: 200,
+  minimumRating: null,
+  rounding: "NEAREST_INTEGER",
+  ffaMode: "WINNER_VS_FIELD_ZERO_SUM",
+};
 
 export interface PowerRatingMatchInput {
   matchId: string;
@@ -48,35 +69,61 @@ interface MutablePlayerState {
   games: number;
 }
 
-function kFactor(games: number): number {
-  return games < PROVISIONAL_MATCH_COUNT ? PROVISIONAL_K : ESTABLISHED_K;
+function finiteNumber(name: string, value: number, minimum: number, maximum: number): void {
+  if (!Number.isFinite(value) || value < minimum || value > maximum) {
+    throw new Error(`${name} must be between ${minimum} and ${maximum}.`);
+  }
 }
 
-function roundRating(value: number): number {
-  return Math.round(value);
+export function validatePowerRatingConfig(config: PowerRatingConfig): PowerRatingConfig {
+  finiteNumber("baseRating", config.baseRating, 0, 10000);
+  if (!Number.isInteger(config.provisionalMatchCount) || config.provisionalMatchCount < 0 || config.provisionalMatchCount > 100) {
+    throw new Error("provisionalMatchCount must be an integer between 0 and 100.");
+  }
+  finiteNumber("provisionalK", config.provisionalK, 0, 500);
+  finiteNumber("establishedK", config.establishedK, 0, 500);
+  finiteNumber("ratingScale", config.ratingScale, 1, 5000);
+  finiteNumber("teamSizeBonus", config.teamSizeBonus, -2000, 2000);
+  if (config.minimumRating != null) finiteNumber("minimumRating", config.minimumRating, 0, 10000);
+  if (config.rounding !== "NEAREST_INTEGER") throw new Error("Unsupported Power Rating rounding mode.");
+  if (config.ffaMode !== "WINNER_VS_FIELD_ZERO_SUM") throw new Error("Unsupported Power Rating FFA mode.");
+  return config;
 }
 
-function expectedScore(rating: number, opposingRating: number): number {
-  return 1 / (1 + 10 ** ((opposingRating - rating) / 400));
+function kFactor(games: number, config: PowerRatingConfig): number {
+  return games < config.provisionalMatchCount ? config.provisionalK : config.establishedK;
 }
 
-function mean(values: number[]): number {
-  if (values.length === 0) return DEFAULT_POWER_RATING;
+function roundRating(value: number, config: PowerRatingConfig): number {
+  const rounded = Math.round(value);
+  return config.minimumRating == null ? rounded : Math.max(config.minimumRating, rounded);
+}
+
+function expectedScore(rating: number, opposingRating: number, config: PowerRatingConfig): number {
+  return 1 / (1 + 10 ** ((opposingRating - rating) / config.ratingScale));
+}
+
+function mean(values: number[], config: PowerRatingConfig): number {
+  if (values.length === 0) return config.baseRating;
   return values.reduce((total, value) => total + value, 0) / values.length;
 }
 
-function effectiveTeamRating(ratings: number[]): number {
-  return mean(ratings) + TEAM_SIZE_RATING_BONUS * Math.log2(Math.max(1, ratings.length));
+function effectiveTeamRating(ratings: number[], config: PowerRatingConfig): number {
+  return mean(ratings, config) + config.teamSizeBonus * Math.log2(Math.max(1, ratings.length));
 }
 
-function strength(rating: number): number {
-  return 10 ** (rating / 400);
+function strength(rating: number, config: PowerRatingConfig): number {
+  return 10 ** (rating / config.ratingScale);
 }
 
-function stateFor(states: Map<string, MutablePlayerState>, playerId: string): MutablePlayerState {
+function stateFor(
+  states: Map<string, MutablePlayerState>,
+  playerId: string,
+  config: PowerRatingConfig,
+): MutablePlayerState {
   let state = states.get(playerId);
   if (!state) {
-    state = { rating: DEFAULT_POWER_RATING, games: 0 };
+    state = { rating: config.baseRating, games: 0 };
     states.set(playerId, state);
   }
   return state;
@@ -85,6 +132,7 @@ function stateFor(states: Map<string, MutablePlayerState>, playerId: string): Mu
 function pushHistory(
   history: PowerRatingHistoryEntry[],
   state: MutablePlayerState,
+  config: PowerRatingConfig,
   input: {
     playerId: string;
     match: PowerRatingMatchInput;
@@ -94,7 +142,7 @@ function pushHistory(
   },
 ): void {
   const previousRating = state.rating;
-  const newRating = roundRating(previousRating + input.delta);
+  const newRating = roundRating(previousRating + input.delta, config);
   state.rating = newRating;
   state.games += 1;
 
@@ -108,7 +156,7 @@ function pushHistory(
     expectedScore: input.expected,
     actualScore: input.actual,
     ratedMatchNumber: state.games,
-    provisionalAfter: state.games < PROVISIONAL_MATCH_COUNT,
+    provisionalAfter: state.games < config.provisionalMatchCount,
     orderAtMs: input.match.orderAtMs,
   });
 }
@@ -117,6 +165,7 @@ function processTeamMatch(
   states: Map<string, MutablePlayerState>,
   history: PowerRatingHistoryEntry[],
   match: PowerRatingMatchInput,
+  config: PowerRatingConfig,
 ): void {
   const teamOne = match.participants.filter((participant) => participant.team === 1);
   const teamTwo = match.participants.filter((participant) => participant.team === 2);
@@ -128,33 +177,26 @@ function processTeamMatch(
     throw new Error(`Match ${match.matchId} requires a team winner.`);
   }
 
-  const teamOneRatings = teamOne.map((participant) => stateFor(states, participant.playerId).rating);
-  const teamTwoRatings = teamTwo.map((participant) => stateFor(states, participant.playerId).rating);
+  const teamOneRatings = teamOne.map((participant) => stateFor(states, participant.playerId, config).rating);
+  const teamTwoRatings = teamTwo.map((participant) => stateFor(states, participant.playerId, config).rating);
   const teamOneExpected = expectedScore(
-    effectiveTeamRating(teamOneRatings),
-    effectiveTeamRating(teamTwoRatings),
+    effectiveTeamRating(teamOneRatings, config),
+    effectiveTeamRating(teamTwoRatings, config),
+    config,
   );
   const teamTwoExpected = 1 - teamOneExpected;
   const teamOneActual = match.canonicalResult.winnerTeam === 1 ? 1 : 0;
   const teamTwoActual = 1 - teamOneActual;
 
   const updates = [
-    ...teamOne.map((participant) => ({
-      participant,
-      expected: teamOneExpected,
-      actual: teamOneActual,
-    })),
-    ...teamTwo.map((participant) => ({
-      participant,
-      expected: teamTwoExpected,
-      actual: teamTwoActual,
-    })),
+    ...teamOne.map((participant) => ({ participant, expected: teamOneExpected, actual: teamOneActual })),
+    ...teamTwo.map((participant) => ({ participant, expected: teamTwoExpected, actual: teamTwoActual })),
   ];
 
   for (const update of updates) {
-    const state = stateFor(states, update.participant.playerId);
-    const delta = kFactor(state.games) * (update.actual - update.expected);
-    pushHistory(history, state, {
+    const state = stateFor(states, update.participant.playerId, config);
+    const delta = kFactor(state.games, config) * (update.actual - update.expected);
+    pushHistory(history, state, config, {
       playerId: update.participant.playerId,
       match,
       delta,
@@ -168,7 +210,11 @@ function processFfaMatch(
   states: Map<string, MutablePlayerState>,
   history: PowerRatingHistoryEntry[],
   match: PowerRatingMatchInput,
+  config: PowerRatingConfig,
 ): void {
+  if (config.ffaMode !== "WINNER_VS_FIELD_ZERO_SUM") {
+    throw new Error(`Unsupported FFA rating mode ${config.ffaMode}.`);
+  }
   if (match.canonicalResult.type !== "PLAYER_WIN") {
     throw new Error(`FFA Match ${match.matchId} requires a player winner.`);
   }
@@ -180,27 +226,23 @@ function processFfaMatch(
   }
 
   const before = participants.map((participant) => {
-    const state = stateFor(states, participant.playerId);
+    const state = stateFor(states, participant.playerId, config);
     return {
       participant,
       rating: state.rating,
       games: state.games,
-      strength: strength(state.rating),
+      strength: strength(state.rating, config),
     };
   });
   const totalStrength = before.reduce((total, item) => total + item.strength, 0);
   const winner = before.find((item) => item.participant.playerId === winnerId)!;
   const winnerExpected = winner.strength / totalStrength;
-  const averageK = mean(before.map((item) => kFactor(item.games)));
+  const averageK = mean(before.map((item) => kFactor(item.games, config)), config);
   const winnerDelta = averageK * (1 - winnerExpected);
   const loserProbabilityMass = Math.max(1e-9, 1 - winnerExpected);
 
   const deltas = new Map<string, { delta: number; expected: number; actual: number }>();
-  deltas.set(winnerId, {
-    delta: winnerDelta,
-    expected: winnerExpected,
-    actual: 1,
-  });
+  deltas.set(winnerId, { delta: winnerDelta, expected: winnerExpected, actual: 1 });
 
   for (const item of before) {
     if (item.participant.playerId === winnerId) continue;
@@ -214,8 +256,8 @@ function processFfaMatch(
 
   for (const item of before) {
     const update = deltas.get(item.participant.playerId)!;
-    const state = stateFor(states, item.participant.playerId);
-    pushHistory(history, state, {
+    const state = stateFor(states, item.participant.playerId, config);
+    pushHistory(history, state, config, {
       playerId: item.participant.playerId,
       match,
       delta: update.delta,
@@ -225,7 +267,11 @@ function processFfaMatch(
   }
 }
 
-export function rebuildPowerRatings(matches: PowerRatingMatchInput[]): PowerRatingRebuildResult {
+export function rebuildPowerRatings(
+  matches: PowerRatingMatchInput[],
+  configInput: PowerRatingConfig = DEFAULT_POWER_RATING_CONFIG,
+): PowerRatingRebuildResult {
+  const config = validatePowerRatingConfig(configInput);
   const states = new Map<string, MutablePlayerState>();
   const history: PowerRatingHistoryEntry[] = [];
 
@@ -240,9 +286,9 @@ export function rebuildPowerRatings(matches: PowerRatingMatchInput[]): PowerRati
     }
 
     if (match.format === "FFA") {
-      processFfaMatch(states, history, match);
+      processFfaMatch(states, history, match, config);
     } else {
-      processTeamMatch(states, history, match);
+      processTeamMatch(states, history, match, config);
     }
   }
 
@@ -251,7 +297,7 @@ export function rebuildPowerRatings(matches: PowerRatingMatchInput[]): PowerRati
       playerId,
       currentPowerRating: state.rating,
       ratedMatchCount: state.games,
-      provisionalRating: state.games < PROVISIONAL_MATCH_COUNT,
+      provisionalRating: state.games < config.provisionalMatchCount,
     }))
     .sort((left, right) => left.playerId.localeCompare(right.playerId));
 
