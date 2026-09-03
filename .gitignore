@@ -10,6 +10,10 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
+# Replay tooling local artifacts
+.venv-replay/
+replay-output*.json
+
 # Environment / secrets
 .env
 .env.*
