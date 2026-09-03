@@ -185,30 +185,41 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
   ]);
 
   const rebuiltAt = Timestamp.now();
-  const writer = db.bulkWriter();
+
+  // Phase 1: remove all existing derived statistics and wait for the cleanup
+  // to finish completely. BulkWriter does not provide a cross-operation barrier
+  // when delete + set target the same document path, so mixing both phases in
+  // one writer can allow a stale delete to remove a freshly rebuilt document.
+  const cleanupWriter = db.bulkWriter();
 
   for (const player of playersSnapshot.docs) {
-    writer.delete(player.ref.collection("statistics").doc("lifetime"));
+    cleanupWriter.delete(player.ref.collection("statistics").doc("lifetime"));
   }
   for (const snapshot of opponentSnapshots) {
-    for (const document of snapshot.docs) writer.delete(document.ref);
+    for (const document of snapshot.docs) cleanupWriter.delete(document.ref);
   }
   for (const snapshot of teammateSnapshots) {
-    for (const document of snapshot.docs) writer.delete(document.ref);
+    for (const document of snapshot.docs) cleanupWriter.delete(document.ref);
   }
   for (const snapshot of seasonStatisticsSnapshots) {
-    for (const document of snapshot.docs) writer.delete(document.ref);
+    for (const document of snapshot.docs) cleanupWriter.delete(document.ref);
   }
 
+  await cleanupWriter.close();
+
+  // Phase 2: write the complete rebuilt projection only after cleanup has
+  // finished. This makes rebuilds deterministic and safe to rerun.
+  const projectionWriter = db.bulkWriter();
+
   for (const stats of rebuilt.lifetime) {
-    writer.set(
+    projectionWriter.set(
       db.collection(collections.players).doc(stats.playerId).collection("statistics").doc("lifetime"),
       statsDocument(stats, rebuiltAt),
     );
   }
 
   for (const stats of rebuilt.seasonal) {
-    writer.set(
+    projectionWriter.set(
       db.collection(collections.seasons).doc(stats.seasonId).collection("statistics").doc(stats.playerId),
       {
         ...statsDocument(stats, rebuiltAt),
@@ -218,7 +229,7 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
   }
 
   for (const relationship of rebuilt.opponents) {
-    writer.set(
+    projectionWriter.set(
       db.collection(collections.players).doc(relationship.playerId).collection("opponentStats").doc(relationship.otherPlayerId),
       {
         schemaVersion: COMPETITION_STATS_VERSION,
@@ -231,7 +242,7 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
   }
 
   for (const relationship of rebuilt.teammates) {
-    writer.set(
+    projectionWriter.set(
       db.collection(collections.players).doc(relationship.playerId).collection("teammateStats").doc(relationship.otherPlayerId),
       {
         schemaVersion: COMPETITION_STATS_VERSION,
@@ -243,7 +254,7 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
     );
   }
 
-  await writer.close();
+  await projectionWriter.close();
 
   const triggerRevision = canonicalRevision(triggerMatch.canonicalResult);
   const revisionedJobRef = db.collection(collections.processingJobs).doc(resultProcessingJobId(matchId, triggerRevision));
