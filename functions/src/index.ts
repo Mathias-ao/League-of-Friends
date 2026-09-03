@@ -24,6 +24,7 @@ export { adminIngestReplayStats } from "./commands/statistics/ingestReplayStats.
 export { adminProcessReplayDerivedStats } from "./commands/statistics/processReplayDerivedStats.js";
 export { adminProcessReplayAnalysis } from "./commands/statistics/processReplayAnalysis.js";
 export { adminRebuildReplayPlayerStatistics } from "./commands/statistics/rebuildReplayPlayerStatistics.js";
+export { adminRebuildReplayRecords } from "./commands/statistics/rebuildReplayRecords.js";
 export { adminProcessMatchRewards } from "./commands/processing/processMatchRewards.js";
 export { adminProcessPowerRatings } from "./commands/processing/processPowerRatings.js";
 export { adminProcessStatistics } from "./commands/processing/processStatistics.js";
