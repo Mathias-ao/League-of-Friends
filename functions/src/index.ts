@@ -33,6 +33,7 @@ export { adminProcessAchievements } from "./commands/processing/processAchieveme
 export { adminProcessRivalries } from "./commands/processing/processRivalries.js";
 export { adminProcessRecords } from "./commands/processing/processRecords.js";
 export { adminProcessActivity } from "./commands/processing/processActivity.js";
+export { getLeagueBootstrap } from "./queries/getLeagueBootstrap.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
