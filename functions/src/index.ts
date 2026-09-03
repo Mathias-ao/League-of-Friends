@@ -2,6 +2,7 @@ import { onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "./auth/authorization.js";
 import { callableOptions } from "./config/runtime.js";
 
+export { bootstrapEmulatorAdmin } from "./dev/bootstrapEmulatorAdmin.js";
 export { requestLeagueMembership } from "./commands/players/requestMembership.js";
 export { adminSetMembershipStatus } from "./commands/players/setMembershipStatus.js";
 export { adminCreateSeason } from "./commands/seasons/createSeason.js";
