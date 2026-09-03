@@ -81,6 +81,12 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(callableOptions, asyn
         version: 1,
         mode: "UNCONFIGURED",
       },
+      warRoom: {
+        status: "CLOSED" as const,
+        openedAt: null,
+        openedByRivalryId: null,
+        engineVersion: null,
+      },
       finalSnapshot: null,
       createdBy: actor.playerId,
       createdAt: now,
