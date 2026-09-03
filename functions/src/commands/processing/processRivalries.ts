@@ -13,9 +13,13 @@ import {
 } from "../../engines/rivalryEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+import {
+  adminResultProcessingActor,
+  type ResultProcessingActor,
+} from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId } from "../results/resultSupport.js";
 
-interface ProcessRivalriesInput {
+export interface ProcessRivalriesInput {
   requestId: string;
   matchId: string;
 }
@@ -61,9 +65,11 @@ function assertRivalryMatch(
   }
 }
 
-export const adminProcessRivalries = onCall<ProcessRivalriesInput>(callableOptions, async (request) => {
-  const actor = await requireAdmin(request);
-  const { requestId, matchId } = request.data;
+export async function processRivalries(
+  input: ProcessRivalriesInput,
+  actor: ResultProcessingActor,
+) {
+  const { requestId, matchId } = input;
   if (!requestId || !matchId) throw new HttpsError("invalid-argument", "requestId and matchId are required.");
 
   const triggerMatchRef = db.collection(collections.matches).doc(matchId);
@@ -105,7 +111,7 @@ export const adminProcessRivalries = onCall<ProcessRivalriesInput>(callableOptio
       };
     });
 
-  if (!inputs.some((input) => input.matchId === matchId)) {
+  if (!inputs.some((entry) => entry.matchId === matchId)) {
     throw new HttpsError("failed-precondition", "The triggering Match is not eligible to affect rivalries.");
   }
 
@@ -202,7 +208,9 @@ export const adminProcessRivalries = onCall<ProcessRivalriesInput>(callableOptio
       throw new HttpsError("failed-precondition", "The current processing job cannot process rivalries.");
     }
 
-    await reserveIdempotencyKey(transaction, requestId, "adminProcessRivalries", actor.authUid);
+    if (actor.source === "ADMIN") {
+      await reserveIdempotencyKey(transaction, requestId, "adminProcessRivalries", actor.authUid);
+    }
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("RIVALRIES");
     completedSteps.add("RIVALRIES");
@@ -237,6 +245,7 @@ export const adminProcessRivalries = onCall<ProcessRivalriesInput>(callableOptio
         lifetimeRivalries: rebuilt.lifetime.length,
         seasonalRivalries: rebuilt.seasonal.reduce((sum, season) => sum + season.rivalries.length, 0),
         openedSeasons,
+        processingSource: actor.source,
       },
     });
 
@@ -260,4 +269,9 @@ export const adminProcessRivalries = onCall<ProcessRivalriesInput>(callableOptio
     alreadyProcessed: finalization.alreadyProcessed,
     remainingSteps: finalization.pendingSteps,
   };
+}
+
+export const adminProcessRivalries = onCall<ProcessRivalriesInput>(callableOptions, async (request) => {
+  const actor = await requireAdmin(request);
+  return processRivalries(request.data, adminResultProcessingActor(actor));
 });
