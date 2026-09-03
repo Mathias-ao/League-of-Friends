@@ -5,6 +5,7 @@ import { callableOptions } from "./config/runtime.js";
 export { bootstrapEmulatorAdmin } from "./dev/bootstrapEmulatorAdmin.js";
 export { requestLeagueMembership } from "./commands/players/requestMembership.js";
 export { adminSetMembershipStatus } from "./commands/players/setMembershipStatus.js";
+export { adminSetPowerRatingConfig } from "./commands/admin/setPowerRatingConfig.js";
 export { adminCreateSeason } from "./commands/seasons/createSeason.js";
 export { adminActivateSeason } from "./commands/seasons/activateSeason.js";
 export { adminCreateEvent } from "./commands/events/createEvent.js";
