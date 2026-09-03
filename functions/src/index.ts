@@ -16,6 +16,8 @@ export { adminApproveMatchPlan } from "./commands/events/approveMatchPlan.js";
 export { submitGameResult } from "./commands/results/submitGameResult.js";
 export { respondToGameResult } from "./commands/results/respondToGameResult.js";
 export { adminResolveGameResult } from "./commands/results/adminResolveGameResult.js";
+export { disputeCanonicalGameResult } from "./commands/results/disputeCanonicalGameResult.js";
+export { adminResolveCanonicalResultDispute } from "./commands/results/adminResolveCanonicalResultDispute.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
