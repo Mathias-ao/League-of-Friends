@@ -16,9 +16,13 @@ import {
 } from "../../engines/powerRatingEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+import {
+  adminResultProcessingActor,
+  type ResultProcessingActor,
+} from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId } from "../results/resultSupport.js";
 
-interface ProcessPowerRatingsInput {
+export interface ProcessPowerRatingsInput {
   requestId: string;
   matchId: string;
 }
@@ -147,9 +151,11 @@ function assertRateableMatch(
   }
 }
 
-export const adminProcessPowerRatings = onCall<ProcessPowerRatingsInput>(callableOptions, async (request) => {
-  const actor = await requireAdmin(request);
-  const { requestId, matchId } = request.data;
+export async function processPowerRatings(
+  input: ProcessPowerRatingsInput,
+  actor: ResultProcessingActor,
+) {
+  const { requestId, matchId } = input;
 
   if (!matchId) throw new HttpsError("invalid-argument", "matchId is required.");
 
@@ -304,7 +310,9 @@ export const adminProcessPowerRatings = onCall<ProcessPowerRatingsInput>(callabl
       throw new HttpsError("failed-precondition", "The current result processing job cannot process ratings.");
     }
 
-    await reserveIdempotencyKey(transaction, requestId, "adminProcessPowerRatings", actor.authUid);
+    if (actor.source === "ADMIN") {
+      await reserveIdempotencyKey(transaction, requestId, "adminProcessPowerRatings", actor.authUid);
+    }
 
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("POWER_RATING");
@@ -348,6 +356,7 @@ export const adminProcessPowerRatings = onCall<ProcessPowerRatingsInput>(callabl
         ratedMatches: ratingMatches.length,
         ratedPlayers: rebuilt.projections.length,
         historyEntries: rebuilt.history.length,
+        processingSource: actor.source,
       },
     });
 
@@ -382,4 +391,9 @@ export const adminProcessPowerRatings = onCall<ProcessPowerRatingsInput>(callabl
     remainingSteps: finalization.pendingSteps,
     triggerPlayerRatings,
   };
+}
+
+export const adminProcessPowerRatings = onCall<ProcessPowerRatingsInput>(callableOptions, async (request) => {
+  const actor = await requireAdmin(request);
+  return processPowerRatings(request.data, adminResultProcessingActor(actor));
 });
