@@ -114,13 +114,13 @@ export type GameOutcome =
       winnerPlayerId: string;
     };
 
-export interface CanonicalGameResult extends GameOutcome {
+export type CanonicalGameResult = GameOutcome & {
   winningPlayerIds: string[];
   source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED";
   submissionId: string;
   submittedBy: string;
   confirmedBy: string | null;
-}
+};
 
 export interface SeriesRule {
   maxGames: number;
