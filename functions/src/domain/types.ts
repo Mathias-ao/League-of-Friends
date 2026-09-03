@@ -115,10 +115,11 @@ export type GameOutcome =
     };
 
 export type CanonicalGameResult = GameOutcome & {
+  revision: number;
   winningPlayerIds: string[];
-  source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED";
-  submissionId: string;
-  submittedBy: string;
+  source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED" | "ADMIN_CORRECTED";
+  submissionId: string | null;
+  submittedBy: string | null;
   confirmedBy: string | null;
 };
 
