@@ -3,7 +3,7 @@ export type MembershipStatus = "PENDING" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
 export type SeasonStatus = "DRAFT" | "UPCOMING" | "ACTIVE" | "COMPLETED" | "ARCHIVED";
 export type EventStatus = "DRAFT" | "PUBLISHED" | "ACTIVE" | "COMPLETED" | "CANCELLED" | "POSTPONED";
 export type CompetitionStyle = "ONE_V_ONE" | "TWO_V_TWO" | "BIG_TEAM" | "FFA";
-export type MatchFormat = "ONE_V_ONE" | "TWO_V_TWO" | "THREE_V_THREE" | "FOUR_V_FOUR" | "FFA";
+export type MatchFormat = "ONE_V_ONE" | "TWO_V_TWO" | "THREE_V_THREE" | "FOUR_V_FOUR" | "ASYMMETRIC_TEAM" | "FFA";
 export type MatchStatus = "PROPOSED" | "READY" | "ACTIVE" | "COMPLETED" | "CANCELLED" | "DISPUTED";
 export type GameStatus = "READY" | "COMPLETED" | "REMAKE" | "NO_CONTEST" | "DISPUTED";
 export type RsvpStatus = "YES" | "NO" | "UNANSWERED";
@@ -116,6 +116,7 @@ export interface SpecialMatchCondition {
 export interface ProposedMatch {
   format: MatchFormat;
   participants: MatchParticipant[];
+  teamSizes?: [number, number];
   balanceEstimate?: {
     teamOneWinProbability: number;
     teamTwoWinProbability: number;
