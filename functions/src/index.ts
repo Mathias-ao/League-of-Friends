@@ -30,6 +30,7 @@ export { adminProcessMatchRewards } from "./commands/processing/processMatchRewa
 export { adminProcessPowerRatings } from "./commands/processing/processPowerRatings.js";
 export { adminProcessStatistics } from "./commands/processing/processStatistics.js";
 export { adminProcessAchievements } from "./commands/processing/processAchievements.js";
+export { adminProcessRivalries } from "./commands/processing/processRivalries.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
