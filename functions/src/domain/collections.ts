@@ -13,6 +13,7 @@ export const collections = {
   achievementDefinitions: "achievementDefinitions",
   titleDefinitions: "titleDefinitions",
   scoringProfiles: "scoringProfiles",
+  powerRatingProfiles: "powerRatingProfiles",
   activity: "activity",
   stories: "stories",
   adminAudit: "adminAudit",
