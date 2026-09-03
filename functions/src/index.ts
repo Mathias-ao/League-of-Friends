@@ -16,6 +16,8 @@ export { setEventRsvp } from "./commands/events/setRsvp.js";
 export { checkInToEvent } from "./commands/events/checkIn.js";
 export { adminGenerateMatchPlan } from "./commands/events/generateMatchPlan.js";
 export { adminApproveMatchPlan } from "./commands/events/approveMatchPlan.js";
+export { createWarRoomChallenge } from "./commands/challenges/createWarRoomChallenge.js";
+export { respondToWarRoomChallenge } from "./commands/challenges/respondToWarRoomChallenge.js";
 export { submitGameResult } from "./commands/results/submitGameResult.js";
 export { respondToGameResult } from "./commands/results/respondToGameResult.js";
 export { adminResolveGameResult } from "./commands/results/adminResolveGameResult.js";
