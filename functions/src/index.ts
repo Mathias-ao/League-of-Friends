@@ -35,6 +35,7 @@ export { adminProcessAchievements } from "./commands/processing/processAchieveme
 export { adminProcessRivalries } from "./commands/processing/processRivalries.js";
 export { adminProcessRecords } from "./commands/processing/processRecords.js";
 export { adminProcessActivity } from "./commands/processing/processActivity.js";
+export { processResultJob } from "./triggers/processResultJob.js";
 export { getLeagueBootstrap } from "./queries/getLeagueBootstrap.js";
 export { getEventDetail } from "./queries/getEventDetail.js";
 export { getPlayerProfile } from "./queries/getPlayerProfile.js";
