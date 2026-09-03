@@ -10,6 +10,17 @@ function seconds(ms) {
   return ms == null ? "-" : `${Math.round(ms / 1000)}s`;
 }
 
+function strategyEvidence(strategy) {
+  const evidence = strategy?.evidence ?? {};
+  if (strategy.code.endsWith("OPENING_CANDIDATE")) {
+    return `first=${seconds(evidence.firstProductionAtMs)} queued=${evidence.earlyUnitsQueued ?? "?"} unitId=${evidence.unitId ?? "?"} cutoff=${evidence.cutoffSeconds ?? "?"}s`;
+  }
+  if (strategy.code.startsWith("FAST_")) {
+    return `click=${seconds(evidence.researchStartedAtMs)} threshold=${evidence.thresholdSeconds ?? "?"}s`;
+  }
+  return JSON.stringify(evidence);
+}
+
 try {
   const parsed = JSON.parse(await fs.readFile(inputPath, "utf8"));
   const factsEngine = await import(pathToFileURL(factsEnginePath).href);
@@ -70,8 +81,14 @@ try {
       `peak30=${playerAnalysis.peak30sRawApm?.apm ?? "n/a"} ` +
       `peak60=${playerAnalysis.peak60sRawApm?.apm ?? "n/a"}`,
     );
-    const strategies = playerAnalysis.strategies.map((item) => item.code).join(", ") || "none";
-    console.log(`    strategy detections: ${strategies}`);
+    if (!playerAnalysis.strategies.length) {
+      console.log("    strategy detections: none");
+    } else {
+      console.log("    strategy detections:");
+      for (const strategy of playerAnalysis.strategies) {
+        console.log(`      ${strategy.code}: ${strategyEvidence(strategy)}`);
+      }
+    }
   }
 
   console.log("Replay Level 1 + Level 2 smoke test passed.");
