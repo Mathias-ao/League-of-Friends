@@ -5,6 +5,7 @@ export interface RewardEngineMatch {
   canonicalResult: CanonicalGameResult;
   context?: {
     affectsLeaguePoints?: boolean;
+    affectsWarRoomPoints?: boolean;
     affectsGold?: boolean;
   } | null;
   scoringSnapshot?: {
@@ -19,6 +20,10 @@ export interface RewardEngineMatch {
 export interface PlayerMatchReward {
   playerId: string;
   leaguePoints: {
+    matchCompletion: number;
+    matchWin: number;
+  };
+  warRoomPoints: {
     matchCompletion: number;
     matchWin: number;
   };
@@ -62,6 +67,13 @@ export function computeMatchRewards(match: RewardEngineMatch): PlayerMatchReward
     ? finiteNumber(rules.matchWinPoints, "scoringSnapshot.rules.matchWinPoints")
     : 0;
 
+  const warRoomCompletion = match.context?.affectsWarRoomPoints
+    ? finiteNumber(rules.warRoomMatchCompletionPoints, "scoringSnapshot.rules.warRoomMatchCompletionPoints")
+    : 0;
+  const warRoomWin = match.context?.affectsWarRoomPoints
+    ? finiteNumber(rules.warRoomMatchWinPoints, "scoringSnapshot.rules.warRoomMatchWinPoints")
+    : 0;
+
   const goldCompletion = match.context?.affectsGold
     ? nonNegativeNumber(match.goldRewardSnapshot?.matchCompletion, "goldRewardSnapshot.matchCompletion")
     : 0;
@@ -76,6 +88,10 @@ export function computeMatchRewards(match: RewardEngineMatch): PlayerMatchReward
       leaguePoints: {
         matchCompletion: leagueCompletion,
         matchWin: isWinner ? leagueWin : 0,
+      },
+      warRoomPoints: {
+        matchCompletion: warRoomCompletion,
+        matchWin: isWinner ? warRoomWin : 0,
       },
       gold: {
         matchCompletion: goldCompletion,
