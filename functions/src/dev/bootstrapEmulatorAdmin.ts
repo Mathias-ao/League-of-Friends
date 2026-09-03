@@ -88,6 +88,8 @@ export const bootstrapEmulatorAdmin = onRequest(
           membershipStatus: "ACTIVE" as const,
           role: "ADMIN" as const,
           currentPowerRating: null,
+          powerRatingGames: 0,
+          powerRatingAlgorithmVersion: null,
           provisionalRating: true,
           goldBalance: 0,
           joinedAt: now,
