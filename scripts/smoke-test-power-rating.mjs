@@ -82,8 +82,7 @@ function mapFields(document, field) {
 }
 
 function participantMaps(document) {
-  return (document.fields?.participants?.arrayValue?.values ?? [])
-    .map((value) => value.mapValue?.fields ?? {});
+  return (document.fields?.participants?.arrayValue?.values ?? []).map((value) => value.mapValue?.fields ?? {});
 }
 
 function stringArray(document, field) {
@@ -120,16 +119,17 @@ try {
   });
   console.log("Processed:", JSON.stringify(processed));
 
-  if (processed.algorithmVersion !== "POWER_RATING_V1") {
-    throw new Error(`Unexpected rating algorithm version: ${processed.algorithmVersion}`);
+  if (processed.algorithmVersion !== "POWER_RATING_ENGINE_V1") {
+    throw new Error(`Unexpected rating engine version: ${processed.algorithmVersion}`);
+  }
+  if (!processed.powerRatingProfile?.id || !processed.powerRatingProfile?.config) {
+    throw new Error("Processor did not report the active Power Rating profile.");
   }
   if (processed.triggerPlayerRatings.length !== participants.length) {
     throw new Error("Trigger player rating count does not match Match participants.");
   }
 
-  const returnedRatings = new Map(
-    processed.triggerPlayerRatings.map((rating) => [rating.playerId, rating]),
-  );
+  const returnedRatings = new Map(processed.triggerPlayerRatings.map((rating) => [rating.playerId, rating]));
 
   const playerChecks = await Promise.all(participants.map(async (participant) => {
     const [player, history] = await Promise.all([
@@ -146,8 +146,11 @@ try {
       throw new Error(`Player ${participant.playerId} rating projection does not match processor output.`);
     }
     if (games < 1) throw new Error(`Player ${participant.playerId} has no rated Match count.`);
-    if (stringField(history, "algorithmVersion") !== "POWER_RATING_V1") {
-      throw new Error(`Player ${participant.playerId} rating history has the wrong algorithm version.`);
+    if (stringField(history, "algorithmVersion") !== "POWER_RATING_ENGINE_V1") {
+      throw new Error(`Player ${participant.playerId} rating history has the wrong engine version.`);
+    }
+    if (stringField(history, "powerRatingProfileId") !== processed.powerRatingProfile.id) {
+      throw new Error(`Player ${participant.playerId} rating history has the wrong profile ID.`);
     }
     if (historyRevision !== revision) {
       throw new Error(`Player ${participant.playerId} rating history used revision ${historyRevision}, expected ${revision}.`);
@@ -176,7 +179,9 @@ try {
   }
 
   console.log("Verified Power Rating rebuild:");
-  console.log(`  algorithm: ${processed.algorithmVersion}`);
+  console.log(`  engine: ${processed.algorithmVersion}`);
+  console.log(`  profile: ${processed.powerRatingProfile.name} (${processed.powerRatingProfile.id}, v${processed.powerRatingProfile.version})`);
+  console.log(`  config: ${JSON.stringify(processed.powerRatingProfile.config)}`);
   console.log(`  canonical Matches replayed: ${processed.ratedMatches}`);
   console.log(`  rated players: ${processed.ratedPlayers}`);
   console.log(`  trigger winner team: ${winnerTeam}`);
