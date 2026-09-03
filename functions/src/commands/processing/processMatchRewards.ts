@@ -25,6 +25,7 @@ interface MatchForRewards {
   processingState?: string | null;
   context?: {
     affectsLeaguePoints?: boolean;
+    affectsWarRoomPoints?: boolean;
     affectsGold?: boolean;
   } | null;
   scoringSnapshot?: {
@@ -96,10 +97,17 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
       .doc(resultProcessingJobId(matchId, revision));
     const legacyJobRef = db.collection(collections.processingJobs).doc(`MATCH_RESULT_${matchId}`);
 
-    const [revisionedJobSnapshot, legacyJobSnapshot, leagueLedgerSnapshot, goldLedgerSnapshot] = await Promise.all([
+    const [
+      revisionedJobSnapshot,
+      legacyJobSnapshot,
+      leagueLedgerSnapshot,
+      warRoomLedgerSnapshot,
+      goldLedgerSnapshot,
+    ] = await Promise.all([
       transaction.get(revisionedJobRef),
       transaction.get(legacyJobRef),
       transaction.get(db.collection(collections.leaguePointLedger).where("matchId", "==", matchId)),
+      transaction.get(db.collection(collections.warRoomPointLedger).where("matchId", "==", matchId)),
       transaction.get(db.collection(collections.goldLedger).where("matchId", "==", matchId)),
     ]);
 
@@ -130,6 +138,7 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
         resultRevision: revision,
         alreadyProcessed: true,
         leaguePointDelta: 0,
+        warRoomPointDelta: 0,
         goldDelta: 0,
       };
     }
@@ -155,8 +164,8 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
       throw error;
     }
 
-    if (match.context?.affectsLeaguePoints && !match.seasonId) {
-      throw new HttpsError("failed-precondition", "A Season is required for League Point rewards.");
+    if ((match.context?.affectsLeaguePoints || match.context?.affectsWarRoomPoints) && !match.seasonId) {
+      throw new HttpsError("failed-precondition", "A Season is required for competition point rewards.");
     }
 
     const playerRefs = rewards.map((reward) => db.collection(collections.players).doc(reward.playerId));
@@ -166,10 +175,17 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
         .collection("standings")
         .doc(reward.playerId))
       : [];
+    const warRoomStandingRefs = match.seasonId
+      ? rewards.map((reward) => db.collection(collections.seasons)
+        .doc(match.seasonId!)
+        .collection("warRoomStandings")
+        .doc(reward.playerId))
+      : [];
 
-    const [playerSnapshots, standingSnapshots] = await Promise.all([
+    const [playerSnapshots, standingSnapshots, warRoomStandingSnapshots] = await Promise.all([
       Promise.all(playerRefs.map((ref) => transaction.get(ref))),
       Promise.all(standingRefs.map((ref) => transaction.get(ref))),
+      Promise.all(warRoomStandingRefs.map((ref) => transaction.get(ref))),
     ]);
 
     for (const snapshot of playerSnapshots) {
@@ -187,6 +203,7 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
 
     const now = Timestamp.now();
     let totalLeaguePointDelta = 0;
+    let totalWarRoomPointDelta = 0;
     let totalGoldDelta = 0;
 
     rewards.forEach((reward, index) => {
@@ -236,6 +253,57 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
           {
             playerId: reward.playerId,
             leaguePoints: previousPoints + playerLeagueDelta,
+            updatedAt: now,
+          },
+          { merge: true },
+        );
+      }
+
+      const warRoomComponents = [
+        ["MATCH_COMPLETION", reward.warRoomPoints.matchCompletion],
+        ["MATCH_WIN", reward.warRoomPoints.matchWin],
+      ] as const;
+      let playerWarRoomDelta = 0;
+
+      for (const [component, desired] of warRoomComponents) {
+        const current = netForComponent(warRoomLedgerSnapshot.docs, reward.playerId, component);
+        const delta = desired - current;
+        if (delta === 0) continue;
+
+        const entryRef = db.collection(collections.warRoomPointLedger)
+          .doc(ledgerId(matchId, revision, reward.playerId, component));
+        transaction.create(entryRef, {
+          seasonId: match.seasonId,
+          playerId: reward.playerId,
+          matchId,
+          challengeId: null,
+          amount: delta,
+          component,
+          reasonCode: `WAR_ROOM_${component}`,
+          description: revision === 1
+            ? `War Room match reward: ${component}`
+            : `War Room result correction reconciliation: ${component}`,
+          sourceId: matchId,
+          sourceVersion: revision,
+          correction: revision > 1,
+          reversalOfEntryId: null,
+          idempotencyKey: entryRef.id,
+          createdAt: now,
+        });
+        playerWarRoomDelta += delta;
+        totalWarRoomPointDelta += delta;
+      }
+
+      if (match.seasonId && playerWarRoomDelta !== 0) {
+        const standingSnapshot = warRoomStandingSnapshots[index];
+        const previousPoints = standingSnapshot?.exists
+          ? Number(standingSnapshot.data()?.warRoomPoints ?? 0)
+          : 0;
+        transaction.set(
+          warRoomStandingRefs[index],
+          {
+            playerId: reward.playerId,
+            warRoomPoints: previousPoints + playerWarRoomDelta,
             updatedAt: now,
           },
           { merge: true },
@@ -313,6 +381,7 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
       after: {
         resultRevision: revision,
         leaguePointDelta: totalLeaguePointDelta,
+        warRoomPointDelta: totalWarRoomPointDelta,
         goldDelta: totalGoldDelta,
       },
     });
@@ -321,6 +390,7 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
       resultRevision: revision,
       alreadyProcessed: false,
       leaguePointDelta: totalLeaguePointDelta,
+      warRoomPointDelta: totalWarRoomPointDelta,
       goldDelta: totalGoldDelta,
     };
   });
