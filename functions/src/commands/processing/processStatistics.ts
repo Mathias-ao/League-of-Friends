@@ -12,9 +12,13 @@ import {
 } from "../../engines/statisticsEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+import {
+  adminResultProcessingActor,
+  type ResultProcessingActor,
+} from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId } from "../results/resultSupport.js";
 
-interface ProcessStatisticsInput {
+export interface ProcessStatisticsInput {
   requestId: string;
   matchId: string;
 }
@@ -116,9 +120,11 @@ function statsDocument(stats: {
   };
 }
 
-export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOptions, async (request) => {
-  const actor = await requireAdmin(request);
-  const { requestId, matchId } = request.data;
+export async function processStatistics(
+  input: ProcessStatisticsInput,
+  actor: ResultProcessingActor,
+) {
+  const { requestId, matchId } = input;
   if (!matchId) throw new HttpsError("invalid-argument", "matchId is required.");
 
   const triggerMatchRef = db.collection(collections.matches).doc(matchId);
@@ -185,11 +191,6 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
   ]);
 
   const rebuiltAt = Timestamp.now();
-
-  // Phase 1: remove all existing derived statistics and wait for the cleanup
-  // to finish completely. BulkWriter does not provide a cross-operation barrier
-  // when delete + set target the same document path, so mixing both phases in
-  // one writer can allow a stale delete to remove a freshly rebuilt document.
   const cleanupWriter = db.bulkWriter();
 
   for (const player of playersSnapshot.docs) {
@@ -207,8 +208,6 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
 
   await cleanupWriter.close();
 
-  // Phase 2: write the complete rebuilt projection only after cleanup has
-  // finished. This makes rebuilds deterministic and safe to rerun.
   const projectionWriter = db.bulkWriter();
 
   for (const stats of rebuilt.lifetime) {
@@ -288,7 +287,9 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
       throw new HttpsError("failed-precondition", "The current result processing job cannot process statistics.");
     }
 
-    await reserveIdempotencyKey(transaction, requestId, "adminProcessStatistics", actor.authUid);
+    if (actor.source === "ADMIN") {
+      await reserveIdempotencyKey(transaction, requestId, "adminProcessStatistics", actor.authUid);
+    }
 
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("STATISTICS");
@@ -329,6 +330,7 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
         seasonalPlayers: rebuilt.seasonal.length,
         opponentRelationships: rebuilt.opponents.length,
         teammateRelationships: rebuilt.teammates.length,
+        processingSource: actor.source,
       },
     });
 
@@ -352,4 +354,9 @@ export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOpt
     remainingSteps: finalization.pendingSteps,
     triggerPlayerStats,
   };
+}
+
+export const adminProcessStatistics = onCall<ProcessStatisticsInput>(callableOptions, async (request) => {
+  const actor = await requireAdmin(request);
+  return processStatistics(request.data, adminResultProcessingActor(actor));
 });
