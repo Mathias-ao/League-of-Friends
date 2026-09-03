@@ -19,6 +19,7 @@ export { respondToGameResult } from "./commands/results/respondToGameResult.js";
 export { adminResolveGameResult } from "./commands/results/adminResolveGameResult.js";
 export { disputeCanonicalGameResult } from "./commands/results/disputeCanonicalGameResult.js";
 export { adminResolveCanonicalResultDispute } from "./commands/results/adminResolveCanonicalResultDispute.js";
+export { adminIngestReplayStats } from "./commands/statistics/ingestReplayStats.js";
 export { adminProcessMatchRewards } from "./commands/processing/processMatchRewards.js";
 export { adminProcessPowerRatings } from "./commands/processing/processPowerRatings.js";
 export { adminProcessStatistics } from "./commands/processing/processStatistics.js";
