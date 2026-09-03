@@ -14,9 +14,13 @@ import {
 } from "../../engines/achievementEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+import {
+  adminResultProcessingActor,
+  type ResultProcessingActor,
+} from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId, type MatchForResult } from "../results/resultSupport.js";
 
-interface ProcessAchievementsInput {
+export interface ProcessAchievementsInput {
   requestId: string;
   matchId: string;
 }
@@ -73,9 +77,11 @@ function metrics(competition: CompetitionStats | null, replay: ReplayStats | nul
   };
 }
 
-export const adminProcessAchievements = onCall<ProcessAchievementsInput>(callableOptions, async (request) => {
-  const actor = await requireAdmin(request);
-  const { requestId, matchId } = request.data;
+export async function processAchievements(
+  input: ProcessAchievementsInput,
+  actor: ResultProcessingActor,
+) {
+  const { requestId, matchId } = input;
   if (!requestId || !matchId) throw new HttpsError("invalid-argument", "requestId and matchId are required.");
 
   const triggerMatchRef = db.collection(collections.matches).doc(matchId);
@@ -264,7 +270,9 @@ export const adminProcessAchievements = onCall<ProcessAchievementsInput>(callabl
       throw new HttpsError("failed-precondition", "The current processing job cannot process achievements.");
     }
 
-    await reserveIdempotencyKey(transaction, requestId, "adminProcessAchievements", actor.authUid);
+    if (actor.source === "ADMIN") {
+      await reserveIdempotencyKey(transaction, requestId, "adminProcessAchievements", actor.authUid);
+    }
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("ACHIEVEMENTS");
     completedSteps.add("ACHIEVEMENTS");
@@ -299,6 +307,7 @@ export const adminProcessAchievements = onCall<ProcessAchievementsInput>(callabl
         definitions: definitions.length,
         activeAwards,
         revokedAwards,
+        processingSource: actor.source,
       },
     });
 
@@ -316,4 +325,9 @@ export const adminProcessAchievements = onCall<ProcessAchievementsInput>(callabl
     alreadyProcessed: finalization.alreadyProcessed,
     remainingSteps: finalization.pendingSteps,
   };
+}
+
+export const adminProcessAchievements = onCall<ProcessAchievementsInput>(callableOptions, async (request) => {
+  const actor = await requireAdmin(request);
+  return processAchievements(request.data, adminResultProcessingActor(actor));
 });
