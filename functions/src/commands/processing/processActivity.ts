@@ -3,7 +3,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { callableOptions } from "../../config/runtime.js";
-import { collections } from "../../domain/collections.js";
+import { collections, leagueStateDocumentId } from "../../domain/collections.js";
 import type { CanonicalGameResult, MatchFormat, MatchParticipant } from "../../domain/types.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
@@ -25,6 +25,7 @@ interface MatchForActivity {
   participants?: MatchParticipant[];
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   activeResultDisputeId?: string | null;
+  processingState?: string | null;
   firstCompletedAt?: Timestamp | null;
   completedAt?: Timestamp | null;
 }
@@ -107,6 +108,20 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
       challengeSnapshot = await transaction.get(challengeRef);
     }
 
+    let eventRef: FirebaseFirestore.DocumentReference | null = null;
+    let eventSnapshot: FirebaseFirestore.DocumentSnapshot | null = null;
+    let eventMatchesSnapshot: FirebaseFirestore.QuerySnapshot | null = null;
+    let leagueStateSnapshot: FirebaseFirestore.DocumentSnapshot | null = null;
+    const leagueStateRef = db.collection(collections.leagueState).doc(leagueStateDocumentId);
+    if (currentMatch.eventId) {
+      eventRef = db.collection(collections.events).doc(currentMatch.eventId);
+      [eventSnapshot, eventMatchesSnapshot, leagueStateSnapshot] = await Promise.all([
+        transaction.get(eventRef),
+        transaction.get(db.collection(collections.matches).where("eventId", "==", currentMatch.eventId)),
+        transaction.get(leagueStateRef),
+      ]);
+    }
+
     await reserveIdempotencyKey(transaction, requestId, "adminProcessActivity", actor.authUid);
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("ACTIVITY");
@@ -143,6 +158,49 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
       }, { merge: true });
     }
 
+    let eventCompleted = false;
+    if (eventRef && eventSnapshot?.exists && eventMatchesSnapshot && pendingSteps.length === 0) {
+      const allMatchesFinished = eventMatchesSnapshot.docs.length > 0 && eventMatchesSnapshot.docs.every((document) => {
+        if (document.id === matchId) return true;
+        const data = document.data() as MatchForActivity;
+        if (data.status === "CANCELLED") return true;
+        return data.status === "COMPLETED" && data.processingState === "COMPLETE";
+      });
+
+      const eventStatus = eventSnapshot.data()?.status;
+      if (allMatchesFinished && eventStatus !== "COMPLETED" && eventStatus !== "CANCELLED") {
+        const eventPlayerIds = [...new Set(eventMatchesSnapshot.docs.flatMap((document) => {
+          const data = document.data() as MatchForActivity;
+          return Array.isArray(data.participants) ? data.participants.map((participant) => participant.playerId) : [];
+        }))];
+
+        transaction.set(eventRef, {
+          status: "COMPLETED",
+          featured: false,
+          completedAt: now,
+          updatedAt: now,
+        }, { merge: true });
+        if (leagueStateSnapshot?.exists && leagueStateSnapshot.data()?.featuredEventId === currentMatch.eventId) {
+          transaction.set(leagueStateRef, {
+            featuredEventId: null,
+            updatedAt: now,
+          }, { merge: true });
+        }
+        transaction.set(db.collection(collections.activity).doc(`EVENT_COMPLETED_${currentMatch.eventId}`), {
+          schemaVersion: "EVENT_ACTIVITY_V1",
+          type: "EVENT_COMPLETED",
+          eventId: currentMatch.eventId,
+          seasonId: currentMatch.seasonId ?? null,
+          playerIds: eventPlayerIds,
+          matchIds: eventMatchesSnapshot.docs.map((document) => document.id),
+          occurredAt: now,
+          createdAt: now,
+          updatedAt: now,
+        }, { merge: true });
+        eventCompleted = true;
+      }
+    }
+
     transaction.update(jobSnapshot.ref, {
       status: pendingSteps.length ? "PENDING" : "COMPLETED",
       completedSteps: [...completedSteps],
@@ -170,10 +228,11 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
         schemaVersion: RESULT_ACTIVITY_VERSION,
         activityId: feedRef.id,
         challengeId: currentMatch.challengeId ?? null,
+        eventCompleted,
       },
     });
 
-    return { alreadyProcessed, pendingSteps };
+    return { alreadyProcessed, pendingSteps, eventCompleted };
   });
 
   return {
@@ -183,6 +242,7 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
     schemaVersion: RESULT_ACTIVITY_VERSION,
     activityId: feedRef.id,
     alreadyProcessed: result.alreadyProcessed,
+    eventCompleted: result.eventCompleted,
     remainingSteps: result.pendingSteps,
   };
 });
