@@ -103,21 +103,30 @@ if (warnings.length) {
   console.log("  warnings: none");
 }
 
+const suspiciousSettings = [
+  settings?.mapId,
+  settings?.mapSize,
+  settings?.population,
+  settings?.gameTypeId,
+  settings?.revealMapId,
+  settings?.seed,
+].every((value) => Number(value) === 0);
+
 const normalizedCandidates = [
-  ["game duration", Number.isFinite(Number(body?.durationMs)) && Number(body?.durationMs) > 0],
-  ["player identity / slot", players.length >= 2 && players.every((player) => player?.replaySlot && player?.name)],
-  ["civilization", players.length >= 2 && players.every((player) => player?.civilizationId != null)],
-  ["team assignment", players.length >= 2 && players.every((player) => player?.teamId != null)],
-  ["color", players.length >= 2 && players.every((player) => player?.colorId != null)],
-  ["map/settings IDs", settings?.mapId != null],
-  ["action counts", Object.keys(actionCounts).length > 0],
-  ["build counts", Object.keys(buildCounts).length > 0],
-  ["research timeline", researchEvents.length > 0],
-  ["resignation timeline", resignations.length > 0],
+  ["game duration", Number.isFinite(Number(body?.durationMs)) && Number(body?.durationMs) > 0, ""],
+  ["player identity / slot", players.length >= 2 && players.every((player) => player?.replaySlot && player?.name), ""],
+  ["civilization", players.length >= 2 && players.every((player) => player?.civilizationId != null), ""],
+  ["team assignment", players.length >= 2 && players.every((player) => player?.teamId != null), ""],
+  ["color", players.length >= 2 && players.every((player) => player?.colorId != null), ""],
+  ["map/settings IDs", settings?.mapId != null && !suspiciousSettings, suspiciousSettings ? " (raw-only: suspicious all-zero lobby/settings values)" : ""],
+  ["action counts", Object.keys(actionCounts).length > 0, ""],
+  ["build command counts", Object.keys(buildCounts).length > 0, ""],
+  ["research command timeline", researchEvents.length > 0, ""],
+  ["resignation timeline", resignations.length > 0, ""],
 ];
 
 console.log("");
 console.log("Candidate normalized facts");
-for (const [name, available] of normalizedCandidates) {
-  console.log(`  ${available ? "YES" : "NO "}  ${name}`);
+for (const [name, available, note] of normalizedCandidates) {
+  console.log(`  ${available ? "YES" : "NO "}  ${name}${note}`);
 }
