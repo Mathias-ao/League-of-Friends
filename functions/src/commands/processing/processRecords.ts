@@ -9,9 +9,13 @@ import { REPLAY_RECORDS_VERSION } from "../../engines/replayRecords.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 import { rebuildReplayRecordsProjection } from "../../services/replayRecordsProjection.js";
+import {
+  adminResultProcessingActor,
+  type ResultProcessingActor,
+} from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId } from "../results/resultSupport.js";
 
-interface ProcessRecordsInput {
+export interface ProcessRecordsInput {
   requestId: string;
   matchId: string;
 }
@@ -29,9 +33,11 @@ interface ProcessingJob {
   attempts?: number;
 }
 
-export const adminProcessRecords = onCall<ProcessRecordsInput>(callableOptions, async (request) => {
-  const actor = await requireAdmin(request);
-  const { requestId, matchId } = request.data;
+export async function processRecords(
+  input: ProcessRecordsInput,
+  actor: ResultProcessingActor,
+) {
+  const { requestId, matchId } = input;
   if (!requestId || !matchId) throw new HttpsError("invalid-argument", "requestId and matchId are required.");
 
   const matchRef = db.collection(collections.matches).doc(matchId);
@@ -78,7 +84,9 @@ export const adminProcessRecords = onCall<ProcessRecordsInput>(callableOptions, 
       throw new HttpsError("failed-precondition", "The current result processing job cannot process records.");
     }
 
-    await reserveIdempotencyKey(transaction, requestId, "adminProcessRecords", actor.authUid);
+    if (actor.source === "ADMIN") {
+      await reserveIdempotencyKey(transaction, requestId, "adminProcessRecords", actor.authUid);
+    }
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("RECORDS");
     completedSteps.add("RECORDS");
@@ -114,6 +122,7 @@ export const adminProcessRecords = onCall<ProcessRecordsInput>(callableOptions, 
         seasonalPlayers: rebuilt.seasonalPlayers,
         lifetimeRecords: rebuilt.lifetimeRecords.length,
         seasonsWithRecords: rebuilt.seasonalRecords.length,
+        processingSource: actor.source,
       },
     });
 
@@ -130,4 +139,9 @@ export const adminProcessRecords = onCall<ProcessRecordsInput>(callableOptions, 
     alreadyProcessed: finalization.alreadyProcessed,
     remainingSteps: finalization.pendingSteps,
   };
+}
+
+export const adminProcessRecords = onCall<ProcessRecordsInput>(callableOptions, async (request) => {
+  const actor = await requireAdmin(request);
+  return processRecords(request.data, adminResultProcessingActor(actor));
 });
