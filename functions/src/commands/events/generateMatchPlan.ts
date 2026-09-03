@@ -45,14 +45,7 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
   const matchPlansRef = eventRef.collection("matchPlans");
   const planRef = matchPlansRef.doc();
 
-  let result: {
-    planId: string;
-    eligiblePlayerIds: string[];
-    sittingOutPlayerIds: string[];
-    matches: ReturnType<typeof generateMatchPlan>["matches"];
-  } | null = null;
-
-  await db.runTransaction(async (transaction) => {
+  const transactionResult = await db.runTransaction(async (transaction) => {
     const [eventSnapshot, participantSnapshot, existingPlansSnapshot] = await Promise.all([
       transaction.get(eventRef),
       transaction.get(participantsRef),
@@ -173,7 +166,7 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
       },
     });
 
-    result = {
+    return {
       planId: planRef.id,
       eligiblePlayerIds,
       sittingOutPlayerIds: plan.sittingOutPlayerIds,
@@ -181,14 +174,10 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
     };
   });
 
-  if (!result) {
-    throw new HttpsError("internal", "Match Plan transaction completed without a result.");
-  }
-
   return {
     success: true,
     eventId,
     status: "PROPOSED",
-    ...result,
+    ...transactionResult,
   };
 });
