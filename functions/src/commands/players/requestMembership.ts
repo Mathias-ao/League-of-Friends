@@ -46,6 +46,8 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(callableOp
       membershipStatus: "PENDING",
       role: "PLAYER",
       currentPowerRating: null,
+      powerRatingGames: 0,
+      powerRatingAlgorithmVersion: null,
       provisionalRating: true,
       goldBalance: 0,
       joinedAt: null,
