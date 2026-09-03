@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 const inputPath = path.resolve(process.argv[2] ?? "replay-output.json");
 const factsEnginePath = path.resolve("functions/lib/engines/replayDerivedStats.js");
 const analysisEnginePath = path.resolve("functions/lib/engines/replayAnalysis.js");
+const aggregateEnginePath = path.resolve("functions/lib/engines/replayPlayerAggregates.js");
 
 function seconds(ms) {
   return ms == null ? "-" : `${Math.round(ms / 1000)}s`;
@@ -25,6 +26,7 @@ try {
   const parsed = JSON.parse(await fs.readFile(inputPath, "utf8"));
   const factsEngine = await import(pathToFileURL(factsEnginePath).href);
   const analysisEngine = await import(pathToFileURL(analysisEnginePath).href);
+  const aggregateEngine = await import(pathToFileURL(aggregateEnginePath).href);
 
   const sourcePlayers = Array.isArray(parsed.sourcePlayers) ? parsed.sourcePlayers : [];
   const playerMapping = sourcePlayers.map((player, index) => ({
@@ -39,6 +41,15 @@ try {
     playerMapping,
   });
   const analysis = analysisEngine.analyzeReplayStats(facts, analysisEngine.DEFAULT_REPLAY_ANALYSIS_CONFIG);
+  const aggregate = aggregateEngine.rebuildReplayPlayerAggregates([{
+    matchId: "REPLAY_SMOKE_MATCH",
+    gameId: "G1",
+    seasonId: "REPLAY_SMOKE_SEASON",
+    affectsLifetimeStats: true,
+    affectsSeasonStats: true,
+    durationSeconds: analysis.durationSeconds,
+    players: analysis.players,
+  }]);
 
   if (facts.schemaVersion !== "REPLAY_DERIVED_STATS_V2") {
     throw new Error(`Expected REPLAY_DERIVED_STATS_V2, got ${facts.schemaVersion}.`);
@@ -52,17 +63,25 @@ try {
   if (analysis.players.length !== facts.players.length) {
     throw new Error("Analysis player count does not match normalized facts.");
   }
+  if (aggregate.schemaVersion !== "REPLAY_PLAYER_AGGREGATES_V1") {
+    throw new Error(`Unexpected aggregate schema ${aggregate.schemaVersion}.`);
+  }
+  if (aggregate.lifetime.length !== facts.players.length || aggregate.seasonal.length !== facts.players.length) {
+    throw new Error("Replay aggregate player count does not match normalized facts.");
+  }
 
   console.log("Replay Level 1 + Level 2 smoke test");
   console.log(`adapter: ${parsed.schemaVersion}`);
   console.log(`facts: ${facts.schemaVersion} (${facts.eventDetailLevel})`);
   console.log(`analysis: ${analysis.schemaVersion}`);
+  console.log(`aggregates: ${aggregate.schemaVersion}`);
   console.log(`duration: ${facts.durationSeconds}s`);
   console.log(`players: ${facts.playerCount}`);
 
   for (const player of facts.players) {
     const playerAnalysis = analysis.players.find((item) => item.playerId === player.playerId);
-    if (!playerAnalysis) throw new Error(`Missing analysis for ${player.playerId}.`);
+    const playerAggregate = aggregate.lifetime.find((item) => item.playerId === player.playerId);
+    if (!playerAnalysis || !playerAggregate) throw new Error(`Missing analysis/aggregate for ${player.playerId}.`);
 
     const productionUnits = player.productionEvents.reduce((sum, event) => sum + event.amount, 0);
     console.log(`  slot ${player.replaySlot} ${player.sourceName}`);
@@ -89,6 +108,10 @@ try {
         console.log(`      ${strategy.code}: ${strategyEvidence(strategy)}`);
       }
     }
+    console.log(
+      `    aggregate projection: games=${playerAggregate.gamesAnalyzed} weightedAvgAPM=${playerAggregate.weightedAverageRawApm} ` +
+      `best30=${playerAggregate.highestPeak30sRawApm?.value ?? "n/a"} best60=${playerAggregate.highestPeak60sRawApm?.value ?? "n/a"}`,
+    );
   }
 
   console.log("Replay Level 1 + Level 2 smoke test passed.");
