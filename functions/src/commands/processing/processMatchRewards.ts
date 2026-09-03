@@ -8,9 +8,13 @@ import type { CanonicalGameResult, MatchParticipant } from "../../domain/types.j
 import { computeMatchRewards, RewardConfigurationError } from "../../engines/rewardEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+import {
+  adminResultProcessingActor,
+  type ResultProcessingActor,
+} from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId } from "../results/resultSupport.js";
 
-interface ProcessMatchRewardsInput {
+export interface ProcessMatchRewardsInput {
   requestId: string;
   matchId: string;
 }
@@ -67,9 +71,11 @@ function ledgerId(matchId: string, revision: number, playerId: string, component
   return `${matchId}_R${revision}_${playerId}_${component}`;
 }
 
-export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callableOptions, async (request) => {
-  const actor = await requireAdmin(request);
-  const { requestId, matchId } = request.data;
+export async function processMatchRewards(
+  input: ProcessMatchRewardsInput,
+  actor: ResultProcessingActor,
+) {
+  const { requestId, matchId } = input;
 
   if (!matchId) {
     throw new HttpsError("invalid-argument", "matchId is required.");
@@ -194,12 +200,14 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
       }
     }
 
-    await reserveIdempotencyKey(
-      transaction,
-      requestId,
-      "adminProcessMatchRewards",
-      actor.authUid,
-    );
+    if (actor.source === "ADMIN") {
+      await reserveIdempotencyKey(
+        transaction,
+        requestId,
+        "adminProcessMatchRewards",
+        actor.authUid,
+      );
+    }
 
     const now = Timestamp.now();
     let totalLeaguePointDelta = 0;
@@ -383,6 +391,7 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
         leaguePointDelta: totalLeaguePointDelta,
         warRoomPointDelta: totalWarRoomPointDelta,
         goldDelta: totalGoldDelta,
+        processingSource: actor.source,
       },
     });
 
@@ -401,4 +410,9 @@ export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callabl
     completedSteps: ["SCORING", "GOLD"],
     ...result,
   };
+}
+
+export const adminProcessMatchRewards = onCall<ProcessMatchRewardsInput>(callableOptions, async (request) => {
+  const actor = await requireAdmin(request);
+  return processMatchRewards(request.data, adminResultProcessingActor(actor));
 });
