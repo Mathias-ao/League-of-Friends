@@ -1,4 +1,4 @@
-import type { Transaction } from "firebase-admin/firestore";
+import { Timestamp, type Transaction } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { db } from "../config/firebase.js";
 import { collections } from "../domain/collections.js";
@@ -6,7 +6,7 @@ import { collections } from "../domain/collections.js";
 export interface IdempotencyRecord {
   operation: string;
   actorUid: string;
-  createdAt: FirebaseFirestore.Timestamp;
+  createdAt: Timestamp;
 }
 
 export async function reserveIdempotencyKey(
@@ -33,6 +33,6 @@ export async function reserveIdempotencyKey(
   transaction.create(ref, {
     operation,
     actorUid,
-    createdAt: FirebaseFirestore.Timestamp.now(),
+    createdAt: Timestamp.now(),
   });
 }
