@@ -1,0 +1,38 @@
+name: Replay Tools CI
+
+on:
+  push:
+    paths:
+      - "replay-tools/**"
+      - "scripts/ingest-replay-file.mjs"
+      - ".github/workflows/replay-tools-ci.yml"
+  pull_request:
+    paths:
+      - "replay-tools/**"
+      - "scripts/ingest-replay-file.mjs"
+      - ".github/workflows/replay-tools-ci.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install replay parser dependency
+        run: pip install -r replay-tools/requirements.txt
+
+      - name: Validate Python adapter
+        run: |
+          python -m py_compile replay-tools/parse_replay.py
+          python replay-tools/parse_replay.py --help
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate Node ingestion bridge
+        run: node --check scripts/ingest-replay-file.mjs
