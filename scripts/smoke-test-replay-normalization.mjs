@@ -5,6 +5,10 @@ import path from "node:path";
 const inputPath = path.resolve(process.argv[2] ?? "replay-output.json");
 const enginePath = path.resolve("functions/lib/engines/replayDerivedStats.js");
 
+function secondsOrDash(ms) {
+  return ms == null ? "-" : `${Math.round(ms / 1000)}s`;
+}
+
 try {
   const parsed = JSON.parse(await fs.readFile(inputPath, "utf8"));
   const { normalizeReplayDerivedStats, REPLAY_DERIVED_STATS_VERSION } = await import(pathToFileURL(enginePath).href);
@@ -47,9 +51,11 @@ try {
   console.log(`research events: ${researchEvents}`);
   console.log(`resignations: ${resigningPlayers.length}`);
   for (const player of normalized.players) {
+    const ages = player.ageResearchStartedAt;
     console.log(
       `  slot ${player.replaySlot} ${player.sourceName}: civ=${player.civilizationId} team=${player.teamId} ` +
       `actions=${player.totalActions} builds=${player.totalBuildCommands} research=${player.researchEventCount} ` +
+      `ageResearch(feudal/castle/imperial)=${secondsOrDash(ages.feudalAtMs)}/${secondsOrDash(ages.castleAtMs)}/${secondsOrDash(ages.imperialAtMs)} ` +
       `resigned=${player.resigned}${player.resignedAtMs == null ? "" : ` at ${Math.round(player.resignedAtMs / 1000)}s`}`,
     );
   }
