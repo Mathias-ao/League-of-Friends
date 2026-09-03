@@ -29,15 +29,20 @@ export interface MatchForResult {
   context?: {
     affectsLeaguePoints?: boolean;
     affectsGold?: boolean;
+    affectsPowerRating?: boolean;
   } | null;
   activeResultDisputeId?: string | null;
   processingState?: string | null;
+  completedAt?: Timestamp | null;
+  firstCompletedAt?: Timestamp | null;
 }
 
 export interface GameForResult {
   status?: string;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   activeResultDisputeId?: string | null;
+  completedAt?: Timestamp | null;
+  firstCompletedAt?: Timestamp | null;
 }
 
 export interface ResultSubmissionDocument {
@@ -151,6 +156,7 @@ export function applyCanonicalGameResult(
 ): { canonicalResult: CanonicalGameResult; matchCompleted: boolean } {
   const now = Timestamp.now();
   const revision = input.revision ?? 1;
+  const firstCompletedAt = input.match.firstCompletedAt ?? input.match.completedAt ?? now;
   const canonicalResult: CanonicalGameResult = {
     ...input.outcome,
     revision,
@@ -169,7 +175,8 @@ export function applyCanonicalGameResult(
     },
     resultRevision: revision,
     activeResultDisputeId: null,
-    completedAt: now,
+    firstCompletedAt,
+    ...(revision === 1 ? { completedAt: now } : { lastResultCorrectedAt: now }),
     updatedAt: now,
   });
 
@@ -185,7 +192,8 @@ export function applyCanonicalGameResult(
       resultVersion: revision,
       processingState: "PENDING",
       activeResultDisputeId: null,
-      completedAt: now,
+      firstCompletedAt,
+      ...(revision === 1 ? { completedAt: now } : { lastResultCorrectedAt: now }),
       updatedAt: now,
     });
 
