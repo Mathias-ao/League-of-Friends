@@ -20,6 +20,7 @@ interface MatchForActivity {
   status?: string;
   seasonId?: string | null;
   eventId?: string | null;
+  challengeId?: string | null;
   format?: MatchFormat;
   participants?: MatchParticipant[];
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
@@ -99,6 +100,13 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
       throw new HttpsError("failed-precondition", "The current result processing job cannot process activity.");
     }
 
+    let challengeRef: FirebaseFirestore.DocumentReference | null = null;
+    let challengeSnapshot: FirebaseFirestore.DocumentSnapshot | null = null;
+    if (currentMatch.challengeId) {
+      challengeRef = db.collection(collections.challenges).doc(currentMatch.challengeId);
+      challengeSnapshot = await transaction.get(challengeRef);
+    }
+
     await reserveIdempotencyKey(transaction, requestId, "adminProcessActivity", actor.authUid);
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("ACTIVITY");
@@ -112,6 +120,7 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
       matchId,
       seasonId: currentMatch.seasonId ?? null,
       eventId: currentMatch.eventId ?? null,
+      challengeId: currentMatch.challengeId ?? null,
       format: currentMatch.format,
       playerIds,
       winningPlayerIds,
@@ -123,6 +132,16 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
         : now,
       updatedAt: now,
     }, { merge: false });
+
+    if (challengeRef && challengeSnapshot?.exists && challengeSnapshot.data()?.matchId === matchId) {
+      transaction.set(challengeRef, {
+        status: "COMPLETED",
+        completedAt: occurredAt,
+        winningPlayerIds,
+        resultRevision: revision,
+        updatedAt: now,
+      }, { merge: true });
+    }
 
     transaction.update(jobSnapshot.ref, {
       status: pendingSteps.length ? "PENDING" : "COMPLETED",
@@ -150,6 +169,7 @@ export const adminProcessActivity = onCall<ProcessActivityInput>(callableOptions
         resultRevision: revision,
         schemaVersion: RESULT_ACTIVITY_VERSION,
         activityId: feedRef.id,
+        challengeId: currentMatch.challengeId ?? null,
       },
     });
 
