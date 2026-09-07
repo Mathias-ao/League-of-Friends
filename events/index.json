@@ -1,0 +1,9 @@
+{
+  "events": [
+    {
+      "eventId": "E001",
+      "slug": "war-for-lombardia",
+      "contentFile": "E001-lombardia.json"
+    }
+  ]
+}
