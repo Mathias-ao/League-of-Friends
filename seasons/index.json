@@ -1,0 +1,9 @@
+{
+  "seasons": [
+    {
+      "seasonId": "S001",
+      "slug": "fiefdom-of-bad-neighbors",
+      "contentFile": "S001-fiefdom-of-bad-neighbors.json"
+    }
+  ]
+}
