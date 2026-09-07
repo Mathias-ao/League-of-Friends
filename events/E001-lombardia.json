@@ -1,0 +1,78 @@
+{
+  "eventId": "E001",
+  "slug": "war-for-lombardia",
+  "display": {
+    "eventNumber": "Event I",
+    "title": "The War for Lombardia",
+    "shortTitle": "Lombardia",
+    "tagline": "Eight factions. Two grand alliances. One battlefield.",
+    "formatLine": "4v4 · Lombardia · Standard Victory"
+  },
+  "story": {
+    "brief": [
+      "The fertile plains of Lombardia are choked with the dust of marching armies. This grand gateway to the Mediterranean—wealthy, strategic, and proud—lies fractured.",
+      "The Kingdom of France seeks to tighten its grip on the Duchy of Milan, while the vast Habsburg alliance moves across the Alps to crush French ambition. The Treaty of Lodi is dead. The time for diplomacy has passed.",
+      "The fate of Northern Italy will not be decided by mapmakers or merchants, but by blood, iron, and stone.",
+      "Eight factions have mobilized. Two grand alliances face each other across the Lombard hills."
+    ],
+    "homepageTeaser": "Lombardia is fractured. France presses its claim on Milan while the Habsburg alliance descends from the Alps. Eight factions march to war, and two grand alliances will decide the fate of Northern Italy.",
+    "oneLine": "France and the Habsburg alliance clash for control of Lombardia."
+  },
+  "states": {
+    "announcement": {
+      "eyebrow": "THE CALL TO WAR",
+      "heading": "Lombardia Stands Divided",
+      "body": "The old peace is broken. Eight factions are called to arms. Two alliances will emerge, and only one will leave the field victorious.",
+      "primaryAction": "ANSWER THE CALL",
+      "declineAction": "I WILL NOT MARCH"
+    },
+    "registration": {
+      "eyebrow": "THE MUSTER",
+      "heading": "The Banners Are Gathering",
+      "body": "Across the north, armies assemble and old loyalties are tested. War draws near.",
+      "progressTemplate": "{count} / {capacity} BANNERS RAISED",
+      "fullMessage": "THE MUSTER IS COMPLETE"
+    },
+    "teamReveal": {
+      "eyebrow": "THE ALLIANCES ARE FORMED",
+      "heading": "The Armies of Lombardia Have Been Formed",
+      "body": "Eight factions have assembled. Two grand alliances now stand ready for war.",
+      "revealLine": "You do not choose your allies. War does.",
+      "versusLabel": "VS"
+    },
+    "draft": {
+      "eyebrow": "THE HOSTS MUSTER FOR BATTLE",
+      "heading": "Choose Who Marches Beneath Your Banner",
+      "body": "Ten powers stand ready to enter Lombardia. Eight will take the field.",
+      "availableLabel": "POWERS YET TO MARCH",
+      "selectedTemplate": "{playerName} has called the {civilizationName} to their banner.",
+      "completeMessage": "THE HOSTS ARE READY"
+    },
+    "matchReady": {
+      "eyebrow": "THE BATTLE FOR LOMBARDIA",
+      "heading": "The Treaty Is Dead. Let the Armies Decide.",
+      "body": "Two alliances stand opposed across the Lombard hills. The road to Milan will be decided by blood, iron, and stone.",
+      "closingLine": "When the gates open, diplomacy ends.",
+      "allianceLabelTemplate": "ALLIANCE {number}"
+    },
+    "complete": {
+      "eyebrow": "LOMBARDIA HAS FALLEN",
+      "heading": "The Fighting Is Over",
+      "body": "The armies of the defeated withdraw from the fields of Lombardia. One alliance remains victorious.",
+      "winnerHeading": "THE CONQUERORS OF LOMBARDIA",
+      "winnerBody": "Four commanders leave the field victorious. Their banners now fly over Lombardia.",
+      "closingLine": "The battle is over. The season will remember what happened here."
+    }
+  },
+  "labels": {
+    "teamSingular": "Alliance",
+    "teamPlural": "Alliances",
+    "participantSingular": "Faction",
+    "participantPlural": "Factions"
+  },
+  "assets": {
+    "heroImage": null,
+    "backgroundImage": null,
+    "emblemImage": null
+  }
+}
