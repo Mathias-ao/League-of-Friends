@@ -1,0 +1,72 @@
+{
+  "seasonId": "S001",
+  "slug": "fiefdom-of-bad-neighbors",
+  "display": {
+    "seasonNumber": "Season I",
+    "title": "The Fiefdom of Bad Neighbors",
+    "shortTitle": "Bad Neighbors",
+    "tagline": "Good fences make good neighbors. Castles make better ones."
+  },
+  "theme": {
+    "region": "Europe",
+    "premise": "Season I explores European conflicts and rivalries relevant to Age of Empires II: Definitive Edition.",
+    "tone": [
+      "historical",
+      "warlike",
+      "darkly playful",
+      "persistent rivalries"
+    ]
+  },
+  "story": {
+    "brief": [
+      "Europe has never been particularly good at minding its own business.",
+      "Across the continent, kingdoms, republics, empires and ambitious lords fight over borders, crowns, trade routes, faith and old grievances.",
+      "Throughout Season I, the league will revisit conflicts and regions drawn from the world of Age of Empires II: Definitive Edition. Alliances will shift. Armies will cross borders. Neighbors will become enemies.",
+      "And when the dust settles, somebody will inevitably hold a grudge."
+    ],
+    "homepageTeaser": "The gates are open. Season I takes the league across the wars, rivalries and contested frontiers of Europe. Enter the season, raise your banner, and prepare to meet some very bad neighbors.",
+    "oneLine": "A season of European wars, shifting alliances and very bad neighbors."
+  },
+  "launchNews": {
+    "eyebrow": "THE GATES ARE OPEN",
+    "heading": "SEASON I: THE FIEFDOM OF BAD NEIGHBORS",
+    "body": [
+      "The banners have been raised.",
+      "What begins here is more than a series of matches. Victories will be remembered. Defeats will leave scars. Alliances will form, grudges will grow, and every battle will become part of the history of the league.",
+      "Across the coming season, commanders will face one another in conflicts inspired by the battlefields, rivalries and regions of medieval Europe.",
+      "No two events will be alike. But every one of them will count.",
+      "Season I begins now."
+    ],
+    "primaryAction": "ENTER SEASON I",
+    "joinedMessage": "YOUR BANNER HAS BEEN RAISED"
+  },
+  "participationFlow": {
+    "leagueMembership": {
+      "scope": "permanent",
+      "description": "A player first joins the league and creates their persistent player identity."
+    },
+    "seasonParticipation": {
+      "scope": "per-season",
+      "action": "ENTER SEASON I",
+      "description": "A league member explicitly enters Season I before becoming eligible for Season I event signups."
+    },
+    "eventParticipation": {
+      "scope": "per-event",
+      "description": "A Season I participant separately signs up or declines each event, such as answering the call for The War for Lombardia."
+    }
+  },
+  "events": [
+    {
+      "eventId": "E001",
+      "title": "The War for Lombardia",
+      "role": "opening_campaign"
+    }
+  ],
+  "artwork": {
+    "heroDesktop": null,
+    "heroMobile": null,
+    "poster": null,
+    "emblem": null,
+    "artDirection": "A medieval campaign table or broad European strategic scene suggesting many wars to come, distinct from any single event battlefield."
+  }
+}
