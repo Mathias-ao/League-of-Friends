@@ -1,0 +1,38 @@
+{
+  "brandId": "age-of-friends",
+  "name": "Age of Friends",
+  "shortName": "AoF",
+  "technicalProjectName": "League of Friends",
+  "positioning": "A private Age of Empires II league built around persistent seasons, campaigns, rivalries, statistics, and shared history.",
+  "tone": {
+    "primary": [
+      "serious",
+      "hardcore",
+      "historical",
+      "martial",
+      "understated"
+    ],
+    "avoid": [
+      "generic fantasy",
+      "constant jokes",
+      "overt history-class parody",
+      "esports cliches"
+    ],
+    "humorRule": "Humor should be sparse and underplayed so it lands against an otherwise serious historical-war presentation."
+  },
+  "naming": {
+    "seasonFormat": "Season {number}: {title}",
+    "eventFormat": "Event {number}: {title}"
+  },
+  "current": {
+    "season": {
+      "id": "S001",
+      "title": "The Fiefdom of Bad Neighbors"
+    },
+    "firstEvent": {
+      "id": "E001",
+      "title": "The War for Lombardia"
+    }
+  },
+  "tagline": null
+}
