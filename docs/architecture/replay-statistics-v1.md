@@ -1,5 +1,7 @@
 # Replay Statistics V1
 
+> **Status and vocabulary:** This document records the original V1 product-statistics boundary and remains useful for implemented fields. Its Level 1/2/3 labels describe the earlier rollout. The durable project-wide truth model is now CanonicalReplay's four layers: parser facts, deterministic reconstruction, inferred analysis and separate league interpretation. See [`replay-extraction-contract-v1.md`](replay-extraction-contract-v1.md) and [`../project/CURRENT-STATE.md`](../project/CURRENT-STATE.md). Current code wins where implementation differs.
+
 This document freezes the League of Friends replay-statistics boundary for product V1.
 
 The core rule is:

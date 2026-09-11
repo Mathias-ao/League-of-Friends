@@ -1,5 +1,7 @@
 # Age of Friends Replay V3 — corpus test
 
+> **Status:** This is the structural V3 corpus guide. The extraction pass and Match Analysis V1.3/V1.4 now exist. Use [`docs/project/CURRENT-STATE.md`](docs/project/CURRENT-STATE.md) for current task routing and [`docs/architecture/replay-extraction-contract-v1.md`](docs/architecture/replay-extraction-contract-v1.md) for later extractor implementation requirements.
+
 This bundle upgrades the replay parser from `LOF_MGZ_FAST_ADAPTER_V2` to `LOF_MGZ_FAST_ADAPTER_V3` and adds a seven-fixture corpus test harness.
 
 ## What V3 changes
@@ -89,4 +91,4 @@ Upload those two first. Individual fixture adapters/canonical bundles are useful
 
 ## Expected next step
 
-Do not tune raids, fights, Teamwork, Gallantry, Treachery or Chivalry until this P0 extraction pass is clean. Once the corpus is structurally sound, build `MatchAnalysis V1` from the canonical facts, starting with entity normalization, queue/building attribution, start anchors, dynamic diplomacy and directed player-pair evidence.
+The historical next step described by the original V3 bundle has been completed through Match Analysis V1.3/V1.4. Do not introduce Gallantry, Treachery or Chivalry as product relationship tracks; the locked direction is separate Rivalry, Enemy and Friend tracks. Follow `CURRENT-STATE.md` for the next selected workstream. V1.4 analysis uses existing canonical facts and does not itself justify binary replay reparsing.
