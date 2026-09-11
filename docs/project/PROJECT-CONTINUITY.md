@@ -5,7 +5,7 @@ Purpose: Preserve the project's identity, locked decisions, technical truth, act
 
 ## 1. How to use this file
 
-This is the first file to give any fresh chat working on Age of Friends. It is a continuity map, not a replacement for the repository or the specialist replay documents.
+This is the first file to read for any fresh Age of Friends task. It is a continuity map, not a replacement for current code or specialist documents. Read [`CURRENT-STATE.md`](CURRENT-STATE.md) next for the implemented state, known gaps and task routing.
 
 Authority order when sources disagree:
 
@@ -128,9 +128,10 @@ Semantic rules:
 Repository baseline inspected for this recovery:
 
 - Branch: `main`.
-- Baseline commit: `46671d9e411049bbb95855b159fa1eceb357daf3`.
-- Commit time: 11 September 2026, 06:59:16 UTC.
-- Commit message: `Upgrade replay parser and match analysis foundation`.
+- Implementation baseline commit: `94f5b125245a56f64119477f5bf00ff17da95352`.
+- Commit time: 11 September 2026, 07:45:00 UTC.
+- Commit message: `docs: add project continuity and recovery file`.
+- The later project-direction synchronization changes documentation and preserved research, not runtime implementation.
 - Replay Tools CI: passed for the baseline commit.
 - Backend CI: passed for the baseline commit.
 
@@ -142,27 +143,34 @@ Replay parser/analysis status at that baseline:
 - V1.4 uses entity roles for opening classification, separates context tags from strategy tags, adds raid evidence quality, caps FFA raid confidence until diplomacy semantics are mapped, and excludes low-confidence raids from team-support candidates.
 - The immediate review inputs are `match-analysis-output-v1-4/match-analysis-summary.json` and `.md`.
 - The immediate questions are opening resolution, context/strategy composition, high-confidence raid survival, FFA diplomacy mode mapping, and plausibility of raid pairs.
+- The extraction-tool requirements are now settled in `docs/architecture/replay-extraction-contract-v1.md`. Parser implementation and new binary replay processing are deferred until a later task explicitly selects that workstream.
 
-Important status mismatch:
+Important implementation boundaries:
 
-- The root `README.md` still labels the project as Phase 2 backend foundation even though the repository now contains substantially more backend and replay-analysis work. It should be refreshed, but the code and specialist status files outrank that stale phase label.
+- The repository contains a broad backend foundation and replay analysis, but no committed user-facing web client or complete authenticated replay-upload pipeline.
+- The current rivalry engine predates the locked Rivalry / Enemy / Friend split.
+- The current canonical exporter and ingestion path do not yet satisfy every requirement of the extraction contract.
+- See `CURRENT-STATE.md` for the exact implemented/planned distinction and known gaps.
 
 ## 9. Authoritative artifacts and integrity record
 
 ### GitHub
 
 - Repository `Mathias-ao/League-of-Friends` is the source of truth for implementation.
+- `docs/project/CURRENT-STATE.md` is the current task router and implementation handoff.
 - `branding/site.json` is the source of truth for brand identity.
 - `seasons/S001-fiefdom-of-bad-neighbors.json` and `events/E001-lombardia.json` hold the current persisted season and first-event identity.
-- `README-MATCH-ANALYSIS-V1_4.md` is the active parser-analysis resume note at the inspected baseline.
+- `docs/architecture/replay-extraction-contract-v1.md` is the settled extraction-tool decision for later implementation.
+- `README-MATCH-ANALYSIS-V1_4.md` is the analysis-only V1.4 workstream note; it does not authorize corpus reparsing.
 
 ### Replay foundation files
 
 | Artifact | Role | SHA-256 of preserved file |
 |---|---|---|
-| `Age-of-Friends-Replay-Analysis-Foundation.md` | Research, evidence boundaries, architecture, backlog, and test plan | `83df810d644e950155145049455ea52e8666d7b241c8da4bab20e4f71876c6e5` |
-| `canonical-replay-v1.schema.json` | CanonicalReplay 1.0 JSON Schema | `a20de391236d8e81219fc2edac3e2407e391cbebd9c49b63a9d5e2822fa22f72` |
-| `townbell-capability-matrix.csv` | 320-row capability mapping plus header | `2506011e77cf17a5f4c6bd2d36aae6bcf1b6f85fde62462c44fe5982e4d1d4ce` |
+| `docs/replay-foundation/Age-of-Friends-Replay-Analysis-Foundation.md` | Research, evidence boundaries, architecture, backlog, and test plan | `83df810d644e950155145049455ea52e8666d7b241c8da4bab20e4f71876c6e5` |
+| `replay-tools/canonical-replay-v1.schema.json` | CanonicalReplay 1.0 JSON Schema used by tooling | `a20de391236d8e81219fc2edac3e2407e391cbebd9c49b63a9d5e2822fa22f72` |
+| `docs/replay-foundation/townbell-capability-matrix.csv` | 320-row capability mapping plus header | `2506011e77cf17a5f4c6bd2d36aae6bcf1b6f85fde62462c44fe5982e4d1d4ce` |
+| `docs/architecture/replay-extraction-contract-v1.md` | Settled extraction-tool boundary, storage, evidence, lifecycle and acceptance gates | `53d86164b6f5e9cfe8c600fd85ce07d3523516e8e2ff52016a51323dd155a708` |
 
 Integrity checks performed during recovery:
 
@@ -170,21 +178,25 @@ Integrity checks performed during recovery:
 - The capability matrix contains 321 CSV lines: one header plus 320 capabilities.
 - The three preserved files total 344,290 bytes.
 
-Do not edit these three files casually. Make a new version when their contract or research conclusions change, and record why.
+The replay foundation now lives in GitHub and is indexed by `docs/replay-foundation/README.md`. Do not edit these three files casually. Make a deliberately versioned successor when their contract or research conclusions change, and record why.
 
 ## 10. Active priorities
 
-1. Complete the V1.4 semantic review using the existing canonical replay corpus.
-2. Explicitly map FFA diplomacy mode values and transitions before allowing high-confidence FFA raid claims.
-3. Validate opening classifications and high-confidence raid pairs against the corpus outputs.
-4. Make derived analysis consume retained canonical facts; reparse only for missing or incorrectly decoded source facts.
-5. Align the repository README and project status with the actual implementation state.
-6. Persist remaining chat-only product decisions in repository configuration or decision records.
-7. Migrate the relationship system from the old single-score implementation to the three-track model after thresholds and Friend behavior are frozen.
+Choose one bounded workstream. Current candidates, rather than a forced sequence, are:
+
+1. Product rules: freeze Enemy labels/thresholds and the Friend reward, then design the three-track migration.
+2. Replay upload/backend: design the authenticated archive-first upload and job-orchestration path against the extraction contract, without implementing binary parser changes unless that is explicitly the task.
+3. Replay analysis: complete the V1.4 semantic review from existing canonical facts; map FFA diplomacy before high-confidence FFA raid claims. Do not reparse merely for V1.4.
+4. Extraction implementation: when explicitly resumed, close source retention, identity, byte coverage, chunk reading, guarded promotion and qualification gaps in contract order.
+5. Product/UI: choose a client stack and implement read-only league surfaces from existing backend queries, keeping authoritative competition writes in Functions.
+6. Event design: persist Event II's final competition/content configuration and civilization pool.
+7. Player identity: design the portrait model from versioned production-commitment evidence after its exact V1 inputs are chosen.
+
+`CURRENT-STATE.md` records prerequisites, implemented limitations and specialist sources for each workstream.
 
 ## 11. Fresh-chat operating procedure
 
-Long chats are archives, not working databases. Do not delete them until this recovery file and the repository have been checked, but stop extending slow or error-prone threads.
+Long chats are archives, not working databases. GitHub contains the active project direction and replay foundation. Old conversations are secondary history.
 
 Use one fresh chat per bounded workstream:
 
@@ -195,11 +207,10 @@ Use one fresh chat per bounded workstream:
 
 At the start of a fresh chat:
 
-1. Attach or reference this continuity file.
-2. Attach only the specialist artifacts needed for that task.
-3. Tell the chat to inspect the latest `main` branch before proposing or editing implementation.
-4. State the one concrete outcome for the session.
-5. For parser work, explicitly say whether reparsing is permitted. The current V1.4 task says it is not.
+1. Point the task at this repository and ask it to read this file plus `CURRENT-STATE.md`.
+2. Tell it to inspect the latest `main` code and the specialist source linked for the workstream.
+3. State one concrete outcome for the session.
+4. For replay work, explicitly say whether binary parser changes or replay processing are in scope. V1.4 alone does not require reparsing.
 
 At the end of meaningful work:
 
@@ -211,8 +222,8 @@ At the end of meaningful work:
 
 ## 12. Copyable bootstrap prompt
 
-> Continue Age of Friends using the attached Project Continuity and Recovery File. Treat `Mathias-ao/League-of-Friends` on GitHub as implementation truth and inspect the latest `main` state before acting. Preserve the Age of Friends brand, data-truth doctrine, immutable replay evidence, CanonicalReplay layering, and all authority rules in the continuity file. Use old chats only as secondary historical evidence. The concrete task for this session is: [ONE TASK]. Before changing anything, report the current relevant implementation state, the files you will touch, and any conflict with the continuity file. When finished, give the exact commit/tests/artifacts and a compact handoff for the next chat.
+> Continue Age of Friends from `Mathias-ao/League-of-Friends`. Read `docs/project/PROJECT-CONTINUITY.md` and `docs/project/CURRENT-STATE.md`, then inspect the latest `main` implementation and the specialist documents linked for this workstream. GitHub is sufficient project context; use old chats only as secondary history. Preserve the Age of Friends brand, data-truth doctrine, immutable replay evidence, CanonicalReplay layering and authority order. The concrete task is: [ONE TASK]. Before editing, identify current relevant behavior, intended files and any conflict with locked direction. When finished, record the exact commit, tests/artifacts actually run, implemented versus deferred behavior and the next bounded action.
 
 ## 13. What this recovery does and does not do
 
-This file preserves the project's center of gravity and gives fresh chats a reliable restart path. It does not claim every brainstorm is locked, replace detailed schemas, or certify uninspected local-only work. Anything absent from GitHub or the named persistent artifacts remains at risk until deliberately promoted into one of those sources.
+This file preserves the project's center of gravity and gives fresh tasks a reliable restart path. It does not claim every brainstorm is locked, replace detailed schemas or certify uninspected work. A lasting decision absent from GitHub is not part of the active project direction until deliberately promoted into the appropriate source.
