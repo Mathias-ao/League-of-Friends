@@ -1,0 +1,170 @@
+**Age of Friends — Extraction Contract v1**
+
+Decision record • 11 September 2026 • Contract decision; implementation and qualification remain future work.
+
+This decision uses `Mathias-ao/League-of-Friends` at commit `94f5b125245a56f64119477f5bf00ff17da95352`, the committed project doctrine, the preserved replay foundation, reviewed supporting research, CanonicalReplay 1.0, and the 320-row capability matrix. This document consolidates the supporting findings needed for implementation; external chats or reports are not normative dependencies. The work that produced this decision was limited to settling extraction details. No parser changes, corpus reparsing, runtime repository changes, or new replay tests were performed for this decision.
+
+**The selected tool is an Age of Friends canonical evidence exporter around the existing Python decoder.** Its permanent output is reusable evidence for one recorded Game. The existing `mgz-fast==1.0.0` is the integration baseline; it is not thereby certified as a complete decoder. Retain that pin until a fixture-qualified change demonstrates the need for a patch, fuller upstream decoding, or replacement. Use the aoc-mgz family below its summary/reporting interface, with AoF-owned retention, provenance, normalization, and validation. The current package is a minimal aoc-mgz derivative; `mgz-fast==1.0.0` and `mgz==1.8.51` are different distributions and must not be conflated. [Committed dependency](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/replay-tools/requirements.txt), [mgz-fast package](https://pypi.org/project/mgz-fast/1.0.0/), [upstream architecture](https://github.com/happyleavesaoc/aoc-mgz).
+
+AgeAlyser is optional prior art for individual downstream algorithms after validation. It is not a second production extraction path or an authority for completed production. TownBell remains a capability benchmark. Its metric names and its 320 outputs do not define AoF's storage contract. The upstream replay model is an initial state plus commands; exact ongoing game state generally needs compatible game execution. [AgeAlyser](https://github.com/byrnesy924/AgeAlyser_2), [aoc-mgz limitations](https://github.com/happyleavesaoc/aoc-mgz).
+
+**The sources contribute different kinds of evidence.** The preserved Markdown foundation supplies the paired replay/TownBell audit and is authoritative research. Additional reviewed research contributed safeguards for field-level evidence, multiple recordings, production completion and immutable runs; those safeguards are stated directly in this contract. The matrix traces future metrics to retained primitives. This decision preserves CanonicalReplay `1.0.0` unchanged and adds a separate extraction-run envelope; it does not quietly revise the supplied schema. [Committed authority order and replay doctrine](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/docs/project/PROJECT-CONTINUITY.md).
+
+The authoritative attachment fingerprints are:
+
+| Supplied artifact | SHA-256 |
+|---|---|
+| Age-of-Friends-Replay-Analysis-Foundation.md | `83df810d644e950155145049455ea52e8666d7b241c8da4bab20e4f71876c6e5` |
+| canonical-replay-v1.schema.json | `a20de391236d8e81219fc2edac3e2407e391cbebd9c49b63a9d5e2822fa22f72` |
+| townbell-capability-matrix.csv | `2506011e77cf17a5f4c6bd2d36aae6bcf1b6f85fde62462c44fe5982e4d1d4ce` |
+
+**The product boundary determines the extraction boundary.** One league Match contains one or more Games. One recording is a source for one Game; several recordings can describe the same Game. Extraction never creates another Game merely because another player uploads a recording. A Game's results, statistics, portraits, and relationships must ultimately use the same durable league player identities and revision history. Player upload is the normal required post-match action; manual statistics entry and universal result confirmation are not part of the design. [Project invariants](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/docs/project/PROJECT-CONTINUITY.md).
+
+| Component | Responsibility |
+|---|---|
+| Authenticated Node/TypeScript backend | Authorize upload and Game association; retain source; schedule a bounded Python job; validate artifacts; atomically select eligible revisions. |
+| Python evidence exporter | Decode through the selected adapter; retain source bytes and all available fields; emit canonical facts, references, diagnostics, and coverage. |
+| Versioned reconstruction and analysis | Read retained artifacts to resolve entities, reconstruct qualified facts, calculate statistics, and infer patterns. New metrics ordinarily do not reopen the binary replay. |
+| Result resolver | Independently qualify result evidence against the approved Game and victory rules. Extraction supplies evidence, not a guessed winner. |
+| League systems | Apply separately versioned standings, portrait, Rivalry, Enemy, Friend, achievement, and War Room rules. |
+| Optional future state collector | Provide independently validated game-engine observations with their own provenance and coverage. Its absence must remain visible. |
+
+Python work runs asynchronously outside the player's request. Backend authentication, authorization, and authoritative writes remain in the existing Firebase architecture. Workers receive only the source and authorized context they need; they do not publish league standings directly. Deployment sizing is an implementation task, not a reason to change the platform now.
+
+Bound input size, decompressed size, memory and execution time through versioned worker limits qualified against the fixture corpus. Hitting a limit produces an explicit incomplete/failed outcome and retains the original; it never produces a silently shortened successful export. Retry transient infrastructure failures idempotently, while unsupported layouts remain a diagnostic outcome until the qualified decoder changes.
+
+**Identity must remain explicit at every boundary.** A replay display name is evidence for a candidate identity, not the identity itself.
+
+| Identity | Required meaning |
+|---|---|
+| League `matchId` / `gameId` | Trusted application identifiers for the encounter and its individual Game. |
+| `sourceSha256` | Hash of the original uploaded bytes; immutable source identity and exact-file deduplication key. |
+| Recording GUID / recorder / segment | Replay-supplied identifiers with their original namespace and coverage. A GUID is a grouping hint, not sufficient authorization to bind a Game. |
+| `extractionRunId` | Immutable run identity, separate from source identity; records the exact decoder, exporter, schema, options, and artifact set. |
+| League `playerId` | Durable person identity, distinct from authentication UID, replay slot, and external platform profile. |
+| Replay participant / controller / object IDs | Preserve raw slot, profile namespace, controller, object instance, and entity type independently. An object type is never an object instance. |
+| Binding and selection revisions | Versioned decisions connecting sources and replay participants to the approved Game and league roster. |
+
+Automatic binding uses verified external profile links and the approved Game roster. Names and civilization picks are cross-checks. Ambiguous or conflicting identities become an admin exception; the tool must not silently bind a renamed player to somebody else. Preserve AI, Gaia, spectators, and co-op/controller distinctions where present. Unsupported identity shapes are explicit qualification failures, not invented friend accounts.
+
+Event identifiers are deterministic within a pinned export: source identity, segment, operation ordinal and subevent index identify the observation; cross-run references also identify the run. Keep physical byte locators separately because a new decoder can change event decomposition. Object-instance references are scoped to their recording/segment, with reuse or lifetime distinctions where established. Cross-source object equivalence requires an explicit mapping.
+
+CanonicalReplay 1.0's `match` object describes the recorded game-domain object. Its `matchId` must not be treated as the application's enclosing Match ID. Put the league Match/Game binding in the new envelope. Do not add `gameId`, run IDs, coverage objects, or field claims to schema locations that reject additional properties. [Existing canonical schema](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/replay-tools/canonical-replay-v1.schema.json).
+
+**The minimum input is the recording plus a trusted context snapshot.** Preserve the original bytes before decoding. Bind the job to the approved roster and Game plan, event/rules revision, source selection revision, and identity-link revision. Record game build, save/log versions, expansion/data identity, mod or scenario identifiers, and replay-supplied settings separately from expected application settings. A conflict is evidence to investigate, not a value to overwrite with the expected setting. Preserve original filenames as metadata; use generated identifiers for storage paths.
+
+**Capture all available primitives, including those without a V1 metric.** The exporter may project smaller views, but filtering those views must not destroy the underlying evidence.
+
+| Evidence family | Mandatory retained detail | Semantic restriction |
+|---|---|---|
+| File and header | Original file, complete header bytes, decompressed header where used, all decoded fields, layout/build provenance, GUID, recorder, timestamps, lobby/settings, unknown blocks. | A successfully decoded field is not automatically a validated setting. |
+| Participants and relations | Raw names/profile IDs/civilizations/colors/slots/controller flags; lobby teams; initial directed diplomacy; every diplomacy action with raw mode, actor, target, time. | Initial teams do not establish permanent allies in FFA or unlocked diplomacy. |
+| Map and initial world | Actual width and height; terrain/elevation grid; raw map/RMS/seed/mod identifiers; initial objects with type, instance ID, owner, location, raw attributes and block provenance. | No square-map fallback, default Town Center, default villager count, or default land start. |
+| Operation stream | Every framed HEADER, INITIAL_OBJECT, MAP_TILE, SYNC, VIEWLOCK, CHAT, ACTION, START, SAVE and POSTGAME observation; original ordering, raw tags and payload references. | Unknown framing belongs in a raw-gap record; do not relabel it as a known operation. |
+| Commands and selections | Raw action code, every decoded field, actor, full selected object lists, target instance/player, selection reuse markers, flags, signed quantities, and raw payload. | Preserve ambiguity; do not invent an accepted action or permanent target owner. |
+| Production and research | Every queue form, batch amount, producer reference/candidates, cancel/unqueue, autoqueue state changes when present, research request, and distinct observed age/system notification. | Requests, active production, cancellations, projections and completions are different claims. |
+| Spatial orders | Coordinates and endpoints for movement, contextual orders, attack ground, patrol, rally, buildings, walls and flares; all available targets and coordinate roles. | A destination is not the unit's actual position. |
+| Economy transfers | Market and tribute records, actor/recipient, raw resource codes/vectors, amounts, fees and related fields when present, including explicit zero values. | An unknown component is not zero; an order amount is not automatically a settled transaction. |
+| Mechanics and communication | Formation, stance, selection, control/group and other action fields when available; raw chat, recipient/scope/system flags, flares; full camera stream. | Logical chat deduplication and eAPM are later projections. Camera is recorder-only. |
+| Time and termination | Raw synchronization increments, sequence/order, start/save/restore metadata, segment boundaries, resignation, disconnect and postgame evidence, last observable time. | End of file does not establish completed play or a winner. |
+| Unknown and failed data | Undecoded bytes, source range, offset domain, last reliable clock/ordinal, decoded prefix, failure code and affected capabilities. | Never silently discard a tail or fabricate resynchronization. |
+
+Capture completeness means every original byte remains recoverable and every decode decision is auditable. It does not mean the meaning of every byte is known. An unknown opcode must be retained even when no current statistic depends on it. If its possible effects cannot be bounded, all potentially dependent capabilities lose complete-coverage status.
+
+**Use one immutable artifact package per extraction run.** `AOF_EXTRACTION_V1` is the selected envelope contract name; its machine schema will be implemented later. It references CanonicalReplay 1.0 rather than replacing it.
+
+| Artifact | Required contents |
+|---|---|
+| Original recording | Permanently retained bytes, SHA-256, byte length, persistent object reference. |
+| `extraction-manifest.json` | Contract version; run and source identities; trusted context/binding snapshots; decoder distribution/version/code hash and patches; exporter/schema/rules/taxonomy versions; qualification reference; lifecycle outcome; ordered artifact references; coverage summary. |
+| `canonical-replay.json` | Schema-valid CanonicalReplay 1.0 metadata and references to all fact and initial-state chunks. Reconstructions and metric sets may initially be empty. |
+| Fact and initial-state chunks | Ordered gzip JSONL for events, terrain, and initial objects; full records without metric-specific reduction. |
+| Raw byte artifacts and index | Raw header/body operation material or indexed ranges into retained artifacts; source operation/segment, raw tags, domain, offset and length. Preserve raw payloads even where the decoder discards fields. |
+| Field-claim and decode-gap sidecars | Subject/event ID plus JSON Pointer, evidence class, method, assumptions, supporting references; undecoded spans and their affected fields/capabilities. |
+| Coverage sidecar | Coverage by capability, participant, segment and interval; observed counts, unknowns, missing fields, unsupported layouts, dependency failures and availability reasons. |
+| Later projection artifacts | Separate immutable reconstruction, metric, interaction and optional engine-observation runs linked back to the selected evidence. |
+
+All selected artifact references must resolve and verify by hash and length, even where the attached schema technically permits a null URI. URI means a durable object reference, not a stored expiring download URL. Hashes and lengths describe the actual stored bytes, including compression. Use deterministic JSON serialization and compression settings; keep run timestamps outside deterministic fact content.
+
+Start with chunk limits of 10,000 records or 8 MiB uncompressed, whichever comes first. These are versioned engineering defaults, not AoE2 limits. A single oversized record needs a referenced byte blob or an explicitly supported oversized chunk, never truncation. Readers must enumerate every listed chunk, verify ordering and integrity, and reconcile record totals. Optional family indexes are accelerators; a canonical event is not counted twice because it appears in two views.
+
+Keep lightweight run pointers and summaries in Firestore; keep bulk facts, terrain, byte data, and full diagnostics in object storage. Set a conservative 256 KiB application budget for operational metadata, while checking the actual encoded Firestore document size. The platform limit is 1 MiB; the current 600,000-character payload check is not a byte-size guarantee. [Firestore limits](https://firebase.google.com/docs/firestore/quotas), [current ingestion limits](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/functions/src/engines/replayStatsIngestion.ts).
+
+Offsets must name their coordinate domain: original file, inflated header, or identified body/segment artifact. An inflated-header offset must never be presented as an original-file offset. Indexed raw payloads must support targeted future decoding without rerunning the whole binary parser. Keep the original anyway; a discovery in previously uninterpreted source bytes may still require authorized parser work later.
+
+**Evidence is attached to claims, not merely to whole documents.** Use the foundation's A/B/C/D/E/F meanings: direct observation, deterministic reconstruction, inference, engine-required observation, recorder limitation, and unobtainable evidence. E can combine with A, B or C. Preserve event-level evidence in the existing schema and place more specific claims in the sidecar. Each claim identifies its field, source, method version, assumptions and dependencies. A directly observed target object ID does not make an inferred target player or inferred raid exact.
+
+Maintain distinct semantic series:
+
+| Series | What can be stated |
+|---|---|
+| Requested production | Observed queue commands and verified requested amounts, by entity and time. Keep command count and amount count separate. |
+| Cancellation requests | Observed cancel/unqueue commands; matched quantity only when semantics and linkage are qualified. Preserve unmatched and ambiguous cases. |
+| Projected production | A conditional model using known queues, timing and rules; publish assumptions and uncertainty. |
+| Confirmed creation/completion | Only explicit, qualified completion evidence or a validated engine event/counter source. Otherwise unavailable. |
+| Live composition | State evidence of ownership and survival at a stated time; not queue totals or cumulative births. |
+| Planned resource commitment | Command quantities multiplied by applicable versioned cost data. Not actual collection, bank, affordability or net spend. |
+
+Do not multiply a multi-producer selection by a queue amount without validating that command's semantics. Do not subtract every cancellation from every earlier queue. Do not infer actual buildings from repeated placements, actual deaths from delete commands, or actual battles from clusters of target commands. Preserve observed age completion messages separately from age clicks and modeled completion times. Unknown time origins and restore offsets remain explicit; no concatenation based solely on increasing timestamps.
+
+Canonical event time is game elapsed time in milliseconds, derived from a qualified synchronization clock. Preserve raw increments, file order and tied-event order; do not substitute upload time or multiply by lobby speed without validated semantics. A restored segment keeps its own origin until an offset is established. Coordinates retain original precision, coordinate system and semantic role; spatial bins and rounded chart values belong in projections.
+
+For exact trained-unit counts, future state enrichment must show complete birth/completion events or validated cumulative counters, separating training from conversions, starting units, triggers, and other origins. Periodic live-army snapshots cannot prove every unit trained because a unit can be born and die between samples. This feasibility gate is required before advertising exact trained counts; a full simulation platform is not a prerequisite for useful command-based V1 statistics.
+
+**Normalization is replaceable and preserves raw identity.** Every resolved entity keeps namespace, raw ID, normalized key, entity-data version and unresolved status. Bind costs, durations and transformation rules to the actual build/data/mod context, with data hashes and civ/technology assumptions. Unknown mappings must not fall back to a current-patch unit or a generic infantry label.
+
+Store exact entity-level production evidence before family aggregation. Use a versioned, mutually exclusive primary family for additive totals and separate overlapping tags such as unique, naval, gunpowder, economic role or trash. A unique cavalry unit remains cavalry without being counted twice in the primary total. Preserve fishing, trade, transport and combat distinctions. Upgrading a line or converting ownership is not another training event. Taxonomy revisions should regenerate projections from retained facts, not require replay parsing.
+
+**Every statistic has its own eligibility test.** Record its dependency capabilities, covered interval, participant scope, evidence basis and version. The existing metric statuses remain `available`, `not_applicable`, `not_observable`, `insufficient_evidence`, `parser_error`, or `unsupported_version`. Use the correct status and reason instead of a fabricated zero. An observed-prefix count may be available for its explicitly bounded interval; it must not be presented as the full-game total. Ratios retain numerator, denominator, window and basis so games with different coverage are not silently compared.
+
+There is no universal “98% parsed” acceptance score. Byte retention, framing coverage, semantic coverage, recorder coverage, game completion and result qualification are separate. A file can reach a clean EOF before the game ends. A sealed package may contain qualified facts and unqualified capabilities. If a required CanonicalReplay field cannot be established, retain the source and diagnostics and do not claim a schema-valid canonical export by inventing a dimension, timestamp or duration. Such a failure does not itself invalidate independently qualified result evidence.
+
+**AoF's downstream uses are explicit, but their scoring rules stay outside extraction.** Portraits consume per-entity and per-family production commitment with availability, sample size and time context. Recent and lifetime views can later apply minimum games, confidence and hysteresis. The newcomer/peasant state remains until the profile model has enough evidence. Extraction does not set portrait thresholds or titles.
+
+Rivalry, Enemy and Friend remain separate tracks. Store interaction inputs for all ordered participant pairs—56 possible directed pairs in an eight-player Game—with actor, target, timing, relation context, provenance and confidence. Explicit tribute and diplomacy, object-target commands, spatial activity and inferred episodes remain distinguishable. Keep unknown targets unresolved. Ownership can change, and unilateral alliance is not automatically mutual friendship. Never infer an emotion from a command. War Room unlocks, labels, weights and Friend rewards are league configuration. [Locked identity and relationship decisions](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/docs/project/PROJECT-CONTINUITY.md).
+
+**Results can finalize without waiting for optional analytics.** The normal flow archives the upload, binds the Game, qualifies result evidence, and publishes the canonical result as soon as those checks succeed. Statistics and narratives can follow asynchronously. No winner is guessed from EOF, a single POV stopping, or the last player not seen resigning. FFA placement and scenario victory need their own supported result evidence; team victory logic must not be reused indiscriminately. If evidence or identity is ambiguous, route an exception to admins and preserve the source. The future implementation must demonstrate a reliable automatic result path for Event I's 4v4 Standard Victory before declaring the upload-only flow ready. This is an acceptance gate, not a claim that the existing extractor already provides it.
+
+**Duplicates, alternative recordings and corrections use immutable history plus explicit selection.** Exact duplicate hashes may reuse extraction for the same qualified version tuple, with a new authorized binding if needed. Distinct files can belong to the same Game but are not byte-level duplicates. Group candidates using trusted application context and compatible replay evidence, not names alone.
+
+Select one qualified shared command stream per Game by a versioned completeness and compatibility policy. Other recordings may supply recorder-specific camera evidence or help adjudicate a gap. Do not blindly union streams or deduplicate by timestamp/action equality: repeated identical commands can be legitimate, and recorder-local operations differ. Any future merge must demonstrate shared-event alignment, conflict handling and provenance. Keep each recorder track separate, and do not require all players to upload for ordinary processing.
+
+The job lifecycle is received → queued → running → staged → sealed, with explicit failed/cancelled outcomes. “Sealed” means the immutable artifact set and validation report are finalized. It does not mean the game finished, every metric is available, or the result is final. A malformed source can remain archived with a failed extraction. Stage and verify artifacts before any active pointer changes.
+
+Promotion must compare the expected active source/binding/result revisions in a transaction. A stale worker must not overwrite a newer upload or correction. Dependent projections record the tuple of source-selection revision, extraction run, binding revision, metric version/run, canonical result revision and rules snapshot. Historical attempts remain auditable; only the selected eligible contribution for a Game enters each aggregate. A failed optional recomputation does not displace an otherwise valid active projection.
+
+A dispute or correction is different from an optional recomputation failure: affected eligibility must be withdrawn immediately, then dependent views rebuilt or marked unavailable until reconciled. Stored old aggregates must not continue to look authoritative. A result correction with unchanged source evidence does not need binary extraction again. A binding correction rebuilds affected player projections; a rules or taxonomy change rebuilds only its dependencies. Match-level results aggregate the approved Games, never the count of uploaded recordings. The current dispute command blocks pending work but does not itself prove withdrawal of already completed aggregate contributions. [Current dispute handling](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/functions/src/commands/results/disputeCanonicalGameResult.ts), [correction handling](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/functions/src/commands/results/adminResolveCanonicalResultDispute.ts).
+
+**The committed project is beyond a report-only prototype, but the extraction contract is not yet enforced end to end.** It already has canonical export, immutable raw-stat ingestion, corpus tooling, and V1.4 analysis. These are reusable foundations. The following gaps are grounded in the inspected commit and become later implementation requirements.
+
+| Current evidence | Required change when implementation resumes |
+|---|---|
+| `parse_replay.py` makes `--canonical-dir` optional; the ingestion script invokes it without that flag. | Canonical evidence packaging must be the default authorized upload path. A legacy report may be an additional projection. |
+| Exported `retainedReplay.uri` is null. | Require verified permanent source retention and a resolvable reference before evidence selection. |
+| Some raw action bytes and failure data survive, but retention is not comprehensive across header and operation types. | Complete raw-range accounting, field retention, offset domains, unknown-payload retention and capability diagnostics. |
+| `match.matchId` uses a replay GUID/hash fallback; completion can follow `bodyParseComplete`; map size has fallback assumptions. | Separate league binding, framing, source coverage and game completion; never fill unknown dimensions with plausible values. |
+| The corpus consumer reads `chunks[0]`. | Read and validate all chunks before multi-chunk output can be enabled safely. |
+| Raw-stat ingestion uses a large JSON payload with a character limit. | Reference sealed bulk artifacts through small versioned manifests and bounded operational documents. |
+| Admin ingestion maps normalized replay names or explicit manual overrides to players. | Add verified external identity binding and ordinary authenticated upload orchestration; keep overrides for exceptions. |
+| Immutable raw-stat IDs and revisions exist, but ingestion does not require an expected-active revision from the caller. | Add guarded promotion so competing workers cannot supersede newer selections accidentally. |
+| Disputes block pending jobs; completed projections need additional qualification/invalidation handling. | Enforce one eligible contribution per Game and suppress stale results throughout the correction lifecycle. |
+
+The relevant implementation is in the [exporter](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/replay-tools/parse_replay.py), [ingestion script](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/scripts/ingest-replay-file.mjs), [corpus reader](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/scripts/test-match-analysis-corpus.mjs), and [raw-stat command](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/functions/src/commands/statistics/ingestReplayStats.ts). V1.4 remains an analysis-only upgrade over stored canonical facts. [V1.4 instructions](https://github.com/Mathias-ao/League-of-Friends/blob/94f5b125245a56f64119477f5bf00ff17da95352/README-MATCH-ANALYSIS-V1_4.md).
+
+**Implementation is accepted by capability, against independent evidence.** These are future gates; this decision does not report them as passed.
+
+| Gate | Required demonstration |
+|---|---|
+| Retention and integrity | All original bytes recoverable; every framed operation accounted for; unknown spans retained; all chunks verified and counted; corrupted/missing chunks prevent dependent publication. Repeat extraction yields identical deterministic facts for a pinned version tuple. |
+| Controlled production | A paired-view fixture with A/B allied and C/D opposed; single and multiple producers; batch requests, cancellation, blocked production and completed units. Keep requests, matched/unmatched cancels and actual completions distinct using an independent UI/state oracle. |
+| Semantics and context | Qualify selection reuse, target ownership, diplomacy modes, market/tribute amounts, age notifications and restoration clocks. Include negative controls that must remain unresolved. |
+| Supported game shapes | Normal 1v1/team games, asymmetric attendance such as 2v3, eight- and seven-player FFA, changing alliances, water, Nomad/no-TC starts, AI/spectators, and supported custom starts. Unsupported builds/mods/modes are explicit, not silently treated as standard. |
+| Multiple sources and incomplete files | A/B POVs do not double production; recorder camera remains scoped; truncated, restored and interrupted recordings do not imply completed Games; ambiguous merges abstain. |
+| Result readiness | A qualified automatic 4v4 Standard Victory result without manual statistics entry; supported later modes tested separately; absent/ambiguous winner evidence becomes an admin exception. |
+| Persistence and correction | Duplicate retries are idempotent; stale worker promotion fails; invalid replacements do not erase valid evidence; disputes/corrections leave only eligible contributions in player, relationship and league views. |
+| Future reuse | A new metric, revised entity family, or V1.4 projection can run from archived canonical inputs with no binary replay access. A genuinely missing source primitive is reported as a parser requirement instead of fabricated. |
+| Optional exact state | Before any exact trained/live-unit, resource, kill or damage promise, validate that collector's event/counter completeness, origin semantics, build compatibility and desync behavior. Otherwise mark those metrics unavailable. |
+
+Qualification records must pin fixture hashes, independent expectations, decoder/exporter revisions, game/data versions, capability results, supported shapes and known limitations. A deterministic heuristic remains inference; it does not become a direct fact because a test repeats its output. Timing tolerance must follow observed clock/collector precision. Do not assign an unmeasured universal accuracy percentage.
+
+The later implementation order is now fixed: enforce source retention and canonical packaging; close identity, byte-retention and coverage gaps; qualify command semantics and production limits; connect guarded ingestion and result eligibility; then expand metric and league projections. Exact parser patches, tested support tuples, state-collector feasibility, runtime budgets and profile/scoring calibration remain implementation investigations. They do not change the settled contract: retain reusable Game evidence, state precisely what it proves, and make every downstream interpretation replaceable without losing history.
