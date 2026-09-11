@@ -1,0 +1,446 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ageoffriends.example/schemas/canonical-replay-v1.schema.json",
+  "title": "Age of Friends Canonical Replay Version 1",
+  "description": "Logical canonical representation of an AoE2 DE replay. Large event and map collections may be stored in referenced chunks while retaining this logical model.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "versions",
+    "source",
+    "match",
+    "participants",
+    "teams",
+    "initialState",
+    "factStore",
+    "reconstructionSets",
+    "metricSets",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "versions": {"$ref": "#/$defs/versionBundle"},
+    "source": {"$ref": "#/$defs/sourceReplay"},
+    "match": {"$ref": "#/$defs/match"},
+    "participants": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/participant"},
+      "maxItems": 16
+    },
+    "teams": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/team"}
+    },
+    "initialDiplomacy": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/diplomacyEdge"},
+      "default": []
+    },
+    "initialState": {"$ref": "#/$defs/initialState"},
+    "factStore": {"$ref": "#/$defs/eventStore"},
+    "reconstructionSets": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/reconstructionSet"}
+    },
+    "interactionSets": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/interactionSet"},
+      "default": []
+    },
+    "metricSets": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/metricSet"}
+    },
+    "leagueInterpretationRefs": {
+      "type": "array",
+      "description": "References only. League scoring is deliberately stored outside the canonical replay.",
+      "items": {"$ref": "#/$defs/artifactRef"},
+      "default": []
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/warning"}
+    }
+  },
+  "$defs": {
+    "versionBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parserVersion", "normalizerVersion", "entityDataVersion"],
+      "properties": {
+        "parserVersion": {"type": "string", "minLength": 1},
+        "schemaVersion": {"const": "1.0.0"},
+        "normalizerVersion": {"type": "string", "minLength": 1},
+        "entityDataVersion": {"type": "string", "minLength": 1},
+        "reconstructionVersion": {"type": ["string", "null"]},
+        "spatialModelVersion": {"type": ["string", "null"]},
+        "interactionModelVersion": {"type": ["string", "null"]}
+      }
+    },
+    "sourceReplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "byteLength",
+        "format",
+        "saveVersion",
+        "gameBuild",
+        "parsedAt",
+        "retainedReplay"
+      ],
+      "properties": {
+        "fileName": {"type": ["string", "null"]},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "byteLength": {"type": "integer", "minimum": 1},
+        "format": {"const": "aoe2record"},
+        "saveVersion": {"type": ["number", "string"]},
+        "logVersion": {"type": ["integer", "null"]},
+        "gameBuild": {"type": ["integer", "null"]},
+        "recordedAt": {"type": ["string", "null"], "format": "date-time"},
+        "parsedAt": {"type": "string", "format": "date-time"},
+        "povPlayerId": {"type": ["integer", "null"]},
+        "retainedReplay": {"$ref": "#/$defs/artifactRef"},
+        "compatibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": {"enum": ["supported", "supported_with_patch", "degraded", "unsupported"]},
+            "upstreamParser": {"type": ["string", "null"]},
+            "formatPatches": {"type": "array", "items": {"type": "string"}},
+            "decodeCoveragePercent": {"type": "number", "minimum": 0, "maximum": 100}
+          }
+        }
+      }
+    },
+    "artifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "byteLength", "encoding"],
+      "properties": {
+        "uri": {"type": ["string", "null"]},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "byteLength": {"type": "integer", "minimum": 0},
+        "encoding": {"enum": ["identity", "gzip", "zstd", "parquet", "jsonl_gzip"]},
+        "contentType": {"type": ["string", "null"]},
+        "recordCount": {"type": ["integer", "null"], "minimum": 0},
+        "firstOrdinal": {"type": ["integer", "null"], "minimum": 0},
+        "lastOrdinal": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["matchId", "durationMs", "completionStatus", "settings"],
+      "properties": {
+        "matchId": {"type": "string", "minLength": 1},
+        "guid": {"type": ["string", "null"]},
+        "durationMs": {"type": "integer", "minimum": 0},
+        "completionStatus": {"enum": ["complete", "incomplete", "restored", "unknown"]},
+        "winnerPlayerIds": {"type": "array", "items": {"type": "integer"}},
+        "winnerTeamIds": {"type": "array", "items": {"type": "string"}},
+        "winnerEvidence": {"$ref": "#/$defs/evidence"},
+        "settings": {"type": "object", "additionalProperties": true},
+        "privacy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "containsChat": {"type": "boolean"},
+            "containsPlayerNames": {"type": "boolean"},
+            "retentionPolicyId": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["playerId", "number", "name", "civilization", "colorId", "initialObjectIds"],
+      "properties": {
+        "playerId": {"type": "integer"},
+        "number": {"type": "integer"},
+        "name": {"type": "string"},
+        "profileId": {"type": ["integer", "null"]},
+        "platformIdentity": {"type": ["string", "null"]},
+        "civilization": {"$ref": "#/$defs/entityRef"},
+        "colorId": {"type": ["integer", "null"]},
+        "lobbyTeamId": {"type": ["integer", "null"]},
+        "isHuman": {"type": ["boolean", "null"]},
+        "isRecorder": {"type": "boolean", "default": false},
+        "initialObjectIds": {"type": "array", "items": {"type": "integer"}},
+        "ratingSnapshots": {"type": "array", "items": {"type": "object", "additionalProperties": true}}
+      }
+    },
+    "team": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["teamId", "memberPlayerIds", "kind"],
+      "properties": {
+        "teamId": {"type": "string"},
+        "memberPlayerIds": {"type": "array", "items": {"type": "integer"}},
+        "kind": {"enum": ["fixed", "solo", "ffa_initial", "scenario", "unknown"]},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      }
+    },
+    "diplomacyEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromPlayerId", "toPlayerId", "stance", "evidence"],
+      "properties": {
+        "fromPlayerId": {"type": "integer"},
+        "toPlayerId": {"type": "integer"},
+        "stance": {"enum": ["ally", "neutral", "enemy", "unknown"]},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      }
+    },
+    "initialState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map", "objectStore"],
+      "properties": {
+        "map": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height", "coordinateSystem", "terrainStore"],
+          "properties": {
+            "mapId": {"type": ["integer", "null"]},
+            "mapName": {"type": ["string", "null"]},
+            "rmsFileName": {"type": ["string", "null"]},
+            "rmsModId": {"type": ["string", "null"]},
+            "seed": {"type": ["integer", "null"]},
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1},
+            "coordinateSystem": {"const": "aoe2_world_xy_origin_top_left"},
+            "terrainStore": {"$ref": "#/$defs/eventStore"}
+          }
+        },
+        "objectStore": {"$ref": "#/$defs/eventStore"},
+        "startAnchors": {
+          "description": "Optional reconstructed anchors. These are not parser facts.",
+          "type": "array",
+          "items": {"$ref": "#/$defs/startAnchor"},
+          "default": []
+        }
+      }
+    },
+    "startAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["playerId", "position", "method", "evidence"],
+      "properties": {
+        "playerId": {"type": "integer"},
+        "position": {"$ref": "#/$defs/position"},
+        "method": {"enum": ["initial_town_center", "initial_unit_centroid", "first_town_center_order", "scenario_marker", "unknown"]},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      }
+    },
+    "eventStore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordCount", "chunks"],
+      "properties": {
+        "recordCount": {"type": "integer", "minimum": 0},
+        "inlineEvents": {"type": "array", "items": {"$ref": "#/$defs/eventEnvelope"}},
+        "chunks": {"type": "array", "items": {"$ref": "#/$defs/artifactRef"}},
+        "operationCounts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "actionCounts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "unknownActionCounts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "eventEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "layer",
+        "eventType",
+        "timestampMs",
+        "operationOrdinal",
+        "sourceOperation",
+        "decode",
+        "evidence",
+        "payload"
+      ],
+      "properties": {
+        "eventId": {"type": "string", "minLength": 1},
+        "layer": {"enum": ["parser_fact", "reconstructed_fact"]},
+        "eventType": {"type": "string", "pattern": "^[a-z][a-z0-9_.]+$"},
+        "timestampMs": {"type": "integer", "minimum": 0},
+        "clock": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "syncElapsedMs": {"type": ["integer", "null"], "minimum": 0},
+            "restoreOffsetMs": {"type": ["integer", "null"], "minimum": 0},
+            "sequence": {"type": ["integer", "null"]}
+          }
+        },
+        "operationOrdinal": {"type": "integer", "minimum": 0},
+        "byteOffset": {"type": ["integer", "null"], "minimum": 0},
+        "byteLength": {"type": ["integer", "null"], "minimum": 0},
+        "sourceOperation": {
+          "enum": ["HEADER", "INITIAL_OBJECT", "MAP_TILE", "SYNC", "VIEWLOCK", "CHAT", "ACTION", "START", "SAVE", "POSTGAME"]
+        },
+        "sourceActionCode": {"type": ["integer", "null"]},
+        "sourceActionName": {"type": ["string", "null"]},
+        "actorPlayerId": {"type": ["integer", "null"]},
+        "targetPlayerId": {"type": ["integer", "null"]},
+        "objectInstanceIds": {"type": "array", "items": {"type": "integer"}},
+        "targetInstanceId": {"type": ["integer", "null"]},
+        "entity": {"oneOf": [{"$ref": "#/$defs/entityRef"}, {"type": "null"}]},
+        "position": {"oneOf": [{"$ref": "#/$defs/position"}, {"type": "null"}]},
+        "endPosition": {"oneOf": [{"$ref": "#/$defs/position"}, {"type": "null"}]},
+        "payload": {"type": "object", "additionalProperties": true},
+        "decode": {"$ref": "#/$defs/decodeStatus"},
+        "evidence": {"$ref": "#/$defs/evidence"},
+        "dependsOnEventIds": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "decodeStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["complete", "partial", "unknown_action", "failed"]},
+        "knownByteCount": {"type": ["integer", "null"], "minimum": 0},
+        "unknownByteCount": {"type": ["integer", "null"], "minimum": 0},
+        "unknownBytesBase64": {"type": ["string", "null"], "contentEncoding": "base64"},
+        "parserWarningCodes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "entityRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "rawId", "normalizedKey", "normalizationVersion"],
+      "properties": {
+        "namespace": {"enum": ["aoe2de.object", "aoe2de.unit", "aoe2de.building", "aoe2de.technology", "aoe2de.civilization", "aoe2de.terrain", "aoe2de.resource"]},
+        "rawId": {"type": ["integer", "string"]},
+        "displayName": {"type": ["string", "null"]},
+        "normalizedKey": {"type": ["string", "null"]},
+        "familyKey": {"type": ["string", "null"]},
+        "lineKey": {"type": ["string", "null"]},
+        "roleKeys": {"type": "array", "items": {"type": "string"}},
+        "normalizationVersion": {"type": "string"}
+      }
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "z": {"type": ["number", "null"]},
+        "tileX": {"type": ["integer", "null"]},
+        "tileY": {"type": ["integer", "null"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "confidence", "methodVersion"],
+      "properties": {
+        "classification": {"enum": ["A", "B", "C", "D", "E", "F", "A+E", "B+E", "C+E"]},
+        "confidence": {"enum": ["exact", "high", "medium", "low", "unavailable"]},
+        "methodVersion": {"type": "string"},
+        "assumptionCodes": {"type": "array", "items": {"type": "string"}},
+        "sourceEventIds": {"type": "array", "items": {"type": "string"}},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "reconstructionSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reconstructionVersion", "createdAt", "eventStore", "assumptions"],
+      "properties": {
+        "reconstructionVersion": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "eventStore": {"$ref": "#/$defs/eventStore"},
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "description"],
+            "properties": {
+              "code": {"type": "string"},
+              "description": {"type": "string"},
+              "validatedByTestIds": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
+    "interactionSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modelVersion", "createdAt", "edges"],
+      "properties": {
+        "modelVersion": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fromPlayerId", "toPlayerId", "facts", "evidence"],
+            "properties": {
+              "fromPlayerId": {"type": "integer"},
+              "toPlayerId": {"type": "integer"},
+              "facts": {"type": "object", "additionalProperties": true},
+              "evidence": {"$ref": "#/$defs/evidence"}
+            }
+          }
+        }
+      }
+    },
+    "metricSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metricSetVersion", "createdAt", "scope", "metrics"],
+      "properties": {
+        "metricSetVersion": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id"],
+          "properties": {
+            "type": {"enum": ["match", "player", "team", "directed_player_pair", "undirected_player_pair"]},
+            "id": {"type": "string"}
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/metricValue"}
+        }
+      }
+    },
+    "metricValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "unit", "evidence"],
+      "properties": {
+        "status": {"enum": ["available", "not_applicable", "not_observable", "insufficient_evidence", "parser_error", "unsupported_version"]},
+        "value": {"type": ["number", "integer", "string", "boolean", "array", "object", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "window": {"type": ["object", "null"], "additionalProperties": true},
+        "evidence": {"$ref": "#/$defs/evidence"},
+        "unavailableReason": {"type": ["string", "null"]}
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": {"type": "string"},
+        "severity": {"enum": ["info", "warning", "error"]},
+        "message": {"type": "string"},
+        "operationOrdinal": {"type": ["integer", "null"]},
+        "affectedFields": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

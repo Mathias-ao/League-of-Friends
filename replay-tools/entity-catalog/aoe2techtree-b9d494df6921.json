@@ -1,0 +1,5857 @@
+{
+  "schemaVersion": "AOF_ENTITY_CATALOG_V1_1",
+  "sourceVersion": "aoe2techtree@b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
+  "source": {
+    "repository": "SiegeEngineers/aoe2techtree",
+    "commit": "b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
+    "dataPath": "data/data.json",
+    "localePath": "data/locales/en/strings.json"
+  },
+  "buildings": {
+    "12": {
+      "id": 12,
+      "name": "Barracks",
+      "internalName": "Barracks Age1",
+      "kind": "building",
+      "roleKeys": [
+        "barracks",
+        "military_production"
+      ],
+      "cost": {
+        "Wood": 175
+      },
+      "trainTime": 50
+    },
+    "45": {
+      "id": 45,
+      "name": "Dock",
+      "internalName": "DOCK",
+      "kind": "building",
+      "roleKeys": [
+        "dock",
+        "naval_economy",
+        "naval_production"
+      ],
+      "cost": {
+        "Wood": 150
+      },
+      "trainTime": 35
+    },
+    "49": {
+      "id": 49,
+      "name": "SIWS",
+      "internalName": "SIWS",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 200
+      },
+      "trainTime": 40
+    },
+    "50": {
+      "id": 50,
+      "name": "Farm",
+      "internalName": "FARM",
+      "kind": "building",
+      "roleKeys": [
+        "farm",
+        "economy"
+      ],
+      "cost": {
+        "Wood": 60
+      },
+      "trainTime": 15
+    },
+    "68": {
+      "id": 68,
+      "name": "Mill",
+      "internalName": "MILL",
+      "kind": "building",
+      "roleKeys": [
+        "mill",
+        "economy"
+      ],
+      "cost": {
+        "Wood": 100
+      },
+      "trainTime": 35
+    },
+    "70": {
+      "id": 70,
+      "name": "House",
+      "internalName": "HOUS",
+      "kind": "building",
+      "roleKeys": [
+        "house"
+      ],
+      "cost": {
+        "Wood": 25
+      },
+      "trainTime": 25
+    },
+    "71": {
+      "id": 71,
+      "name": "Town Center",
+      "internalName": "RTWC2",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 100,
+        "Wood": 275
+      },
+      "trainTime": 100
+    },
+    "72": {
+      "id": 72,
+      "name": "Palisade Wall",
+      "internalName": "WALL",
+      "kind": "building",
+      "roleKeys": [
+        "wall",
+        "fortification"
+      ],
+      "cost": {
+        "Wood": 3
+      },
+      "trainTime": 7
+    },
+    "79": {
+      "id": 79,
+      "name": "Watch Tower",
+      "internalName": "WCTW",
+      "kind": "building",
+      "roleKeys": [
+        "tower",
+        "fortification"
+      ],
+      "cost": {
+        "Stone": 125,
+        "Wood": 35
+      },
+      "trainTime": 80
+    },
+    "82": {
+      "id": 82,
+      "name": "CSTL",
+      "internalName": "CSTL",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 650,
+        "Wood": 0
+      },
+      "trainTime": 200
+    },
+    "84": {
+      "id": 84,
+      "name": "Market",
+      "internalName": "MRKT",
+      "kind": "building",
+      "roleKeys": [
+        "market",
+        "economy"
+      ],
+      "cost": {
+        "Wood": 175
+      },
+      "trainTime": 60
+    },
+    "87": {
+      "id": 87,
+      "name": "Archery Range",
+      "internalName": "ARRG",
+      "kind": "building",
+      "roleKeys": [
+        "archery_range",
+        "military_production"
+      ],
+      "cost": {
+        "Wood": 175
+      },
+      "trainTime": 50
+    },
+    "101": {
+      "id": 101,
+      "name": "Stable",
+      "internalName": "STBL",
+      "kind": "building",
+      "roleKeys": [
+        "stable",
+        "military_production"
+      ],
+      "cost": {
+        "Wood": 175
+      },
+      "trainTime": 50
+    },
+    "103": {
+      "id": 103,
+      "name": "Blacksmith",
+      "internalName": "BLAC",
+      "kind": "building",
+      "roleKeys": [
+        "blacksmith",
+        "military_upgrade"
+      ],
+      "cost": {
+        "Wood": 150
+      },
+      "trainTime": 40
+    },
+    "104": {
+      "id": 104,
+      "name": "CRCH",
+      "internalName": "CRCH",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 175
+      },
+      "trainTime": 40
+    },
+    "109": {
+      "id": 109,
+      "name": "Town Center",
+      "internalName": "RTWC",
+      "kind": "building",
+      "roleKeys": [
+        "town_center",
+        "economy",
+        "population_production"
+      ],
+      "cost": {
+        "Stone": 100,
+        "Wood": 275
+      },
+      "trainTime": 100
+    },
+    "117": {
+      "id": 117,
+      "name": "WALL2",
+      "internalName": "WALL2",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 5
+      },
+      "trainTime": 10
+    },
+    "155": {
+      "id": 155,
+      "name": "WALL3",
+      "internalName": "WALL3",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 5
+      },
+      "trainTime": 10
+    },
+    "199": {
+      "id": 199,
+      "name": "FTRAP",
+      "internalName": "FTRAP",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 100
+      },
+      "trainTime": 40
+    },
+    "209": {
+      "id": 209,
+      "name": "UNIV",
+      "internalName": "UNIV",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 200
+      },
+      "trainTime": 60
+    },
+    "234": {
+      "id": 234,
+      "name": "WCTW2",
+      "internalName": "WCTW2",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 125,
+        "Wood": 35
+      },
+      "trainTime": 80
+    },
+    "235": {
+      "id": 235,
+      "name": "WCTW3",
+      "internalName": "WCTW3",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 125,
+        "Wood": 35
+      },
+      "trainTime": 80
+    },
+    "236": {
+      "id": 236,
+      "name": "WCTW4",
+      "internalName": "WCTW4",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 100,
+        "Stone": 125,
+        "Wood": 0
+      },
+      "trainTime": 80
+    },
+    "276": {
+      "id": 276,
+      "name": "WNDR",
+      "internalName": "WNDR",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 1000,
+        "Stone": 1000,
+        "Wood": 1000
+      },
+      "trainTime": 3500
+    },
+    "487": {
+      "id": 487,
+      "name": "GTAX2",
+      "internalName": "GTAX2",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 30
+      },
+      "trainTime": 70
+    },
+    "562": {
+      "id": 562,
+      "name": "Lumber Camp",
+      "internalName": "SMIL",
+      "kind": "building",
+      "roleKeys": [
+        "lumber_camp",
+        "economy"
+      ],
+      "cost": {
+        "Wood": 100
+      },
+      "trainTime": 35
+    },
+    "584": {
+      "id": 584,
+      "name": "Mining Camp",
+      "internalName": "MINE",
+      "kind": "building",
+      "roleKeys": [
+        "mining_camp",
+        "economy"
+      ],
+      "cost": {
+        "Wood": 100
+      },
+      "trainTime": 35
+    },
+    "598": {
+      "id": 598,
+      "name": "Outpost",
+      "internalName": "WCTWX",
+      "kind": "building",
+      "roleKeys": [
+        "outpost",
+        "vision"
+      ],
+      "cost": {
+        "Stone": 5,
+        "Wood": 25
+      },
+      "trainTime": 15
+    },
+    "621": {
+      "id": 621,
+      "name": "Town Center",
+      "internalName": "RTWC1X",
+      "kind": "building",
+      "roleKeys": [
+        "town_center",
+        "economy",
+        "population_production"
+      ],
+      "cost": {
+        "Stone": 100,
+        "Wood": 275
+      },
+      "trainTime": 150
+    },
+    "792": {
+      "id": 792,
+      "name": "PGTAX",
+      "internalName": "PGTAX",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 30
+      },
+      "trainTime": 30
+    },
+    "1021": {
+      "id": 1021,
+      "name": "FEITO",
+      "internalName": "FEITO",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 350,
+        "Stone": 300
+      },
+      "trainTime": 120
+    },
+    "1189": {
+      "id": 1189,
+      "name": "Harbor",
+      "internalName": "HARBOR",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 150
+      },
+      "trainTime": 35
+    },
+    "1251": {
+      "id": 1251,
+      "name": "KREPOST",
+      "internalName": "KREPOST",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 350
+      },
+      "trainTime": 150
+    },
+    "1665": {
+      "id": 1665,
+      "name": "Donjon",
+      "internalName": "DONJON",
+      "kind": "building",
+      "roleKeys": [
+        "tower",
+        "fortification",
+        "military_production"
+      ],
+      "cost": {
+        "Stone": 175,
+        "Wood": 50
+      },
+      "trainTime": 125
+    },
+    "1734": {
+      "id": 1734,
+      "name": "FOLWARK1",
+      "internalName": "FOLWARK1",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 100
+      },
+      "trainTime": 40
+    },
+    "1754": {
+      "id": 1754,
+      "name": "CARAVANSERAI",
+      "internalName": "CARAVANSERAI",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 50,
+        "Wood": 175
+      },
+      "trainTime": 60
+    },
+    "1806": {
+      "id": 1806,
+      "name": "FORTCRCH",
+      "internalName": "FORTCRCH",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 200
+      },
+      "trainTime": 40
+    },
+    "1808": {
+      "id": 1808,
+      "name": "Mule Cart",
+      "internalName": "MULECART",
+      "kind": "building",
+      "roleKeys": [
+        "mobile_dropoff",
+        "economy"
+      ],
+      "cost": {
+        "Food": 20,
+        "Wood": 80
+      },
+      "trainTime": 25
+    },
+    "1889": {
+      "id": 1889,
+      "name": "Pasture",
+      "internalName": "PASTURE_BUILD",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 110
+      },
+      "trainTime": 22
+    },
+    "2556": {
+      "id": 2556,
+      "name": "SETTL1",
+      "internalName": "SETTL1",
+      "kind": "building",
+      "roleKeys": [],
+      "cost": {
+        "Wood": 125
+      },
+      "trainTime": 40
+    }
+  },
+  "units": {
+    "4": {
+      "id": 4,
+      "name": "Archer",
+      "internalName": "ARCHR",
+      "kind": "unit",
+      "roleKeys": [
+        "archer",
+        "land_military",
+        "ranged"
+      ],
+      "cost": {
+        "Gold": 45,
+        "Wood": 25
+      },
+      "trainTime": 35
+    },
+    "5": {
+      "id": 5,
+      "name": "HCANR",
+      "internalName": "HCANR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 45,
+        "Gold": 50
+      },
+      "trainTime": 34
+    },
+    "6": {
+      "id": 6,
+      "name": "HXBOW",
+      "internalName": "HXBOW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 25,
+        "Wood": 35
+      },
+      "trainTime": 22
+    },
+    "7": {
+      "id": 7,
+      "name": "Skirmisher",
+      "internalName": "XBOWM",
+      "kind": "unit",
+      "roleKeys": [
+        "skirmisher",
+        "land_military",
+        "ranged"
+      ],
+      "cost": {
+        "Food": 25,
+        "Wood": 35
+      },
+      "trainTime": 26
+    },
+    "8": {
+      "id": 8,
+      "name": "LNGBW",
+      "internalName": "LNGBW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 40,
+        "Wood": 35
+      },
+      "trainTime": 18
+    },
+    "11": {
+      "id": 11,
+      "name": "MOSUN",
+      "internalName": "MOSUN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 65,
+        "Wood": 55
+      },
+      "trainTime": 26
+    },
+    "13": {
+      "id": 13,
+      "name": "Fishing Ship",
+      "internalName": "FSHSP",
+      "kind": "unit",
+      "roleKeys": [
+        "fishing_ship",
+        "economic_unit",
+        "water_unit"
+      ],
+      "cost": {
+        "Wood": 75
+      },
+      "trainTime": 40
+    },
+    "17": {
+      "id": 17,
+      "name": "Trade Cog",
+      "internalName": "COGXX",
+      "kind": "unit",
+      "roleKeys": [
+        "trade_unit",
+        "economic_unit",
+        "water_unit"
+      ],
+      "cost": {
+        "Gold": 50,
+        "Wood": 100
+      },
+      "trainTime": 36
+    },
+    "21": {
+      "id": 21,
+      "name": "GALLY",
+      "internalName": "GALLY",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 30,
+        "Wood": 90
+      },
+      "trainTime": 27
+    },
+    "24": {
+      "id": 24,
+      "name": "CARCH",
+      "internalName": "CARCH",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 25
+      },
+      "trainTime": 27
+    },
+    "25": {
+      "id": 25,
+      "name": "TKNIT",
+      "internalName": "TKNIT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 85,
+        "Gold": 30
+      },
+      "trainTime": 12
+    },
+    "36": {
+      "id": 36,
+      "name": "BCANN",
+      "internalName": "BCANN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 225,
+        "Wood": 225
+      },
+      "trainTime": 56
+    },
+    "38": {
+      "id": 38,
+      "name": "Knight",
+      "internalName": "KNGHT",
+      "kind": "unit",
+      "roleKeys": [
+        "knight",
+        "land_military",
+        "cavalry"
+      ],
+      "cost": {
+        "Food": 60,
+        "Gold": 75
+      },
+      "trainTime": 30
+    },
+    "39": {
+      "id": 39,
+      "name": "CVRCH",
+      "internalName": "CVRCH",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 40
+      },
+      "trainTime": 37
+    },
+    "40": {
+      "id": 40,
+      "name": "CATAP",
+      "internalName": "CATAP",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 75
+      },
+      "trainTime": 20
+    },
+    "41": {
+      "id": 41,
+      "name": "GBRSK",
+      "internalName": "GBRSK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 35
+      },
+      "trainTime": 13
+    },
+    "42": {
+      "id": 42,
+      "name": "Trebuchet",
+      "internalName": "TREBU",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 200,
+        "Wood": 200
+      },
+      "trainTime": 50
+    },
+    "46": {
+      "id": 46,
+      "name": "JANNI",
+      "internalName": "JANNI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 55
+      },
+      "trainTime": 21
+    },
+    "73": {
+      "id": 73,
+      "name": "CHUKN",
+      "internalName": "CHUKN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 35,
+        "Wood": 40
+      },
+      "trainTime": 16
+    },
+    "74": {
+      "id": 74,
+      "name": "Militia",
+      "internalName": "SPRMN",
+      "kind": "unit",
+      "roleKeys": [
+        "militia",
+        "land_military",
+        "infantry"
+      ],
+      "cost": {
+        "Food": 50,
+        "Gold": 20
+      },
+      "trainTime": 21
+    },
+    "75": {
+      "id": 75,
+      "name": "Man-at-Arms",
+      "internalName": "SWDMN",
+      "kind": "unit",
+      "roleKeys": [
+        "man_at_arms",
+        "land_military",
+        "infantry"
+      ],
+      "cost": {
+        "Food": 50,
+        "Gold": 20
+      },
+      "trainTime": 21
+    },
+    "77": {
+      "id": 77,
+      "name": "THSWD",
+      "internalName": "THSWD",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 20
+      },
+      "trainTime": 21
+    },
+    "83": {
+      "id": 83,
+      "name": "Villager",
+      "internalName": "VMBAS",
+      "kind": "unit",
+      "roleKeys": [
+        "villager",
+        "economic_unit"
+      ],
+      "cost": {
+        "Food": 50
+      },
+      "trainTime": 25
+    },
+    "93": {
+      "id": 93,
+      "name": "Spearman",
+      "internalName": "PKEMN",
+      "kind": "unit",
+      "roleKeys": [
+        "spearman",
+        "land_military",
+        "infantry"
+      ],
+      "cost": {
+        "Food": 35,
+        "Wood": 25
+      },
+      "trainTime": 22
+    },
+    "125": {
+      "id": 125,
+      "name": "Monk",
+      "internalName": "MONKX",
+      "kind": "unit",
+      "roleKeys": [
+        "monk",
+        "land_military",
+        "support"
+      ],
+      "cost": {
+        "Food": 0,
+        "Gold": 100
+      },
+      "trainTime": 51
+    },
+    "128": {
+      "id": 128,
+      "name": "Trade Cart",
+      "internalName": "TCART",
+      "kind": "unit",
+      "roleKeys": [
+        "trade_unit",
+        "economic_unit"
+      ],
+      "cost": {
+        "Gold": 50,
+        "Wood": 100
+      },
+      "trainTime": 51
+    },
+    "185": {
+      "id": 185,
+      "name": "SLINGR",
+      "internalName": "SLINGR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Wood": 25
+      },
+      "trainTime": 25
+    },
+    "207": {
+      "id": 207,
+      "name": "SHCLRY",
+      "internalName": "SHCLRY",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 60
+      },
+      "trainTime": 20
+    },
+    "232": {
+      "id": 232,
+      "name": "WBRSK",
+      "internalName": "WBRSK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 25
+      },
+      "trainTime": 10
+    },
+    "239": {
+      "id": 239,
+      "name": "MPCAV",
+      "internalName": "MPCAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 170,
+        "Gold": 85
+      },
+      "trainTime": 25
+    },
+    "250": {
+      "id": 250,
+      "name": "LNGBT",
+      "internalName": "LNGBT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 50,
+        "Wood": 100
+      },
+      "trainTime": 25
+    },
+    "279": {
+      "id": 279,
+      "name": "SCBAL",
+      "internalName": "SCBAL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 75,
+        "Wood": 75
+      },
+      "trainTime": 30
+    },
+    "280": {
+      "id": 280,
+      "name": "MANGO",
+      "internalName": "MANGO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 135,
+        "Wood": 160
+      },
+      "trainTime": 46
+    },
+    "281": {
+      "id": 281,
+      "name": "TAXEM",
+      "internalName": "TAXEM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 25
+      },
+      "trainTime": 13
+    },
+    "282": {
+      "id": 282,
+      "name": "DERVI",
+      "internalName": "DERVI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 85
+      },
+      "trainTime": 23
+    },
+    "283": {
+      "id": 283,
+      "name": "PALDN",
+      "internalName": "PALDN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 75
+      },
+      "trainTime": 30
+    },
+    "291": {
+      "id": 291,
+      "name": "SMURI",
+      "internalName": "SMURI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 45,
+        "Gold": 30
+      },
+      "trainTime": 9
+    },
+    "329": {
+      "id": 329,
+      "name": "CVLRY",
+      "internalName": "CVLRY",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 60
+      },
+      "trainTime": 22
+    },
+    "330": {
+      "id": 330,
+      "name": "HCLRY",
+      "internalName": "HCLRY",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 60
+      },
+      "trainTime": 22
+    },
+    "331": {
+      "id": 331,
+      "name": "PTREB",
+      "internalName": "PTREB",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 200,
+        "Wood": 200
+      },
+      "trainTime": 50
+    },
+    "358": {
+      "id": 358,
+      "name": "ISPKM",
+      "internalName": "ISPKM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Wood": 25
+      },
+      "trainTime": 22
+    },
+    "359": {
+      "id": 359,
+      "name": "HLBDM",
+      "internalName": "HLBDM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Wood": 25
+      },
+      "trainTime": 22
+    },
+    "420": {
+      "id": 420,
+      "name": "CANGA",
+      "internalName": "CANGA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 150,
+        "Wood": 200
+      },
+      "trainTime": 46
+    },
+    "422": {
+      "id": 422,
+      "name": "CBATR",
+      "internalName": "CBATR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 75,
+        "Wood": 160
+      },
+      "trainTime": 36
+    },
+    "440": {
+      "id": 440,
+      "name": "PETARD",
+      "internalName": "PETARD",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 20
+      },
+      "trainTime": 25
+    },
+    "441": {
+      "id": 441,
+      "name": "HUSSAR",
+      "internalName": "HUSSAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 80
+      },
+      "trainTime": 30
+    },
+    "442": {
+      "id": 442,
+      "name": "WARGA",
+      "internalName": "WARGA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 30,
+        "Wood": 90
+      },
+      "trainTime": 27
+    },
+    "448": {
+      "id": 448,
+      "name": "Scout Cavalry",
+      "internalName": "SCOUT",
+      "kind": "unit",
+      "roleKeys": [
+        "scout_cavalry",
+        "land_military",
+        "cavalry",
+        "raider"
+      ],
+      "cost": {
+        "Food": 80
+      },
+      "trainTime": 30
+    },
+    "473": {
+      "id": 473,
+      "name": "HTHSW",
+      "internalName": "HTHSW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 20
+      },
+      "trainTime": 21
+    },
+    "474": {
+      "id": 474,
+      "name": "HCVAR",
+      "internalName": "HCVAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 40
+      },
+      "trainTime": 30
+    },
+    "492": {
+      "id": 492,
+      "name": "ACOAR",
+      "internalName": "ACOAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 25
+      },
+      "trainTime": 27
+    },
+    "527": {
+      "id": 527,
+      "name": "RMSHP",
+      "internalName": "RMSHP",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 80,
+        "Wood": 45
+      },
+      "trainTime": 31
+    },
+    "528": {
+      "id": 528,
+      "name": "CRMSH",
+      "internalName": "CRMSH",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 80,
+        "Wood": 45
+      },
+      "trainTime": 31
+    },
+    "529": {
+      "id": 529,
+      "name": "FRGAL",
+      "internalName": "FRGAL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 75
+      },
+      "trainTime": 27
+    },
+    "530": {
+      "id": 530,
+      "name": "ULGBW",
+      "internalName": "ULGBW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 40,
+        "Wood": 35
+      },
+      "trainTime": 18
+    },
+    "531": {
+      "id": 531,
+      "name": "UTAXE",
+      "internalName": "UTAXE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 25
+      },
+      "trainTime": 13
+    },
+    "532": {
+      "id": 532,
+      "name": "HFGAL",
+      "internalName": "HFGAL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 75
+      },
+      "trainTime": 27
+    },
+    "533": {
+      "id": 533,
+      "name": "ULNGB",
+      "internalName": "ULNGB",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 50,
+        "Wood": 100
+      },
+      "trainTime": 25
+    },
+    "534": {
+      "id": 534,
+      "name": "UWBRS",
+      "internalName": "UWBRS",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 25
+      },
+      "trainTime": 10
+    },
+    "539": {
+      "id": 539,
+      "name": "Galley",
+      "internalName": "SGALY",
+      "kind": "unit",
+      "roleKeys": [
+        "galley",
+        "water_military",
+        "ranged"
+      ],
+      "cost": {
+        "Gold": 30,
+        "Wood": 90
+      },
+      "trainTime": 45
+    },
+    "542": {
+      "id": 542,
+      "name": "HWBAL",
+      "internalName": "HWBAL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 75,
+        "Wood": 75
+      },
+      "trainTime": 30
+    },
+    "545": {
+      "id": 545,
+      "name": "Transport Ship",
+      "internalName": "XPORT",
+      "kind": "unit",
+      "roleKeys": [
+        "transport_ship",
+        "water_unit"
+      ],
+      "cost": {
+        "Wood": 125
+      },
+      "trainTime": 46
+    },
+    "546": {
+      "id": 546,
+      "name": "LTCAV",
+      "internalName": "LTCAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 80
+      },
+      "trainTime": 30
+    },
+    "548": {
+      "id": 548,
+      "name": "SGRAM",
+      "internalName": "SGRAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 75,
+        "Wood": 160
+      },
+      "trainTime": 36
+    },
+    "550": {
+      "id": 550,
+      "name": "ONAGR",
+      "internalName": "ONAGR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 135,
+        "Wood": 160
+      },
+      "trainTime": 46
+    },
+    "553": {
+      "id": 553,
+      "name": "UCATA",
+      "internalName": "UCATA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 75
+      },
+      "trainTime": 20
+    },
+    "554": {
+      "id": 554,
+      "name": "UTKNI",
+      "internalName": "UTKNI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 85,
+        "Gold": 30
+      },
+      "trainTime": 12
+    },
+    "555": {
+      "id": 555,
+      "name": "UGBRS",
+      "internalName": "UGBRS",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 35
+      },
+      "trainTime": 13
+    },
+    "556": {
+      "id": 556,
+      "name": "UDERV",
+      "internalName": "UDERV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 85
+      },
+      "trainTime": 23
+    },
+    "557": {
+      "id": 557,
+      "name": "UJANI",
+      "internalName": "UJANI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 55
+      },
+      "trainTime": 21
+    },
+    "558": {
+      "id": 558,
+      "name": "UMPCAV",
+      "internalName": "UMPCAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 170,
+        "Gold": 85
+      },
+      "trainTime": 25
+    },
+    "559": {
+      "id": 559,
+      "name": "UCHUK",
+      "internalName": "UCHUK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 35,
+        "Wood": 40
+      },
+      "trainTime": 13
+    },
+    "560": {
+      "id": 560,
+      "name": "USMUR",
+      "internalName": "USMUR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 45,
+        "Gold": 30
+      },
+      "trainTime": 9
+    },
+    "561": {
+      "id": 561,
+      "name": "UMOSU",
+      "internalName": "UMOSU",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 65,
+        "Wood": 55
+      },
+      "trainTime": 26
+    },
+    "567": {
+      "id": 567,
+      "name": "HEROI",
+      "internalName": "HEROI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 20
+      },
+      "trainTime": 21
+    },
+    "569": {
+      "id": 569,
+      "name": "HEROC",
+      "internalName": "HEROC",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 75
+      },
+      "trainTime": 30
+    },
+    "588": {
+      "id": 588,
+      "name": "SNAGR",
+      "internalName": "SNAGR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 135,
+        "Wood": 160
+      },
+      "trainTime": 46
+    },
+    "691": {
+      "id": 691,
+      "name": "CNGAU",
+      "internalName": "CNGAU",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 150,
+        "Wood": 200
+      },
+      "trainTime": 46
+    },
+    "692": {
+      "id": 692,
+      "name": "VBRSK",
+      "internalName": "VBRSK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 20
+      },
+      "trainTime": 14
+    },
+    "694": {
+      "id": 694,
+      "name": "UVBRK",
+      "internalName": "UVBRK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 20
+      },
+      "trainTime": 12
+    },
+    "725": {
+      "id": 725,
+      "name": "JAGUAR",
+      "internalName": "JAGUAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 30
+      },
+      "trainTime": 12
+    },
+    "726": {
+      "id": 726,
+      "name": "JAGUARX",
+      "internalName": "JAGUARX",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 30
+      },
+      "trainTime": 12
+    },
+    "751": {
+      "id": 751,
+      "name": "EAGLE",
+      "internalName": "EAGLE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 20,
+        "Gold": 50
+      },
+      "trainTime": 50
+    },
+    "752": {
+      "id": 752,
+      "name": "EAGLEX",
+      "internalName": "EAGLEX",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 20,
+        "Gold": 50
+      },
+      "trainTime": 20
+    },
+    "753": {
+      "id": 753,
+      "name": "EAGLEH",
+      "internalName": "EAGLEH",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 20,
+        "Gold": 50
+      },
+      "trainTime": 35
+    },
+    "755": {
+      "id": 755,
+      "name": "TARKAN",
+      "internalName": "TARKAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 60
+      },
+      "trainTime": 14
+    },
+    "757": {
+      "id": 757,
+      "name": "UTARK",
+      "internalName": "UTARK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 60
+      },
+      "trainTime": 14
+    },
+    "759": {
+      "id": 759,
+      "name": "BHUSK",
+      "internalName": "BHUSK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 35
+      },
+      "trainTime": 13
+    },
+    "761": {
+      "id": 761,
+      "name": "BHUSKX",
+      "internalName": "BHUSKX",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 35
+      },
+      "trainTime": 13
+    },
+    "763": {
+      "id": 763,
+      "name": "PLUME",
+      "internalName": "PLUME",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 55,
+        "Wood": 55
+      },
+      "trainTime": 16
+    },
+    "765": {
+      "id": 765,
+      "name": "UPLUM",
+      "internalName": "UPLUM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 55,
+        "Wood": 55
+      },
+      "trainTime": 16
+    },
+    "771": {
+      "id": 771,
+      "name": "CONQI",
+      "internalName": "CONQI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 60
+      },
+      "trainTime": 24
+    },
+    "773": {
+      "id": 773,
+      "name": "UCONQ",
+      "internalName": "UCONQ",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 60
+      },
+      "trainTime": 24
+    },
+    "775": {
+      "id": 775,
+      "name": "MONKY",
+      "internalName": "MONKY",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 100
+      },
+      "trainTime": 51
+    },
+    "827": {
+      "id": 827,
+      "name": "WAGON",
+      "internalName": "WAGON",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 200
+      },
+      "trainTime": 21
+    },
+    "829": {
+      "id": 829,
+      "name": "UWAGO",
+      "internalName": "UWAGO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 200
+      },
+      "trainTime": 21
+    },
+    "831": {
+      "id": 831,
+      "name": "TURTL",
+      "internalName": "TURTL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 130,
+        "Wood": 190
+      },
+      "trainTime": 50
+    },
+    "832": {
+      "id": 832,
+      "name": "UTURT",
+      "internalName": "UTURT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 130,
+        "Wood": 190
+      },
+      "trainTime": 50
+    },
+    "866": {
+      "id": 866,
+      "name": "GENOE",
+      "internalName": "GENOE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 40,
+        "Wood": 45
+      },
+      "trainTime": 14
+    },
+    "868": {
+      "id": 868,
+      "name": "GENOE_E",
+      "internalName": "GENOE_E",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 40,
+        "Wood": 45
+      },
+      "trainTime": 14
+    },
+    "869": {
+      "id": 869,
+      "name": "UMAGYX",
+      "internalName": "UMAGYX",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Gold": 45
+      },
+      "trainTime": 12
+    },
+    "871": {
+      "id": 871,
+      "name": "UMAGYX",
+      "internalName": "UMAGYX",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Gold": 45
+      },
+      "trainTime": 12
+    },
+    "873": {
+      "id": 873,
+      "name": "ELEAR",
+      "internalName": "ELEAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 80
+      },
+      "trainTime": 32
+    },
+    "875": {
+      "id": 875,
+      "name": "UELEA",
+      "internalName": "UELEA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 80
+      },
+      "trainTime": 32
+    },
+    "876": {
+      "id": 876,
+      "name": "BOYAR",
+      "internalName": "BOYAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 70
+      },
+      "trainTime": 15
+    },
+    "878": {
+      "id": 878,
+      "name": "EBOYA",
+      "internalName": "EBOYA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 70
+      },
+      "trainTime": 15
+    },
+    "879": {
+      "id": 879,
+      "name": "KAMAY",
+      "internalName": "KAMAY",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 30
+      },
+      "trainTime": 10
+    },
+    "881": {
+      "id": 881,
+      "name": "EKAMA",
+      "internalName": "EKAMA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 30
+      },
+      "trainTime": 10
+    },
+    "882": {
+      "id": 882,
+      "name": "CONDO",
+      "internalName": "CONDO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 35
+      },
+      "trainTime": 18
+    },
+    "886": {
+      "id": 886,
+      "name": "TARKAN",
+      "internalName": "TARKAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 60
+      },
+      "trainTime": 14
+    },
+    "887": {
+      "id": 887,
+      "name": "UTARK",
+      "internalName": "UTARK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 60
+      },
+      "trainTime": 14
+    },
+    "1001": {
+      "id": 1001,
+      "name": "ORGAN",
+      "internalName": "ORGAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 70,
+        "Wood": 80
+      },
+      "trainTime": 25
+    },
+    "1003": {
+      "id": 1003,
+      "name": "EORGAN",
+      "internalName": "EORGAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 70,
+        "Wood": 80
+      },
+      "trainTime": 21
+    },
+    "1004": {
+      "id": 1004,
+      "name": "CARAV",
+      "internalName": "CARAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 43,
+        "Wood": 90
+      },
+      "trainTime": 25
+    },
+    "1006": {
+      "id": 1006,
+      "name": "CARAV",
+      "internalName": "CARAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 43,
+        "Wood": 90
+      },
+      "trainTime": 25
+    },
+    "1007": {
+      "id": 1007,
+      "name": "CAMAR",
+      "internalName": "CAMAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 50
+      },
+      "trainTime": 25
+    },
+    "1009": {
+      "id": 1009,
+      "name": "ECAMAR",
+      "internalName": "ECAMAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 50
+      },
+      "trainTime": 25
+    },
+    "1010": {
+      "id": 1010,
+      "name": "GENITO",
+      "internalName": "GENITO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 40,
+        "Wood": 35
+      },
+      "trainTime": 25
+    },
+    "1012": {
+      "id": 1012,
+      "name": "EGENITO",
+      "internalName": "EGENITO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 40,
+        "Wood": 35
+      },
+      "trainTime": 23
+    },
+    "1013": {
+      "id": 1013,
+      "name": "GBETO",
+      "internalName": "GBETO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 40
+      },
+      "trainTime": 17
+    },
+    "1015": {
+      "id": 1015,
+      "name": "EGBETO",
+      "internalName": "EGBETO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 40
+      },
+      "trainTime": 17
+    },
+    "1016": {
+      "id": 1016,
+      "name": "SHOTEL",
+      "internalName": "SHOTEL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 30
+      },
+      "trainTime": 8
+    },
+    "1018": {
+      "id": 1018,
+      "name": "ESHOTEL",
+      "internalName": "ESHOTEL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 30
+      },
+      "trainTime": 4
+    },
+    "1103": {
+      "id": 1103,
+      "name": "Fire Galley",
+      "internalName": "SFRGAL",
+      "kind": "unit",
+      "roleKeys": [
+        "fire_galley",
+        "water_military"
+      ],
+      "cost": {
+        "Gold": 45,
+        "Wood": 75
+      },
+      "trainTime": 49
+    },
+    "1104": {
+      "id": 1104,
+      "name": "Demolition Raft",
+      "internalName": "SDGAL",
+      "kind": "unit",
+      "roleKeys": [
+        "demolition_raft",
+        "water_military"
+      ],
+      "cost": {
+        "Gold": 80,
+        "Wood": 45
+      },
+      "trainTime": 45
+    },
+    "1105": {
+      "id": 1105,
+      "name": "SIEGTWR",
+      "internalName": "SIEGTWR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 120,
+        "Wood": 100
+      },
+      "trainTime": 36
+    },
+    "1120": {
+      "id": 1120,
+      "name": "ELEBALI",
+      "internalName": "ELEBALI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 80
+      },
+      "trainTime": 25
+    },
+    "1122": {
+      "id": 1122,
+      "name": "EELEBALI",
+      "internalName": "EELEBALI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 80
+      },
+      "trainTime": 25
+    },
+    "1123": {
+      "id": 1123,
+      "name": "KARAM",
+      "internalName": "KARAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 25,
+        "Gold": 15
+      },
+      "trainTime": 6
+    },
+    "1125": {
+      "id": 1125,
+      "name": "EKARAM",
+      "internalName": "EKARAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 25,
+        "Gold": 15
+      },
+      "trainTime": 6
+    },
+    "1126": {
+      "id": 1126,
+      "name": "ARAMBAI",
+      "internalName": "ARAMBAI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 75
+      },
+      "trainTime": 18
+    },
+    "1128": {
+      "id": 1128,
+      "name": "EARAMBAI",
+      "internalName": "EARAMBAI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 75
+      },
+      "trainTime": 18
+    },
+    "1129": {
+      "id": 1129,
+      "name": "RATAN",
+      "internalName": "RATAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 50
+      },
+      "trainTime": 16
+    },
+    "1131": {
+      "id": 1131,
+      "name": "ERATAN",
+      "internalName": "ERATAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 50
+      },
+      "trainTime": 16
+    },
+    "1132": {
+      "id": 1132,
+      "name": "BATELE",
+      "internalName": "BATELE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 70
+      },
+      "trainTime": 24
+    },
+    "1134": {
+      "id": 1134,
+      "name": "EBATELE",
+      "internalName": "EBATELE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 70
+      },
+      "trainTime": 24
+    },
+    "1155": {
+      "id": 1155,
+      "name": "IHXBOW",
+      "internalName": "IHXBOW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 25,
+        "Wood": 35
+      },
+      "trainTime": 22
+    },
+    "1225": {
+      "id": 1225,
+      "name": "KONNIK",
+      "internalName": "KONNIK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 70
+      },
+      "trainTime": 16
+    },
+    "1227": {
+      "id": 1227,
+      "name": "EKONNIK",
+      "internalName": "EKONNIK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 70
+      },
+      "trainTime": 16
+    },
+    "1228": {
+      "id": 1228,
+      "name": "KESHIK",
+      "internalName": "KESHIK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 40
+      },
+      "trainTime": 17
+    },
+    "1230": {
+      "id": 1230,
+      "name": "EKESHIK",
+      "internalName": "EKESHIK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 40
+      },
+      "trainTime": 15
+    },
+    "1231": {
+      "id": 1231,
+      "name": "KIPCHAK",
+      "internalName": "KIPCHAK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 35,
+        "Wood": 60
+      },
+      "trainTime": 20
+    },
+    "1233": {
+      "id": 1233,
+      "name": "EKIPCHAK",
+      "internalName": "EKIPCHAK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 35,
+        "Wood": 60
+      },
+      "trainTime": 20
+    },
+    "1234": {
+      "id": 1234,
+      "name": "LEITIS",
+      "internalName": "LEITIS",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 50
+      },
+      "trainTime": 20
+    },
+    "1236": {
+      "id": 1236,
+      "name": "ELEITIS",
+      "internalName": "ELEITIS",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 50
+      },
+      "trainTime": 18
+    },
+    "1252": {
+      "id": 1252,
+      "name": "Konnik (Dismounted)",
+      "internalName": "KONNIK_INF",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 0
+      },
+      "trainTime": 16
+    },
+    "1253": {
+      "id": 1253,
+      "name": "Elite Konnik (Dismounted)",
+      "internalName": "EKONNIK_INF",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 0
+      },
+      "trainTime": 16
+    },
+    "1254": {
+      "id": 1254,
+      "name": "KONNIK",
+      "internalName": "KONNIK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 70
+      },
+      "trainTime": 16
+    },
+    "1255": {
+      "id": 1255,
+      "name": "EKONNIK",
+      "internalName": "EKONNIK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 70
+      },
+      "trainTime": 16
+    },
+    "1258": {
+      "id": 1258,
+      "name": "BTRAM",
+      "internalName": "BTRAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 75,
+        "Wood": 160
+      },
+      "trainTime": 36
+    },
+    "1260": {
+      "id": 1260,
+      "name": "MKIPCHAK",
+      "internalName": "MKIPCHAK",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {},
+      "trainTime": 12
+    },
+    "1263": {
+      "id": 1263,
+      "name": "FCAMEL",
+      "internalName": "FCAMEL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 30
+      },
+      "trainTime": 30
+    },
+    "1302": {
+      "id": 1302,
+      "name": "DRAGS",
+      "internalName": "DRAGS",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 75
+      },
+      "trainTime": 27
+    },
+    "1370": {
+      "id": 1370,
+      "name": "SLANCER",
+      "internalName": "SLANCER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 40
+      },
+      "trainTime": 24
+    },
+    "1372": {
+      "id": 1372,
+      "name": "ESLANCER",
+      "internalName": "ESLANCER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 40
+      },
+      "trainTime": 20
+    },
+    "1570": {
+      "id": 1570,
+      "name": "Xolotl Warrior",
+      "internalName": "AZTRAIDER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 75
+      },
+      "trainTime": 30
+    },
+    "1655": {
+      "id": 1655,
+      "name": "COUSTILLIER",
+      "internalName": "COUSTILLIER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 55
+      },
+      "trainTime": 15
+    },
+    "1657": {
+      "id": 1657,
+      "name": "ECOUSTILLIER",
+      "internalName": "ECOUSTILLIER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 55
+      },
+      "trainTime": 14
+    },
+    "1658": {
+      "id": 1658,
+      "name": "SERJEANT",
+      "internalName": "SERJEANT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 25
+      },
+      "trainTime": 12
+    },
+    "1659": {
+      "id": 1659,
+      "name": "ESERJEANT",
+      "internalName": "ESERJEANT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 25
+      },
+      "trainTime": 12
+    },
+    "1660": {
+      "id": 1660,
+      "name": "DSERJEANT",
+      "internalName": "DSERJEANT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 25
+      },
+      "trainTime": 16
+    },
+    "1661": {
+      "id": 1661,
+      "name": "EDSERJEANT",
+      "internalName": "EDSERJEANT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 25
+      },
+      "trainTime": 12
+    },
+    "1699": {
+      "id": 1699,
+      "name": "FLEMISHPIKEMAN2",
+      "internalName": "FLEMISHPIKEMAN2",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 30,
+        "Gold": 25
+      },
+      "trainTime": 14
+    },
+    "1701": {
+      "id": 1701,
+      "name": "OBUCH",
+      "internalName": "OBUCH",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 20
+      },
+      "trainTime": 12
+    },
+    "1703": {
+      "id": 1703,
+      "name": "EOBUCH",
+      "internalName": "EOBUCH",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 20
+      },
+      "trainTime": 12
+    },
+    "1704": {
+      "id": 1704,
+      "name": "HUSSITEWAGON",
+      "internalName": "HUSSITEWAGON",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 70,
+        "Wood": 110
+      },
+      "trainTime": 30
+    },
+    "1706": {
+      "id": 1706,
+      "name": "EHUSSITEWAGON",
+      "internalName": "EHUSSITEWAGON",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 70,
+        "Wood": 110
+      },
+      "trainTime": 26
+    },
+    "1707": {
+      "id": 1707,
+      "name": "WINGEDHUSSAR",
+      "internalName": "WINGEDHUSSAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 80
+      },
+      "trainTime": 30
+    },
+    "1709": {
+      "id": 1709,
+      "name": "HOUFNICE",
+      "internalName": "HOUFNICE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 225,
+        "Wood": 225
+      },
+      "trainTime": 56
+    },
+    "1735": {
+      "id": 1735,
+      "name": "URUMI",
+      "internalName": "URUMI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 20
+      },
+      "trainTime": 9
+    },
+    "1737": {
+      "id": 1737,
+      "name": "EURUMI",
+      "internalName": "EURUMI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 20
+      },
+      "trainTime": 9
+    },
+    "1738": {
+      "id": 1738,
+      "name": "Ratha (Melee)",
+      "internalName": "RATHA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 60
+      },
+      "trainTime": 20
+    },
+    "1740": {
+      "id": 1740,
+      "name": "Elite Ratha (Melee)",
+      "internalName": "ERATHA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 60
+      },
+      "trainTime": 18
+    },
+    "1741": {
+      "id": 1741,
+      "name": "CHAKRAM",
+      "internalName": "CHAKRAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 30
+      },
+      "trainTime": 15
+    },
+    "1743": {
+      "id": 1743,
+      "name": "ECHAKRAM",
+      "internalName": "ECHAKRAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 30
+      },
+      "trainTime": 15
+    },
+    "1744": {
+      "id": 1744,
+      "name": "ARELE",
+      "internalName": "ARELE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 120,
+        "Gold": 95
+      },
+      "trainTime": 36
+    },
+    "1746": {
+      "id": 1746,
+      "name": "EARELE",
+      "internalName": "EARELE",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 120,
+        "Gold": 95
+      },
+      "trainTime": 36
+    },
+    "1747": {
+      "id": 1747,
+      "name": "GHULAM",
+      "internalName": "GHULAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 30,
+        "Gold": 45
+      },
+      "trainTime": 12
+    },
+    "1749": {
+      "id": 1749,
+      "name": "EGHULAM",
+      "internalName": "EGHULAM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 30,
+        "Gold": 45
+      },
+      "trainTime": 12
+    },
+    "1750": {
+      "id": 1750,
+      "name": "THIRISADAI",
+      "internalName": "THIRISADAI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 180
+      },
+      "trainTime": 40
+    },
+    "1751": {
+      "id": 1751,
+      "name": "SHRIVAMSHA",
+      "internalName": "SHRIVAMSHA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 30
+      },
+      "trainTime": 20
+    },
+    "1753": {
+      "id": 1753,
+      "name": "ESHRIVAMSHA",
+      "internalName": "ESHRIVAMSHA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 30
+      },
+      "trainTime": 20
+    },
+    "1755": {
+      "id": 1755,
+      "name": "CAMELSC",
+      "internalName": "CAMELSC",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 55,
+        "Gold": 60
+      },
+      "trainTime": 22
+    },
+    "1759": {
+      "id": 1759,
+      "name": "Ratha (Ranged)",
+      "internalName": "RATHA2",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 60
+      },
+      "trainTime": 20
+    },
+    "1761": {
+      "id": 1761,
+      "name": "Elite Ratha (Ranged)",
+      "internalName": "ERATHA2",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 60
+      },
+      "trainTime": 18
+    },
+    "1786": {
+      "id": 1786,
+      "name": "DPKEMN",
+      "internalName": "DPKEMN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Wood": 25
+      },
+      "trainTime": 22
+    },
+    "1787": {
+      "id": 1787,
+      "name": "DISPKM",
+      "internalName": "DISPKM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Wood": 25
+      },
+      "trainTime": 22
+    },
+    "1788": {
+      "id": 1788,
+      "name": "DHLBDM",
+      "internalName": "DHLBDM",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Wood": 25
+      },
+      "trainTime": 22
+    },
+    "1790": {
+      "id": 1790,
+      "name": "CENTURION",
+      "internalName": "CENTURION",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 85
+      },
+      "trainTime": 24
+    },
+    "1792": {
+      "id": 1792,
+      "name": "ECENTURION",
+      "internalName": "ECENTURION",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 85
+      },
+      "trainTime": 24
+    },
+    "1793": {
+      "id": 1793,
+      "name": "LEGIONARY",
+      "internalName": "LEGIONARY",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 20
+      },
+      "trainTime": 21
+    },
+    "1795": {
+      "id": 1795,
+      "name": "DROMON",
+      "internalName": "DROMON",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 150,
+        "Wood": 175
+      },
+      "trainTime": 65
+    },
+    "1800": {
+      "id": 1800,
+      "name": "COMPBOW",
+      "internalName": "COMPBOW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 35
+      },
+      "trainTime": 12
+    },
+    "1802": {
+      "id": 1802,
+      "name": "ECOMPBOW",
+      "internalName": "ECOMPBOW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 35
+      },
+      "trainTime": 10
+    },
+    "1803": {
+      "id": 1803,
+      "name": "MONASPA",
+      "internalName": "MONASPA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 45
+      },
+      "trainTime": 14
+    },
+    "1805": {
+      "id": 1805,
+      "name": "EMONASPA",
+      "internalName": "EMONASPA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 45
+      },
+      "trainTime": 14
+    },
+    "1811": {
+      "id": 1811,
+      "name": "WARRIORPRIEST",
+      "internalName": "WARRIORPRIEST",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 40,
+        "Gold": 50
+      },
+      "trainTime": 30
+    },
+    "1813": {
+      "id": 1813,
+      "name": "SAVAR",
+      "internalName": "SAVAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 75
+      },
+      "trainTime": 30
+    },
+    "1901": {
+      "id": 1901,
+      "name": "FLNCER",
+      "internalName": "FLNCER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 45
+      },
+      "trainTime": 35
+    },
+    "1903": {
+      "id": 1903,
+      "name": "EFLNCER",
+      "internalName": "EFLNCER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 45
+      },
+      "trainTime": 25
+    },
+    "1904": {
+      "id": 1904,
+      "name": "RCKTCRT",
+      "internalName": "RCKTCRT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 155,
+        "Wood": 135
+      },
+      "trainTime": 40
+    },
+    "1907": {
+      "id": 1907,
+      "name": "HRCKTCRT",
+      "internalName": "HRCKTCRT",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 155,
+        "Wood": 135
+      },
+      "trainTime": 40
+    },
+    "1908": {
+      "id": 1908,
+      "name": "IRONPAG",
+      "internalName": "IRONPAG",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 80,
+        "Gold": 55
+      },
+      "trainTime": 14
+    },
+    "1910": {
+      "id": 1910,
+      "name": "EIRONPAG",
+      "internalName": "EIRONPAG",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 80,
+        "Gold": 55
+      },
+      "trainTime": 14
+    },
+    "1911": {
+      "id": 1911,
+      "name": "GRNADR",
+      "internalName": "GRNADR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 35,
+        "Gold": 65
+      },
+      "trainTime": 21
+    },
+    "1920": {
+      "id": 1920,
+      "name": "LIAODAO",
+      "internalName": "LIAODAO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 40,
+        "Gold": 40
+      },
+      "trainTime": 12
+    },
+    "1922": {
+      "id": 1922,
+      "name": "ELIAODAO",
+      "internalName": "ELIAODAO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 40,
+        "Gold": 40
+      },
+      "trainTime": 12
+    },
+    "1923": {
+      "id": 1923,
+      "name": "SIEGECAMEL",
+      "internalName": "SIEGECAMEL",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 175,
+        "Gold": 175
+      },
+      "trainTime": 46
+    },
+    "1942": {
+      "id": 1942,
+      "name": "TRTREB",
+      "internalName": "TRTREB",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 210,
+        "Wood": 175
+      },
+      "trainTime": 70
+    },
+    "1944": {
+      "id": 1944,
+      "name": "HKUCAV",
+      "internalName": "HKUCAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 65
+      },
+      "trainTime": 28
+    },
+    "1946": {
+      "id": 1946,
+      "name": "HHKUCAV",
+      "internalName": "HHKUCAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 65
+      },
+      "trainTime": 28
+    },
+    "1948": {
+      "id": 1948,
+      "name": "LOUCHUAN",
+      "internalName": "LOUCHUAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 225,
+        "Wood": 250
+      },
+      "trainTime": 60
+    },
+    "1949": {
+      "id": 1949,
+      "name": "TIGERCAV",
+      "internalName": "TIGERCAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 80
+      },
+      "trainTime": 18
+    },
+    "1951": {
+      "id": 1951,
+      "name": "ETIGERCAV",
+      "internalName": "ETIGERCAV",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 80
+      },
+      "trainTime": 18
+    },
+    "1952": {
+      "id": 1952,
+      "name": "XIANBEI",
+      "internalName": "XIANBEI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 25,
+        "Wood": 65
+      },
+      "trainTime": 29
+    },
+    "1954": {
+      "id": 1954,
+      "name": "CAOCAO",
+      "internalName": "CAOCAO",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 500
+      },
+      "trainTime": 60
+    },
+    "1959": {
+      "id": 1959,
+      "name": "WHTFTHRG",
+      "internalName": "WHTFTHRG",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 15
+      },
+      "trainTime": 11
+    },
+    "1961": {
+      "id": 1961,
+      "name": "EWHTFTHRG",
+      "internalName": "EWHTFTHRG",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 60,
+        "Gold": 15
+      },
+      "trainTime": 11
+    },
+    "1962": {
+      "id": 1962,
+      "name": "War Chariot (Focus Fire)",
+      "internalName": "WARCHAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 90
+      },
+      "trainTime": 28
+    },
+    "1966": {
+      "id": 1966,
+      "name": "LIUBEI",
+      "internalName": "LIUBEI",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 500
+      },
+      "trainTime": 60
+    },
+    "1968": {
+      "id": 1968,
+      "name": "FIREARCHER",
+      "internalName": "FIREARCHER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 45
+      },
+      "trainTime": 17
+    },
+    "1970": {
+      "id": 1970,
+      "name": "EFIREARCHER",
+      "internalName": "EFIREARCHER",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 45
+      },
+      "trainTime": 17
+    },
+    "1974": {
+      "id": 1974,
+      "name": "JIANSWDS",
+      "internalName": "JIANSWDS",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 45,
+        "Gold": 50
+      },
+      "trainTime": 35
+    },
+    "1978": {
+      "id": 1978,
+      "name": "SUNJIAN",
+      "internalName": "SUNJIAN",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 500
+      },
+      "trainTime": 60
+    },
+    "1980": {
+      "id": 1980,
+      "name": "War Chariot (Barrage)",
+      "internalName": "WARCHAR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 90
+      },
+      "trainTime": 28
+    },
+    "2550": {
+      "id": 2550,
+      "name": "CHAMPIR",
+      "internalName": "CHAMPIR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 25
+      },
+      "trainTime": 42
+    },
+    "2552": {
+      "id": 2552,
+      "name": "CHAMPIW",
+      "internalName": "CHAMPIW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 25
+      },
+      "trainTime": 26
+    },
+    "2554": {
+      "id": 2554,
+      "name": "ECHAMPIW",
+      "internalName": "ECHAMPIW",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 25
+      },
+      "trainTime": 21
+    },
+    "2562": {
+      "id": 2562,
+      "name": "GUECHA",
+      "internalName": "GUECHA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 50
+      },
+      "trainTime": 17
+    },
+    "2564": {
+      "id": 2564,
+      "name": "EGUECHA",
+      "internalName": "EGUECHA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 60,
+        "Wood": 50
+      },
+      "trainTime": 17
+    },
+    "2566": {
+      "id": 2566,
+      "name": "KONA",
+      "internalName": "KONA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 40
+      },
+      "trainTime": 14
+    },
+    "2568": {
+      "id": 2568,
+      "name": "EKONA",
+      "internalName": "EKONA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 65,
+        "Gold": 40
+      },
+      "trainTime": 14
+    },
+    "2569": {
+      "id": 2569,
+      "name": "BOLASR",
+      "internalName": "BOLASR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 50,
+        "Wood": 45
+      },
+      "trainTime": 34
+    },
+    "2571": {
+      "id": 2571,
+      "name": "EBOLASR",
+      "internalName": "EBOLASR",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 50,
+        "Wood": 45
+      },
+      "trainTime": 28
+    },
+    "2579": {
+      "id": 2579,
+      "name": "BLCKWOOD",
+      "internalName": "BLCKWOOD",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 35
+      },
+      "trainTime": 18
+    },
+    "2581": {
+      "id": 2581,
+      "name": "EBLCKWOOD",
+      "internalName": "EBLCKWOOD",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 45,
+        "Wood": 35
+      },
+      "trainTime": 14
+    },
+    "2582": {
+      "id": 2582,
+      "name": "IBIRAP",
+      "internalName": "IBIRAP",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 30,
+        "Gold": 60
+      },
+      "trainTime": 24
+    },
+    "2584": {
+      "id": 2584,
+      "name": "EIBIRAP",
+      "internalName": "EIBIRAP",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 30,
+        "Gold": 60
+      },
+      "trainTime": 24
+    },
+    "2586": {
+      "id": 2586,
+      "name": "Temple Guard",
+      "internalName": "Temple Guard",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 45
+      },
+      "trainTime": 28
+    },
+    "2587": {
+      "id": 2587,
+      "name": "Elite Temple Guard",
+      "internalName": "Elite Temple Guard",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 70,
+        "Gold": 45
+      },
+      "trainTime": 24
+    },
+    "2588": {
+      "id": 2588,
+      "name": "CHAMPIS",
+      "internalName": "CHAMPIS",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 25
+      },
+      "trainTime": 34
+    },
+    "2626": {
+      "id": 2626,
+      "name": "Hulk",
+      "internalName": "Hulk",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 35,
+        "Wood": 75
+      },
+      "trainTime": 42
+    },
+    "2627": {
+      "id": 2627,
+      "name": "War hulk",
+      "internalName": "War hulk",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 35,
+        "Wood": 75
+      },
+      "trainTime": 27
+    },
+    "2628": {
+      "id": 2628,
+      "name": "Carrack",
+      "internalName": "Carrack",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 35,
+        "Wood": 75
+      },
+      "trainTime": 27
+    },
+    "2633": {
+      "id": 2633,
+      "name": "CATAGA",
+      "internalName": "CATAGA",
+      "kind": "unit",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 100,
+        "Wood": 225
+      },
+      "trainTime": 55
+    }
+  },
+  "technologies": {
+    "3": {
+      "id": 3,
+      "name": "British Yeoman",
+      "internalName": "British Yeoman",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 450,
+        "Wood": 750
+      },
+      "researchTime": 60
+    },
+    "4": {
+      "id": 4,
+      "name": "Mayan El Dorado",
+      "internalName": "Mayan El Dorado",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 750,
+        "Gold": 450
+      },
+      "researchTime": 70
+    },
+    "5": {
+      "id": 5,
+      "name": "Celtic Furor Celtica",
+      "internalName": "Celtic Furor Celtica",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 750,
+        "Gold": 450
+      },
+      "researchTime": 50
+    },
+    "6": {
+      "id": 6,
+      "name": "Mongol Siege Drill",
+      "internalName": "Mongol Siege Drill",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 450,
+        "Wood": 500
+      },
+      "researchTime": 60
+    },
+    "7": {
+      "id": 7,
+      "name": "Citadels",
+      "internalName": "Citadels",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 300,
+        "Wood": 600
+      },
+      "researchTime": 50
+    },
+    "8": {
+      "id": 8,
+      "name": "Town Watch",
+      "internalName": "Town Watch",
+      "kind": "technology",
+      "roleKeys": [
+        "town_watch"
+      ],
+      "cost": {
+        "Food": 75
+      },
+      "researchTime": 25
+    },
+    "10": {
+      "id": 10,
+      "name": "Turkish Artillery",
+      "internalName": "Turkish Artillery",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 600,
+        "Gold": 650
+      },
+      "researchTime": 40
+    },
+    "11": {
+      "id": 11,
+      "name": "Teuton Crenellations",
+      "internalName": "Teuton Crenellations",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 600,
+        "Stone": 400
+      },
+      "researchTime": 60
+    },
+    "12": {
+      "id": 12,
+      "name": "Crop rotation",
+      "internalName": "Crop rotation",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Wood": 250
+      },
+      "researchTime": 70
+    },
+    "13": {
+      "id": 13,
+      "name": "Heavy plow",
+      "internalName": "Heavy plow",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 125,
+        "Wood": 125
+      },
+      "researchTime": 40
+    },
+    "14": {
+      "id": 14,
+      "name": "Horse Collar",
+      "internalName": "Horse collar",
+      "kind": "technology",
+      "roleKeys": [
+        "horse_collar",
+        "eco_tech"
+      ],
+      "cost": {
+        "Food": 75,
+        "Wood": 75
+      },
+      "researchTime": 20
+    },
+    "15": {
+      "id": 15,
+      "name": "Guilds",
+      "internalName": "Guilds",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 200
+      },
+      "researchTime": 50
+    },
+    "16": {
+      "id": 16,
+      "name": "Gothic Anarchy",
+      "internalName": "Gothic Anarchy",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 450,
+        "Gold": 250
+      },
+      "researchTime": 40
+    },
+    "17": {
+      "id": 17,
+      "name": "Banking",
+      "internalName": "Banking",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 200
+      },
+      "researchTime": 70
+    },
+    "19": {
+      "id": 19,
+      "name": "Cartography",
+      "internalName": "Cartography",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 0
+      },
+      "researchTime": 1
+    },
+    "21": {
+      "id": 21,
+      "name": "Hun Atheism",
+      "internalName": "Hun Atheism",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Wood": 300
+      },
+      "researchTime": 60
+    },
+    "22": {
+      "id": 22,
+      "name": "Loom",
+      "internalName": "Loom",
+      "kind": "technology",
+      "roleKeys": [
+        "loom",
+        "eco_tech"
+      ],
+      "cost": {
+        "Gold": 50
+      },
+      "researchTime": 25
+    },
+    "23": {
+      "id": 23,
+      "name": "Coinage",
+      "internalName": "Coinage",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 100
+      },
+      "researchTime": 70
+    },
+    "24": {
+      "id": 24,
+      "name": "Aztec Garland Wars",
+      "internalName": "Aztec Garland Wars",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 450,
+        "Gold": 750
+      },
+      "researchTime": 60
+    },
+    "28": {
+      "id": 28,
+      "name": "Bimaristan",
+      "internalName": "Bimaristan",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 200,
+        "Wood": 300
+      },
+      "researchTime": 50
+    },
+    "34": {
+      "id": 34,
+      "name": "War Galley",
+      "internalName": "War Galley",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 100,
+        "Wood": 150
+      },
+      "researchTime": 50
+    },
+    "35": {
+      "id": 35,
+      "name": "Galleon",
+      "internalName": "Galleon",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 315,
+        "Wood": 400
+      },
+      "researchTime": 65
+    },
+    "39": {
+      "id": 39,
+      "name": "Husbandry",
+      "internalName": "Husbandry",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150
+      },
+      "researchTime": 40
+    },
+    "45": {
+      "id": 45,
+      "name": "Faith",
+      "internalName": "Faith",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 550,
+        "Gold": 750
+      },
+      "researchTime": 60
+    },
+    "46": {
+      "id": 46,
+      "name": "Devotion",
+      "internalName": "Devotion",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 200
+      },
+      "researchTime": 40
+    },
+    "47": {
+      "id": 47,
+      "name": "Chemistry",
+      "internalName": "Chemistry",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 200
+      },
+      "researchTime": 100
+    },
+    "48": {
+      "id": 48,
+      "name": "Caravan",
+      "internalName": "Caravan",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 200
+      },
+      "researchTime": 40
+    },
+    "49": {
+      "id": 49,
+      "name": "Bogsveigar",
+      "internalName": "Bogsveigar",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 500
+      },
+      "researchTime": 40
+    },
+    "50": {
+      "id": 50,
+      "name": "Masonry",
+      "internalName": "Masonry",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150,
+        "Wood": 175
+      },
+      "researchTime": 50
+    },
+    "51": {
+      "id": 51,
+      "name": "Architecture",
+      "internalName": "Architecture",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Wood": 200
+      },
+      "researchTime": 70
+    },
+    "52": {
+      "id": 52,
+      "name": "Chinese Rocketry",
+      "internalName": "Chinese Rocketry",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 1100,
+        "Gold": 900
+      },
+      "researchTime": 60
+    },
+    "54": {
+      "id": 54,
+      "name": "Stone cutting",
+      "internalName": "Stone cutting",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 50,
+        "Wood": 200
+      },
+      "researchTime": 20
+    },
+    "55": {
+      "id": 55,
+      "name": "Gold Mining",
+      "internalName": "Gold Mining",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Wood": 75
+      },
+      "researchTime": 30
+    },
+    "59": {
+      "id": 59,
+      "name": "Japanese Kataparuto",
+      "internalName": "Japanese Kataparuto",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 300,
+        "Wood": 550
+      },
+      "researchTime": 60
+    },
+    "61": {
+      "id": 61,
+      "name": "Byzantine Logistica",
+      "internalName": "Byzantine Logistica",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 800,
+        "Gold": 600
+      },
+      "researchTime": 50
+    },
+    "63": {
+      "id": 63,
+      "name": "Keep",
+      "internalName": "Keep",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Wood": 350
+      },
+      "researchTime": 75
+    },
+    "64": {
+      "id": 64,
+      "name": "Bombard Tower",
+      "internalName": "Bombard Tower",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 800,
+        "Wood": 400
+      },
+      "researchTime": 60
+    },
+    "65": {
+      "id": 65,
+      "name": "Gillnets",
+      "internalName": "Gillnets",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Wood": 125
+      },
+      "researchTime": 30
+    },
+    "67": {
+      "id": 67,
+      "name": "Forging",
+      "internalName": "Forging",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150
+      },
+      "researchTime": 50
+    },
+    "68": {
+      "id": 68,
+      "name": "Iron casting",
+      "internalName": "Iron casting",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 220,
+        "Gold": 120
+      },
+      "researchTime": 75
+    },
+    "74": {
+      "id": 74,
+      "name": "Scale Mail Armor",
+      "internalName": "Scale Mail Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100
+      },
+      "researchTime": 40
+    },
+    "75": {
+      "id": 75,
+      "name": "Blast Furnace",
+      "internalName": "Blast Furnace",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 275,
+        "Gold": 225
+      },
+      "researchTime": 100
+    },
+    "76": {
+      "id": 76,
+      "name": "Chain Mail Armor",
+      "internalName": "Chain Mail Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 100
+      },
+      "researchTime": 55
+    },
+    "77": {
+      "id": 77,
+      "name": "Plate Mail Armor",
+      "internalName": "Plate Mail Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 150
+      },
+      "researchTime": 70
+    },
+    "80": {
+      "id": 80,
+      "name": "Plate Barding Armor",
+      "internalName": "Plate Barding Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 350,
+        "Gold": 200
+      },
+      "researchTime": 75
+    },
+    "81": {
+      "id": 81,
+      "name": "Scale Barding Armor",
+      "internalName": "Scale Barding Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150
+      },
+      "researchTime": 45
+    },
+    "82": {
+      "id": 82,
+      "name": "Chain Barding Armor",
+      "internalName": "Chain Barding Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 150
+      },
+      "researchTime": 60
+    },
+    "83": {
+      "id": 83,
+      "name": "Frankish Bearded Axe",
+      "internalName": "Frankish Bearded Axe",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 300
+      },
+      "researchTime": 60
+    },
+    "90": {
+      "id": 90,
+      "name": "Tracking",
+      "internalName": "Tracking",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {},
+      "researchTime": 0
+    },
+    "93": {
+      "id": 93,
+      "name": "Ballistics",
+      "internalName": "Ballistics",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 175,
+        "Wood": 300
+      },
+      "researchTime": 60
+    },
+    "101": {
+      "id": 101,
+      "name": "Feudal Age",
+      "internalName": "Middle Age",
+      "kind": "technology",
+      "roleKeys": [
+        "feudal_age"
+      ],
+      "cost": {
+        "Food": 500
+      },
+      "researchTime": 130
+    },
+    "102": {
+      "id": 102,
+      "name": "Castle Age",
+      "internalName": "Feudal Age",
+      "kind": "technology",
+      "roleKeys": [
+        "castle_age"
+      ],
+      "cost": {
+        "Food": 800,
+        "Gold": 200
+      },
+      "researchTime": 160
+    },
+    "103": {
+      "id": 103,
+      "name": "Imperial Age",
+      "internalName": "Imperial Age",
+      "kind": "technology",
+      "roleKeys": [
+        "imperial_age"
+      ],
+      "cost": {
+        "Food": 1000,
+        "Gold": 800
+      },
+      "researchTime": 190
+    },
+    "140": {
+      "id": 140,
+      "name": "Guard Tower",
+      "internalName": "Guard Tower",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Wood": 250
+      },
+      "researchTime": 30
+    },
+    "182": {
+      "id": 182,
+      "name": "Gold Shaft Mining",
+      "internalName": "Gold Shaft Mining",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 175,
+        "Wood": 75
+      },
+      "researchTime": 75
+    },
+    "194": {
+      "id": 194,
+      "name": "Fortified Wall",
+      "internalName": "Fortified Wall",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Wood": 100
+      },
+      "researchTime": 50
+    },
+    "199": {
+      "id": 199,
+      "name": "Fletching",
+      "internalName": "Fletching",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 50
+      },
+      "researchTime": 30
+    },
+    "200": {
+      "id": 200,
+      "name": "Bodkin Arrow",
+      "internalName": "Bodkin Arrow",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 100
+      },
+      "researchTime": 35
+    },
+    "201": {
+      "id": 201,
+      "name": "Bracer",
+      "internalName": "Bracer",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 200
+      },
+      "researchTime": 40
+    },
+    "202": {
+      "id": 202,
+      "name": "Double-Bit Axe",
+      "internalName": "Double Bit Axe",
+      "kind": "technology",
+      "roleKeys": [
+        "double_bit_axe",
+        "eco_tech"
+      ],
+      "cost": {
+        "Food": 100,
+        "Wood": 50
+      },
+      "researchTime": 25
+    },
+    "203": {
+      "id": 203,
+      "name": "Bow Saw",
+      "internalName": "Bow Saw",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150,
+        "Wood": 100
+      },
+      "researchTime": 50
+    },
+    "211": {
+      "id": 211,
+      "name": "Padded Archer Armor",
+      "internalName": "Padded Archer Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100
+      },
+      "researchTime": 40
+    },
+    "212": {
+      "id": 212,
+      "name": "Leather Archer Armor",
+      "internalName": "Leather Archer Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150,
+        "Gold": 150
+      },
+      "researchTime": 55
+    },
+    "213": {
+      "id": 213,
+      "name": "Wheelbarrow",
+      "internalName": "Wheel Barrow",
+      "kind": "technology",
+      "roleKeys": [
+        "wheelbarrow",
+        "eco_tech"
+      ],
+      "cost": {
+        "Food": 175,
+        "Wood": 50
+      },
+      "researchTime": 75
+    },
+    "215": {
+      "id": 215,
+      "name": "Squires",
+      "internalName": "Squires",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100
+      },
+      "researchTime": 40
+    },
+    "219": {
+      "id": 219,
+      "name": "Ring Archer Armor",
+      "internalName": "Ring Archer Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 250
+      },
+      "researchTime": 70
+    },
+    "221": {
+      "id": 221,
+      "name": "Two Man Saw",
+      "internalName": "Two Man Saw",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Wood": 200
+      },
+      "researchTime": 100
+    },
+    "230": {
+      "id": 230,
+      "name": "Block Printing",
+      "internalName": "Block Printing",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 200
+      },
+      "researchTime": 55
+    },
+    "231": {
+      "id": 231,
+      "name": "Sanctity",
+      "internalName": "Sanctity",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 175
+      },
+      "researchTime": 60
+    },
+    "233": {
+      "id": 233,
+      "name": "Illumination",
+      "internalName": "Illumination",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 120
+      },
+      "researchTime": 65
+    },
+    "249": {
+      "id": 249,
+      "name": "Hand Cart",
+      "internalName": "Hand Cart",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Wood": 200
+      },
+      "researchTime": 55
+    },
+    "252": {
+      "id": 252,
+      "name": "Fervor",
+      "internalName": "Fervor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 140
+      },
+      "researchTime": 50
+    },
+    "278": {
+      "id": 278,
+      "name": "Stone Mining",
+      "internalName": "Stone Mining",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Wood": 75
+      },
+      "researchTime": 30
+    },
+    "279": {
+      "id": 279,
+      "name": "Stone Shaft Mining",
+      "internalName": "Stone Shaft Mining",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 175,
+        "Wood": 75
+      },
+      "researchTime": 75
+    },
+    "280": {
+      "id": 280,
+      "name": "Town Patrol",
+      "internalName": "Town Patrol",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 100
+      },
+      "researchTime": 40
+    },
+    "315": {
+      "id": 315,
+      "name": "Conscription",
+      "internalName": "Conscription",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150,
+        "Gold": 150
+      },
+      "researchTime": 60
+    },
+    "316": {
+      "id": 316,
+      "name": "Redemption",
+      "internalName": "Redemption",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 475
+      },
+      "researchTime": 50
+    },
+    "319": {
+      "id": 319,
+      "name": "Atonement",
+      "internalName": "Atonement",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 325
+      },
+      "researchTime": 40
+    },
+    "321": {
+      "id": 321,
+      "name": "Sappers",
+      "internalName": "Sappers",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Wood": 200
+      },
+      "researchTime": 10
+    },
+    "322": {
+      "id": 322,
+      "name": "Murder Holes",
+      "internalName": "Murder Holes",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Stone": 100
+      },
+      "researchTime": 35
+    },
+    "373": {
+      "id": 373,
+      "name": "Shipwright",
+      "internalName": "Shipwright",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 1000,
+        "Gold": 300
+      },
+      "researchTime": 60
+    },
+    "374": {
+      "id": 374,
+      "name": "Careening",
+      "internalName": "Careening",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 200
+      },
+      "researchTime": 50
+    },
+    "375": {
+      "id": 375,
+      "name": "Dry Dock",
+      "internalName": "Dry Dock",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 400
+      },
+      "researchTime": 60
+    },
+    "377": {
+      "id": 377,
+      "name": "Siege Engineers",
+      "internalName": "Siege Engineers",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Wood": 600
+      },
+      "researchTime": 45
+    },
+    "379": {
+      "id": 379,
+      "name": "Hoardings",
+      "internalName": "Hoardings",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Wood": 400
+      },
+      "researchTime": 75
+    },
+    "380": {
+      "id": 380,
+      "name": "Heated Shot",
+      "internalName": "Heated Shot",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 350,
+        "Gold": 100
+      },
+      "researchTime": 30
+    },
+    "408": {
+      "id": 408,
+      "name": "Spy Technology",
+      "internalName": "Spy Technology",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 200
+      },
+      "researchTime": 1
+    },
+    "435": {
+      "id": 435,
+      "name": "Bloodlines",
+      "internalName": "Bloodlines",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150,
+        "Gold": 100
+      },
+      "researchTime": 50
+    },
+    "436": {
+      "id": 436,
+      "name": "Parthian Tactics",
+      "internalName": "Parthian Tactics",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 250
+      },
+      "researchTime": 65
+    },
+    "437": {
+      "id": 437,
+      "name": "Thumb Ring",
+      "internalName": "Thumb Ring",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Wood": 250
+      },
+      "researchTime": 45
+    },
+    "438": {
+      "id": 438,
+      "name": "Theocracy",
+      "internalName": "Theocracy",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 200
+      },
+      "researchTime": 75
+    },
+    "439": {
+      "id": 439,
+      "name": "Heresy",
+      "internalName": "Heresy",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 1000
+      },
+      "researchTime": 60
+    },
+    "440": {
+      "id": 440,
+      "name": "Spanish Supremacy",
+      "internalName": "Spanish Supremacy",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 250
+      },
+      "researchTime": 60
+    },
+    "441": {
+      "id": 441,
+      "name": "Herbal Medicine",
+      "internalName": "Herbal Medicine",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 0,
+        "Gold": 200
+      },
+      "researchTime": 35
+    },
+    "445": {
+      "id": 445,
+      "name": "Korean catapults",
+      "internalName": "Korean catapults",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 1100,
+        "Gold": 800
+      },
+      "researchTime": 60
+    },
+    "454": {
+      "id": 454,
+      "name": "Counterweights",
+      "internalName": "Counterweights",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 500
+      },
+      "researchTime": 50
+    },
+    "455": {
+      "id": 455,
+      "name": "Detinets",
+      "internalName": "Detinets",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 200,
+        "Wood": 400
+      },
+      "researchTime": 40
+    },
+    "457": {
+      "id": 457,
+      "name": "Gothic Perfusion",
+      "internalName": "Gothic Perfusion",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 600,
+        "Wood": 400
+      },
+      "researchTime": 40
+    },
+    "460": {
+      "id": 460,
+      "name": "Aztec Sacrifice",
+      "internalName": "Aztec Sacrifice",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 350
+      },
+      "researchTime": 40
+    },
+    "461": {
+      "id": 461,
+      "name": "Britons City Rights",
+      "internalName": "Britons City Rights",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 400,
+        "Wood": 800
+      },
+      "researchTime": 40
+    },
+    "462": {
+      "id": 462,
+      "name": "Chinese Great Wall",
+      "internalName": "Chinese Great Wall",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Stone": 200,
+        "Wood": 400
+      },
+      "researchTime": 40
+    },
+    "463": {
+      "id": 463,
+      "name": "Viking Chieftains",
+      "internalName": "Viking Chieftains",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 600,
+        "Gold": 450
+      },
+      "researchTime": 40
+    },
+    "464": {
+      "id": 464,
+      "name": "Byzantines Greek Fire",
+      "internalName": "Byzantines Greek Fire",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "482": {
+      "id": 482,
+      "name": "Stronghold",
+      "internalName": "Stronghold",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 200
+      },
+      "researchTime": 30
+    },
+    "483": {
+      "id": 483,
+      "name": "Huns UT",
+      "internalName": "Huns UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 200,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "484": {
+      "id": 484,
+      "name": "Japanese UT",
+      "internalName": "Japanese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "485": {
+      "id": 485,
+      "name": "Mayans UT",
+      "internalName": "Mayans UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "486": {
+      "id": 486,
+      "name": "Koreans UT",
+      "internalName": "Koreans UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "487": {
+      "id": 487,
+      "name": "Mongols UT",
+      "internalName": "Mongols UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 150,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "488": {
+      "id": 488,
+      "name": "Persians UT",
+      "internalName": "Persians UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "489": {
+      "id": 489,
+      "name": "Teutons UT",
+      "internalName": "Teutons UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 350,
+        "Wood": 400
+      },
+      "researchTime": 60
+    },
+    "491": {
+      "id": 491,
+      "name": "Sipahi",
+      "internalName": "Sipahi",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 350,
+        "Gold": 150
+      },
+      "researchTime": 60
+    },
+    "492": {
+      "id": 492,
+      "name": "Spanish UT",
+      "internalName": "Spanish UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "493": {
+      "id": 493,
+      "name": "Franks UT",
+      "internalName": "Franks UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 500,
+        "Wood": 600
+      },
+      "researchTime": 40
+    },
+    "499": {
+      "id": 499,
+      "name": "Silk Route",
+      "internalName": "Silk Route",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 250
+      },
+      "researchTime": 60
+    },
+    "506": {
+      "id": 506,
+      "name": "Indians UT",
+      "internalName": "Indians UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Wood": 200
+      },
+      "researchTime": 40
+    },
+    "507": {
+      "id": 507,
+      "name": "Indians UT2",
+      "internalName": "Indians UT2",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 650
+      },
+      "researchTime": 40
+    },
+    "513": {
+      "id": 513,
+      "name": "Slavs UT",
+      "internalName": "Slavs UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 900,
+        "Gold": 500
+      },
+      "researchTime": 40
+    },
+    "514": {
+      "id": 514,
+      "name": "Magyars UT",
+      "internalName": "Magyars UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "515": {
+      "id": 515,
+      "name": "Indians UT",
+      "internalName": "Indians UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 400,
+        "Wood": 600
+      },
+      "researchTime": 40
+    },
+    "516": {
+      "id": 516,
+      "name": "Incas UT",
+      "internalName": "Incas UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "517": {
+      "id": 517,
+      "name": "Indians UT",
+      "internalName": "Indians UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 600,
+        "Gold": 600
+      },
+      "researchTime": 40
+    },
+    "573": {
+      "id": 573,
+      "name": "Portuguese UT",
+      "internalName": "Portuguese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 700,
+        "Gold": 400
+      },
+      "researchTime": 40
+    },
+    "574": {
+      "id": 574,
+      "name": "Ethiopian UT",
+      "internalName": "Ethiopian UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "575": {
+      "id": 575,
+      "name": "Ethiopian UT",
+      "internalName": "Ethiopian UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 1000,
+        "Gold": 600
+      },
+      "researchTime": 40
+    },
+    "576": {
+      "id": 576,
+      "name": "Malian UT",
+      "internalName": "Malian UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "577": {
+      "id": 577,
+      "name": "Malian UT",
+      "internalName": "Malian UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 400
+      },
+      "researchTime": 40
+    },
+    "578": {
+      "id": 578,
+      "name": "Berber UT",
+      "internalName": "Berber UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 250
+      },
+      "researchTime": 40
+    },
+    "579": {
+      "id": 579,
+      "name": "Berber UT",
+      "internalName": "Berber UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 700,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "602": {
+      "id": 602,
+      "name": "Arson",
+      "internalName": "Arson",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 75,
+        "Gold": 25
+      },
+      "researchTime": 25
+    },
+    "608": {
+      "id": 608,
+      "name": "Arrowslits",
+      "internalName": "Arrowslits",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Wood": 250
+      },
+      "researchTime": 25
+    },
+    "622": {
+      "id": 622,
+      "name": "Khmer UT",
+      "internalName": "Khmer UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 450,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "623": {
+      "id": 623,
+      "name": "Khmer UT",
+      "internalName": "Khmer UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 700,
+        "Gold": 400
+      },
+      "researchTime": 40
+    },
+    "624": {
+      "id": 624,
+      "name": "Malay UT",
+      "internalName": "Malay UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "625": {
+      "id": 625,
+      "name": "Malay UT",
+      "internalName": "Malay UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 850,
+        "Gold": 500
+      },
+      "researchTime": 40
+    },
+    "626": {
+      "id": 626,
+      "name": "Burmese UT",
+      "internalName": "Burmese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "627": {
+      "id": 627,
+      "name": "Burmese UT",
+      "internalName": "Burmese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "628": {
+      "id": 628,
+      "name": "Vietnamese UT",
+      "internalName": "Vietnamese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 250
+      },
+      "researchTime": 40
+    },
+    "629": {
+      "id": 629,
+      "name": "Vietnamese UT",
+      "internalName": "Vietnamese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 550,
+        "Wood": 200
+      },
+      "researchTime": 60
+    },
+    "685": {
+      "id": 685,
+      "name": "Khmer UT",
+      "internalName": "Khmer UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 200
+      },
+      "researchTime": 35
+    },
+    "686": {
+      "id": 686,
+      "name": "Khmer UT",
+      "internalName": "Khmer UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 900,
+        "Gold": 450
+      },
+      "researchTime": 40
+    },
+    "687": {
+      "id": 687,
+      "name": "Malay UT",
+      "internalName": "Malay UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 300,
+        "Wood": 400
+      },
+      "researchTime": 40
+    },
+    "688": {
+      "id": 688,
+      "name": "Malay UT",
+      "internalName": "Malay UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 400,
+        "Wood": 500
+      },
+      "researchTime": 50
+    },
+    "689": {
+      "id": 689,
+      "name": "Burmese UT",
+      "internalName": "Burmese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "690": {
+      "id": 690,
+      "name": "Burmese UT",
+      "internalName": "Burmese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 400
+      },
+      "researchTime": 40
+    },
+    "691": {
+      "id": 691,
+      "name": "Vietnamese UT",
+      "internalName": "Vietnamese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Gold": 250
+      },
+      "researchTime": 40
+    },
+    "692": {
+      "id": 692,
+      "name": "Vietnamese UT",
+      "internalName": "Vietnamese UT",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 200
+      },
+      "researchTime": 40
+    },
+    "754": {
+      "id": 754,
+      "name": "Burgundian Vineyards",
+      "internalName": "Burgundian Vineyards",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 300
+      },
+      "researchTime": 45
+    },
+    "755": {
+      "id": 755,
+      "name": "Flemish Revolution",
+      "internalName": "Flemish Revolution",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 150
+      },
+      "researchTime": 10
+    },
+    "756": {
+      "id": 756,
+      "name": "First Crusade",
+      "internalName": "First Crusade",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 300
+      },
+      "researchTime": 60
+    },
+    "757": {
+      "id": 757,
+      "name": "Hauberk",
+      "internalName": "Hauberk",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 700,
+        "Gold": 600
+      },
+      "researchTime": 45
+    },
+    "782": {
+      "id": 782,
+      "name": "Szlachta Privileges",
+      "internalName": "Szlachta Privileges",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 300
+      },
+      "researchTime": 45
+    },
+    "783": {
+      "id": 783,
+      "name": "Lechitic Legacy",
+      "internalName": "Lechitic Legacy",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 750,
+        "Gold": 550
+      },
+      "researchTime": 60
+    },
+    "784": {
+      "id": 784,
+      "name": "Wagenburg Tactics",
+      "internalName": "Wagenburg Tactics",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 300
+      },
+      "researchTime": 45
+    },
+    "785": {
+      "id": 785,
+      "name": "Hussite Reforms",
+      "internalName": "Hussite Reforms",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 450
+      },
+      "researchTime": 45
+    },
+    "831": {
+      "id": 831,
+      "name": "Medical Corps",
+      "internalName": "Medical Corps",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 200
+      },
+      "researchTime": 45
+    },
+    "832": {
+      "id": 832,
+      "name": "Wootz Steel",
+      "internalName": "Wootz Steel",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 550
+      },
+      "researchTime": 60
+    },
+    "833": {
+      "id": 833,
+      "name": "Paiks",
+      "internalName": "Paiks",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 275,
+        "Wood": 375
+      },
+      "researchTime": 45
+    },
+    "834": {
+      "id": 834,
+      "name": "Mahayana",
+      "internalName": "Mahayana",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 650,
+        "Wood": 800
+      },
+      "researchTime": 60
+    },
+    "835": {
+      "id": 835,
+      "name": "Kshatriyas",
+      "internalName": "Kshatriyas",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 450
+      },
+      "researchTime": 45
+    },
+    "836": {
+      "id": 836,
+      "name": "Frontier Guards",
+      "internalName": "Frontier Guards",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 800,
+        "Gold": 700
+      },
+      "researchTime": 60
+    },
+    "875": {
+      "id": 875,
+      "name": "Gambesons",
+      "internalName": "Gambesons",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Gold": 100
+      },
+      "researchTime": 25
+    },
+    "883": {
+      "id": 883,
+      "name": "Ballistas",
+      "internalName": "Ballistas",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 300,
+        "Wood": 400
+      },
+      "researchTime": 45
+    },
+    "884": {
+      "id": 884,
+      "name": "Comitatenses",
+      "internalName": "Comitatenses",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 700,
+        "Gold": 800
+      },
+      "researchTime": 60
+    },
+    "902": {
+      "id": 902,
+      "name": "Pirotecnia",
+      "internalName": "Pirotecnia",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 500
+      },
+      "researchTime": 50
+    },
+    "906": {
+      "id": 906,
+      "name": "Fishing Lines",
+      "internalName": "Fishing Lines",
+      "kind": "technology",
+      "roleKeys": [
+        "fishing_lines",
+        "eco_tech",
+        "water_economy"
+      ],
+      "cost": {
+        "Food": 50,
+        "Wood": 100
+      },
+      "researchTime": 20
+    },
+    "907": {
+      "id": 907,
+      "name": "Carvel Hull",
+      "internalName": "Carvel Hull",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 350,
+        "Wood": 200
+      },
+      "researchTime": 60
+    },
+    "908": {
+      "id": 908,
+      "name": "Clinker Construction",
+      "internalName": "Clinker Construction",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 150,
+        "Wood": 100
+      },
+      "researchTime": 50
+    },
+    "909": {
+      "id": 909,
+      "name": "Carvel Hull",
+      "internalName": "Carvel Hull",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Gold": 175
+      },
+      "researchTime": 45
+    },
+    "910": {
+      "id": 910,
+      "name": "Clinker Construction",
+      "internalName": "Clinker Construction",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 200,
+        "Gold": 325
+      },
+      "researchTime": 50
+    },
+    "921": {
+      "id": 921,
+      "name": "Fereters",
+      "internalName": "Fereters",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 550,
+        "Gold": 400
+      },
+      "researchTime": 45
+    },
+    "922": {
+      "id": 922,
+      "name": "Cilician Fleet",
+      "internalName": "Cilician Fleet",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 300,
+        "Wood": 350
+      },
+      "researchTime": 45
+    },
+    "923": {
+      "id": 923,
+      "name": "Svan Towers",
+      "internalName": "Svan Towers",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 200
+      },
+      "researchTime": 45
+    },
+    "924": {
+      "id": 924,
+      "name": "Aznauri Cavalry",
+      "internalName": "Aznauri Cavalry",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 550,
+        "Gold": 250
+      },
+      "researchTime": 45
+    },
+    "996": {
+      "id": 996,
+      "name": "Fortifed Bastions",
+      "internalName": "Fortifed Bastions",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 350,
+        "Wood": 250
+      },
+      "researchTime": 40
+    },
+    "997": {
+      "id": 997,
+      "name": "Thunderclap Bombs",
+      "internalName": "Thunderclap Bombs",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 900,
+        "Gold": 600
+      },
+      "researchTime": 50
+    },
+    "1006": {
+      "id": 1006,
+      "name": "Lamellar Armor",
+      "internalName": "Lamellar Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 450,
+        "Gold": 300
+      },
+      "researchTime": 45
+    },
+    "1007": {
+      "id": 1007,
+      "name": "Ordo Cavalry",
+      "internalName": "Ordo Cavalry",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 600,
+        "Gold": 300
+      },
+      "researchTime": 45
+    },
+    "1012": {
+      "id": 1012,
+      "name": "Grazing Grasslands",
+      "internalName": "Grazing Grasslands",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 175,
+        "Wood": 325
+      },
+      "researchTime": 70
+    },
+    "1013": {
+      "id": 1013,
+      "name": "Enclosures",
+      "internalName": "Enclosures",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 100,
+        "Wood": 150
+      },
+      "researchTime": 40
+    },
+    "1014": {
+      "id": 1014,
+      "name": "Livestock Husbandry",
+      "internalName": "Livestock Husbandry",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 50,
+        "Wood": 100
+      },
+      "researchTime": 20
+    },
+    "1061": {
+      "id": 1061,
+      "name": "Tuntian",
+      "internalName": "Tuntian",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Wood": 300
+      },
+      "researchTime": 40
+    },
+    "1062": {
+      "id": 1062,
+      "name": "Ming-Kuang Armor",
+      "internalName": "Ming-Kuang Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 600,
+        "Gold": 450
+      },
+      "researchTime": 65
+    },
+    "1069": {
+      "id": 1069,
+      "name": "Bolt Magazine",
+      "internalName": "Bolt Magazine",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 750
+      },
+      "researchTime": 40
+    },
+    "1070": {
+      "id": 1070,
+      "name": "Coiled Serpent Array",
+      "internalName": "Coiled Serpent Array",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 350,
+        "Gold": 300
+      },
+      "researchTime": 40
+    },
+    "1080": {
+      "id": 1080,
+      "name": "Red Cliffs Tactics",
+      "internalName": "Red Cliffs Tactics",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 250
+      },
+      "researchTime": 40
+    },
+    "1081": {
+      "id": 1081,
+      "name": "Ming-Kuang Armor",
+      "internalName": "Ming-Kuang Armor",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 300,
+        "Wood": 600
+      },
+      "researchTime": 40
+    },
+    "1365": {
+      "id": 1365,
+      "name": "Herbalism",
+      "internalName": "Herbalism",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 350
+      },
+      "researchTime": 40
+    },
+    "1366": {
+      "id": 1366,
+      "name": "Huaracas",
+      "internalName": "Huaracas",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Gold": 350,
+        "Wood": 450
+      },
+      "researchTime": 45
+    },
+    "1379": {
+      "id": 1379,
+      "name": "Malon",
+      "internalName": "Malon",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 300,
+        "Gold": 350
+      },
+      "researchTime": 40
+    },
+    "1380": {
+      "id": 1380,
+      "name": "Butalmapu",
+      "internalName": "Butalmapu",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 500,
+        "Gold": 450
+      },
+      "researchTime": 45
+    },
+    "1392": {
+      "id": 1392,
+      "name": "Caciques",
+      "internalName": "Caciques",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 400,
+        "Gold": 200
+      },
+      "researchTime": 45
+    },
+    "1393": {
+      "id": 1393,
+      "name": "Curare",
+      "internalName": "Curare",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 650,
+        "Gold": 600
+      },
+      "researchTime": 45
+    },
+    "1404": {
+      "id": 1404,
+      "name": "Circumnavigation",
+      "internalName": "Circumnavigation",
+      "kind": "technology",
+      "roleKeys": [],
+      "cost": {
+        "Food": 250,
+        "Wood": 150
+      },
+      "researchTime": 40
+    }
+  }
+}

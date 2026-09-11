@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "league-of-freinds",
+    "production": "league-of-friends-cc274"
+  },
+  "targets": {},
+  "etags": {}
+}
