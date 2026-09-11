@@ -1,5 +1,7 @@
 # Phase 2 — Firestore Data Architecture
 
+> **Status:** This is the original Firestore architecture baseline. Much of it is implemented, and some suggested shapes have since evolved. Use current code for implemented behavior and [`../project/CURRENT-STATE.md`](../project/CURRENT-STATE.md) for the present task handoff. The replay extraction storage decision is in [`replay-extraction-contract-v1.md`](replay-extraction-contract-v1.md).
+
 This document translates the frozen Phase 1 domain model into a Firestore-oriented backend design.
 
 ## Goals
