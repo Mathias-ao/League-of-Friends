@@ -1,0 +1,1636 @@
+{
+  "actionCounts": {
+    "ATTACK_GROUND": 60,
+    "BACK_TO_WORK": 6,
+    "BUILD": 697,
+    "BUY": 86,
+    "DELETE": 337,
+    "DE_107_A": 1,
+    "DE_ATTACK_MOVE": 12,
+    "DE_MULTI_GATHERPOINT": 2,
+    "DE_QUEUE": 1720,
+    "DE_TRANSFORM": 199,
+    "DE_TRIBUTE": 231,
+    "FLARE": 2,
+    "FORMATION": 14,
+    "GAME": 101,
+    "GATE": 1,
+    "GATHER_POINT": 794,
+    "MOVE": 5273,
+    "ORDER": 2581,
+    "PATROL": 42,
+    "RESEARCH": 216,
+    "SELL": 439,
+    "SPECIAL": 441,
+    "STANCE": 14,
+    "STOP": 35,
+    "UNGARRISON": 255,
+    "WALL": 64
+  },
+  "buildingPlacementCount": 697,
+  "completionStatus": "unknown",
+  "decodeStatusCounts": {
+    "complete": 219610,
+    "partial": 234510
+  },
+  "diplomacyCommandCount": 86,
+  "durationMs": 5639022,
+  "fundamentals": {
+    "ageAdvanceStartedCandidates": {
+      "basis": "research_ids_101_102_103",
+      "events": [
+        {
+          "atMs": 215605,
+          "producerObjectIds": [
+            23736
+          ],
+          "replaySlot": 4,
+          "sourceEventId": "op-000033739",
+          "technologyId": 101
+        },
+        {
+          "atMs": 456584,
+          "producerObjectIds": [
+            23651
+          ],
+          "replaySlot": 5,
+          "sourceEventId": "op-000066984",
+          "technologyId": 101
+        },
+        {
+          "atMs": 548294,
+          "producerObjectIds": [
+            23681
+          ],
+          "replaySlot": 6,
+          "sourceEventId": "op-000076254",
+          "technologyId": 101
+        },
+        {
+          "atMs": 548502,
+          "producerObjectIds": [
+            23681
+          ],
+          "replaySlot": 6,
+          "sourceEventId": "op-000076287",
+          "technologyId": 101
+        },
+        {
+          "atMs": 599998,
+          "producerObjectIds": [
+            23770
+          ],
+          "replaySlot": 8,
+          "sourceEventId": "op-000081655",
+          "technologyId": 101
+        },
+        {
+          "atMs": 641922,
+          "producerObjectIds": [
+            23670
+          ],
+          "replaySlot": 3,
+          "sourceEventId": "op-000085003",
+          "technologyId": 101
+        },
+        {
+          "atMs": 764255,
+          "producerObjectIds": [
+            23681
+          ],
+          "replaySlot": 6,
+          "sourceEventId": "op-000094944",
+          "technologyId": 102
+        },
+        {
+          "atMs": 764680,
+          "producerObjectIds": [
+            23681
+          ],
+          "replaySlot": 6,
+          "sourceEventId": "op-000094980",
+          "technologyId": 102
+        },
+        {
+          "atMs": 768830,
+          "producerObjectIds": [
+            23660
+          ],
+          "replaySlot": 2,
+          "sourceEventId": "op-000095327",
+          "technologyId": 101
+        },
+        {
+          "atMs": 898661,
+          "producerObjectIds": [
+            23770
+          ],
+          "replaySlot": 8,
+          "sourceEventId": "op-000105844",
+          "technologyId": 102
+        },
+        {
+          "atMs": 970859,
+          "producerObjectIds": [
+            23736
+          ],
+          "replaySlot": 4,
+          "sourceEventId": "op-000111757",
+          "technologyId": 102
+        },
+        {
+          "atMs": 971284,
+          "producerObjectIds": [
+            23736
+          ],
+          "replaySlot": 4,
+          "sourceEventId": "op-000111796",
+          "technologyId": 102
+        },
+        {
+          "atMs": 1059409,
+          "producerObjectIds": [
+            23660
+          ],
+          "replaySlot": 2,
+          "sourceEventId": "op-000119093",
+          "technologyId": 102
+        },
+        {
+          "atMs": 1072334,
+          "producerObjectIds": [
+            23651
+          ],
+          "replaySlot": 5,
+          "sourceEventId": "op-000120164",
+          "technologyId": 102
+        },
+        {
+          "atMs": 1159669,
+          "producerObjectIds": [
+            23818
+          ],
+          "replaySlot": 7,
+          "sourceEventId": "op-000127070",
+          "technologyId": 101
+        },
+        {
+          "atMs": 1631060,
+          "producerObjectIds": [
+            25002
+          ],
+          "replaySlot": 6,
+          "sourceEventId": "op-000163320",
+          "technologyId": 103
+        },
+        {
+          "atMs": 1894242,
+          "producerObjectIds": [
+            23770
+          ],
+          "replaySlot": 8,
+          "sourceEventId": "op-000182711",
+          "technologyId": 103
+        },
+        {
+          "atMs": 1988126,
+          "producerObjectIds": [
+            23670
+          ],
+          "replaySlot": 3,
+          "sourceEventId": "op-000189697",
+          "technologyId": 102
+        },
+        {
+          "atMs": 2307370,
+          "producerObjectIds": [
+            23660
+          ],
+          "replaySlot": 2,
+          "sourceEventId": "op-000212983",
+          "technologyId": 103
+        },
+        {
+          "atMs": 2408375,
+          "producerObjectIds": [
+            25502
+          ],
+          "replaySlot": 4,
+          "sourceEventId": "op-000219957",
+          "technologyId": 103
+        },
+        {
+          "atMs": 3333369,
+          "producerObjectIds": [
+            35009
+          ],
+          "replaySlot": 3,
+          "sourceEventId": "op-000287204",
+          "technologyId": 103
+        }
+      ],
+      "qualification": "requires_standard_entity_data; no completion projected"
+    },
+    "buildingPlacementCountsByPlayerAndRawBuilding": {
+      "1": {
+        "562": 1
+      },
+      "2": {
+        "103": 2,
+        "104": 1,
+        "12": 7,
+        "209": 1,
+        "45": 5,
+        "50": 13,
+        "562": 13,
+        "598": 1,
+        "621": 2,
+        "68": 1,
+        "70": 32,
+        "82": 2,
+        "84": 1,
+        "87": 6
+      },
+      "3": {
+        "103": 1,
+        "12": 1,
+        "209": 1,
+        "45": 6,
+        "49": 2,
+        "50": 23,
+        "562": 13,
+        "598": 4,
+        "621": 2,
+        "68": 2,
+        "70": 23,
+        "82": 1,
+        "84": 2
+      },
+      "4": {
+        "101": 10,
+        "103": 1,
+        "104": 1,
+        "12": 1,
+        "209": 1,
+        "236": 13,
+        "45": 11,
+        "487": 2,
+        "49": 2,
+        "490": 1,
+        "50": 38,
+        "562": 13,
+        "598": 11,
+        "621": 4,
+        "68": 5,
+        "70": 43,
+        "79": 1,
+        "82": 2,
+        "84": 1
+      },
+      "5": {
+        "45": 3,
+        "562": 4,
+        "598": 1,
+        "621": 1,
+        "70": 14,
+        "79": 2,
+        "792": 5,
+        "84": 1
+      },
+      "6": {
+        "101": 7,
+        "103": 1,
+        "104": 9,
+        "12": 2,
+        "209": 2,
+        "276": 1,
+        "45": 6,
+        "49": 5,
+        "50": 34,
+        "562": 23,
+        "598": 8,
+        "621": 5,
+        "68": 3,
+        "70": 71,
+        "82": 3,
+        "84": 4,
+        "87": 3
+      },
+      "7": {
+        "199": 11,
+        "45": 5,
+        "562": 2,
+        "621": 1,
+        "68": 1,
+        "70": 20,
+        "792": 1,
+        "84": 1
+      },
+      "8": {
+        "103": 1,
+        "104": 1,
+        "12": 5,
+        "199": 4,
+        "209": 1,
+        "2556": 9,
+        "45": 6,
+        "487": 2,
+        "49": 1,
+        "490": 1,
+        "50": 39,
+        "598": 1,
+        "621": 3,
+        "70": 25,
+        "82": 2,
+        "84": 1,
+        "87": 5
+      }
+    },
+    "directedDiplomacyCommandTimelines": {
+      "1->2": [
+        {
+          "atMs": 93938,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 14488,
+          "replaySlot": 1,
+          "sourceEventId": "op-000014488",
+          "targetReplaySlot": 2
+        }
+      ],
+      "1->3": [
+        {
+          "atMs": 93938,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 14490,
+          "replaySlot": 1,
+          "sourceEventId": "op-000014490",
+          "targetReplaySlot": 3
+        }
+      ],
+      "1->4": [
+        {
+          "atMs": 93938,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 14492,
+          "replaySlot": 1,
+          "sourceEventId": "op-000014492",
+          "targetReplaySlot": 4
+        }
+      ],
+      "1->5": [
+        {
+          "atMs": 93938,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 14494,
+          "replaySlot": 1,
+          "sourceEventId": "op-000014494",
+          "targetReplaySlot": 5
+        }
+      ],
+      "1->6": [
+        {
+          "atMs": 93938,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 14496,
+          "replaySlot": 1,
+          "sourceEventId": "op-000014496",
+          "targetReplaySlot": 6
+        }
+      ],
+      "1->7": [
+        {
+          "atMs": 93938,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 14498,
+          "replaySlot": 1,
+          "sourceEventId": "op-000014498",
+          "targetReplaySlot": 7
+        }
+      ],
+      "1->8": [
+        {
+          "atMs": 93938,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 14500,
+          "replaySlot": 1,
+          "sourceEventId": "op-000014500",
+          "targetReplaySlot": 8
+        }
+      ],
+      "2->1": [
+        {
+          "atMs": 127244,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 19713,
+          "replaySlot": 2,
+          "sourceEventId": "op-000019713",
+          "targetReplaySlot": 1
+        }
+      ],
+      "2->3": [
+        {
+          "atMs": 127244,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 19715,
+          "replaySlot": 2,
+          "sourceEventId": "op-000019715",
+          "targetReplaySlot": 3
+        },
+        {
+          "atMs": 2817587,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 249718,
+          "replaySlot": 2,
+          "sourceEventId": "op-000249718",
+          "targetReplaySlot": 3
+        },
+        {
+          "atMs": 2997491,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 262922,
+          "replaySlot": 2,
+          "sourceEventId": "op-000262922",
+          "targetReplaySlot": 3
+        },
+        {
+          "atMs": 3170799,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 275481,
+          "replaySlot": 2,
+          "sourceEventId": "op-000275481",
+          "targetReplaySlot": 3
+        }
+      ],
+      "2->4": [
+        {
+          "atMs": 59605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 9080,
+          "replaySlot": 2,
+          "sourceEventId": "op-000009080",
+          "targetReplaySlot": 4
+        },
+        {
+          "atMs": 5552639,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 447484,
+          "replaySlot": 2,
+          "sourceEventId": "op-000447484",
+          "targetReplaySlot": 4
+        }
+      ],
+      "2->5": [
+        {
+          "atMs": 59605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 9082,
+          "replaySlot": 2,
+          "sourceEventId": "op-000009082",
+          "targetReplaySlot": 5
+        }
+      ],
+      "2->6": [
+        {
+          "atMs": 59605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 9084,
+          "replaySlot": 2,
+          "sourceEventId": "op-000009084",
+          "targetReplaySlot": 6
+        },
+        {
+          "atMs": 2736804,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 243853,
+          "replaySlot": 2,
+          "sourceEventId": "op-000243853",
+          "targetReplaySlot": 6
+        }
+      ],
+      "2->7": [
+        {
+          "atMs": 59605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 9086,
+          "replaySlot": 2,
+          "sourceEventId": "op-000009086",
+          "targetReplaySlot": 7
+        }
+      ],
+      "2->8": [
+        {
+          "atMs": 59605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 9088,
+          "replaySlot": 2,
+          "sourceEventId": "op-000009088",
+          "targetReplaySlot": 8
+        },
+        {
+          "atMs": 5229086,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 423791,
+          "replaySlot": 2,
+          "sourceEventId": "op-000423791",
+          "targetReplaySlot": 8
+        }
+      ],
+      "3->1": [
+        {
+          "atMs": 76869,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 11788,
+          "replaySlot": 3,
+          "sourceEventId": "op-000011788",
+          "targetReplaySlot": 1
+        }
+      ],
+      "3->2": [
+        {
+          "atMs": 76869,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 11790,
+          "replaySlot": 3,
+          "sourceEventId": "op-000011790",
+          "targetReplaySlot": 2
+        },
+        {
+          "atMs": 3130776,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 272460,
+          "replaySlot": 3,
+          "sourceEventId": "op-000272460",
+          "targetReplaySlot": 2
+        },
+        {
+          "atMs": 3191605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 276949,
+          "replaySlot": 3,
+          "sourceEventId": "op-000276949",
+          "targetReplaySlot": 2
+        },
+        {
+          "atMs": 3584054,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 305645,
+          "replaySlot": 3,
+          "sourceEventId": "op-000305645",
+          "targetReplaySlot": 2
+        }
+      ],
+      "3->4": [
+        {
+          "atMs": 76869,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 11792,
+          "replaySlot": 3,
+          "sourceEventId": "op-000011792",
+          "targetReplaySlot": 4
+        }
+      ],
+      "3->5": [
+        {
+          "atMs": 76869,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 11794,
+          "replaySlot": 3,
+          "sourceEventId": "op-000011794",
+          "targetReplaySlot": 5
+        },
+        {
+          "atMs": 698093,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 89639,
+          "replaySlot": 3,
+          "sourceEventId": "op-000089639",
+          "targetReplaySlot": 5
+        }
+      ],
+      "3->6": [
+        {
+          "atMs": 76869,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 11796,
+          "replaySlot": 3,
+          "sourceEventId": "op-000011796",
+          "targetReplaySlot": 6
+        },
+        {
+          "atMs": 2779453,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 246987,
+          "replaySlot": 3,
+          "sourceEventId": "op-000246987",
+          "targetReplaySlot": 6
+        }
+      ],
+      "3->7": [
+        {
+          "atMs": 76869,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 11798,
+          "replaySlot": 3,
+          "sourceEventId": "op-000011798",
+          "targetReplaySlot": 7
+        }
+      ],
+      "3->8": [
+        {
+          "atMs": 76869,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 11800,
+          "replaySlot": 3,
+          "sourceEventId": "op-000011800",
+          "targetReplaySlot": 8
+        }
+      ],
+      "4->1": [
+        {
+          "atMs": 44772,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 6723,
+          "replaySlot": 4,
+          "sourceEventId": "op-000006723",
+          "targetReplaySlot": 1
+        }
+      ],
+      "4->2": [
+        {
+          "atMs": 44772,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 6725,
+          "replaySlot": 4,
+          "sourceEventId": "op-000006725",
+          "targetReplaySlot": 2
+        },
+        {
+          "atMs": 5562943,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 448240,
+          "replaySlot": 4,
+          "sourceEventId": "op-000448240",
+          "targetReplaySlot": 2
+        }
+      ],
+      "4->3": [
+        {
+          "atMs": 44772,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 6727,
+          "replaySlot": 4,
+          "sourceEventId": "op-000006727",
+          "targetReplaySlot": 3
+        }
+      ],
+      "4->5": [
+        {
+          "atMs": 44772,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 6729,
+          "replaySlot": 4,
+          "sourceEventId": "op-000006729",
+          "targetReplaySlot": 5
+        }
+      ],
+      "4->6": [
+        {
+          "atMs": 44772,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 6731,
+          "replaySlot": 4,
+          "sourceEventId": "op-000006731",
+          "targetReplaySlot": 6
+        },
+        {
+          "atMs": 2747927,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 244667,
+          "replaySlot": 4,
+          "sourceEventId": "op-000244667",
+          "targetReplaySlot": 6
+        }
+      ],
+      "4->7": [
+        {
+          "atMs": 44772,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 6733,
+          "replaySlot": 4,
+          "sourceEventId": "op-000006733",
+          "targetReplaySlot": 7
+        }
+      ],
+      "4->8": [
+        {
+          "atMs": 44772,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 6735,
+          "replaySlot": 4,
+          "sourceEventId": "op-000006735",
+          "targetReplaySlot": 8
+        },
+        {
+          "atMs": 5226398,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 423586,
+          "replaySlot": 4,
+          "sourceEventId": "op-000423586",
+          "targetReplaySlot": 8
+        }
+      ],
+      "5->1": [
+        {
+          "atMs": 46813,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7065,
+          "replaySlot": 5,
+          "sourceEventId": "op-000007065",
+          "targetReplaySlot": 1
+        }
+      ],
+      "5->2": [
+        {
+          "atMs": 46813,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7067,
+          "replaySlot": 5,
+          "sourceEventId": "op-000007067",
+          "targetReplaySlot": 2
+        }
+      ],
+      "5->3": [
+        {
+          "atMs": 46813,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7069,
+          "replaySlot": 5,
+          "sourceEventId": "op-000007069",
+          "targetReplaySlot": 3
+        },
+        {
+          "atMs": 635314,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 84512,
+          "replaySlot": 5,
+          "sourceEventId": "op-000084512",
+          "targetReplaySlot": 3
+        }
+      ],
+      "5->4": [
+        {
+          "atMs": 46813,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7071,
+          "replaySlot": 5,
+          "sourceEventId": "op-000007071",
+          "targetReplaySlot": 4
+        }
+      ],
+      "5->6": [
+        {
+          "atMs": 46813,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7073,
+          "replaySlot": 5,
+          "sourceEventId": "op-000007073",
+          "targetReplaySlot": 6
+        }
+      ],
+      "5->7": [
+        {
+          "atMs": 46813,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7075,
+          "replaySlot": 5,
+          "sourceEventId": "op-000007075",
+          "targetReplaySlot": 7
+        }
+      ],
+      "5->8": [
+        {
+          "atMs": 46813,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7077,
+          "replaySlot": 5,
+          "sourceEventId": "op-000007077",
+          "targetReplaySlot": 8
+        }
+      ],
+      "6->1": [
+        {
+          "atMs": 46605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7019,
+          "replaySlot": 6,
+          "sourceEventId": "op-000007019",
+          "targetReplaySlot": 1
+        },
+        {
+          "atMs": 2723799,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 242956,
+          "replaySlot": 6,
+          "sourceEventId": "op-000242956",
+          "targetReplaySlot": 1
+        }
+      ],
+      "6->2": [
+        {
+          "atMs": 46605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7021,
+          "replaySlot": 6,
+          "sourceEventId": "op-000007021",
+          "targetReplaySlot": 2
+        },
+        {
+          "atMs": 2723799,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 242958,
+          "replaySlot": 6,
+          "sourceEventId": "op-000242958",
+          "targetReplaySlot": 2
+        }
+      ],
+      "6->3": [
+        {
+          "atMs": 46605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7023,
+          "replaySlot": 6,
+          "sourceEventId": "op-000007023",
+          "targetReplaySlot": 3
+        },
+        {
+          "atMs": 2723799,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 242960,
+          "replaySlot": 6,
+          "sourceEventId": "op-000242960",
+          "targetReplaySlot": 3
+        }
+      ],
+      "6->4": [
+        {
+          "atMs": 46605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7025,
+          "replaySlot": 6,
+          "sourceEventId": "op-000007025",
+          "targetReplaySlot": 4
+        },
+        {
+          "atMs": 2723799,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 242962,
+          "replaySlot": 6,
+          "sourceEventId": "op-000242962",
+          "targetReplaySlot": 4
+        }
+      ],
+      "6->5": [
+        {
+          "atMs": 46605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7027,
+          "replaySlot": 6,
+          "sourceEventId": "op-000007027",
+          "targetReplaySlot": 5
+        },
+        {
+          "atMs": 2723799,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 242964,
+          "replaySlot": 6,
+          "sourceEventId": "op-000242964",
+          "targetReplaySlot": 5
+        }
+      ],
+      "6->7": [
+        {
+          "atMs": 46605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7029,
+          "replaySlot": 6,
+          "sourceEventId": "op-000007029",
+          "targetReplaySlot": 7
+        },
+        {
+          "atMs": 1836782,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 178553,
+          "replaySlot": 6,
+          "sourceEventId": "op-000178553",
+          "targetReplaySlot": 7
+        }
+      ],
+      "6->8": [
+        {
+          "atMs": 46605,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7031,
+          "replaySlot": 6,
+          "sourceEventId": "op-000007031",
+          "targetReplaySlot": 8
+        },
+        {
+          "atMs": 2670960,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 238918,
+          "replaySlot": 6,
+          "sourceEventId": "op-000238918",
+          "targetReplaySlot": 8
+        }
+      ],
+      "7->1": [
+        {
+          "atMs": 34008,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 5042,
+          "replaySlot": 7,
+          "sourceEventId": "op-000005042",
+          "targetReplaySlot": 1
+        }
+      ],
+      "7->2": [
+        {
+          "atMs": 34008,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 5044,
+          "replaySlot": 7,
+          "sourceEventId": "op-000005044",
+          "targetReplaySlot": 2
+        }
+      ],
+      "7->3": [
+        {
+          "atMs": 34008,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 5046,
+          "replaySlot": 7,
+          "sourceEventId": "op-000005046",
+          "targetReplaySlot": 3
+        }
+      ],
+      "7->4": [
+        {
+          "atMs": 34008,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 5048,
+          "replaySlot": 7,
+          "sourceEventId": "op-000005048",
+          "targetReplaySlot": 4
+        }
+      ],
+      "7->5": [
+        {
+          "atMs": 34008,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 5050,
+          "replaySlot": 7,
+          "sourceEventId": "op-000005050",
+          "targetReplaySlot": 5
+        }
+      ],
+      "7->6": [
+        {
+          "atMs": 34008,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 5052,
+          "replaySlot": 7,
+          "sourceEventId": "op-000005052",
+          "targetReplaySlot": 6
+        },
+        {
+          "atMs": 1874894,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 181287,
+          "replaySlot": 7,
+          "sourceEventId": "op-000181287",
+          "targetReplaySlot": 6
+        }
+      ],
+      "7->8": [
+        {
+          "atMs": 34008,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 5054,
+          "replaySlot": 7,
+          "sourceEventId": "op-000005054",
+          "targetReplaySlot": 8
+        }
+      ],
+      "8->1": [
+        {
+          "atMs": 50063,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7582,
+          "replaySlot": 8,
+          "sourceEventId": "op-000007582",
+          "targetReplaySlot": 1
+        },
+        {
+          "atMs": 5215505,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 422811,
+          "replaySlot": 8,
+          "sourceEventId": "op-000422811",
+          "targetReplaySlot": 1
+        }
+      ],
+      "8->2": [
+        {
+          "atMs": 50063,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7584,
+          "replaySlot": 8,
+          "sourceEventId": "op-000007584",
+          "targetReplaySlot": 2
+        },
+        {
+          "atMs": 5215505,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 422813,
+          "replaySlot": 8,
+          "sourceEventId": "op-000422813",
+          "targetReplaySlot": 2
+        }
+      ],
+      "8->3": [
+        {
+          "atMs": 50063,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7586,
+          "replaySlot": 8,
+          "sourceEventId": "op-000007586",
+          "targetReplaySlot": 3
+        },
+        {
+          "atMs": 5215505,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 422815,
+          "replaySlot": 8,
+          "sourceEventId": "op-000422815",
+          "targetReplaySlot": 3
+        }
+      ],
+      "8->4": [
+        {
+          "atMs": 50063,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7588,
+          "replaySlot": 8,
+          "sourceEventId": "op-000007588",
+          "targetReplaySlot": 4
+        },
+        {
+          "atMs": 5215505,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 422817,
+          "replaySlot": 8,
+          "sourceEventId": "op-000422817",
+          "targetReplaySlot": 4
+        }
+      ],
+      "8->5": [
+        {
+          "atMs": 50063,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7590,
+          "replaySlot": 8,
+          "sourceEventId": "op-000007590",
+          "targetReplaySlot": 5
+        },
+        {
+          "atMs": 5215505,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 422819,
+          "replaySlot": 8,
+          "sourceEventId": "op-000422819",
+          "targetReplaySlot": 5
+        }
+      ],
+      "8->6": [
+        {
+          "atMs": 50063,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7592,
+          "replaySlot": 8,
+          "sourceEventId": "op-000007592",
+          "targetReplaySlot": 6
+        },
+        {
+          "atMs": 2660384,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 238117,
+          "replaySlot": 8,
+          "sourceEventId": "op-000238117",
+          "targetReplaySlot": 6
+        }
+      ],
+      "8->7": [
+        {
+          "atMs": 50063,
+          "commandId": 0,
+          "diplomacyMode": 0,
+          "operationOrdinal": 7594,
+          "replaySlot": 8,
+          "sourceEventId": "op-000007594",
+          "targetReplaySlot": 7
+        },
+        {
+          "atMs": 5215505,
+          "commandId": 0,
+          "diplomacyMode": 3,
+          "operationOrdinal": 422822,
+          "replaySlot": 8,
+          "sourceEventId": "op-000422822",
+          "targetReplaySlot": 7
+        }
+      ]
+    },
+    "observedAgeReached": {
+      "events": [],
+      "status": "insufficient_evidence"
+    },
+    "positiveQueueAmountsByPlayerAndRawUnit": {
+      "2": {
+        "1103": 3,
+        "13": 28,
+        "1658": 19,
+        "17": 41,
+        "331": 26,
+        "4": 205,
+        "539": 41,
+        "545": 6,
+        "83": 139,
+        "93": 46
+      },
+      "3": {
+        "1104": 15,
+        "128": 3,
+        "13": 22,
+        "17": 41,
+        "1904": 5,
+        "2626": 1,
+        "331": 1,
+        "545": 5,
+        "83": 154
+      },
+      "4": {
+        "1103": 25,
+        "1104": 12,
+        "1129": 41,
+        "1132": 324,
+        "13": 34,
+        "17": 100,
+        "280": 2,
+        "420": 16,
+        "545": 4,
+        "83": 196
+      },
+      "5": {
+        "13": 16,
+        "539": 6,
+        "83": 41
+      },
+      "6": {
+        "1103": 20,
+        "1104": 10,
+        "125": 69,
+        "13": 64,
+        "17": 163,
+        "36": 31,
+        "448": 63,
+        "5": 35,
+        "539": 17,
+        "545": 3,
+        "83": 205
+      },
+      "7": {
+        "13": 23,
+        "17": 20,
+        "545": 3,
+        "83": 71
+      },
+      "8": {
+        "13": 28,
+        "17": 52,
+        "2579": 51,
+        "2633": 9,
+        "280": 5,
+        "331": 20,
+        "539": 95,
+        "7": 157,
+        "83": 126,
+        "93": 186
+      }
+    },
+    "projectedAgeCompletion": {
+      "events": [],
+      "status": "not_observable"
+    },
+    "queueCommandCountsByPlayerAndRawUnit": {
+      "2": {
+        "1103": 3,
+        "13": 28,
+        "1658": 19,
+        "17": 41,
+        "331": 26,
+        "4": 117,
+        "539": 41,
+        "545": 6,
+        "83": 139,
+        "93": 18
+      },
+      "3": {
+        "1104": 8,
+        "128": 3,
+        "13": 10,
+        "17": 14,
+        "1904": 5,
+        "2626": 1,
+        "331": 1,
+        "545": 5,
+        "83": 49
+      },
+      "4": {
+        "1103": 9,
+        "1104": 4,
+        "1129": 10,
+        "1132": 68,
+        "13": 11,
+        "17": 26,
+        "280": 2,
+        "420": 12,
+        "545": 4,
+        "83": 51
+      },
+      "5": {
+        "13": 16,
+        "539": 6,
+        "83": 41
+      },
+      "6": {
+        "1103": 4,
+        "1104": 6,
+        "125": 49,
+        "13": 36,
+        "17": 86,
+        "36": 31,
+        "448": 19,
+        "5": 35,
+        "539": 17,
+        "545": 3,
+        "83": 187
+      },
+      "7": {
+        "13": 23,
+        "17": 4,
+        "545": 3,
+        "83": 63
+      },
+      "8": {
+        "13": 28,
+        "17": 36,
+        "2579": 43,
+        "2633": 5,
+        "280": 5,
+        "331": 20,
+        "539": 19,
+        "7": 37,
+        "83": 126,
+        "93": 41
+      }
+    },
+    "queueCommandsWithUnknownAmountByPlayer": {},
+    "researchCommandCountsByPlayerAndRawTechnology": {
+      "2": {
+        "100": 1,
+        "101": 1,
+        "102": 1,
+        "103": 1,
+        "14": 1,
+        "197": 1,
+        "199": 1,
+        "200": 1,
+        "201": 2,
+        "202": 1,
+        "203": 1,
+        "211": 1,
+        "212": 2,
+        "213": 1,
+        "22": 1,
+        "237": 1,
+        "249": 1,
+        "315": 1,
+        "34": 1,
+        "35": 1,
+        "429": 1,
+        "47": 1,
+        "48": 1,
+        "74": 1,
+        "8": 1,
+        "93": 1
+      },
+      "3": {
+        "101": 1,
+        "102": 1,
+        "103": 1,
+        "14": 1,
+        "199": 1,
+        "200": 1,
+        "201": 1,
+        "202": 1,
+        "203": 1,
+        "213": 1,
+        "22": 1,
+        "221": 1,
+        "249": 1,
+        "280": 1,
+        "34": 1,
+        "48": 1,
+        "50": 1,
+        "65": 1,
+        "8": 1,
+        "905": 1,
+        "906": 3,
+        "93": 1,
+        "980": 1
+      },
+      "4": {
+        "101": 1,
+        "102": 2,
+        "103": 1,
+        "12": 1,
+        "13": 1,
+        "14": 1,
+        "194": 1,
+        "199": 1,
+        "200": 1,
+        "201": 1,
+        "202": 1,
+        "203": 1,
+        "213": 1,
+        "22": 1,
+        "221": 1,
+        "249": 1,
+        "257": 1,
+        "280": 1,
+        "321": 1,
+        "322": 1,
+        "34": 1,
+        "35": 1,
+        "374": 1,
+        "376": 2,
+        "377": 1,
+        "379": 1,
+        "380": 1,
+        "39": 1,
+        "435": 1,
+        "47": 1,
+        "48": 1,
+        "54": 1,
+        "608": 1,
+        "621": 1,
+        "628": 1,
+        "629": 1,
+        "631": 2,
+        "64": 1,
+        "65": 1,
+        "67": 1,
+        "68": 1,
+        "74": 1,
+        "8": 1,
+        "80": 1,
+        "81": 1,
+        "82": 1,
+        "905": 1,
+        "906": 1,
+        "908": 1,
+        "93": 1
+      },
+      "5": {
+        "101": 1,
+        "102": 1,
+        "22": 1
+      },
+      "6": {
+        "101": 2,
+        "102": 2,
+        "103": 1,
+        "14": 1,
+        "15": 1,
+        "199": 2,
+        "200": 2,
+        "201": 2,
+        "202": 1,
+        "203": 1,
+        "213": 1,
+        "22": 1,
+        "230": 2,
+        "231": 2,
+        "233": 2,
+        "249": 1,
+        "254": 1,
+        "280": 2,
+        "315": 2,
+        "316": 2,
+        "34": 2,
+        "35": 2,
+        "373": 2,
+        "374": 2,
+        "379": 2,
+        "39": 3,
+        "435": 2,
+        "438": 2,
+        "47": 2,
+        "48": 3,
+        "492": 2,
+        "50": 2,
+        "51": 2,
+        "65": 2,
+        "67": 1,
+        "8": 1,
+        "81": 1,
+        "906": 2,
+        "907": 2,
+        "908": 1,
+        "93": 2
+      },
+      "7": {
+        "101": 1,
+        "213": 1,
+        "22": 1,
+        "8": 1
+      },
+      "8": {
+        "101": 1,
+        "102": 1,
+        "103": 1,
+        "197": 1,
+        "199": 1,
+        "200": 1,
+        "201": 1,
+        "202": 1,
+        "203": 1,
+        "211": 1,
+        "213": 1,
+        "215": 1,
+        "22": 1,
+        "249": 1,
+        "257": 1,
+        "315": 1,
+        "34": 1,
+        "35": 1,
+        "374": 1,
+        "429": 1,
+        "46": 1,
+        "47": 1,
+        "48": 1,
+        "54": 1,
+        "67": 1,
+        "74": 1,
+        "76": 1,
+        "8": 1,
+        "906": 1,
+        "908": 1,
+        "93": 1,
+        "98": 1
+      }
+    }
+  },
+  "map": {
+    "height": 220,
+    "width": 220
+  },
+  "operationCounts": {
+    "ACTION": 13623,
+    "CHAT": 396,
+    "POSTGAME": 1,
+    "SYNC": 220050,
+    "VIEWLOCK": 220050
+  },
+  "participantsSha256": "ef738f51bdd148076c07877db41802cb60129e79694194b94acb3f0bd3ce6692",
+  "playerCount": 8,
+  "positiveQueueAmount": 3144,
+  "queueCommandCount": 1720,
+  "researchCommandCount": 216,
+  "schemaVersion": "1.1.0",
+  "snapshotVersion": "AOF_GOLDEN_V1",
+  "source": {
+    "byteLength": 7631541,
+    "gameBuild": 180059,
+    "povPlayerId": 4,
+    "saveVersion": 68.0,
+    "sha256": "2dd7a9a63f1b1b74f7e43dc1de1e70417089bb7f3ff667424591dea7db1e9ec9"
+  },
+  "stores": {
+    "facts": {
+      "recordCount": 454120,
+      "semanticSha256": "32fca70aa730fe23ee45538a7c2a29161277310de05164706ab1a779d25a2acc"
+    },
+    "objects": {
+      "recordCount": 23628,
+      "semanticSha256": "3c968fba9bcfd28c8bfb443741184ab83ab2b0b5890327b866a187c86525840c"
+    },
+    "terrain": {
+      "recordCount": 48400,
+      "semanticSha256": "84821c0a129e9d37691350624d12ce373aec7d467cfb7efb3ef8cd5fd27f35b7"
+    }
+  },
+  "versions": {
+    "entityDataVersion": "RAW_AOE2_IDS_V1",
+    "interactionModelVersion": null,
+    "normalizerVersion": "AOF_CANONICAL_NORMALIZER_V1_1",
+    "parserVersion": "mgz-fast/1.0.0",
+    "reconstructionVersion": null,
+    "schemaVersion": "1.1.0",
+    "spatialModelVersion": null
+  }
+}

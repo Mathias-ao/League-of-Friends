@@ -2,27 +2,34 @@ from __future__ import annotations
 
 import argparse
 import base64
-import gzip
 import hashlib
 import json
 import os
-from collections import Counter, defaultdict
+import math
+import tempfile
+import shutil
+import struct
+import zlib
 from datetime import datetime, timezone
 from importlib.metadata import version as package_version
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from mgz.fast import meta, operation, save as parse_save, start as parse_start
-from mgz.fast.enums import Action, Operation
+from mgz.fast import meta
 from mgz.fast.header import parse as parse_header
+from canonical_io import EventWriter, SCHEMA_VERSION, json_bytes
+from canonical_stream import frames, command_layout, ExactReader
+from canonical_projector import CompactProjector
+from canonical_run import stage_run, seal_local, compatibility
 
-ADAPTER_SCHEMA_VERSION = "LOF_MGZ_FAST_ADAPTER_V3"
-CANONICAL_SCHEMA_VERSION = "1.0.0"
-NORMALIZER_VERSION = "LOF_CANONICAL_NORMALIZER_V1"
+ADAPTER_SCHEMA_VERSION = "LOF_MGZ_FAST_ADAPTER_V4"
+CANONICAL_SCHEMA_VERSION = SCHEMA_VERSION
+NORMALIZER_VERSION = "AOF_CANONICAL_NORMALIZER_V1_1"
+EXPORTER_VERSION = "AOF_CANONICAL_EXTRACTOR_V1"
 ENTITY_DATA_VERSION = "RAW_AOE2_IDS_V1"
 PARSER_DISTRIBUTION = "mgz-fast"
-
-PARTIAL_ACTION_PREFIXES = ("DE_UNKNOWN_", "HD_UNKNOWN_")
+MAX_SOURCE_BYTES = 128 * 1024 * 1024
+MAX_INFLATED_HEADER_BYTES = 256 * 1024 * 1024
 
 ACTION_EVENT_TYPES: dict[str, str] = {
     "MOVE": "command.move",
@@ -95,7 +102,7 @@ def integer(value: Any) -> int | None:
 def finite_number(value: Any) -> float | int | None:
     if isinstance(value, bool):
         return int(value)
-    if isinstance(value, (int, float)):
+    if isinstance(value, (int, float)) and math.isfinite(value):
         return value
     return None
 
@@ -118,7 +125,27 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def preflight_source(path: Path, *, max_source_bytes: int = MAX_SOURCE_BYTES,
+                     max_header_bytes: int = MAX_INFLATED_HEADER_BYTES) -> None:
+    """Reject oversized/truncated DE input and header bombs before decoding."""
+    size = path.stat().st_size
+    if size < 8 or size > max_source_bytes:
+        raise ValueError("Replay size is outside the extraction profile limit")
+    with path.open('rb') as handle:
+        header_length, _ = struct.unpack('<II', handle.read(8))
+        if header_length < 8 or header_length > size:
+            raise ValueError("Invalid compressed header boundary")
+        decoder = zlib.decompressobj(wbits=-15)
+        inflated = decoder.decompress(handle.read(header_length - 8), max_header_bytes + 1)
+        if len(inflated) > max_header_bytes or decoder.unconsumed_tail:
+            raise ValueError("Inflated header exceeds extraction profile limit")
+        if not decoder.eof or decoder.unused_data:
+            raise ValueError("Incomplete or trailing compressed header data")
+
+
 def json_safe(value: Any) -> Any:
+    if isinstance(value, float) and not math.isfinite(value):
+        return {"nonFiniteFloat": str(value)}
     if value is None or isinstance(value, (str, bool, int, float)):
         return value
     if isinstance(value, bytes):
@@ -127,8 +154,11 @@ def json_safe(value: Any) -> Any:
         return [json_safe(item) for item in value]
     if isinstance(value, dict):
         return {str(key): json_safe(child) for key, child in value.items()}
-    name = enum_name(value)
-    return name if name is not None else repr(value)
+    if hasattr(value, "hexdigest"):
+        return {"digestAlgorithm": value.name, "digestHex": value.hexdigest()}
+    if hasattr(value, "name"):
+        return value.name
+    raise TypeError(f"Unsupported decoded value type: {type(value).__name__}")
 
 
 def position(x: Any, y: Any, *, tile_x: int | None = None, tile_y: int | None = None) -> dict[str, Any] | None:
@@ -174,46 +204,8 @@ def entity_ref(namespace: str, raw_id: Any) -> dict[str, Any] | None:
     }
 
 
-def artifact_ref(path: Path, *, encoding: str, record_count: int | None = None, first_ordinal: int | None = None, last_ordinal: int | None = None) -> dict[str, Any]:
-    return {
-        "uri": path.name,
-        "sha256": file_sha256(path),
-        "byteLength": path.stat().st_size,
-        "encoding": encoding,
-        "contentType": "application/x-ndjson" if "jsonl" in encoding else "application/json",
-        "recordCount": record_count,
-        "firstOrdinal": first_ordinal,
-        "lastOrdinal": last_ordinal,
-    }
-
-
-class JsonlGzipWriter:
-    def __init__(self, path: Path):
-        self.path = path
-        self.handle = gzip.open(path, "wt", encoding="utf-8", newline="\n")
-        self.record_count = 0
-        self.first_ordinal: int | None = None
-        self.last_ordinal: int | None = None
-
-    def write(self, record: dict[str, Any]) -> None:
-        ordinal = integer(record.get("operationOrdinal"))
-        if ordinal is not None:
-            if self.first_ordinal is None:
-                self.first_ordinal = ordinal
-            self.last_ordinal = ordinal
-        self.handle.write(json.dumps(record, ensure_ascii=False, separators=(",", ":")))
-        self.handle.write("\n")
-        self.record_count += 1
-
-    def close(self) -> dict[str, Any]:
-        self.handle.close()
-        return artifact_ref(
-            self.path,
-            encoding="jsonl_gzip",
-            record_count=self.record_count,
-            first_ordinal=self.first_ordinal,
-            last_ordinal=self.last_ordinal,
-        )
+# Kept as a local alias for existing exporter call sites.
+JsonlGzipWriter = EventWriter
 
 
 def structured_warning(code: str, message: str, *, severity: str = "warning", operation_ordinal: int | None = None, affected_fields: list[str] | None = None) -> dict[str, Any]:
@@ -279,19 +271,6 @@ def extract_players(header: dict[str, Any], warnings: list[str]) -> list[dict[st
     return players
 
 
-def compact_event(slot: int, elapsed_ms: int, **fields: Any) -> dict[str, Any]:
-    return {"replaySlot": slot, "atMs": elapsed_ms, **fields}
-
-
-def read_operation_bytes(handle: BinaryIO, start: int, end: int) -> bytes:
-    current = handle.tell()
-    try:
-        handle.seek(start)
-        return handle.read(max(0, end - start))
-    finally:
-        handle.seek(current)
-
-
 def recovered_action_code(raw_operation: bytes) -> int | None:
     # ACTION operation layout: op-id(4), action-length(4), action-code(1), ...
     return raw_operation[8] if len(raw_operation) > 8 else None
@@ -315,18 +294,19 @@ def action_decode(action_name: str, raw_operation: bytes) -> tuple[dict[str, Any
         return ({
             "status": "unknown_action",
             "knownByteCount": None,
-            "unknownByteCount": len(raw_operation),
+            "unknownByteCount": None,
             "unknownBytesBase64": base64.b64encode(raw_operation).decode("ascii"),
             "parserWarningCodes": ["MGZ_FAST_ACTION_DECODE_ERROR"],
         }, code, None)
 
-    partial = action_name.startswith(PARTIAL_ACTION_PREFIXES)
+    # Recognition is not complete decoding: the dependency discards padding,
+    # selected research buildings and some named fields. Retain the full frame.
     return ({
-        "status": "partial" if partial else "complete",
+        "status": "partial",
         "knownByteCount": None,
         "unknownByteCount": None,
-        "unknownBytesBase64": None,
-        "parserWarningCodes": ["KNOWN_ACTION_SEMANTICS_PARTIAL"] if partial else [],
+        "unknownBytesBase64": base64.b64encode(raw_operation).decode("ascii"),
+        "parserWarningCodes": ["UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"],
     }, None, action_name)
 
 
@@ -361,6 +341,8 @@ def canonical_action_event(
         event_type = "command.diplomacy_change"
 
     payload = json_safe(action_data)
+    payload["_rawOperationBase64"] = base64.b64encode(raw_operation).decode("ascii")
+    payload["_rawLayout"] = json_safe(command_layout(raw_operation, action_name))
     return {
         "eventId": f"op-{ordinal:09d}",
         "layer": "parser_fact",
@@ -369,6 +351,7 @@ def canonical_action_event(
         "clock": {"syncElapsedMs": elapsed_ms, "restoreOffsetMs": None, "sequence": integer(action_data.get("sequence"))},
         "operationOrdinal": ordinal,
         "byteOffset": op_start,
+        "byteOffsetDomain": "original_file",
         "byteLength": max(0, op_end - op_start),
         "sourceOperation": "ACTION",
         "sourceActionCode": source_code,
@@ -382,7 +365,9 @@ def canonical_action_event(
         "endPosition": position(action_data.get("x_end"), action_data.get("y_end")),
         "payload": payload,
         "decode": decode,
-        "evidence": evidence("A", "exact" if decode["status"] == "complete" else "low"),
+        "evidence": evidence("A", "low" if action_name == "ERROR" else "high",
+                             method_version=EXPORTER_VERSION,
+                             notes="Decoded fields are observations; acceptance/completion and unread bytes are not qualified."),
         "dependsOnEventIds": [],
     }
 
@@ -410,6 +395,7 @@ def generic_body_event(
         "clock": {"syncElapsedMs": elapsed_ms, "restoreOffsetMs": None, "sequence": None},
         "operationOrdinal": ordinal,
         "byteOffset": op_start,
+        "byteOffsetDomain": "original_file",
         "byteLength": max(0, op_end - op_start),
         "sourceOperation": source_operation,
         "sourceActionCode": None,
@@ -438,394 +424,79 @@ def parse_body(
     path: Path,
     players: list[dict[str, Any]],
     warnings: list[str],
-    fact_writer: JsonlGzipWriter | None,
+    fact_writer: EventWriter | None,
     structured_warnings: list[dict[str, Any]],
+    *,
+    body_offset: int | None = None,
+    pov_player_id: int | None = None,
 ) -> dict[str, Any]:
-    action_counts: dict[int, Counter[str]] = defaultdict(Counter)
-    action_seconds: dict[int, Counter[int]] = defaultdict(Counter)
-    build_counts: dict[int, Counter[str]] = defaultdict(Counter)
-    build_events: list[dict[str, Any]] = []
-    wall_events: list[dict[str, Any]] = []
-    production_events: list[dict[str, Any]] = []
-    research_events: list[dict[str, Any]] = []
-    market_events: list[dict[str, Any]] = []
-    tribute_events: list[dict[str, Any]] = []
-    diplomacy_events: list[dict[str, Any]] = []
-    flare_events: list[dict[str, Any]] = []
-    resignations: list[dict[str, Any]] = []
-    operation_counts: Counter[str] = Counter()
-    all_action_counts: Counter[str] = Counter()
-    unknown_action_counts: Counter[str] = Counter()
-    action_payload_keys: dict[str, Counter[str]] = defaultdict(Counter)
-
+    projector = CompactProjector({player["replaySlot"] for player in players})
     elapsed_ms = 0
-    total_actions = 0
-    total_syncs = 0
-    camera_points = 0
-    chat_operations = 0
-    body_complete = True
-    operation_ordinal = 0
-    valid_slots = {player["replaySlot"] for player in players}
-    pov_player_id: int | None = None
-
     with path.open("rb") as handle:
         eof = os.fstat(handle.fileno()).st_size
-        header = parse_header(handle)
-        metadata = header.get("metadata") or {}
-        pov_player_id = integer(metadata.get("owner_id"))
-        meta(handle)
-
-        while handle.tell() < eof:
-            op_start = handle.tell()
-            peek = handle.read(4)
-            if len(peek) < 4:
-                break
-            raw_operation_code = int.from_bytes(peek, "little")
-            handle.seek(op_start)
-            try:
-                if raw_operation_code == Operation.START.value:
-                    handle.read(4)
-                    parse_start(handle)
-                    op_type, payload = Operation.START, None
-                elif raw_operation_code == Operation.SAVE.value:
-                    handle.read(4)
-                    parse_save(handle)
-                    op_type, payload = Operation.SAVE, None
-                else:
-                    op_type, payload = operation(handle)
-            except EOFError:
-                break
-            except Exception as exc:  # Deliberately fail closed: no silent operation loss.
-                op_end = handle.tell()
-                body_complete = False
-                message = f"Body parser stopped at byte {op_start}: {type(exc).__name__}: {exc}"
-                warnings.append(message)
-                structured_warnings.append(structured_warning(
-                    "BODY_OPERATION_PARSE_FAILED",
-                    message,
-                    severity="error",
-                    operation_ordinal=operation_ordinal,
-                    affected_fields=["factStore", "durationMs"],
-                ))
-                if fact_writer is not None:
-                    raw = read_operation_bytes(handle, op_start, max(op_start + 1, op_end))
-                    fact_writer.write({
-                        "eventId": f"op-{operation_ordinal:09d}",
-                        "layer": "parser_fact",
-                        "eventType": "action.unknown",
-                        "timestampMs": elapsed_ms,
-                        "clock": {"syncElapsedMs": elapsed_ms, "restoreOffsetMs": None, "sequence": None},
-                        "operationOrdinal": operation_ordinal,
-                        "byteOffset": op_start,
-                        "byteLength": len(raw),
-                        "sourceOperation": "SAVE",
-                        "sourceActionCode": None,
-                        "sourceActionName": None,
-                        "actorPlayerId": None,
-                        "targetPlayerId": None,
-                        "objectInstanceIds": [],
-                        "targetInstanceId": None,
-                        "entity": None,
-                        "position": None,
-                        "endPosition": None,
-                        "payload": {"exceptionType": type(exc).__name__, "message": str(exc)},
-                        "decode": {
-                            "status": "failed",
-                            "knownByteCount": None,
-                            "unknownByteCount": len(raw),
-                            "unknownBytesBase64": base64.b64encode(raw).decode("ascii"),
-                            "parserWarningCodes": ["BODY_OPERATION_PARSE_FAILED"],
-                        },
-                        "evidence": evidence("A", "low", notes="Raw bytes retained for the parser failure span."),
-                        "dependsOnEventIds": [],
-                    })
-                break
-
-            op_end = handle.tell()
-            op_name = enum_name(op_type) or "UNKNOWN"
-            operation_counts[op_name] += 1
-
-            if op_type == Operation.SYNC:
-                increment, checksum, sync_data = payload
-                elapsed_ms += int(increment)
-                total_syncs += 1
-                if fact_writer is not None:
-                    fact_writer.write(generic_body_event(
-                        ordinal=operation_ordinal,
-                        elapsed_ms=elapsed_ms,
-                        op_start=op_start,
-                        op_end=op_end,
-                        source_operation="SYNC",
-                        event_type="clock.sync",
-                        payload={"incrementMs": int(increment), "checksum": checksum, "data": sync_data},
-                    ))
-                operation_ordinal += 1
-                continue
-
-            if op_type == Operation.VIEWLOCK:
-                camera_points += 1
-                x, y = payload
-                if fact_writer is not None:
-                    fact_writer.write(generic_body_event(
-                        ordinal=operation_ordinal,
-                        elapsed_ms=elapsed_ms,
-                        op_start=op_start,
-                        op_end=op_end,
-                        source_operation="VIEWLOCK",
-                        event_type="camera.view",
-                        payload={},
-                        actor_player_id=pov_player_id,
-                        pos=position(x, y),
-                        evidence_classification="A+E",
-                    ))
-                operation_ordinal += 1
-                continue
-
-            if op_type == Operation.CHAT:
-                chat_operations += 1
-                raw = payload if isinstance(payload, bytes) else bytes()
-                if fact_writer is not None:
-                    fact_writer.write(generic_body_event(
-                        ordinal=operation_ordinal,
-                        elapsed_ms=elapsed_ms,
-                        op_start=op_start,
-                        op_end=op_end,
-                        source_operation="CHAT",
-                        event_type="chat.raw",
-                        payload={
-                            "text": raw.decode("utf-8", errors="replace").strip("\x00"),
-                            "rawBase64": base64.b64encode(raw).decode("ascii"),
-                        },
-                    ))
-                operation_ordinal += 1
-                continue
-
-            if op_type == Operation.POSTGAME:
-                if fact_writer is not None:
-                    fact_writer.write(generic_body_event(
-                        ordinal=operation_ordinal,
-                        elapsed_ms=elapsed_ms,
-                        op_start=op_start,
-                        op_end=op_end,
-                        source_operation="POSTGAME",
-                        event_type="postgame.block",
-                        payload={"decoded": payload},
-                    ))
-                operation_ordinal += 1
-                continue
-
-            if op_type == Operation.START:
-                if fact_writer is not None:
-                    fact_writer.write(generic_body_event(
-                        ordinal=operation_ordinal,
-                        elapsed_ms=elapsed_ms,
-                        op_start=op_start,
-                        op_end=op_end,
-                        source_operation="START",
-                        event_type="match.start",
-                        payload={"rawOperationCode": raw_operation_code},
-                    ))
-                operation_ordinal += 1
-                continue
-
-            if op_type == Operation.SAVE:
-                raw = read_operation_bytes(handle, op_start, op_end)
-                inferred_save = raw_operation_code != Operation.SAVE.value
-                if fact_writer is not None:
-                    fact_writer.write(generic_body_event(
-                        ordinal=operation_ordinal,
-                        elapsed_ms=elapsed_ms,
-                        op_start=op_start,
-                        op_end=op_end,
-                        source_operation="SAVE",
-                        event_type="save.chapter",
-                        payload={
-                            "rawOperationCode": raw_operation_code,
-                            "rawBase64": base64.b64encode(raw).decode("ascii") if inferred_save else None,
-                        },
-                        decode_status="partial" if inferred_save else "complete",
-                        parser_warning_codes=["UNKNOWN_OPERATION_INTERPRETED_AS_SAVE"] if inferred_save else [],
-                    ))
-                operation_ordinal += 1
-                continue
-
-            if op_type != Operation.ACTION:
-                operation_ordinal += 1
-                continue
-
-            action_type, action_data = payload
-            action_data = action_data if isinstance(action_data, dict) else {}
-            total_actions += 1
-            action_name = enum_name(action_type) or "ERROR"
-            all_action_counts[action_name] += 1
-            for key in action_data:
-                action_payload_keys[action_name][str(key)] += 1
-
-            player_id = integer(action_data.get("player_id"))
-            if player_id in valid_slots:
-                action_counts[player_id][action_name] += 1
-                action_seconds[player_id][elapsed_ms // 1000] += 1
-
-            if action_name == "ERROR":
-                raw_operation = read_operation_bytes(handle, op_start, op_end)
-                raw_code = recovered_action_code(raw_operation)
-                unknown_action_counts[str(raw_code) if raw_code is not None else "unknown"] += 1
+        if body_offset is None:
+            header = parse_header(handle)
+            pov_player_id = integer((header.get("metadata") or {}).get("owner_id"))
+            meta(ExactReader(handle, eof))
+            body_offset = handle.tell()
+        handle.seek(body_offset)
+        for ordinal, (op_name, payload, begin, end, raw, error) in enumerate(frames(handle, eof)):
+            if op_name == "ACTION":
+                action_type, data = payload
+                event = canonical_action_event(ordinal=ordinal, elapsed_ms=elapsed_ms,
+                    op_start=begin, op_end=end, action_type=action_type,
+                    action_data=data, raw_operation=raw)
             else:
-                raw_operation = b""
-
-            if action_type == Action.RESIGN and player_id in valid_slots:
-                resignations.append(compact_event(player_id, elapsed_ms))
-
-            elif action_type == Action.RESEARCH and player_id in valid_slots:
-                research_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    technologyId=integer(action_data.get("technology_id")),
-                    producerObjectIds=[value for value in (integer(item) for item in (action_data.get("object_ids") or [])) if value is not None],
-                ))
-
-            elif action_type == Action.BUILD and player_id in valid_slots:
-                building_id = integer(action_data.get("building_id"))
-                if building_id is not None:
-                    build_counts[player_id][str(building_id)] += 1
-                build_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    buildingId=building_id,
-                    builderObjectIds=[value for value in (integer(item) for item in (action_data.get("object_ids") or [])) if value is not None],
-                    x=finite_number(action_data.get("x")),
-                    y=finite_number(action_data.get("y")),
-                ))
-
-            elif action_type == Action.WALL and player_id in valid_slots:
-                wall_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    buildingId=integer(action_data.get("building_id")),
-                    builderObjectIds=[value for value in (integer(item) for item in (action_data.get("object_ids") or [])) if value is not None],
-                    x=finite_number(action_data.get("x")),
-                    y=finite_number(action_data.get("y")),
-                    xEnd=finite_number(action_data.get("x_end")),
-                    yEnd=finite_number(action_data.get("y_end")),
-                ))
-
-            elif action_type in (Action.DE_QUEUE, Action.QUEUE, Action.MULTIQUEUE, Action.MAKE) and player_id in valid_slots:
-                raw_amount = integer(action_data.get("amount"))
-                producer_ids = [value for value in (integer(item) for item in (action_data.get("object_ids") or [])) if value is not None]
-                production_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    commandType=action_name,
-                    unitId=integer(action_data.get("unit_id")),
-                    amount=raw_amount if raw_amount is not None and raw_amount > 0 else 1,
-                    signedAmount=raw_amount,
-                    buildingId=integer(action_data.get("building_id")),
-                    producerObjectIds=producer_ids,
-                ))
-
-            elif action_type in (Action.BUY, Action.SELL) and player_id in valid_slots:
-                market_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    type=action_name,
-                    resourceId=integer(action_data.get("resource_id")),
-                    amount=finite_number(action_data.get("amount")),
-                    marketObjectIds=[value for value in (integer(item) for item in (action_data.get("object_ids") or [])) if value is not None],
-                ))
-
-            elif action_type in (Action.TRIBUTE, Action.DE_TRIBUTE) and player_id in valid_slots:
-                tribute_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    targetReplaySlot=integer(action_data.get("target_player_id")) or integer(action_data.get("player_id_to")),
-                    resourceId=integer(action_data.get("resource_id")),
-                    amount=finite_number(action_data.get("amount")),
-                    fee=finite_number(action_data.get("fee")),
-                    food=finite_number(action_data.get("food")),
-                    wood=finite_number(action_data.get("wood")),
-                    gold=finite_number(action_data.get("gold")),
-                    stone=finite_number(action_data.get("stone")),
-                ))
-
-            if action_type == Action.GAME and player_id in valid_slots and action_data.get("target_player_id") is not None:
-                diplomacy_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    targetReplaySlot=integer(action_data.get("target_player_id")),
-                    diplomacyMode=integer(action_data.get("diplomacy_mode")),
-                    commandId=integer(action_data.get("command_id")),
-                ))
-
-            if action_type == Action.FLARE and player_id in valid_slots:
-                flare_events.append(compact_event(
-                    player_id,
-                    elapsed_ms,
-                    x=finite_number(action_data.get("x")),
-                    y=finite_number(action_data.get("y")),
-                    targets=json_safe(action_data.get("targets") or []),
-                ))
-
+                fields: dict[str, Any] = {}
+                actor, pos, classification = None, None, "A"
+                event_type = {"SYNC": "clock.sync", "VIEWLOCK": "camera.view", "CHAT": "chat.raw",
+                              "POSTGAME": "postgame.block", "START": "match.start", "SAVE": "save.chapter",
+                              "UNKNOWN": "operation.unknown"}[op_name]
+                if op_name == "SYNC":
+                    increment, checksum, data = payload
+                    elapsed_ms += int(increment)
+                    fields = {"incrementMs": int(increment), "checksum": checksum, "data": json_safe(data)}
+                elif op_name == "VIEWLOCK":
+                    pos = position(*payload)
+                    actor, classification = pov_player_id, "A+E"
+                elif op_name == "CHAT":
+                    fields = {"text": payload.decode("utf-8", errors="replace").strip("\x00"),
+                              "rawBase64": base64.b64encode(payload).decode("ascii")}
+                    try:
+                        fields["structuredChat"] = json.loads(fields["text"])
+                    except (ValueError, TypeError):
+                        pass
+                elif op_name == "POSTGAME":
+                    fields = {"decoded": json_safe(payload)}
+                else:
+                    fields = {"rawOperationCode": int.from_bytes(raw[:4], "little") if len(raw) >= 4 else None}
+                if error:
+                    fields["failure"] = error
+                    message = f"Body framing stopped at byte {begin}: {error}; entire tail retained."
+                    warnings.append(message)
+                    structured_warnings.append(structured_warning("BODY_OPERATION_PARSE_FAILED", message,
+                        severity="error", operation_ordinal=ordinal, affected_fields=["factStore", "match.durationMs"]))
+                fields["_rawOperationBase64"] = base64.b64encode(raw).decode("ascii")
+                # Only an increment-only sync frame has fully accounted bytes here.
+                status = "failed" if error else "complete" if op_name == "SYNC" and len(raw) == 8 else "partial"
+                event = generic_body_event(ordinal=ordinal, elapsed_ms=elapsed_ms, op_start=begin, op_end=end,
+                    source_operation=op_name, event_type=event_type, payload=fields,
+                    actor_player_id=actor, pos=pos, evidence_classification=classification, decode_status=status)
+                event["decode"].update(knownByteCount=len(raw) if status == "complete" else None,
+                    unknownByteCount=0 if status == "complete" else None,
+                    unknownBytesBase64=None if status == "complete" else base64.b64encode(raw).decode("ascii"),
+                    parserWarningCodes=[] if status == "complete" else ["FRAMING_FAILED" if error else "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"])
+                event["evidence"]["methodVersion"] = EXPORTER_VERSION
+                event["evidence"]["confidence"] = "low" if error else "high"
             if fact_writer is not None:
-                if not raw_operation:
-                    raw_operation = b""
-                fact_writer.write(canonical_action_event(
-                    ordinal=operation_ordinal,
-                    elapsed_ms=elapsed_ms,
-                    op_start=op_start,
-                    op_end=op_end,
-                    action_type=action_type,
-                    action_data=action_data,
-                    raw_operation=raw_operation,
-                ))
-
-            operation_ordinal += 1
-
-    if total_syncs == 0:
-        warnings.append("Replay body contained no SYNC operations; duration may be unavailable.")
-        structured_warnings.append(structured_warning(
-            "NO_SYNC_OPERATIONS",
-            "Replay body contained no SYNC operations; duration may be unavailable.",
-            affected_fields=["match.durationMs"],
-        ))
-
-    decoded_actions = total_actions - sum(unknown_action_counts.values())
-    decode_coverage = round((decoded_actions / total_actions * 100), 3) if total_actions else 0.0
-
-    return {
-        "durationMs": elapsed_ms,
-        "totalActions": total_actions,
-        "totalSyncOperations": total_syncs,
-        "bodyParseComplete": body_complete,
-        "decodeCoveragePercent": decode_coverage,
-        "operationCounts": dict(sorted(operation_counts.items())),
-        "allActionCounts": dict(sorted(all_action_counts.items())),
-        "unknownActionCounts": dict(sorted(unknown_action_counts.items())),
-        "cameraPointsTotal": camera_points,
-        "chatOperationsTotal": chat_operations,
-        "actionPayloadKeys": {
-            action: dict(sorted(counter.items())) for action, counter in sorted(action_payload_keys.items())
-        },
-        "actionCountsByPlayer": {
-            str(slot): dict(sorted(counter.items())) for slot, counter in sorted(action_counts.items())
-        },
-        "actionSecondsByPlayer": {
-            str(slot): [{"second": second, "count": count} for second, count in sorted(counter.items())]
-            for slot, counter in sorted(action_seconds.items())
-        },
-        "buildCountsByPlayer": {
-            str(slot): dict(sorted(counter.items(), key=lambda item: int(item[0])))
-            for slot, counter in sorted(build_counts.items())
-        },
-        "buildEvents": build_events,
-        "wallEvents": wall_events,
-        "productionEvents": production_events,
-        "researchEvents": research_events,
-        "marketEvents": market_events,
-        "tributeEvents": tribute_events,
-        "diplomacyEvents": diplomacy_events,
-        "flareEvents": flare_events,
-        "resignations": resignations,
-    }
+                fact_writer.write(event)
+            projector.consume(event)
+    body = projector.finish()
+    if not body["totalSyncOperations"]:
+        warnings.append("Replay contained no SYNC operations; no duration qualification.")
+        structured_warnings.append(structured_warning("NO_SYNC_OPERATIONS",
+            "Observed sync duration is zero; full game duration is unavailable.", affected_fields=["match.durationMs"]))
+    return body
 
 
 def write_initial_state_stores(header: dict[str, Any], canonical_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -835,8 +506,10 @@ def write_initial_state_stores(header: dict[str, Any], canonical_dir: Path) -> t
     object_writer = JsonlGzipWriter(objects_path)
 
     map_data = header.get("map") or {}
-    dimension = integer(map_data.get("dimension")) or 1
+    dimension = integer(map_data.get("dimension"))
     tiles = list(map_data.get("tiles") or [])
+    if dimension is None or dimension <= 0 or not tiles or len(tiles) % dimension:
+        raise ValueError("Map dimensions cannot be established from decoded width and tile count")
     for index, raw_tile in enumerate(tiles):
         tile = list(raw_tile) if isinstance(raw_tile, (list, tuple)) else []
         terrain_raw = integer(tile[0]) if len(tile) > 0 else None
@@ -852,6 +525,7 @@ def write_initial_state_stores(header: dict[str, Any], canonical_dir: Path) -> t
             "clock": {"syncElapsedMs": 0, "restoreOffsetMs": None, "sequence": None},
             "operationOrdinal": index,
             "byteOffset": None,
+            "byteOffsetDomain": None,
             "byteLength": None,
             "sourceOperation": "MAP_TILE",
             "sourceActionCode": None,
@@ -864,7 +538,7 @@ def write_initial_state_stores(header: dict[str, Any], canonical_dir: Path) -> t
             "position": position(float(x), float(y), tile_x=x, tile_y=y),
             "endPosition": None,
             "payload": {"terrainId": terrain_id, "terrainRaw": terrain_raw, "elevation": elevation, "raw": json_safe(tile)},
-            "decode": {"status": "complete", "knownByteCount": None, "unknownByteCount": None, "unknownBytesBase64": None, "parserWarningCodes": []},
+            "decode": {"status": "partial", "knownByteCount": None, "unknownByteCount": None, "unknownBytesBase64": None, "parserWarningCodes": ["RAW_HEADER_RETAINED_SEPARATELY"]},
             "evidence": evidence(),
             "dependsOnEventIds": [],
         })
@@ -884,6 +558,7 @@ def write_initial_state_stores(header: dict[str, Any], canonical_dir: Path) -> t
                 "clock": {"syncElapsedMs": 0, "restoreOffsetMs": None, "sequence": None},
                 "operationOrdinal": object_ordinal,
                 "byteOffset": None,
+                "byteOffsetDomain": None,
                 "byteLength": None,
                 "sourceOperation": "INITIAL_OBJECT",
                 "sourceActionCode": None,
@@ -901,8 +576,9 @@ def write_initial_state_stores(header: dict[str, Any], canonical_dir: Path) -> t
                     "classId": integer(obj.get("class_id")),
                     "instanceId": instance_id,
                     "objectBlockIndex": integer(obj.get("index")),
+                    "rawDecodedObject": json_safe(obj),
                 },
-                "decode": {"status": "complete", "knownByteCount": None, "unknownByteCount": None, "unknownBytesBase64": None, "parserWarningCodes": []},
+                "decode": {"status": "partial", "knownByteCount": None, "unknownByteCount": None, "unknownBytesBase64": None, "parserWarningCodes": ["HEADER_OBJECT_SEARCH_NOT_EXHAUSTIVE", "RAW_HEADER_RETAINED_SEPARATELY"]},
                 "evidence": evidence(),
                 "dependsOnEventIds": [],
             })
@@ -916,22 +592,15 @@ def canonical_participants(players: list[dict[str, Any]], header: dict[str, Any]
     result: list[dict[str, Any]] = []
     for player in players:
         slot = int(player["replaySlot"])
+        if player.get("civilizationId") is None:
+            raise ValueError(f"Missing civilization ID for slot {slot}; header retained only on diagnostic failure")
         result.append({
             "playerId": slot,
             "number": slot,
             "name": player["name"],
             "profileId": player.get("profileId"),
             "platformIdentity": None,
-            "civilization": entity_ref("aoe2de.civilization", player.get("civilizationId")) or {
-                "namespace": "aoe2de.civilization",
-                "rawId": -1,
-                "displayName": None,
-                "normalizedKey": None,
-                "familyKey": None,
-                "lineKey": None,
-                "roleKeys": [],
-                "normalizationVersion": ENTITY_DATA_VERSION,
-            },
+            "civilization": entity_ref("aoe2de.civilization", player.get("civilizationId")),
             "colorId": player.get("colorId"),
             "lobbyTeamId": player.get("teamId"),
             "isHuman": None,
@@ -940,36 +609,6 @@ def canonical_participants(players: list[dict[str, Any]], header: dict[str, Any]
             "ratingSnapshots": [],
         })
     return result
-
-
-def canonical_teams(players: list[dict[str, Any]], lock_teams: bool | None) -> list[dict[str, Any]]:
-    by_team: dict[int | None, list[int]] = defaultdict(list)
-    for player in players:
-        by_team[integer(player.get("teamId"))].append(int(player["replaySlot"]))
-
-    shared_team_exists = any(team_id is not None and len(members) > 1 for team_id, members in by_team.items())
-    teams: list[dict[str, Any]] = []
-    for player in players:
-        slot = int(player["replaySlot"])
-        team_id = integer(player.get("teamId"))
-        members = by_team.get(team_id, []) if team_id is not None else [slot]
-        if team_id is not None and len(members) > 1:
-            key = f"lobby-{team_id}"
-            if any(team["teamId"] == key for team in teams):
-                continue
-            kind = "fixed" if lock_teams else "scenario"
-            team_members = sorted(members)
-        else:
-            key = f"solo-{slot}"
-            kind = "ffa_initial" if not lock_teams and not shared_team_exists else "solo"
-            team_members = [slot]
-        teams.append({
-            "teamId": key,
-            "memberPlayerIds": team_members,
-            "kind": kind,
-            "evidence": evidence("A", "high", notes="Derived directly from lobby team identifiers; dynamic diplomacy remains separate."),
-        })
-    return teams
 
 
 def build_settings(header: dict[str, Any], players: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1022,13 +661,13 @@ def build_canonical_manifest(
     scenario = header.get("scenario") or {}
     lobby = header.get("lobby") or {}
     metadata = header.get("metadata") or {}
-    dimension = integer(map_data.get("dimension")) or integer(lobby.get("map_size")) or 1
-    lock_teams = bool(lobby.get("lock_teams")) if lobby.get("lock_teams") is not None else None
+    dimension = integer(map_data.get("dimension"))
+    if not dimension or len(map_data.get("tiles") or []) % dimension:
+        raise ValueError("Invalid decoded map dimensions")
     parser_version = package_version(PARSER_DISTRIBUTION)
 
-    compatibility_status = "supported"
-    if not body.get("bodyParseComplete") or body.get("unknownActionCounts"):
-        compatibility_status = "degraded"
+    # A successful parse is not cross-version or field-semantic qualification.
+    compatibility_status = "degraded" if compatibility(header)['status'] == 'fixture_regression_only' else "unsupported"
 
     return {
         "schemaVersion": CANONICAL_SCHEMA_VERSION,
@@ -1052,16 +691,7 @@ def build_canonical_manifest(
             "recordedAt": utc_iso_from_unix(de.get("timestamp")),
             "parsedAt": parsed_at,
             "povPlayerId": integer(metadata.get("owner_id")),
-            "retainedReplay": {
-                "uri": None,
-                "sha256": source_hash,
-                "byteLength": path.stat().st_size,
-                "encoding": "identity",
-                "contentType": "application/octet-stream",
-                "recordCount": None,
-                "firstOrdinal": None,
-                "lastOrdinal": None,
-            },
+            "retainedReplay": None,
             "compatibility": {
                 "status": compatibility_status,
                 "upstreamParser": f"{PARSER_DISTRIBUTION}/{parser_version}",
@@ -1070,21 +700,22 @@ def build_canonical_manifest(
             },
         },
         "match": {
-            "matchId": text(de.get("guid")) or source_hash[:24],
+            "matchId": "replay:" + source_hash,
             "guid": text(de.get("guid")),
             "durationMs": int(body.get("durationMs") or 0),
-            "completionStatus": "complete" if body.get("bodyParseComplete") else "unknown",
+            "completionStatus": "restored" if (integer(map_data.get("restore_time")) or 0) > 0 else "unknown",
             "winnerPlayerIds": [],
             "winnerTeamIds": [],
             "settings": build_settings(header, players),
             "privacy": {
                 "containsChat": int(body.get("chatOperationsTotal") or 0) > 0,
                 "containsPlayerNames": True,
-                "retentionPolicyId": None,
+                "retentionPolicyId": "temporary_until_verified_canonical_persistence",
             },
         },
         "participants": canonical_participants(players, header),
-        "teams": canonical_teams(players, lock_teams),
+        "teams": [],
+        "initialDiplomacy": [],
         "initialState": {
             "map": {
                 "mapId": integer(scenario.get("map_id")) or integer(de.get("rms_map_id")),
@@ -1093,11 +724,11 @@ def build_canonical_manifest(
                 "rmsModId": text(de.get("rms_mod_id")),
                 "seed": integer(lobby.get("seed")),
                 "width": dimension,
-                "height": dimension,
+                "height": len(map_data["tiles"]) // dimension,
                 "coordinateSystem": "aoe2_world_xy_origin_top_left",
                 "terrainStore": {
                     "recordCount": terrain_store["recordCount"],
-                    "chunks": [terrain_store],
+                    "chunks": terrain_store["chunks"],
                     "operationCounts": {},
                     "actionCounts": {},
                     "unknownActionCounts": {},
@@ -1105,7 +736,7 @@ def build_canonical_manifest(
             },
             "objectStore": {
                 "recordCount": object_store["recordCount"],
-                "chunks": [object_store],
+                "chunks": object_store["chunks"],
                 "operationCounts": {},
                 "actionCounts": {},
                 "unknownActionCounts": {},
@@ -1114,7 +745,7 @@ def build_canonical_manifest(
         },
         "factStore": {
             "recordCount": fact_store["recordCount"],
-            "chunks": [fact_store],
+            "chunks": fact_store["chunks"],
             "operationCounts": body.get("operationCounts") or {},
             "actionCounts": body.get("allActionCounts") or {},
             "unknownActionCounts": body.get("unknownActionCounts") or {},
@@ -1128,13 +759,42 @@ def build_canonical_manifest(
 
 
 def build_payload(path: Path, canonical_dir: Path | None = None) -> dict[str, Any]:
+    """Stage and validate before publishing; never replace an existing bundle.
+
+    The legacy compact-only call remains available for current admin ingestion.
+    It uses the same canonical event projector but is not archival extraction.
+    """
+    if canonical_dir is None:
+        return _build_payload(path, None)
+    canonical_dir = canonical_dir.resolve()
+    if canonical_dir.exists():
+        raise FileExistsError(f"Canonical bundle already exists: {canonical_dir}; select a new run directory")
+    canonical_dir.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=".canonical-stage-", dir=canonical_dir.parent))
+    try:
+        result = _build_payload(path, staging)
+        if canonical_dir.exists():
+            raise FileExistsError(f"Canonical destination appeared during extraction: {canonical_dir}")
+        staging.rename(canonical_dir)
+        return result
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
+
+
+def _build_payload(path: Path, canonical_dir: Path | None) -> dict[str, Any]:
     warnings: list[str] = []
     structured_warnings: list[dict[str, Any]] = []
     parsed_at = datetime.now(timezone.utc).isoformat()
+    preflight_source(path)
     source_hash = file_sha256(path)
 
     with path.open("rb") as handle:
         header = parse_header(handle)
+        meta(ExactReader(handle, path.stat().st_size))
+        body_offset = handle.tell()
+        handle.seek(0)
+        prefix = handle.read(body_offset)
 
     players = extract_players(header, warnings)
     fact_writer: JsonlGzipWriter | None = None
@@ -1148,7 +808,10 @@ def build_payload(path: Path, canonical_dir: Path | None = None) -> dict[str, An
         terrain_store, object_store = write_initial_state_stores(header, canonical_dir)
         fact_writer = JsonlGzipWriter(canonical_dir / "facts.jsonl.gz")
 
-    body = parse_body(path, players, warnings, fact_writer, structured_warnings)
+    body = parse_body(path, players, warnings, fact_writer, structured_warnings,
+                      body_offset=body_offset, pov_player_id=integer((header.get("metadata") or {}).get("owner_id")))
+    if file_sha256(path) != source_hash:
+        raise RuntimeError("Source changed during extraction; refusing to publish evidence")
 
     if fact_writer is not None:
         fact_store = fact_writer.close()
@@ -1166,7 +829,9 @@ def build_payload(path: Path, canonical_dir: Path | None = None) -> dict[str, An
             structured_warnings=structured_warnings,
         )
         manifest_path = canonical_dir / "canonical-replay.json"
-        manifest_path.write_text(json.dumps(canonical, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        manifest_path.write_bytes(json_bytes(canonical))
+        run = stage_run(canonical_dir, canonical, header, prefix, body, players, json_safe(header))
+        seal_local(canonical_dir, run)
 
     de = header.get("de") or {}
     replay = {
@@ -1218,7 +883,7 @@ def build_payload(path: Path, canonical_dir: Path | None = None) -> dict[str, An
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Parse an AoE2 recorded game into the Age of Friends V3 replay adapter and optional CanonicalReplay bundle.")
+    parser = argparse.ArgumentParser(description="Parse an AoE2 recorded game into the Age of Friends V4 replay adapter and optional CanonicalReplay bundle.")
     parser.add_argument("replay", type=Path, help="Path to .aoe2record/.mgz file")
     parser.add_argument("--out", type=Path, help="Adapter JSON output path. Defaults to stdout.")
     parser.add_argument("--canonical-dir", type=Path, help="Optional directory for CanonicalReplay manifest + gzipped fact stores.")
@@ -1231,7 +896,7 @@ def main() -> None:
 
     canonical_dir = args.canonical_dir.expanduser().resolve() if args.canonical_dir else None
     result = build_payload(replay_path, canonical_dir)
-    serialized = json.dumps(result, indent=2 if args.pretty else None, ensure_ascii=False)
+    serialized = json.dumps(result, indent=2 if args.pretty else None, ensure_ascii=False, allow_nan=False)
 
     if args.out:
         output_path = args.out.expanduser().resolve()
@@ -1242,6 +907,8 @@ def main() -> None:
             print(f"Wrote CanonicalReplay bundle to {canonical_dir}")
     else:
         print(serialized)
+    if not result["payload"]["body"]["bodyParseComplete"]:
+        raise SystemExit("Incomplete body extraction; diagnostic evidence retained, source must not be deleted or ingested as complete.")
 
 
 if __name__ == "__main__":

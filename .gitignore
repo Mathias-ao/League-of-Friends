@@ -32,3 +32,4 @@ replay-corpus-output/
 match-analysis-output*/
 replay-tools/__pycache__/
 *.pyc
+canonical-test-output/

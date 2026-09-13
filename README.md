@@ -15,7 +15,7 @@ Implemented foundations include:
 - canonical Game results, disputes, corrections and versioned processing jobs;
 - rewards, ratings, statistics, records, achievements, activity and the existing rivalry engine;
 - War Room challenges and read-model queries;
-- a Python `mgz-fast` replay adapter, CanonicalReplay 1.0 export and corpus tooling;
+- a Python `mgz-fast` replay adapter, CanonicalReplay v1 (schema 1.1.0) export and golden conformance tooling;
 - derived replay statistics and Match Analysis through V1.4;
 - player-facing brand, Season I and Event I content.
 
@@ -61,7 +61,7 @@ The authority order and fresh-task procedure are defined in the continuity file.
 
 The extraction requirements are settled in [`docs/architecture/replay-extraction-contract-v1.md`](docs/architecture/replay-extraction-contract-v1.md). Parser implementation is a later workstream.
 
-CanonicalReplay 1.0 is the durable evidence contract. The 320 TownBell-shaped capabilities remain a benchmark and projection catalogue. Queue commands prove requested production, not completed units; exact trained/live-unit claims require an independently qualified state source. Match Analysis V1.4 consumes existing canonical facts and must not trigger corpus reparsing by itself.
+CanonicalReplay v1 is the durable evidence contract; the current explicit schema revision is 1.1.0. See [extraction and conformance](replay-tools/README.md) for the completed slice and qualification limits. The 320 TownBell-shaped capabilities remain a benchmark and projection catalogue. Queue commands prove requested production, not completed units; exact trained/live-unit claims require an independently qualified state source. Match Analysis V1.4 consumes existing canonical facts and must not trigger corpus reparsing by itself.
 
 ## Repository map
 

@@ -1,34 +1,14 @@
-import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
-import zlib from "node:zlib";
-import readline from "node:readline";
 import { pathToFileURL } from "node:url";
+import { readCanonicalStore } from "./lib/canonical-artifacts.mjs";
 
 const corpusDir = path.resolve(process.argv[2] ?? "replay-corpus-output");
 const outputDir = path.resolve(process.argv[3] ?? "match-analysis-output");
-const enginePath = path.resolve("functions/lib/engines/matchAnalysis.js");
+const enginePath = path.resolve(process.env.AOF_ANALYSIS_ENGINE ?? "functions/lib/engines/matchAnalysis.js");
 const entityCatalogPath = path.resolve(
   process.argv[4] ?? "replay-tools/entity-catalog/aoe2techtree-b9d494df6921.json",
 );
-
-async function readJsonlGzip(filePath, predicate = () => true) {
-  const input = fs.createReadStream(filePath).pipe(zlib.createGunzip());
-  const lines = readline.createInterface({ input, crlfDelay: Infinity });
-  const result = [];
-  for await (const line of lines) {
-    if (!line.trim()) continue;
-    const value = JSON.parse(line);
-    if (predicate(value)) result.push(value);
-  }
-  return result;
-}
-
-function artifactPath(canonicalDir, store) {
-  const chunk = store?.chunks?.[0];
-  if (!chunk?.uri) throw new Error(`Missing canonical store chunk in ${canonicalDir}`);
-  return path.join(canonicalDir, chunk.uri);
-}
 
 function fmtMs(ms) {
   if (ms == null) return "-";
@@ -99,12 +79,13 @@ for (const name of children) {
   const manifestPath = path.join(canonicalDir, "canonical-replay.json");
   try {
     const manifest = JSON.parse(await fsp.readFile(manifestPath, "utf8"));
-    const facts = await readJsonlGzip(
-      artifactPath(canonicalDir, manifest.factStore),
+    if (!["1.0.0", "1.1.0"].includes(manifest.schemaVersion)) throw new Error(`Unsupported canonical schema: ${manifest.schemaVersion}`);
+    const facts = await readCanonicalStore(
+      canonicalDir, manifest.factStore,
       (event) => event.sourceOperation === "ACTION" || String(event.eventType ?? "").startsWith("command."),
     );
-    const initialObjects = await readJsonlGzip(
-      artifactPath(canonicalDir, manifest.initialState.objectStore),
+    const initialObjects = await readCanonicalStore(
+      canonicalDir, manifest.initialState.objectStore,
       (event) => event.eventType === "object.initial",
     );
     const analysis = engine.analyzeCanonicalReplay({ manifest, facts, initialObjects, entityCatalog });

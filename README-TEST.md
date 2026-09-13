@@ -1,5 +1,7 @@
 # Age of Friends Replay V3 — corpus test
 
+**Historical V3 guide.** For the current V4 adapter, CanonicalReplay schema 1.1.0 and mandatory bundle conformance checks, use [replay-tools/README.md](replay-tools/README.md). The corpus commands below now verify all chunk references; file names and version assertions in this historical description refer to the original V3 bundle.
+
 > **Status:** This is the structural V3 corpus guide. The extraction pass and Match Analysis V1.3/V1.4 now exist. Use [`docs/project/CURRENT-STATE.md`](docs/project/CURRENT-STATE.md) for current task routing and [`docs/architecture/replay-extraction-contract-v1.md`](docs/architecture/replay-extraction-contract-v1.md) for later extractor implementation requirements.
 
 This bundle upgrades the replay parser from `LOF_MGZ_FAST_ADAPTER_V2` to `LOF_MGZ_FAST_ADAPTER_V3` and adds a seven-fixture corpus test harness.

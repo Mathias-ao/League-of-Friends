@@ -1,0 +1,346 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "extractionRunId",
+    "createdAt",
+    "state",
+    "sourceSha256",
+    "versions",
+    "canonicalManifest",
+    "coverageReport",
+    "headerEvidence",
+    "retention",
+    "binding",
+    "compatibility",
+    "fieldClaims"
+  ],
+  "properties": {
+    "contractVersion": {
+      "const": "AOF_EXTRACTION_V1"
+    },
+    "extractionRunId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "enum": [
+        "staged",
+        "verified_local"
+      ]
+    },
+    "sourceSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exporterVersion",
+        "exporterCodeSha256",
+        "decoderDistribution",
+        "decoderVersion",
+        "decoderCodeSha256",
+        "canonicalSchemaVersion",
+        "schemaSha256",
+        "entityDataVersion",
+        "compatibilityRegistrySha256"
+      ],
+      "properties": {
+        "exporterVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exporterCodeSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "decoderDistribution": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decoderVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decoderCodeSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "canonicalSchemaVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schemaSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "entityDataVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compatibilityRegistrySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "canonicalManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uri",
+        "sha256",
+        "byteLength",
+        "encoding"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "encoding": {
+          "enum": [
+            "identity",
+            "gzip",
+            "jsonl_gzip"
+          ]
+        }
+      }
+    },
+    "coverageReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uri",
+        "sha256",
+        "byteLength",
+        "encoding"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "encoding": {
+          "enum": [
+            "identity",
+            "gzip",
+            "jsonl_gzip"
+          ]
+        }
+      }
+    },
+    "headerEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rawPrefix",
+        "decodedHeader",
+        "bodyByteOffset",
+        "offsetDomain"
+      ],
+      "properties": {
+        "rawPrefix": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "uri",
+            "sha256",
+            "byteLength",
+            "encoding"
+          ],
+          "properties": {
+            "uri": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "byteLength": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "encoding": {
+              "enum": [
+                "identity",
+                "gzip",
+                "jsonl_gzip"
+              ]
+            }
+          }
+        },
+        "decodedHeader": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "uri",
+            "sha256",
+            "byteLength",
+            "encoding"
+          ],
+          "properties": {
+            "uri": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "byteLength": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "encoding": {
+              "enum": [
+                "identity",
+                "gzip",
+                "jsonl_gzip"
+              ]
+            }
+          }
+        },
+        "bodyByteOffset": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "offsetDomain": {
+          "const": "original_file"
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy",
+        "sourceDeletionEligible",
+        "persistenceVerified"
+      ],
+      "properties": {
+        "policy": {
+          "const": "temporary_until_verified_canonical_persistence"
+        },
+        "sourceDeletionEligible": {
+          "const": false
+        },
+        "persistenceVerified": {
+          "const": false
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "leagueMatchId",
+        "leagueGameId",
+        "participantIdentityNamespace"
+      ],
+      "properties": {
+        "status": {
+          "const": "unbound"
+        },
+        "leagueMatchId": {
+          "type": "null"
+        },
+        "leagueGameId": {
+          "type": "null"
+        },
+        "participantIdentityNamespace": {
+          "const": "replay_slot"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "fixtureIds",
+        "unqualifiedCapabilities"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "fixture_regression_only",
+            "unverified_tuple"
+          ]
+        },
+        "fixtureIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "unqualifiedCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "fieldClaims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uri",
+        "sha256",
+        "byteLength",
+        "encoding"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "encoding": {
+          "enum": [
+            "identity",
+            "gzip",
+            "jsonl_gzip"
+          ]
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AoF extraction envelope v1"
+}

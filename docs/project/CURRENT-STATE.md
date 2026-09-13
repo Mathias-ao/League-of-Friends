@@ -1,7 +1,9 @@
 # Age of Friends — Current State
 
-Last reviewed: 11 September 2026  
-Repository baseline reviewed: `b7b3adc6ecb646fdb55e2586d5ad022e25d1ef59` on `main`  
+Last reviewed: 13 September 2026
+
+Repository baseline reviewed: `2688d472a14e9105da0ccac101eca3f3bb8f5c94` on `main`, with the CanonicalReplay conformance milestone described below
+
 Purpose: Record what currently exists, what is being developed, and what remains blocked or pending. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision.
 
 ## Current focus
@@ -12,7 +14,7 @@ Match Analysis is in development. Currently V1.3 is the current structural basel
 
 V1.3 is not the final player-facing statistics contract. Metric selection, names, evidence requirements, formulas, confidence rules and presentation remain subject to further review and change. Later experiments in the repository do not become settled product behavior until deliberately accepted.
 
-The immediate goal is to define a reliable V1 statistics set from replay evidence. Systems that consume statistics must remain pending until their required inputs are chosen and validated.
+The first durable CanonicalReplay extraction/conformance slice is implemented locally. The immediate engineering goal is to qualify its command semantics with controlled real recordings, then define a reliable V1 statistics set from that evidence. Systems that consume statistics must remain pending until their required inputs are chosen and validated.
 
 ## Match and competition structure
 
@@ -35,12 +37,16 @@ Backend foundations exist for membership, seasons, events, RSVP/check-in, flexib
 
 ### Present foundation
 
-- Python replay decoding through `mgz-fast==1.0.0` and the V3 compact adapter.
-- Optional `CanonicalReplay 1.0` export with structured facts, initial objects and terrain data.
+- Python replay decoding through code-hash-pinned `mgz-fast==1.0.0`. The V4 compact adapter is projected from canonical events and preserves signed/null queue amounts.
+- Optional `CanonicalReplay 1.1.0` extraction with source SHA-256, explicit parser/schema/entity-data versions, replay-local participant identities, initial objects/terrain and chronological operation envelopes. The original 1.0.0 schema is archived; this is an explicit contract migration.
+- Complete original byte evidence in canonical header/operation artifacts, retained unknown/partial payloads, deterministic multi-chunk stores, schema validation, stream invariants, semantic goldens and coverage/warnings reports. Local validation reproduces the source hash without opening the replay.
+- A replay-free command projector for action/time buckets, queue requests, research requests, building-placement orders and directed diplomacy timelines. Age-start candidates, observed AgeReached and projected completion remain separate; the latter two are unavailable in this slice.
 - A seven-shape corpus harness for structural checks.
 - Versioned raw and derived replay-stat ingestion foundations.
-- V1.3 analysis foundations for match topology, opening and production evidence, spatial activity, dynamic diplomacy and directed player-pair interaction.
+- V1.3 analysis foundations for match topology, opening and production evidence, spatial activity, dynamic diplomacy and directed player-pair interaction. The repository's V1.4 analyzer remains an optional experiment; both corpus readers now verify and read every canonical chunk.
 - Backend rebuild paths for player statistics and records.
+
+The conformance harness includes a declared synthetic wire fixture and two hash-pinned real regression snapshots: save/build 68/180059 (FFA) and 66.6/158041 (1v1), totaling 782,192 body operations. Their compatibility is `fixture_regression_only`, not general patch support. The historical seven-shape corpus has not been rerun in this milestone. See the [milestone audit](../architecture/canonical-v1-conformance-milestone.md) for test evidence and exact projection boundaries.
 
 ### Current limitations
 
@@ -49,9 +55,11 @@ Backend foundations exist for membership, seasons, events, RSVP/check-in, flexib
 - Some interaction, raid, support and spatial measures remain inferred and require confidence rules.
 - FFA and changing-diplomacy interpretations require continued qualification.
 - Canonical export is not yet the mandatory normal upload path.
+- Authenticated upload orchestration, durable remote persistence, transactional canonical revision selection and backend ingestion of adapter V4 remain unimplemented. Existing derived-stat ingestion supports only V1/V2.
+- Initial-object completeness, patch/mod-aware entity normalization, restored-game clocks and effective diplomacy state are unqualified. Queue/research/build commands do not establish acceptance or completion; age-notification authenticity still needs controlled fixtures.
 - Player mapping still relies partly on names or administrative overrides.
 - The authenticated player upload and automatic processing flow is not complete.
-- Uploaded replay files are intended to be temporary and deleted only after canonical evidence has been extracted, validated and stored successfully. Existing contracts and schemas that require permanent replay retention must be revised to match this decision.
+- Uploaded replay files are temporary and may be deleted only after canonical evidence has been extracted, validated and durably stored. The extraction contract and active schema now reflect this rule. This local CLI never deletes a source; `persistenceVerified` and `sourceDeletionEligible` remain false. Players retain their originals.
 
 ## Systems pending the statistics foundation
 
@@ -79,8 +87,8 @@ The following are part of the product vision but are not considered implemented 
 
 ## Immediate priorities
 
-1. Finalize the V1 replay statistics and their evidence classifications.
-2. Validate those statistics across the supported match shapes.
+1. Add a controlled current-build queue/cancel/research/diplomacy recording pair with an action log and two-player evidence; qualify only the semantics it establishes.
+2. Finalize the V1 replay statistics and their evidence classifications, then validate them across the supported match shapes.
 3. Decide which statistics are player-facing and which remain internal evidence.
 4. Define the rating, matchmaking and relationship models that consume them.
 5. Implement leaderboards, the three relationship tracks and the War Room against those versioned models.
@@ -100,6 +108,6 @@ The following are part of the product vision but are not considered implemented 
 
 - [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
+- [`../architecture/canonical-v1-conformance-milestone.md`](../architecture/canonical-v1-conformance-milestone.md)
 - [`../replay-foundation/README.md`](../replay-foundation/README.md)
 - [`../../README-TEST.md`](../../README-TEST.md)
-
