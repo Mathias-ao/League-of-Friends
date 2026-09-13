@@ -1,0 +1,39 @@
+{
+  "registryVersion": "AOF_COMPATIBILITY_V1",
+  "decoder": {
+    "distribution": "mgz-fast",
+    "version": "1.0.0",
+    "codeSha256": "3ff9f2e99b5ac33f4596d364f7cf851c277215b52abba3ef138e554cbcc69e54"
+  },
+  "tuples": [
+    {
+      "saveVersion": 68.0,
+      "gameBuild": 180059,
+      "fixtureIds": [
+        "townbell-ffa-save68",
+        "user-duel-pov-1",
+        "user-duel-pov-2"
+      ],
+      "status": "fixture_regression_only"
+    },
+    {
+      "saveVersion": 66.6,
+      "gameBuild": 158041,
+      "fixtureIds": [
+        "upstream-duel-save66.6"
+      ],
+      "status": "fixture_regression_only"
+    }
+  ],
+  "unqualifiedCapabilities": [
+    "header_lobby_semantics",
+    "initial_object_completeness",
+    "entity_taxonomy_by_patch_and_mod",
+    "queue_cancellation_and_producer_allocation",
+    "tribute_settlement",
+    "system_age_message_authenticity",
+    "restore_clock_origin",
+    "game_completion_and_winner",
+    "league_identity_binding"
+  ]
+}

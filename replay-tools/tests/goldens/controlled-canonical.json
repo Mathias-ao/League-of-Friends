@@ -1,0 +1,1619 @@
+{
+  "facts": [
+    {
+      "actorPlayerId": null,
+      "byteLength": 8,
+      "byteOffset": 32,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": 8,
+        "parserWarningCodes": [],
+        "status": "complete",
+        "unknownByteCount": 0,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000000",
+      "eventType": "clock.sync",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 0,
+      "payload": {
+        "_rawOperationBase64": "AgAAAGQAAAA=",
+        "checksum": null,
+        "data": {},
+        "incrementMs": 100
+      },
+      "position": null,
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "SYNC",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 38,
+      "byteOffset": 40,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABoAAACBARYAAgAAAAAAbQBTAAUAZAAAAGUAAADerQEAAAA="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.unit",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 83,
+        "roleKeys": []
+      },
+      "eventId": "op-000000001",
+      "eventType": "command.unit_queue",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [
+        100,
+        101
+      ],
+      "operationOrdinal": 1,
+      "payload": {
+        "_rawLayout": {
+          "amountRaw": 5,
+          "buildingTypeIdRaw": 109,
+          "layout": "de_71094",
+          "payloadLengthRaw": 22,
+          "playerIdRaw": 1,
+          "selectedCountRaw": 2,
+          "unitIdRaw": 83
+        },
+        "_rawOperationBase64": "AQAAABoAAACBARYAAgAAAAAAbQBTAAUAZAAAAGUAAADerQEAAAA=",
+        "amount": 5,
+        "object_ids": [
+          100,
+          101
+        ],
+        "player_id": 1,
+        "sequence": 1,
+        "unit_id": 83
+      },
+      "position": null,
+      "sourceActionCode": 129,
+      "sourceActionName": "DE_QUEUE",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 36,
+      "byteOffset": 78,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABgAAACBARQAAgAAAAAAbQBTAP7/ZAAAAGUAAAABAAAA"
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.unit",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 83,
+        "roleKeys": []
+      },
+      "eventId": "op-000000002",
+      "eventType": "command.unit_queue",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [
+        100,
+        101
+      ],
+      "operationOrdinal": 2,
+      "payload": {
+        "_rawLayout": {
+          "amountRaw": -2,
+          "buildingTypeIdRaw": 109,
+          "layout": "de_71094",
+          "payloadLengthRaw": 20,
+          "playerIdRaw": 1,
+          "selectedCountRaw": 2,
+          "unitIdRaw": 83
+        },
+        "_rawOperationBase64": "AQAAABgAAACBARQAAgAAAAAAbQBTAP7/ZAAAAGUAAAABAAAA",
+        "amount": -2,
+        "object_ids": [
+          100,
+          101
+        ],
+        "player_id": 1,
+        "sequence": 1,
+        "unit_id": 83
+      },
+      "position": null,
+      "sourceActionCode": 129,
+      "sourceActionName": "DE_QUEUE",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 36,
+      "byteOffset": 114,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABgAAACBARQAAgAAAAAAbQBTAAAAZAAAAGUAAAABAAAA"
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.unit",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 83,
+        "roleKeys": []
+      },
+      "eventId": "op-000000003",
+      "eventType": "command.unit_queue",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [
+        100,
+        101
+      ],
+      "operationOrdinal": 3,
+      "payload": {
+        "_rawLayout": {
+          "amountRaw": 0,
+          "buildingTypeIdRaw": 109,
+          "layout": "de_71094",
+          "payloadLengthRaw": 20,
+          "playerIdRaw": 1,
+          "selectedCountRaw": 2,
+          "unitIdRaw": 83
+        },
+        "_rawOperationBase64": "AQAAABgAAACBARQAAgAAAAAAbQBTAAAAZAAAAGUAAAABAAAA",
+        "amount": 0,
+        "object_ids": [
+          100,
+          101
+        ],
+        "player_id": 1,
+        "sequence": 1,
+        "unit_id": 83
+      },
+      "position": null,
+      "sourceActionCode": 129,
+      "sourceActionName": "DE_QUEUE",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 26,
+      "byteOffset": 150,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAAA4AAABkAQoAbQAAAAAAAABTAAEAAAA="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.unit",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 83,
+        "roleKeys": []
+      },
+      "eventId": "op-000000004",
+      "eventType": "command.unit_queue",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 4,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "payloadLengthRaw": 10,
+          "playerIdRaw": 1
+        },
+        "_rawOperationBase64": "AQAAAA4AAABkAQoAbQAAAAAAAABTAAEAAAA=",
+        "building_id": 109,
+        "player_id": 1,
+        "sequence": 1,
+        "unit_id": 83
+      },
+      "position": null,
+      "sourceActionCode": 100,
+      "sourceActionName": "MAKE",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 37,
+      "byteOffset": 176,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABkAAABlARUAZAAAAAIAZQAAAAAAAGQAAABlAAAAAQAAAA=="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.technology",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 101,
+        "roleKeys": []
+      },
+      "eventId": "op-000000005",
+      "eventType": "command.research_start",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [
+        100
+      ],
+      "operationOrdinal": 5,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "payloadLengthRaw": 21,
+          "playerIdRaw": 1,
+          "primaryObjectIdRaw": 100,
+          "selectedBuildingIdsRaw": [
+            100,
+            101
+          ],
+          "selectedCountRaw": 2,
+          "technologyIdRaw": 101
+        },
+        "_rawOperationBase64": "AQAAABkAAABlARUAZAAAAAIAZQAAAAAAAGQAAABlAAAAAQAAAA==",
+        "object_ids": [
+          100
+        ],
+        "player_id": 1,
+        "sequence": 1,
+        "technology_id": 101
+      },
+      "position": null,
+      "sourceActionCode": 101,
+      "sourceActionName": "RESEARCH",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 48,
+      "byteOffset": 213,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAACQAAABmASAAAQAAAAAAAAAAAKA/VwAAAAAAAAAAAAAABwAICcgAAAABAAAA"
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.building",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 87,
+        "roleKeys": []
+      },
+      "eventId": "op-000000006",
+      "eventType": "command.build_placement",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [
+        200
+      ],
+      "operationOrdinal": 6,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "payloadLengthRaw": 32,
+          "playerIdRaw": 1,
+          "selectedCountRaw": 1,
+          "unknownByte1": 8,
+          "unknownByte2": 9,
+          "unknownInt16": 7
+        },
+        "_rawOperationBase64": "AQAAACQAAABmASAAAQAAAAAAAAAAAKA/VwAAAAAAAAAAAAAABwAICcgAAAABAAAA",
+        "building_id": 87,
+        "object_ids": [
+          200
+        ],
+        "player_id": 1,
+        "sequence": 1,
+        "x": 0.0,
+        "y": 1.25
+      },
+      "position": {
+        "tileX": null,
+        "tileY": null,
+        "x": 0.0,
+        "y": 1.25,
+        "z": null
+      },
+      "sourceActionCode": 102,
+      "sourceActionName": "BUILD",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 29,
+      "byteOffset": 261,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABEAAABnAQ0AAAAAAAEAAgAAAEBAAwEAAAA="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000007",
+      "eventType": "command.diplomacy_change",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 7,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "modeFloatRaw": 3.0,
+          "modeRaw": 3,
+          "payloadLengthRaw": 13,
+          "playerIdRaw": 1,
+          "sourcePlayerRaw": 1,
+          "targetPlayerRaw": 2
+        },
+        "_rawOperationBase64": "AQAAABEAAABnAQ0AAAAAAAEAAgAAAEBAAwEAAAA=",
+        "command_id": 0,
+        "diplomacy_mode": 3,
+        "player_id": 1,
+        "sequence": 1,
+        "target_player_id": 2
+      },
+      "position": null,
+      "sourceActionCode": 103,
+      "sourceActionName": "GAME",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": 2,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 2,
+      "byteLength": 29,
+      "byteOffset": 290,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABEAAABnAg0AAAAAAAIAAQAAAAAAAAEAAAA="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000008",
+      "eventType": "command.diplomacy_change",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 8,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "modeFloatRaw": 0.0,
+          "modeRaw": 0,
+          "payloadLengthRaw": 13,
+          "playerIdRaw": 2,
+          "sourcePlayerRaw": 2,
+          "targetPlayerRaw": 1
+        },
+        "_rawOperationBase64": "AQAAABEAAABnAg0AAAAAAAIAAQAAAAAAAAEAAAA=",
+        "command_id": 0,
+        "diplomacy_mode": 0,
+        "player_id": 2,
+        "sequence": 1,
+        "target_player_id": 1
+      },
+      "position": null,
+      "sourceActionCode": 103,
+      "sourceActionName": "GAME",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": 1,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 29,
+      "byteOffset": 319,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABEAAABnAQ0AAAAAAAEAAgAAAAAAAAEAAAA="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000009",
+      "eventType": "command.diplomacy_change",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 9,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "modeFloatRaw": 0.0,
+          "modeRaw": 0,
+          "payloadLengthRaw": 13,
+          "playerIdRaw": 1,
+          "sourcePlayerRaw": 1,
+          "targetPlayerRaw": 2
+        },
+        "_rawOperationBase64": "AQAAABEAAABnAQ0AAAAAAAEAAgAAAAAAAAEAAAA=",
+        "command_id": 0,
+        "diplomacy_mode": 0,
+        "player_id": 1,
+        "sequence": 1,
+        "target_player_id": 2
+      },
+      "position": null,
+      "sourceActionCode": 103,
+      "sourceActionName": "GAME",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": 2,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 34,
+      "byteOffset": 348,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAABYAAAAAARIA5wMAAAAAgL8AAAAA//8AAAAAAQAAAA=="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000010",
+      "eventType": "command.order",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 10,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "payloadLengthRaw": 18,
+          "playerIdRaw": 1,
+          "selectedCountRaw": -1
+        },
+        "_rawOperationBase64": "AQAAABYAAAAAARIA5wMAAAAAgL8AAAAA//8AAAAAAQAAAA==",
+        "object_ids": [],
+        "player_id": 1,
+        "sequence": 1,
+        "target_id": 999,
+        "x": -1.0,
+        "y": 0.0
+      },
+      "position": {
+        "tileX": null,
+        "tileY": null,
+        "x": -1.0,
+        "y": 0.0,
+        "z": null
+      },
+      "sourceActionCode": 0,
+      "sourceActionName": "ORDER",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": 999,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": 19,
+      "byteOffset": 382,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "MGZ_FAST_ACTION_DECODE_ERROR"
+        ],
+        "status": "unknown_action",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAAAcAAADIAQMAq83vAQAAAA=="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000011",
+      "eventType": "action.unknown",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "low",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 11,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "payloadLengthRaw": 3,
+          "playerIdRaw": 1
+        },
+        "_rawOperationBase64": "AQAAAAcAAADIAQMAq83vAQAAAA=="
+      },
+      "position": null,
+      "sourceActionCode": 200,
+      "sourceActionName": null,
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 19,
+      "byteOffset": 401,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": 1,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AQAAAAcAAAAlAQMA/wD+AQAAAA=="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000012",
+      "eventType": "command.other",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": "Decoded fields are observations; acceptance/completion and unread bytes are not qualified.",
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 12,
+      "payload": {
+        "_rawLayout": {
+          "layout": "de_71094",
+          "payloadLengthRaw": 3,
+          "playerIdRaw": 1
+        },
+        "_rawOperationBase64": "AQAAAAcAAAAlAQMA/wD+AQAAAA==",
+        "player_id": 1,
+        "sequence": 1
+      },
+      "position": null,
+      "sourceActionCode": 37,
+      "sourceActionName": "DE_UNKNOWN_37",
+      "sourceOperation": "ACTION",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": 1,
+      "byteLength": 16,
+      "byteOffset": 420,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "AwAAAAAAAAAAACBAewAAAA=="
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000013",
+      "eventType": "camera.view",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A+E",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 13,
+      "payload": {
+        "_rawOperationBase64": "AwAAAAAAAAAAACBAewAAAA=="
+      },
+      "position": {
+        "tileX": null,
+        "tileY": null,
+        "x": 0.0,
+        "y": 2.5,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "VIEWLOCK",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": 153,
+      "byteOffset": 436,
+      "byteOffsetDomain": "original_file",
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 100
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": "BAAAAAAAAACNAAAAeyJwbGF5ZXIiOiAxLCAiY2hhbm5lbCI6IDAsICJtZXNzYWdlIjogImFkdmFuY2VkIHRvIHRoZSBDYXN0bGUgQWdlLiIsICJtZXNzYWdlQUdQIjogIlBsYXllcjogYWR2YW5jZWQgdG8gdGhlIENhc3RsZSBBZ2UuIiwgInRhdW50TnVtYmVyIjogLTF9"
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": null,
+      "eventId": "op-000000014",
+      "eventType": "chat.raw",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "high",
+        "methodVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 14,
+      "payload": {
+        "_rawOperationBase64": "BAAAAAAAAACNAAAAeyJwbGF5ZXIiOiAxLCAiY2hhbm5lbCI6IDAsICJtZXNzYWdlIjogImFkdmFuY2VkIHRvIHRoZSBDYXN0bGUgQWdlLiIsICJtZXNzYWdlQUdQIjogIlBsYXllcjogYWR2YW5jZWQgdG8gdGhlIENhc3RsZSBBZ2UuIiwgInRhdW50TnVtYmVyIjogLTF9",
+        "rawBase64": "eyJwbGF5ZXIiOiAxLCAiY2hhbm5lbCI6IDAsICJtZXNzYWdlIjogImFkdmFuY2VkIHRvIHRoZSBDYXN0bGUgQWdlLiIsICJtZXNzYWdlQUdQIjogIlBsYXllcjogYWR2YW5jZWQgdG8gdGhlIENhc3RsZSBBZ2UuIiwgInRhdW50TnVtYmVyIjogLTF9",
+        "structuredChat": {
+          "channel": 0,
+          "message": "advanced to the Castle Age.",
+          "messageAGP": "Player: advanced to the Castle Age.",
+          "player": 1,
+          "tauntNumber": -1
+        },
+        "text": "{\"player\": 1, \"channel\": 0, \"message\": \"advanced to the Castle Age.\", \"messageAGP\": \"Player: advanced to the Castle Age.\", \"tauntNumber\": -1}"
+      },
+      "position": null,
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "CHAT",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 100
+    }
+  ],
+  "initialObjects": [
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "HEADER_OBJECT_SEARCH_NOT_EXHAUSTIVE",
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.object",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 109,
+        "roleKeys": []
+      },
+      "eventId": "initial-object-00000000",
+      "eventType": "object.initial",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [
+        100
+      ],
+      "operationOrdinal": 0,
+      "payload": {
+        "classId": 70,
+        "instanceId": 100,
+        "objectBlockIndex": 0,
+        "objectId": 109,
+        "ownerPlayerId": 1,
+        "rawDecodedObject": {
+          "class_id": 70,
+          "index": 0,
+          "instance_id": 100,
+          "object_id": 109,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "uninterpreted": {
+            "bytesBase64": "AP8="
+          }
+        }
+      },
+      "position": {
+        "tileX": null,
+        "tileY": null,
+        "x": 0,
+        "y": 0,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "INITIAL_OBJECT",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "HEADER_OBJECT_SEARCH_NOT_EXHAUSTIVE",
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.object",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 109,
+        "roleKeys": []
+      },
+      "eventId": "initial-object-00000001",
+      "eventType": "object.initial",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [
+        101
+      ],
+      "operationOrdinal": 1,
+      "payload": {
+        "classId": 70,
+        "instanceId": 101,
+        "objectBlockIndex": 0,
+        "objectId": 109,
+        "ownerPlayerId": 2,
+        "rawDecodedObject": {
+          "class_id": 70,
+          "index": 0,
+          "instance_id": 101,
+          "object_id": 109,
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "uninterpreted": {
+            "bytesBase64": "AP8="
+          }
+        }
+      },
+      "position": {
+        "tileX": null,
+        "tileY": null,
+        "x": 1,
+        "y": 2,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "INITIAL_OBJECT",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    }
+  ],
+  "match": {
+    "completionStatus": "unknown",
+    "durationMs": 100,
+    "guid": "fixture-guid",
+    "matchId": "replay:b0211f083280b672d371074ba093dcf3631a250543272e97a48ccbfb170711c3",
+    "privacy": {
+      "containsChat": true,
+      "containsPlayerNames": true,
+      "retentionPolicyId": "temporary_until_verified_canonical_persistence"
+    },
+    "settings": {
+      "allTechnologies": null,
+      "difficultyId": null,
+      "endingAgeId": null,
+      "gameTypeId": null,
+      "initialDiplomacyRaw": {
+        "1": [
+          0,
+          3,
+          3
+        ],
+        "2": [
+          0,
+          3,
+          3
+        ]
+      },
+      "lockTeams": false,
+      "mapId": null,
+      "mapSize": null,
+      "multiplayer": null,
+      "population": null,
+      "rated": null,
+      "revealMapId": null,
+      "rmsFilename": null,
+      "rmsModId": null,
+      "seed": null,
+      "speed": 1.7,
+      "startingAgeId": null,
+      "startingResourcesId": null,
+      "teamTogether": null,
+      "treatyLength": null,
+      "victoryTypeId": null
+    },
+    "winnerPlayerIds": [],
+    "winnerTeamIds": []
+  },
+  "participants": [
+    {
+      "civilization": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.civilization",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 1,
+        "roleKeys": []
+      },
+      "colorId": 1,
+      "initialObjectIds": [
+        100
+      ],
+      "isHuman": null,
+      "isRecorder": true,
+      "lobbyTeamId": null,
+      "name": "Fixture 1",
+      "number": 1,
+      "platformIdentity": null,
+      "playerId": 1,
+      "profileId": null,
+      "ratingSnapshots": []
+    },
+    {
+      "civilization": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.civilization",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 2,
+        "roleKeys": []
+      },
+      "colorId": 2,
+      "initialObjectIds": [
+        101
+      ],
+      "isHuman": null,
+      "isRecorder": false,
+      "lobbyTeamId": null,
+      "name": "Fixture 2",
+      "number": 2,
+      "platformIdentity": null,
+      "playerId": 2,
+      "profileId": null,
+      "ratingSnapshots": []
+    }
+  ],
+  "schemaVersion": "1.1.0",
+  "sourceSha256": "b0211f083280b672d371074ba093dcf3631a250543272e97a48ccbfb170711c3",
+  "terrain": [
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.terrain",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 0,
+        "roleKeys": []
+      },
+      "eventId": "tile-00000000",
+      "eventType": "map.tile",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 0,
+      "payload": {
+        "elevation": 0,
+        "raw": [
+          0,
+          0
+        ],
+        "terrainId": 0,
+        "terrainRaw": 0
+      },
+      "position": {
+        "tileX": 0,
+        "tileY": 0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "MAP_TILE",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.terrain",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 1,
+        "roleKeys": []
+      },
+      "eventId": "tile-00000001",
+      "eventType": "map.tile",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 1,
+      "payload": {
+        "elevation": 0,
+        "raw": [
+          1,
+          0
+        ],
+        "terrainId": 1,
+        "terrainRaw": 1
+      },
+      "position": {
+        "tileX": 1,
+        "tileY": 0,
+        "x": 1.0,
+        "y": 0.0,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "MAP_TILE",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.terrain",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 2,
+        "roleKeys": []
+      },
+      "eventId": "tile-00000002",
+      "eventType": "map.tile",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 2,
+      "payload": {
+        "elevation": 1,
+        "raw": [
+          2,
+          1
+        ],
+        "terrainId": 2,
+        "terrainRaw": 2
+      },
+      "position": {
+        "tileX": 0,
+        "tileY": 1,
+        "x": 0.0,
+        "y": 1.0,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "MAP_TILE",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.terrain",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 255,
+        "roleKeys": []
+      },
+      "eventId": "tile-00000003",
+      "eventType": "map.tile",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 3,
+      "payload": {
+        "elevation": 2,
+        "raw": [
+          -1,
+          2
+        ],
+        "terrainId": 255,
+        "terrainRaw": -1
+      },
+      "position": {
+        "tileX": 1,
+        "tileY": 1,
+        "x": 1.0,
+        "y": 1.0,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "MAP_TILE",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.terrain",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 3,
+        "roleKeys": []
+      },
+      "eventId": "tile-00000004",
+      "eventType": "map.tile",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 4,
+      "payload": {
+        "elevation": 1,
+        "raw": [
+          3,
+          1
+        ],
+        "terrainId": 3,
+        "terrainRaw": 3
+      },
+      "position": {
+        "tileX": 0,
+        "tileY": 2,
+        "x": 0.0,
+        "y": 2.0,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "MAP_TILE",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    },
+    {
+      "actorPlayerId": null,
+      "byteLength": null,
+      "byteOffset": null,
+      "byteOffsetDomain": null,
+      "clock": {
+        "restoreOffsetMs": null,
+        "sequence": null,
+        "syncElapsedMs": 0
+      },
+      "decode": {
+        "knownByteCount": null,
+        "parserWarningCodes": [
+          "RAW_HEADER_RETAINED_SEPARATELY"
+        ],
+        "status": "partial",
+        "unknownByteCount": null,
+        "unknownBytesBase64": null
+      },
+      "dependsOnEventIds": [],
+      "endPosition": null,
+      "entity": {
+        "displayName": null,
+        "familyKey": null,
+        "lineKey": null,
+        "namespace": "aoe2de.terrain",
+        "normalizationVersion": "RAW_AOE2_IDS_V1",
+        "normalizedKey": null,
+        "rawId": 4,
+        "roleKeys": []
+      },
+      "eventId": "tile-00000005",
+      "eventType": "map.tile",
+      "evidence": {
+        "assumptionCodes": [],
+        "classification": "A",
+        "confidence": "exact",
+        "methodVersion": "LOF_MGZ_FAST_ADAPTER_V4",
+        "notes": null,
+        "sourceEventIds": []
+      },
+      "layer": "parser_fact",
+      "objectInstanceIds": [],
+      "operationOrdinal": 5,
+      "payload": {
+        "elevation": 0,
+        "raw": [
+          4,
+          0
+        ],
+        "terrainId": 4,
+        "terrainRaw": 4
+      },
+      "position": {
+        "tileX": 1,
+        "tileY": 2,
+        "x": 1.0,
+        "y": 2.0,
+        "z": null
+      },
+      "sourceActionCode": null,
+      "sourceActionName": null,
+      "sourceOperation": "MAP_TILE",
+      "targetInstanceId": null,
+      "targetPlayerId": null,
+      "timestampMs": 0
+    }
+  ]
+}

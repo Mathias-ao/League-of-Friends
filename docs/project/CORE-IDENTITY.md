@@ -117,7 +117,7 @@ The system keeps observed facts separate from reconstructions and interpretation
 
 ## 7. Replay-analysis truth model
 
-`CanonicalReplay 1.0` is the durable source of replay evidence. TownBell’s 320-metric structure remains a useful capability benchmark and reporting layer, not the Age of Friends data model.
+`CanonicalReplay 1.1` is the current durable source of replay evidence; the original 1.0 contract is archived as an explicit predecessor. TownBell’s 320-metric structure remains a useful capability benchmark and reporting layer, not the Age of Friends data model.
 
 Replay information is kept in four distinct layers:
 

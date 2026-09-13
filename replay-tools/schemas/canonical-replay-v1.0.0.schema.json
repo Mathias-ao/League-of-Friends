@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ageoffriends.example/schemas/canonical-replay-v1.1.0.schema.json",
+  "$id": "https://ageoffriends.example/schemas/canonical-replay-v1.schema.json",
   "title": "Age of Friends Canonical Replay Version 1",
   "description": "Logical canonical representation of an AoE2 DE replay. Large event and map collections may be stored in referenced chunks while retaining this logical model.",
   "type": "object",
@@ -19,7 +19,7 @@
     "warnings"
   ],
   "properties": {
-    "schemaVersion": {"const": "1.1.0"},
+    "schemaVersion": {"const": "1.0.0"},
     "versions": {"$ref": "#/$defs/versionBundle"},
     "source": {"$ref": "#/$defs/sourceReplay"},
     "match": {"$ref": "#/$defs/match"},
@@ -70,7 +70,7 @@
       "required": ["parserVersion", "normalizerVersion", "entityDataVersion"],
       "properties": {
         "parserVersion": {"type": "string", "minLength": 1},
-        "schemaVersion": {"const": "1.1.0"},
+        "schemaVersion": {"const": "1.0.0"},
         "normalizerVersion": {"type": "string", "minLength": 1},
         "entityDataVersion": {"type": "string", "minLength": 1},
         "reconstructionVersion": {"type": ["string", "null"]},
@@ -101,7 +101,7 @@
         "recordedAt": {"type": ["string", "null"], "format": "date-time"},
         "parsedAt": {"type": "string", "format": "date-time"},
         "povPlayerId": {"type": ["integer", "null"]},
-        "retainedReplay": {"type": "null", "description": "Temporary upload is not a retained artifact. Raw evidence is retained in canonical chunks and header evidence."},
+        "retainedReplay": {"$ref": "#/$defs/artifactRef"},
         "compatibility": {
           "type": "object",
           "additionalProperties": false,
@@ -258,7 +258,6 @@
         "eventType",
         "timestampMs",
         "operationOrdinal",
-        "byteOffsetDomain",
         "sourceOperation",
         "decode",
         "evidence",
@@ -280,10 +279,9 @@
         },
         "operationOrdinal": {"type": "integer", "minimum": 0},
         "byteOffset": {"type": ["integer", "null"], "minimum": 0},
-        "byteOffsetDomain": {"enum": ["original_file", "inflated_header", null]},
         "byteLength": {"type": ["integer", "null"], "minimum": 0},
         "sourceOperation": {
-          "enum": ["HEADER", "INITIAL_OBJECT", "MAP_TILE", "SYNC", "VIEWLOCK", "CHAT", "ACTION", "START", "SAVE", "POSTGAME", "UNKNOWN"]
+          "enum": ["HEADER", "INITIAL_OBJECT", "MAP_TILE", "SYNC", "VIEWLOCK", "CHAT", "ACTION", "START", "SAVE", "POSTGAME"]
         },
         "sourceActionCode": {"type": ["integer", "null"]},
         "sourceActionName": {"type": ["string", "null"]},

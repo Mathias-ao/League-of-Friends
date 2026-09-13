@@ -1,9 +1,7 @@
 import fs from "node:fs/promises";
-import { createReadStream } from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { createGunzip } from "node:zlib";
+import { readCanonicalStore } from "./lib/canonical-artifacts.mjs";
 
 const fixtureArg = process.argv[2] ?? "replay-tools/fixtures";
 const outputArg = process.argv[3] ?? "replay-corpus-output";
@@ -11,52 +9,6 @@ const fixturePath = path.resolve(fixtureArg);
 const outputRoot = path.resolve(outputArg);
 const parserPath = path.resolve("replay-tools/parse_replay.py");
 const pythonCommand = process.env.PYTHON ?? "python";
-
-async function sha256(filePath) {
-  return await new Promise((resolve, reject) => {
-    const hash = crypto.createHash("sha256");
-    const stream = createReadStream(filePath);
-    stream.on("data", (chunk) => hash.update(chunk));
-    stream.on("error", reject);
-    stream.on("end", () => resolve(hash.digest("hex")));
-  });
-}
-
-async function countJsonlGzip(filePath, onRecord = null) {
-  return await new Promise((resolve, reject) => {
-    const stream = createReadStream(filePath).pipe(createGunzip());
-    let buffer = "";
-    let count = 0;
-    stream.setEncoding("utf8");
-    stream.on("data", (chunk) => {
-      buffer += chunk;
-      let newline;
-      while ((newline = buffer.indexOf("\n")) >= 0) {
-        const line = buffer.slice(0, newline);
-        buffer = buffer.slice(newline + 1);
-        if (!line.trim()) continue;
-        count += 1;
-        if (onRecord) {
-          try {
-            onRecord(JSON.parse(line));
-          } catch (error) {
-            reject(new Error(`Invalid JSONL in ${filePath} line ${count}: ${error.message}`));
-            stream.destroy();
-            return;
-          }
-        }
-      }
-    });
-    stream.on("error", reject);
-    stream.on("end", () => {
-      if (buffer.trim()) {
-        count += 1;
-        if (onRecord) onRecord(JSON.parse(buffer));
-      }
-      resolve(count);
-    });
-  });
-}
 
 function sumValues(record) {
   return Object.values(record ?? {}).reduce((sum, value) => sum + Number(value ?? 0), 0);
@@ -72,22 +24,6 @@ function expectedPlayersFromFilename(fileName) {
 function check(condition, code, message, errors, warnings, severity = "error") {
   if (condition) return;
   (severity === "error" ? errors : warnings).push({ code, message });
-}
-
-async function validateArtifact(bundleDir, ref, label, errors) {
-  const filePath = path.join(bundleDir, ref.uri);
-  try {
-    const stat = await fs.stat(filePath);
-    check(stat.isFile(), `${label.toUpperCase()}_NOT_FILE`, `${label} artifact is not a file.`, errors, []);
-    const digest = await sha256(filePath);
-    check(digest === ref.sha256, `${label.toUpperCase()}_HASH_MISMATCH`, `${label} SHA-256 mismatch.`, errors, []);
-    const count = await countJsonlGzip(filePath);
-    check(count === ref.recordCount, `${label.toUpperCase()}_COUNT_MISMATCH`, `${label} record count ${count} != manifest ${ref.recordCount}.`, errors, []);
-    return { filePath, byteLength: stat.size, recordCount: count };
-  } catch (error) {
-    errors.push({ code: `${label.toUpperCase()}_READ_FAILED`, message: String(error.message ?? error) });
-    return null;
-  }
 }
 
 async function runFixture(filePath) {
@@ -116,8 +52,8 @@ async function runFixture(filePath) {
   const errors = [];
   const warnings = [];
 
-  check(adapter.schemaVersion === "LOF_MGZ_FAST_ADAPTER_V3", "ADAPTER_SCHEMA", `Unexpected adapter schema ${adapter.schemaVersion}.`, errors, warnings);
-  check(canonical.schemaVersion === "1.0.0", "CANONICAL_SCHEMA", `Unexpected canonical schema ${canonical.schemaVersion}.`, errors, warnings);
+  check(adapter.schemaVersion === "LOF_MGZ_FAST_ADAPTER_V4", "ADAPTER_SCHEMA", `Unexpected adapter schema ${adapter.schemaVersion}.`, errors, warnings);
+  check(canonical.schemaVersion === "1.1.0", "CANONICAL_SCHEMA", `Unexpected canonical schema ${canonical.schemaVersion}.`, errors, warnings);
   check(adapter.sourceHash === canonical.source.sha256, "SOURCE_HASH", "Adapter and canonical source hashes differ.", errors, warnings);
   check(/^[a-f0-9]{64}$/.test(adapter.sourceHash ?? ""), "SOURCE_HASH_FORMAT", "Source hash is not SHA-256 hex.", errors, warnings);
   check(Array.isArray(adapter.sourcePlayers) && adapter.sourcePlayers.length >= 2 && adapter.sourcePlayers.length <= 8, "PLAYER_COUNT_RANGE", `Expected 2-8 players, got ${adapter.sourcePlayers?.length}.`, errors, warnings);
@@ -149,17 +85,19 @@ async function runFixture(filePath) {
     warnings.push({ code: "DECODE_COVERAGE", message: `Action decode coverage is ${body.decodeCoveragePercent}%.` });
   }
 
-  const terrainRef = map.terrainStore.chunks[0];
-  const objectRef = canonical.initialState.objectStore.chunks[0];
-  const factRef = factStore.chunks[0];
-  const terrainArtifact = await validateArtifact(bundleDir, terrainRef, "terrain", errors);
-  const objectArtifact = await validateArtifact(bundleDir, objectRef, "objects", errors);
-  const factArtifact = await validateArtifact(bundleDir, factRef, "facts", errors);
+  // Extraction already runs full schema/byte conformance. Readers must still
+  // verify every chunk rather than silently analyzing only chunks[0].
+  await readCanonicalStore(bundleDir, map.terrainStore, () => false);
+  await readCanonicalStore(bundleDir, factStore, () => false);
+  const initialObjects = await readCanonicalStore(bundleDir, canonical.initialState.objectStore);
+  const terrainArtifact = { recordCount: map.terrainStore.recordCount };
+  const objectArtifact = { recordCount: initialObjects.length };
+  const factArtifact = { recordCount: factStore.recordCount };
 
   const startingObjectCounts = {};
   const startingTownCenters = {};
   if (objectArtifact) {
-    await countJsonlGzip(objectArtifact.filePath, (record) => {
+    initialObjects.forEach((record) => {
       const owner = record?.payload?.ownerPlayerId;
       if (owner == null || owner < 1 || owner > 8) return;
       startingObjectCounts[owner] = (startingObjectCounts[owner] ?? 0) + 1;
