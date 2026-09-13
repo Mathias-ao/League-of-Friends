@@ -34,7 +34,7 @@ Real fixture names and SHA-256 values are in `tests/fixtures.json`. Place them i
 AOF_REPLAY_FIXTURE_DIR=replay-fixtures AOF_REPLAY_OUTPUT_DIR=canonical-test-output python -m unittest discover -s replay-tools/tests -v
 ```
 
-The output root must not already contain those canonical run directories. Omit `AOF_REPLAY_OUTPUT_DIR` to use temporary test output. The supplied FFA recording is not redistributed; the upstream duel is linked to an exact upstream commit. The complete initial synthetic golden and real-fixture semantic snapshots are committed under `tests/goldens/`.
+The output root must not already contain those canonical run directories. Omit `AOF_REPLAY_OUTPUT_DIR` to use temporary test output. The reviewed recordings are committed under `replay-fixtures/`: the user-supplied sources are public with owner authorization, and the upstream duel retains its exact upstream provenance in `tests/fixtures.json`. The complete initial synthetic golden and real-fixture semantic snapshots are committed under `tests/goldens/`.
 
 ```bash
 python replay-tools/conformance.py output/new-run --compare replay-tools/tests/goldens/townbell-ffa-save68.json

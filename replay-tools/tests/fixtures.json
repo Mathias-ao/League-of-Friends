@@ -5,7 +5,7 @@
       "id": "townbell-ffa-save68",
       "fileName": "townbell-ffa-save68.aoe2record",
       "sha256": "2dd7a9a63f1b1b74f7e43dc1de1e70417089bb7f3ff667424591dea7db1e9ec9",
-      "source": "User-supplied paired replay, independently recovered by SHA-256 in the workspace; not redistributed in this public repository.",
+      "source": "User-supplied replay committed as a public regression fixture with owner authorization.",
       "evidenceClass": "real_game_regression_not_controlled",
       "expected": {"playerCount": 8, "durationMs": 5639022, "operationCount": 454120, "queueCommandCount": 1720, "positiveQueueAmount": 3144, "researchCommandCount": 216, "buildingPlacementCount": 697, "diplomacyCommandCount": 86}
     },
@@ -22,7 +22,7 @@
     {
       "id": "user-duel-two-pov",
       "evidenceClass": "ordinary_game_two_recorder_regression_not_controlled",
-      "source": "User-supplied recordings from both player perspectives; not redistributed in this public repository.",
+      "source": "User-supplied recordings from both player perspectives, committed as public regression fixtures with owner authorization.",
       "recordings": [
         {
           "id": "user-duel-pov-1",

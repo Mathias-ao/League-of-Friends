@@ -96,7 +96,7 @@ Local verification on 13 September 2026 used Python 3.12 and Node 24.19.0:
 
 | Check | Result |
 |---|---|
-| `python -m unittest discover -s replay-tools/tests -v` | 23 passed; three real-recording checks are explicit skips when their private fixture files are absent. |
+| `python -m unittest discover -s replay-tools/tests -v` | 23 passed; three real-recording checks are explicit skips unless the committed `replay-fixtures/` directory is selected with `AOF_REPLAY_FIXTURE_DIR`. |
 | Full extraction with all four hash-pinned recordings supplied | 26 passed in 570.535 seconds: FFA, upstream duel and both paired POVs completed byte/schema validation, semantic goldens and canonical-statistics corpus comparisons. |
 | `conformance.py <bundle> --compare <golden>` on each saved real bundle | Both passed with `changes: []`; 782,192 body operations plus initial stores validated without reopening either replay. |
 | `node --test scripts/test-canonical-artifacts.mjs` | 2 passed, including later-chunk corruption and the unchanged TypeScript analyzer consuming the synthetic canonical golden. |
@@ -106,4 +106,4 @@ Local verification on 13 September 2026 used Python 3.12 and Node 24.19.0:
 
 The first real-golden comparison exposed a harness representation bug (`Counter` versus a deserialized JSON object). The comparator was corrected and given a round-trip regression. The final checks above revalidated the saved bundles and original goldens; no changed replay facts were blessed to make the tests pass. Remote CI is configured for the self-contained suite; a remote CI result is not implied by these local checks.
 
-See [the tooling instructions](../../replay-tools/README.md). The default suite runs controlled conformance and explicitly skips missing real recordings. Supplying both hash-pinned real recordings enables their full extraction/golden comparisons. Golden changes are never automatically accepted by tests; `conformance.py` reports semantic JSON Pointer changes, while real-corpus snapshots include whole-store semantic hashes.
+See [the tooling instructions](../../replay-tools/README.md). The default suite runs controlled conformance and explicitly skips opt-in real recordings. Setting `AOF_REPLAY_FIXTURE_DIR=replay-fixtures` enables full extraction/golden comparisons for all four hash-pinned conformance sources. Golden changes are never automatically accepted by tests; `conformance.py` reports semantic JSON Pointer changes, while real-corpus snapshots include whole-store semantic hashes.
