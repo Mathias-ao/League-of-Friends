@@ -52,7 +52,7 @@ The controlled **wire fixture** exercises real decoder action layouts, unknown c
 
 ### Two-recorder ordinary-game evidence
 
-An additional user-supplied ordinary 1v1 supplies distinct recordings from POV slots 1 and 2 for save/build 68.0/180059. Both sources remain private, separate and hash-pinned in the fixture manifest. Their CanonicalReplay bundles establish the following fixture-level observations:
+An additional user-supplied ordinary 1v1 supplies distinct recordings from POV slots 1 and 2 for save/build 68.0/180059. Both sources are located in replay-fixtures, separate and hash-pinned in the fixture manifest. Their CanonicalReplay bundles establish the following fixture-level observations:
 
 | Evidence | POV 1 | POV 2 | Comparison |
 |---|---:|---:|---|
