@@ -1,155 +1,105 @@
-# Age of Friends — Current State and Task Router
+# Age of Friends — Current State
 
-Status date: 11 September 2026  
-Implementation baseline inspected: `94f5b125245a56f64119477f5bf00ff17da95352` on `main`  
-Purpose: let a new project task start from GitHub alone.
+Last reviewed: 11 September 2026  
+Repository baseline reviewed: `b7b3adc6ecb646fdb55e2586d5ad022e25d1ef59` on `main`  
+Purpose: Record what currently exists, what is being developed, and what remains blocked or pending. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision.
 
-## How to begin any task
+## Current focus
 
-1. Read [`PROJECT-CONTINUITY.md`](PROJECT-CONTINUITY.md) for the locked product direction and authority order.
-2. Read this file for current state and select one bounded workstream.
-3. Inspect the latest `main` code for the area being changed. The baseline above records the implementation reviewed for this status; later code may supersede it.
-4. Read the specialist source linked in the routing table.
-5. State whether the task changes product rules, implementation, analysis, generated artifacts or only documentation.
-6. For replay work, state explicitly whether binary replay parsing is authorized. The extraction contract has been settled; parser implementation is deferred until a later task.
+The active workstream is the replay-derived statistics foundation.
 
-Do not require an old chat to understand a task. If a chat contains a lasting decision that is absent here, persist it in the appropriate configuration, decision record or continuity update before treating it as locked.
+Match Analysis is in development. Currently V1.3 is the current structural baseline. It demonstrates that the existing replay pipeline can process the seven test shapes: 1v1, 2v2, 3v3, 4v4, FFA with dynamic diplomacy, Nomad and water maps. It provides a working basis for topology, opening, production, spatial and directed player-interaction analysis.
 
-## Product state
+V1.3 is not the final player-facing statistics contract. Metric selection, names, evidence requirements, formulas, confidence rules and presentation remain subject to further review and change. Later experiments in the repository do not become settled product behavior until deliberately accepted.
 
-Age of Friends is a private, persistent AoE2:DE league for friends. Its tone is serious, hardcore, historical, martial and understated. Competition and data truth lead; drama and narrative come from real league evidence.
+The immediate goal is to define a reliable V1 statistics set from replay evidence. Systems that consume statistics must remain pending until their required inputs are chosen and validated.
 
-The player journey is:
+## Match and competition structure
 
-1. join the league and receive a durable player identity;
-2. enter a season;
-3. answer each event signup separately;
-4. check in and receive an approved Match/Game plan;
-5. complete the Game and upload a recording;
-6. receive a normally final result, statistics and league consequences, with a small dispute route.
+The required hierarchy is:
 
-Players do not manually enter post-match statistics. Admin tools exist for exceptions and corrections.
+**League → Season → Event → Match → Game**
 
-### Locked competition direction
+- A Match is one planned competitive encounter and may contain one or more Games.
+- One `.aoe2record` represents one Game.
+- Players join the league once, enter each season separately and sign up for each event separately.
+- RSVP and check-in determine the available players.
+- The approved Match/Game plan is authoritative for roster, teams, format and civilization rules.
+- Attendance changes may produce fewer Games, asymmetric teams or FFA. Downstream systems must use the approved Game shape rather than assume the advertised format.
+- Civilization drafting belongs in the web application. Civilizations are unique within each Game, and a captain is selected randomly when required.
+- Players upload the replay after playing. They do not manually enter post-match statistics.
 
-| Area | Current decision |
-|---|---|
-| Brand | Age of Friends (AoF); technical repository name League of Friends. |
-| Season I | The Fiefdom of Bad Neighbors; European conflicts relevant to AoE2:DE. |
-| Event I | The War for Lombardia; 4v4, Lombardia, Standard Victory; web-app civilization draft; unique civilizations within the Game; random captain when needed. |
-| Flexible attendance | The approved topology may differ from the advertised format, including asymmetric teams or FFA. Systems must consume the approved Game plan. |
-| Event II | Multiple Mediterranean 2v2s, some naval play, players on the same landmass, thematic civilization pool. Final rules/configuration are not yet persisted. |
-| Later events | Halloween FFA, Christmas FFA Capture the Relic, New Year King of the Hill. Details remain future design. |
+Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match-plan approval and Game creation. The complete player-facing flow and end-to-end draft integration are not yet implemented.
 
-### Locked identity and social direction
+## Replay and statistics state
 
-- A permanent league `playerId` is distinct from authentication UID, display name, external profile ID, replay slot and replay object IDs.
-- Relationships are separate Rivalry, Enemy and Friend tracks.
-- Rivalry progression is Friction → Competing → Rivalry → Nemesis.
-- Enemy progression and labels are under exploration: Grudge → Bad Blood → Enemy → Vendetta → Blood Feud → Internecine Strife.
-- Friend progression and labels are under exploration: Friendly → Respect → Honored → Trusted Friend → Blood Brothers.
-- Level 3 Rivalry or Enemy unlocks the War Room. The Friend reward remains unresolved.
-- Current backend rivalry code implements an older single-score model. Do not present it as the settled three-track design.
-- Portraits begin in a newcomer/peasant state. Later identity uses sustained production-commitment evidence across recent and lifetime Games, with minimum evidence, confidence and hysteresis. Exact thresholds are not frozen.
+### Present foundation
 
-## Implemented repository state
+- Python replay decoding through `mgz-fast==1.0.0` and the V3 compact adapter.
+- Optional `CanonicalReplay 1.0` export with structured facts, initial objects and terrain data.
+- A seven-shape corpus harness for structural checks.
+- Versioned raw and derived replay-stat ingestion foundations.
+- V1.3 analysis foundations for match topology, opening and production evidence, spatial activity, dynamic diplomacy and directed player-pair interaction.
+- Backend rebuild paths for player statistics and records.
 
-“Implemented” means code or configuration is present, not that production deployment or every scenario has been certified.
+### Current limitations
 
-| Workstream | Present on the inspected baseline | Material limitations |
+- The V1 statistics shown to players are not yet frozen.
+- Queue and command evidence must not be presented as confirmed completion, kills or damage.
+- Some interaction, raid, support and spatial measures remain inferred and require confidence rules.
+- FFA and changing-diplomacy interpretations require continued qualification.
+- Canonical export is not yet the mandatory normal upload path.
+- Player mapping still relies partly on names or administrative overrides.
+- The authenticated player upload and automatic processing flow is not complete.
+- Uploaded replay files are intended to be temporary and deleted only after canonical evidence has been extracted, validated and stored successfully. Existing contracts and schemas that require permanent replay retention must be revised to match this decision.
+
+## Systems pending the statistics foundation
+
+The following are part of the product vision but are not considered implemented product systems yet. Existing backend jobs, engines or queries are foundations only.
+
+| System | Current state | Required before implementation is complete |
 |---|---|---|
-| Firebase foundation | Node.js 22, TypeScript, Functions v2, Firestore rules/indexes, auth mapping and Emulator Suite setup. | No production project or deployment is documented as active. |
-| Membership and competition | Membership review, seasons, events, RSVP/check-in, flexible match-plan generation/approval and Game creation. | No committed user-facing client. Draft integration is not end to end. |
-| Results | Result submission/respond/admin resolution, canonical result pipeline, disputes, corrections and revision history. | Normal replay-derived automatic result qualification is not complete. Completed downstream projections need explicit eligibility withdrawal during disputes/corrections. |
-| Processing | Idempotent jobs for rewards, power ratings, statistics, achievements, rivalries, records and activity. | Models are V1 foundations and may not yet reflect all locked product changes. |
-| Read models | League bootstrap, event detail, Match detail, player profile and War Room queries. | Frontend consumption is absent. |
-| Replay adapter | `mgz-fast==1.0.0`, V3 compact adapter, optional CanonicalReplay 1.0 bundle and seven-shape corpus tooling. | Canonical export is optional; permanent source retention and full raw-byte coverage are not enforced. |
-| Replay ingestion | Admin ingestion, immutable raw-stat documents, revisions, derived statistics and player/record rebuild commands. | Name/manual mapping remains in tooling; bulk canonical artifacts are not the normal ingestion contract; caller does not guard promotion with an expected active revision. |
-| Match analysis | Structural V1.3 findings and analysis-only V1.4 entity/opening/raid/diplomacy work. | V1.4 semantic review is not recorded as complete. Corpus reader currently consumes only the first listed chunk. FFA diplomacy semantics remain unqualified. |
-| Content | Brand file, Season I content, Event I narrative and landing-page design record. | Event II and later content are not persisted; artwork paths are empty. |
+| Leaderboards and ladder | Result, points, rating and read-model foundations exist. Final player-facing boards are not implemented. | Freeze the result, rating and statistical measures used for ranking, including season and lifetime scope. |
+| Matchmaking | Flexible Match/Game planning exists, but statistics-informed matchmaking is not complete. | Choose the rating and player evidence used to create balanced or intentionally themed matches. |
+| Relationships | Existing rivalry code uses an older single-score model and is not authoritative. | Select validated inputs and formulas for Gallantry, Treachery and Chivalry, then implement the separate Rivalry, Enemy and Friend tracks. |
+| War Room | Challenge and query foundations exist, but the intended relationship-driven experience is not implemented. | Implement the three-track relationship model and unlock the War Room at the third Rivalry or Enemy stage. |
+| Achievements | Processing scaffolding exists, but the final catalogue and triggers are not frozen. | Define achievements only after their required statistics are reliable and versioned. |
+| Awards and trophies | Product direction exists, but definitions, earning rules and presentation are pending. | Decide which validated match, event, season and lifetime statistics support each award or trophy. |
+| Player portraits | The persistent portrait direction is defined, but the model is not implemented. | Choose reliable military-family evidence, participation thresholds, recent/lifetime weighting and stability rules. |
 
-## Replay and extraction decision
+## Other implementation state
 
-The settled decision is [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md). Use it as the implementation target when replay parser work resumes.
-
-The selected boundary is an AoF-owned canonical evidence exporter around the existing Python decoder. It must retain the original Game recording and reusable primitive evidence, with field-level provenance, coverage and immutable versioned artifacts. CanonicalReplay 1.0 remains unchanged. A separate `AOF_EXTRACTION_V1` run envelope will bind league Match/Game identity, source selection, extraction versions, artifact integrity, coverage and qualification.
-
-The replay facts support later projections without reopening the binary file. They do not turn queue requests into completed units, spatial commands into confirmed combat, or EOF into a winner. Result qualification remains an independent path so a reliable result can become final before optional analysis completes.
-
-The authoritative replay sources are indexed in [`../replay-foundation/README.md`](../replay-foundation/README.md). The TownBell capability matrix is a traceability catalogue, not the storage schema.
-
-### Required later extraction work
-
-1. Make permanent original replay retention and canonical packaging part of the normal authorized upload path.
-2. Add complete raw byte/range accounting, field claims, offset domains, unknown/failure preservation and capability-level coverage.
-3. Separate league Match/Game identity, source identity, recording/segment identity and extraction run identity.
-4. Bind replay participants through verified external identity links and the approved Game roster; names are only cross-checks.
-5. Remove invented map-size/completion fallbacks and distinguish framing completeness, recording coverage, game completion and result evidence.
-6. Read and verify every canonical artifact chunk.
-7. Stage immutable artifacts, then promote active pointers with expected-revision guards.
-8. Qualify production requests, cancellations, producer association, timing, dynamic diplomacy and result evidence with controlled fixtures.
-9. Prove complete birth/completion evidence before offering exact units-trained statistics; otherwise expose production commitment honestly.
-
-## Task routing
-
-| If the next task concerns… | Read first | Safe next action / gate |
+| Area | Current state | Main gap |
 |---|---|---|
-| Project direction or a cross-cutting decision | `PROJECT-CONTINUITY.md`, this file, current code | Update the source closest to the decision; keep implemented and planned state distinct. |
-| Replay extraction/parser | extraction contract; replay foundation; `replay-tools/`; `README-TEST.md` | Implement against the contract only when parsing is explicitly in scope. Run controlled and corpus qualification; do not infer completion from queues. |
-| Match Analysis V1.4 | `README-MATCH-ANALYSIS-V1_4.md`; canonical artifacts; analysis engine | Regenerate the entity catalogue and run analysis on existing facts. Do not reparse merely for V1.4. Record review findings before V1.5. |
-| Results, disputes or corrections | Firestore architecture; result commands/engine; processing trigger | Maintain one active result and one eligible downstream contribution. Test correction/dispute invalidation. |
-| Replay upload integration | extraction contract; replay ingestion commands; Game model; auth | Design authenticated upload, archive-first storage, verified roster binding, async worker and guarded selection. |
-| Relationships / War Room | this file; continuity; rivalry engine; War Room challenge/query files | Freeze Enemy labels/thresholds and Friend reward before migrating the single-score model to three tracks. Preserve directed evidence. |
-| Player portraits | continuity; extraction contract; player statistics/analysis | Design a versioned profile model from production commitment with minimum games, confidence, recent/lifetime balance and hysteresis. |
-| Events and drafting | season/event configs; match planner; event commands | Persist Event II or add draft integration. Preserve flexible topologies and civ uniqueness within each Game. |
-| Web UI | brand; season/event content; landing-page design; backend queries | Establish a client stack and consume read models without client writes to authoritative competition state. |
-| Firebase/backend | Phase 2 architecture; functions exports/types; setup guide; smoke scripts | Build in Functions v2, keep authoritative writes server-side and test through Emulator Suite. |
+| Firebase backend | Node.js 22, TypeScript, Functions v2, Firestore rules/indexes, authentication mapping and Emulator Suite support exist. | No documented active production deployment. |
+| Results | Submission, response, administrator resolution, disputes, corrections and revision history exist as backend foundations. | Replay-derived automatic result qualification and complete downstream invalidation still require finishing. |
+| Processing | Repeat-safe jobs exist for rewards, ratings, statistics, achievements, rivalries, records and activity. | Their models must be aligned with the final statistics and locked product rules. |
+| Read models | League, event, Match, player-profile and War Room queries exist. | No committed user-facing web client consumes them. |
+| Content | Brand, Season I, Event I and landing-page design material exist. | Event II and later content are not yet fully persisted; artwork remains outstanding. |
 
-## Open product decisions
+## Immediate priorities
 
-These remain choices for a future product-design task. Do not silently resolve them in implementation:
+1. Finalize the V1 replay statistics and their evidence classifications.
+2. Validate those statistics across the supported match shapes.
+3. Decide which statistics are player-facing and which remain internal evidence.
+4. Define the rating, matchmaking and relationship models that consume them.
+5. Implement leaderboards, the three relationship tracks and the War Room against those versioned models.
+6. Define achievements, awards, trophies and portrait progression from validated inputs.
+7. Complete the authenticated replay-upload flow and build the player-facing web application.
 
-- final Enemy labels and thresholds;
-- Friend-track reward or unlock behavior;
-- exact relationship weights, decay, reciprocity and seasonal/lifetime policy;
-- portrait graduation threshold, evidence window, dominance threshold and hysteresis;
-- final Event II civilization pool, rules, schedule and content;
-- frontend stack and production hosting/deployment plan;
-- exact V1 statistics presented to players, within the evidence boundaries already locked.
+## Task guidance
 
-## Known technical gaps
+- Treat [`CORE-IDENTITY.md`](CORE-IDENTITY.md) as the authority for product vision.
+- Inspect the latest `main` code before describing behavior as implemented.
+- Treat Match Analysis V1.3 as a working baseline, not a frozen statistics contract.
+- Keep observed facts, deterministic reconstruction, inferred analysis and league interpretation separate.
+- Do not implement statistics-dependent rewards or relationship progression using provisional fields without recording the model version and evidence limits.
+- Update this file whenever the active statistics baseline, a major implementation gap or the immediate priority changes.
 
-- `README-TEST.md` describes the structural corpus path; its “expected next step” predates V1.3/V1.4 and must not override this state file.
-- `docs/architecture/phase-2-firestore.md` is the original architecture baseline. Some suggested shapes are now implemented differently; current code wins for implemented behavior.
-- The existing raw-stat path stores a bounded JSON payload in Firestore. The extraction contract requires lightweight manifests plus external immutable bulk artifacts for the permanent design.
-- The replay exporter currently leaves `retainedReplay.uri` null, makes `--canonical-dir` optional, derives completion from body parse completeness and uses a map-size fallback.
-- The corpus analysis reader uses the first chunk only. Multi-chunk generation must not be treated as supported until every listed chunk is read and verified.
-- Current admin replay ingestion maps normalized names or manual overrides. Durable external profile binding is required for the normal player upload flow.
-- Current ingestion revisions are immutable and idempotent for identical data, but future worker promotion needs an expected-active/source-selection guard.
-- Opening/raid analysis remains a heuristic layer. FFA raid confidence stays capped until diplomacy modes are explicitly qualified.
-- The repository contains no web-client source directory.
+## Specialist sources
 
-## Validation commands
+- [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
+- [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
+- [`../replay-foundation/README.md`](../replay-foundation/README.md)
+- [`../../README-TEST.md`](../../README-TEST.md)
 
-Use only the commands relevant to the files changed.
-
-```bash
-npm --prefix functions install
-npm --prefix functions run build
-npm --prefix functions run lint
-```
-
-Run the Emulator Suite and the relevant `scripts/smoke-test-*.mjs` scripts for backend behavior. `README-TEST.md` documents replay corpus setup. `README-MATCH-ANALYSIS-V1_4.md` documents analysis-only V1.4 execution. Replay fixture files and generated corpus outputs are deliberately uncommitted unless a task explicitly establishes a safe fixture policy.
-
-## Completion record for future tasks
-
-At the end of meaningful work, record:
-
-- the exact commit and changed files;
-- what behavior is implemented versus decided for later;
-- tests and generated artifacts actually run;
-- any changed product or evidence decision;
-- the next bounded action and its prerequisites;
-- whether replay binaries were parsed or the work used retained canonical facts.
-
-Update this file when the implemented state, active routing or material gaps change. Update `PROJECT-CONTINUITY.md` only when project-wide identity, authority, architecture, locked direction or top priorities change.
