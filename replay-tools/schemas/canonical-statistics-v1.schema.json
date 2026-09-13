@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ageoffriends.example/schemas/canonical-statistics-v1.schema.json",
+  "title": "Age of Friends Canonical Statistics Projection V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "statisticsSchemaVersion",
+    "statisticsSchemaSha256",
+    "statisticsProjectionVersion",
+    "formulaVersion",
+    "eligibilityRegistryVersion",
+    "entityCatalogVersion",
+    "source",
+    "scope",
+    "participants",
+    "commandEvidence",
+    "recorderCamera",
+    "townBellEligibility",
+    "coverage",
+    "warnings"
+  ],
+  "properties": {
+    "statisticsSchemaVersion": {"const": "1.0.0"},
+    "statisticsSchemaSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "statisticsProjectionVersion": {"const": "AOF_CANONICAL_STATISTICS_V1"},
+    "formulaVersion": {"const": "AOF_OBSERVED_COMMAND_FORMULAS_V1"},
+    "eligibilityRegistryVersion": {"const": "AOF_STATISTICS_ELIGIBILITY_V1"},
+    "entityCatalogVersion": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "required": ["replaySha256", "canonicalManifestSha256", "extractionRunId", "canonicalSchemaVersion", "parserVersion"],
+      "properties": {
+        "replaySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "canonicalManifestSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "extractionRunId": {"type": "string", "format": "uuid"},
+        "canonicalSchemaVersion": {"type": "string"},
+        "parserVersion": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "scope": {"type": "object"},
+    "participants": {"type": "array", "items": {"type": "object"}},
+    "commandEvidence": {"type": "object"},
+    "recorderCamera": {"type": "object"},
+    "townBellEligibility": {
+      "type": "object",
+      "required": ["metricCount", "counts", "availableMetricIds"],
+      "properties": {
+        "metricCount": {"const": 320},
+        "counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "availableMetricIds": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "coverage": {"type": "object"},
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {"code": {"type": "string"}, "message": {"type": "string"}},
+        "additionalProperties": false
+      }
+    }
+  }
+}

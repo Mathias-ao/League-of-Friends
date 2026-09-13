@@ -96,8 +96,8 @@ Local verification on 13 September 2026 used Python 3.12 and Node 24.19.0:
 
 | Check | Result |
 |---|---|
-| `python -m unittest discover -s replay-tools/tests -v` | 17 passed; three real-recording checks are explicit skips when their private fixture files are absent. |
-| Full extraction with both hash-pinned real fixtures supplied | Both recordings completed byte/schema validation and their independent fixture assertions. |
+| `python -m unittest discover -s replay-tools/tests -v` | 23 passed; three real-recording checks are explicit skips when their private fixture files are absent. |
+| Full extraction with all four hash-pinned recordings supplied | 26 passed in 570.535 seconds: FFA, upstream duel and both paired POVs completed byte/schema validation, semantic goldens and canonical-statistics corpus comparisons. |
 | `conformance.py <bundle> --compare <golden>` on each saved real bundle | Both passed with `changes: []`; 782,192 body operations plus initial stores validated without reopening either replay. |
 | `node --test scripts/test-canonical-artifacts.mjs` | 2 passed, including later-chunk corruption and the unchanged TypeScript analyzer consuming the synthetic canonical golden. |
 | `test-match-analysis-corpus.mjs` on both real bundles, using the source TypeScript engine | 2 passed: FFA/dynamic and duel. This checks optional-analysis integration, not the truth of inferred raids or target ownership. |

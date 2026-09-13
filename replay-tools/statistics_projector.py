@@ -1,0 +1,175 @@
+"""Replay-free statistics evidence projected from a verified canonical bundle."""
+from __future__ import annotations
+
+import argparse
+from collections import Counter, defaultdict
+import json
+from pathlib import Path
+from statistics import median
+from typing import Any
+
+from jsonschema import Draft202012Validator, FormatChecker
+
+from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
+from canonical_run import project_bundle
+from statistics_registry import build_registry
+
+PROJECTION_VERSION = "AOF_CANONICAL_STATISTICS_V1"
+FORMULA_VERSION = "AOF_OBSERVED_COMMAND_FORMULAS_V1"
+STATISTICS_SCHEMA_VERSION = "1.0.0"
+STATISTICS_SCHEMA = ROOT / "schemas" / "canonical-statistics-v1.schema.json"
+ENTITY_CATALOG = ROOT / "entity-catalog" / "aoe2techtree-b9d494df6921.json"
+
+
+def _entity(catalog: dict, kind: str, raw_id: Any) -> dict:
+    if isinstance(raw_id, str) and raw_id.lstrip("-").isdigit():
+        raw_id = int(raw_id)
+    result = {"rawId": raw_id, "kind": kind, "catalogVersion": catalog["schemaVersion"],
+              "catalogSourceVersion": catalog["sourceVersion"]}
+    item = catalog[{"unit": "units", "building": "buildings", "technology": "technologies"}[kind]].get(str(raw_id))
+    if item is None:
+        return {**result, "resolutionStatus": "unresolved", "name": None, "roleKeys": []}
+    return {**result, "resolutionStatus": "reference_catalog_unqualified_for_replay_patch",
+            "name": item["name"], "roleKeys": item.get("roleKeys", [])}
+
+
+def _inventory(counts: dict[str, Counter], catalog: dict, kind: str) -> dict[str, list[dict]]:
+    return {player: [{"entity": _entity(catalog, kind, raw_id), "commandCount": count}
+                     for raw_id, count in sorted(values.items(), key=lambda item: int(item[0]))]
+            for player, values in sorted(counts.items(), key=lambda item: int(item[0]))}
+
+
+def project_statistics(directory: Path, *, validate: bool = True, catalog_path: Path = ENTITY_CATALOG) -> dict:
+    if validate:
+        validate_bundle(directory)
+    manifest = read_json(directory / "canonical-replay.json")
+    run = read_json(directory / "extraction-manifest.json")
+    compact = project_bundle(directory, validate=False)
+    registry = build_registry()
+    catalog = read_json(catalog_path)
+    slots = {p["playerId"] for p in manifest["participants"]}
+
+    action_counts: dict[str, Counter] = defaultdict(Counter)
+    action_times: dict[str, list[int]] = defaultdict(list)
+    selection_sizes: dict[str, list[int]] = defaultdict(list)
+    formation_modes: dict[str, set[str]] = defaultdict(set)
+    for event in iter_store(directory, manifest["factStore"]):
+        if event["sourceOperation"] != "ACTION" or event.get("actorPlayerId") not in slots:
+            continue
+        player = str(event["actorPlayerId"])
+        name = event.get("sourceActionName") or "ERROR"
+        action_counts[player][name] += 1
+        action_times[player].append(event["timestampMs"])
+        selection_sizes[player].append(len(event.get("objectInstanceIds", [])))
+        if name == "FORMATION":
+            payload = event.get("payload", {})
+            for key in ("formation_id", "formation", "mode"):
+                if payload.get(key) is not None:
+                    formation_modes[player].add(str(payload[key]))
+                    break
+
+    body = compact["body"]
+    fundamentals = compact["fundamentals"]
+    participants = []
+    for participant in manifest["participants"]:
+        player = str(participant["playerId"])
+        times = action_times[player]
+        counts = action_counts[player]
+        sizes = selection_sizes[player]
+        observed_minutes = body["durationMs"] / 60000 if body["durationMs"] else None
+        participants.append({
+            "playerId": participant["playerId"],
+            "replaySlot": participant["number"],
+            "isRecorder": participant["isRecorder"],
+            "displayName": participant["name"],
+            "observedCommands": {
+                "count": sum(counts.values()), "byRawActionName": dict(sorted(counts.items())),
+                "firstAtMs": min(times) if times else None, "lastAtMs": max(times) if times else None,
+                "firstFiveObservedMinutesCount": sum(t < 300000 for t in times),
+                "activeSecondCount": len({t // 1000 for t in times}),
+                "ratePerObservedMinute": round(sum(counts.values()) / observed_minutes, 6) if observed_minutes else None,
+                "formulaVersion": FORMULA_VERSION,
+                "scope": "decoded player ACTION operations over observed sync-clock interval",
+            },
+            "selectionEvidence": {
+                "sampleCount": len(sizes), "averageSelectedObjectCount": round(sum(sizes) / len(sizes), 6) if sizes else None,
+                "medianSelectedObjectCount": median(sizes) if sizes else None,
+                "maximumSelectedObjectCount": max(sizes) if sizes else None,
+                "rawFormationModes": sorted(formation_modes[player]),
+            },
+        })
+
+    queue_counts = {p: Counter(v) for p, v in fundamentals["queueCommandCountsByPlayerAndRawUnit"].items()}
+    research_counts = {p: Counter(v) for p, v in fundamentals["researchCommandCountsByPlayerAndRawTechnology"].items()}
+    building_counts = {p: Counter(v) for p, v in fundamentals["buildingPlacementCountsByPlayerAndRawBuilding"].items()}
+    available = [m["metricId"] for m in registry["metrics"] if m["eligibility"] == "available_canonical"]
+    warnings = list(compact["coverage"].get("warnings", [])) + [
+        {"code": "OBSERVED_INTERVAL_ONLY", "message": "Totals cover the decoded recorded interval; full-game origin/completeness is not asserted."},
+        {"code": "REQUESTS_NOT_OUTCOMES", "message": "Queue, research and building values are requests or placement commands, not trained units, accepted research, or completed buildings."},
+        {"code": "ENTITY_LABELS_UNQUALIFIED", "message": "Raw IDs are authoritative. Catalog names and role keys are reference labels not qualified against this replay patch or data mods."},
+        {"code": "RECORDER_CAMERA_ONLY", "message": "Camera points represent the recording perspective and are not a comparable all-player statistic."},
+    ]
+    result = {
+        "statisticsSchemaVersion": STATISTICS_SCHEMA_VERSION,
+        "statisticsSchemaSha256": sha256(STATISTICS_SCHEMA),
+        "statisticsProjectionVersion": PROJECTION_VERSION,
+        "formulaVersion": FORMULA_VERSION,
+        "eligibilityRegistryVersion": registry["registryVersion"],
+        "entityCatalogVersion": catalog["schemaVersion"],
+        "source": {
+            "replaySha256": manifest["source"]["sha256"],
+            "canonicalManifestSha256": run["canonicalManifest"]["sha256"],
+            "extractionRunId": run["extractionRunId"],
+            "canonicalSchemaVersion": manifest["schemaVersion"],
+            "parserVersion": manifest["versions"]["parserVersion"],
+        },
+        "scope": {"clock": body["durationBasis"], "observedUntilMs": body["durationMs"],
+                  "decodeCoveragePercent": body["decodeCoveragePercent"],
+                  "decodeCoverageMeaning": body["decodeCoverageMeaning"]},
+        "participants": participants,
+        "commandEvidence": {
+            "queueRequestsByPlayerAndUnit": _inventory(queue_counts, catalog, "unit"),
+            "positiveEncodedQueueAmountsByPlayerAndRawUnit": fundamentals["positiveQueueAmountsByPlayerAndRawUnit"],
+            "researchRequestsByPlayerAndTechnology": _inventory(research_counts, catalog, "technology"),
+            "buildingPlacementsByPlayerAndBuilding": _inventory(building_counts, catalog, "building"),
+            "marketCommands": body["marketEvents"], "tributeCommands": body["tributeEvents"],
+            "resignCommands": body["resignations"], "flareCommands": body["flareEvents"],
+            "directedDiplomacyCommands": fundamentals["directedDiplomacyCommandTimelines"],
+            "ageAdvanceRequestCandidates": fundamentals["ageAdvanceRequestCandidates"],
+            "ageAdvanceStarted": fundamentals["ageAdvanceStarted"],
+            "observedAgeReached": fundamentals["observedAgeReached"],
+            "projectedAgeCompletion": fundamentals["projectedAgeCompletion"],
+        },
+        "recorderCamera": {"pointCount": body["cameraPointsTotal"], "scope": "recording_perspective_only",
+                           "recorderPlayerIds": [p["playerId"] for p in manifest["participants"] if p["isRecorder"]]},
+        "townBellEligibility": {"metricCount": registry["metricCount"],
+                                "counts": registry["eligibilityCounts"],
+                                "availableMetricIds": available},
+        "coverage": compact["coverage"],
+        "warnings": warnings,
+    }
+    schema = read_json(STATISTICS_SCHEMA)
+    errors = sorted(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(result),
+                    key=lambda error: list(error.absolute_path))
+    if errors:
+        first = errors[0]
+        raise ValueError(f"Statistics schema validation failed at /{'/'.join(map(str, first.absolute_path))}: {first.message}")
+    return result
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Project conservative statistics from canonical evidence only.")
+    parser.add_argument("bundle", type=Path)
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--catalog", type=Path, default=ENTITY_CATALOG)
+    args = parser.parse_args()
+    result = project_statistics(args.bundle, catalog_path=args.catalog)
+    if args.out:
+        args.out.write_bytes(json_bytes(result))
+        print(f"Wrote canonical statistics projection to {args.out}")
+    else:
+        print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

@@ -11,11 +11,15 @@ from canonical_io import read_json, sha256, semantic_diff
 from conformance import semantic_snapshot
 from parse_replay import build_payload
 from paired_conformance import paired_snapshot
+from statistics_corpus import summarize
+from statistics_projector import project_statistics
 
 ROOT = Path(__file__).parent
 FIXTURE_MANIFEST = read_json(ROOT / 'fixtures.json')
 FIXTURES = FIXTURE_MANIFEST['fixtures']
 PAIRS = FIXTURE_MANIFEST.get('pairedFixtures', [])
+STATISTICS_GOLDEN = read_json(ROOT / 'goldens' / 'statistics-corpus-v1.json')
+STATISTICS_REPORTS = {report['id']: report for report in STATISTICS_GOLDEN['reports']}
 
 
 class RealReplayTests(unittest.TestCase):
@@ -39,6 +43,8 @@ class RealReplayTests(unittest.TestCase):
             golden = read_json(ROOT / 'goldens' / f"{fixture['id']}.json")
             changes = semantic_diff(golden, snapshot)
             self.assertEqual(changes, [], json.dumps(changes[:3], indent=2))
+            statistics = summarize(fixture['id'], project_statistics(output / 'canonical', validate=False))
+            self.assertEqual(semantic_diff(STATISTICS_REPORTS[fixture['id']], statistics), [])
 
     def test_townbell_ffa(self):
         self.check_fixture(FIXTURES[0])
@@ -70,6 +76,8 @@ class RealReplayTests(unittest.TestCase):
                           'chatCount': body['chatOperationsTotal']}
                 for field, expected in fixture['expected'].items():
                     self.assertEqual(actual[field], expected, f"Independent paired assertion: {field}")
+                statistics = summarize(fixture['id'], project_statistics(bundle, validate=False))
+                self.assertEqual(semantic_diff(STATISTICS_REPORTS[fixture['id']], statistics), [])
                 bundles.append(bundle)
             # build_payload already performs full bundle validation.
             actual = paired_snapshot(*bundles, validate=False)

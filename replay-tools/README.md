@@ -7,9 +7,13 @@ python -m pip install -r replay-tools/requirements.txt
 python replay-tools/parse_replay.py replay.aoe2record --canonical-dir output/new-run --out output/adapter.json
 python replay-tools/canonical_run.py output/new-run
 python replay-tools/canonical_run.py output/new-run --out output/command-projection.json
+python replay-tools/statistics_registry.py --out output/statistics-eligibility.json
+python replay-tools/statistics_projector.py output/new-run --out output/statistics.json
 ```
 
-The latter two commands need no replay and do not import the decoder. The first verifies the bundle; `--out` also projects the compatibility command report and `AOF_COMMAND_FUNDAMENTALS_V2`. Projection envelope V2 separates age-advance request candidates from unavailable `AgeAdvanceStarted`, observed `AgeReached` and projected completion facts. Artifact hashes, all chunks and schemas are checked before projection. Use a fresh bundle directory for each run. A framing failure writes diagnostic evidence, exits unsuccessfully, and must not be ingested as complete. Invalid headers or required fields fail publication and leave the input intact.
+All commands after extraction need no replay and do not import the decoder. The first `canonical_run.py` invocation verifies the bundle; `--out` also projects the compatibility command report and `AOF_COMMAND_FUNDAMENTALS_V2`. Projection envelope V2 separates age-advance request candidates from unavailable `AgeAdvanceStarted`, observed `AgeReached` and projected completion facts. Artifact hashes, all chunks and schemas are checked before projection. Use a fresh bundle directory for each run. A framing failure writes diagnostic evidence, exits unsuccessfully, and must not be ingested as complete. Invalid headers or required fields fail publication and leave the input intact.
+
+The statistics commands also need no replay. `statistics_registry.py` materializes `AOF_STATISTICS_ELIGIBILITY_V1` from all 320 source-matrix rows. `statistics_projector.py` validates `AOF_CANONICAL_STATISTICS_V1`, adds raw-ID-preserving reference catalog labels and keeps request/placement facts distinct from game outcomes. See the [statistics milestone](../docs/architecture/canonical-statistics-v1.md).
 
 Omitting `--canonical-dir` preserves the compact-only administrative/debug call. It uses the canonical event projector but creates **no durable evidence bundle**. The normal authenticated upload path, durable storage, deletion gate and backend ingestion of adapter V4 are not implemented here. The existing derived-stat backend supports only adapters V1/V2; do not relabel V4 data to bypass that gate.
 
@@ -43,6 +47,15 @@ Two recordings of the same Game remain separate evidence sources. Compare a revi
 
 ```bash
 python replay-tools/paired_conformance.py output/pov-a/canonical output/pov-b/canonical --compare replay-tools/tests/goldens/user-duel-two-pov.json
+```
+
+Create a privacy-minimized report across several canonical bundles:
+
+```bash
+python replay-tools/statistics_corpus.py \
+  --bundle ffa=output/ffa/canonical \
+  --bundle duel=output/duel/canonical \
+  --out output/statistics-corpus.json
 ```
 
 The existing corpus commands remain available and now read every verified chunk:

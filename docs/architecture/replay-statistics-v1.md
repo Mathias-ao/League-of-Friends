@@ -37,9 +37,9 @@ Current V1 target:
 - total player action counts by action type
 - sparse per-second player action counts for APM analysis
 - building-placement commands with timestamp, building ID and coordinates when available
-- unit-production / queue commands with timestamp, unit ID, quantity and producing building ID when available
+- unit-production / queue **requests** with timestamp, unit ID, encoded quantity and selected producer object IDs when available
 - research commands with timestamp and technology ID
-- Feudal / Castle / Imperial research-start commands (tech IDs 101 / 102 / 103)
+- Feudal / Castle / Imperial age-advance request candidates (tech IDs 101 / 102 / 103); these are not accepted starts or completions
 - market buy / sell commands with timestamp, resource ID and amount when available
 - tribute commands with timestamp, target replay slot / League Player and resource amounts when available
 - resignation commands and timestamps
@@ -60,7 +60,7 @@ Current `REPLAY_ANALYSIS_V1` supports:
 - peak 30-second raw APM
 - peak 60-second raw APM
 - per-minute APM timeline
-- Feudal / Castle / Imperial research-start timing
+- Feudal / Castle / Imperial age-advance request-candidate timing
 - first queued production by unit ID
 - market buy/sell command counts
 - tribute command count
@@ -91,9 +91,9 @@ Changing a threshold creates a new profile. It does not mutate replay facts or o
 
 Initial built-in defaults are intentionally provisional:
 
-- Fast Feudal research start: <= 10:00
-- Fast Castle research start: <= 16:00
-- Fast Imperial research start: <= 30:00
+- Fast Feudal request candidate: <= 10:00
+- Fast Castle request candidate: <= 16:00
+- Fast Imperial request candidate: <= 30:00
 - opening-candidate window: <= 15:00
 - opening-candidate minimum: 2 queued units
 - APM peak windows: 30s and 60s
