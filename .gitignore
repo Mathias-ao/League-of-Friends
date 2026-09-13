@@ -27,7 +27,6 @@ replay-output*.json
 .idea/
 
 # Replay regression fixtures and generated analysis
-replay-fixtures/
 replay-corpus-output/
 match-analysis-output*/
 replay-tools/__pycache__/
