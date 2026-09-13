@@ -36,7 +36,8 @@
   "diplomacyCommandCount": 86,
   "durationMs": 5639022,
   "fundamentals": {
-    "ageAdvanceStartedCandidates": {
+    "fundamentalsVersion": "AOF_COMMAND_FUNDAMENTALS_V2",
+    "ageAdvanceRequestCandidates": {
       "basis": "research_ids_101_102_103",
       "events": [
         {
@@ -229,7 +230,11 @@
           "technologyId": 103
         }
       ],
-      "qualification": "requires_standard_entity_data; no completion projected"
+      "qualification": "decoded research requests; repeated clicks may refer to one intended start"
+    },
+    "ageAdvanceStarted": {
+      "events": [],
+      "status": "insufficient_evidence"
     },
     "buildingPlacementCountsByPlayerAndRawBuilding": {
       "1": {
@@ -1602,7 +1607,7 @@
   "queueCommandCount": 1720,
   "researchCommandCount": 216,
   "schemaVersion": "1.1.0",
-  "snapshotVersion": "AOF_GOLDEN_V1",
+  "snapshotVersion": "AOF_GOLDEN_V2",
   "source": {
     "byteLength": 7631541,
     "gameBuild": 180059,

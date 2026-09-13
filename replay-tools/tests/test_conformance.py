@@ -17,6 +17,7 @@ from canonical_io import (ConformanceError, EventWriter, checked_path, iter_stor
                           schema_validator, semantic_diff, validate_bundle, json_bytes)
 from canonical_run import project_bundle
 from canonical_stream import frames
+from paired_conformance import event_signature, stream_summary
 import parse_replay
 from fixture_support import export_fixture, controlled_body, header, PREFIX
 
@@ -98,8 +99,11 @@ class ConformanceTests(unittest.TestCase):
         finally:
             hidden.rename(self.source)
         self.assertEqual(projected['body'], self.adapter['payload']['body'])
+        self.assertEqual(projected['schemaVersion'], 'AOF_CANONICAL_PROJECTION_V2')
+        self.assertEqual(projected['fundamentals']['fundamentalsVersion'], 'AOF_COMMAND_FUNDAMENTALS_V2')
         self.assertEqual(projected['extractionRunId'], read_json(self.bundle / 'extraction-manifest.json')['extractionRunId'])
         self.assertEqual(projected['fundamentals']['positiveQueueAmountsByPlayerAndRawUnit'], {'1': {'83': 5}})
+        self.assertEqual(projected['fundamentals']['ageAdvanceStarted']['events'], [])
         self.assertEqual(projected['fundamentals']['observedAgeReached']['events'], [])
         self.assertEqual(len(projected['fundamentals']['directedDiplomacyCommandTimelines']['1->2']), 2)
 
@@ -197,6 +201,16 @@ class ConformanceTests(unittest.TestCase):
         expected = json.loads(json.dumps(actual))
         self.assertEqual(semantic_diff(expected, actual), [])
         self.assertTrue(semantic_diff({'value': True}, {'value': 1}))
+
+    def test_paired_signature_ignores_source_addresses_but_not_evidence(self):
+        left = dict(self.events[2])
+        right = json.loads(json.dumps(left))
+        right.update(eventId='other-source-event', operationOrdinal=999, byteOffset=123456, byteLength=999)
+        right['evidence']['sourceEventIds'] = ['other-source-event']
+        self.assertEqual(event_signature(left), event_signature(right))
+        self.assertTrue(stream_summary([left], [right])['exactMatch'])
+        right['payload']['incrementMs'] = 999
+        self.assertFalse(stream_summary([left], [right])['exactMatch'])
 
     def test_source_and_inflation_limits_fail_closed(self):
         with tempfile.TemporaryDirectory() as d:

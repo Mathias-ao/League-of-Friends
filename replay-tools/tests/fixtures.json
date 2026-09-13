@@ -17,5 +17,26 @@
       "evidenceClass": "real_game_regression_not_controlled",
       "expected": {"playerCount": 2}
     }
+  ],
+  "pairedFixtures": [
+    {
+      "id": "user-duel-two-pov",
+      "evidenceClass": "ordinary_game_two_recorder_regression_not_controlled",
+      "source": "User-supplied recordings from both player perspectives; not redistributed in this public repository.",
+      "recordings": [
+        {
+          "id": "user-duel-pov-1",
+          "fileName": "1v1_1.aoe2record",
+          "sha256": "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181",
+          "expected": {"operationCount": 348012, "povPlayerId": 1, "chatCount": 5}
+        },
+        {
+          "id": "user-duel-pov-2",
+          "fileName": "1v1_2.aoe2record",
+          "sha256": "bcb0872742d2e6c2da1ed9844aed373e533adafe6b097765bcca3a9dd30e8836",
+          "expected": {"operationCount": 348013, "povPlayerId": 2, "chatCount": 6}
+        }
+      ]
+    }
   ]
 }

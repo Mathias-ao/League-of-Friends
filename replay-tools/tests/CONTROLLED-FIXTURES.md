@@ -2,6 +2,8 @@
 
 The committed wire fixture validates byte decoding and packaging. It does not prove game-engine outcomes. Do not promote compatibility on its strength alone.
 
+The ordinary `user-duel-two-pov` regression now proves that this fixture's ordered non-camera/non-chat operation evidence is identical across two recorders. Its camera streams differ and one recorder has one extra terminal chat operation. This qualifies recorder-local separation and shared-stream comparison for that fixture, but the game had no controlled action log and therefore does not qualify command outcomes.
+
 Create one short current-build unlocked-team game, recorded from two human participants, with a written action log and synchronized video. Include game/build/save versions, data and mod identifiers, lobby settings, recorder identities, source SHA-256 values, and the timing reference in the fixture manifest. Each participant keeps the original recording. Test-corpus retention is a deliberate development choice separate from production upload retention.
 
 | Step | Controlled action | Check against canonical evidence and video |

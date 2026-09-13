@@ -10,7 +10,9 @@
       "saveVersion": 68.0,
       "gameBuild": 180059,
       "fixtureIds": [
-        "townbell-ffa-save68"
+        "townbell-ffa-save68",
+        "user-duel-pov-1",
+        "user-duel-pov-2"
       ],
       "status": "fixture_regression_only"
     },

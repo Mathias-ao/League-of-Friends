@@ -10,9 +10,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from canonical_io import read_json, sha256, semantic_diff
 from conformance import semantic_snapshot
 from parse_replay import build_payload
+from paired_conformance import paired_snapshot
 
 ROOT = Path(__file__).parent
-FIXTURES = read_json(ROOT / 'fixtures.json')['fixtures']
+FIXTURE_MANIFEST = read_json(ROOT / 'fixtures.json')
+FIXTURES = FIXTURE_MANIFEST['fixtures']
+PAIRS = FIXTURE_MANIFEST.get('pairedFixtures', [])
 
 
 class RealReplayTests(unittest.TestCase):
@@ -42,6 +45,37 @@ class RealReplayTests(unittest.TestCase):
 
     def test_upstream_duel(self):
         self.check_fixture(FIXTURES[1])
+
+    def test_two_recorder_duel(self):
+        if not PAIRS:
+            self.skipTest('No paired replay fixture declared')
+        pair = PAIRS[0]
+        directory = os.environ.get('AOF_REPLAY_FIXTURE_DIR')
+        if not directory:
+            self.skipTest('Set AOF_REPLAY_FIXTURE_DIR to run paired replay qualification regression')
+        bundles = []
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for fixture in pair['recordings']:
+                source = Path(directory) / fixture['fileName']
+                if not source.is_file():
+                    self.skipTest(f"Required paired fixture not supplied: {fixture['id']}")
+                self.assertEqual(sha256(source), fixture['sha256'])
+                bundle = root / fixture['id'] / 'canonical'
+                adapter = build_payload(source, bundle)
+                body = adapter['payload']['body']
+                manifest = read_json(bundle / 'canonical-replay.json')
+                actual = {'operationCount': sum(body['operationCounts'].values()),
+                          'povPlayerId': manifest['source']['povPlayerId'],
+                          'chatCount': body['chatOperationsTotal']}
+                for field, expected in fixture['expected'].items():
+                    self.assertEqual(actual[field], expected, f"Independent paired assertion: {field}")
+                bundles.append(bundle)
+            # build_payload already performs full bundle validation.
+            actual = paired_snapshot(*bundles, validate=False)
+            expected = read_json(ROOT / 'goldens' / f"{pair['id']}.json")
+            changes = semantic_diff(expected, actual)
+            self.assertEqual(changes, [], json.dumps(changes[:3], indent=2))
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ python replay-tools/canonical_run.py output/new-run
 python replay-tools/canonical_run.py output/new-run --out output/command-projection.json
 ```
 
-The latter two commands need no replay and do not import the decoder. The first verifies the bundle; `--out` also projects the compatibility command report and fundamentals. Artifact hashes, all chunks and schemas are checked before projection. Use a fresh bundle directory for each run. A framing failure writes diagnostic evidence, exits unsuccessfully, and must not be ingested as complete. Invalid headers or required fields fail publication and leave the input intact.
+The latter two commands need no replay and do not import the decoder. The first verifies the bundle; `--out` also projects the compatibility command report and `AOF_COMMAND_FUNDAMENTALS_V2`. Projection envelope V2 separates age-advance request candidates from unavailable `AgeAdvanceStarted`, observed `AgeReached` and projected completion facts. Artifact hashes, all chunks and schemas are checked before projection. Use a fresh bundle directory for each run. A framing failure writes diagnostic evidence, exits unsuccessfully, and must not be ingested as complete. Invalid headers or required fields fail publication and leave the input intact.
 
 Omitting `--canonical-dir` preserves the compact-only administrative/debug call. It uses the canonical event projector but creates **no durable evidence bundle**. The normal authenticated upload path, durable storage, deletion gate and backend ingestion of adapter V4 are not implemented here. The existing derived-stat backend supports only adapters V1/V2; do not relabel V4 data to bypass that gate.
 
@@ -38,6 +38,12 @@ python replay-tools/conformance.py output/new-run --write-snapshot candidate-gol
 ```
 
 Review candidate changes and declare the parser/schema/model migration before updating a golden. The snapshot CLI never silently blesses changes. Whole-store semantic hashes detect changes even when aggregate counts stay the same; the synthetic golden permits field-level JSON Pointer diffs. Raw source bytes are checked separately from decoded semantics.
+
+Two recordings of the same Game remain separate evidence sources. Compare a reviewed pair without merging provenance or recorder-local camera/chat evidence:
+
+```bash
+python replay-tools/paired_conformance.py output/pov-a/canonical output/pov-b/canonical --compare replay-tools/tests/goldens/user-duel-two-pov.json
+```
 
 The existing corpus commands remain available and now read every verified chunk:
 

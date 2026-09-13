@@ -50,15 +50,31 @@ The FFA source hash and key counts agree with the attached research. The duel so
 
 The controlled **wire fixture** exercises real decoder action layouts, unknown codes, signed/null queue quantities, additional selected research IDs, building coordinates including zero, directed/tied diplomacy, target IDs, selection-reuse markers, chat, camera and malformed tails. Its header is a declared test double. It is not represented as a recording of a real controlled game.
 
+### Two-recorder ordinary-game evidence
+
+An additional user-supplied ordinary 1v1 supplies distinct recordings from POV slots 1 and 2 for save/build 68.0/180059. Both sources remain private, separate and hash-pinned in the fixture manifest. Their CanonicalReplay bundles establish the following fixture-level observations:
+
+| Evidence | POV 1 | POV 2 | Comparison |
+|---|---:|---:|---|
+| All source operations | 348,012 | 348,013 | One additional terminal chat operation in POV 2. |
+| Ordered non-camera/non-chat operations | 176,588 | 176,588 | Exact semantic and retained-raw-byte match after removing only source-local addresses. |
+| Actions | 5,168 | 5,168 | Exact match, including 367 queue and 56 research commands. |
+| Camera samples | 171,419 | 171,419 | All recorder-specific positions differ. |
+| Initial terrain / objects | 14,400 / 3,953 | 14,400 / 3,953 | Exact match. |
+
+This validates the architectural separation between shared Game evidence and recorder-local camera/chat evidence for one fixture. It does **not** justify merging source bundles, selecting a preferred source, assuming all chats are shared, or generalizing recorder agreement to every save/build tuple. Because this was an ordinary game without a controlled action log, it does not establish queue cancellation/allocation, research or building completion, effective diplomacy, or result semantics.
+
+POV 1 contains three raw Feudal-age research commands within 403 ms. Those cannot be three separate accepted age starts. Accordingly the replay-free projector calls ID 101/102/103 matches `ageAdvanceRequestCandidates`; `ageAdvanceStarted` is a separate insufficient-evidence output rather than an alias for every research command.
+
 ## Statistics available without reopening a replay
 
-The replay-free projector provides the following for the **observed decoded command interval**, with source event IDs on compatibility timeline entries:
+The replay-free `AOF_CANONICAL_PROJECTION_V2` projector provides `AOF_COMMAND_FUNDAMENTALS_V2` for the **observed decoded command interval**, with source event IDs on compatibility timeline entries. V2 is an explicit semantic migration prompted by the paired fixture: age-related research commands are requests, not accepted starts.
 
 | Projection | Evidence boundary |
 |---|---|
 | Action totals by participant/type and per-second buckets; SYNC, camera and raw chat counts | Recorded operation counts, not eAPM, logical chat count or complete-game participation. Camera scope is recorder-only. |
 | Queue-command count and positive encoded amount by participant and raw unit ID; signed/null quantities and command times | Requests only. No per-producer multiplication, net cancellation balance, trained units or surviving army. |
-| Research-command count by participant/raw technology and request times | Age-start candidates use raw technology IDs 101/102/103 with an explicit standard-entity-data qualification. No completion is projected. |
+| Research-command count by participant/raw technology and request times | Age-advance request candidates use raw technology IDs 101/102/103. `AgeAdvanceStarted`, observed `AgeReached` and projected completion are separate unavailable claims. |
 | Building-placement counts by participant/raw building ID, placement coordinates/times and wall endpoints | Orders, not completed or surviving buildings. |
 | Directed diplomacy-command counts and ordered timelines for each actor→target pair | Raw modes and times; no symmetric relationship, effective alliance or inferred hostility assertion. |
 | Market, tribute, flare and resignation command timelines | Decoded command fields only; transaction settlement, tribute offsets/fees and result semantics remain unqualified. |
@@ -69,7 +85,7 @@ New windows, first/last command timings, command-rate formulas, spatial summarie
 
 - **Controlled replay fixtures:** queue amount semantics for multi-producer selection; cancel/requeue/autoqueue; research cancel; building cancel/delete; unilateral diplomacy and engine-effective state; nonzero tribute with fees; clean completion/disconnect; two-recorder and restored-game coverage.
 - **Parser/header research:** exact unread spans, exhaustive initial-object decoding, lobby conflicts, additional operation layouts, selection reuse, entity-data/mod qualification and restore origins. Raw evidence is retained so discoveries can target canonical byte artifacts.
-- **AgeReached qualification:** the FFA contains 17 English age-notification-shaped JSON messages, but system authenticity, ordinary-chat spoofing, language and mode coverage are not yet controlled. Raw structured chat is retained; `observedAgeReached` is explicitly unavailable and separate from age-start candidates and projected completion.
+- **AgeReached qualification:** the FFA contains 17 English age-notification-shaped JSON messages, but system authenticity, ordinary-chat spoofing, language and mode coverage are not yet controlled. Raw structured chat is retained; `observedAgeReached` is explicitly unavailable and separate from age-advance requests, `AgeAdvanceStarted` and projected completion.
 - **Compatible engine simulation or independently qualified telemetry:** actual trained/completed units, construction/research completion without direct evidence, live composition, resource collection/banks/net spending, damage, kills/deaths, visibility, pathing and unit positions over time.
 
 The next smallest milestone is one short current-build queue/cancel/research/diplomacy recording pair with a written action log and synchronized two-player video/POV evidence. Add its expected raw fields and observed engine outcomes to this harness, then qualify only the command semantics the experiment establishes. See the [controlled fixture protocol](../../replay-tools/tests/CONTROLLED-FIXTURES.md).
@@ -80,11 +96,12 @@ Local verification on 13 September 2026 used Python 3.12 and Node 24.19.0:
 
 | Check | Result |
 |---|---|
-| `python -m unittest discover -s replay-tools/tests -v` | 16 passed; the two real-recording tests are explicit skips when the fixture environment variable is absent. |
+| `python -m unittest discover -s replay-tools/tests -v` | 17 passed; three real-recording checks are explicit skips when their private fixture files are absent. |
 | Full extraction with both hash-pinned real fixtures supplied | Both recordings completed byte/schema validation and their independent fixture assertions. |
 | `conformance.py <bundle> --compare <golden>` on each saved real bundle | Both passed with `changes: []`; 782,192 body operations plus initial stores validated without reopening either replay. |
 | `node --test scripts/test-canonical-artifacts.mjs` | 2 passed, including later-chunk corruption and the unchanged TypeScript analyzer consuming the synthetic canonical golden. |
 | `test-match-analysis-corpus.mjs` on both real bundles, using the source TypeScript engine | 2 passed: FFA/dynamic and duel. This checks optional-analysis integration, not the truth of inferred raids or target ownership. |
+| `paired_conformance.py` on the user-supplied two-recorder 1v1 | Exact match for all 176,588 ordered non-camera/non-chat operations; expected recorder-local camera and chat differences retained. |
 | Python compilation, changed Node script syntax and `git diff --check` | Passed. |
 
 The first real-golden comparison exposed a harness representation bug (`Counter` versus a deserialized JSON object). The comparator was corrected and given a round-trip regression. The final checks above revalidated the saved bundles and original goldens; no changed replay facts were blessed to make the tests pass. Remote CI is configured for the self-contained suite; a remote CI result is not implied by these local checks.

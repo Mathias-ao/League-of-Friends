@@ -40,13 +40,15 @@ Backend foundations exist for membership, seasons, events, RSVP/check-in, flexib
 - Python replay decoding through code-hash-pinned `mgz-fast==1.0.0`. The V4 compact adapter is projected from canonical events and preserves signed/null queue amounts.
 - Optional `CanonicalReplay 1.1.0` extraction with source SHA-256, explicit parser/schema/entity-data versions, replay-local participant identities, initial objects/terrain and chronological operation envelopes. The original 1.0.0 schema is archived; this is an explicit contract migration.
 - Complete original byte evidence in canonical header/operation artifacts, retained unknown/partial payloads, deterministic multi-chunk stores, schema validation, stream invariants, semantic goldens and coverage/warnings reports. Local validation reproduces the source hash without opening the replay.
-- A replay-free command projector for action/time buckets, queue requests, research requests, building-placement orders and directed diplomacy timelines. Age-start candidates, observed AgeReached and projected completion remain separate; the latter two are unavailable in this slice.
+- Replay-free projection V2 / command fundamentals V2 for action/time buckets, queue requests, research requests, building-placement orders and directed diplomacy timelines. Age-advance request candidates, `AgeAdvanceStarted`, observed `AgeReached` and projected completion remain separate; the latter three are unavailable in this slice.
 - A seven-shape corpus harness for structural checks.
 - Versioned raw and derived replay-stat ingestion foundations.
 - V1.3 analysis foundations for match topology, opening and production evidence, spatial activity, dynamic diplomacy and directed player-pair interaction. The repository's V1.4 analyzer remains an optional experiment; both corpus readers now verify and read every canonical chunk.
 - Backend rebuild paths for player statistics and records.
 
 The conformance harness includes a declared synthetic wire fixture and two hash-pinned real regression snapshots: save/build 68/180059 (FFA) and 66.6/158041 (1v1), totaling 782,192 body operations. Their compatibility is `fixture_regression_only`, not general patch support. The historical seven-shape corpus has not been rerun in this milestone. See the [milestone audit](../architecture/canonical-v1-conformance-milestone.md) for test evidence and exact projection boundaries.
+
+A private, hash-pinned ordinary 1v1 recorded from both player perspectives adds paired-source evidence for save/build 68/180059. All 176,588 ordered non-camera/non-chat operations match exactly across POVs, including retained raw bytes; initial terrain and objects also match. Camera streams differ and one POV contains one extra terminal chat operation. Three Feudal research commands within 403 ms also demonstrate that decoded age-related research requests are not automatically accepted `AgeAdvanceStarted` facts. This validates recorder-local separation for that fixture, not command completion semantics or a general source-merging policy.
 
 ### Current limitations
 

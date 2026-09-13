@@ -1,0 +1,62 @@
+{
+  "durationMatches": true,
+  "gameBuild": 180059,
+  "initialObjects": {
+    "exactMatch": true,
+    "leftCount": 3953,
+    "leftSemanticSha256": "3d4c77cfc563421f7f138d1fd275ee0e02a2ed25c23fcbd8f235f63d98912b74",
+    "rightCount": 3953,
+    "rightSemanticSha256": "3d4c77cfc563421f7f138d1fd275ee0e02a2ed25c23fcbd8f235f63d98912b74"
+  },
+  "initialTerrain": {
+    "exactMatch": true,
+    "leftCount": 14400,
+    "leftSemanticSha256": "417d22424cd413745f19df304646dc623aa3bdc7966002e06030672f7b0e4fb3",
+    "rightCount": 14400,
+    "rightSemanticSha256": "417d22424cd413745f19df304646dc623aa3bdc7966002e06030672f7b0e4fb3"
+  },
+  "participantCoreMatches": true,
+  "qualification": {
+    "established": "fixture-level recorder agreement for ordered non-camera/non-chat operation evidence",
+    "notEstablished": "command acceptance, cancellation, completion, effective diplomacy, result or general version support",
+    "selectionPolicy": "none; source bundles remain separate"
+  },
+  "recorderLocal": {
+    "chat": {
+      "exactMatch": false,
+      "leftCount": 5,
+      "leftSemanticSha256": "b34330126760ed019396176ca3a4da48ae81a4682b0238b6a869c709273221f4",
+      "rightCount": 6,
+      "rightSemanticSha256": "28e46eec9b5f1b70de0434ffece40d50bd083ffb40ae7d0d5ec385f5d32265d3"
+    },
+    "viewlock": {
+      "exactMatch": false,
+      "leftCount": 171419,
+      "leftSemanticSha256": "66a8f4bbb4122050eb39aff772ba00148ddff99a8af8073fc24607a437b17426",
+      "rightCount": 171419,
+      "rightSemanticSha256": "fee66156509282764fe30429f20f795ba606ebe948b2b5ec8509d499daff61eb"
+    }
+  },
+  "saveVersion": 68.0,
+  "schemaVersion": "1.1.0",
+  "sharedOperations": {
+    "exactMatch": true,
+    "leftCount": 176588,
+    "leftSemanticSha256": "8db318dc1630d0a07b3a928255e97c86951fdbb5081d134f0b02d9008cd2b8c0",
+    "rightCount": 176588,
+    "rightSemanticSha256": "8db318dc1630d0a07b3a928255e97c86951fdbb5081d134f0b02d9008cd2b8c0"
+  },
+  "snapshotVersion": "AOF_PAIRED_RECORDING_V1",
+  "sources": [
+    {
+      "byteLength": 4966857,
+      "povPlayerId": 1,
+      "sha256": "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181"
+    },
+    {
+      "byteLength": 4967023,
+      "povPlayerId": 2,
+      "sha256": "bcb0872742d2e6c2da1ed9844aed373e533adafe6b097765bcca3a9dd30e8836"
+    }
+  ]
+}

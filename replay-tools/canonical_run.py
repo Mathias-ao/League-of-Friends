@@ -149,7 +149,7 @@ def project_bundle(directory: Path, *, validate: bool = True) -> dict:
     for event in iter_store(directory, manifest['factStore']):
         projector.consume(event)
     body = projector.finish()
-    return {'schemaVersion': 'AOF_CANONICAL_PROJECTION_V1', 'sourceSha256': manifest['source']['sha256'],
+    return {'schemaVersion': 'AOF_CANONICAL_PROJECTION_V2', 'sourceSha256': manifest['source']['sha256'],
             'extractionRunId': run['extractionRunId'],
             'canonicalManifestSha256': run['canonicalManifest']['sha256'],
             'sourceCanonicalSchemaVersion': manifest['schemaVersion'],
@@ -180,14 +180,16 @@ def fundamentals(body: dict) -> dict:
     directed = defaultdict(list)
     for event in body['diplomacyEvents']:
         directed[f"{event['replaySlot']}->{event['targetReplaySlot']}"].append(event)
-    age_starts = [e for e in body['researchEvents'] if e['technologyId'] in (101, 102, 103)]
-    return {'queueCommandCountsByPlayerAndRawUnit': dict(queue_counts),
+    age_requests = [e for e in body['researchEvents'] if e['technologyId'] in (101, 102, 103)]
+    return {'fundamentalsVersion': 'AOF_COMMAND_FUNDAMENTALS_V2',
+            'queueCommandCountsByPlayerAndRawUnit': dict(queue_counts),
             'positiveQueueAmountsByPlayerAndRawUnit': dict(quantities),
             'queueCommandsWithUnknownAmountByPlayer': dict(missing),
             'researchCommandCountsByPlayerAndRawTechnology': dict(research),
             'buildingPlacementCountsByPlayerAndRawBuilding': dict(builds),
-            'ageAdvanceStartedCandidates': {'events': age_starts, 'basis': 'research_ids_101_102_103',
-                'qualification': 'requires_standard_entity_data; no completion projected'},
+            'ageAdvanceRequestCandidates': {'events': age_requests, 'basis': 'research_ids_101_102_103',
+                'qualification': 'decoded research requests; repeated clicks may refer to one intended start'},
+            'ageAdvanceStarted': {'status': 'insufficient_evidence', 'events': []},
             'observedAgeReached': {'status': 'insufficient_evidence', 'events': []},
             'projectedAgeCompletion': {'status': 'not_observable', 'events': []},
             'directedDiplomacyCommandTimelines': dict(directed)}

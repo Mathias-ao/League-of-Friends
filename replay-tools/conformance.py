@@ -22,7 +22,7 @@ def semantic_snapshot(bundle: Path) -> dict:
         stores[name] = {'recordCount': store['recordCount'], 'semanticSha256': digest.hexdigest()}
     projected = project_bundle(bundle, validate=False)
     body = projected['body']
-    return {'snapshotVersion': 'AOF_GOLDEN_V1', 'schemaVersion': manifest['schemaVersion'],
+    return {'snapshotVersion': 'AOF_GOLDEN_V2', 'schemaVersion': manifest['schemaVersion'],
             'versions': manifest['versions'],
             'source': {k: manifest['source'][k] for k in ['sha256', 'byteLength', 'saveVersion', 'gameBuild', 'povPlayerId']},
             'durationMs': manifest['match']['durationMs'], 'completionStatus': manifest['match']['completionStatus'],
