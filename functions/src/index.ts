@@ -52,3 +52,7 @@ export const backendHealth = onCall(callableOptions, async (request) => {
     role: actor.role,
   };
 });
+
+export {getMyMembership} from "./queries/getMyMembership.js";
+export {getPlayerSiteDirectory} from "./queries/getPlayerSiteDirectory.js";
+export {enterSeason} from "./commands/seasons/enterSeason.js";

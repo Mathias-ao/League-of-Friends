@@ -47,6 +47,7 @@ export const setEventRsvp = onCall<SetEventRsvpInput>(callableOptions, async (re
     }
 
     const event = eventSnapshot.data() as {
+      seasonId?: string | null;
       status?: string;
       signupDeadlineAt?: Timestamp;
       maxParticipants?: number | null;
@@ -65,6 +66,17 @@ export const setEventRsvp = onCall<SetEventRsvpInput>(callableOptions, async (re
     const existingDocument = participantsSnapshot.docs.find((document) => document.id === actor.playerId);
     const existing = existingDocument?.data() as ParticipantData | undefined;
     const wasConfirmed = existing?.signupState === "CONFIRMED";
+    // Preserve confirmed legacy signups; require explicit entry for new signups.
+    // Withdrawal remains possible without creating season membership.
+    if (rsvp === "YES" && !wasConfirmed && event.seasonId) {
+      const enrollment = await transaction.get(
+        db.collection(collections.seasons).doc(event.seasonId).collection("participants").doc(actor.playerId),
+      );
+      if (enrollment.data()?.status !== "ENTERED") {
+        throw new HttpsError("failed-precondition", "Enter the season before signing up for an event.");
+      }
+    }
+
 
     let signupState: SignupState = "NONE";
     let promotedPlayerId: string | null = null;

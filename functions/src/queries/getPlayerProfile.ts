@@ -191,7 +191,7 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
     })
     .sort((left, right) => right.matchesTogether - left.matchesTogether || left.player.steamName.localeCompare(right.player.steamName));
 
-  const achievements = achievementsSnapshot.docs
+  const activeAchievements = achievementsSnapshot.docs
     .map((document) => ({ awardId: document.id, ...document.data() as AchievementDocument }))
     .filter((achievement) => achievement.status === "ACTIVE")
     .map((achievement) => ({
@@ -230,7 +230,12 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
       recordsHeld: lifetimeRecordsHeld,
     },
     activeSeason: season,
-    achievements,
+    // Never expose another player's full achievement collection.
+    achievements: activeAchievements.filter(achievement =>
+      ((player as Player & {showcasedAwardIds?: string[]}).showcasedAwardIds ?? [])
+        .slice(0, 3).includes(achievement.awardId),
+    ),
+    ...(playerId === actor.playerId ? {achievementCollection: activeAchievements} : {}),
     opponents: relationships(opponentsSnapshot),
     teammates: relationships(teammatesSnapshot),
   };
