@@ -17,9 +17,9 @@ type DialogState={type:'login'}|{type:'rules'}|{type:'story'}|{type:'account'}|{
 function readPage():Page{return pages.find(p=>'#'+p.id===location.hash)?.id??'season';}
 export function App({repository}:{repository:LeagueRepository}){
   const [snapshot,setSnapshot]=useState(emptySnapshot),[page,setPage]=useState<Page>(readPage),[dialog,setDialog]=useState<DialogState>(null);
-  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
+  const [actionBusy,setBusy]=useState(false),[detailBusy,setDetailBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
   const generation=useRef(0),authEpoch=useRef(0),detailRequest=useRef(0),working=useRef(false);
-  const preview=repository.mode==='preview';
+  const preview=repository.mode==='preview',busy=actionBusy||detailBusy;
   const refresh=useCallback(async()=>{
     const id=++generation.current;
     try{const data=await repository.load();if(id===generation.current){setSnapshot(data);setError('');}return true;}
@@ -28,12 +28,12 @@ export function App({repository}:{repository:LeagueRepository}){
   },[repository]);
   useEffect(()=>{
     void refresh();
-    const unsubscribe=repository.onAuthChange(()=>{authEpoch.current++;detailRequest.current++;setSnapshot(emptySnapshot());setDialog(null);setLoading(true);void refresh();});
+    const unsubscribe=repository.onAuthChange(()=>{authEpoch.current++;detailRequest.current++;setDetailBusy(false);setSnapshot(emptySnapshot());setDialog(null);setLoading(true);void refresh();});
     return ()=>{generation.current++;authEpoch.current++;detailRequest.current++;unsubscribe();};
   },[repository,refresh]);
-  useEffect(()=>{const fn=()=>{setPage(readPage());setDialog(null);};addEventListener('hashchange',fn);return ()=>removeEventListener('hashchange',fn);},[]);
+  useEffect(()=>{const fn=()=>{detailRequest.current++;setDetailBusy(false);setPage(readPage());setDialog(null);};addEventListener('hashchange',fn);return ()=>removeEventListener('hashchange',fn);},[]);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),6000);return ()=>clearTimeout(timer);},[notice]);
-  const navigate=(next:Page)=>{location.hash=next;setPage(next);setDialog(null);};
+  const navigate=(next:Page)=>{detailRequest.current++;setDetailBusy(false);location.hash=next;setPage(next);setDialog(null);};
   const act=async(action:()=>Promise<void>,message:string)=>{
     if(working.current)return false;working.current=true;setBusy(true);setError('');
     try{await action();const loaded=await refresh();if(loaded)setNotice(message+(preview?' (Preview only.)':''));return loaded;}
@@ -42,12 +42,12 @@ export function App({repository}:{repository:LeagueRepository}){
   };
   const detail=async(type:'event'|'match'|'player',id:string)=>{
     if(!preview&&snapshot.membership!=='ACTIVE'){setDialog({type:'login'});return;}
-    const request=++detailRequest.current,epoch=authEpoch.current;setBusy(true);
+    const request=++detailRequest.current,epoch=authEpoch.current;setDetailBusy(true);
     try{
       const result:DialogState=type==='event'?{type,data:await repository.event(id)}:type==='match'?{type,data:await repository.match(id)}:{type,data:await repository.player(id)};
       if(request===detailRequest.current&&epoch===authEpoch.current)setDialog(result);
     }catch(e){if(request===detailRequest.current&&epoch===authEpoch.current)setError(errorMessage(e));}
-    finally{if(request===detailRequest.current)setBusy(false);}
+    finally{if(request===detailRequest.current)setDetailBusy(false);}
   };
   const enter=()=>{
     if(snapshot.membership!=='ACTIVE'){setDialog({type:'login'});return;}
@@ -80,7 +80,7 @@ export function App({repository}:{repository:LeagueRepository}){
     </div>
     {notice&&<div className="toast" role="status"><Check size={17}/>{notice}</div>}
     {busy&&<div className="working" role="status"><LoaderCircle size={16} className="spin"/>Working…</div>}
-    {dialog&&<Modal key={dialog.type} title={title} wide={['event','match','player'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}>
+    {dialog&&<Modal key={dialog.type} title={title} wide={['event','match','player'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDetailBusy(false);setDialog(null);setError('');}}>
       {error&&<div className="alert" role="alert">{error}</div>}
       {dialog.type==='login'?<MembershipForm snapshot={snapshot} repository={repository} preview={preview} busy={busy} act={act} onClose={()=>setDialog(null)}/>:
        dialog.type==='rules'?<Rules/>:dialog.type==='story'?<article className="story"><span className="eyebrow">EVENT I · LOMBARDIA</span>{lombardia.story.brief.map(p=><p key={p}>{p}</p>)}<div className="story-facts"><span>4v4</span><span>Lombardia</span><span>Standard Victory</span></div></article>:
