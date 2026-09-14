@@ -17,9 +17,6 @@ jobs:
           node-version: '22'
       - name: Install recovered frontend dependencies
         run: npm install --prefix web --no-audit --no-fund
-      - name: Inspect installed font entry points
-        run: |
-          node --input-type=module -e "import {readdirSync,readFileSync} from 'node:fs'; for (const font of ['cinzel','inter']) { const dir='web/node_modules/@fontsource/'+font; console.log(font, readdirSync(dir)); console.log(readFileSync(dir+'/package.json','utf8')); }"
       - name: Build frontend
         run: npm run build --prefix web
       - name: Test domain and render surfaces
