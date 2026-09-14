@@ -142,6 +142,8 @@ try {
     featured: false,
   });
 
+  const league = await callCallable("getLeagueBootstrap", adminToken, {});
+  if (league.activeSeason) await callCallable("enterSeason", adminToken, {seasonId:league.activeSeason.seasonId});
   await callCallable("setEventRsvp", adminToken, { eventId: created.eventId, rsvp: "YES" });
   await callCallable("checkInToEvent", adminToken, { eventId: created.eventId });
   console.log("Admin checked in (1/8). Creating seven normal emulator members...");
@@ -162,6 +164,7 @@ try {
       reason: "Emulator Match Planner smoke test",
     });
 
+    if (league.activeSeason) await callCallable("enterSeason", user.idToken, {seasonId:league.activeSeason.seasonId});
     await callCallable("setEventRsvp", user.idToken, {
       eventId: created.eventId,
       rsvp: "YES",

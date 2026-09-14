@@ -138,6 +138,8 @@ try {
   });
   console.log("Published:", JSON.stringify(published));
 
+  const league = await callCallable("getLeagueBootstrap", idToken, {});
+  if (league.activeSeason) await callCallable("enterSeason", idToken, {seasonId:league.activeSeason.seasonId});
   const rsvp = await callCallable("setEventRsvp", idToken, {
     eventId: created.eventId,
     rsvp: "YES",

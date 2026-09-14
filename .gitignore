@@ -32,3 +32,9 @@ match-analysis-output*/
 replay-tools/__pycache__/
 *.pyc
 canonical-test-output/
+
+# Player website
+web/node_modules/
+web/dist/
+web/test-results/
+.sites-runtime/

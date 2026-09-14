@@ -37,10 +37,18 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // League-facing data is readable to authenticated active members.
-    // Authoritative writes are intentionally server-only in Version 1.
-    match /{document=**} {
-      allow read: if isActiveMember();
+    // The player website uses authenticated callable read models.
+    match /players/{playerId} {
+      allow read: if isActiveMember() && currentPlayerId() == playerId;
+      allow write: if false;
+    }
+    match /players/{playerId}/{document=**} {
+      allow read: if isActiveMember() && currentPlayerId() == playerId;
+      allow write: if false;
+    }
+    // Rules combine with OR; explicitly exclude authLinks from this grant.
+    match /{collectionName}/{document=**} {
+      allow read: if collectionName != 'authLinks' && isAdmin();
       allow write: if false;
     }
   }

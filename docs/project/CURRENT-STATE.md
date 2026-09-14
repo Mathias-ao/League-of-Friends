@@ -1,6 +1,6 @@
 # Age of Friends — Current State
 
-Last reviewed: 13 September 2026
+Last reviewed: 14 September 2026
 
 Repository baseline reviewed: `2688d472a14e9105da0ccac101eca3f3bb8f5c94` on `main`, with the CanonicalReplay conformance milestone described below
 
@@ -31,7 +31,7 @@ The required hierarchy is:
 - Civilization drafting belongs in the web application. Civilizations are unique within each Game, and a captain is selected randomly when required.
 - Players upload the replay after playing. They do not manually enter post-match statistics.
 
-Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match-plan approval and Game creation. The complete player-facing flow and end-to-end draft integration are not yet implemented.
+Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match-plan approval and Game creation. A player-facing React/TypeScript client has been recovered in `web/`, with separate season entry and Firebase callable integration. Production configuration, replay upload and end-to-end draft integration remain incomplete.
 
 ## Replay and statistics state
 
@@ -87,7 +87,7 @@ The following are part of the product vision but are not considered implemented 
 | Firebase backend | Node.js 22, TypeScript, Functions v2, Firestore rules/indexes, authentication mapping and Emulator Suite support exist. | No documented active production deployment. |
 | Results | Submission, response, administrator resolution, disputes, corrections and revision history exist as backend foundations. | Replay-derived automatic result qualification and complete downstream invalidation still require finishing. |
 | Processing | Repeat-safe jobs exist for rewards, ratings, statistics, achievements, rivalries, records and activity. | Their models must be aligned with the final statistics and locked product rules. |
-| Read models | League, event, Match, player-profile and War Room queries exist. | No committed user-facing web client consumes them. |
+| Player website and read models | Client in `web/` consumes authenticated league, event, Match and profile queries, with a labelled memory-only preview and separate season entry. | Recovered source needs current CI verification, browser/emulator validation and production configuration. Replay upload, drafting and statistics-dependent systems remain pending. |
 | Content | Brand, Season I, Event I and landing-page design material exist. | Event II and later content are not yet fully persisted; artwork remains outstanding. |
 
 ## Immediate priorities
@@ -117,3 +117,13 @@ The following are part of the product vision but are not considered implemented 
 - [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)
 - [`../replay-foundation/README.md`](../replay-foundation/README.md)
 - [`../../README-TEST.md`](../../README-TEST.md)
+
+## Player website recovery — 14 September 2026
+
+The approved `feat/player-facing-website` branch recovers the interrupted frontend and participation gateway directly through GitHub. Source follows the six-tab layout and uses object-oriented domain/services/repositories. It is reconstructed from the conversation, not byte-identical to the unavailable local commit.
+
+The original generated artwork, dependency lockfile and compiled preview were not retrievable. The hero renders without artwork until restored. Earlier local tests apply only to the interrupted commit; use the recovery branch's own CI results. No private Site version or Firebase production rollout has completed.
+
+New callables: `getMyMembership`, `getPlayerSiteDirectory`, `enterSeason`. New affirmative RSVP requires season entry, public achievements require showcase selection, and raw Firestore reads are restricted to player owners or administrators. These read-policy changes require emulator checks and review of existing direct consumers before deployment.
+
+See [the client README](../../web/README.md) and [recovery record](../../web/RECOVERY.md) for setup, exact limitations, the reserved Site identity, and next steps.

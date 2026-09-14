@@ -1,0 +1,37 @@
+name: Player website
+on:
+  push:
+    branches: [feat/player-facing-website]
+    paths: ['web/**', 'functions/**', 'scripts/test-player-site-boundaries.mjs', '.github/workflows/player-website.yml', 'branding/**', 'events/**', 'seasons/**']
+  pull_request:
+    paths: ['web/**', 'functions/**', 'scripts/test-player-site-boundaries.mjs', '.github/workflows/player-website.yml', 'branding/**', 'events/**', 'seasons/**']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install recovered frontend dependencies
+        run: npm install --prefix web --no-audit --no-fund
+      - name: Build frontend
+        run: npm run build --prefix web
+      - name: Test domain and render surfaces
+        run: npm test --prefix web
+      - name: Install backend dependencies
+        run: npm ci --prefix functions --no-audit --no-fund
+      - name: Build backend
+        run: npm run build --prefix functions
+      - name: Test callable boundaries
+        run: node scripts/test-player-site-boundaries.mjs
+      - name: Retain build and generated lockfile for recovery
+        uses: actions/upload-artifact@v4
+        with:
+          name: player-website
+          path: |
+            web/dist
+            web/package-lock.json
+          retention-days: 14
