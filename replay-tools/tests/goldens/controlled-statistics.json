@@ -30,6 +30,40 @@
     "counts": {"available_canonical": 13, "inferred_with_confidence": 25, "needs_controlled_fixture": 59, "needs_engine_simulation": 98, "needs_parser_research": 125},
     "metricCount": 320
   },
+  "opening": [
+    {
+      "castleAgeUpAtMs": null,
+      "feudalAgeUpAtMs": 130100,
+      "feudalClickAtMs": 100,
+      "firstMilitaryBuildingRawId": 87,
+      "firstMilitaryUnitRawId": null,
+      "firstWallAtMs": null,
+      "housesBeforeFeudal": 0,
+      "imperialAgeUpAtMs": null,
+      "loomAtMs": null,
+      "loomBeforeFeudal": false,
+      "modelVersion": "AOF_OPENING_STATISTICS_V1",
+      "playerId": 1,
+      "wallStyle": "open",
+      "wallTilesBeforeFeudal": 0
+    },
+    {
+      "castleAgeUpAtMs": null,
+      "feudalAgeUpAtMs": null,
+      "feudalClickAtMs": null,
+      "firstMilitaryBuildingRawId": null,
+      "firstMilitaryUnitRawId": null,
+      "firstWallAtMs": null,
+      "housesBeforeFeudal": 0,
+      "imperialAgeUpAtMs": null,
+      "loomAtMs": null,
+      "loomBeforeFeudal": null,
+      "modelVersion": "AOF_OPENING_STATISTICS_V1",
+      "playerId": 2,
+      "wallStyle": "open",
+      "wallTilesBeforeFeudal": 0
+    }
+  ],
   "participantCommands": [
     {"count": 10, "firstAtMs": 100, "firstFiveObservedMinutesCount": 10, "isRecorder": true, "lastAtMs": 100, "playerId": 1},
     {"count": 1, "firstAtMs": 100, "firstFiveObservedMinutesCount": 1, "isRecorder": false, "lastAtMs": 100, "playerId": 2}
