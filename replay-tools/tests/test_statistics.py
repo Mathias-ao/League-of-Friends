@@ -31,6 +31,12 @@ def statistics_snapshot(result):
             "lastAtMs": p["observedCommands"]["lastAtMs"],
             "firstFiveObservedMinutesCount": p["observedCommands"]["firstFiveObservedMinutesCount"],
         } for p in result["participants"]],
+        "combat": [{
+            "playerId": p["playerId"],
+            "raidsInitiated": p["combat"]["raidsInitiated"],
+            "raidsAgainstYou": p["combat"]["raidsAgainstYou"],
+            "modelVersion": p["combat"]["modelVersion"],
+        } for p in result["participants"]],
         "queue": evidence["queueRequestsByPlayerAndUnit"],
         "queueAmounts": evidence["positiveEncodedQueueAmountsByPlayerAndRawUnit"],
         "research": evidence["researchRequestsByPlayerAndTechnology"],
