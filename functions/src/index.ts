@@ -23,7 +23,7 @@ export { respondToGameResult } from "./commands/results/respondToGameResult.js";
 export { adminResolveGameResult } from "./commands/results/adminResolveGameResult.js";
 export { disputeCanonicalGameResult } from "./commands/results/disputeCanonicalGameResult.js";
 export { adminResolveCanonicalResultDispute } from "./commands/results/adminResolveCanonicalResultDispute.js";
-export { adminIngestTownBellStats } from "./commands/statistics/ingestTownBellStats.js";
+export { adminIngestTownBellReport } from "./commands/statistics/ingestTownBellReport.js";
 export { adminIngestReplayStats } from "./commands/statistics/ingestReplayStats.js";
 export { adminProcessReplayDerivedStats } from "./commands/statistics/processReplayDerivedStats.js";
 export { adminProcessReplayAnalysis } from "./commands/statistics/processReplayAnalysis.js";
