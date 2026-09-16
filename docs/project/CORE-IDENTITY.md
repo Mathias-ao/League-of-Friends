@@ -9,8 +9,6 @@ This is the first file to read for any fresh Age of Friends task. It is a contin
 
 Authority order when sources disagree:
 
-Authority depends on the question:
-
 1. The latest explicit decision by Mathias governs product direction until formally documented.
 2. CORE-IDENTITY.md governs lasting product identity and principles.
 3. The latest code on main governs current implemented behaviour.
@@ -41,14 +39,16 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 - A Match is one competitive encounter and may contain one or more Games.
 - One `.aoe2record` represents one Game.
 - Event configuration must be snapshotted so historical results remain reproducible.
-- Raw statistical source data, normalized interpretations and league scoring must remain separate.
+- Raw source reports, Age of Friends interpretation, additional inferred statistics and league consequences must remain separate.
 - The client may read Firestore directly but must not directly mutate authoritative competition state.
 - Privileged changes run through authenticated Cloud Functions.
 - Processing must be idempotent; corrections and disputes must be auditable.
 - Do not ask players to manually enter post-match statistics.
-- A result normally becomes final directly, with a small dispute option. A resolved correction invalidates the prior canonical result so only one result contributes to statistics.
-- For launch, TownBell-produced JSON is the authoritative statistics input. The in-house replay/statistics system is a parallel R&D track until deliberately promoted.
-- League interpretation and scoring must depend on a versioned Age of Friends interpretation contract, not directly on TownBell field names or parser internals.
+- A result normally becomes final directly, with a small dispute option. A resolved correction invalidates the prior canonical result so only one result contributes.
+- For launch, TownBell-produced JSON is the authoritative statistics source report. The in-house replay/statistics system is a parallel R&D track until deliberately promoted.
+- The V1 statistics path is **Match → TownBell JSON report → Age of Friends interpretation → additional inferred statistics → points / relationship systems**.
+- Only the TownBell report ingestion contract is currently settled. Interpretation and every later statistics-dependent layer must be settled explicitly before becoming authoritative.
+- Points and relationship rules must never consume raw TownBell fields directly.
 
 ## 4. Current competition identity
 
@@ -87,13 +87,15 @@ Friend: Friendly → Respect → Honored → Trusted Friend → Blood Brothers.
 
 Enemy and Friend labels, progression thresholds and the Friend-track reward remain under exploration.
 
-Match outcomes and statistical evidence contribute through three behavioural axes:
+Match outcomes and approved downstream statistical evidence may eventually contribute through three behavioural axes:
 
 Gallantry → Rivalry: recurring, reciprocal competition, including balanced results, mutual aggression, rematches and contested battles.
 Treachery → Enemy: concentrated or asymmetric hostility, including focused attacks, diplomacy reversals and repeatedly targeting the same player.
 Chivalry → Friend: demonstrated cooperation, including tribute, reinforcements, defensive assistance and sustained mutual support.
 
-Reaching the third stage of Rivalry or Enemy unlocks the War Room for that relationship. Progression must remain traceable to match evidence and recalculable as the scoring rules improve.
+The formulas and eligible inputs for these axes are not yet settled under the TownBell V1 strategy.
+
+Reaching the third stage of Rivalry or Enemy unlocks the War Room for that relationship. Progression must remain traceable to versioned source/interpretation evidence and recalculable as rules improve.
 
 ### Player portraits
 
@@ -103,35 +105,37 @@ New players begin in a peasant or newcomer state and graduate after sufficient p
 Later identity reflects the player’s dominant military family.
 Recent Games establish current preference, while lifetime evidence provides stability.
 Minimum sample sizes, confidence requirements and resistance to frequent changes prevent one unusual Game from rewriting the portrait.
-Military identity is based only on production or unit evidence the active statistics source can support reliably.
+Military identity is based only on downstream evidence the active statistics system can support reliably.
 Clothing, weapons, headgear and titles are earned separately through league achievements and notable accomplishments.
 
 ## 6. Technical architecture
 
-Age of Friends is a match-driven web application for permanent player identities, matchmaking, ladder standings, inter-player relationships, and statistics, organized through League → Season → Event → Match → Game.
+Age of Friends is a match-driven web application for permanent player identities, matchmaking, standings, inter-player relationships, and statistics, organized through League → Season → Event → Match → Game.
 
-For launch, TownBell analyzes the AoE2 recording and emits JSON. Age of Friends stores that source revision, maps it through a versioned interpretation layer and then derives player statistics, records, relationship inputs and other league systems. Canonical Game results independently drive competition outcomes and point accounting.
+For V1 launch statistics, a TownBell JSON report is attached as an immutable revision to a specific Game. That report is a source artifact only. A later Age of Friends interpretation layer will normalize selected facts; a later inferred-statistics layer may derive additional measures; and points/relationship systems may then consume only approved downstream outputs according to separately versioned rules.
 
-The in-house replay extraction, CanonicalReplay and Match Analysis stack remains in the repository as a long-term replacement path. It must not block launch and is promoted only after it can satisfy the approved interpretation contract with documented evidence limits.
+The in-house replay extraction, CanonicalReplay and Match Analysis stack remains in the repository as a long-term replacement path. It must not block launch and is promoted only after an explicit decision.
 
 All processing must be traceable, repeatable and resistant to duplicate or corrected data.
 
 ## 7. Statistics truth model
 
-TownBell-produced JSON is the launch statistics source. It is source evidence, not itself the Age of Friends domain model.
+TownBell-produced JSON is the launch source report. It is not itself the Age of Friends domain statistics model.
 
-Statistics are kept in distinct layers:
+The V1 layers are:
 
-1. **Source statistics:** the immutable TownBell JSON revision associated with a Game.
-2. **Age of Friends interpretation:** approved normalized metrics, identity mapping, formulas and qualification rules with an explicit model version.
-3. **League interpretation:** ratings, Gallantry, Treachery, Chivalry, achievements, records and other versioned rules that consume approved interpretation fields.
-4. **Competition scoring:** League Points and other ledgers, kept separately from statistical interpretation unless a scoring model explicitly chooses approved statistical inputs.
+1. **Match and source report:** the League Match/Game context plus one active immutable `TOWNBELL_REPORT_V1` revision.
+2. **Age of Friends interpretation:** future approved identity mapping, selected metrics, normalization, units, qualification and unavailable-state rules with an explicit model version.
+3. **Additional inferred statistics:** future estimates or compound measures derived only after interpretation, each traceable to its interpretation input and inference model version.
+4. **Points / relationship consequences:** future versioned formulas that consume approved result, interpreted and/or inferred inputs. Raw TownBell fields are not valid direct inputs.
+
+Only layer 1 report ingestion is currently settled.
 
 The in-house replay/statistics system keeps its own observed/reconstructed/inferred evidence taxonomy while under development. It does not become the launch source merely because a metric exists there.
 
-Every statistic and interpretation must remain traceable to its source revision and model version. AI may explain or narrate established findings, but it must never invent match facts.
+Every downstream statistic and consequence must remain traceable to its source report revision and relevant model versions. AI may explain or narrate established findings, but it must never invent match facts.
 
-The launch architecture and migration boundary are specified in [`../architecture/townbell-launch-statistics.md`](../architecture/townbell-launch-statistics.md).
+The V1 ingestion architecture and migration boundary are specified in [`../architecture/townbell-launch-statistics.md`](../architecture/townbell-launch-statistics.md).
 
 ## 8. Document authority
 
