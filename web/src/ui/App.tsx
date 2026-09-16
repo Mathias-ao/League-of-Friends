@@ -4,9 +4,13 @@ import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Page,type E
 import {lombardia,brand} from '../data/content';
 import {Avatar,Empty,Modal,Sigil} from './Primitives';
 import {SeasonView,EventsView,BattlesView,PlayersView,WarRoomView,StatisticsView,EventDialog,MatchDialog,ProfileDialog} from './Views';
-const pages:{id:Page;label:string;icon:typeof Shield}[]=[
-  {id:'season',label:'Season',icon:Shield},{id:'events',label:'Events',icon:Flag},{id:'battles',label:'Battles',icon:Swords},
-  {id:'players',label:'Players',icon:Users},{id:'war-room',label:'War Room',icon:Lock},{id:'statistics',label:'Statistics',icon:ChartNoAxesCombined}
+const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
+  {id:'season',label:'Season',icon:Shield},
+  {id:'events',label:'Events',icon:Flag},
+  {id:'battles',label:'Battles',icon:Swords},
+  {id:'players',label:'Players',icon:Users},
+  {id:'war-room',label:'W..',icon:Lock,disabled:true},
+  {id:'statistics',label:'Statistics',icon:ChartNoAxesCombined}
 ];
 export interface ViewProps {
   snapshot:LeagueSnapshot;preview:boolean;busy:boolean;repository:LeagueRepository;
@@ -14,7 +18,9 @@ export interface ViewProps {
   act:(action:()=>Promise<void>,message:string)=>Promise<boolean>;enter:()=>void;navigate:(page:Page)=>void;
 }
 type DialogState={type:'login'}|{type:'rules'}|{type:'story'}|{type:'account'}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile}|null;
-function readPage():Page{return pages.find(p=>'#'+p.id===location.hash)?.id??'season';}
+function readPage():Page{
+  return pages.find(p => !p.disabled && '#'+p.id===location.hash)?.id ?? 'season';
+}
 export function App({repository}:{repository:LeagueRepository}){
   const [snapshot,setSnapshot]=useState(emptySnapshot),[page,setPage]=useState<Page>(readPage),[dialog,setDialog]=useState<DialogState>(null);
   const [actionBusy,setBusy]=useState(false),[detailBusy,setDetailBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
@@ -66,7 +72,8 @@ export function App({repository}:{repository:LeagueRepository}){
       <div className="header-account">{snapshot.viewer?<button className="profile-button" onClick={()=>setDialog({type:'account'})}><Avatar player={snapshot.viewer}/><span>{snapshot.viewer.steamName}</span></button>:<button className="sign-in" onClick={()=>setDialog({type:'login'})}><Shield size={16}/>Sign in</button>}</div>
     </div></header>
     <div className="site-shell"><Hero onStory={()=>setDialog({type:'story'})} onEvent={()=>next?openEvent(next.eventId):setDialog({type:'story'})}/>
-      <nav className="main-nav" aria-label="League navigation">{pages.map(({id,label,icon:Icon})=><a key={id} href={'#'+id} aria-current={page===id?'page':undefined} className={page===id?'active':''}><Icon size={17} strokeWidth={1.4}/><span>{label}</span></a>)}</nav>
+      <nav className="main-nav" aria-label="League navigation">
+        {pages.map(({id,label,icon:Icon})=><a key={id} href={'#'+id} aria-current={page===id?'page':undefined} className={page===id?'active':''}><Icon size={17} strokeWidth={1.4}/><span>{label}</span></a>)}</nav>
       <main id="main-content" tabIndex={-1}>
         {error&&<div className="alert" role="alert"><span>{error}</span><button onClick={()=>void refresh()}>Retry</button><button aria-label="Dismiss error" onClick={()=>setError('')}>×</button></div>}
         {loading?<div className="loading" role="status"><LoaderCircle className="spin"/>Gathering the banners…</div>:!preview&&snapshot.membership!=='ACTIVE'?

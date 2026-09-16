@@ -1,7 +1,7 @@
 :root {
   font-family:Inter,Arial,sans-serif;color:#e8e7e4;background:#14171b;
   font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;
-  --bg:#14171b;--panel:#1c2025;--border:#35393e;--muted:#aab0b7;--gold:#cfb17d;
+  --bg:#14171b;--panel:#1c2025;--border:#35393e;--muted:#aab0b7;--gold:#db8b00;
   --serif:Cinzel,Georgia,serif;color-scheme:dark;
 }
 *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}
