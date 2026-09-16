@@ -31,6 +31,31 @@ def statistics_snapshot(result):
             "lastAtMs": p["observedCommands"]["lastAtMs"],
             "firstFiveObservedMinutesCount": p["observedCommands"]["firstFiveObservedMinutesCount"],
         } for p in result["participants"]],
+        "opening": [{
+            "playerId": p["playerId"],
+            "modelVersion": p["opening"]["modelVersion"],
+            "feudalClickAtMs": p["opening"]["ageUp"]["feudal"]["clickAtMs"],
+            "feudalAgeUpAtMs": p["opening"]["ageUp"]["feudal"]["ageUpAtMs"],
+            "castleAgeUpAtMs": p["opening"]["ageUp"]["castle"]["ageUpAtMs"],
+            "imperialAgeUpAtMs": p["opening"]["ageUp"]["imperial"]["ageUpAtMs"],
+            "firstMilitaryUnitRawId": (
+                p["opening"]["firstMilitaryUnitQueued"]["unit"]["rawId"]
+                if p["opening"]["firstMilitaryUnitQueued"] else None
+            ),
+            "firstMilitaryBuildingRawId": (
+                p["opening"]["firstMilitaryBuilding"]["building"]["rawId"]
+                if p["opening"]["firstMilitaryBuilding"] else None
+            ),
+            "firstWallAtMs": (
+                p["opening"]["firstWallSegment"]["atMs"]
+                if p["opening"]["firstWallSegment"] else None
+            ),
+            "wallTilesBeforeFeudal": p["opening"]["wallTilesBeforeFeudal"]["count"],
+            "wallStyle": p["opening"]["wallStyle"]["label"],
+            "housesBeforeFeudal": p["opening"]["housesBeforeFeudal"]["count"],
+            "loomAtMs": p["opening"]["loomTiming"]["atMs"],
+            "loomBeforeFeudal": p["opening"]["loomBeforeFeudal"]["value"],
+        } for p in result["participants"]],
         "combat": [{
             "playerId": p["playerId"],
             "raidsInitiated": p["combat"]["raidsInitiated"],

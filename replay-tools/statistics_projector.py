@@ -13,6 +13,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from build_order_classifier import classify_build_orders
 from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
 from canonical_run import project_bundle
+from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
 from statistics_registry import build_registry
 
@@ -85,6 +86,12 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         build_events=body["buildEvents"],
         action_events=raid_action_events,
     )
+    opening_statistics = project_opening_statistics(
+        manifest=manifest,
+        body=body,
+        catalog=catalog,
+        observed_until_ms=body["durationMs"],
+    )
     participants = []
     for participant in manifest["participants"]:
         player = str(participant["playerId"])
@@ -98,6 +105,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
             "isRecorder": participant["isRecorder"],
             "displayName": participant["name"],
             "buildOrder": build_orders[player],
+            "opening": opening_statistics[player],
             "combat": raid_statistics[player],
             "observedCommands": {
                 "count": sum(counts.values()), "byRawActionName": dict(sorted(counts.items())),
