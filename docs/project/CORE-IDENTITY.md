@@ -1,6 +1,6 @@
 # Age of Friends — Core Identity & Philosophy
 
-Status date: 11 September 2026  
+Status date: 16 September 2026  
 Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development
 
 ## 1. How to use this file
@@ -40,15 +40,15 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 - League Points, War Room Points, relationship scores, and Gold are separate accounting systems.
 - A Match is one competitive encounter and may contain one or more Games.
 - One `.aoe2record` represents one Game.
-- The original replay file is a temporary upload, not a permanent system artifact.
-- Canonical evidence is retained permanently. Derived results and interpretations must be reproducible from that evidence.
 - Event configuration must be snapshotted so historical results remain reproducible.
-- Raw replay facts, deterministic reconstructions, inferred analysis, and league scoring must remain separate.
+- Raw statistical source data, normalized interpretations and league scoring must remain separate.
 - The client may read Firestore directly but must not directly mutate authoritative competition state.
 - Privileged changes run through authenticated Cloud Functions.
 - Processing must be idempotent; corrections and disputes must be auditable.
-- Do not ask players to manually enter post-match statistics. Their required post-match action is replay upload.
+- Do not ask players to manually enter post-match statistics.
 - A result normally becomes final directly, with a small dispute option. A resolved correction invalidates the prior canonical result so only one result contributes to statistics.
+- For launch, TownBell-produced JSON is the authoritative statistics input. The in-house replay/statistics system is a parallel R&D track until deliberately promoted.
+- League interpretation and scoring must depend on a versioned Age of Friends interpretation contract, not directly on TownBell field names or parser internals.
 
 ## 4. Current competition identity
 
@@ -64,7 +64,7 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 - Title: **The War for Lombardia**.
 - Format: 4v4, Lombardia, Standard Victory.
 - Structure: eight factions, two randomly formed alliances, one battlefield.
-- Civilization selection belongs in the web app so picks map cleanly to player and replay statistics.
+- Civilization selection belongs in the web app so picks map cleanly to player and match statistics.
 - Civilization choices are unique within the match.
 - Match captain is selected randomly per match when a captain is needed.
 - Attendance contingencies may change match topology. Drafting must adapt to the actual approved match plan rather than assume the advertised player count.
@@ -87,7 +87,7 @@ Friend: Friendly → Respect → Honored → Trusted Friend → Blood Brothers.
 
 Enemy and Friend labels, progression thresholds and the Friend-track reward remain under exploration.
 
-Match outcomes and replay evidence contribute through three behavioural axes:
+Match outcomes and statistical evidence contribute through three behavioural axes:
 
 Gallantry → Rivalry: recurring, reciprocal competition, including balanced results, mutual aggression, rematches and contested battles.
 Treachery → Enemy: concentrated or asymmetric hostility, including focused attacks, diplomacy reversals and repeatedly targeting the same player.
@@ -103,42 +103,38 @@ New players begin in a peasant or newcomer state and graduate after sufficient p
 Later identity reflects the player’s dominant military family.
 Recent Games establish current preference, while lifetime evidence provides stability.
 Minimum sample sizes, confidence requirements and resistance to frequent changes prevent one unusual Game from rewriting the portrait.
-Military identity is based only on production or unit evidence the replay extraction system can support reliably.
+Military identity is based only on production or unit evidence the active statistics source can support reliably.
 Clothing, weapons, headgear and titles are earned separately through league achievements and notable accomplishments.
 
 ## 6. Technical architecture
 
-Age of Friends is a replay-driven web application for permanent player identities, matchmaking, ladder standings, inter-player relationships, and statistics, organized through League → Season → Event → Match → Game.
+Age of Friends is a match-driven web application for permanent player identities, matchmaking, ladder standings, inter-player relationships, and statistics, organized through League → Season → Event → Match → Game.
 
-Uploaded recordings are converted into trustworthy, versioned evidence and then deleted. Results, statistics, records, relationships, portraits and ladder ratings are derived from that evidence and support future matchmaking.
+For launch, TownBell analyzes the AoE2 recording and emits JSON. Age of Friends stores that source revision, maps it through a versioned interpretation layer and then derives player statistics, records, relationship inputs and other league systems. Canonical Game results independently drive competition outcomes and point accounting.
 
-The system keeps observed facts separate from reconstructions and interpretations. All processing must be traceable, repeatable and resistant to duplicate or corrected data.
+The in-house replay extraction, CanonicalReplay and Match Analysis stack remains in the repository as a long-term replacement path. It must not block launch and is promoted only after it can satisfy the approved interpretation contract with documented evidence limits.
 
+All processing must be traceable, repeatable and resistant to duplicate or corrected data.
 
-## 7. Replay-analysis truth model
+## 7. Statistics truth model
 
-`CanonicalReplay 1.1` is the current durable source of replay evidence; the original 1.0 contract is archived as an explicit predecessor. TownBell’s 320-metric structure remains a useful capability benchmark and reporting layer, not the Age of Friends data model.
+TownBell-produced JSON is the launch statistics source. It is source evidence, not itself the Age of Friends domain model.
 
-Replay information is kept in four distinct layers:
+Statistics are kept in distinct layers:
 
-1. **Observed evidence:** information directly present in the recording.
-2. **Reconstructed evidence:** results produced by declared, deterministic rules.
-3. **Inferred analysis:** estimates based on documented models, thresholds and confidence.
-4. **League interpretation:** statistics, ratings, Gallantry, Treachery, Chivalry and other versioned Age of Friends rules.
+1. **Source statistics:** the immutable TownBell JSON revision associated with a Game.
+2. **Age of Friends interpretation:** approved normalized metrics, identity mapping, formulas and qualification rules with an explicit model version.
+3. **League interpretation:** ratings, Gallantry, Treachery, Chivalry, achievements, records and other versioned rules that consume approved interpretation fields.
+4. **Competition scoring:** League Points and other ledgers, kept separately from statistical interpretation unless a scoring model explicitly chooses approved statistical inputs.
 
-A recording contains an initial state followed by player commands; it is not a complete record of game state at every moment. The system must therefore describe evidence honestly. A queued unit is not necessarily trained, a placement command is not a completed building, and inferred combat does not prove kills or damage.
+The in-house replay/statistics system keeps its own observed/reconstructed/inferred evidence taxonomy while under development. It does not become the launch source merely because a metric exists there.
 
-Observed and estimated age timings remain separate. Exact creation, survival, resources, kills, damage, visibility and positions are not claimed unless the evidence genuinely supports them.
+Every statistic and interpretation must remain traceable to its source revision and model version. AI may explain or narrate established findings, but it must never invent match facts.
 
-Diplomacy and player interaction are time-sensitive and directional. Evidence is recorded from each player toward every other player so team games, changing alliances and FFA relationships are represented correctly. Camera analysis applies only to the player whose viewpoint produced the recording.
-
-Every statistic and interpretation must remain traceable to its evidence and model version. AI may explain or narrate established findings, but it must never invent match facts.
-
+The launch architecture and migration boundary are specified in [`../architecture/townbell-launch-statistics.md`](../architecture/townbell-launch-statistics.md).
 
 ## 8. Document authority
 
 GitHub is the source of truth for Age of Friends implementation and maintained project documentation.
 
-CORE-IDENTITY.md defines the lasting product vision and locked principles. CURRENT-STATE.md records implementation status and active priorities. Specialist architecture, replay, brand, season and event documents govern their respective areas without overriding the core identity.
-
-The detailed artifact list belongs in docs/replay-foundation/README.md.
+CORE-IDENTITY.md defines the lasting product vision and locked principles. CURRENT-STATE.md records implementation status and active priorities. Specialist architecture, statistics, brand, season and event documents govern their respective areas without overriding the core identity.
