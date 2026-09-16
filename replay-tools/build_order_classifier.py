@@ -11,33 +11,107 @@ from collections import defaultdict
 import math
 from typing import Any, Iterable
 
-BUILD_ORDER_RULE_VERSION = "AOF_BUILD_ORDER_V1"
+BUILD_ORDER_RULE_VERSION = "AOF_BUILD_ORDER_V2"
 QUALIFICATION_SCORE_EXCLUSIVE = 75.0
 PRECEDENCE_EXECUTION_WEIGHT = 0.70
 PRECEDENCE_DIFFICULTY_WEIGHT = 0.30
 
-# Fast Castle policy supplied for V1. A Castle time above 18:00 can never qualify.
-FAST_CASTLE_PERFECT_MS = 14 * 60_000
-FAST_CASTLE_75_MS = 17 * 60_000
-FAST_CASTLE_HARD_MAX_MS = 18 * 60_000
-
-# A Watch Tower has to be meaningfully inside the opponent's starting economic
-# zone. <=8 tiles is treated as direct-pressure quality; 16 tiles is the outer
-# zoning boundary. Because qualification is strictly >75, exactly 16 tiles does
-# not qualify on proximity alone.
-TOWER_DIRECT_PRESSURE_RADIUS_TILES = 8.0
-TOWER_ZONING_RADIUS_TILES = 16.0
-
+# Difficulty is intentionally separate from execution quality. Difficulty only
+# breaks ties/precedence between multiple well-executed qualifying openings.
 DIFFICULTY_SCORE = {
-    "Tower Rush": 95.0,
+    "Tower Rush": 65.0,
     "Drush": 90.0,
-    "Naval Rush": 90.0,
-    "Fast Castle": 85.0,
+    "Naval Rush": 70.0,
+    "Fast Castle": 50.0,
     "Archer Rush": 80.0,
-    "Boom": 75.0,
-    "Scout Rush": 75.0,
-    "Fish Boom": 65.0,
+    "Boom": 35.0,
+    "Scout Rush": 60.0,
+    "Fish Boom": 40.0,
 }
+
+# Every archetype has an explicit execution curve. Each component scores 100 at
+# or before the perfect threshold and 75 at the cutoff. The candidate's execution
+# score is the weakest required component, so a "perfect" opening is 100 only when
+# every required component is perfect. Exactly 75 does not qualify player-facing.
+EXECUTION_SCORE_PROFILE: dict[str, dict[str, dict[str, float]]] = {
+    "Drush": {
+        "secondMilitiaOrManAtArmsQueuedAtMs": {
+            "perfectAtOrBefore": 9 * 60_000,
+            "score75At": 14 * 60_000,
+        },
+    },
+    "Scout Rush": {
+        "stableAfterFeudalMs": {
+            "perfectAtOrBefore": 90_000,
+            "score75At": 4 * 60_000,
+        },
+        "secondScoutAfterFeudalMs": {
+            "perfectAtOrBefore": 210_000,
+            "score75At": 6 * 60_000,
+        },
+    },
+    "Archer Rush": {
+        "archeryRangeAfterFeudalMs": {
+            "perfectAtOrBefore": 90_000,
+            "score75At": 4 * 60_000,
+        },
+        "thirdArcherAfterFeudalMs": {
+            "perfectAtOrBefore": 240_000,
+            "score75At": 7 * 60_000,
+        },
+    },
+    "Tower Rush": {
+        "towerAfterFeudalMs": {
+            "perfectAtOrBefore": 150_000,
+            "score75At": 6 * 60_000,
+        },
+        "distanceToEnemyStartTiles": {
+            "perfectAtOrBefore": 8.0,
+            "score75At": 16.0,
+        },
+    },
+    "Naval Rush": {
+        "dockPlacedAtMs": {
+            "perfectAtOrBefore": 7 * 60_000,
+            "score75At": 12 * 60_000,
+        },
+        "secondMilitaryWaterUnitAfterFeudalMs": {
+            "perfectAtOrBefore": 180_000,
+            "score75At": 7 * 60_000,
+        },
+    },
+    "Fish Boom": {
+        "dockPlacedAtMs": {
+            "perfectAtOrBefore": 7 * 60_000,
+            "score75At": 12 * 60_000,
+        },
+        "thirdFishingShipQueuedAtMs": {
+            "perfectAtOrBefore": 9 * 60_000,
+            "score75At": 14 * 60_000,
+        },
+    },
+    "Boom": {
+        "secondAdditionalTownCenterAfterCastleMs": {
+            "perfectAtOrBefore": 120_000,
+            "score75At": 5 * 60_000,
+        },
+    },
+    "Fast Castle": {
+        "castleAtMs": {
+            "perfectAtOrBefore": 14 * 60_000,
+            "score75At": 17 * 60_000,
+            "hardMaximum": 18 * 60_000,
+        },
+    },
+}
+
+# Convenience aliases retained because Fast Castle and Tower Rush have explicit
+# product rules beyond the generic execution-profile curve.
+FAST_CASTLE_PERFECT_MS = int(EXECUTION_SCORE_PROFILE["Fast Castle"]["castleAtMs"]["perfectAtOrBefore"])
+FAST_CASTLE_75_MS = int(EXECUTION_SCORE_PROFILE["Fast Castle"]["castleAtMs"]["score75At"])
+FAST_CASTLE_HARD_MAX_MS = int(EXECUTION_SCORE_PROFILE["Fast Castle"]["castleAtMs"]["hardMaximum"])
+TOWER_DIRECT_PRESSURE_RADIUS_TILES = EXECUTION_SCORE_PROFILE["Tower Rush"]["distanceToEnemyStartTiles"]["perfectAtOrBefore"]
+TOWER_ZONING_RADIUS_TILES = EXECUTION_SCORE_PROFILE["Tower Rush"]["distanceToEnemyStartTiles"]["score75At"]
 
 AGE_TECH_IDS = {101: "feudal", 102: "castle", 103: "imperial"}
 
@@ -56,16 +130,41 @@ def _descending_score(value: float, best: float, cutoff_75: float) -> float:
     return max(0.0, 100.0 - (value - best) * slope)
 
 
-def _fast_castle_score(castle_ms: int) -> float:
+def _profile_component(label: str, component: str, value: float) -> dict[str, Any]:
+    profile = EXECUTION_SCORE_PROFILE[label][component]
+    perfect = profile["perfectAtOrBefore"]
+    score75 = profile["score75At"]
+    score = _descending_score(value, perfect, score75)
+    return {
+        "component": component,
+        "value": _round(value),
+        "perfectAtOrBefore": _round(perfect),
+        "score75At": _round(score75),
+        "score": _round(score),
+    }
+
+
+def _fast_castle_component(castle_ms: int) -> dict[str, Any]:
+    profile = EXECUTION_SCORE_PROFILE["Fast Castle"]["castleAtMs"]
     if castle_ms > FAST_CASTLE_HARD_MAX_MS:
-        return 0.0
-    if castle_ms <= FAST_CASTLE_PERFECT_MS:
-        return 100.0
-    if castle_ms <= FAST_CASTLE_75_MS:
-        return _descending_score(castle_ms, FAST_CASTLE_PERFECT_MS, FAST_CASTLE_75_MS)
-    # Keep 17:00 visibly at 75 while degrading to zero by the 18:00 hard maximum.
-    return max(0.0, 75.0 * (FAST_CASTLE_HARD_MAX_MS - castle_ms)
-               / (FAST_CASTLE_HARD_MAX_MS - FAST_CASTLE_75_MS))
+        score = 0.0
+    elif castle_ms <= FAST_CASTLE_75_MS:
+        score = _descending_score(castle_ms, FAST_CASTLE_PERFECT_MS, FAST_CASTLE_75_MS)
+    else:
+        # Preserve 17:00 at 75 but fall to zero at the 18:00 hard maximum.
+        score = max(
+            0.0,
+            75.0 * (FAST_CASTLE_HARD_MAX_MS - castle_ms)
+            / (FAST_CASTLE_HARD_MAX_MS - FAST_CASTLE_75_MS),
+        )
+    return {
+        "component": "castleAtMs",
+        "value": castle_ms,
+        "perfectAtOrBefore": int(profile["perfectAtOrBefore"]),
+        "score75At": int(profile["score75At"]),
+        "hardMaximum": int(profile["hardMaximum"]),
+        "score": _round(score),
+    }
 
 
 def _ids_with_role(catalog: dict[str, Any], section: str, role: str) -> set[int]:
@@ -231,13 +330,22 @@ def _nearest_enemy_anchor(
     return best
 
 
-def _candidate(label: str, execution_score: float, trigger_at_ms: int, evidence: dict[str, Any]) -> dict[str, Any]:
+def _candidate(
+    label: str,
+    execution_components: list[dict[str, Any]],
+    trigger_at_ms: int,
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    execution_score = min(component["score"] for component in execution_components)
     difficulty = DIFFICULTY_SCORE[label]
-    precedence = (execution_score * PRECEDENCE_EXECUTION_WEIGHT
-                  + difficulty * PRECEDENCE_DIFFICULTY_WEIGHT)
+    precedence = (
+        execution_score * PRECEDENCE_EXECUTION_WEIGHT
+        + difficulty * PRECEDENCE_DIFFICULTY_WEIGHT
+    )
     return {
         "label": label,
         "executionScore": _round(execution_score),
+        "executionComponents": execution_components,
         "difficultyScore": _round(difficulty),
         "precedenceScore": _round(precedence),
         "triggerAtMs": trigger_at_ms,
@@ -302,7 +410,6 @@ def classify_build_orders(
                 production, drush_units, 2, end_ms=feudal_ms + 4 * 60_000,
             )
             if drush_trigger is not None:
-                score = _descending_score(drush_trigger, 9 * 60_000, 14 * 60_000)
                 maa_seen = any(
                     event.get("unitId") in maa_ids and isinstance(event.get("atMs"), int)
                     and event["atMs"] <= drush_trigger for event in production
@@ -310,41 +417,56 @@ def classify_build_orders(
                     event.get("technologyId") in maa_tech_ids and isinstance(event.get("atMs"), int)
                     and event["atMs"] <= feudal_ms + 4 * 60_000 for event in research
                 )
-                candidates.append(_candidate("Drush", score, drush_trigger, {
-                    "variant": "Man-at-Arms" if maa_seen else "Militia",
-                    "secondMilitiaOrManAtArmsQueuedAtMs": drush_trigger,
-                    "feudalAtMs": feudal_ms,
-                    "requiredQueuedUnits": 2,
-                }))
+                candidates.append(_candidate(
+                    "Drush",
+                    [_profile_component("Drush", "secondMilitiaOrManAtArmsQueuedAtMs", drush_trigger)],
+                    drush_trigger,
+                    {
+                        "variant": "Man-at-Arms" if maa_seen else "Militia",
+                        "secondMilitiaOrManAtArmsQueuedAtMs": drush_trigger,
+                        "feudalAtMs": feudal_ms,
+                        "requiredQueuedUnits": 2,
+                    },
+                ))
 
             stable = _first_placement(builds, stable_ids, start_ms=feudal_ms, end_ms=feudal_ms + 4 * 60_000)
             second_scout = _nth_request_time(
                 production, scout_ids, 2, start_ms=feudal_ms, end_ms=feudal_ms + 6 * 60_000,
             )
             if stable and second_scout is not None:
-                stable_score = _descending_score(stable["atMs"] - feudal_ms, 90_000, 4 * 60_000)
-                scout_score = _descending_score(second_scout - feudal_ms, 210_000, 6 * 60_000)
-                score = min(stable_score, scout_score)
-                candidates.append(_candidate("Scout Rush", score, second_scout, {
-                    "feudalAtMs": feudal_ms,
-                    "stablePlacedAtMs": stable["atMs"],
-                    "secondNewScoutQueuedAtMs": second_scout,
-                    "startingScoutCounted": False,
-                }))
+                candidates.append(_candidate(
+                    "Scout Rush",
+                    [
+                        _profile_component("Scout Rush", "stableAfterFeudalMs", stable["atMs"] - feudal_ms),
+                        _profile_component("Scout Rush", "secondScoutAfterFeudalMs", second_scout - feudal_ms),
+                    ],
+                    second_scout,
+                    {
+                        "feudalAtMs": feudal_ms,
+                        "stablePlacedAtMs": stable["atMs"],
+                        "secondNewScoutQueuedAtMs": second_scout,
+                        "startingScoutCounted": False,
+                    },
+                ))
 
             archery_range = _first_placement(builds, range_ids, start_ms=feudal_ms, end_ms=feudal_ms + 4 * 60_000)
             third_archer = _nth_request_time(
                 production, archer_ids, 3, start_ms=feudal_ms, end_ms=feudal_ms + 7 * 60_000,
             )
             if archery_range and third_archer is not None:
-                range_score = _descending_score(archery_range["atMs"] - feudal_ms, 90_000, 4 * 60_000)
-                archer_score = _descending_score(third_archer - feudal_ms, 240_000, 7 * 60_000)
-                score = min(range_score, archer_score)
-                candidates.append(_candidate("Archer Rush", score, third_archer, {
-                    "feudalAtMs": feudal_ms,
-                    "archeryRangePlacedAtMs": archery_range["atMs"],
-                    "thirdArcherQueuedAtMs": third_archer,
-                }))
+                candidates.append(_candidate(
+                    "Archer Rush",
+                    [
+                        _profile_component("Archer Rush", "archeryRangeAfterFeudalMs", archery_range["atMs"] - feudal_ms),
+                        _profile_component("Archer Rush", "thirdArcherAfterFeudalMs", third_archer - feudal_ms),
+                    ],
+                    third_archer,
+                    {
+                        "feudalAtMs": feudal_ms,
+                        "archeryRangePlacedAtMs": archery_range["atMs"],
+                        "thirdArcherQueuedAtMs": third_archer,
+                    },
+                ))
 
             # Tower Rush requires both early timing and enemy-zone proximity.
             for tower in builds:
@@ -359,74 +481,99 @@ def classify_build_orders(
                 if nearest is None:
                     continue
                 enemy_id, distance, anchor_method = nearest
-                timing_score = _descending_score(at_ms - feudal_ms, 150_000, 6 * 60_000)
-                proximity_score = _descending_score(
-                    distance, TOWER_DIRECT_PRESSURE_RADIUS_TILES, TOWER_ZONING_RADIUS_TILES,
-                )
-                score = min(timing_score, proximity_score)
-                candidates.append(_candidate("Tower Rush", score, at_ms, {
-                    "feudalAtMs": feudal_ms,
-                    "towerPlacedAtMs": at_ms,
-                    "towerPosition": {"x": x, "y": y},
-                    "nearestEnemyPlayerId": enemy_id,
-                    "enemyStartAnchorMethod": anchor_method,
-                    "distanceToEnemyStartTiles": _round(distance),
-                    "directPressureRadiusTiles": TOWER_DIRECT_PRESSURE_RADIUS_TILES,
-                    "zoningRadiusTiles": TOWER_ZONING_RADIUS_TILES,
-                }))
+                candidates.append(_candidate(
+                    "Tower Rush",
+                    [
+                        _profile_component("Tower Rush", "towerAfterFeudalMs", at_ms - feudal_ms),
+                        _profile_component("Tower Rush", "distanceToEnemyStartTiles", distance),
+                    ],
+                    at_ms,
+                    {
+                        "feudalAtMs": feudal_ms,
+                        "towerPlacedAtMs": at_ms,
+                        "towerPosition": {"x": x, "y": y},
+                        "nearestEnemyPlayerId": enemy_id,
+                        "enemyStartAnchorMethod": anchor_method,
+                        "distanceToEnemyStartTiles": _round(distance),
+                        "directPressureRadiusTiles": TOWER_DIRECT_PRESSURE_RADIUS_TILES,
+                        "zoningRadiusTiles": TOWER_ZONING_RADIUS_TILES,
+                    },
+                ))
 
             dock = _first_placement(builds, dock_ids, end_ms=feudal_ms + 7 * 60_000)
             second_warship = _nth_request_time(
                 production, water_military_ids, 2, end_ms=feudal_ms + 7 * 60_000,
             )
             if dock and second_warship is not None:
-                dock_score = _descending_score(dock["atMs"], 7 * 60_000, 12 * 60_000)
-                ship_score = _descending_score(second_warship - feudal_ms, 180_000, 7 * 60_000)
-                score = min(dock_score, ship_score)
-                candidates.append(_candidate("Naval Rush", score, second_warship, {
-                    "feudalAtMs": feudal_ms,
-                    "dockPlacedAtMs": dock["atMs"],
-                    "secondMilitaryWaterUnitQueuedAtMs": second_warship,
-                }))
+                candidates.append(_candidate(
+                    "Naval Rush",
+                    [
+                        _profile_component("Naval Rush", "dockPlacedAtMs", dock["atMs"]),
+                        _profile_component("Naval Rush", "secondMilitaryWaterUnitAfterFeudalMs", second_warship - feudal_ms),
+                    ],
+                    second_warship,
+                    {
+                        "feudalAtMs": feudal_ms,
+                        "dockPlacedAtMs": dock["atMs"],
+                        "secondMilitaryWaterUnitQueuedAtMs": second_warship,
+                    },
+                ))
 
             third_fishing_ship = _nth_request_time(
                 production, fishing_ids, 3, end_ms=feudal_ms + 8 * 60_000,
             )
             if dock and third_fishing_ship is not None:
-                dock_score = _descending_score(dock["atMs"], 7 * 60_000, 12 * 60_000)
-                fish_score = _descending_score(third_fishing_ship, 9 * 60_000, 14 * 60_000)
-                score = min(dock_score, fish_score)
-                candidates.append(_candidate("Fish Boom", score, third_fishing_ship, {
-                    "dockPlacedAtMs": dock["atMs"],
-                    "thirdFishingShipQueuedAtMs": third_fishing_ship,
-                }))
+                candidates.append(_candidate(
+                    "Fish Boom",
+                    [
+                        _profile_component("Fish Boom", "dockPlacedAtMs", dock["atMs"]),
+                        _profile_component("Fish Boom", "thirdFishingShipQueuedAtMs", third_fishing_ship),
+                    ],
+                    third_fishing_ship,
+                    {
+                        "dockPlacedAtMs": dock["atMs"],
+                        "thirdFishingShipQueuedAtMs": third_fishing_ship,
+                    },
+                ))
 
         if castle_ms is not None and feudal_ms is not None and castle_ms > feudal_ms:
             second_extra_tc = _nth_placement_time(
                 builds, tc_ids, 2, start_ms=castle_ms, end_ms=castle_ms + 5 * 60_000,
             )
             if second_extra_tc is not None:
-                boom_score = _descending_score(second_extra_tc - castle_ms, 120_000, 5 * 60_000)
-                candidates.append(_candidate("Boom", boom_score, second_extra_tc, {
-                    "castleAtMs": castle_ms,
-                    "secondAdditionalTownCenterPlacedAtMs": second_extra_tc,
-                    "requiredAdditionalTownCenters": 2,
-                }))
+                candidates.append(_candidate(
+                    "Boom",
+                    [_profile_component(
+                        "Boom",
+                        "secondAdditionalTownCenterAfterCastleMs",
+                        second_extra_tc - castle_ms,
+                    )],
+                    second_extra_tc,
+                    {
+                        "castleAtMs": castle_ms,
+                        "secondAdditionalTownCenterPlacedAtMs": second_extra_tc,
+                        "requiredAdditionalTownCenters": 2,
+                    },
+                ))
 
             aggressive_labels = {"Drush", "Scout Rush", "Archer Rush", "Tower Rush", "Naval Rush"}
             has_qualifying_aggression = any(
                 candidate["label"] in aggressive_labels and candidate["qualifies"] for candidate in candidates
             )
             if not has_qualifying_aggression:
-                fc_score = _fast_castle_score(castle_ms)
-                candidates.append(_candidate("Fast Castle", fc_score, castle_ms, {
-                    "feudalAtMs": feudal_ms,
-                    "castleAtMs": castle_ms,
-                    "perfectAtOrBeforeMs": FAST_CASTLE_PERFECT_MS,
-                    "score75AtMs": FAST_CASTLE_75_MS,
-                    "hardMaximumMs": FAST_CASTLE_HARD_MAX_MS,
-                    "qualifyingFeudalAggressionPresent": False,
-                }))
+                candidates.append(_candidate(
+                    "Fast Castle",
+                    [_fast_castle_component(castle_ms)],
+                    castle_ms,
+                    {
+                        "feudalAtMs": feudal_ms,
+                        "castleAtMs": castle_ms,
+                        "perfectAtOrBeforeMs": FAST_CASTLE_PERFECT_MS,
+                        "score75AtMs": FAST_CASTLE_75_MS,
+                        "hardMaximumMs": FAST_CASTLE_HARD_MAX_MS,
+                        "qualifyingFeudalAggressionPresent": False,
+                    },
+                ))
 
         candidates.sort(key=lambda candidate: (
             candidate["triggerAtMs"], candidate["label"],
