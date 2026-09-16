@@ -13,6 +13,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from build_order_classifier import classify_build_orders
 from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
 from canonical_run import project_bundle
+from raid_detector import detect_raids
 from statistics_registry import build_registry
 
 PROJECTION_VERSION = "AOF_CANONICAL_STATISTICS_V1"
@@ -54,9 +55,11 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
     action_times: dict[str, list[int]] = defaultdict(list)
     selection_sizes: dict[str, list[int]] = defaultdict(list)
     formation_modes: dict[str, set[str]] = defaultdict(set)
+    raid_action_events: list[dict[str, Any]] = []
     for event in iter_store(directory, manifest["factStore"]):
         if event["sourceOperation"] != "ACTION" or event.get("actorPlayerId") not in slots:
             continue
+        raid_action_events.append(event)
         player = str(event["actorPlayerId"])
         name = event.get("sourceActionName") or "ERROR"
         action_counts[player][name] += 1
@@ -75,6 +78,13 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
     build_orders = classify_build_orders(
         manifest=manifest, body=body, catalog=catalog, initial_objects=initial_objects,
     )
+    raid_statistics = detect_raids(
+        manifest=manifest,
+        catalog=catalog,
+        initial_objects=initial_objects,
+        build_events=body["buildEvents"],
+        action_events=raid_action_events,
+    )
     participants = []
     for participant in manifest["participants"]:
         player = str(participant["playerId"])
@@ -88,6 +98,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
             "isRecorder": participant["isRecorder"],
             "displayName": participant["name"],
             "buildOrder": build_orders[player],
+            "combat": raid_statistics[player],
             "observedCommands": {
                 "count": sum(counts.values()), "byRawActionName": dict(sorted(counts.items())),
                 "firstAtMs": min(times) if times else None, "lastAtMs": max(times) if times else None,
@@ -114,6 +125,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         {"code": "REQUESTS_NOT_OUTCOMES", "message": "Queue, research and building values are requests or placement commands, not trained units, accepted research, or completed buildings."},
         {"code": "ENTITY_LABELS_UNQUALIFIED", "message": "Raw IDs are authoritative. Catalog names and role keys are reference labels not qualified against this replay patch or data mods."},
         {"code": "RECORDER_CAMERA_ONLY", "message": "Camera points represent the recording perspective and are not a comparable all-player statistic."},
+        {"code": "RAIDS_ARE_INFERRED", "message": "Raid counts are inferred hostile-command episodes inside reconstructed economic zones; they do not imply damage or kills."},
     ]
     result = {
         "statisticsSchemaVersion": STATISTICS_SCHEMA_VERSION,
