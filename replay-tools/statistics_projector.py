@@ -10,6 +10,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from build_order_classifier import classify_build_orders
 from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
 from canonical_run import project_bundle
 from statistics_registry import build_registry
@@ -70,6 +71,10 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
 
     body = compact["body"]
     fundamentals = compact["fundamentals"]
+    initial_objects = list(iter_store(directory, manifest["initialState"]["objectStore"]))
+    build_orders = classify_build_orders(
+        manifest=manifest, body=body, catalog=catalog, initial_objects=initial_objects,
+    )
     participants = []
     for participant in manifest["participants"]:
         player = str(participant["playerId"])
@@ -82,6 +87,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
             "replaySlot": participant["number"],
             "isRecorder": participant["isRecorder"],
             "displayName": participant["name"],
+            "buildOrder": build_orders[player],
             "observedCommands": {
                 "count": sum(counts.values()), "byRawActionName": dict(sorted(counts.items())),
                 "firstAtMs": min(times) if times else None, "lastAtMs": max(times) if times else None,
