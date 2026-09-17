@@ -17,6 +17,7 @@ from forward_eco import project_forward_eco
 from map_presence_v2 import project_map_presence
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
+from resource_commitment import project_resource_commitment
 from statistics_registry import build_registry
 
 PROJECTION_VERSION = "AOF_CANONICAL_STATISTICS_V1"
@@ -94,6 +95,11 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         catalog=catalog,
         observed_until_ms=body["durationMs"],
     )
+    resource_commitment_statistics = project_resource_commitment(
+        manifest=manifest,
+        body=body,
+        catalog=catalog,
+    )
     map_presence_statistics = project_map_presence(
         manifest=manifest,
         catalog=catalog,
@@ -124,6 +130,9 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
             "displayName": participant["name"],
             "buildOrder": build_orders[player],
             "opening": opening_statistics[player],
+            "economy": {
+                "resourceCommitment": resource_commitment_statistics[player],
+            },
             "combat": raid_statistics[player],
             "mapPresence": map_presence_statistics[player],
             "observedCommands": {
@@ -154,6 +163,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         {"code": "RECORDER_CAMERA_ONLY", "message": "Camera points represent the recording perspective and are not a comparable all-player statistic."},
         {"code": "RAIDS_ARE_INFERRED", "message": "Raid counts are inferred hostile-command episodes inside reconstructed economic zones; they do not imply damage or kills."},
         {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and building placements; command coverage is not fog-of-war exploration and gold control is not resource gathering."},
+        {"code": "RESOURCE_COMMITMENT_IS_ESTIMATED", "message": "Resource commitment uses pinned base catalog costs for decoded requests/placements; it does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute."},
     ]
     result = {
         "statisticsSchemaVersion": STATISTICS_SCHEMA_VERSION,
