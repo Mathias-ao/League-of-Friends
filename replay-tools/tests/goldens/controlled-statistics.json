@@ -33,8 +33,8 @@
   "mapPresence": [
     {
       "commandCoveragePercent": 100.0,
-      "enemyBaseFoundAtMs": null,
-      "enemyBaseFoundPlayerId": null,
+      "enemyBaseFoundAtMs": 100,
+      "enemyBaseFoundPlayerId": 2,
       "expansions": 0,
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
