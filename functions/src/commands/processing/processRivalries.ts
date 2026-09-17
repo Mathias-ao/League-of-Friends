@@ -6,11 +6,12 @@ import { callableOptions } from "../../config/runtime.js";
 import { collections } from "../../domain/collections.js";
 import type { CanonicalGameResult, MatchFormat, MatchParticipant } from "../../domain/types.js";
 import {
-  DEFAULT_RIVALRY_CONFIG,
-  RIVALRY_ENGINE_VERSION,
-  rebuildRivalries,
-  type RivalryMatchInput,
-} from "../../engines/rivalryEngine.js";
+  PAIR_HISTORY_VERSION,
+  RELATIONSHIP_ENGINE_VERSION,
+  evaluateRelationship,
+  rebuildPairHistory,
+  type PairHistoryMatchInput,
+} from "../../engines/relationshipEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 import {
@@ -24,9 +25,8 @@ export interface ProcessRivalriesInput {
   matchId: string;
 }
 
-interface MatchForRivalries {
+interface MatchForRelationships {
   status?: string;
-  seasonId?: string | null;
   format?: MatchFormat;
   participants?: MatchParticipant[];
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
@@ -35,6 +35,8 @@ interface MatchForRivalries {
     affectsLifetimeStats?: boolean;
     affectsSeasonStats?: boolean;
   } | null;
+  completedAt?: Timestamp | null;
+  firstCompletedAt?: Timestamp | null;
 }
 
 interface ProcessingJob {
@@ -44,24 +46,31 @@ interface ProcessingJob {
   attempts?: number;
 }
 
-interface SeasonDocument {
-  warRoom?: {
-    status?: string;
-    openedAt?: Timestamp | null;
-    openedByRivalryId?: string | null;
-  } | null;
+function timestampMillis(value: unknown): number | null {
+  return value instanceof Timestamp ? value.toMillis() : null;
 }
 
-function assertRivalryMatch(
+function stableOrderAt(
   snapshot: FirebaseFirestore.QueryDocumentSnapshot,
-  match: MatchForRivalries,
-): asserts match is MatchForRivalries & {
+  match: MatchForRelationships,
+): number {
+  const firstCompletedAt = timestampMillis(match.firstCompletedAt);
+  if (firstCompletedAt != null) return firstCompletedAt;
+  const completedAt = timestampMillis(match.completedAt);
+  if (completedAt != null) return completedAt;
+  return snapshot.createTime.toMillis();
+}
+
+function assertRelationshipMatch(
+  snapshot: FirebaseFirestore.QueryDocumentSnapshot,
+  match: MatchForRelationships,
+): asserts match is MatchForRelationships & {
   format: MatchFormat;
   participants: MatchParticipant[];
   canonicalResult: CanonicalGameResult;
 } {
   if (!match.format || !Array.isArray(match.participants) || match.participants.length < 2 || !match.canonicalResult) {
-    throw new HttpsError("failed-precondition", `Completed Match ${snapshot.id} is missing rivalry inputs.`);
+    throw new HttpsError("failed-precondition", `Completed Match ${snapshot.id} is missing relationship inputs.`);
   }
 }
 
@@ -73,33 +82,33 @@ export async function processRivalries(
   if (!requestId || !matchId) throw new HttpsError("invalid-argument", "requestId and matchId are required.");
 
   const triggerMatchRef = db.collection(collections.matches).doc(matchId);
-  const [triggerSnapshot, completedSnapshot, seasonsSnapshot] = await Promise.all([
+  const [triggerSnapshot, completedSnapshot, existingRelationships] = await Promise.all([
     triggerMatchRef.get(),
     db.collection(collections.matches).where("status", "==", "COMPLETED").get(),
-    db.collection(collections.seasons).get(),
+    db.collection(collections.relationships).get(),
   ]);
 
   if (!triggerSnapshot.exists) throw new HttpsError("not-found", "Match not found.");
-  const triggerMatch = triggerSnapshot.data() as MatchForRivalries;
+  const triggerMatch = triggerSnapshot.data() as MatchForRelationships;
   if (triggerMatch.status !== "COMPLETED" || !triggerMatch.canonicalResult) {
-    throw new HttpsError("failed-precondition", "Only a completed Match with a canonical result can trigger rivalries.");
+    throw new HttpsError("failed-precondition", "Only a completed Match with a canonical result can trigger relationship history.");
   }
   if (triggerMatch.activeResultDisputeId) {
-    throw new HttpsError("failed-precondition", "Rivalry processing is blocked while a result dispute is open.");
+    throw new HttpsError("failed-precondition", "Relationship processing is blocked while a result dispute is open.");
   }
 
-  const inputs: RivalryMatchInput[] = completedSnapshot.docs
-    .map((snapshot) => ({ snapshot, match: snapshot.data() as MatchForRivalries }))
+  const inputs: PairHistoryMatchInput[] = completedSnapshot.docs
+    .map((snapshot) => ({ snapshot, match: snapshot.data() as MatchForRelationships }))
     .filter(({ match }) => (
       !match.activeResultDisputeId &&
       match.canonicalResult &&
       (match.context?.affectsLifetimeStats === true || match.context?.affectsSeasonStats === true)
     ))
     .map(({ snapshot, match }) => {
-      assertRivalryMatch(snapshot, match);
+      assertRelationshipMatch(snapshot, match);
       return {
         matchId: snapshot.id,
-        seasonId: match.seasonId ?? null,
+        orderAtMs: stableOrderAt(snapshot, match),
         format: match.format,
         participants: match.participants,
         canonicalResult: {
@@ -107,75 +116,46 @@ export async function processRivalries(
           revision: canonicalRevision(match.canonicalResult),
         } as CanonicalGameResult,
         affectsLifetimeStats: match.context?.affectsLifetimeStats === true,
-        affectsSeasonStats: match.context?.affectsSeasonStats === true,
+        // Replay-derived directional signals are added here once the current Match Statistics
+        // projection is durably available to the Functions backend. Until then Pair History is
+        // deliberately limited to neutral encounter/team/result evidence.
+        signals: [],
       };
     });
 
   if (!inputs.some((entry) => entry.matchId === matchId)) {
-    throw new HttpsError("failed-precondition", "The triggering Match is not eligible to affect rivalries.");
+    throw new HttpsError("failed-precondition", "The triggering Match is not eligible to affect relationship processing.");
   }
 
-  const rebuilt = rebuildRivalries(inputs, DEFAULT_RIVALRY_CONFIG);
+  let histories;
+  try {
+    histories = rebuildPairHistory(inputs);
+  } catch (error) {
+    throw new HttpsError(
+      "failed-precondition",
+      error instanceof Error ? error.message : "Pair History rebuild failed.",
+    );
+  }
+
   const rebuiltAt = Timestamp.now();
+  const cleanupWriter = db.bulkWriter();
+  for (const document of existingRelationships.docs) cleanupWriter.delete(document.ref);
+  await cleanupWriter.close();
+
   const writer = db.bulkWriter();
-
-  for (const rivalry of rebuilt.lifetime) {
-    writer.set(db.collection(collections.rivalries).doc(rivalry.pairId), {
-      ...rivalry,
-      engineVersion: RIVALRY_ENGINE_VERSION,
-      config: rebuilt.config,
-      scope: "LIFETIME",
-      seasonId: null,
+  for (const history of histories) {
+    const relationship = evaluateRelationship(history, null);
+    writer.set(db.collection(collections.relationships).doc(history.pairId), {
+      schemaVersion: PAIR_HISTORY_VERSION,
+      pairHistory: history,
+      relationship,
+      relationshipEngineVersion: RELATIONSHIP_ENGINE_VERSION,
+      relationshipRuleVersion: null,
+      relationshipRulesConfigured: false,
       updatedAt: rebuiltAt,
-    }, { merge: true });
-  }
-
-  for (const season of rebuilt.seasonal) {
-    const seasonRef = db.collection(collections.seasons).doc(season.seasonId);
-    for (const rivalry of season.rivalries) {
-      writer.set(seasonRef.collection("rivalries").doc(rivalry.pairId), {
-        ...rivalry,
-        engineVersion: RIVALRY_ENGINE_VERSION,
-        config: rebuilt.config,
-        scope: "SEASON",
-        seasonId: season.seasonId,
-        updatedAt: rebuiltAt,
-      }, { merge: true });
-    }
+    });
   }
   await writer.close();
-
-  const openedSeasons: Array<{ seasonId: string; rivalryId: string }> = [];
-  for (const seasonSnapshot of seasonsSnapshot.docs) {
-    const seasonData = seasonSnapshot.data() as SeasonDocument;
-    const seasonRivalries = rebuilt.seasonal.find((item) => item.seasonId === seasonSnapshot.id)?.rivalries ?? [];
-    const qualifier = seasonRivalries.find((rivalry) => rivalry.status === "QUALIFIED") ?? null;
-    const currentStatus = seasonData.warRoom?.status === "OPEN" ? "OPEN" : "CLOSED";
-
-    if (currentStatus === "OPEN") continue;
-    if (qualifier) {
-      await seasonSnapshot.ref.set({
-        warRoom: {
-          status: "OPEN",
-          openedAt: rebuiltAt,
-          openedByRivalryId: qualifier.pairId,
-          engineVersion: RIVALRY_ENGINE_VERSION,
-        },
-        updatedAt: rebuiltAt,
-      }, { merge: true });
-      openedSeasons.push({ seasonId: seasonSnapshot.id, rivalryId: qualifier.pairId });
-    } else if (!seasonData.warRoom) {
-      await seasonSnapshot.ref.set({
-        warRoom: {
-          status: "CLOSED",
-          openedAt: null,
-          openedByRivalryId: null,
-          engineVersion: RIVALRY_ENGINE_VERSION,
-        },
-        updatedAt: rebuiltAt,
-      }, { merge: true });
-    }
-  }
 
   const triggerRevision = canonicalRevision(triggerMatch.canonicalResult);
   const revisionedJobRef = db.collection(collections.processingJobs).doc(resultProcessingJobId(matchId, triggerRevision));
@@ -187,13 +167,13 @@ export async function processRivalries(
       transaction.get(revisionedJobRef),
       transaction.get(legacyJobRef),
     ]);
-    if (!currentMatchSnapshot.exists) throw new HttpsError("not-found", "Match disappeared during rivalry rebuild.");
-    const currentMatch = currentMatchSnapshot.data() as MatchForRivalries;
+    if (!currentMatchSnapshot.exists) throw new HttpsError("not-found", "Match disappeared during Pair History rebuild.");
+    const currentMatch = currentMatchSnapshot.data() as MatchForRelationships;
     if (currentMatch.status !== "COMPLETED" || currentMatch.activeResultDisputeId) {
-      throw new HttpsError("failed-precondition", "Match state changed during rivalry rebuild; run it again.");
+      throw new HttpsError("failed-precondition", "Match state changed during Pair History rebuild; run it again.");
     }
     if (canonicalRevision(currentMatch.canonicalResult) !== triggerRevision) {
-      throw new HttpsError("failed-precondition", "Canonical result changed during rivalry rebuild; run it again.");
+      throw new HttpsError("failed-precondition", "Canonical result changed during Pair History rebuild; run it again.");
     }
 
     const jobSnapshot = revisionedJobSnapshot.exists
@@ -205,7 +185,7 @@ export async function processRivalries(
 
     const job = jobSnapshot.data() as ProcessingJob;
     if (job.status === "BLOCKED" || job.status === "SUPERSEDED") {
-      throw new HttpsError("failed-precondition", "The current processing job cannot process rivalries.");
+      throw new HttpsError("failed-precondition", "The current processing job cannot process relationship history.");
     }
 
     if (actor.source === "ADMIN") {
@@ -228,23 +208,27 @@ export async function processRivalries(
     });
     transaction.update(triggerMatchRef, {
       rivalryProcessedRevision: triggerRevision,
-      rivalryEngineVersion: RIVALRY_ENGINE_VERSION,
-      rivalryRebuiltAt: rebuiltAt,
+      pairHistoryVersion: PAIR_HISTORY_VERSION,
+      relationshipEngineVersion: RELATIONSHIP_ENGINE_VERSION,
+      relationshipRuleVersion: null,
+      relationshipRulesConfigured: false,
+      relationshipRebuiltAt: rebuiltAt,
       processingState: pendingSteps.length ? "PENDING" : "COMPLETE",
       updatedAt: now,
     });
     writeAdminAudit(transaction, {
       actorUid: actor.authUid,
       actorPlayerId: actor.playerId,
-      action: "RIVALRIES_REBUILT",
+      action: "PAIR_HISTORY_REBUILT",
       targetType: "MATCH",
       targetId: matchId,
       after: {
-        engineVersion: RIVALRY_ENGINE_VERSION,
+        pairHistoryVersion: PAIR_HISTORY_VERSION,
+        relationshipEngineVersion: RELATIONSHIP_ENGINE_VERSION,
+        relationshipRuleVersion: null,
         resultRevision: triggerRevision,
-        lifetimeRivalries: rebuilt.lifetime.length,
-        seasonalRivalries: rebuilt.seasonal.reduce((sum, season) => sum + season.rivalries.length, 0),
-        openedSeasons,
+        pairHistories: histories.length,
+        relationshipRulesConfigured: false,
         processingSource: actor.source,
       },
     });
@@ -256,16 +240,11 @@ export async function processRivalries(
     success: true,
     matchId,
     resultRevision: triggerRevision,
-    engineVersion: RIVALRY_ENGINE_VERSION,
-    config: rebuilt.config,
-    lifetimeRivalries: rebuilt.lifetime.length,
-    seasonalRivalries: rebuilt.seasonal.reduce((sum, season) => sum + season.rivalries.length, 0),
-    qualifiedLifetime: rebuilt.lifetime.filter((rivalry) => rivalry.status === "QUALIFIED").length,
-    qualifiedSeasonal: rebuilt.seasonal.reduce(
-      (sum, season) => sum + season.rivalries.filter((rivalry) => rivalry.status === "QUALIFIED").length,
-      0,
-    ),
-    openedSeasons,
+    pairHistoryVersion: PAIR_HISTORY_VERSION,
+    relationshipEngineVersion: RELATIONSHIP_ENGINE_VERSION,
+    relationshipRuleVersion: null,
+    relationshipRulesConfigured: false,
+    pairHistories: histories.length,
     alreadyProcessed: finalization.alreadyProcessed,
     remainingSteps: finalization.pendingSteps,
   };
