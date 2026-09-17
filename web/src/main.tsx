@@ -9,6 +9,7 @@ import '@fontsource/inter/600.css';
 import './styles.css';
 import './stone-shell.css';
 import './season-gate.css';
+import './league-entry.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
 import type {LeagueRepository} from './domain/league';
