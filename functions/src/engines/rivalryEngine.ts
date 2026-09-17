@@ -1,5 +1,11 @@
 import type { CanonicalGameResult, MatchFormat, MatchParticipant } from "../domain/types.js";
 
+/**
+ * @deprecated Legacy single-score rivalry model. It is retained only for compatibility with
+ * existing consumers. New product behavior must use relationshipEngine.ts, Pair History and
+ * an explicitly approved AOF_RELATIONSHIP_ENGINE_V1 rule set. The defaults below are not
+ * authoritative for Rivalry / Enemy / Friend progression.
+ */
 export const RIVALRY_ENGINE_VERSION = "RIVALRY_ENGINE_V1";
 
 export interface RivalryConfig {
