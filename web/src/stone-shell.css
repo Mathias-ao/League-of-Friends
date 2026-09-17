@@ -13,9 +13,7 @@ html{scroll-behavior:smooth}
 body{min-width:320px}
 
 .landing-stage{
-  min-height:calc(100svh - var(--stone-nav-height));
-  display:grid;
-  grid-template-rows:auto minmax(360px,1fr);
+  display:block;
   background:#11171d;
 }
 
@@ -88,7 +86,7 @@ body{min-width:320px}
 
 .hero{
   min-height:0;
-  height:100%;
+  height:clamp(380px,34vw,520px);
   width:100%;
   background:radial-gradient(ellipse at 85% 35%,#52453644,transparent 55%),linear-gradient(115deg,#111b24,#263039 60%,#292c2b);
 }
@@ -96,7 +94,7 @@ body{min-width:320px}
   width:min(calc(100% - 64px),1240px);
   max-width:none;
   margin:0 auto;
-  padding:clamp(42px,7vh,76px) 0 88px;
+  padding:clamp(36px,4vw,58px) 0 76px;
 }
 .hero-content>*{max-width:690px}
 .hero h2{font-size:clamp(2.65rem,4.3vw,4.4rem);max-width:760px}
@@ -189,6 +187,7 @@ body{min-width:320px}
 
 @media(max-width:900px){
   .header-inner{padding:21px 22px}
+  .hero{height:clamp(360px,52vw,470px)}
   .hero-content{width:calc(100% - 44px);padding-top:42px}
   .hero-bottom{left:22px;right:22px}
   .main-nav{padding:0}
@@ -198,11 +197,10 @@ body{min-width:320px}
 
 @media(max-width:620px){
   :root{--stone-nav-height:116px}
-  .landing-stage{min-height:calc(100svh - var(--stone-nav-height));grid-template-rows:auto minmax(335px,1fr)}
   .header-inner{padding:18px 16px;min-height:87px}
   .brand-top{font-size:1.38rem}
   .brand-bottom{font-size:.62rem;letter-spacing:.055em}
-  .hero{margin:0}
+  .hero{margin:0;height:350px}
   .hero-content{width:100%;padding:30px 23px 72px}
   .hero h2{font-size:clamp(1.75rem,8vw,2.35rem)}
   .hero-bottom{left:23px;right:12px;bottom:10px}
