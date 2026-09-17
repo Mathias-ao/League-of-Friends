@@ -33,13 +33,13 @@
   "mapPresence": [
     {
       "commandCoveragePercent": 100.0,
-      "enemyBaseFoundAtMs": null,
-      "enemyBaseFoundPlayerId": null,
+      "enemyBaseFoundAtMs": 100,
+      "enemyBaseFoundPlayerId": 2,
       "expansions": 0,
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V1",
+      "modelVersion": "AOF_MAP_PRESENCE_V2",
       "playerId": 1
     },
     {
@@ -50,7 +50,7 @@
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V1",
+      "modelVersion": "AOF_MAP_PRESENCE_V2",
       "playerId": 2
     }
   ],
