@@ -14,7 +14,7 @@ The replay pipeline produces Match Statistics across **Opening, Economy, Militar
 |---|---|
 | Match Statistics | Active / implemented |
 | Lifetime Stats | Aggregation foundation implemented; persistence/presentation pending |
-| Relationships | Pair History + configurable engine implemented; points/stages intentionally unconfigured |
+| Relationships | Pair History + configurable engine implemented; result pipeline persists neutral encounter/team/result history; points/stages intentionally unconfigured |
 | Individual Player Stats + Playstyle Sliders | Configurable engine implemented; slider rules/normalization intentionally unconfigured |
 
 [`CURRENT-STATS.md`](CURRENT-STATS.md) is the concise source of truth for statistics status. [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md) defines the separation between measurement and product judgment.
@@ -73,7 +73,7 @@ The statistics system preserves the distinction between observed evidence, recon
 
 `functions/src/engines/lifetimeStatistics.ts` implements `AOF_LIFETIME_STATISTICS_V1`. It aggregates current match-level Opening, Economy, Military, Map Presence and Execution inputs into player lifetime totals, averages, rates/counts and min/max records with match/game provenance.
 
-This is descriptive aggregation only. It does not assign playstyle meaning or points.
+This is descriptive aggregation only. It does not assign playstyle meaning or points. The engine exists, but it is not yet wired to durable current Match Statistics storage.
 
 ### Player Identity / Playstyle Sliders
 
@@ -90,9 +90,9 @@ No default slider catalogue, weights, thresholds or normalization population are
 - `AOF_PAIR_HISTORY_V1` — neutral pair history including encounters, allied/opponent history, results and directional replay-derived signals.
 - `AOF_RELATIONSHIP_ENGINE_V1` — configurable independent Rivalry, Enemy and Friend tracks.
 
-With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no points or stages. The product owner must define point rules and stage thresholds before these tracks become product behavior.
+The existing `RIVALRIES` processing step now rebuilds and persists neutral Pair History in the `relationships` collection. Today that persisted history uses encounter/team/result evidence because the current Functions backend does not yet receive the replay-derived directional Match Statistics required for raids/forward pressure. Those signals are explicit future inputs rather than guessed data.
 
-The older `RIVALRY_ENGINE_V1` code is legacy and is not authoritative for the new three-track relationship model.
+With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no points or stages. The legacy automatic rivalry threshold no longer drives this processing step, and it no longer opens the War Room. The older `RIVALRY_ENGINE_V1` code is retained only for compatibility and is not authoritative for the new three-track relationship model.
 
 ## Current limitations
 
@@ -104,7 +104,8 @@ The older `RIVALRY_ENGINE_V1` code is legacy and is not authoritative for the ne
 - Restored-game clocks, complete effective diplomacy state and some initial-object semantics remain qualification areas.
 - Canonical export is not yet the mandatory normal upload path.
 - Authenticated replay upload, durable remote canonical persistence and complete backend ingestion remain unfinished.
-- The new Lifetime, Pair History, Playstyle and Relationship engines are foundations; storage, rebuild orchestration and player-facing website presentation are not yet wired end to end.
+- Lifetime Statistics persistence and Playstyle presentation are not yet wired end to end.
+- Pair History currently persists match/team/result history but not replay-derived directional interaction signals.
 - Playstyle normalization, slider definitions/weights and Relationship point/stage rules are intentionally undecided.
 
 ## Systems pending broader statistics work
@@ -113,8 +114,8 @@ The older `RIVALRY_ENGINE_V1` code is legacy and is not authoritative for the ne
 |---|---|---|
 | Leaderboards and ladder | Foundations exist; final player-facing boards are incomplete. | Lifetime/rating definitions and presentation. |
 | Matchmaking | Match planning exists; statistics-informed matchmaking is incomplete. | Rating and persistent player statistics. |
-| Relationships | Technical foundation implemented; product rules not defined. | Product-owner Rivalry/Enemy/Friend point and stage rules. |
-| War Room | Challenge/query foundations exist; player access should remain closed until the intended relationship system is configured. | Relationship rules and progression. |
+| Relationships | Neutral Pair History processing implemented; interpretation rules not defined. | Product-owner Rivalry/Enemy/Friend point and stage rules plus replay-derived pair signals. |
+| War Room | Challenge/query foundations exist; legacy automatic opening is no longer part of relationship processing. | Explicit future product decision after relationship rules are approved. |
 | Achievements | Processing scaffolding exists; final catalogue and triggers are not frozen. | Stable match/lifetime statistics and product rules. |
 | Awards and trophies | Direction exists; earning rules remain pending. | Stable match, event, season and lifetime statistics. |
 | Player portraits / playstyle | Slider engine foundation exists; actual identity model is unconfigured. | Product-owner slider definitions, normalized inputs, weights and sample rules. |
@@ -125,18 +126,18 @@ The older `RIVALRY_ENGINE_V1` code is legacy and is not authoritative for the ne
 |---|---|---|
 | Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, authentication mapping and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
 | Results | Submission, administrator resolution, disputes, corrections and revision foundations exist. | Replay-derived automatic result qualification and downstream invalidation. |
-| Processing | Repeat-safe jobs exist for several downstream systems. | Wire the current Match Statistics and longitudinal engines into versioned rebuild/storage jobs. |
+| Processing | Repeat-safe jobs exist for several downstream systems; Pair History now uses the existing `RIVALRIES` step. | Wire current Match Statistics and Lifetime aggregation into versioned rebuild/storage jobs. |
 | Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
 
 ## Immediate priorities
 
 1. Validate the current Match Statistics models against additional real replays and supported match shapes.
 2. Wire current Match Statistics into durable backend persistence and the player-facing website.
-3. Wire `AOF_LIFETIME_STATISTICS_V1` and `AOF_PAIR_HISTORY_V1` into repeatable rebuild/storage flows.
-4. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
-5. Define Rivalry / Enemy / Friend point rules and stage thresholds.
-6. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
-7. Build statistics-dependent leaderboards, matchmaking, achievements, awards and War Room behavior only on versioned inputs.
+3. Wire `AOF_LIFETIME_STATISTICS_V1` to persisted Match Statistics and durable rebuild/storage.
+4. Feed replay-derived directional Match Statistics into `AOF_PAIR_HISTORY_V1` once backend Match Statistics persistence exists.
+5. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
+6. Define Rivalry / Enemy / Friend point rules and stage thresholds.
+7. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
 
 ## Task guidance
 
