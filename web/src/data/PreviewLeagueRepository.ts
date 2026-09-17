@@ -5,7 +5,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
   readonly mode='preview' as const;
   private listeners=new Set<()=>void>();
   private state:LeagueSnapshot={
-    membership:'SIGNED_OUT',viewer:null,enteredSeason:false,season:{seasonId:'S001',name:'The Fiefdom of Bad Neighbors',status:'ACTIVE'},
+    membership:'SIGNED_OUT',viewer:null,enteredSeason:false,hasLeagueHistory:false,season:{seasonId:'S001',name:'The Fiefdom of Bad Neighbors',status:'ACTIVE'},
     standings:[
       {playerId:'sample-ragnar',steamName:'Ragnar',leaguePoints:41,rank:1,wins:14,losses:3},
       {playerId:'sample-steve',steamName:'Steve',leaguePoints:35,rank:2,wins:10,losses:6},
@@ -27,7 +27,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async signIn(){this.state.membership='ACTIVE';this.state.viewer=this.state.players[4];this.listeners.forEach(fn=>fn());}
   async signOut(){this.state.membership='SIGNED_OUT';this.state.viewer=null;this.listeners.forEach(fn=>fn());}
   async requestMembership(name:string){this.state.membership='ACTIVE';this.state.viewer={playerId:'sample-you',steamName:name};}
-  async enterSeason(){if(this.state.membership!=='ACTIVE')throw new Error('Join the league first.');this.state.enteredSeason=true;}
+  async enterSeason(){if(this.state.membership!=='ACTIVE')throw new Error('Join the league first.');this.state.enteredSeason=true;this.state.hasLeagueHistory=true;}
   async rsvp(id:string,value:'YES'|'NO'){
     if(this.state.membership!=='ACTIVE'||value==='YES'&&!this.state.enteredSeason)throw new Error('Enter the season first.');
     const e=this.state.events.find(e=>e.eventId===id);if(!e||!new LeagueEvent(e).canRsvp())throw new Error('Sign-ups are closed.');

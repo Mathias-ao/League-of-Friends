@@ -9,13 +9,19 @@ import type {MatchParticipant} from '../domain/types.js';
 /** Return allowlisted public DTOs, never raw Player documents or private collections. */
 export const getPlayerSiteDirectory=onCall(callableOptions,async request=>{
   const actor=await requireLeaguePlayer(request);
-  const [stateDoc,playersDoc]=await Promise.all([
+  const playerRef=db.collection(collections.players).doc(actor.playerId);
+  const [stateDoc,playersDoc,seasonsDoc,lifetimeCompetitionDoc,lifetimeReplayDoc]=await Promise.all([
     db.collection(collections.leagueState).doc(leagueStateDocumentId).get(),
-    db.collection(collections.players).get()
+    db.collection(collections.players).get(),
+    db.collection(collections.seasons).get(),
+    playerRef.collection('statistics').doc('lifetime').get(),
+    playerRef.collection('statistics').doc('replayLifetime').get()
   ]);
   const players=playerMap(playersDoc),seasonId=stateDoc.data()?.activeSeasonId as string|undefined;
   const publicPlayers=[...players.entries()].filter(([,p])=>p.membershipStatus==='ACTIVE'||p.membershipStatus==='INACTIVE').map(([id,p])=>publicPlayer(id,p));
-  if(!seasonId)return {players:publicPlayers,events:[],matches:[],enteredSeason:false};
+  const enrollmentDocs=await Promise.all(seasonsDoc.docs.map(season=>season.ref.collection('participants').doc(actor.playerId).get()));
+  const hasLeagueHistory=enrollmentDocs.some(doc=>doc.data()?.status==='ENTERED')||Number(lifetimeCompetitionDoc.data()?.matchesPlayed??0)>0||Number(lifetimeReplayDoc.data()?.gamesAnalyzed??0)>0;
+  if(!seasonId)return {players:publicPlayers,events:[],matches:[],enteredSeason:false,hasLeagueHistory};
   const [eventsDoc,matchesDoc,enrollmentDoc]=await Promise.all([
     db.collection(collections.events).where('seasonId','==',seasonId).get(),
     db.collection(collections.matches).where('seasonId','==',seasonId).get(),
@@ -42,5 +48,5 @@ export const getPlayerSiteDirectory=onCall(callableOptions,async request=>{
       participants:((m.participants??[]) as MatchParticipant[]).map(p=>({...publicPlayer(p.playerId,players.get(p.playerId)),team:p.team,slot:p.slot})),
       result:m.canonicalResult&&m.status==='COMPLETED'?{revision:Number(m.canonicalResult.revision??1),winningPlayerIds:m.canonicalResult.winningPlayerIds??[]}:null};
   });
-  return {players:publicPlayers,events,matches,enteredSeason:enrollmentDoc.data()?.status==='ENTERED'};
+  return {players:publicPlayers,events,matches,enteredSeason:enrollmentDoc.data()?.status==='ENTERED',hasLeagueHistory};
 });

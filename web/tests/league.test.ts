@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {LeagueEvent,LeagueService,RelationshipPolicy} from '../src/domain/league';
+import {canBrowseLeague,LeagueEvent,LeagueService,RelationshipPolicy} from '../src/domain/league';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 
 test('league, season and event entry are distinct; repeat RSVP does not double count',async()=>{
@@ -14,6 +14,21 @@ test('league, season and event entry are distinct; repeat RSVP does not double c
   assert.equal((await repo.load()).events[0].confirmedCount,original.events[0].confirmedCount!+1);
   await repo.rsvp('E001','NO');
   assert.equal((await repo.event('E001')).signup.confirmed?.length,original.events[0].confirmedCount);
+});
+test('brand-new players are gated until season entry, while established players retain browsing access',async()=>{
+  const repo=new PreviewLeagueRepository();
+  assert.equal(canBrowseLeague(await repo.load()),false);
+  await repo.signIn();
+  const newPlayer=await repo.load();
+  assert.equal(newPlayer.hasLeagueHistory,false);
+  assert.equal(canBrowseLeague(newPlayer),false);
+  await repo.enterSeason();
+  const entered=await repo.load();
+  assert.equal(entered.enteredSeason,true);
+  assert.equal(entered.hasLeagueHistory,true);
+  assert.equal(canBrowseLeague(entered),true);
+  assert.equal(canBrowseLeague({...entered,enteredSeason:false,hasLeagueHistory:true}),true);
+  assert.equal(canBrowseLeague({...entered,membership:'SIGNED_OUT'}),false);
 });
 test('preview state is isolated and no replay upload is falsely implemented',async()=>{
   const repo=new PreviewLeagueRepository();await repo.signIn();await repo.enterSeason();
