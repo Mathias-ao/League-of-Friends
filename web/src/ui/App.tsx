@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState,type Ref} from 'react';
 import {ArrowRight,ChevronLeft,ChevronRight,Pause,Play,Shield,Swords,Users,ChartNoAxesCombined,Lock,Flag,LogOut,BookOpen,Check,LoaderCircle} from 'lucide-react';
 import {canBrowseLeague,emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Page,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {lombardia,brand} from '../data/content';
@@ -132,13 +132,13 @@ export function App({repository}:{repository:LeagueRepository}){
     <nav ref={navRef} className="main-nav stone-nav" aria-label="League navigation">
       {pages.map(({id,label,disabled})=>disabled?
         <span key={id} className="nav-item nav-disabled war-room-tab" aria-disabled="true" title="War Room sealed"><Lock size={15} strokeWidth={1.3}/><span>{label}</span></span>:
-        <a key={id} className={'nav-item '+(!canBrowse?'nav-gated ':'')+(sectionOpen&&page===id?'active':'')} href={'#'+id} aria-current={sectionOpen&&page===id?'page':undefined} aria-disabled={!canBrowse||undefined} title={!canBrowse?'Enter the current season to unlock the league':undefined} onClick={e=>{e.preventDefault();openSection(id);}}><span>{label}</span></a>)}
+        <a key={id} className={'nav-item '+(!canBrowse?'nav-gated ':'')+(sectionOpen&&page===id?'active':'')} href={'#'+id} aria-current={sectionOpen&&page===id?'page':undefined} aria-disabled={!canBrowse||undefined} title={!canBrowse?'Join the league and enter the current season to unlock the league':undefined} onClick={e=>{e.preventDefault();openSection(id);}}><span>{label}</span></a>)}
     </nav>
     {showContent&&<div className="content-region"><div className="content-shell">
       <main id="main-content" tabIndex={-1}>
         {error&&<div className="alert" role="alert"><span>{error}</span><button onClick={()=>void refresh()}>Retry</button><button aria-label="Dismiss error" onClick={()=>setError('')}>×</button></div>}
         {loading?<div className="loading" role="status"><LoaderCircle className="spin"/>Gathering the banners…</div>:!canBrowse?
-          <SeasonAccessGate ref={gateRef} snapshot={snapshot} busy={busy} enter={enter} openMembership={()=>setDialog({type:'login'})}/>:
+          <SeasonAccessGate gateRef={gateRef} snapshot={snapshot} busy={busy} enter={enter} openMembership={()=>setDialog({type:'login'})}/>:
           page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<StatisticsView/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
       </main>
       <footer className="site-footer"><span>AGE OF FRIENDS · SEASON I</span><span>A private Age of Empires II: DE league</span></footer>
@@ -156,7 +156,7 @@ export function App({repository}:{repository:LeagueRepository}){
     </Modal>}
   </>;
 }
-function SeasonAccessGate({ref,snapshot,busy,enter,openMembership}:{ref:React.Ref<HTMLElement>;snapshot:LeagueSnapshot;busy:boolean;enter:()=>void;openMembership:()=>void}){
+function SeasonAccessGate({gateRef,snapshot,busy,enter,openMembership}:{gateRef:Ref<HTMLElement>;snapshot:LeagueSnapshot;busy:boolean;enter:()=>void;openMembership:()=>void}){
   let eyebrow='SEASON I · THE FIRST CAMPAIGN',title='Raise your banner',body='The campaign is already under way. Create your league identity, then enter the current season to unlock the league.',button='Join Age of Friends',action=openMembership,note='League membership comes first. Season entry follows.';
   if(snapshot.membership==='UNLINKED'){
     title='Claim your league identity';body='Connect your Steam name to Age of Friends. Once your membership is approved, you can raise your banner for the current season.';button='Complete membership';note='Your identity persists between seasons.';
@@ -171,7 +171,7 @@ function SeasonAccessGate({ref,snapshot,busy,enter,openMembership}:{ref:React.Re
       eyebrow='BETWEEN CAMPAIGNS';title='The next season is being prepared';body='Your league identity is ready. Season entry will open when the next campaign is announced.';button='';note='Return when the next campaign is called.';
     }
   }
-  return <section ref={ref} className="season-access-gate" aria-labelledby="season-access-title"><div className="season-access-card">
+  return <section ref={gateRef} className="season-access-gate" aria-labelledby="season-access-title"><div className="season-access-card">
     <Sigil kind="flag" size={42}/><span className="eyebrow">{eyebrow}</span><h1 id="season-access-title">{title}</h1><p>{body}</p>
     <div className="season-access-actions">{button&&<button className="season-access-primary" disabled={busy} onClick={action}>{button}<ArrowRight size={18}/></button>}<p className="season-access-note">{note}</p></div>
     {snapshot.membership==='PENDING'&&<div className="season-access-status">Membership request pending</div>}
