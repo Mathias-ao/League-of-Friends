@@ -13,6 +13,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from build_order_classifier import classify_build_orders
 from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
 from canonical_run import project_bundle
+from forward_eco import project_forward_eco
 from map_presence_v2 import project_map_presence
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
@@ -100,6 +101,15 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         build_events=body["buildEvents"],
         action_events=spatial_action_events,
     )
+    forward_eco_statistics = project_forward_eco(
+        manifest=manifest,
+        catalog=catalog,
+        initial_objects=initial_objects,
+        build_events=body["buildEvents"],
+    )
+    for player, forward_eco in forward_eco_statistics.items():
+        map_presence_statistics[player]["forwardEco"] = forward_eco
+
     participants = []
     for participant in manifest["participants"]:
         player = str(participant["playerId"])
