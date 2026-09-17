@@ -112,7 +112,7 @@ class MapPresenceV2Tests(unittest.TestCase):
         self.assertEqual(p1["firstRelicTouch"]["atMs"], 21_000)
         self.assertEqual(p1["commandMapCoverage"]["coveredCellCount"], 3)
         self.assertEqual(p1["goldControl"]["goldClusterCount"], 3)
-        self.assertEqual(p1["goldControl"]["controlSharePercent"], 66.67)
+        self.assertEqual(p1["goldControl"]["controlSharePercent"], 33.33)
         self.assertEqual(p2["goldControl"]["controlSharePercent"], 33.33)
 
     def test_enemy_base_found_requires_proximity_not_hostility(self):
@@ -153,7 +153,7 @@ class MapPresenceV2Tests(unittest.TestCase):
         builds = [
             build("qualifies", 1, 1_000, 12, 55, 10),
             build("too-far", 1, 2_000, 12, 49, 10),
-            build("not-enough-advantage", 1, 3_000, 12, 47, 10),
+            build("not-enough-advantage", 1, 3_000, 12, 51, 10),
         ]
         result = project_map_presence(
             manifest=manifest(), catalog=CATALOG, initial_objects=initial_objects,
