@@ -1,24 +1,29 @@
 # Age of Friends — Current State
 
-Last reviewed: 14 September 2026
+Last reviewed: 17 September 2026
 
-Repository baseline reviewed: `2688d472a14e9105da0ccac101eca3f3bb8f5c94` on `main`, with the CanonicalReplay conformance milestone described below
-
-Purpose: Record what currently exists, what is being developed, and what remains blocked or pending. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision.
+Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
 ## Current focus
 
-The active workstream is the replay-derived statistics foundation.
+The active workstream is the player-facing replay statistics system and its integration into the website.
 
-Match Analysis is in development. Currently V1.3 is the current structural baseline. It demonstrates that the existing replay pipeline can process the seven test shapes: 1v1, 2v2, 3v3, 4v4, FFA with dynamic diplomacy, Nomad and water maps. It provides a working basis for topology, opening, production, spatial and directed player-interaction analysis.
+The replay pipeline now produces a meaningful set of Match Statistics across the five player-facing categories: **Opening, Economy, Military, Map Presence and Execution**. The implemented match models include Build Order V2, Opening Statistics V1, Raid Detection V1, Map Presence V2, Forward Eco V1 and Resource Commitment V1.
 
-V1.3 is not the final player-facing statistics contract. Metric selection, names, evidence requirements, formulas, confidence rules and presentation remain subject to further review and change. Later experiments in the repository do not become settled product behavior until deliberately accepted.
+The broader statistics product is structured into four sections:
 
-The first durable CanonicalReplay extraction/conformance slice and conservative replay-free statistics projection are implemented locally. The immediate engineering goal is to qualify command semantics with controlled real recordings and use that evidence to revise the provisional V1 eligibility registry. Systems that consume statistics must remain pending until their required inputs are chosen and validated.
+| Statistics section | State |
+|---|---|
+| Match Statistics | Active / implemented |
+| Lifetime Stats | Not started |
+| Relationships | Not started |
+| Individual Player Stats + Playstyle Sliders | Not started |
+
+[`CURRENT-STATS.md`](CURRENT-STATS.md) is the source of truth for which player-facing statistics currently exist.
 
 ## Match and competition structure
 
-The required hierarchy is:
+The required hierarchy remains:
 
 **League → Season → Event → Match → Game**
 
@@ -27,103 +32,100 @@ The required hierarchy is:
 - Players join the league once, enter each season separately and sign up for each event separately.
 - RSVP and check-in determine the available players.
 - The approved Match/Game plan is authoritative for roster, teams, format and civilization rules.
-- Attendance changes may produce fewer Games, asymmetric teams or FFA. Downstream systems must use the approved Game shape rather than assume the advertised format.
-- Civilization drafting belongs in the web application. Civilizations are unique within each Game, and a captain is selected randomly when required.
-- Players upload the replay after playing. They do not manually enter post-match statistics.
+- Attendance changes may produce fewer Games, asymmetric teams or FFA.
+- Civilization drafting belongs in the web application.
+- Players upload replays; post-match statistics are derived automatically rather than entered manually.
 
-Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match-plan approval and Game creation. A player-facing React/TypeScript client has been recovered in `web/`, with separate season entry and Firebase callable integration. Production configuration, replay upload and end-to-end draft integration remain incomplete.
+Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning and Game creation. The player-facing React/TypeScript client lives in `web/`. Production configuration, replay upload and the complete end-to-end statistics presentation flow remain incomplete.
 
-## Replay and statistics state
+## Replay and statistics foundation
 
-### Present foundation
+The current replay/statistics foundation includes:
 
-- Python replay decoding through code-hash-pinned `mgz-fast==1.0.0`. The V4 compact adapter is projected from canonical events and preserves signed/null queue amounts.
-- Optional `CanonicalReplay 1.1.0` extraction with source SHA-256, explicit parser/schema/entity-data versions, replay-local participant identities, initial objects/terrain and chronological operation envelopes. The original 1.0.0 schema is archived; this is an explicit contract migration.
-- Complete original byte evidence in canonical header/operation artifacts, retained unknown/partial payloads, deterministic multi-chunk stores, schema validation, stream invariants, semantic goldens and coverage/warnings reports. Local validation reproduces the source hash without opening the replay.
-- Replay-free projection V2 / command fundamentals V2 for action/time buckets, queue requests, research requests, building-placement orders and directed diplomacy timelines. Age-advance request candidates, `AgeAdvanceStarted`, observed `AgeReached` and projected completion remain separate; the latter three are unavailable in this slice.
-- `AOF_STATISTICS_ELIGIBILITY_V1` preserves and classifies all 320 TownBell rows: 13 available canonical command measures, 25 inferred measures, 59 needing controlled fixtures, 125 needing parser research and 98 needing engine simulation. `AOF_CANONICAL_STATISTICS_V1` validates a replay-free evidence report with participant command summaries, request/placement/diplomacy facts, qualified coverage warnings and raw-ID-preserving reference entity labels. These classifications are provisional engineering eligibility, not frozen player-facing product choices.
-- A seven-shape corpus harness for structural checks.
-- Versioned raw and derived replay-stat ingestion foundations.
-- V1.3 analysis foundations for match topology, opening and production evidence, spatial activity, dynamic diplomacy and directed player-pair interaction. The repository's V1.4 analyzer remains an optional experiment; both corpus readers now verify and read every canonical chunk.
-- Backend rebuild paths for player statistics and records.
+- Python replay decoding through the pinned `mgz-fast` adapter.
+- Versioned CanonicalReplay extraction with source hashing, participant identity, initial state and chronological operation evidence.
+- Deterministic canonical stores, validation, retained raw evidence and coverage warnings.
+- Replay-free statistics projection from canonical evidence.
+- Player-facing Opening statistics and Build Order classification.
+- Resource Commitment estimates by resource and age.
+- Raid episode detection with attacker/victim attribution.
+- Map Presence V2, including command coverage, enemy-base contact, forward buildings, expansions, gold influence and relic interaction.
+- Forward Eco classification using the Map Presence V2 forward geometry.
+- Observed command and selection evidence for Execution statistics.
+- Versioned tests, golden projections and architecture documents for the active models.
 
-The conformance harness includes a declared synthetic wire fixture and two hash-pinned real regression snapshots: save/build 68/180059 (FFA) and 66.6/158041 (1v1), totaling 782,192 body operations. Their compatibility is `fixture_regression_only`, not general patch support. The regression recordings, paired POVs and historical shape corpus are now committed under `replay-fixtures/` with owner authorization. The historical seven-shape corpus has not been rerun in this milestone. See the [milestone audit](../architecture/canonical-v1-conformance-milestone.md) for test evidence and exact projection boundaries.
+The statistics system continues to preserve the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
 
-A hash-pinned ordinary 1v1 recorded from both player perspectives adds paired-source evidence for save/build 68/180059. All 176,588 ordered non-camera/non-chat operations match exactly across POVs, including retained raw bytes; initial terrain and objects also match. Camera streams differ and one POV contains one extra terminal chat operation. Three Feudal research commands within 403 ms also demonstrate that decoded age-related research requests are not automatically accepted `AgeAdvanceStarted` facts. This validates recorder-local separation for that fixture, not command completion semantics or a general source-merging policy.
+## Current Match Statistics
 
-The replay-free statistics corpus report has been run over the stored FFA, upstream duel and both ordinary-1v1 canonical bundles. The paired projections agree on 5,168 decoded player actions, 367 queue requests, 56 research requests, 226 building placements, five market commands and one resignation; both retain camera scope as recorder-only. See the [Canonical Statistics V1 milestone](../architecture/canonical-statistics-v1.md) for exact available projections and unresolved research boundaries.
+The match layer is now useful enough to support player-facing match analysis. The concise list and model status are maintained in [`CURRENT-STATS.md`](CURRENT-STATS.md).
 
-### Current limitations
+Current strengths:
 
-- The V1 statistics shown to players are not yet frozen.
-- Queue and command evidence must not be presented as confirmed completion, kills or damage.
-- Some interaction, raid, support and spatial measures remain inferred and require confidence rules.
-- FFA and changing-diplomacy interpretations require continued qualification.
+- **Opening:** mature first player-facing category, including build order, age timings, military opening timing, walls, houses and Loom.
+- **Economy:** Resource Commitment provides the first useful economy model, including age breakdowns.
+- **Military:** raid initiation and raid exposure are implemented; broader military performance statistics remain future work.
+- **Map Presence:** strong spatial category with V2 geometry, Forward Eco and gold/relic measures.
+- **Execution:** reliable command-volume and selection evidence is available, but higher-level efficiency/APM interpretation is not yet a finished player-facing model.
+
+## Current limitations
+
+- Queue requests, research requests and placements do not by themselves prove completion, survival, damage or kills.
+- Resource Commitment is an estimate from pinned base costs and does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute.
+- Raid detection is command-episode inference and does not prove raid success or damage.
+- Map Presence represents command/building geometry, not fog-of-war exploration or permanent territorial ownership.
+- Entity labels are based on the pinned reference catalog and are not yet fully qualified for every replay patch/mod.
+- Restored-game clocks, complete effective diplomacy state and some initial-object semantics remain qualification areas.
 - Canonical export is not yet the mandatory normal upload path.
-- Authenticated upload orchestration, durable remote persistence, transactional canonical revision selection and backend ingestion of adapter V4 remain unimplemented. Existing derived-stat ingestion supports only V1/V2.
-- Initial-object completeness, patch/mod-aware entity normalization, restored-game clocks and effective diplomacy state are unqualified. Queue/research/build commands do not establish acceptance or completion; age-notification authenticity still needs controlled fixtures.
-- Player mapping still relies partly on names or administrative overrides.
-- The authenticated player upload and automatic processing flow is not complete.
-- Uploaded replay files are temporary and may be deleted only after canonical evidence has been extracted, validated and durably stored. The extraction contract and active schema now reflect this rule. This local CLI never deletes a source; `persistenceVerified` and `sourceDeletionEligible` remain false. Players retain their originals.
+- Authenticated replay upload, durable remote canonical persistence and complete backend ingestion remain unfinished.
+- Lifetime Stats, Relationships, and Individual Player Stats/Playstyle Sliders have not started.
 
-## Systems pending the statistics foundation
+## Systems pending broader statistics work
 
-The following are part of the product vision but are not considered implemented product systems yet. Existing backend jobs, engines or queries are foundations only.
-
-| System | Current state | Required before implementation is complete |
+| System | Current state | Main dependency |
 |---|---|---|
-| Leaderboards and ladder | Result, points, rating and read-model foundations exist. Final player-facing boards are not implemented. | Freeze the result, rating and statistical measures used for ranking, including season and lifetime scope. |
-| Matchmaking | Flexible Match/Game planning exists, but statistics-informed matchmaking is not complete. | Choose the rating and player evidence used to create balanced or intentionally themed matches. |
-| Relationships | Existing rivalry code uses an older single-score model and is not authoritative. | Select validated inputs and formulas for Gallantry, Treachery and Chivalry, then implement the separate Rivalry, Enemy and Friend tracks. |
-| War Room | Challenge and query foundations exist, but the intended relationship-driven experience is not implemented. | Implement the three-track relationship model and unlock the War Room at the third Rivalry or Enemy stage. |
-| Achievements | Processing scaffolding exists, but the final catalogue and triggers are not frozen. | Define achievements only after their required statistics are reliable and versioned. |
-| Awards and trophies | Product direction exists, but definitions, earning rules and presentation are pending. | Decide which validated match, event, season and lifetime statistics support each award or trophy. |
-| Player portraits | The persistent portrait direction is defined, but the model is not implemented. | Choose reliable military-family evidence, participation thresholds, recent/lifetime weighting and stability rules. |
+| Leaderboards and ladder | Foundations exist; final player-facing boards are incomplete. | Lifetime/rating definitions and presentation. |
+| Matchmaking | Match planning exists; statistics-informed matchmaking is incomplete. | Rating and persistent player statistics. |
+| Relationships | Not started under the new statistics structure. Older rivalry code is not authoritative. | Relationship statistic definitions and versioned progression models. |
+| War Room | Challenge/query foundations exist; player access should remain closed until the intended relationship system exists. | Relationships. |
+| Achievements | Processing scaffolding exists; final catalogue and triggers are not frozen. | Stable match/lifetime statistics. |
+| Awards and trophies | Direction exists; earning rules remain pending. | Stable match, event, season and lifetime statistics. |
+| Player portraits / playstyle | Direction exists; persistent model is not implemented. | Individual Player Stats and Playstyle Sliders. |
 
 ## Other implementation state
 
 | Area | Current state | Main gap |
 |---|---|---|
-| Firebase backend | Node.js 22, TypeScript, Functions v2, Firestore rules/indexes, authentication mapping and Emulator Suite support exist. | No documented active production deployment. |
-| Results | Submission, response, administrator resolution, disputes, corrections and revision history exist as backend foundations. | Replay-derived automatic result qualification and complete downstream invalidation still require finishing. |
-| Processing | Repeat-safe jobs exist for rewards, ratings, statistics, achievements, rivalries, records and activity. | Their models must be aligned with the final statistics and locked product rules. |
-| Player website and read models | Client in `web/` consumes authenticated league, event, Match and profile queries, with a labelled memory-only preview and separate season entry. | Recovered source needs current CI verification, browser/emulator validation and production configuration. Replay upload, drafting and statistics-dependent systems remain pending. |
-| Content | Brand, Season I, Event I and landing-page design material exist. | Event II and later content are not yet fully persisted; artwork remains outstanding. |
+| Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, authentication mapping and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
+| Results | Submission, administrator resolution, disputes, corrections and revision foundations exist. | Replay-derived automatic result qualification and downstream invalidation. |
+| Processing | Repeat-safe jobs exist for several downstream systems. | Align consumers with the current versioned statistics models. |
+| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data. | Present current Match Statistics, complete replay upload, drafting and production configuration. |
 
 ## Immediate priorities
 
-1. Add a controlled current-build queue/cancel/research/diplomacy recording pair with an action log and two-player evidence; qualify only the semantics it establishes.
-2. Review the candidate player-facing list and revise the V1 eligibility registry only as controlled fixtures qualify semantics; then validate it across the supported match shapes.
-3. Decide which statistics are player-facing and which remain internal evidence.
-4. Define the rating, matchmaking and relationship models that consume them.
-5. Implement leaderboards, the three relationship tracks and the War Room against those versioned models.
-6. Define achievements, awards, trophies and portrait progression from validated inputs.
-7. Complete the authenticated replay-upload flow and build the player-facing web application.
+1. Validate the current Match Statistics models against additional real replays and supported match shapes.
+2. Present the current Match Statistics cleanly in the player-facing website.
+3. Complete authenticated replay upload, canonical persistence and automatic statistics processing.
+4. Define and implement Lifetime Stats from the stable match-level outputs.
+5. Define Relationships as a separate statistics/product layer.
+6. Define Individual Player Stats and Playstyle Sliders from stable longitudinal evidence.
+7. Build statistics-dependent leaderboards, matchmaking, achievements, awards and relationship experiences only on versioned inputs.
 
 ## Task guidance
 
 - Treat [`CORE-IDENTITY.md`](CORE-IDENTITY.md) as the authority for product vision.
-- Inspect the latest `main` code before describing behavior as implemented.
-- Treat Match Analysis V1.3 as a working baseline, not a frozen statistics contract.
+- Treat [`CURRENT-STATS.md`](CURRENT-STATS.md) as the concise authority for the current player-facing statistics set.
+- Inspect latest `main` before describing behavior as implemented.
 - Keep observed facts, deterministic reconstruction, inferred analysis and league interpretation separate.
-- Do not implement statistics-dependent rewards or relationship progression using provisional fields without recording the model version and evidence limits.
-- Update this file whenever the active statistics baseline, a major implementation gap or the immediate priority changes.
+- Keep model/rule versions attached to inferred or reconstructed statistics.
+- Update this file when a major implementation state or priority changes.
+- Update `CURRENT-STATS.md` whenever a player-facing statistic is added, removed, renamed or changes status.
 
 ## Specialist sources
 
+- [`CURRENT-STATS.md`](CURRENT-STATS.md)
+- [`../architecture/opening-statistics-v1.md`](../architecture/opening-statistics-v1.md)
+- [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)
 - [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
-- [`../architecture/canonical-v1-conformance-milestone.md`](../architecture/canonical-v1-conformance-milestone.md)
-- [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)
 - [`../replay-foundation/README.md`](../replay-foundation/README.md)
-- [`../../README-TEST.md`](../../README-TEST.md)
-
-## Player website recovery — 14 September 2026
-
-The approved `feat/player-facing-website` branch recovers the interrupted frontend and participation gateway directly through GitHub. Source follows the six-tab layout and uses object-oriented domain/services/repositories. It is reconstructed from the conversation, not byte-identical to the unavailable local commit.
-
-The original generated artwork, dependency lockfile and compiled preview were not retrievable. The hero renders without artwork until restored. Earlier local tests apply only to the interrupted commit; use the recovery branch's own CI results. No private Site version or Firebase production rollout has completed.
-
-New callables: `getMyMembership`, `getPlayerSiteDirectory`, `enterSeason`. New affirmative RSVP requires season entry, public achievements require showcase selection, and raw Firestore reads are restricted to player owners or administrators. These read-policy changes require emulator checks and review of existing direct consumers before deployment.
-
-See [the client README](../../web/README.md) and [recovery record](../../web/RECOVERY.md) for setup, exact limitations, the reserved Site identity, and next steps.
