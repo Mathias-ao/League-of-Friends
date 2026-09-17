@@ -1,8 +1,8 @@
 import {useCallback,useEffect,useRef,useState,type Ref} from 'react';
-import {ArrowRight,ChevronLeft,ChevronRight,Pause,Play,Shield,Swords,Users,ChartNoAxesCombined,Lock,Flag,LogOut,BookOpen,Check,LoaderCircle} from 'lucide-react';
+import {ArrowRight,ChevronLeft,ChevronRight,Pause,Play,Shield,Swords,Users,ChartNoAxesCombined,Lock,Flag,LogOut,Check,LoaderCircle} from 'lucide-react';
 import {canBrowseLeague,emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Page,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {lombardia,brand} from '../data/content';
-import {Avatar,Empty,Modal,Sigil} from './Primitives';
+import {Avatar,Modal,Sigil} from './Primitives';
 import {SeasonView,EventsView,BattlesView,PlayersView,StatisticsView,EventDialog,MatchDialog,ProfileDialog} from './Views';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
@@ -17,7 +17,7 @@ export interface ViewProps {
   openEvent:(id:string)=>void;openMatch:(id:string)=>void;openPlayer:(id:string)=>void;
   act:(action:()=>Promise<void>,message:string)=>Promise<boolean>;enter:()=>void;navigate:(page:Page)=>void;
 }
-type DialogState={type:'login'}|{type:'rules'}|{type:'story'}|{type:'account'}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile}|null;
+type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile}|null;
 function pageFromHash():Page|null{return pages.find(p=>!p.disabled&&'#'+p.id===location.hash)?.id??null;}
 function clearHash(){history.replaceState(null,'',location.pathname+location.search);}
 export function App({repository}:{repository:LeagueRepository}){
@@ -25,7 +25,9 @@ export function App({repository}:{repository:LeagueRepository}){
   const [actionBusy,setBusy]=useState(false),[detailBusy,setDetailBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
   const generation=useRef(0),authEpoch=useRef(0),detailRequest=useRef(0),working=useRef(false),navRef=useRef<HTMLElement>(null),gateRef=useRef<HTMLElement>(null);
   const accessResolved=useRef(false),previousCanBrowse=useRef(false);
-  const preview=repository.mode==='preview',busy=actionBusy||detailBusy,canBrowse=canBrowseLeague(snapshot),showGate=!loading&&!canBrowse;
+  const preview=repository.mode==='preview',busy=actionBusy||detailBusy,canBrowse=canBrowseLeague(snapshot);
+  const leagueEntryVisible=loading||snapshot.membership!=='ACTIVE';
+  const showSeasonGate=!loading&&snapshot.membership==='ACTIVE'&&!canBrowse;
   const refresh=useCallback(async()=>{
     const id=++generation.current;
     try{const data=await repository.load();if(id===generation.current){setSnapshot(data);setError('');}return true;}
@@ -48,7 +50,7 @@ export function App({repository}:{repository:LeagueRepository}){
       if(!canBrowse){
         setPage('season');setSectionOpen(false);
         if(next)clearHash();
-        requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
+        if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
         return;
       }
       setPage(next??'season');setSectionOpen(next!==null);
@@ -56,13 +58,13 @@ export function App({repository}:{repository:LeagueRepository}){
     };
     addEventListener('hashchange',syncLocation);addEventListener('popstate',syncLocation);
     return ()=>{removeEventListener('hashchange',syncLocation);removeEventListener('popstate',syncLocation);};
-  },[canBrowse,loading]);
+  },[canBrowse,loading,snapshot.membership]);
   useEffect(()=>{
     if(loading)return;
     if(!canBrowse){
       const requested=pageFromHash();
       previousCanBrowse.current=false;accessResolved.current=true;setPage('season');setSectionOpen(false);
-      if(requested){clearHash();requestAnimationFrame(()=>gateRef.current?.scrollIntoView({block:'start'}));}
+      if(requested){clearHash();if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({block:'start'}));}
       return;
     }
     if(!accessResolved.current||!previousCanBrowse.current){
@@ -71,14 +73,14 @@ export function App({repository}:{repository:LeagueRepository}){
       requestAnimationFrame(()=>navRef.current?.scrollIntoView({block:'start'}));
     }
     previousCanBrowse.current=true;accessResolved.current=true;
-  },[canBrowse,loading]);
+  },[canBrowse,loading,snapshot.membership]);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),6000);return ()=>clearTimeout(timer);},[notice]);
   const openSection=(next:Page)=>{
     const target=pages.find(p=>p.id===next);
     if(!target||target.disabled)return;
     if(!canBrowse){
       detailRequest.current++;setDetailBusy(false);setPage('season');setSectionOpen(false);setDialog(null);clearHash();
-      requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
+      if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
       return;
     }
     detailRequest.current++;setDetailBusy(false);setPage(next);setSectionOpen(true);setDialog(null);
@@ -98,8 +100,7 @@ export function App({repository}:{repository:LeagueRepository}){
   };
   const detail=async(type:'event'|'match'|'player',id:string)=>{
     if(!canBrowse){
-      if(snapshot.membership!=='ACTIVE')setDialog({type:'login'});
-      else requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
+      if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
       return;
     }
     const request=++detailRequest.current,epoch=authEpoch.current;setDetailBusy(true);
@@ -110,45 +111,48 @@ export function App({repository}:{repository:LeagueRepository}){
     finally{if(request===detailRequest.current)setDetailBusy(false);}
   };
   const enter=()=>{
-    if(snapshot.membership!=='ACTIVE'){setDialog({type:'login'});return;}
+    if(snapshot.membership!=='ACTIVE')return;
     if(snapshot.season)void act(()=>repository.enterSeason(snapshot.season!.seasonId),'You have entered the season.');
   };
   const openEvent=(id:string)=>{void detail('event',id);},openMatch=(id:string)=>{void detail('match',id);},openPlayer=(id:string)=>{void detail('player',id);};
   const next=snapshot.events.find(e=>e.status==='ACTIVE')??snapshot.events.find(e=>e.status==='PUBLISHED'&&(!e.startsAt||Date.parse(e.startsAt)>=Date.now()));
-  const actionLabel=snapshot.membership==='SIGNED_OUT'?'Join the league':snapshot.membership!=='ACTIVE'?'Your membership':!snapshot.enteredSeason?'Enter the season':next?.viewer?.rsvp==='UNANSWERED'?'Answer the call':null;
+  const actionLabel=snapshot.membership==='ACTIVE'?(!snapshot.enteredSeason?'Enter the season':next?.viewer?.rsvp==='UNANSWERED'?'Answer the call':null):null;
   const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate};
-  const title=dialog?.type==='login'?'Raise your banner':dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Battle details':dialog?.type==='player'?dialog.data.player.steamName:'';
-  const showContent=sectionOpen||showGate||!!error;
-  return <>{showContent&&<a className="skip" href="#main-content">Skip to content</a>}
-    {preview&&<div className="preview-bar"><span>DESIGN PREVIEW</span> Sample standings and battles · Changes last only for this visit.</div>}
-    <div className="landing-stage">
-      <header className="site-header"><div className="header-inner">
-        <div className="header-action">{actionLabel&&<button className="action-ribbon" onClick={()=>snapshot.enteredSeason&&next&&canBrowse?openEvent(next.eventId):enter()}><Flag size={16}/>{actionLabel}</button>}</div>
-        <a className="brand" href="/" onClick={e=>{e.preventDefault();returnHome();}}><span className="brand-top">{brand.name}</span><span className="brand-bottom">AN AGE OF EMPIRES II LEAGUE</span></a>
-        <div className="header-account">{snapshot.viewer?<button className="profile-button" onClick={()=>setDialog({type:'account'})}><Avatar player={snapshot.viewer}/><span>{snapshot.viewer.steamName}</span></button>:<button className="sign-in" onClick={()=>setDialog({type:'login'})}><Shield size={16}/>Sign in</button>}</div>
-      </div></header>
-      <Hero onStory={()=>setDialog({type:'story'})} onEvent={()=>next?openEvent(next.eventId):setDialog({type:'story'})}/>
+  const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Battle details':dialog?.type==='player'?dialog.data.player.steamName:'';
+  const showContent=sectionOpen||showSeasonGate||(!leagueEntryVisible&&!!error);
+  return <>
+    <div className={leagueEntryVisible?'league-entry-underlay':''} inert={leagueEntryVisible}>
+      {showContent&&<a className="skip" href="#main-content">Skip to content</a>}
+      {preview&&<div className="preview-bar"><span>DESIGN PREVIEW</span> Sample standings and battles · Changes last only for this visit.</div>}
+      <div className="landing-stage">
+        <header className="site-header"><div className="header-inner">
+          <div className="header-action">{actionLabel&&<button className="action-ribbon" onClick={()=>snapshot.enteredSeason&&next&&canBrowse?openEvent(next.eventId):enter()}><Flag size={16}/>{actionLabel}</button>}</div>
+          <a className="brand" href="/" onClick={e=>{e.preventDefault();returnHome();}}><span className="brand-top">{brand.name}</span><span className="brand-bottom">AN AGE OF EMPIRES II LEAGUE</span></a>
+          <div className="header-account">{snapshot.viewer?<button className="profile-button" onClick={()=>setDialog({type:'account'})}><Avatar player={snapshot.viewer}/><span>{snapshot.viewer.steamName}</span></button>:<span className="sign-in"><Shield size={16}/>League gate</span>}</div>
+        </div></header>
+        <Hero onStory={()=>setDialog({type:'story'})} onEvent={()=>next?openEvent(next.eventId):setDialog({type:'story'})}/>
+      </div>
+      <nav ref={navRef} className="main-nav stone-nav" aria-label="League navigation">
+        {pages.map(({id,label,disabled})=>disabled?
+          <span key={id} className="nav-item nav-disabled war-room-tab" aria-disabled="true" title="War Room sealed"><Lock size={15} strokeWidth={1.3}/><span>{label}</span></span>:
+          <a key={id} className={'nav-item '+(!canBrowse?'nav-gated ':'')+(sectionOpen&&page===id?'active':'')} href={'#'+id} aria-current={sectionOpen&&page===id?'page':undefined} aria-disabled={!canBrowse||undefined} title={!canBrowse?'Enter the current season to unlock the league':undefined} onClick={e=>{e.preventDefault();openSection(id);}}><span>{label}</span></a>)}
+      </nav>
+      {showContent&&<div className="content-region"><div className="content-shell">
+        <main id="main-content" tabIndex={-1}>
+          {error&&!leagueEntryVisible&&<div className="alert" role="alert"><span>{error}</span><button onClick={()=>void refresh()}>Retry</button><button aria-label="Dismiss error" onClick={()=>setError('')}>×</button></div>}
+          {loading?<div className="loading" role="status"><LoaderCircle className="spin"/>Gathering the banners…</div>:showSeasonGate?
+            <SeasonAccessGate gateRef={gateRef} snapshot={snapshot} busy={busy} enter={enter}/>:
+            page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<StatisticsView/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
+        </main>
+        <footer className="site-footer"><span>AGE OF FRIENDS · SEASON I</span><span>A private Age of Empires II: DE league</span></footer>
+      </div></div>}
     </div>
-    <nav ref={navRef} className="main-nav stone-nav" aria-label="League navigation">
-      {pages.map(({id,label,disabled})=>disabled?
-        <span key={id} className="nav-item nav-disabled war-room-tab" aria-disabled="true" title="War Room sealed"><Lock size={15} strokeWidth={1.3}/><span>{label}</span></span>:
-        <a key={id} className={'nav-item '+(!canBrowse?'nav-gated ':'')+(sectionOpen&&page===id?'active':'')} href={'#'+id} aria-current={sectionOpen&&page===id?'page':undefined} aria-disabled={!canBrowse||undefined} title={!canBrowse?'Join the league and enter the current season to unlock the league':undefined} onClick={e=>{e.preventDefault();openSection(id);}}><span>{label}</span></a>)}
-    </nav>
-    {showContent&&<div className="content-region"><div className="content-shell">
-      <main id="main-content" tabIndex={-1}>
-        {error&&<div className="alert" role="alert"><span>{error}</span><button onClick={()=>void refresh()}>Retry</button><button aria-label="Dismiss error" onClick={()=>setError('')}>×</button></div>}
-        {loading?<div className="loading" role="status"><LoaderCircle className="spin"/>Gathering the banners…</div>:!canBrowse?
-          <SeasonAccessGate gateRef={gateRef} snapshot={snapshot} busy={busy} enter={enter} openMembership={()=>setDialog({type:'login'})}/>:
-          page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<StatisticsView/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
-      </main>
-      <footer className="site-footer"><span>AGE OF FRIENDS · SEASON I</span><span>A private Age of Empires II: DE league</span></footer>
-    </div></div>}
+    {leagueEntryVisible&&<LeagueEntryGate snapshot={snapshot} loading={loading} preview={preview} busy={busy} repository={repository} act={act} error={error}/>} 
     {notice&&<div className="toast" role="status"><Check size={17}/>{notice}</div>}
     {busy&&<div className="working" role="status"><LoaderCircle size={16} className="spin"/>Working…</div>}
     {dialog&&<Modal key={dialog.type} title={title} wide={['event','match','player'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDetailBusy(false);setDialog(null);setError('');}}>
       {error&&<div className="alert" role="alert">{error}</div>}
-      {dialog.type==='login'?<MembershipForm snapshot={snapshot} repository={repository} preview={preview} busy={busy} act={act} onClose={()=>setDialog(null)}/>:
-       dialog.type==='rules'?<Rules/>:dialog.type==='story'?<article className="story"><span className="eyebrow">EVENT I · LOMBARDIA</span>{lombardia.story.brief.map(p=><p key={p}>{p}</p>)}<div className="story-facts"><span>4v4</span><span>Lombardia</span><span>Standard Victory</span></div></article>:
+      {dialog.type==='rules'?<Rules/>:dialog.type==='story'?<article className="story"><span className="eyebrow">EVENT I · LOMBARDIA</span>{lombardia.story.brief.map(p=><p key={p}>{p}</p>)}<div className="story-facts"><span>4v4</span><span>Lombardia</span><span>Standard Victory</span></div></article>:
        dialog.type==='account'?<><div className="account-heading">{snapshot.viewer&&<Avatar player={snapshot.viewer} large/>}<div><h3>{snapshot.viewer?.steamName}</h3><p>{snapshot.membership==='ACTIVE'?'League member':snapshot.membership.toLowerCase()}</p></div></div><p>Your league identity persists between seasons.</p><div className="stack">{snapshot.membership==='ACTIVE'&&<button className="primary" onClick={()=>snapshot.viewer&&openPlayer(snapshot.viewer.playerId)}>View profile</button>}<button className="text-button" onClick={()=>void act(()=>repository.signOut(),'Signed out.')}><LogOut size={16}/>Sign out</button></div></>:
        dialog.type==='event'?<EventDialog {...props} data={dialog.data} onUpdated={()=>openEvent(dialog.data.event.eventId)}/>:
        dialog.type==='match'?<MatchDialog {...props} data={dialog.data} onUpdated={()=>openMatch(dialog.data.match.matchId)}/>:
@@ -156,26 +160,19 @@ export function App({repository}:{repository:LeagueRepository}){
     </Modal>}
   </>;
 }
-function SeasonAccessGate({gateRef,snapshot,busy,enter,openMembership}:{gateRef:Ref<HTMLElement>;snapshot:LeagueSnapshot;busy:boolean;enter:()=>void;openMembership:()=>void}){
-  let eyebrow='SEASON I · THE FIRST CAMPAIGN',title='Raise your banner',body='The campaign is already under way. Create your league identity, then enter the current season to unlock the league.',button='Join Age of Friends',action=openMembership,note='League membership comes first. Season entry follows.';
-  if(snapshot.membership==='UNLINKED'){
-    title='Claim your league identity';body='Connect your Steam name to Age of Friends. Once your membership is approved, you can raise your banner for the current season.';button='Complete membership';note='Your identity persists between seasons.';
-  }else if(snapshot.membership==='PENDING'){
-    title='Your banner awaits approval';body='Your league membership request has been sent. Once approved, return here to enter the current season.';button='';note='The league administrator will review your request.';
-  }else if(snapshot.membership==='INACTIVE'||snapshot.membership==='SUSPENDED'){
-    eyebrow='LEAGUE MEMBERSHIP';title='Your banner cannot be raised';body='Your league membership is not currently active. Contact the league administrator before entering a season.';button='';note='Season entry requires active league membership.';
-  }else if(snapshot.membership==='ACTIVE'){
-    if(snapshot.season){
-      eyebrow='THE CURRENT CAMPAIGN';title='Enter '+snapshot.season.name;body='Raise your banner for this season. Season entry unlocks the league navigation, standings, events, battles, players and statistics.';button='Enter Season I';action=enter;note='One league identity. A fresh entry for every season.';
-    }else{
-      eyebrow='BETWEEN CAMPAIGNS';title='The next season is being prepared';body='Your league identity is ready. Season entry will open when the next campaign is announced.';button='';note='Return when the next campaign is called.';
-    }
-  }
-  return <section ref={gateRef} className="season-access-gate" aria-labelledby="season-access-title"><div className="season-access-card">
-    <Sigil kind="flag" size={42}/><span className="eyebrow">{eyebrow}</span><h1 id="season-access-title">{title}</h1><p>{body}</p>
-    <div className="season-access-actions">{button&&<button className="season-access-primary" disabled={busy} onClick={action}>{button}<ArrowRight size={18}/></button>}<p className="season-access-note">{note}</p></div>
-    {snapshot.membership==='PENDING'&&<div className="season-access-status">Membership request pending</div>}
-  </div></section>;
+function LeagueEntryGate({snapshot,loading,preview,busy,repository,act,error}:{snapshot:LeagueSnapshot;loading:boolean;preview:boolean;busy:boolean;repository:LeagueRepository;act:ViewProps['act'];error:string}){
+  const [name,setName]=useState(''),[discord,setDiscord]=useState('');
+  const google=()=>{void act(()=>repository.signIn(),preview?'Preview identity selected.':'Signed in with Google.');};
+  const signOut=()=>{void act(()=>repository.signOut(),'Signed out.');};
+  if(loading)return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><span className="eyebrow">AGE OF FRIENDS · PRIVATE LEAGUE</span><h1 id="league-entry-title">The league gate</h1><p className="league-entry-lead">The banners are being read.</p><div className="league-entry-loading"><LoaderCircle className="spin" size={17}/>Opening the ledger…</div></section></div>;
+  if(snapshot.membership==='SIGNED_OUT')return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><span className="eyebrow">AGE OF FRIENDS · PRIVATE LEAGUE</span><h1 id="league-entry-title">Enter the league</h1><p className="league-entry-lead">Raise a banner of your own, or return under the one you already carry. Your Google account keeps your league identity with you between visits.</p><div className="league-entry-rule"/><div className="league-entry-actions"><button className="league-entry-primary" disabled={busy} onClick={google}>Sign up for the league<ArrowRight size={18}/></button><button className="league-entry-secondary" disabled={busy} onClick={google}>Already a member? Sign in with Google</button></div>{error&&<div className="league-entry-error" role="alert">{error}</div>}<p className="league-entry-note">One league identity. Season entry comes next.</p></section></div>;
+  if(snapshot.membership==='UNLINKED')return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Sigil className="league-entry-mark" size={48}/><span className="eyebrow">NEW LEAGUE IDENTITY</span><h1 id="league-entry-title">Raise your banner</h1><p className="league-entry-lead">Google has identified you. Add the name that should follow you through Age of Friends; this identity persists across seasons.</p><form className="league-entry-form" onSubmit={e=>{e.preventDefault();void act(()=>repository.requestMembership(name.trim(),discord.trim()),'League identity created.');}}><label>Steam name<input required maxLength={100} value={name} onChange={e=>setName(e.target.value)} autoComplete="nickname" placeholder="Your AoE II name"/></label><label>Discord name · optional<input maxLength={100} value={discord} onChange={e=>setDiscord(e.target.value)} placeholder="Your Discord name"/></label><button className="league-entry-primary" disabled={busy||!name.trim()}>Join Age of Friends<ArrowRight size={18}/></button></form>{error&&<div className="league-entry-error" role="alert">{error}</div>}<button className="league-entry-secondary" disabled={busy} onClick={signOut}>Use another Google account</button></section></div>;
+  if(snapshot.membership==='PENDING')return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><span className="eyebrow">LEAGUE MEMBERSHIP</span><h1 id="league-entry-title">Banner awaiting approval</h1><p className="league-entry-lead">This older membership request still requires administrator approval before the league can be entered.</p><div className="league-entry-status">Membership request pending</div>{error&&<div className="league-entry-error" role="alert">{error}</div>}<button className="league-entry-secondary" disabled={busy} onClick={signOut}>Sign out</button></section></div>;
+  return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><span className="eyebrow">LEAGUE MEMBERSHIP</span><h1 id="league-entry-title">The gate is closed</h1><p className="league-entry-lead">Your league membership is not currently active. Contact the league administrator to restore access.</p><div className="league-entry-status">{snapshot.membership.replaceAll('_',' ')}</div>{error&&<div className="league-entry-error" role="alert">{error}</div>}<button className="league-entry-secondary" disabled={busy} onClick={signOut}>Sign out</button></section></div>;
+}
+function SeasonAccessGate({gateRef,snapshot,busy,enter}:{gateRef:Ref<HTMLElement>;snapshot:LeagueSnapshot;busy:boolean;enter:()=>void}){
+  if(!snapshot.season)return <section ref={gateRef} className="season-access-gate" aria-labelledby="season-access-title"><div className="season-access-card"><Sigil kind="flag" size={42}/><span className="eyebrow">BETWEEN CAMPAIGNS</span><h1 id="season-access-title">The next season is being prepared</h1><p>Your league identity is ready. Season entry will open when the next campaign is announced.</p><div className="season-access-actions"><p className="season-access-note">Return when the next campaign is called.</p></div></div></section>;
+  return <section ref={gateRef} className="season-access-gate" aria-labelledby="season-access-title"><div className="season-access-card"><Sigil kind="flag" size={42}/><span className="eyebrow">THE CURRENT CAMPAIGN</span><h1 id="season-access-title">Enter {snapshot.season.name}</h1><p>Your league banner is raised. Enter the current season to unlock its standings, events, battles, players and statistics.</p><div className="season-access-actions"><button className="season-access-primary" disabled={busy} onClick={enter}>Enter Season I<ArrowRight size={18}/></button><p className="season-access-note">One league identity. A fresh entry for every season.</p></div></div></section>;
 }
 function Hero({onStory,onEvent}:{onStory:()=>void;onEvent:()=>void}){
   const [slide,setSlide]=useState(0),[paused,setPaused]=useState(false),[interacting,setInteracting]=useState(false),[imageFailed,setImageFailed]=useState(false);
@@ -187,12 +184,6 @@ function Hero({onStory,onEvent}:{onStory:()=>void;onEvent:()=>void}){
     <div className="hero-shade"/><div className="hero-content" key={slide}><span className="eyebrow">{slide===0?'SEASON I · THE FIRST CAMPAIGN':'EVENT I · THE CALL TO WAR'}</span><h2>{slide===0?<>THE FIEFDOM<br/>OF BAD NEIGHBORS</>:<>LOMBARDIA<br/>STANDS DIVIDED</>}</h2><p>{slide===0?'Good fences make good neighbors. Castles make better ones.':'Eight factions. Two grand alliances. One battlefield.'}</p><button className="hero-link" onClick={slide===0?onStory:onEvent}>{slide===0?'Read the opening story':'Answer the call'}<ArrowRight size={17}/></button></div>
     <div className="hero-bottom"><span className="hero-caption">THE ROAD TO MILAN</span><div className="carousel-controls"><button aria-label="Previous story" onClick={change}><ChevronLeft size={17}/></button>{[0,1].map(i=><button key={i} className={'slide-dot '+(slide===i?'active':'')} aria-label={'Show story '+(i+1)} aria-pressed={slide===i} onClick={()=>{setSlide(i);setPaused(true);}}/>)}<button aria-label="Next story" onClick={change}><ChevronRight size={17}/></button><button aria-label={paused?'Play stories':'Pause stories'} onClick={()=>setPaused(!paused)}>{paused?<Play size={13}/>:<Pause size={13}/>}</button></div></div>
   </section>;
-}
-function MembershipForm({snapshot,preview,busy,repository,act,onClose}:{snapshot:LeagueSnapshot;preview:boolean;busy:boolean;repository:LeagueRepository;act:ViewProps['act'];onClose:()=>void}){
-  const [name,setName]=useState(''),[discord,setDiscord]=useState('');
-  if(snapshot.membership==='SIGNED_OUT')return <div className="login-body"><Sigil size={42}/><p>Join the league once. Enter each season. Answer the call to battle.</p>{preview&&<p className="subtle-box">This preview uses an example player. No account is created and no league data is changed.</p>}<button className="primary full" disabled={busy} onClick={async()=>{if(await act(()=>repository.signIn(),preview?'Preview player selected.':'Signed in.'))onClose();}}>{preview?'Explore as D’Karius':'Continue with Google'}<ArrowRight size={16}/></button></div>;
-  if(snapshot.membership==='UNLINKED')return <form className="form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.requestMembership(name.trim(),discord.trim()),'Membership request sent.'))onClose();}}><p>Your Steam name connects your identity to your Games.</p><label>Steam name<input required maxLength={100} value={name} onChange={e=>setName(e.target.value)} autoComplete="nickname"/></label><label>Discord name (optional)<input maxLength={100} value={discord} onChange={e=>setDiscord(e.target.value)}/></label><button className="primary" disabled={busy||!name.trim()}>Request league membership</button></form>;
-  return <><Empty title={snapshot.membership==='PENDING'?'Awaiting approval':snapshot.membership==='ACTIVE'?'Your banner is raised':'Membership unavailable'}>{snapshot.membership==='PENDING'?'The league administrator will review your request.':snapshot.membership==='ACTIVE'?'You can enter the season and sign up for events.':'Contact the league administrator.'}</Empty><button className="text-button" onClick={()=>void act(()=>repository.signOut(),'Signed out.')}>Sign out</button></>;
 }
 function Rules(){
   const rows=[
