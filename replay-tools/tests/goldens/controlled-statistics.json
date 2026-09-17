@@ -39,7 +39,7 @@
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V1",
+      "modelVersion": "AOF_MAP_PRESENCE_V2",
       "playerId": 1
     },
     {
@@ -50,7 +50,7 @@
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V1",
+      "modelVersion": "AOF_MAP_PRESENCE_V2",
       "playerId": 2
     }
   ],
