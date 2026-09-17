@@ -9,9 +9,9 @@ Purpose: Concise source of truth for player-facing statistics status. Technical 
 | Section | Status | Scope |
 |---|---|---|
 | Match Statistics | Active / implemented | Statistics derived from one replayed Game and shown for that match. |
-| Lifetime Stats | Not started | Cross-match and cross-season player totals, rates and records. |
-| Relationships | Not started | Player-to-player relationship statistics and progression. |
-| Individual Player Stats + Playstyle Sliders | Not started | Persistent player profile statistics and derived playstyle dimensions. |
+| Lifetime Stats | Foundation implemented | Neutral cross-match aggregation is implemented; persistence and player-facing presentation are not yet integrated. |
+| Relationships | Foundation implemented; rules pending | Neutral Pair History and a versioned Rivalry/Enemy/Friend rule engine exist. Points and stages are intentionally undefined. |
+| Individual Player Stats + Playstyle Sliders | Foundation implemented; rules pending | Versioned slider calculation exists. Slider definitions, normalization, weights and thresholds are intentionally undefined. |
 
 ## Match Statistics
 
@@ -71,9 +71,23 @@ Map Presence is based on command/building geometry and does not assert fog-of-wa
 - Maximum selection size.
 - Raw formation modes used.
 
+## Lifetime Stats
+
+`AOF_LIFETIME_STATISTICS_V1` aggregates eligible Match Statistics without assigning player identity or points. It covers the current Opening, Economy, Military, Map Presence and Execution outputs, retaining sample counts and record provenance.
+
+## Relationships
+
+`AOF_PAIR_HISTORY_V1` records neutral pair history: encounters, ally/opponent history, results and directional replay-derived interactions.
+
+`AOF_RELATIONSHIP_ENGINE_V1` supports independent Rivalry, Enemy and Friend tracks, but returns them unconfigured until an explicit versioned point/stage rule set is supplied.
+
+## Individual Player Stats + Playstyle Sliders
+
+`AOF_PLAYSTYLE_ENGINE_V1` accepts normalized longitudinal metrics and an explicit versioned slider rule set. No default sliders, weights, thresholds or comparison population are defined.
+
 ## Model status
 
-Current player-facing match models include:
+Current models include:
 
 - `AOF_BUILD_ORDER_V2`
 - `AOF_OPENING_STATISTICS_V1`
@@ -82,5 +96,9 @@ Current player-facing match models include:
 - `AOF_FORWARD_ECO_V1`
 - `AOF_RESOURCE_COMMITMENT_V1`
 - `AOF_CANONICAL_STATISTICS_V1`
+- `AOF_LIFETIME_STATISTICS_V1`
+- `AOF_PAIR_HISTORY_V1`
+- `AOF_PLAYSTYLE_ENGINE_V1`
+- `AOF_RELATIONSHIP_ENGINE_V1`
 
-All statistics must retain their evidence layer and model/rule version. Observed commands and placements must not be silently presented as completed game-state outcomes.
+All statistics and interpretations must retain their evidence/model/rule versions. Match measurement is separated from player-identity and relationship judgment.
