@@ -7,6 +7,7 @@ export const collections = {
   matches: "matches",
   challenges: "challenges",
   rivalries: "rivalries",
+  relationships: "relationships",
   leaguePointLedger: "leaguePointLedger",
   warRoomPointLedger: "warRoomPointLedger",
   goldLedger: "goldLedger",

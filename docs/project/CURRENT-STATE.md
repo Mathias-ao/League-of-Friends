@@ -6,20 +6,31 @@ Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.
 
 ## Current focus
 
-The active workstream is the player-facing replay statistics system and its integration into the website.
+The active workstream is the player-facing statistics stack and its integration into the website.
 
-The replay pipeline now produces a meaningful set of Match Statistics across the five player-facing categories: **Opening, Economy, Military, Map Presence and Execution**. The implemented match models include Build Order V2, Opening Statistics V1, Raid Detection V1, Map Presence V2, Forward Eco V1 and Resource Commitment V1.
-
-The broader statistics product is structured into four sections:
+The replay pipeline produces Match Statistics across **Opening, Economy, Military, Map Presence and Execution**. A longitudinal foundation now sits above that match layer: neutral Lifetime Statistics and Pair History can be built from versioned match outputs, while Playstyle Sliders and Relationships are explicit rule-driven interpretation systems.
 
 | Statistics section | State |
 |---|---|
 | Match Statistics | Active / implemented |
-| Lifetime Stats | Not started |
-| Relationships | Not started |
-| Individual Player Stats + Playstyle Sliders | Not started |
+| Lifetime Stats | Aggregation foundation implemented; persistence/presentation pending |
+| Relationships | Pair History + configurable engine implemented; result pipeline persists neutral encounter/team/result history; points/stages intentionally unconfigured |
+| Individual Player Stats + Playstyle Sliders | Configurable engine implemented; slider rules/normalization intentionally unconfigured |
 
-[`CURRENT-STATS.md`](CURRENT-STATS.md) is the source of truth for which player-facing statistics currently exist.
+[`CURRENT-STATS.md`](CURRENT-STATS.md) is the concise source of truth for statistics status. [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md) defines the separation between measurement and product judgment.
+
+## Statistics architecture
+
+The intended flow is:
+
+**`.aoe2record` → canonical replay evidence → Match Statistics → neutral longitudinal facts → configured interpretation systems**
+
+- Match Statistics describe one replayed Game using observed, reconstructed and inferred evidence.
+- Lifetime Statistics aggregate eligible match outputs without assigning a player identity label or points.
+- Pair History aggregates neutral player-to-player history and directional interaction evidence.
+- Playstyle Sliders only produce scores from an explicit versioned rule set supplied by the product owner.
+- Rivalry / Enemy / Friend only produce points and stages from an explicit versioned relationship rule set supplied by the product owner.
+- Higher layers should consume versioned Match Statistics and neutral league context; they should not independently reinterpret raw replay files.
 
 ## Match and competition structure
 
@@ -38,7 +49,7 @@ The required hierarchy remains:
 
 Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning and Game creation. The player-facing React/TypeScript client lives in `web/`. Production configuration, replay upload and the complete end-to-end statistics presentation flow remain incomplete.
 
-## Replay and statistics foundation
+## Replay and Match Statistics foundation
 
 The current replay/statistics foundation includes:
 
@@ -54,19 +65,34 @@ The current replay/statistics foundation includes:
 - Observed command and selection evidence for Execution statistics.
 - Versioned tests, golden projections and architecture documents for the active models.
 
-The statistics system continues to preserve the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
+The statistics system preserves the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
 
-## Current Match Statistics
+## Longitudinal systems foundation
 
-The match layer is now useful enough to support player-facing match analysis. The concise list and model status are maintained in [`CURRENT-STATS.md`](CURRENT-STATS.md).
+### Lifetime Statistics
 
-Current strengths:
+`functions/src/engines/lifetimeStatistics.ts` implements `AOF_LIFETIME_STATISTICS_V1`. It aggregates current match-level Opening, Economy, Military, Map Presence and Execution inputs into player lifetime totals, averages, rates/counts and min/max records with match/game provenance.
 
-- **Opening:** mature first player-facing category, including build order, age timings, military opening timing, walls, houses and Loom.
-- **Economy:** Resource Commitment provides the first useful economy model, including age breakdowns.
-- **Military:** raid initiation and raid exposure are implemented; broader military performance statistics remain future work.
-- **Map Presence:** strong spatial category with V2 geometry, Forward Eco and gold/relic measures.
-- **Execution:** reliable command-volume and selection evidence is available, but higher-level efficiency/APM interpretation is not yet a finished player-facing model.
+This is descriptive aggregation only. It does not assign playstyle meaning or points. The engine exists, but it is not yet wired to durable current Match Statistics storage.
+
+### Player Identity / Playstyle Sliders
+
+`functions/src/engines/playstyleEngine.ts` implements `AOF_PLAYSTYLE_ENGINE_V1`.
+
+The engine accepts normalized 0-100 longitudinal metrics plus an explicit versioned rule set defining slider labels, components, directions, weights and sample requirements. With no rule set it returns `UNCONFIGURED` and no slider scores.
+
+No default slider catalogue, weights, thresholds or normalization population are authoritative yet.
+
+### Pair History and Relationships
+
+`functions/src/engines/relationshipEngine.ts` implements:
+
+- `AOF_PAIR_HISTORY_V1` — neutral pair history including encounters, allied/opponent history, results and directional replay-derived signals.
+- `AOF_RELATIONSHIP_ENGINE_V1` — configurable independent Rivalry, Enemy and Friend tracks.
+
+The existing `RIVALRIES` processing step now rebuilds and persists neutral Pair History in the `relationships` collection. Today that persisted history uses encounter/team/result evidence because the current Functions backend does not yet receive the replay-derived directional Match Statistics required for raids/forward pressure. Those signals are explicit future inputs rather than guessed data.
+
+With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no points or stages. The legacy automatic rivalry threshold no longer drives this processing step, and it no longer opens the War Room. The older `RIVALRY_ENGINE_V1` code is retained only for compatibility and is not authoritative for the new three-track relationship model.
 
 ## Current limitations
 
@@ -78,7 +104,9 @@ Current strengths:
 - Restored-game clocks, complete effective diplomacy state and some initial-object semantics remain qualification areas.
 - Canonical export is not yet the mandatory normal upload path.
 - Authenticated replay upload, durable remote canonical persistence and complete backend ingestion remain unfinished.
-- Lifetime Stats, Relationships, and Individual Player Stats/Playstyle Sliders have not started.
+- Lifetime Statistics persistence and Playstyle presentation are not yet wired end to end.
+- Pair History currently persists match/team/result history but not replay-derived directional interaction signals.
+- Playstyle normalization, slider definitions/weights and Relationship point/stage rules are intentionally undecided.
 
 ## Systems pending broader statistics work
 
@@ -86,11 +114,11 @@ Current strengths:
 |---|---|---|
 | Leaderboards and ladder | Foundations exist; final player-facing boards are incomplete. | Lifetime/rating definitions and presentation. |
 | Matchmaking | Match planning exists; statistics-informed matchmaking is incomplete. | Rating and persistent player statistics. |
-| Relationships | Not started under the new statistics structure. Older rivalry code is not authoritative. | Relationship statistic definitions and versioned progression models. |
-| War Room | Challenge/query foundations exist; player access should remain closed until the intended relationship system exists. | Relationships. |
-| Achievements | Processing scaffolding exists; final catalogue and triggers are not frozen. | Stable match/lifetime statistics. |
+| Relationships | Neutral Pair History processing implemented; interpretation rules not defined. | Product-owner Rivalry/Enemy/Friend point and stage rules plus replay-derived pair signals. |
+| War Room | Challenge/query foundations exist; legacy automatic opening is no longer part of relationship processing. | Explicit future product decision after relationship rules are approved. |
+| Achievements | Processing scaffolding exists; final catalogue and triggers are not frozen. | Stable match/lifetime statistics and product rules. |
 | Awards and trophies | Direction exists; earning rules remain pending. | Stable match, event, season and lifetime statistics. |
-| Player portraits / playstyle | Direction exists; persistent model is not implemented. | Individual Player Stats and Playstyle Sliders. |
+| Player portraits / playstyle | Slider engine foundation exists; actual identity model is unconfigured. | Product-owner slider definitions, normalized inputs, weights and sample rules. |
 
 ## Other implementation state
 
@@ -98,34 +126,35 @@ Current strengths:
 |---|---|---|
 | Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, authentication mapping and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
 | Results | Submission, administrator resolution, disputes, corrections and revision foundations exist. | Replay-derived automatic result qualification and downstream invalidation. |
-| Processing | Repeat-safe jobs exist for several downstream systems. | Align consumers with the current versioned statistics models. |
-| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data. | Present current Match Statistics, complete replay upload, drafting and production configuration. |
+| Processing | Repeat-safe jobs exist for several downstream systems; Pair History now uses the existing `RIVALRIES` step. | Wire current Match Statistics and Lifetime aggregation into versioned rebuild/storage jobs. |
+| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
 
 ## Immediate priorities
 
 1. Validate the current Match Statistics models against additional real replays and supported match shapes.
-2. Present the current Match Statistics cleanly in the player-facing website.
-3. Complete authenticated replay upload, canonical persistence and automatic statistics processing.
-4. Define and implement Lifetime Stats from the stable match-level outputs.
-5. Define Relationships as a separate statistics/product layer.
-6. Define Individual Player Stats and Playstyle Sliders from stable longitudinal evidence.
-7. Build statistics-dependent leaderboards, matchmaking, achievements, awards and relationship experiences only on versioned inputs.
+2. Wire current Match Statistics into durable backend persistence and the player-facing website.
+3. Wire `AOF_LIFETIME_STATISTICS_V1` to persisted Match Statistics and durable rebuild/storage.
+4. Feed replay-derived directional Match Statistics into `AOF_PAIR_HISTORY_V1` once backend Match Statistics persistence exists.
+5. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
+6. Define Rivalry / Enemy / Friend point rules and stage thresholds.
+7. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
 
 ## Task guidance
 
 - Treat [`CORE-IDENTITY.md`](CORE-IDENTITY.md) as the authority for product vision.
-- Treat [`CURRENT-STATS.md`](CURRENT-STATS.md) as the concise authority for the current player-facing statistics set.
+- Treat [`CURRENT-STATS.md`](CURRENT-STATS.md) as the concise authority for statistics status.
+- Treat [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md) as the authority for the measurement-versus-judgment boundary.
 - Inspect latest `main` before describing behavior as implemented.
 - Keep observed facts, deterministic reconstruction, inferred analysis and league interpretation separate.
-- Keep model/rule versions attached to inferred or reconstructed statistics.
+- Keep model/rule versions attached to inferred, reconstructed and interpreted outputs.
+- Do not introduce default slider weights, relationship points or stage thresholds without explicit product-owner approval.
 - Update this file when a major implementation state or priority changes.
-- Update `CURRENT-STATS.md` whenever a player-facing statistic is added, removed, renamed or changes status.
 
 ## Specialist sources
 
 - [`CURRENT-STATS.md`](CURRENT-STATS.md)
+- [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md)
 - [`../architecture/opening-statistics-v1.md`](../architecture/opening-statistics-v1.md)
 - [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)
 - [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
-- [`../replay-foundation/README.md`](../replay-foundation/README.md)
