@@ -30,6 +30,30 @@
     "counts": {"available_canonical": 13, "inferred_with_confidence": 25, "needs_controlled_fixture": 59, "needs_engine_simulation": 98, "needs_parser_research": 125},
     "metricCount": 320
   },
+  "mapPresence": [
+    {
+      "commandCoveragePercent": 100.0,
+      "enemyBaseFoundAtMs": null,
+      "enemyBaseFoundPlayerId": null,
+      "expansions": 0,
+      "firstRelicTouchAtMs": null,
+      "forwardBuildings": 0,
+      "goldControlSharePercent": null,
+      "modelVersion": "AOF_MAP_PRESENCE_V1",
+      "playerId": 1
+    },
+    {
+      "commandCoveragePercent": 0.0,
+      "enemyBaseFoundAtMs": null,
+      "enemyBaseFoundPlayerId": null,
+      "expansions": 0,
+      "firstRelicTouchAtMs": null,
+      "forwardBuildings": 0,
+      "goldControlSharePercent": null,
+      "modelVersion": "AOF_MAP_PRESENCE_V1",
+      "playerId": 2
+    }
+  ],
   "opening": [
     {
       "castleAgeUpAtMs": null,
@@ -100,5 +124,5 @@
   "scope": {"clock": "sum_of_observed_sync_increments", "decodeCoverageMeaning": "recognized_action_fraction_not_semantic_coverage", "decodeCoveragePercent": 91.667, "observedUntilMs": 100},
   "source": {"canonicalSchemaVersion": "1.1.0", "parserVersion": "mgz-fast/1.0.0", "replaySha256": "b0211f083280b672d371074ba093dcf3631a250543272e97a48ccbfb170711c3"},
   "versions": {"eligibilityRegistryVersion": "AOF_STATISTICS_ELIGIBILITY_V1", "entityCatalogVersion": "AOF_ENTITY_CATALOG_V1_1", "formulaVersion": "AOF_OBSERVED_COMMAND_FORMULAS_V1", "statisticsProjectionVersion": "AOF_CANONICAL_STATISTICS_V1", "statisticsSchemaVersion": "1.0.0"},
-  "warningCodes": ["PARTIAL_DECODE", "HEADER_SEMANTICS_UNQUALIFIED", "RELATION_STATE_UNQUALIFIED", "NO_SOURCE_DELETION", "OBSERVED_INTERVAL_ONLY", "REQUESTS_NOT_OUTCOMES", "ENTITY_LABELS_UNQUALIFIED", "RECORDER_CAMERA_ONLY", "RAIDS_ARE_INFERRED"]
+  "warningCodes": ["PARTIAL_DECODE", "HEADER_SEMANTICS_UNQUALIFIED", "RELATION_STATE_UNQUALIFIED", "NO_SOURCE_DELETION", "OBSERVED_INTERVAL_ONLY", "REQUESTS_NOT_OUTCOMES", "ENTITY_LABELS_UNQUALIFIED", "RECORDER_CAMERA_ONLY", "RAIDS_ARE_INFERRED", "MAP_PRESENCE_IS_INFERRED"]
 }
