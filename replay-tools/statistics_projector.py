@@ -13,6 +13,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from build_order_classifier import classify_build_orders
 from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
 from canonical_run import project_bundle
+from map_presence import project_map_presence
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
 from statistics_registry import build_registry
@@ -56,11 +57,11 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
     action_times: dict[str, list[int]] = defaultdict(list)
     selection_sizes: dict[str, list[int]] = defaultdict(list)
     formation_modes: dict[str, set[str]] = defaultdict(set)
-    raid_action_events: list[dict[str, Any]] = []
+    spatial_action_events: list[dict[str, Any]] = []
     for event in iter_store(directory, manifest["factStore"]):
         if event["sourceOperation"] != "ACTION" or event.get("actorPlayerId") not in slots:
             continue
-        raid_action_events.append(event)
+        spatial_action_events.append(event)
         player = str(event["actorPlayerId"])
         name = event.get("sourceActionName") or "ERROR"
         action_counts[player][name] += 1
@@ -84,13 +85,20 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         catalog=catalog,
         initial_objects=initial_objects,
         build_events=body["buildEvents"],
-        action_events=raid_action_events,
+        action_events=spatial_action_events,
     )
     opening_statistics = project_opening_statistics(
         manifest=manifest,
         body=body,
         catalog=catalog,
         observed_until_ms=body["durationMs"],
+    )
+    map_presence_statistics = project_map_presence(
+        manifest=manifest,
+        catalog=catalog,
+        initial_objects=initial_objects,
+        build_events=body["buildEvents"],
+        action_events=spatial_action_events,
     )
     participants = []
     for participant in manifest["participants"]:
@@ -107,6 +115,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
             "buildOrder": build_orders[player],
             "opening": opening_statistics[player],
             "combat": raid_statistics[player],
+            "mapPresence": map_presence_statistics[player],
             "observedCommands": {
                 "count": sum(counts.values()), "byRawActionName": dict(sorted(counts.items())),
                 "firstAtMs": min(times) if times else None, "lastAtMs": max(times) if times else None,
@@ -134,6 +143,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         {"code": "ENTITY_LABELS_UNQUALIFIED", "message": "Raw IDs are authoritative. Catalog names and role keys are reference labels not qualified against this replay patch or data mods."},
         {"code": "RECORDER_CAMERA_ONLY", "message": "Camera points represent the recording perspective and are not a comparable all-player statistic."},
         {"code": "RAIDS_ARE_INFERRED", "message": "Raid counts are inferred hostile-command episodes inside reconstructed economic zones; they do not imply damage or kills."},
+        {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and building placements; command coverage is not fog-of-war exploration and gold control is not resource gathering."},
     ]
     result = {
         "statisticsSchemaVersion": STATISTICS_SCHEMA_VERSION,
