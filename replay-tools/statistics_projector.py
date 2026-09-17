@@ -13,7 +13,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from build_order_classifier import classify_build_orders
 from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
 from canonical_run import project_bundle
-from map_presence import project_map_presence
+from map_presence_v2 import project_map_presence
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
 from statistics_registry import build_registry
