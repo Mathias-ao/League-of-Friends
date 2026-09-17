@@ -1,9 +1,9 @@
 import {useEffect,useRef,type ReactNode} from 'react';
 import {X,Shield,Swords,Flag,Crown} from 'lucide-react';
 import {Player,type PlayerRecord} from '../domain/league';
-export function Sigil({kind='team',size=28}:{kind?:string;size?:number}){
+export function Sigil({kind='team',size=28,className=''}:{kind?:string;size?:number;className?:string}){
   const Icon=kind==='duel'?Swords:kind==='ffa'?Crown:kind==='flag'?Flag:Shield;
-  return <span className="sigil"><Icon size={size} strokeWidth={1.3}/></span>;
+  return <span className={'sigil '+className}><Icon size={size} strokeWidth={1.3}/></span>;
 }
 export function Avatar({player,large=false}:{player:PlayerRecord;large?:boolean}){
   return <span className={'avatar '+(large?'large':'')} aria-hidden="true">{new Player(player).initials}</span>;
