@@ -43,14 +43,14 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(callableOp
       steamNameNormalized: normalizeSteamName(steamName),
       discordName,
       avatarUrl: null,
-      membershipStatus: "PENDING",
+      membershipStatus: "ACTIVE",
       role: "PLAYER",
       currentPowerRating: null,
       powerRatingGames: 0,
       powerRatingAlgorithmVersion: null,
       provisionalRating: true,
       goldBalance: 0,
-      joinedAt: null,
+      joinedAt: now,
       requestedAt: now,
       createdAt: now,
       updatedAt: now,
@@ -65,6 +65,6 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(callableOp
   return {
     success: true,
     playerId: playerRef.id,
-    membershipStatus: "PENDING",
+    membershipStatus: "ACTIVE",
   };
 });
