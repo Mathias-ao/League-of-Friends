@@ -10,7 +10,7 @@ Purpose: Concise source of truth for player-facing statistics status. Technical 
 |---|---|---|
 | Match Statistics | Active / implemented | Statistics derived from one replayed Game and shown for that match. |
 | Lifetime Stats | Foundation implemented | Neutral cross-match aggregation is implemented; persistence and player-facing presentation are not yet integrated. |
-| Relationships | Foundation implemented; rules pending | Neutral Pair History and a versioned Rivalry/Enemy/Friend rule engine exist. Points and stages are intentionally undefined. |
+| Relationships | Foundation implemented; rules pending | Neutral Pair History is rebuilt by the result pipeline. Rivalry/Enemy/Friend points and stages are intentionally undefined. |
 | Individual Player Stats + Playstyle Sliders | Foundation implemented; rules pending | Versioned slider calculation exists. Slider definitions, normalization, weights and thresholds are intentionally undefined. |
 
 ## Match Statistics
@@ -77,9 +77,9 @@ Map Presence is based on command/building geometry and does not assert fog-of-wa
 
 ## Relationships
 
-`AOF_PAIR_HISTORY_V1` records neutral pair history: encounters, ally/opponent history, results and directional replay-derived interactions.
+`AOF_PAIR_HISTORY_V1` records neutral pair history: encounters, ally/opponent history, results and directional replay-derived interactions. The current result pipeline persists encounter/team/result history; replay-derived directional signals will join this once current Match Statistics are durably available to the Functions backend.
 
-`AOF_RELATIONSHIP_ENGINE_V1` supports independent Rivalry, Enemy and Friend tracks, but returns them unconfigured until an explicit versioned point/stage rule set is supplied.
+`AOF_RELATIONSHIP_ENGINE_V1` supports independent Rivalry, Enemy and Friend tracks, but returns them unconfigured until an explicit versioned point/stage rule set is supplied. The result pipeline does not assign default relationship points or open the War Room from legacy rivalry thresholds.
 
 ## Individual Player Stats + Playstyle Sliders
 
