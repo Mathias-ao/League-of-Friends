@@ -1,6 +1,6 @@
 export type Page = 'season' | 'events' | 'battles' | 'players' | 'war-room' | 'statistics';
 export type Membership = 'SIGNED_OUT' | 'UNLINKED' | 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-export interface PlayerRecord { playerId:string; steamName:string; avatarUrl?:string|null; currentPowerRating?:number|null; provisionalRating?:boolean; leaguePoints?:number; rank?:number; wins?:number|null; losses?:number|null; }
+export interface PlayerRecord { playerId:string; steamName:string; avatarUrl?:string|null; role?:'PLAYER'|'ADMIN'; currentPowerRating?:number|null; provisionalRating?:boolean; leaguePoints?:number; rank?:number; wins?:number|null; losses?:number|null; }
 export class Player {
   constructor(readonly record:PlayerRecord) {}
   get id(){return this.record.playerId;}
@@ -39,6 +39,8 @@ export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playe
 export interface EventDetail {event:EventRecord;viewer:{rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:PlayerRecord[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
 export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];}
+export interface EmperorsFavorPrintable {code:string;emperor:string;serialNumber:number;total:number;printLabel:string;}
+export interface EmperorsFavorBatch {batchId:string;batchName:string;count:number;favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string}|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
 export const emptySnapshot=():LeagueSnapshot=>({membership:'SIGNED_OUT',viewer:null,season:null,enteredSeason:false,hasLeagueHistory:false,standings:[],players:[],events:[],matches:[]});
 export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){
@@ -47,7 +49,7 @@ export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enter
 export interface LeagueRepository {
   readonly mode:'preview'|'live';
   load():Promise<LeagueSnapshot>;signIn():Promise<void>;signOut():Promise<void>;
-  requestMembership(steamName:string,discordName:string):Promise<void>;enterSeason(seasonId:string):Promise<void>;
+  requestMembership(steamName:string,discordName:string,favor:string):Promise<void>;generateEmperorsFavors(batchName:string,count:number):Promise<EmperorsFavorBatch>;enterSeason(seasonId:string):Promise<void>;
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;checkIn(eventId:string):Promise<void>;
   event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;
   dispute(matchId:string,gameId:string,category:string,reason:string):Promise<void>;
