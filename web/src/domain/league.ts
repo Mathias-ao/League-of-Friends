@@ -39,8 +39,8 @@ export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playe
 export interface EventDetail {event:EventRecord;viewer:{rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:PlayerRecord[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
 export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];}
-export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string}|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
-export const emptySnapshot=():LeagueSnapshot=>({membership:'SIGNED_OUT',viewer:null,season:null,enteredSeason:false,hasLeagueHistory:false,standings:[],players:[],events:[],matches:[]});
+export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
+export const emptySnapshot=():LeagueSnapshot=>({membership:'SIGNED_OUT',viewer:null,season:null,emperor:null,enteredSeason:false,hasLeagueHistory:false,standings:[],players:[],events:[],matches:[]});
 export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){
   return snapshot.membership==='ACTIVE'&&(snapshot.enteredSeason||snapshot.hasLeagueHistory);
 }

@@ -22,10 +22,10 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     const member=await this.call<{status:Membership;player:PlayerRecord|null}>('getMyMembership');
     if(member.status!=='ACTIVE')return {...empty,membership:member.status,viewer:member.player};
     const [bootstrap,directory]=await Promise.all([
-      this.call<{viewer:PlayerRecord;activeSeason:LeagueSnapshot['season'];leaderboard:PlayerRecord[];upcomingEvent:EventRecord|null}>('getLeagueBootstrap'),
+      this.call<{viewer:PlayerRecord;activeSeason:LeagueSnapshot['season'];emperor:PlayerRecord|null;leaderboard:PlayerRecord[];upcomingEvent:EventRecord|null}>('getLeagueBootstrap'),
       this.call<{players:PlayerRecord[];events:EventRecord[];matches:LeagueSnapshot['matches'];enteredSeason:boolean;hasLeagueHistory:boolean}>('getPlayerSiteDirectory')
     ]);
-    return {membership:'ACTIVE',viewer:bootstrap.viewer,season:bootstrap.activeSeason,standings:bootstrap.leaderboard,players:directory.players,matches:directory.matches,enteredSeason:directory.enteredSeason,hasLeagueHistory:directory.hasLeagueHistory??false,events:directory.events.map(e=>e.eventId===bootstrap.upcomingEvent?.eventId?{...e,...bootstrap.upcomingEvent}:e)};
+    return {membership:'ACTIVE',viewer:bootstrap.viewer,season:bootstrap.activeSeason,emperor:bootstrap.emperor,standings:bootstrap.leaderboard,players:directory.players,matches:directory.matches,enteredSeason:directory.enteredSeason,hasLeagueHistory:directory.hasLeagueHistory??false,events:directory.events.map(e=>e.eventId===bootstrap.upcomingEvent?.eventId?{...e,...bootstrap.upcomingEvent}:e)};
   }
   async signIn(){await this.ready;await signInWithPopup(this.auth,new GoogleAuthProvider());}
   async signOut(){await signOut(this.auth);}
