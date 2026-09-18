@@ -7,6 +7,7 @@ test('league, season and event entry are distinct; repeat RSVP does not double c
   const repo=new PreviewLeagueRepository(),service=new LeagueService(repo),original=await repo.load();
   await assert.rejects(service.rsvp(original,'E001','YES'),/Join the league/);
   await repo.signIn();
+  await repo.requestMembership('D’Karius','','K7M4Q9');
   await assert.rejects(service.rsvp(await repo.load(),'E001','YES'),/Enter this season/);
   await repo.enterSeason();
   await service.rsvp(await repo.load(),'E001','YES');
@@ -19,6 +20,9 @@ test('brand-new players are gated until season entry, while established players 
   const repo=new PreviewLeagueRepository();
   assert.equal(canBrowseLeague(await repo.load()),false);
   await repo.signIn();
+  assert.equal((await repo.load()).membership,'UNLINKED');
+  await assert.rejects(repo.requestMembership('D’Karius','','AAAAAA'),/invalid|Favor/i);
+  await repo.requestMembership('D’Karius','','K7M4Q9');
   const newPlayer=await repo.load();
   assert.equal(newPlayer.hasLeagueHistory,false);
   assert.equal(canBrowseLeague(newPlayer),false);
@@ -31,7 +35,7 @@ test('brand-new players are gated until season entry, while established players 
   assert.equal(canBrowseLeague({...entered,membership:'SIGNED_OUT'}),false);
 });
 test('preview state is isolated and no replay upload is falsely implemented',async()=>{
-  const repo=new PreviewLeagueRepository();await repo.signIn();await repo.enterSeason();
+  const repo=new PreviewLeagueRepository();await repo.signIn();await repo.requestMembership('D’Karius','','K7M4Q9');await repo.enterSeason();
   const data=await repo.load();data.events[0].confirmedCount=999;
   assert.notEqual((await repo.load()).events[0].confirmedCount,999);
   assert.equal((await new PreviewLeagueRepository().load()).enteredSeason,false);
@@ -63,7 +67,7 @@ test('legacy or unqualified relationship scores never open the War Room',()=>{
 test('a dispute is limited to a participant and sets correction-review state',async()=>{
   const repo=new PreviewLeagueRepository();
   await assert.rejects(repo.dispute('sample-duel','sample-game-1','WRONG_RESULT','Wrong winner'),/participant/);
-  await repo.signIn();await repo.dispute('sample-duel','sample-game-1','WRONG_RESULT','Wrong winner');
+  await repo.signIn();await repo.requestMembership('D’Karius','','K7M4Q9');await repo.dispute('sample-duel','sample-game-1','WRONG_RESULT','Wrong winner');
   const detail=await repo.match('sample-duel');
   assert.equal(detail.games[0].resultDisputeOpen,true);assert.equal(detail.match.status,'DISPUTED');
   await assert.rejects(repo.dispute('sample-duel','sample-game-1','WRONG_RESULT','Wrong winner'),/completed/);
