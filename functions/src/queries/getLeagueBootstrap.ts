@@ -118,7 +118,9 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
     ? leagueStateSnapshot.data() as LeagueStateDocument
     : {};
   const activeSeasonId = leagueState.activeSeasonId ?? null;
-  const currentEmperorPlayerId = leagueState.currentEmperorPlayerId ?? null;
+  const fallbackEmperorPlayerId = [...players.entries()]
+    .find(([, player]) => player.role === "ADMIN" && player.membershipStatus === "ACTIVE")?.[0] ?? null;
+  const currentEmperorPlayerId = leagueState.currentEmperorPlayerId ?? fallbackEmperorPlayerId;
 
   const activity = activitySnapshot.docs.map((document) => {
     const data = document.data() as ActivityDocument;
@@ -150,7 +152,9 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       },
       activeSeason: null,
       upcomingEvent: null,
-      emperor: null,
+      emperor: currentEmperorPlayerId && players.has(currentEmperorPlayerId)
+        ? { ...publicPlayer(currentEmperorPlayerId, players.get(currentEmperorPlayerId)), leaguePoints: 0 }
+        : null,
       leaderboard: [],
       activity,
       warRoom: {
