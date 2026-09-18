@@ -8,6 +8,8 @@
   background:rgba(255,250,232,.12);
 }
 
+/* Season entry is the second threshold after league membership:
+   another carved limestone tablet, but smaller and embedded in the application. */
 .season-access-gate{
   min-height:calc(100svh - var(--stone-nav-height));
   scroll-margin-top:var(--stone-nav-height);
@@ -15,47 +17,95 @@
   place-items:center;
   padding:clamp(46px,8vw,110px) 24px;
   text-align:center;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(197,158,91,.08),transparent 42%),
+    linear-gradient(180deg,#15191b,#101315);
 }
 .season-access-card{
+  isolation:isolate;
+  position:relative;
   width:min(760px,100%);
-  padding:clamp(34px,5vw,64px);
-  border:1px solid #4a4c4f;
-  background:
-    radial-gradient(circle at 50% 0,rgba(219,139,0,.08),transparent 48%),
-    linear-gradient(180deg,#20252a,#181c20);
-  box-shadow:0 20px 70px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035);
+  padding:clamp(38px,5vw,66px);
+  overflow:hidden;
+  border:1px solid rgba(93,72,47,.78);
+  background-color:var(--stone-base);
+  background-image:
+    radial-gradient(ellipse at 15% 18%,rgba(255,250,231,.40) 0 7%,transparent 25%),
+    radial-gradient(ellipse at 84% 72%,rgba(82,61,40,.12) 0 8%,transparent 26%),
+    linear-gradient(108deg,transparent 0 29%,rgba(76,58,40,.10) 29.1%,transparent 29.7% 72%,rgba(255,250,234,.14) 72.2%,transparent 73%),
+    linear-gradient(176deg,#ddcdab 0%,#c4b08a 50%,#d2bd98 100%);
+  box-shadow:
+    0 28px 80px rgba(0,0,0,.42),
+    inset 0 2px rgba(255,255,240,.43),
+    inset 0 -3px rgba(79,59,38,.22);
+}
+.season-access-card:before{
+  content:'';
+  position:absolute;
+  inset:12px;
+  z-index:-1;
+  border:1px solid rgba(99,76,49,.28);
+  box-shadow:inset 0 0 0 1px rgba(255,249,228,.18);
+  pointer-events:none;
+}
+.season-access-card:after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  opacity:.50;
+  pointer-events:none;
+  background-image:
+    linear-gradient(74deg,transparent 0 19%,rgba(77,57,38,.12) 19.12%,transparent 19.5%),
+    linear-gradient(109deg,transparent 0 80%,rgba(77,57,38,.09) 80.1%,transparent 80.45%),
+    radial-gradient(circle at 31% 64%,rgba(75,57,40,.14) 0 1px,transparent 2px),
+    radial-gradient(circle at 68% 28%,rgba(255,255,242,.22) 0 1px,transparent 2px);
+  background-size:auto,auto,41px 37px,47px 43px;
 }
 .season-access-card .sigil{
   width:62px;
   height:72px;
   margin:0 auto 18px;
-  color:#c9a66b;
+  color:#776044;
+  filter:drop-shadow(0 1px rgba(255,248,222,.64)) drop-shadow(0 -1px rgba(64,45,27,.38));
+}
+.season-access-card .eyebrow{
+  color:#796952;
+  text-shadow:0 1px rgba(255,249,230,.72),0 -1px rgba(72,53,34,.28);
 }
 .season-access-card h1{
-  margin:9px 0 16px;
-  font-size:clamp(1.75rem,4vw,2.7rem);
-  color:#eee8dc;
+  margin:10px 0 17px;
+  font-size:clamp(1.85rem,4vw,2.85rem);
+  letter-spacing:.045em;
+  text-transform:uppercase;
+  color:#6c5940;
+  text-shadow:
+    0 2px 1px rgba(255,250,232,.68),
+    0 -2px 1px rgba(72,50,29,.52);
 }
 .season-access-card p{
   max-width:620px;
   margin:0 auto;
+  font-family:Georgia,serif;
   font-size:1rem;
-  color:#bfc3c5;
+  line-height:1.75;
+  color:#6e624f;
+  text-shadow:0 1px rgba(255,249,230,.44);
 }
 .season-access-actions{
   display:flex;
   flex-direction:column;
   align-items:center;
   gap:15px;
-  margin-top:30px;
+  margin-top:31px;
 }
 .season-access-primary{
   min-width:min(100%,420px);
   min-height:58px;
   padding:16px 34px;
-  border:1px solid #ddc08a;
-  background:linear-gradient(#d7b87d,#bd985a);
-  color:#17191b;
+  border:1px solid rgba(80,59,35,.64);
+  background:linear-gradient(180deg,rgba(116,92,57,.18),rgba(74,53,30,.13));
+  color:#6b5436;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -64,23 +114,33 @@
   font-size:1rem;
   letter-spacing:.09em;
   text-transform:uppercase;
-  box-shadow:inset 0 1px rgba(255,255,255,.38),0 8px 24px rgba(0,0,0,.25);
+  box-shadow:
+    inset 0 2px 4px rgba(72,51,28,.28),
+    inset 0 -1px rgba(255,250,230,.42),
+    0 1px rgba(255,250,230,.28);
+  text-shadow:0 1px rgba(255,245,216,.62),0 -1px rgba(56,37,19,.34);
 }
-.season-access-primary:hover:not(:disabled){
-  color:#111315;
-  background:linear-gradient(#e4ca98,#cba86d);
+.season-access-primary:hover:not(:disabled),
+.season-access-primary:focus-visible{
+  color:#8a5a1f;
+  text-shadow:
+    0 1px rgba(255,245,216,.75),
+    0 -1px rgba(72,42,10,.50),
+    0 0 4px rgba(213,145,44,.48),
+    0 0 13px rgba(197,113,20,.22);
 }
 .season-access-note{
-  font-size:.78rem!important;
+  font-family:Inter,Arial,sans-serif!important;
+  font-size:.76rem!important;
   letter-spacing:.08em;
   text-transform:uppercase;
-  color:#8f969c!important;
+  color:#7f715c!important;
 }
 .season-access-status{
   margin-top:28px;
   padding-top:22px;
-  border-top:1px solid #353a3e;
-  color:#c8b27f;
+  border-top:1px solid rgba(93,71,47,.28);
+  color:#715d43;
   font-size:.84rem;
   letter-spacing:.07em;
   text-transform:uppercase;
@@ -88,6 +148,13 @@
 
 @media(max-width:620px){
   .season-access-gate{padding:34px 14px 60px}
-  .season-access-card{padding:32px 20px}
+  .season-access-card{padding:38px 21px 34px}
+  .season-access-card:before{inset:8px}
   .season-access-primary{width:100%;min-width:0}
+}
+
+@media(forced-colors:active){
+  .season-access-card{background:Canvas;color:CanvasText;border:2px solid CanvasText}
+  .season-access-card h1,.season-access-card p,.season-access-card .eyebrow,.season-access-note{color:CanvasText!important;text-shadow:none}
+  .season-access-primary{background:ButtonFace;color:ButtonText;border:1px solid ButtonText;text-shadow:none}
 }
