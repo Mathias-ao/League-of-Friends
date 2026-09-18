@@ -20,7 +20,7 @@ const records=new Map([
 const snapshot=path=>({id:path.split('/').at(-1),exists:records.has(path),data:()=>records.get(path),ref:reference(path)});
 function reference(path,isCollection=false){
   return {
-    path,isCollection,
+    path,id:path.split('/').at(-1),isCollection,
     doc:id=>reference(path+'/'+(id??'auto-'+(++autoId))),
     get:async()=>isCollection?query(path):snapshot(path),
     collection:id=>reference(path+'/'+id,true)
