@@ -8,13 +8,16 @@ Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.
 
 The active workstream is the player-facing statistics stack and its integration into the website.
 
-The replay pipeline produces Match Statistics across **Opening, Economy, Military, Map Presence and Execution**. A longitudinal foundation now sits above that match layer: neutral Lifetime Statistics and Pair History can be built from versioned match outputs, while Playstyle Sliders and Relationships are explicit rule-driven interpretation systems.
+The replay pipeline produces replay-derived statistics across **Opening, Economy, Military, Map Presence and Execution**. Technical code/docs still use Match/Game terminology, while the player-facing statistics hierarchy is now **Battle → Event → Player → Season**. Lifetime aggregation remains underneath but is intentionally hidden from the Season I UI. Player currencies, Playstyle Sliders and pair Relationships remain separate rule-driven interpretation systems.
 
 | Statistics section | State |
 |---|---|
-| Match Statistics | Active / implemented |
-| Lifetime Stats | Aggregation foundation implemented; persistence/presentation pending |
-| Relationships | Pair History + configurable engine implemented; result pipeline persists neutral encounter/team/result history; points/stages intentionally unconfigured |
+| Battle Statistics | Replay/statistics foundation implemented; Battle presentation pending |
+| Event Statistics | Product scope and 4–6 highlight direction defined; aggregation/presentation pending |
+| Season Statistics | Product scope and complete record-book direction defined; aggregation/presentation pending |
+| Lifetime Stats | Aggregation foundation implemented; intentionally hidden from Season I UI |
+| Player currencies | Gallantry/Treachery/Chivalry boundary defined; earning rules intentionally unconfigured |
+| Pair relationships | Pair History foundation implemented; current engine uses superseded Enemy/Friend semantics and needs migration to Rivalry/Hostility/Bond |
 | Individual Player Stats + Playstyle Sliders | Configurable engine implemented; slider rules/normalization intentionally unconfigured |
 
 [`CURRENT-STATS.md`](CURRENT-STATS.md) is the concise source of truth for statistics status. [`../design/statistics-experience.md`](../design/statistics-experience.md) defines the Battle/Event/Player/Season presentation contract. [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md) defines the separation between measurement and product judgment.
@@ -23,10 +26,13 @@ The replay pipeline produces Match Statistics across **Opening, Economy, Militar
 
 The intended flow is:
 
-**`.aoe2record` → canonical replay evidence → Match Statistics → neutral longitudinal facts → configured interpretation systems**
+**`.aoe2record` → canonical replay evidence → Game/Battle measurements → Event/Player/Season aggregation → configured interpretation systems**
 
-- Match Statistics describe one replayed Game using observed, reconstructed and inferred evidence.
-- Lifetime Statistics aggregate eligible match outputs without assigning a player identity label or points.
+- One replay produces Game-level evidence; player-facing Battle Statistics preserve Game provenance when a Battle contains multiple Games.
+- Event Statistics aggregate an Event’s Battles and curate 4–6 post-Event distinctions.
+- Player Statistics aggregate Season evidence and eventually feed evidence-based playstyle sliders.
+- Season Statistics describe the league as a whole and expose the complete approved record catalogue.
+- Lifetime Statistics continue underneath but remain hidden in Season I.
 - Pair History aggregates neutral player-to-player history and directional interaction evidence.
 - Playstyle Sliders only produce scores from an explicit versioned rule set supplied by the product owner.
 - Gallantry / Treachery / Chivalry are future player-level point currencies with separate earning rules.
@@ -93,7 +99,7 @@ No default slider catalogue, weights, thresholds or normalization population are
 
 The existing `RIVALRIES` processing step now rebuilds and persists neutral Pair History in the `relationships` collection. Today that persisted history uses encounter/team/result evidence because the current Functions backend does not yet receive the replay-derived directional Match Statistics required for raids/forward pressure. Those signals are explicit future inputs rather than guessed data.
 
-With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no points or stages. The legacy automatic rivalry threshold no longer drives this processing step, and it no longer opens the War Room. The older `RIVALRY_ENGINE_V1` code is retained only for compatibility and is not authoritative for the new three-track relationship model.
+With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRIEND` tracks remain `UNCONFIGURED`. Product direction now separates player currencies (Gallantry / Treachery / Chivalry) from pair tracks (Rivalry / Hostility / Bond), so a migrated or successor engine is required before final exposure. The legacy automatic rivalry threshold no longer drives this processing step, and it no longer opens the War Room. The older `RIVALRY_ENGINE_V1` code is retained only for compatibility.
 
 ## Current limitations
 
@@ -107,7 +113,7 @@ With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no
 - Authenticated replay upload, durable remote canonical persistence and complete backend ingestion remain unfinished.
 - Lifetime Statistics persistence and Playstyle presentation are not yet wired end to end.
 - Pair History currently persists match/team/result history but not replay-derived directional interaction signals.
-- Playstyle normalization, slider definitions/weights and Relationship point/stage rules are intentionally undecided.
+- Playstyle normalization and slider definitions/weights remain undecided. Gallantry/Treachery/Chivalry earning rules and Rivalry/Hostility/Bond derivation/stages are also intentionally undecided.
 
 ## Systems pending broader statistics work
 
@@ -136,9 +142,10 @@ With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no
 2. Wire current Match Statistics into durable backend persistence and the player-facing website.
 3. Wire `AOF_LIFETIME_STATISTICS_V1` to persisted Match Statistics and durable rebuild/storage.
 4. Feed replay-derived directional Match Statistics into `AOF_PAIR_HISTORY_V1` once backend Match Statistics persistence exists.
-5. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
-6. Define Gallantry / Treachery / Chivalry earning rules separately from Rivalry / Hostility / Bond relationship derivation, stages and War Room visibility.
-7. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
+5. Build the Battle/Event/Player/Season presentation around the shared five-category vocabulary, including up to 3 curated Battle feats, 4–6 Event distinctions and the complete Season record book.
+6. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
+7. Define Gallantry / Treachery / Chivalry earning rules separately from Rivalry / Hostility / Bond relationship derivation, stages and War Room visibility.
+8. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
 
 ## Task guidance
 
