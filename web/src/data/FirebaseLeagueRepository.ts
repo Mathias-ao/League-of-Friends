@@ -1,7 +1,7 @@
 import {initializeApp} from 'firebase/app';
 import {getAuth,GoogleAuthProvider,browserLocalPersistence,setPersistence,signInWithPopup,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
-import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
+import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -29,7 +29,8 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   }
   async signIn(){await this.ready;await signInWithPopup(this.auth,new GoogleAuthProvider());}
   async signOut(){await signOut(this.auth);}
-  async requestMembership(steamName:string,discordName:string){await this.call('requestLeagueMembership',{steamName,discordName});}
+  async requestMembership(steamName:string,discordName:string,favor:string){await this.call('requestLeagueMembership',{steamName,discordName,favor});}
+  generateEmperorsFavors(batchName:string,count:number){return this.call<EmperorsFavorBatch>('adminGenerateEmperorsFavors',{batchName,count});}
   async enterSeason(seasonId:string){await this.call('enterSeason',{seasonId});}
   async rsvp(eventId:string,rsvp:'YES'|'NO'){await this.call('setEventRsvp',{eventId,rsvp});}
   async checkIn(eventId:string){await this.call('checkInToEvent',{eventId});}
