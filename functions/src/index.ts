@@ -4,6 +4,7 @@ import { callableOptions } from "./config/runtime.js";
 
 export { bootstrapEmulatorAdmin } from "./dev/bootstrapEmulatorAdmin.js";
 export { requestLeagueMembership } from "./commands/players/requestMembership.js";
+export { adminGenerateEmperorsFavors } from "./commands/admin/generateEmperorsFavors.js";
 export { adminSetMembershipStatus } from "./commands/players/setMembershipStatus.js";
 export { adminSetPowerRatingConfig } from "./commands/admin/setPowerRatingConfig.js";
 export { adminSetReplayAnalysisConfig } from "./commands/admin/setReplayAnalysisConfig.js";
