@@ -6,7 +6,7 @@ import {SeasonView,EventsView,BattlesView,PlayersView,WarRoomView,StatisticsView
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 
 test('all six sections and three detail surfaces render representative player data',async()=>{
-  const repository=new PreviewLeagueRepository();await repository.signIn();
+  const repository=new PreviewLeagueRepository();await repository.signIn();await repository.requestMembership('D’Karius','','K7M4Q9');
   const snapshot=await repository.load();
   const props={repository,snapshot,preview:true,busy:false,openEvent:()=>{},openMatch:()=>{},openPlayer:()=>{},act:async()=>true,enter:()=>{},navigate:()=>{}};
   const nodes=[
