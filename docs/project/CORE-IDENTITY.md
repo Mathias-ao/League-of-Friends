@@ -1,6 +1,6 @@
 # Age of Friends — Core Identity & Philosophy
 
-Status date: 11 September 2026  
+Status date: 18 September 2026  
 Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development
 
 ## 1. How to use this file
@@ -79,21 +79,17 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 
 ### Player relationships
 
-Relationships are persistent histories between players. They develop through three separate, non-exclusive tracks rather than one blended relationship score. Two players may therefore become both close friends and fierce rivals.
+Relationships are persistent histories between two players. They develop through three separate, non-exclusive pair tracks rather than one blended relationship score:
 
-Rivalry: Friction → Competing → Rivalry → Nemesis.
-Enemy: Grudge → Bad Blood → Enemy → Vendetta → Blood Feud → Internecine Strife.
-Friend: Friendly → Respect → Honored → Trusted Friend → Blood Brothers.
+- **Rivalry**
+- **Hostility**
+- **Bond**
 
-Enemy and Friend labels, progression thresholds and the Friend-track reward remain under exploration.
+The exact stages, thresholds and visibility rules for these tracks remain under design. A future War Room experience may reveal escalated relationship state and relationship progression.
 
-Match outcomes and replay evidence contribute through three behavioural axes:
+Separate from those pair tracks, **Gallantry, Treachery and Chivalry are player-level point currencies** earned from tracked actions under a future explicit rule set. They do not belong to a player pair and they are not aliases for Rivalry, Hostility or Bond. For example, raids are intended candidates for Gallantry and Treachery rewards, while meaningful defensive/ally-support actions are intended candidates for Chivalry; exact actions and values are not yet approved.
 
-Gallantry → Rivalry: recurring, reciprocal competition, including balanced results, mutual aggression, rematches and contested battles.
-Treachery → Enemy: concentrated or asymmetric hostility, including focused attacks, diplomacy reversals and repeatedly targeting the same player.
-Chivalry → Friend: demonstrated cooperation, including tribute, reinforcements, defensive assistance and sustained mutual support.
-
-Reaching the third stage of Rivalry or Enemy unlocks the War Room for that relationship. Progression must remain traceable to match evidence and recalculable as the scoring rules improve.
+Relationship progression and player point awards must remain traceable to evidence and recalculable as their versioned rules improve. The current relationship engine still reflects the older Rivalry / Enemy / Friend model and must be migrated/versioned before it becomes the final player-facing relationship system.
 
 ### Player portraits
 

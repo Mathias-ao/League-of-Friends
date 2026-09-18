@@ -19,7 +19,7 @@ Implemented foundations include:
 - derived replay statistics and Match Analysis through V1.4;
 - player-facing brand, Season I and Event I content.
 
-The normal player upload flow, permanent replay artifact storage, complete extraction qualification and a user-facing web client are not yet implemented end to end. The current rivalry code also predates the locked three-track Rivalry / Enemy / Friend direction.
+The normal player upload flow, permanent replay artifact storage, complete extraction qualification and a user-facing web client are not yet implemented end to end. The current relationship engine also predates the latest split between player currencies (Gallantry / Treachery / Chivalry) and pair tracks (Rivalry / Hostility / Bond).
 
 ## Start here
 
@@ -31,6 +31,7 @@ Every task should begin with the latest `main` branch and these sources:
 | [`docs/project/CURRENT-STATE.md`](docs/project/CURRENT-STATE.md) | Implemented state, known gaps, open decisions and routing for the next task. |
 | Current code and configuration | Implemented behavior. Code outranks a stale implementation description. |
 | [`docs/architecture/`](docs/architecture/) | Firestore, statistics and replay extraction contracts. |
+| [`docs/design/statistics-experience.md`](docs/design/statistics-experience.md) | Player-facing Battle/Event/Player/Season statistics structure, records, Economy presentation and relationship-system boundaries. |
 | [`docs/replay-foundation/`](docs/replay-foundation/) | Replay research, CanonicalReplay schema pointer and TownBell capability traceability. |
 | [`branding/site.json`](branding/site.json), [`seasons/`](seasons/), [`events/`](events/) | Player-facing brand and persisted season/event content. |
 
@@ -47,7 +48,7 @@ The authority order and fresh-task procedure are defined in the continuity file.
 - Results normally become final directly and retain a small dispute option. Only one active result contributes.
 - Authentication UID, durable league `playerId`, external profile ID, replay slot and object instance ID are different identities.
 - League Points, War Room Points and Gold are separate systems.
-- Relationships are three tracks: Rivalry, Enemy and Friend. Level 3 Rivalry or Enemy unlocks the War Room; Friend rewards remain unresolved.
+- Player relationship currencies are Gallantry, Treachery and Chivalry; pair relationship tracks are separately Rivalry, Hostility and Bond. Their earning/progression rules are intentionally not yet frozen, and the current relationship engine requires migration before final exposure.
 - Player portraits reflect sustained production commitment across recent and lifetime evidence, with confidence and hysteresis.
 
 ## Current competition

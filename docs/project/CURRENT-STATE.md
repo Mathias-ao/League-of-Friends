@@ -1,6 +1,6 @@
 # Age of Friends — Current State
 
-Last reviewed: 17 September 2026
+Last reviewed: 18 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
@@ -17,7 +17,7 @@ The replay pipeline produces Match Statistics across **Opening, Economy, Militar
 | Relationships | Pair History + configurable engine implemented; result pipeline persists neutral encounter/team/result history; points/stages intentionally unconfigured |
 | Individual Player Stats + Playstyle Sliders | Configurable engine implemented; slider rules/normalization intentionally unconfigured |
 
-[`CURRENT-STATS.md`](CURRENT-STATS.md) is the concise source of truth for statistics status. [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md) defines the separation between measurement and product judgment.
+[`CURRENT-STATS.md`](CURRENT-STATS.md) is the concise source of truth for statistics status. [`../design/statistics-experience.md`](../design/statistics-experience.md) defines the Battle/Event/Player/Season presentation contract. [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md) defines the separation between measurement and product judgment.
 
 ## Statistics architecture
 
@@ -29,7 +29,8 @@ The intended flow is:
 - Lifetime Statistics aggregate eligible match outputs without assigning a player identity label or points.
 - Pair History aggregates neutral player-to-player history and directional interaction evidence.
 - Playstyle Sliders only produce scores from an explicit versioned rule set supplied by the product owner.
-- Rivalry / Enemy / Friend only produce points and stages from an explicit versioned relationship rule set supplied by the product owner.
+- Gallantry / Treachery / Chivalry are future player-level point currencies with separate earning rules.
+- Rivalry / Hostility / Bond are future pair relationship tracks derived separately from the player currencies.
 - Higher layers should consume versioned Match Statistics and neutral league context; they should not independently reinterpret raw replay files.
 
 ## Match and competition structure
@@ -88,7 +89,7 @@ No default slider catalogue, weights, thresholds or normalization population are
 `functions/src/engines/relationshipEngine.ts` implements:
 
 - `AOF_PAIR_HISTORY_V1` — neutral pair history including encounters, allied/opponent history, results and directional replay-derived signals.
-- `AOF_RELATIONSHIP_ENGINE_V1` — configurable independent Rivalry, Enemy and Friend tracks.
+- `AOF_RELATIONSHIP_ENGINE_V1` — currently implements the older Rivalry / Enemy / Friend track model and must be migrated/versioned for the newer player-currency plus Rivalry / Hostility / Bond product model.
 
 The existing `RIVALRIES` processing step now rebuilds and persists neutral Pair History in the `relationships` collection. Today that persisted history uses encounter/team/result evidence because the current Functions backend does not yet receive the replay-derived directional Match Statistics required for raids/forward pressure. Those signals are explicit future inputs rather than guessed data.
 
@@ -114,7 +115,7 @@ With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no
 |---|---|---|
 | Leaderboards and ladder | Foundations exist; final player-facing boards are incomplete. | Lifetime/rating definitions and presentation. |
 | Matchmaking | Match planning exists; statistics-informed matchmaking is incomplete. | Rating and persistent player statistics. |
-| Relationships | Neutral Pair History processing implemented; interpretation rules not defined. | Product-owner Rivalry/Enemy/Friend point and stage rules plus replay-derived pair signals. |
+| Relationships | Neutral Pair History processing implemented; current engine semantics predate the latest product split. | Define Gallantry/Treachery/Chivalry earning rules separately from Rivalry/Hostility/Bond derivation/stages and migrate the engine. |
 | War Room | Challenge/query foundations exist; legacy automatic opening is no longer part of relationship processing. | Explicit future product decision after relationship rules are approved. |
 | Achievements | Processing scaffolding exists; final catalogue and triggers are not frozen. | Stable match/lifetime statistics and product rules. |
 | Awards and trophies | Direction exists; earning rules remain pending. | Stable match, event, season and lifetime statistics. |
@@ -136,7 +137,7 @@ With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no
 3. Wire `AOF_LIFETIME_STATISTICS_V1` to persisted Match Statistics and durable rebuild/storage.
 4. Feed replay-derived directional Match Statistics into `AOF_PAIR_HISTORY_V1` once backend Match Statistics persistence exists.
 5. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
-6. Define Rivalry / Enemy / Friend point rules and stage thresholds.
+6. Define Gallantry / Treachery / Chivalry earning rules separately from Rivalry / Hostility / Bond relationship derivation, stages and War Room visibility.
 7. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
 
 ## Task guidance
@@ -153,6 +154,7 @@ With no explicit relationship rule set, all tracks remain `UNCONFIGURED` with no
 ## Specialist sources
 
 - [`CURRENT-STATS.md`](CURRENT-STATS.md)
+- [`../design/statistics-experience.md`](../design/statistics-experience.md)
 - [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md)
 - [`../architecture/opening-statistics-v1.md`](../architecture/opening-statistics-v1.md)
 - [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)

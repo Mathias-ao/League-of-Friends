@@ -15,7 +15,8 @@ Keep replay measurement separate from product judgment.
      -> Pair History
   -> configured interpretation systems
      -> Player Identity / Playstyle Sliders
-     -> Relationships: Rivalry / Enemy / Friend
+     -> Player currencies: Gallantry / Treachery / Chivalry
+     -> Pair relationships: Rivalry / Hostility / Bond
 ```
 
 Match Statistics remain the primary statistical source. Higher layers may also consume neutral league context such as results, teams, season/event context and encounter history. They must not independently reinterpret the raw replay.
@@ -82,30 +83,29 @@ Signals retain their source model versions.
 
 Pair History answers **what has happened between the players**, not what the relationship means.
 
-## 4. Relationships
+## 4. Player currencies and pair relationships
+
+### Product direction
+
+Two distinct rule-driven systems now sit above neutral replay/Pair History evidence.
+
+**Player currencies:** Gallantry, Treachery and Chivalry belong to the player and are intended to be earned from tracked actions under a future explicit versioned rule set. Raid actions are intended candidates for Gallantry and Treachery; meaningful ally defense/support is an intended candidate for Chivalry. The exact action catalogue, values, caps and balancing rules are not configured.
+
+**Pair relationship tracks:** Rivalry, Hostility and Bond belong to the persistent relationship between two players. They are separate from the player currencies and are not simple aliases for those balances. Their inputs, stages, thresholds and visibility rules are not configured.
+
+Pair History remains the neutral evidence/history layer beneath the pair interpretation.
+
+### Current implementation
 
 Implementation: `functions/src/engines/relationshipEngine.ts`
 
 Version: `AOF_RELATIONSHIP_ENGINE_V1`
 
-The relationship engine supports three independent tracks:
+The current engine predates the product split above. It still exposes `RIVALRY`, `ENEMY` and `FRIEND` and models points/stages directly on those tracks.
 
-- `RIVALRY`
-- `ENEMY`
-- `FRIEND`
+No rule set is currently configured, so those old tracks remain `UNCONFIGURED`. Before final player-facing relationship behavior is implemented, this engine must be migrated or replaced by a versioned successor that separates player currencies from Rivalry / Hostility / Bond pair progression.
 
-The engine converts Pair History metrics into points and stages only when supplied an explicit versioned `RelationshipRuleSet`.
-
-A relationship rule set defines:
-
-- which pair-history metric contributes to which track;
-- points per unit;
-- optional contribution caps;
-- stage ids and thresholds.
-
-There is **no default relationship point system and no default stage system**. Without a configured rule set each track is returned as `UNCONFIGURED` with `points: null` and `stageId: null`.
-
-This intentionally supersedes the older `RIVALRY_ENGINE_V1` direction for future product behavior. The older engine may remain temporarily for compatibility but is not authoritative for the new relationship model.
+The older `RIVALRY_ENGINE_V1` may remain temporarily for compatibility but is not authoritative for future product behavior.
 
 ## Ownership boundary
 
@@ -123,8 +123,9 @@ This intentionally supersedes the older `RIVALRY_ENGINE_V1` direction for future
 - slider endpoint labels;
 - normalized inputs and comparison population;
 - slider weights and minimum samples;
-- Relationship point rules;
-- Rivalry / Enemy / Friend stage thresholds;
+- Gallantry / Treachery / Chivalry earning rules;
+- Rivalry / Hostility / Bond derivation rules and stage thresholds;
+- relationship visibility and War Room progression rules;
 - whether and how these systems interact with league points, achievements, War Room or other product systems.
 
 ## Versioning rule

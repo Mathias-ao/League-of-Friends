@@ -1,21 +1,24 @@
 # Age of Friends — Current Statistics
 
-Last reviewed: 17 September 2026
+Last reviewed: 18 September 2026
 
-Purpose: Concise source of truth for player-facing statistics status. Technical definitions and evidence limits live in the versioned architecture/model documents.
+Purpose: Concise source of truth for player-facing statistics status. Technical definitions and evidence limits live in the versioned architecture/model documents. The player-facing scope and presentation contract lives in [`../design/statistics-experience.md`](../design/statistics-experience.md).
 
 ## Statistics structure
 
 | Section | Status | Scope |
 |---|---|---|
-| Match Statistics | Active / implemented | Statistics derived from one replayed Game and shown for that match. |
-| Lifetime Stats | Foundation implemented | Neutral cross-match aggregation is implemented; persistence and player-facing presentation are not yet integrated. |
-| Relationships | Foundation implemented; rules pending | Neutral Pair History is rebuilt by the result pipeline. Rivalry/Enemy/Friend points and stages are intentionally undefined. |
+| Battle Statistics | Replay statistics implemented; player-facing Battle presentation pending | What happened in one Battle; preserve Game provenance if the Battle contains multiple Games. |
+| Event Statistics | Product direction defined; aggregation/presentation pending | What shaped an Event across all of its Battles; 4–6 curated distinctions after completion. |
+| Season Statistics | Product direction defined; aggregation/presentation pending | League-wide Season statistics and the complete approved Season record book; main nav label stays **Statistics**. |
+| Lifetime Stats | Foundation implemented | Continue aggregating underneath; keep hidden from the Season I UI and activate when Season II makes all-time distinct. |
+| Player currencies | Product boundary defined; rules pending | Gallantry, Treachery and Chivalry belong to the player and are earned from tracked actions under future rules. |
+| Pair relationships | Pair History foundation implemented; current engine needs migration | Rivalry, Hostility and Bond belong to the relationship between two players and remain partly hidden. |
 | Individual Player Stats + Playstyle Sliders | Foundation implemented; rules pending | Versioned slider calculation exists. Slider definitions, normalization, weights and thresholds are intentionally undefined. |
 
-## Match Statistics
+## Battle Statistics
 
-Match Statistics are grouped into five player-facing categories.
+Battle Statistics are the player-facing detailed record. The underlying replay models remain grouped into five shared categories that should also recur at Event, Player and Season scope.
 
 ### Opening
 
@@ -33,10 +36,12 @@ Match Statistics are grouped into five player-facing categories.
 
 ### Economy
 
-- Resource commitment: Food, Wood, Gold, Stone and total.
-- Resource commitment by age: Dark, Feudal, Castle and Imperial.
+- Resource Commitment: Food, Wood, Gold, Stone and total.
+- Resource Commitment by age: Dark, Feudal, Castle and Imperial, plus Unknown when the model cannot support age assignment.
 
-Resource commitment is a reconstructed estimate from priced queue requests, research requests, building placements and wall tiles; it is not exact engine spend.
+Resource Commitment is a reconstructed estimate from priced queue requests, research requests, building placements and wall tiles; it is not exact resources collected or exact engine spend.
+
+Launch presentation should start with familiar numerical tables. A restrained **★** may mark the largest value in a comparison; it means largest recorded commitment, not “best”. Commitment by age should also be shown numerically. Charts are optional later rather than required for launch.
 
 ### Military
 
@@ -73,13 +78,19 @@ Map Presence is based on command/building geometry and does not assert fog-of-wa
 
 ## Lifetime Stats
 
-`AOF_LIFETIME_STATISTICS_V1` aggregates eligible Match Statistics without assigning player identity or points. It covers the current Opening, Economy, Military, Map Presence and Execution outputs, retaining sample counts and record provenance.
+`AOF_LIFETIME_STATISTICS_V1` aggregates eligible statistics without assigning player identity or points. It covers the current Opening, Economy, Military, Map Presence and Execution outputs, retaining sample counts and record provenance.
 
-## Relationships
+Lifetime remains active underneath the data model during Season I but is intentionally shelved in the player-facing UI until Season II.
 
-`AOF_PAIR_HISTORY_V1` records neutral pair history: encounters, ally/opponent history, results and directional replay-derived interactions. The current result pipeline persists encounter/team/result history; replay-derived directional signals will join this once current Match Statistics are durably available to the Functions backend.
+## Player currencies and pair relationships
 
-`AOF_RELATIONSHIP_ENGINE_V1` supports independent Rivalry, Enemy and Friend tracks, but returns them unconfigured until an explicit versioned point/stage rule set is supplied. The result pipeline does not assign default relationship points or open the War Room from legacy rivalry thresholds.
+**Gallantry, Treachery and Chivalry belong to the player.** They will be awarded from tracked actions under an explicit future rule set. Raids are intended candidates for Gallantry and Treachery; meaningful ally defense/support is an intended candidate for Chivalry. Exact earning rules remain unspecified.
+
+`AOF_PAIR_HISTORY_V1` records neutral pair history: encounters, ally/opponent history, results and directional replay-derived interactions. The current result pipeline persists encounter/team/result history; replay-derived directional signals will join this once Battle Statistics are durably available to the Functions backend.
+
+**Rivalry, Hostility and Bond belong to the relationship between two players.** They are separate from the player currencies and remain partly hidden. A future War Room may reveal escalated relationship state and progression.
+
+The existing `AOF_RELATIONSHIP_ENGINE_V1` still uses the older `RIVALRY / ENEMY / FRIEND` identifiers and direct track points. That implementation predates the latest product direction and must be migrated or versioned before final relationship behavior is exposed.
 
 ## Individual Player Stats + Playstyle Sliders
 
@@ -101,4 +112,4 @@ Current models include:
 - `AOF_PLAYSTYLE_ENGINE_V1`
 - `AOF_RELATIONSHIP_ENGINE_V1`
 
-All statistics and interpretations must retain their evidence/model/rule versions. Match measurement is separated from player-identity and relationship judgment.
+All statistics and interpretations must retain their evidence/model/rule versions. Battle measurement, player currencies, player identity and pair relationship interpretation are separate layers.
