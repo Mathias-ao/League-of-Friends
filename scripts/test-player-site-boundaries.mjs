@@ -55,10 +55,12 @@ const firstFavor=batch.favors[0].code;
 const firstFingerprint=fingerprintEmperorsFavor(firstFavor,process.env.EMPERORS_FAVOR_HMAC_KEY);
 assert.equal(records.get('emperorFavors/'+firstFingerprint).status,'UNUSED');
 
-await requestLeagueMembership.run(request({steamName:'New Banner',discordName:'new-banner',favor:firstFavor},'account-b'));
-const newLink=records.get('authLinks/account-b');
-assert.ok(newLink?.playerId);
-assert.equal(records.get('players/'+newLink.playerId).membershipStatus,'ACTIVE');
+const joined=await requestLeagueMembership.run(request({steamName:'New Banner',discordName:'new-banner',favor:firstFavor},'account-b'));
+assert.equal(joined.membershipStatus,'ACTIVE');
+const joinedMembership=await getMyMembership.run(request({},'account-b'));
+assert.equal(joinedMembership.status,'ACTIVE');
+assert.equal(joinedMembership.player.playerId,joined.playerId);
+assert.equal(records.get('players/'+joined.playerId).membershipStatus,'ACTIVE');
 assert.equal(records.get('emperorFavors/'+firstFingerprint).status,'REDEEMED');
 await assert.rejects(
   requestLeagueMembership.run(request({steamName:'Second Claim',favor:firstFavor},'account-c')),
