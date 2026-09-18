@@ -16,6 +16,14 @@ test('league, season and event entry are distinct; repeat RSVP does not double c
   await repo.rsvp('E001','NO');
   assert.equal((await repo.event('E001')).signup.confirmed?.length,original.events[0].confirmedCount);
 });
+test('the Emperor is separate from the mutable player ladder in preview state',async()=>{
+  const repo=new PreviewLeagueRepository();await repo.signIn();await repo.enterSeason();
+  const state=await repo.load();
+  assert.equal(state.emperor?.playerId,'sample-you');
+  assert.equal(state.viewer?.playerId,state.emperor?.playerId);
+  assert.equal(state.standings.some(player=>player.playerId===state.emperor?.playerId),false);
+  assert.deepEqual(state.standings.map(player=>player.rank),[1,2,3,4,5]);
+});
 test('brand-new players are gated until season entry, while established players retain browsing access',async()=>{
   const repo=new PreviewLeagueRepository();
   assert.equal(canBrowseLeague(await repo.load()),false);

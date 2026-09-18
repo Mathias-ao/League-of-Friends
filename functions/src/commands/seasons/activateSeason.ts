@@ -66,7 +66,7 @@ export const adminActivateSeason = onCall<ActivateSeasonInput>(callableOptions, 
       {
         activeSeasonId: seasonId,
         featuredEventId: existingLeagueState?.featuredEventId ?? null,
-        currentEmperorPlayerId: existingLeagueState?.currentEmperorPlayerId ?? null,
+        currentEmperorPlayerId: existingLeagueState?.currentEmperorPlayerId ?? actor.playerId,
         warRoom: {
           seasonId,
           status: "CLOSED",

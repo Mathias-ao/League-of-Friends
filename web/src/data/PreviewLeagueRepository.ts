@@ -5,29 +5,38 @@ export class PreviewLeagueRepository implements LeagueRepository {
   readonly mode='preview' as const;
   private listeners=new Set<()=>void>();
   private state:LeagueSnapshot={
-    membership:'SIGNED_OUT',viewer:null,enteredSeason:false,hasLeagueHistory:false,season:{seasonId:'S001',name:'The Fiefdom of Bad Neighbors',status:'ACTIVE'},
+    membership:'SIGNED_OUT',viewer:null,enteredSeason:false,hasLeagueHistory:false,season:{seasonId:'S001',name:'The Fiefdom of Bad Neighbors',status:'ACTIVE',currentEmperorPlayerId:'sample-you'},
+    emperor:{playerId:'sample-you',steamName:'D’Karius',leaguePoints:27,wins:6,losses:4},
     standings:[
       {playerId:'sample-ragnar',steamName:'Ragnar',leaguePoints:41,rank:1,wins:14,losses:3},
       {playerId:'sample-steve',steamName:'Steve',leaguePoints:35,rank:2,wins:10,losses:6},
       {playerId:'sample-baguette',steamName:'Lord Baguette',leaguePoints:31,rank:3,wins:9,losses:7},
       {playerId:'sample-lancelot',steamName:'Sir Lancelot',leaguePoints:29,rank:4,wins:8,losses:8},
-      {playerId:'sample-you',steamName:'D’Karius',leaguePoints:27,rank:5,wins:6,losses:4},
-      {playerId:'sample-mbl',steamName:'MBL',leaguePoints:19,rank:6,wins:6,losses:9}
+      {playerId:'sample-mbl',steamName:'MBL',leaguePoints:19,rank:5,wins:6,losses:9}
     ],players:[],matches:[],
     events:[{eventId:'E001',seasonId:'S001',title:lombardia.display.title,description:lombardia.story.homepageTeaser,status:'PUBLISHED',startsAt:null,maxParticipants:8,confirmedCount:5,waitingListCount:0,competitionStyle:'BIG_TEAM',viewer:{rsvp:'UNANSWERED',signupState:'NONE',attendanceStatus:'NOT_CHECKED'}}]
   };
   constructor(){
-    this.state.players=[...this.state.standings];
+    this.state.players=[...this.state.standings,...(this.state.emperor?[this.state.emperor]:[])];
     this.state.matches=[
-      {matchId:'sample-duel',seasonId:'S001',format:'ONE_V_ONE',status:'COMPLETED',completedAt:'2026-09-06T18:00:00Z',participants:[{...this.state.players[4],team:1},{...this.state.players[0],team:2}],result:{winningPlayerIds:['sample-ragnar'],revision:1}},
+      {matchId:'sample-duel',seasonId:'S001',format:'ONE_V_ONE',status:'COMPLETED',completedAt:'2026-09-06T18:00:00Z',participants:[{...this.state.emperor!,team:1},{...this.state.players[0],team:2}],result:{winningPlayerIds:['sample-ragnar'],revision:1}},
       {matchId:'sample-team',seasonId:'S001',format:'TWO_V_TWO',status:'COMPLETED',completedAt:'2026-09-08T18:00:00Z',participants:this.state.players.slice(0,4).map((p,i)=>({...p,team:i<2?1:2})),result:{winningPlayerIds:['sample-ragnar','sample-steve'],revision:1}}
     ];
   }
   async load(){return structuredClone(this.state);}
-  async signIn(){this.state.membership='UNLINKED';this.state.viewer=null;this.listeners.forEach(fn=>fn());}
+  async signIn(){  this.state.membership='UNLINKED';  this.state.viewer=null;  this.listeners.forEach(fn=>fn());}
   async signOut(){this.state.membership='SIGNED_OUT';this.state.viewer=null;this.listeners.forEach(fn=>fn());}
-  async requestMembership(name:string,_discord:string,favor:string){if(favor.replace(/[\s-]+/g,'').toUpperCase()!=='K7M4Q9')throw new Error("That Emperor's Favor is invalid or has already been invoked.");this.state.membership='ACTIVE';this.state.viewer={...this.state.players[4],steamName:name,role:'ADMIN'};}
-  async generateEmperorsFavors(batchName:string,count:number):Promise<EmperorsFavorBatch>{const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const code=()=>Array.from({length:6},()=>alphabet[crypto.getRandomValues(new Uint32Array(1))[0]%alphabet.length]).join('');return {batchId:'preview-batch',batchName,count,favors:Array.from({length:count},(_,i)=>({code:code(),emperor:['AUGUSTUS','TRAIANUS','HADRIANUS'][i%3],serialNumber:i+1,total:count,printLabel:(i+1)+' / '+count}))};}
+  async requestMembership(name:string,_discord:string,favor:string){  if(favor.replace(/[\s-]+/g,'').toUpperCase()!=='K7M4Q9'){    throw new Error("That Emperor's Favor is invalid or has already been invoked.");}  this.state.membership='ACTIVE';  this.state.viewer={    ...this.state.emperor!,    steamName:name,    role:'ADMIN'  };}
+  async generateEmperorsFavors(  batchName:string,  count:number):Promise<EmperorsFavorBatch>{  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  const code=()=>Array.from(    {length:6},    ()=>alphabet[      crypto.getRandomValues(new Uint32Array(1))[0] % alphabet.length    ]  ).join('');  return {    batchId:'preview-batch',    batchName,    count,
+    favors:Array.from({length:count},(_,i)=>({
+      code:code(),
+      emperor:['AUGUSTUS','TRAIANUS','HADRIANUS'][i%3],
+      serialNumber:i+1,
+      total:count,
+      printLabel:(i+1)+' / '+count
+    }))
+  };
+}
   async enterSeason(){if(this.state.membership!=='ACTIVE')throw new Error('Join the league first.');this.state.enteredSeason=true;this.state.hasLeagueHistory=true;}
   async rsvp(id:string,value:'YES'|'NO'){
     if(this.state.membership!=='ACTIVE'||value==='YES'&&!this.state.enteredSeason)throw new Error('Enter the season first.');

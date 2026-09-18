@@ -118,6 +118,9 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
     ? leagueStateSnapshot.data() as LeagueStateDocument
     : {};
   const activeSeasonId = leagueState.activeSeasonId ?? null;
+  const fallbackEmperorPlayerId = [...players.entries()]
+    .find(([, player]) => player.role === "ADMIN" && player.membershipStatus === "ACTIVE")?.[0] ?? null;
+  const currentEmperorPlayerId = leagueState.currentEmperorPlayerId ?? fallbackEmperorPlayerId;
 
   const activity = activitySnapshot.docs.map((document) => {
     const data = document.data() as ActivityDocument;
@@ -149,6 +152,9 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       },
       activeSeason: null,
       upcomingEvent: null,
+      emperor: currentEmperorPlayerId && players.has(currentEmperorPlayerId)
+        ? { ...publicPlayer(currentEmperorPlayerId, players.get(currentEmperorPlayerId)), leaguePoints: 0 }
+        : null,
       leaderboard: [],
       activity,
       warRoom: {
@@ -226,7 +232,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
     };
   }
 
-  const leaderboard = standingsSnapshot.docs
+  const orderedStandings = standingsSnapshot.docs
     .map((document) => {
       const standing = document.data() as StandingDocument;
       const playerId = standing.playerId ?? document.id;
@@ -239,7 +245,16 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       right.leaguePoints - left.leaguePoints ||
       Number(right.currentPowerRating ?? -Infinity) - Number(left.currentPowerRating ?? -Infinity) ||
       left.steamName.localeCompare(right.steamName)
-    ))
+    ));
+  const emperor = currentEmperorPlayerId
+    ? orderedStandings.find((standing) => standing.playerId === currentEmperorPlayerId)
+      ?? (players.has(currentEmperorPlayerId) ? {
+        ...publicPlayer(currentEmperorPlayerId, players.get(currentEmperorPlayerId)),
+        leaguePoints: 0,
+      } : null)
+    : null;
+  const leaderboard = orderedStandings
+    .filter((standing) => standing.playerId !== currentEmperorPlayerId)
     .map((standing, index) => ({ ...standing, rank: index + 1 }));
 
   const viewerRivalries = rivalriesSnapshot.docs
@@ -290,9 +305,10 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       status: season.status ?? "UNKNOWN",
       startsAt: iso(season.startsAt),
       endsAt: iso(season.endsAt),
-      currentEmperorPlayerId: leagueState.currentEmperorPlayerId ?? null,
+      currentEmperorPlayerId,
     },
     upcomingEvent,
+    emperor,
     leaderboard,
     activity,
     warRoom: {

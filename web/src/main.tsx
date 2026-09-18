@@ -10,6 +10,7 @@ import './styles.css';
 import './stone-shell.css';
 import './season-gate.css';
 import './league-entry.css';
+import './stone-content.css';
 import './emperors-favor.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
