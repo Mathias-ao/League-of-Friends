@@ -26,7 +26,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async load(){return structuredClone(this.state);}
   async signIn(){this.state.membership='UNLINKED';this.state.viewer=null;this.listeners.forEach(fn=>fn());}
   async signOut(){this.state.membership='SIGNED_OUT';this.state.viewer=null;this.listeners.forEach(fn=>fn());}
-  async requestMembership(name:string,_discord:string,favor:string){if(favor.replace(/[\\s-]+/g,'').toUpperCase()!=='K7M4Q9')throw new Error("That Emperor's Favor is invalid or has already been invoked.");this.state.membership='ACTIVE';this.state.viewer={...this.state.players[4],steamName:name,role:'ADMIN'};}
+  async requestMembership(name:string,_discord:string,favor:string){if(favor.replace(/[\s-]+/g,'').toUpperCase()!=='K7M4Q9')throw new Error("That Emperor's Favor is invalid or has already been invoked.");this.state.membership='ACTIVE';this.state.viewer={...this.state.players[4],steamName:name,role:'ADMIN'};}
   async generateEmperorsFavors(batchName:string,count:number):Promise<EmperorsFavorBatch>{const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const code=()=>Array.from({length:6},()=>alphabet[crypto.getRandomValues(new Uint32Array(1))[0]%alphabet.length]).join('');return {batchId:'preview-batch',batchName,count,favors:Array.from({length:count},(_,i)=>({code:code(),emperor:['AUGUSTUS','TRAIANUS','HADRIANUS'][i%3],serialNumber:i+1,total:count,printLabel:(i+1)+' / '+count}))};}
   async enterSeason(){if(this.state.membership!=='ACTIVE')throw new Error('Join the league first.');this.state.enteredSeason=true;this.state.hasLeagueHistory=true;}
   async rsvp(id:string,value:'YES'|'NO'){
