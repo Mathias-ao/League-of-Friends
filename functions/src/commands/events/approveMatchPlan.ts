@@ -196,6 +196,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
         transaction.create(draftRef, {
           matchId,
           gameId: "G1",
+          participantIds: proposedMatch.participants.map((participant) => participant.playerId),
           ...civilizationDraft,
           createdBy: actor.playerId,
           createdAt: now,
