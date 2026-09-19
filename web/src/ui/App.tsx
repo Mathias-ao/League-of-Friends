@@ -213,11 +213,14 @@ function SeasonAccessGate({gateRef,snapshot,busy,enter}:{gateRef:Ref<HTMLElement
 }
 function Hero({onStory,onEvent}:{onStory:()=>void;onEvent:()=>void}){
   const [slide,setSlide]=useState(0),[paused,setPaused]=useState(false),[interacting,setInteracting]=useState(false),[imageFailed,setImageFailed]=useState(false);
-  const artwork=import.meta.env.VITE_HERO_IMAGE_URL as string|undefined;
+  const artworks=[
+  '/artwork/season-fiefdom.png',
+  '/artwork/event-lombardia.png'];
+  const artwork=artworks[slide];
   useEffect(()=>{if(paused||interacting||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const timer=setInterval(()=>setSlide(s=>1-s),12000);return ()=>clearInterval(timer);},[paused,interacting]);
   const change=()=>{setSlide(s=>1-s);setPaused(true);};
   return <section className="hero" aria-label="League news" aria-roledescription="carousel" onMouseEnter={()=>setInteracting(true)} onMouseLeave={()=>setInteracting(false)} onFocus={()=>setInteracting(true)} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))setInteracting(false);}}>
-    {artwork&&!imageFailed&&<img src={artwork} alt="The Lombardy campaign" fetchPriority="high" onError={()=>setImageFailed(true)}/>} 
+    {artwork&&!imageFailed&&  <img    src={artwork}    alt={slide===0?'The Fiefdom of Bad Neighbors':'The War for Lombardia'}    fetchPriority="high"    onError={()=>setImageFailed(true)}  />}
     <div className="hero-shade"/><div className="hero-content" key={slide}><span className="eyebrow">{slide===0?'SEASON I · THE FIRST CAMPAIGN':'EVENT I · THE CALL TO WAR'}</span><h2>{slide===0?<>THE FIEFDOM<br/>OF BAD NEIGHBORS</>:<>LOMBARDIA<br/>STANDS DIVIDED</>}</h2><p>{slide===0?'Good fences make good neighbors. Castles make better ones.':'Eight factions. Two grand alliances. One battlefield.'}</p><button className="hero-link" onClick={slide===0?onStory:onEvent}>{slide===0?'Read the opening story':'Answer the call'}<ArrowRight size={17}/></button></div>
     <div className="hero-bottom"><div className="carousel-controls"><button aria-label="Previous story" onClick={change}><ChevronLeft size={17}/></button>{[0,1].map(i=><button key={i} className={'slide-dot '+(slide===i?'active':'')} aria-label={'Show story '+(i+1)} aria-pressed={slide===i} onClick={()=>{setSlide(i);setPaused(true);}}/>)}<button aria-label="Next story" onClick={change}><ChevronRight size={17}/></button><button aria-label={paused?'Play stories':'Pause stories'} onClick={()=>setPaused(!paused)}>{paused?<Play size={13}/>:<Pause size={13}/>}</button></div></div>
   </section>;
