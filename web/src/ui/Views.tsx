@@ -81,7 +81,7 @@ export function EventDialog(props:ViewProps&{data:EventDetail;onUpdated:()=>void
     <div className="actions">{event.canRsvp()&&<><button className="primary" disabled={busy||data.viewer.rsvp==='YES'} onClick={()=>void respond('YES')}>{snapshot.enteredSeason?'I’m in':'Enter season first'}</button><button className="text-button" disabled={busy||data.viewer.rsvp==='NO'} onClick={()=>void respond('NO')}>Decline</button></>}
       {event.canCheckIn()?<button className="primary" disabled={busy} onClick={async()=>{if(await act(()=>repository.checkIn(event.id),'You are checked in.'))onUpdated();}}>Check in</button>:data.viewer.attendanceStatus!=='CHECKED_IN'&&<span className="muted">{data.event.checkInOpensAt?<>Check-in opens <DateLabel value={data.event.checkInOpensAt}/></>:'Check-in time to be announced'}</span>}
     </div><hr/><h3>Matches & civilization draft</h3>{data.matches.filter(m=>m.status!=='PROPOSED').map(m=><button className="battle-row" key={m.matchId} onClick={()=>openMatch(m.matchId)}><Sigil kind="duel"/><span><strong>{formatName(m.format)} · {m.matchId}</strong><small>{m.participants.map(p=>p.steamName).join(' · ')}</small></span><ArrowRight size={17}/></button>)}
-    <p className="muted">{!data.matches.length?'Matches will be revealed after check-in and plan approval. ':''}The civilization draft is not yet available.</p>
+    <p className="muted">{!data.matches.length?'Matches will be revealed after check-in and plan approval. ':'Open your Battle to see the live civilization muster and draft order.'}</p>
   </>;
 }
 export function MatchDialog({data,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
