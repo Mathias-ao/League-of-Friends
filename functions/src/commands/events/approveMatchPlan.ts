@@ -102,6 +102,9 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
 
     const now = Timestamp.now();
     const officialMatchIds: string[] = [];
+    const gameConfig = event.gameConfig;
+    const scoringSnapshot = event.scoringSnapshot;
+    const goldRewardSnapshot = event.goldRewardSnapshot;
 
     plan.matches.forEach((proposedMatch, index) => {
       const matchNumber = index + 1;
@@ -111,14 +114,14 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
       const draftRef = matchRef.collection("civilizationDrafts").doc("G1");
 
       let civilizationDraft = null;
-      if (event.gameConfig.civilizations.mode === "DRAFT") {
+      if (gameConfig.civilizations.mode === "DRAFT") {
         try {
           civilizationDraft = createCivilizationDraft({
             matchId,
             gameId: "G1",
             gameNumber: 1,
             participants: proposedMatch.participants,
-            civilizationConfiguration: event.gameConfig.civilizations,
+            civilizationConfiguration: gameConfig.civilizations,
           });
         } catch (error) {
           if (error instanceof CivilizationDraftValidationError) {
@@ -154,9 +157,9 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
           maxGames: 1,
           gamesRequiredToWin: 1,
         },
-        gameConfigSnapshot: event.gameConfig,
-        scoringSnapshot: event.scoringSnapshot,
-        goldRewardSnapshot: event.goldRewardSnapshot,
+        gameConfigSnapshot: gameConfig,
+        scoringSnapshot,
+        goldRewardSnapshot,
         canonicalResult: null,
         createdBy: actor.playerId,
         createdAt: now,
@@ -176,7 +179,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
         gameNumber: 1,
         status: "READY" as const,
         players: gamePlayers,
-        gameConfigSnapshot: event.gameConfig,
+        gameConfigSnapshot: gameConfig,
         civilizationDraftId: civilizationDraft ? "G1" : null,
         civilizationDraftStatus: civilizationDraft?.status ?? null,
         replay: null,
