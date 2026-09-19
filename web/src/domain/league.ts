@@ -33,8 +33,16 @@ export class LeagueEvent {
     return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>=now);
   }
 }
-export interface MatchRecord {matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;completedAt?:string|null;participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
-export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;civilization?:string|null})[];result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null};}
+export interface MatchRecord {matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
+export interface CivilizationDraftTurnRecord {index:number;playerId:string;team:number|null;slot:number;status:'PENDING'|'COMPLETED';civilization:string|null;}
+export interface CivilizationDraftSelectionRecord {turnIndex:number;playerId:string;team:number|null;civilization:string;}
+export interface CivilizationDraftRecord {
+  draftId:string;ruleVersion:'AOF_CIV_DRAFT_V1';status:'ACTIVE'|'COMPLETED'|'VOID';revision:number;stateVersion:number;gameNumber:number;
+  turnOrder:'RANDOM'|'SLOT'|'TEAM_INTERLEAVED'|'TEAM_SNAKE';reusePolicy:'RESET_EACH_GAME'|'PLAYER_UNIQUE_IN_MATCH'|'TEAM_UNIQUE_IN_MATCH'|'MATCH_UNIQUE';
+  uniqueWithinGame:boolean;pool:string[];available:string[];viewerAvailable:string[];currentTurnIndex:number|null;
+  turns:CivilizationDraftTurnRecord[];selections:CivilizationDraftSelectionRecord[];viewerCanPick:boolean;
+}
+export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null};}
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
 export interface EventDetail {event:EventRecord;viewer:{rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:PlayerRecord[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
@@ -68,6 +76,8 @@ export interface LeagueRepository {
 
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;
   checkIn(eventId:string):Promise<void>;
+  ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;
+  pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;
 
   event(id:string):Promise<EventDetail>;
   match(id:string):Promise<MatchDetail>;
