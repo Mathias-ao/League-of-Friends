@@ -37,6 +37,8 @@ interface GameForDraft {
 interface DraftForReset extends CivilizationDraftState {
   matchId?: string;
   gameId?: string;
+  createdBy?: string;
+  createdAt?: unknown;
 }
 
 function rethrowDraftValidation(error: unknown): never {
