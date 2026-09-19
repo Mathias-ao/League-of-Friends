@@ -84,8 +84,9 @@ export function EventDialog(props:ViewProps&{data:EventDetail;onUpdated:()=>void
     <p className="muted">{!data.matches.length?'Matches will be revealed after check-in and plan approval. ':'Open your Battle to see the live civilization muster and draft order.'}</p>
   </>;
 }
-export function MatchDialog({data,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
+export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
   const [dispute,setDispute]=useState<string|null>(null),[reason,setReason]=useState(''),[category,setCategory]=useState('WRONG_RESULT');
+  const [resetDraft,setResetDraft]=useState<string|null>(null),[resetReason,setResetReason]=useState(''),[rerollDraft,setRerollDraft]=useState(false);
   const playerName=(playerId:string)=>data.match.participants.find(player=>player.playerId===playerId)?.steamName??playerId;
   const reuseLabel=(value:string)=>({
     RESET_EACH_GAME:'Pool resets each Game',
@@ -122,6 +123,14 @@ export function MatchDialog({data,busy,repository,act,onUpdated}:ViewProps&{data
             })}</div>
             {draft.status==='ACTIVE'&&<p className={draft.viewerCanPick?'draft-call':'muted'}>{draft.viewerCanPick?'Your turn. Choose one civilization; the choice is final unless an administrator resets the draft.':currentTurn?'Waiting for '+playerName(currentTurn.playerId)+'.':'Waiting for the next turn.'}</p>}
             {draft.status==='COMPLETED'&&<p className="draft-call">The civilization assignments below are now authoritative for this Game.</p>}
+            {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&<div className="draft-admin">
+              <button className="text-button small" onClick={()=>{setResetDraft(resetDraft===game.gameId?null:game.gameId);setResetReason('');setRerollDraft(false);}}>{resetDraft===game.gameId?'Cancel reset':'Reset draft'}</button>
+              {resetDraft===game.gameId&&<form className="form draft-reset-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.resetCivilizationDraft(data.match.matchId,game.gameId,resetReason.trim(),rerollDraft),'The civilization muster has been reset.')){setResetDraft(null);setResetReason('');setRerollDraft(false);onUpdated();}}}>
+                <label>Reason<textarea required maxLength={1000} value={resetReason} onChange={e=>setResetReason(e.target.value)} placeholder="Why is this draft being reset?"/></label>
+                <label className="draft-reset-check"><input type="checkbox" checked={rerollDraft} onChange={e=>setRerollDraft(e.target.checked)}/>Reroll the draft order</label>
+                <button className="primary" disabled={busy||!resetReason.trim()}>Confirm reset</button>
+              </form>}
+            </div>}
           </>}
         </section>}
         <div className="game-players">{game.players.map(p=><div key={p.playerId}><Avatar player={p}/><span><strong>{p.steamName}</strong><small>{p.civilization??'Civilization not yet selected'}{p.team!=null?' · Team '+p.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(p.playerId)&&<span className="gold">Winner</span>}</div>)}</div><p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':game.result?'Final result · Revision '+game.result.revision:'Awaiting a qualified result.'}</p>
