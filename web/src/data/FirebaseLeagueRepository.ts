@@ -34,6 +34,8 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async enterSeason(seasonId:string){await this.call('enterSeason',{seasonId});}
   async rsvp(eventId:string,rsvp:'YES'|'NO'){await this.call('setEventRsvp',{eventId,rsvp});}
   async checkIn(eventId:string){await this.call('checkInToEvent',{eventId});}
+  async ensureCivilizationDraft(matchId:string,gameId:string){await this.call('ensureCivilizationDraft',{matchId,gameId});}
+  async pickCivilization(matchId:string,gameId:string,civilization:string){await this.call('makeCivilizationDraftPick',{matchId,gameId,civilization});}
   event(eventId:string){return this.call<EventDetail>('getEventDetail',{eventId});}
   match(matchId:string){return this.call<MatchDetail>('getMatchDetail',{matchId});}
   player(playerId:string){return this.call<PlayerProfile>('getPlayerProfile',{playerId});}
