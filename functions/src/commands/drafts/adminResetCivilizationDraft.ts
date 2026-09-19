@@ -185,6 +185,7 @@ export const adminResetCivilizationDraft = onCall<AdminResetCivilizationDraftInp
       transaction.set(draftRef, {
         matchId,
         gameId,
+        participantIds: participants.map((participant) => participant.playerId),
         ...nextState,
         createdBy: freshDraftData.createdBy ?? actor.playerId,
         createdAt: freshDraftData.createdAt ?? now,
