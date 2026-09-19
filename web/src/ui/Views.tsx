@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {ArrowRight,BookOpen,Users,Crown,Check,Lock,Swords,Flag,Heart,Search,Shield,Upload} from 'lucide-react';
 import {LeagueEvent,LeagueService,RelationshipPolicy,formatName,isLombardia,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {plannedEvents,lombardia} from '../data/content';
@@ -93,6 +93,13 @@ export function MatchDialog({data,busy,repository,act,onUpdated}:ViewProps&{data
     TEAM_UNIQUE_IN_MATCH:'Teams cannot reuse a civilization in this Match',
     MATCH_UNIQUE:'A civilization can appear only once in this Match'
   } as Record<string,string>)[value]??value.replaceAll('_',' ');
+  const liveDraftIds=data.viewer.isParticipant?data.games.filter(game=>game.draft?.status==='ACTIVE').map(game=>game.gameId):[];
+  const liveDraftKey=liveDraftIds.join('|');
+  useEffect(()=>{
+    if(!liveDraftKey)return;
+    const stops=liveDraftIds.map(gameId=>repository.watchCivilizationDraft(data.match.matchId,gameId,onUpdated));
+    return ()=>stops.forEach(stop=>stop());
+  },[repository,data.match.matchId,liveDraftKey]);
   return <><div className="detail-meta"><span className="eyebrow">{formatName(data.match.format)} · {data.match.matchId}</span><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></div><Roster players={data.match.participants}/>
     {data.games.map(game=>{
       const draft=game.draft??null;
