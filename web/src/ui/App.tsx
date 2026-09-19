@@ -232,7 +232,7 @@ function Rules(){
     ['The campaign','League → Season → Event → Match → Game. Each recording represents one Game; a Match can contain multiple Games.'],
     ['Raise your banner','Join the league once, enter each season separately, then answer each event invitation. Check in on event day.'],
     ['The two acts','Act I is a 1v1 warm-up of approximately 30 minutes. Act II is the main event. The approved Game plan determines opponents and teams.'],
-    ['Civilizations','Civilizations are unique within each Game. Duplicates are allowed across separate Games. A captain is chosen randomly where needed.'],
+    ['Civilizations','Civilization drafting happens inside Age of Friends. Event rules decide the pool, turn order, uniqueness within a Game, and whether a civilization may be reused later in the same Match.'],
     ['After the battle','Keep your .aoe2record locally. Upload it when replay submission is available. There are no manual post-match statistics forms.'],
     ['Results and corrections','Qualified results become final directly. Use the small dispute option on a completed Game to request a correction.'],
     ['Points and legacy','League Points, War Room Points, relationship progression and Gold are separate. Season points reset; your player identity persists.']
