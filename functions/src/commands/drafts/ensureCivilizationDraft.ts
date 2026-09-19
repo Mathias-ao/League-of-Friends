@@ -8,6 +8,7 @@ import type { GameConfiguration, MatchParticipant } from "../../domain/types.js"
 import {
   CivilizationDraftValidationError,
   createCivilizationDraft,
+  type CivilizationDraftState,
   type PriorCivilizationDraftSelection,
 } from "../../engines/civilizationDraftEngine.js";
 
@@ -130,7 +131,7 @@ export const ensureCivilizationDraft = onCall<EnsureCivilizationDraftInput>(
       throw new HttpsError("failed-precondition", "Game competition configuration is missing.");
     }
 
-    let draftState;
+    let draftState: CivilizationDraftState;
     try {
       draftState = createCivilizationDraft({
         matchId,
