@@ -705,7 +705,160 @@ textarea:focus{border-color:#92734d}
 .schedule button.next strong{color:#dfbd83}
 .site-footer{border-color:#4b3d31;color:#978b7d}
 
+
+/* Season page refinement: quieter hierarchy + stacked campaign parchment. */
+.section-heading.season-heading{
+  border-bottom:0;
+  padding-top:32px;
+  padding-bottom:0;
+  margin-bottom:54px;
+}
+.section-heading.season-heading:after{display:none}
+.season-heading h1{margin-top:4px}
+
+.schedule-section{
+  margin-bottom:58px;
+}
+.schedule-section>.section-heading{
+  border-bottom:0;
+  padding-bottom:0;
+  margin-bottom:28px;
+  align-items:flex-end;
+}
+.schedule-section>.section-heading:after{display:none}
+.schedule-section>.section-heading h2{
+  font-size:1.08rem;
+  line-height:1.2;
+  letter-spacing:.075em;
+  text-transform:uppercase;
+  color:#c9b89f;
+  font-weight:500;
+  text-shadow:none;
+}
+.schedule{
+  padding-top:10px;
+  padding-bottom:10px;
+}
+.schedule button{min-height:116px}
+.schedule button .eyebrow{margin-bottom:7px}
+.schedule button strong{margin-top:10px}
+.schedule button small{margin-top:6px;line-height:1.45}
+
+/* Important campaign papers: dry vellum on a subtle stacked-sheet base. */
+.next-event.panel{
+  position:relative;
+  overflow:visible;
+  margin-top:10px;
+  margin-bottom:72px;
+  color:#34271b;
+  border:1px solid #92764e;
+  background-color:#d7c39d;
+  background-image:
+    radial-gradient(ellipse at 13% 8%,rgba(255,250,229,.45),transparent 31%),
+    radial-gradient(ellipse at 84% 86%,rgba(105,72,41,.105),transparent 34%),
+    radial-gradient(ellipse at 55% 42%,rgba(255,244,213,.11),transparent 46%),
+    linear-gradient(108deg,transparent 0 29%,rgba(96,66,38,.04) 29.15%,transparent 29.55%),
+    linear-gradient(176deg,#e2d1ac 0%,#d4bd92 48%,#cdb184 100%);
+  box-shadow:
+    5px 6px 0 #b89a70,
+    -3px 11px 0 #a98b64,
+    0 22px 46px rgba(0,0,0,.34),
+    inset 0 1px rgba(255,251,233,.72),
+    inset 0 -2px rgba(91,61,34,.16);
+}
+.next-event.panel:before{
+  content:'';
+  position:absolute;
+  inset:4px;
+  z-index:0;
+  pointer-events:none;
+  border:1px solid rgba(116,83,49,.18);
+  background:
+    linear-gradient(90deg,rgba(94,61,33,.05),transparent 5%,transparent 95%,rgba(94,61,33,.05)),
+    linear-gradient(180deg,rgba(255,250,229,.12),transparent 8%,transparent 91%,rgba(89,58,31,.06));
+}
+.next-event.panel:after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 24% 72%,rgba(102,69,37,.055),transparent 20%),
+    radial-gradient(ellipse at 78% 19%,rgba(255,247,220,.10),transparent 23%),
+    linear-gradient(97deg,transparent 0 71%,rgba(102,70,38,.026) 71.2%,transparent 71.8%);
+}
+.next-event.panel>*{position:relative;z-index:1}
+
+.next-event .event-intro{
+  padding:30px 32px 28px;
+  background:rgba(255,250,229,.055);
+}
+.next-event .event-title{gap:21px}
+.next-event .event-title>.sigil{
+  color:#6e482d;
+  border-color:#826442;
+  background:linear-gradient(150deg,rgba(255,245,216,.18),rgba(104,67,35,.08));
+  box-shadow:inset 0 1px rgba(255,252,235,.55),inset 0 -1px rgba(94,61,32,.17);
+}
+.next-event .eyebrow{color:#6a4b31}
+.next-event h2,
+.next-event h3{color:#302318;text-shadow:none}
+.next-event .event-title h2{margin-top:6px}
+.next-event .countdown{padding-left:28px}
+.next-event .countdown strong{color:#704818;text-shadow:none}
+
+.next-event .acts{
+  background:rgba(93,62,34,.035);
+  border-color:rgba(92,65,40,.22);
+}
+.next-event .act{padding:30px 34px}
+.next-event .act+.act{border-color:rgba(92,65,40,.22)}
+.next-event .act svg{color:#604a37}
+.next-event .act p{color:#4b3827}
+.next-event .act .text-button{color:#302319}
+.next-event .act .text-button:hover:not(:disabled){color:#6e471b}
+
+.next-event .event-footer{
+  padding:21px 28px;
+  background:rgba(88,57,31,.045);
+  border-color:rgba(92,65,40,.22);
+}
+.next-event .attendance,
+.next-event .event-footer .text-button{color:#443122}
+.next-event .event-footer .text-button:hover:not(:disabled){color:#794d19}
+
+.next-event .primary{
+  border-color:#795c37;
+  background:linear-gradient(180deg,#efd9a4,#d3ab68);
+  color:#382515;
+  box-shadow:
+    inset 0 1px rgba(255,252,233,.72),
+    inset 0 -2px rgba(101,65,31,.20),
+    0 4px 10px rgba(75,46,23,.13);
+}
+.next-event .primary:hover:not(:disabled){
+  background:linear-gradient(180deg,#f5e2b2,#ddb978);
+  color:#28190d;
+}
+
 @media(max-width:620px){
+  .section-heading.season-heading{padding-top:22px;margin-bottom:38px}
+  .schedule-section>.section-heading{margin-bottom:20px}
+  .schedule-section>.section-heading h2{font-size:.95rem}
+  .schedule-section{margin-bottom:42px}
+  .schedule button{min-height:auto}
+  .next-event.panel{
+    margin-bottom:52px;
+    box-shadow:
+      3px 4px 0 #b89a70,
+      -2px 7px 0 #a98b64,
+      0 15px 30px rgba(0,0,0,.30);
+  }
+  .next-event .event-intro{padding:23px 19px}
+  .next-event .act{padding:23px 19px}
+  .next-event .event-footer{padding:18px 17px}
+
   .section-heading{padding-bottom:10px}
   .standings{padding:7px 7px 0}
   .emperor-seat{grid-template-columns:1fr auto;gap:12px;padding:15px 14px}
