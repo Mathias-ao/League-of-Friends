@@ -1467,3 +1467,24 @@ textarea:focus{border-color:#92734d}
 @media(max-width:420px){
   .draft-turns,.draft-pool{grid-template-columns:1fr}
 }
+
+.draft-admin{
+  margin-top:18px;
+  padding-top:14px;
+  border-top:1px solid rgba(128,95,61,.25);
+}
+.draft-reset-form{
+  max-width:560px;
+  margin-top:12px;
+}
+.draft-reset-check{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center;
+  gap:9px;
+  color:#b6a795;
+}
+.draft-reset-check input{
+  width:auto;
+  margin:0;
+}
