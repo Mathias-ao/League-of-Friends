@@ -91,18 +91,19 @@ body{min-width:320px}
   background:radial-gradient(ellipse at 85% 35%,#52453644,transparent 55%),linear-gradient(115deg,#111b24,#263039 60%,#292c2b);
 }
 .hero-content{
-  width:min(calc(100% - 64px),1240px);
+  width:100%;
   max-width:none;
-  margin:0 auto;
-  padding:clamp(36px,4vw,58px) 0 76px;
+  margin:0;
+  padding:clamp(36px,4vw,58px) clamp(28px,3vw,56px) 76px;
 }
 .hero-content>*{max-width:690px}
 .hero h2{font-size:clamp(2.65rem,4.3vw,4.4rem);max-width:760px}
 .hero-content p{max-width:470px}
 .hero-bottom{
-  left:max(32px,calc((100vw - 1240px)/2));
-  right:max(32px,calc((100vw - 1240px)/2));
+  left:clamp(28px,3vw,56px);
+  right:clamp(28px,3vw,56px);
   bottom:18px;
+  justify-content:flex-end;
 }
 
 .main-nav{
@@ -116,7 +117,11 @@ body{min-width:320px}
   border:0;
   border-top:1px solid rgba(255,250,230,.54);
   border-bottom:1px solid rgba(67,50,31,.72);
-  box-shadow:inset 0 2px 0 rgba(255,255,240,.28),inset 0 -2px 0 rgba(95,73,48,.20),0 8px 22px rgba(0,0,0,.30);
+  box-shadow:
+    inset 0 3px 0 rgba(255,255,240,.30),
+    inset 0 -3px 0 rgba(83,62,39,.22),
+    inset 0 8px 16px rgba(255,250,232,.045),
+    0 8px 22px rgba(0,0,0,.30);
 }
 .main-nav .nav-item{
   flex:1;
@@ -135,9 +140,17 @@ body{min-width:320px}
   text-transform:uppercase;
   white-space:nowrap;
   color:var(--stone-cut);
-  text-shadow:0 1px 1px rgba(255,249,229,.82),0 -1px 1px rgba(59,44,28,.70),1px 0 rgba(255,248,226,.22);
+  text-shadow:
+    0 1px 1px rgba(255,249,229,.86),
+    0 -1px 1px rgba(54,40,25,.78),
+    1px 0 rgba(255,248,226,.20);
+  background:linear-gradient(180deg,rgba(255,251,237,.035),rgba(81,60,37,.025));
+  box-shadow:inset 0 1px rgba(255,255,242,.16),inset 0 -1px rgba(72,53,34,.12);
 }
-.main-nav .nav-item+.nav-item{border-left:1px solid rgba(88,67,43,.20)}
+.main-nav .nav-item+.nav-item{
+  border-left:1px solid rgba(72,52,31,.30);
+  box-shadow:inset 1px 0 rgba(255,252,239,.10),inset 0 1px rgba(255,255,242,.16),inset 0 -1px rgba(72,53,34,.12);
+}
 .main-nav a.nav-item:hover{
   color:#574936;
   background:rgba(255,250,232,.08);
@@ -156,15 +169,13 @@ body{min-width:320px}
   cursor:not-allowed;
   user-select:none;
 }
+/* The sealed War Room stays deliberately neutral. Its future open state may shift to obsidian,
+   but no red/hostile accent is shown before that reveal. */
 .main-nav .war-room-tab{
-  color:#7d211c;
-  text-shadow:
-    0 1px 1px rgba(255,222,202,.58),
-    0 -1px 1px rgba(55,8,6,.82),
-    0 0 3px rgba(166,35,25,.72),
-    0 0 11px rgba(135,18,13,.42);
+  color:rgba(91,78,60,.72);
+  text-shadow:0 1px 1px rgba(255,249,229,.68),0 -1px 1px rgba(55,41,27,.52);
 }
-.main-nav .war-room-tab svg{filter:drop-shadow(0 0 4px rgba(132,20,15,.52))}
+.main-nav .war-room-tab svg{filter:none;color:inherit}
 
 .content-region{
   min-height:100svh;
@@ -180,8 +191,6 @@ body{min-width:320px}
 
 @media(min-width:1500px){
   .header-inner,.content-shell{max-width:1330px}
-  .hero-content{width:min(calc(100% - 72px),1330px)}
-  .hero-bottom{left:max(36px,calc((100vw - 1330px)/2));right:max(36px,calc((100vw - 1330px)/2))}
   .main-nav{padding-left:max(24px,calc((100vw - 1330px)/2));padding-right:max(24px,calc((100vw - 1330px)/2))}
 }
 

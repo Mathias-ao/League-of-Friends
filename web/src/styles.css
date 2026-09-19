@@ -25,14 +25,14 @@ hr{border:0;border-top:1px solid var(--border);margin:28px 0}
 .sign-in,.profile-button{display:flex;align-items:center;gap:10px;font-size:.875rem}
 .sign-in{border:1px solid #45433e;padding:11px 16px}.site-shell{max-width:1240px;padding:0 32px;margin:auto}
 .hero{position:relative;min-height:355px;overflow:hidden;background:radial-gradient(ellipse at 85% 35%,#52453644,transparent 55%),linear-gradient(115deg,#111b24,#263039 60%,#292c2b)}
-.hero>img{position:absolute;width:100%;height:100%;object-fit:cover;object-position:center 51%}
-.hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,#0a0f13c9,#0c111560 45%,#0b0f130d 75%),linear-gradient(0deg,#0d121790,transparent 40%)}
-.hero-content{position:relative;padding:40px 46px 65px;max-width:690px;animation:appear .7s ease}
+.hero>img{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%;object-fit:cover;object-position:center 51%}
+.hero-shade{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#0a0f13c9,#0c111560 45%,#0b0f130d 75%),linear-gradient(0deg,#0d121790,transparent 40%)}
+.hero-content{position:relative;z-index:2;padding:40px 46px 65px;max-width:690px;animation:appear .7s ease}
 .eyebrow{font-family:Inter,Arial,sans-serif;font-size:.75rem;letter-spacing:.11em;font-weight:500;color:var(--muted);line-height:1.65;display:block}
 .hero .eyebrow{color:#d1b787}.hero h2{font-size:2.65rem;line-height:1.2;letter-spacing:.025em;margin:18px 0 12px;color:#f0ece4;text-shadow:0 2px 12px #0008}
 .hero-content p{font-size:.95rem;max-width:425px;margin:0;color:#c4c8ca}
 .hero-link{margin-top:24px;display:flex;gap:18px;padding:0 0 6px;font-size:.875rem;letter-spacing:.06em;text-transform:uppercase;color:#e0c48d}
-.hero-bottom{position:absolute;bottom:14px;left:46px;right:30px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.hero-bottom{position:absolute;z-index:2;bottom:14px;left:46px;right:30px;display:flex;align-items:center;justify-content:space-between;gap:15px}
 .hero-caption{font-size:.75rem;letter-spacing:.1em;color:#afb0ad}
 .carousel-controls{display:flex;align-items:center;gap:7px}.carousel-controls button{padding:4px;min-height:32px;min-width:28px;color:#d4d3ca}
 .slide-dot{position:relative}.slide-dot:after{content:'';height:3px;width:15px;position:absolute;left:6px;top:15px;background:#737875}.slide-dot.active:after{background:var(--gold)}

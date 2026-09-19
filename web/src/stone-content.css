@@ -2,14 +2,14 @@
    Pale limestone marks thresholds and navigation; dense league information lives on darker record stone. */
 
 :root{
-  --record-stone:#1b1e20;
-  --record-stone-deep:#131617;
-  --record-stone-mid:#26282a;
-  --record-edge:#5e594f;
-  --record-edge-light:#817665;
-  --record-ink:#eee8dd;
-  --record-muted:#b7b1a7;
-  --record-gold:#d8b46f;
+  --record-stone:#1d1814;
+  --record-stone-deep:#100d0b;
+  --record-stone-mid:#2a211b;
+  --record-edge:#5b4937;
+  --record-edge-light:#897258;
+  --record-ink:#f0e5d5;
+  --record-muted:#b9aa98;
+  --record-gold:#caa35f;
 }
 
 .content-region{
@@ -499,7 +499,366 @@ textarea:focus{border-color:#9b8258}
   color:#948e84;
 }
 
+/* Dark library pass: the content area should feel like an old campaign archive—
+   blackened walnut, leather, brass and low lamplight—while the navigation remains pale marble. */
+.content-region{
+  background-color:#0f0c0a;
+  background-image:
+    radial-gradient(ellipse at 14% 0,rgba(142,88,43,.11),transparent 34%),
+    radial-gradient(ellipse at 86% 12%,rgba(201,157,86,.045),transparent 28%),
+    linear-gradient(90deg,rgba(118,78,48,.018) 1px,transparent 1px),
+    linear-gradient(177deg,#17120f 0%,#100d0b 34%,#0d0b09 100%);
+  background-size:auto,auto,118px 100%,auto;
+  border-top-color:#090705;
+}
+.content-shell:before{
+  background:linear-gradient(90deg,transparent,rgba(202,163,99,.30),transparent);
+}
+.section-heading{
+  border-bottom-color:rgba(116,88,60,.34);
+}
+.section-heading:after{
+  background:linear-gradient(90deg,#c99e59,transparent);
+}
+.section-heading h1,
+.section-heading h2,
+.section-heading h3{
+  color:#f1e7d7;
+  text-shadow:0 1px 1px #000,0 0 20px rgba(186,128,62,.045);
+}
+.section-heading .eyebrow{color:#b7a084}
+
+.panel,
+.game-panel,
+.relationship-track,
+.profile-portrait,
+.achievements>div,
+.detail-acts,
+.stats-note,
+.subtle-box{
+  border-color:#5c4937;
+  background-color:#1c1713;
+  background-image:
+    radial-gradient(circle at 16% 22%,rgba(255,224,181,.035) 0 1px,transparent 2px),
+    radial-gradient(circle at 82% 67%,rgba(0,0,0,.25) 0 1px,transparent 2px),
+    linear-gradient(90deg,rgba(116,73,42,.025),transparent 18% 82%,rgba(83,51,31,.022)),
+    linear-gradient(176deg,#271f19 0%,#18130f 50%,#211914 100%);
+  background-size:43px 39px,49px 45px,auto,auto;
+  box-shadow:
+    0 16px 42px rgba(0,0,0,.28),
+    inset 0 1px rgba(255,229,190,.055),
+    inset 0 -2px rgba(0,0,0,.34);
+}
+.next-event{
+  border-color:#735c40;
+  box-shadow:
+    0 18px 48px rgba(0,0,0,.30),
+    0 0 0 1px rgba(199,154,81,.055),
+    inset 0 1px rgba(255,230,191,.07);
+}
+.acts{
+  background:rgba(8,5,4,.28);
+  border-color:rgba(114,88,63,.46);
+}
+.act+.act{border-color:rgba(114,88,63,.46)}
+.event-title>.sigil{
+  background:linear-gradient(150deg,rgba(107,49,37,.46),rgba(44,27,20,.46));
+  border-color:#6f4b38;
+  color:#d7a77c;
+  box-shadow:inset 0 1px rgba(255,219,181,.08),inset 0 -2px rgba(0,0,0,.30);
+}
+.countdown strong{
+  margin-top:0;
+  color:#e0b35f;
+  letter-spacing:.015em;
+}
+.text-button{color:#d5c7b5}
+.text-button:hover:not(:disabled){color:#f1cf8d}
+.text-button.gold{color:#dfb661}
+
+.primary{
+  border-color:#8b704c;
+  background:linear-gradient(180deg,#d9bd89,#b98e51);
+  color:#352718;
+  box-shadow:
+    inset 0 1px rgba(255,245,218,.58),
+    inset 0 -2px rgba(74,47,23,.30),
+    0 7px 18px rgba(0,0,0,.20);
+}
+.primary:hover:not(:disabled){
+  background:linear-gradient(180deg,#e5cb99,#c49b5d);
+  color:#281d12;
+}
+input,
+select,
+textarea,
+.search{
+  border-color:#564334;
+  background-color:#120f0d;
+  background-image:linear-gradient(180deg,rgba(0,0,0,.24),rgba(126,79,42,.018));
+  color:#e8dfd3;
+}
+input:focus,
+select:focus,
+textarea:focus{border-color:#92734d}
+.quiet-badge{
+  color:#c9b9a6;
+  border-color:#5d4a39;
+  background:rgba(8,5,4,.30);
+}
+
+.event-list-card{border-color:#5c4938}
+.event-list-card:hover{border-color:#887052}
+.event-list-card.planned{background-color:#17120f}
+.battle-row{border-color:rgba(105,80,58,.38)}
+.battle-row:hover{
+  background:linear-gradient(90deg,rgba(198,147,75,.075),rgba(83,55,35,.025) 48%,transparent);
+}
+
+.portrait-card{
+  border-color:#63503c;
+  background:#18130f;
+}
+.portrait-card:hover{border-color:#9a7b55}
+.portrait-door{border-color:#654f3b}
+.portrait-caption{
+  background:linear-gradient(176deg,#241c17,#17120f);
+  border-top-color:rgba(143,106,70,.30);
+}
+.avatar{
+  border-color:#705c47;
+  background:linear-gradient(140deg,#55483b,#211b17);
+  color:#dbc6a6;
+}
+
+.stats-note{border-color:#65513d;border-left-color:#b58c52}
+.category-tabs{
+  border-color:#514033;
+  background:linear-gradient(180deg,#211a16,#14100d);
+}
+.category-tabs button{color:#aaa095}
+.category-tabs button.active{color:#e1bd7d;border-bottom-color:#c79b56}
+.profile-record{
+  border-color:#594737;
+  background:linear-gradient(180deg,#211a16,#14100d);
+}
+.profile-record>div+div{border-color:#4e3e31}
+.detail-acts{border-color:#5a4737}
+.detail-acts>div+div{border-color:#504033}
+.game-panel{border-color:#5b4938}
+.upload-state{border-color:#5b4938;background:rgba(8,5,4,.28)}
+
+.modal{
+  border-color:#735c44;
+  background:
+    radial-gradient(circle at 80% 20%,rgba(235,190,126,.028),transparent 30%),
+    linear-gradient(176deg,#211a16,#14100d);
+}
+.standings{
+  border-color:#755d40;
+  background-color:#1b1511;
+  background-image:
+    radial-gradient(ellipse at 14% 15%,rgba(190,130,69,.075),transparent 25%),
+    radial-gradient(ellipse at 88% 78%,rgba(0,0,0,.22),transparent 26%),
+    linear-gradient(90deg,rgba(115,71,40,.035),transparent 23% 77%,rgba(75,45,28,.028)),
+    linear-gradient(176deg,#2a211a,#17120f 54%,#211913);
+  box-shadow:
+    0 22px 58px rgba(0,0,0,.36),
+    inset 0 2px rgba(255,224,181,.07),
+    inset 0 -3px rgba(0,0,0,.38);
+}
+.standings:before{
+  background:linear-gradient(90deg,transparent,rgba(193,148,84,.30),transparent);
+}
+.player-ladder-label{
+  color:#b7a38b;
+  text-shadow:0 1px #000;
+}
+.player-ladder-label .eyebrow{color:#c2a77f}
+.player-ladder-label>span:last-child{color:#9e8d7a}
+.standings table{
+  border-color:#514034;
+  background:#100d0b;
+}
+.standings thead{
+  background:linear-gradient(180deg,#282019,#1a1511);
+  color:#c1b19e;
+}
+.standings thead th{border-bottom-color:#574434}
+.standings tbody td,
+.standings tbody th{border-color:#342a22}
+.standings tbody tr:hover{background:#211a15}
+.standings tbody tr:first-child{
+  background:linear-gradient(90deg,rgba(181,123,43,.16),rgba(77,53,32,.08) 42%,rgba(15,12,10,.04));
+}
+.standings>.empty{border-color:#514034;background:#100d0b}
+.standings .progression{
+  border-color:#514034;
+  background:linear-gradient(115deg,rgba(113,79,43,.24),rgba(25,19,15,.98) 42%,#15110e);
+}
+.target-line{background:#473a30}
+.schedule button>i{
+  border-color:#806a53;
+  background:#120f0d;
+}
+.schedule button:after{background:#4a3c31}
+.schedule button.next strong{color:#dfbd83}
+.site-footer{border-color:#4b3d31;color:#978b7d}
+
+
+/* Season page refinement: quieter hierarchy + stacked campaign parchment. */
+.section-heading.season-heading{
+  border-bottom:0;
+  padding-top:32px;
+  padding-bottom:0;
+  margin-bottom:54px;
+}
+.section-heading.season-heading:after{display:none}
+.season-heading h1{margin-top:4px}
+
+.schedule-section{
+  margin-bottom:58px;
+}
+.schedule-section>.section-heading{
+  border-bottom:0;
+  padding-bottom:0;
+  margin-bottom:28px;
+  align-items:flex-end;
+}
+.schedule-section>.section-heading:after{display:none}
+.schedule-section>.section-heading h2{
+  font-size:1.08rem;
+  line-height:1.2;
+  letter-spacing:.075em;
+  text-transform:uppercase;
+  color:#c9b89f;
+  font-weight:500;
+  text-shadow:none;
+}
+.schedule{
+  padding-top:10px;
+  padding-bottom:10px;
+}
+.schedule button{min-height:116px}
+.schedule button .eyebrow{margin-bottom:7px}
+.schedule button strong{margin-top:10px}
+.schedule button small{margin-top:6px;line-height:1.45}
+
+/* Important campaign papers: dry vellum on a subtle stacked-sheet base. */
+.next-event.panel{
+  position:relative;
+  overflow:visible;
+  margin-top:10px;
+  margin-bottom:72px;
+  color:#34271b;
+  border:1px solid #92764e;
+  background-color:#d7c39d;
+  background-image:
+    radial-gradient(ellipse at 13% 8%,rgba(255,250,229,.45),transparent 31%),
+    radial-gradient(ellipse at 84% 86%,rgba(105,72,41,.105),transparent 34%),
+    radial-gradient(ellipse at 55% 42%,rgba(255,244,213,.11),transparent 46%),
+    linear-gradient(108deg,transparent 0 29%,rgba(96,66,38,.04) 29.15%,transparent 29.55%),
+    linear-gradient(176deg,#e2d1ac 0%,#d4bd92 48%,#cdb184 100%);
+  box-shadow:
+    5px 6px 0 #b89a70,
+    -3px 11px 0 #a98b64,
+    0 22px 46px rgba(0,0,0,.34),
+    inset 0 1px rgba(255,251,233,.72),
+    inset 0 -2px rgba(91,61,34,.16);
+}
+.next-event.panel:before{
+  content:'';
+  position:absolute;
+  inset:4px;
+  z-index:0;
+  pointer-events:none;
+  border:1px solid rgba(116,83,49,.18);
+  background:
+    linear-gradient(90deg,rgba(94,61,33,.05),transparent 5%,transparent 95%,rgba(94,61,33,.05)),
+    linear-gradient(180deg,rgba(255,250,229,.12),transparent 8%,transparent 91%,rgba(89,58,31,.06));
+}
+.next-event.panel:after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 24% 72%,rgba(102,69,37,.055),transparent 20%),
+    radial-gradient(ellipse at 78% 19%,rgba(255,247,220,.10),transparent 23%),
+    linear-gradient(97deg,transparent 0 71%,rgba(102,70,38,.026) 71.2%,transparent 71.8%);
+}
+.next-event.panel>*{position:relative;z-index:1}
+
+.next-event .event-intro{
+  padding:30px 32px 28px;
+  background:rgba(255,250,229,.055);
+}
+.next-event .event-title{gap:21px}
+.next-event .event-title>.sigil{
+  color:#6e482d;
+  border-color:#826442;
+  background:linear-gradient(150deg,rgba(255,245,216,.18),rgba(104,67,35,.08));
+  box-shadow:inset 0 1px rgba(255,252,235,.55),inset 0 -1px rgba(94,61,32,.17);
+}
+.next-event .eyebrow{color:#6a4b31}
+.next-event h2,
+.next-event h3{color:#302318;text-shadow:none}
+.next-event .event-title h2{margin-top:6px}
+.next-event .countdown{padding-left:28px}
+.next-event .countdown strong{color:#704818;text-shadow:none}
+
+.next-event .acts{
+  background:rgba(93,62,34,.035);
+  border-color:rgba(92,65,40,.22);
+}
+.next-event .act{padding:30px 34px}
+.next-event .act+.act{border-color:rgba(92,65,40,.22)}
+.next-event .act svg{color:#604a37}
+.next-event .act p{color:#4b3827}
+.next-event .act .text-button{color:#302319}
+.next-event .act .text-button:hover:not(:disabled){color:#6e471b}
+
+.next-event .event-footer{
+  padding:21px 28px;
+  background:rgba(88,57,31,.045);
+  border-color:rgba(92,65,40,.22);
+}
+.next-event .attendance,
+.next-event .event-footer .text-button{color:#443122}
+.next-event .event-footer .text-button:hover:not(:disabled){color:#794d19}
+
+.next-event .primary{
+  border-color:#795c37;
+  background:linear-gradient(180deg,#efd9a4,#d3ab68);
+  color:#382515;
+  box-shadow:
+    inset 0 1px rgba(255,252,233,.72),
+    inset 0 -2px rgba(101,65,31,.20),
+    0 4px 10px rgba(75,46,23,.13);
+}
+.next-event .primary:hover:not(:disabled){
+  background:linear-gradient(180deg,#f5e2b2,#ddb978);
+  color:#28190d;
+}
+
 @media(max-width:620px){
+  .section-heading.season-heading{padding-top:22px;margin-bottom:38px}
+  .schedule-section>.section-heading{margin-bottom:20px}
+  .schedule-section>.section-heading h2{font-size:.95rem}
+  .schedule-section{margin-bottom:42px}
+  .schedule button{min-height:auto}
+  .next-event.panel{
+    margin-bottom:52px;
+    box-shadow:
+      3px 4px 0 #b89a70,
+      -2px 7px 0 #a98b64,
+      0 15px 30px rgba(0,0,0,.30);
+  }
+  .next-event .event-intro{padding:23px 19px}
+  .next-event .act{padding:23px 19px}
+  .next-event .event-footer{padding:18px 17px}
+
   .section-heading{padding-bottom:10px}
   .standings{padding:7px 7px 0}
   .emperor-seat{grid-template-columns:1fr auto;gap:12px;padding:15px 14px}

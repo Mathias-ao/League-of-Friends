@@ -212,14 +212,19 @@ function SeasonAccessGate({gateRef,snapshot,busy,enter}:{gateRef:Ref<HTMLElement
   return <section ref={gateRef} className="season-access-gate" aria-labelledby="season-access-title"><div className="season-access-card"><Sigil kind="flag" size={42}/><span className="eyebrow">THE CURRENT CAMPAIGN</span><h1 id="season-access-title">Enter {snapshot.season.name}</h1><p>Your league banner is raised. Enter the current season to unlock its standings, events, battles, players and statistics.</p><div className="season-access-actions"><button className="season-access-primary" disabled={busy} onClick={enter}>Enter Season I<ArrowRight size={18}/></button><p className="season-access-note">One league identity. A fresh entry for every season.</p></div></div></section>;
 }
 function Hero({onStory,onEvent}:{onStory:()=>void;onEvent:()=>void}){
-  const [slide,setSlide]=useState(0),[paused,setPaused]=useState(false),[interacting,setInteracting]=useState(false),[imageFailed,setImageFailed]=useState(false);
-  const artwork=import.meta.env.VITE_HERO_IMAGE_URL as string|undefined;
+  const [slide,setSlide]=useState(0),[paused,setPaused]=useState(false),[interacting,setInteracting]=useState(false),[failedArtwork,setFailedArtwork]=useState<string|null>(null);
+  const base=import.meta.env.BASE_URL;
+  const artworks=[
+    `${base}artwork/season-fiefdom.png`,
+    `${base}artwork/event-lombardia.png`
+  ];
+  const artwork=artworks[slide];
   useEffect(()=>{if(paused||interacting||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const timer=setInterval(()=>setSlide(s=>1-s),12000);return ()=>clearInterval(timer);},[paused,interacting]);
   const change=()=>{setSlide(s=>1-s);setPaused(true);};
   return <section className="hero" aria-label="League news" aria-roledescription="carousel" onMouseEnter={()=>setInteracting(true)} onMouseLeave={()=>setInteracting(false)} onFocus={()=>setInteracting(true)} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))setInteracting(false);}}>
-    {artwork&&!imageFailed&&<img src={artwork} alt="The Lombardy campaign" fetchPriority="high" onError={()=>setImageFailed(true)}/>} 
+    {failedArtwork!==artwork&&<img key={artwork} src={artwork} alt={slide===0?'The Fiefdom of Bad Neighbors':'The War for Lombardia'} fetchPriority="high" onError={()=>setFailedArtwork(artwork)}/>} 
     <div className="hero-shade"/><div className="hero-content" key={slide}><span className="eyebrow">{slide===0?'SEASON I · THE FIRST CAMPAIGN':'EVENT I · THE CALL TO WAR'}</span><h2>{slide===0?<>THE FIEFDOM<br/>OF BAD NEIGHBORS</>:<>LOMBARDIA<br/>STANDS DIVIDED</>}</h2><p>{slide===0?'Good fences make good neighbors. Castles make better ones.':'Eight factions. Two grand alliances. One battlefield.'}</p><button className="hero-link" onClick={slide===0?onStory:onEvent}>{slide===0?'Read the opening story':'Answer the call'}<ArrowRight size={17}/></button></div>
-    <div className="hero-bottom"><span className="hero-caption">THE ROAD TO MILAN</span><div className="carousel-controls"><button aria-label="Previous story" onClick={change}><ChevronLeft size={17}/></button>{[0,1].map(i=><button key={i} className={'slide-dot '+(slide===i?'active':'')} aria-label={'Show story '+(i+1)} aria-pressed={slide===i} onClick={()=>{setSlide(i);setPaused(true);}}/>)}<button aria-label="Next story" onClick={change}><ChevronRight size={17}/></button><button aria-label={paused?'Play stories':'Pause stories'} onClick={()=>setPaused(!paused)}>{paused?<Play size={13}/>:<Pause size={13}/>}</button></div></div>
+    <div className="hero-bottom"><div className="carousel-controls"><button aria-label="Previous story" onClick={change}><ChevronLeft size={17}/></button>{[0,1].map(i=><button key={i} className={'slide-dot '+(slide===i?'active':'')} aria-label={'Show story '+(i+1)} aria-pressed={slide===i} onClick={()=>{setSlide(i);setPaused(true);}}/>)}<button aria-label="Next story" onClick={change}><ChevronRight size={17}/></button><button aria-label={paused?'Play stories':'Pause stories'} onClick={()=>setPaused(!paused)}>{paused?<Play size={13}/>:<Pause size={13}/>}</button></div></div>
   </section>;
 }
 function Rules(){
