@@ -77,6 +77,10 @@ export const ensureCivilizationDraft = onCall<EnsureCivilizationDraftInput>(
     const participants = Array.isArray(match.participants) ? match.participants : [];
     const viewerIsParticipant = participants.some((participant) => participant.playerId === actor.playerId);
 
+    if (["COMPLETED", "CANCELLED", "DISPUTED"].includes(match.status ?? "")) {
+      throw new HttpsError("failed-precondition", "This Match cannot open a civilization draft.");
+    }
+
     if (!viewerIsParticipant && actor.role !== "ADMIN") {
       throw new HttpsError("permission-denied", "Only Match participants or administrators may open its civilization draft.");
     }
@@ -171,9 +175,15 @@ export const ensureCivilizationDraft = onCall<EnsureCivilizationDraftInput>(
       }
 
       const now = Timestamp.now();
+      const freshMatchStatus = freshMatch.data()?.status;
+      if (["COMPLETED", "CANCELLED", "DISPUTED"].includes(freshMatchStatus ?? "")) {
+        throw new HttpsError("failed-precondition", "This Match can no longer open a civilization draft.");
+      }
+
       transaction.create(draftRef, {
         matchId,
         gameId,
+        participantIds: freshParticipants.map((participant) => participant.playerId),
         ...draftState,
         createdBy: actor.playerId,
         createdAt: now,
