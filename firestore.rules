@@ -46,6 +46,17 @@ service cloud.firestore {
       allow read: if isActiveMember() && currentPlayerId() == playerId;
       allow write: if false;
     }
+
+    // Draft participants may subscribe to the current draft state so every
+    // device updates as soon as the authoritative callable commits a pick.
+    // Pick/action writes remain server-only.
+    match /matches/{matchId}/civilizationDrafts/{draftId} {
+      allow read: if isActiveMember()
+        && resource.data.participantIds is list
+        && currentPlayerId() in resource.data.participantIds;
+      allow write: if false;
+    }
+
     // Rules combine with OR; explicitly exclude authLinks from this grant.
     match /{collectionName}/{document=**} {
       allow read: if collectionName != 'authLinks' && isAdmin();
