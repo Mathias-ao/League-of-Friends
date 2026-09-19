@@ -4,7 +4,17 @@ import { requireLeaguePlayer } from "../auth/authorization.js";
 import { db } from "../config/firebase.js";
 import { callableOptions } from "../config/runtime.js";
 import { collections } from "../domain/collections.js";
-import type { CanonicalGameResult, GamePlayer, MatchParticipant } from "../domain/types.js";
+import type {
+  CanonicalGameResult,
+  GameConfiguration,
+  GamePlayer,
+  MatchParticipant,
+  SeriesRule,
+} from "../domain/types.js";
+import {
+  availableCivilizationsForPlayer,
+  type CivilizationDraftState,
+} from "../engines/civilizationDraftEngine.js";
 import { iso, playerMap, publicPlayer } from "./querySupport.js";
 
 interface MatchDetailInput {
@@ -21,6 +31,7 @@ interface MatchDocument {
   teamSizes?: [number, number] | null;
   participants?: MatchParticipant[];
   status?: string;
+  seriesRule?: SeriesRule;
   context?: Record<string, unknown> | null;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   processingState?: string | null;
@@ -32,6 +43,9 @@ interface GameDocument {
   gameNumber?: number;
   status?: string;
   players?: GamePlayer[];
+  gameConfigSnapshot?: GameConfiguration;
+  civilizationDraftId?: string | null;
+  civilizationDraftStatus?: string | null;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   activeResultDisputeId?: string | null;
   rawStatsState?: string | null;
@@ -73,10 +87,11 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
   if (!matchId) throw new HttpsError("invalid-argument", "matchId is required.");
 
   const matchRef = db.collection(collections.matches).doc(matchId);
-  const [matchSnapshot, gamesSnapshot, playersSnapshot] = await Promise.all([
+  const [matchSnapshot, gamesSnapshot, playersSnapshot, draftsSnapshot] = await Promise.all([
     matchRef.get(),
     matchRef.collection("games").get(),
     db.collection(collections.players).get(),
+    matchRef.collection("civilizationDrafts").get(),
   ]);
   if (!matchSnapshot.exists) throw new HttpsError("not-found", "Match not found.");
 
@@ -85,9 +100,18 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
   const viewerIsParticipant = participants.some((participant) => participant.playerId === actor.playerId);
   const canSeePendingResultClaims = viewerIsParticipant || actor.role === "ADMIN";
   const players = playerMap(playersSnapshot);
+  const drafts = new Map(
+    draftsSnapshot.docs.map((document) => [document.id, document.data() as CivilizationDraftState]),
+  );
 
   const gameRows = await Promise.all(gamesSnapshot.docs.map(async (gameSnapshot) => {
     const game = gameSnapshot.data() as GameDocument;
+    const draft = drafts.get(gameSnapshot.id) ?? null;
+    const gamePlayers = Array.isArray(game.players) ? game.players : [];
+    const viewerGamePlayer = gamePlayers.find((player) => player.playerId === actor.playerId) ?? null;
+    const viewerAvailableCivilizations = draft && viewerGamePlayer
+      ? availableCivilizationsForPlayer(draft, actor.playerId, viewerGamePlayer.team)
+      : [];
     const submissionsSnapshot = canSeePendingResultClaims
       ? await gameSnapshot.ref.collection("resultSubmissions").get()
       : null;
@@ -116,7 +140,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       status: game.status ?? "UNKNOWN",
       startedAt: iso(game.startedAt),
       completedAt: iso(game.completedAt),
-      players: (Array.isArray(game.players) ? game.players : []).map((gamePlayer) => ({
+      players: gamePlayers.map((gamePlayer) => ({
         ...publicPlayer(gamePlayer.playerId, players.get(gamePlayer.playerId)),
         team: gamePlayer.team,
         slot: gamePlayer.slot,
@@ -125,6 +149,30 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
         civilizationSelection: gamePlayer.civilizationSelection,
         position: gamePlayer.position,
       })),
+      draftRequired: game.gameConfigSnapshot?.civilizations.mode === "DRAFT",
+      draft: draft ? {
+        draftId: gameSnapshot.id,
+        ruleVersion: draft.ruleVersion,
+        status: draft.status,
+        revision: draft.revision,
+        stateVersion: draft.stateVersion,
+        gameNumber: draft.gameNumber,
+        turnOrder: draft.turnOrder,
+        reusePolicy: draft.reusePolicy,
+        uniqueWithinGame: draft.uniqueWithinGame,
+        pool: draft.pool,
+        available: draft.available,
+        viewerAvailable: viewerAvailableCivilizations,
+        currentTurnIndex: draft.currentTurnIndex,
+        turns: draft.turns,
+        selections: draft.selections,
+        viewerCanPick: Boolean(
+          viewerGamePlayer
+          && draft.status === "ACTIVE"
+          && draft.currentTurnIndex != null
+          && draft.turns[draft.currentTurnIndex]?.playerId === actor.playerId
+        ),
+      } : null,
       result: canonicalResult(game.canonicalResult),
       resultDisputeOpen: Boolean(game.activeResultDisputeId),
       replay: {
@@ -156,6 +204,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       format: match.format ?? null,
       teamSizes: match.teamSizes ?? null,
       status: match.status ?? "UNKNOWN",
+      seriesRule: match.seriesRule ?? { maxGames: 1, gamesRequiredToWin: 1 },
       processingState: match.processingState ?? null,
       context: match.context ?? {},
       completedAt: iso(match.completedAt ?? match.firstCompletedAt),
