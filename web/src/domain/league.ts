@@ -78,6 +78,7 @@ export interface LeagueRepository {
   checkIn(eventId:string):Promise<void>;
   ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;
   pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;
+  resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
 
   event(id:string):Promise<EventDetail>;
