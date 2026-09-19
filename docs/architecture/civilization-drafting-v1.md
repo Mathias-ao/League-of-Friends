@@ -19,6 +19,8 @@ For a normal drafted Game:
 
 When an approved Match uses `civilizations.mode = "DRAFT"`, the first Game draft is created with the Match.
 
+Every participant can see the same live draft board. Participant clients subscribe read-only to the draft document; after the server commits a pick, the other players' Battle views refresh automatically.
+
 Every participant can see:
 
 - the complete civilization pool;
@@ -118,7 +120,7 @@ Attendance changes are therefore handled by the approved Match Plan. The draft n
 
 ## Concurrency and authority
 
-The browser never directly mutates draft state.
+The browser never directly mutates draft state. Firestore rules permit read-only live subscription to a draft document only when the authenticated player's ID is present in that draft's snapshotted `participantIds`. Draft actions and all competition writes remain server-only.
 
 `makeCivilizationDraftPick` uses a Firestore transaction and validates:
 
@@ -168,3 +170,15 @@ The draft subsystem is Game-aware and Match-aware now. The current Match Plan ap
 That existing competition-orchestration limitation is intentionally not bypassed inside the draft feature. When BO3/series orchestration creates `G2` and `G3`, `ensureCivilizationDraft` can open those drafts and apply the configured carry-over policy without a new drafting model.
 
 Series result finalization must be implemented in the result lifecycle before AoF starts creating BO3 Match Games in production.
+
+## Verification
+
+The backend CI builds the Functions project and runs draft-engine tests covering:
+
+- 4v4 unique selection;
+- FFA without captains;
+- three-team snake ordering;
+- out-of-turn and duplicate-pick rejection;
+- Match-wide, player-wide and team-wide carry-over policies;
+- impossible unique pools;
+- invalid per-Game pool overrides.
