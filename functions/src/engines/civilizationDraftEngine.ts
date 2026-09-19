@@ -151,7 +151,62 @@ function draftConfiguration(configuration: CivilizationConfiguration): Civilizat
   if (configuration.draft.ruleVersion !== "AOF_CIV_DRAFT_V1") {
     throw new CivilizationDraftValidationError("Unsupported civilization draft rule version.");
   }
+  const turnOrders: CivilizationDraftTurnOrder[] = ["RANDOM", "SLOT", "TEAM_INTERLEAVED", "TEAM_SNAKE"];
+  if (!turnOrders.includes(configuration.draft.turnOrder)) {
+    throw new CivilizationDraftValidationError("Unsupported civilization draft turn order.");
+  }
+  const reusePolicies: CivilizationDraftReusePolicy[] = [
+    "RESET_EACH_GAME",
+    "PLAYER_UNIQUE_IN_MATCH",
+    "TEAM_UNIQUE_IN_MATCH",
+    "MATCH_UNIQUE",
+  ];
+  if (!reusePolicies.includes(configuration.draft.reusePolicy)) {
+    throw new CivilizationDraftValidationError("Unsupported civilization reuse policy.");
+  }
+  if (typeof configuration.draft.uniqueWithinGame !== "boolean") {
+    throw new CivilizationDraftValidationError("uniqueWithinGame must be explicitly configured.");
+  }
   return configuration.draft;
+}
+
+export function validateCivilizationDraftConfiguration(
+  configuration: CivilizationConfiguration,
+): void {
+  if (configuration.mode !== "DRAFT") return;
+
+  const draft = draftConfiguration(configuration);
+  const allowed = uniqueNonEmpty(configuration.allowed ?? []);
+  if (allowed.length === 0) {
+    throw new CivilizationDraftValidationError("Civilization drafts require a non-empty allowed civilization pool.");
+  }
+
+  const banned = new Set(uniqueNonEmpty(configuration.banned ?? []));
+  const allowedSet = new Set(allowed);
+  if (allowed.every((civilization) => banned.has(civilization))) {
+    throw new CivilizationDraftValidationError("Every allowed civilization is banned.");
+  }
+
+  for (const [gameKey, rawPool] of Object.entries(draft.gamePools ?? {})) {
+    const gameNumber = Number(gameKey);
+    if (!Number.isInteger(gameNumber) || gameNumber < 1) {
+      throw new CivilizationDraftValidationError("Game-specific civilization pool keys must be positive Game numbers.");
+    }
+    const gamePool = uniqueNonEmpty(rawPool);
+    if (gamePool.length === 0) {
+      throw new CivilizationDraftValidationError(`Game ${gameNumber} has an empty civilization pool.`);
+    }
+    for (const civilization of gamePool) {
+      if (!allowedSet.has(civilization)) {
+        throw new CivilizationDraftValidationError(
+          `Game ${gameNumber} civilization ${civilization} is not in the Event's allowed civilization pool.`,
+        );
+      }
+    }
+    if (gamePool.every((civilization) => banned.has(civilization))) {
+      throw new CivilizationDraftValidationError(`Every civilization in Game ${gameNumber}'s pool is banned.`);
+    }
+  }
 }
 
 function resolvePool(
