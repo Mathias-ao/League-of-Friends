@@ -69,6 +69,9 @@ export const makeCivilizationDraftPick = onCall<MakeCivilizationDraftPickInput>(
       if (!participant) {
         throw new HttpsError("permission-denied", "Only Match participants may choose a civilization.");
       }
+      if (["COMPLETED", "CANCELLED", "DISPUTED"].includes(match.status ?? "")) {
+        throw new HttpsError("failed-precondition", "This Match is no longer accepting civilization picks.");
+      }
       if (["COMPLETED", "REMAKE", "NO_CONTEST", "DISPUTED"].includes(game.status ?? "")) {
         throw new HttpsError("failed-precondition", "This Game is no longer accepting civilization picks.");
       }
