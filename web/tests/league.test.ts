@@ -17,7 +17,7 @@ test('league, season and event entry are distinct; repeat RSVP does not double c
   assert.equal((await repo.event('E001')).signup.confirmed?.length,original.events[0].confirmedCount);
 });
 test('the Emperor is separate from the mutable player ladder in preview state',async()=>{
-  const repo=new PreviewLeagueRepository();await repo.signIn();await repo.enterSeason();
+  const repo=new PreviewLeagueRepository();await repo.signIn();await repo.requestMembership('D’Karius','','K7M4Q9');await repo.enterSeason();
   const state=await repo.load();
   assert.equal(state.emperor?.playerId,'sample-you');
   assert.equal(state.viewer?.playerId,state.emperor?.playerId);

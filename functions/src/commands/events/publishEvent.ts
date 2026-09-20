@@ -4,6 +4,11 @@ import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { callableOptions } from "../../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../../domain/collections.js";
+import type { GameConfiguration } from "../../domain/types.js";
+import {
+  CivilizationDraftValidationError,
+  validateCivilizationDraftConfiguration,
+} from "../../engines/civilizationDraftEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
@@ -38,6 +43,19 @@ export const adminPublishEvent = onCall<PublishEventInput>(callableOptions, asyn
     const event = eventSnapshot.data() as Record<string, unknown>;
     if (event.status !== "DRAFT") {
       throw new HttpsError("failed-precondition", "Only a draft Event can be published.");
+    }
+
+    const gameConfig = event.gameConfig as GameConfiguration | undefined;
+    if (!gameConfig) {
+      throw new HttpsError("failed-precondition", "Event game configuration is missing.");
+    }
+    try {
+      validateCivilizationDraftConfiguration(gameConfig.civilizations);
+    } catch (error) {
+      if (error instanceof CivilizationDraftValidationError) {
+        throw new HttpsError("failed-precondition", `Invalid civilization draft configuration: ${error.message}`);
+      }
+      throw error;
     }
 
     if (!leagueStateSnapshot.exists) {

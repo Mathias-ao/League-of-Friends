@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {ArrowRight,BookOpen,Users,Crown,Check,Lock,Swords,Flag,Heart,Search,Shield,Upload} from 'lucide-react';
 import {LeagueEvent,LeagueService,RelationshipPolicy,formatName,isLombardia,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {plannedEvents,lombardia} from '../data/content';
@@ -81,16 +81,63 @@ export function EventDialog(props:ViewProps&{data:EventDetail;onUpdated:()=>void
     <div className="actions">{event.canRsvp()&&<><button className="primary" disabled={busy||data.viewer.rsvp==='YES'} onClick={()=>void respond('YES')}>{snapshot.enteredSeason?'I’m in':'Enter season first'}</button><button className="text-button" disabled={busy||data.viewer.rsvp==='NO'} onClick={()=>void respond('NO')}>Decline</button></>}
       {event.canCheckIn()?<button className="primary" disabled={busy} onClick={async()=>{if(await act(()=>repository.checkIn(event.id),'You are checked in.'))onUpdated();}}>Check in</button>:data.viewer.attendanceStatus!=='CHECKED_IN'&&<span className="muted">{data.event.checkInOpensAt?<>Check-in opens <DateLabel value={data.event.checkInOpensAt}/></>:'Check-in time to be announced'}</span>}
     </div><hr/><h3>Matches & civilization draft</h3>{data.matches.filter(m=>m.status!=='PROPOSED').map(m=><button className="battle-row" key={m.matchId} onClick={()=>openMatch(m.matchId)}><Sigil kind="duel"/><span><strong>{formatName(m.format)} · {m.matchId}</strong><small>{m.participants.map(p=>p.steamName).join(' · ')}</small></span><ArrowRight size={17}/></button>)}
-    <p className="muted">{!data.matches.length?'Matches will be revealed after check-in and plan approval. ':''}The civilization draft is not yet available.</p>
+    <p className="muted">{!data.matches.length?'Matches will be revealed after check-in and plan approval. ':'Open your Battle to see the live civilization muster and draft order.'}</p>
   </>;
 }
-export function MatchDialog({data,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
+export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
   const [dispute,setDispute]=useState<string|null>(null),[reason,setReason]=useState(''),[category,setCategory]=useState('WRONG_RESULT');
+  const [resetDraft,setResetDraft]=useState<string|null>(null),[resetReason,setResetReason]=useState(''),[rerollDraft,setRerollDraft]=useState(false);
+  const playerName=(playerId:string)=>data.match.participants.find(player=>player.playerId===playerId)?.steamName??playerId;
+  const reuseLabel=(value:string)=>({
+    RESET_EACH_GAME:'Pool resets each Game',
+    PLAYER_UNIQUE_IN_MATCH:'Players cannot repeat a civilization in this Match',
+    TEAM_UNIQUE_IN_MATCH:'Teams cannot reuse a civilization in this Match',
+    MATCH_UNIQUE:'A civilization can appear only once in this Match'
+  } as Record<string,string>)[value]??value.replaceAll('_',' ');
+  const liveDraftIds=data.viewer.isParticipant?data.games.filter(game=>game.draft?.status==='ACTIVE').map(game=>game.gameId):[];
+  const liveDraftKey=liveDraftIds.join('|');
+  useEffect(()=>{
+    if(!liveDraftKey)return;
+    const stops=liveDraftIds.map(gameId=>repository.watchCivilizationDraft(data.match.matchId,gameId,onUpdated));
+    return ()=>stops.forEach(stop=>stop());
+  },[repository,data.match.matchId,liveDraftKey]);
   return <><div className="detail-meta"><span className="eyebrow">{formatName(data.match.format)} · {data.match.matchId}</span><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></div><Roster players={data.match.participants}/>
-    {data.games.map(game=><article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{data.viewer.isParticipant&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>Dispute result</button>}</div><div className="game-players">{game.players.map(p=><div key={p.playerId}><Avatar player={p}/><span><strong>{p.steamName}</strong><small>{p.civilization??'Civilization not yet selected'}{p.team!=null?' · Team '+p.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(p.playerId)&&<span className="gold">Winner</span>}</div>)}</div><p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':game.result?'Final result · Revision '+game.result.revision:'Awaiting a qualified result.'}</p>
-      {dispute===game.gameId&&<form className="form dispute-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.dispute(data.match.matchId,game.gameId,category,reason.trim()),'Dispute submitted for review.')){setDispute(null);onUpdated();}}}><label>What needs correcting?<select value={category} onChange={e=>setCategory(e.target.value)}><option value="WRONG_RESULT">Wrong result</option><option value="WRONG_REPLAY">Wrong replay</option><option value="PLAYER_MISMATCH">Player mismatch</option><option value="OTHER">Other</option></select></label><label>Reason<textarea required maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="primary" disabled={busy||!reason.trim()}>Submit dispute</button></form>}
-      <div className="upload-state"><Upload size={23}/><div><strong>Replay submission is not available yet</strong><p>Keep the .aoe2record on your computer. Uploading and automatic processing will be enabled when ready.</p></div></div>
-    </article>)}
+    {data.games.map(game=>{
+      const draft=game.draft??null;
+      const currentTurn=draft?.currentTurnIndex!=null?draft.turns[draft.currentTurnIndex]??null:null;
+      return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{data.viewer.isParticipant&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>Dispute result</button>}</div>
+        {game.draftRequired&&<section className={'civilization-draft '+(draft?.status==='COMPLETED'?'draft-complete':'')}>
+          <div className="draft-heading"><div><span className="eyebrow">CIVILIZATION MUSTER</span><h4>{draft?.status==='COMPLETED'?'The hosts are ready':currentTurn?playerName(currentTurn.playerId)+' chooses next':'Awaiting the draft'}</h4></div>{draft&&<span className="quiet-badge">{draft.selections.length} / {draft.turns.length} CHOSEN</span>}</div>
+          {!draft?<div className="draft-unopened"><p>The Match requires a civilization draft before this Game can begin.</p>{data.viewer.isParticipant&&<button className="primary" disabled={busy} onClick={async()=>{if(await act(()=>repository.ensureCivilizationDraft(data.match.matchId,game.gameId),'The civilization muster has opened.'))onUpdated();}}>Open civilization draft</button>}</div>:<>
+            <div className="draft-rule-line"><span>{draft.uniqueWithinGame?'No duplicate civilizations in this Game':'Duplicates permitted in this Game'}</span><span>{reuseLabel(draft.reusePolicy)}</span></div>
+            <div className="draft-turns" aria-label="Civilization draft order">{draft.turns.map(turn=><div key={turn.playerId} className={(turn.status==='COMPLETED'?'done ':'')+(currentTurn?.playerId===turn.playerId?'current':'')}><span>{String(turn.index+1).padStart(2,'0')}</span><strong>{playerName(turn.playerId)}</strong><small>{turn.civilization??(turn.team!=null?'Team '+turn.team:'Awaiting choice')}</small></div>)}</div>
+            <div className="draft-pool" aria-label="Civilization pool">{draft.pool.map(civilization=>{
+              const selections=draft.selections.filter(selection=>selection.civilization===civilization);
+              const selected=selections.length>0;
+              const availableToViewer=draft.viewerAvailable.includes(civilization);
+              const canPick=draft.viewerCanPick&&availableToViewer&&!busy;
+              return <button key={civilization} className={'draft-civ '+(selected?'claimed ':'')+(canPick?'available':'')} disabled={!canPick} onClick={async()=>{if(await act(()=>repository.pickCivilization(data.match.matchId,game.gameId,civilization),civilization.replaceAll('_',' ')+' marches beneath your banner.'))onUpdated();}}>
+                <strong>{civilization.replaceAll('_',' ')}</strong>
+                <small>{selected?'Claimed by '+selections.map(selection=>playerName(selection.playerId)).join(', '):canPick?'Choose this civilization':draft.viewerCanPick?'Unavailable to you':'Available'}</small>
+              </button>;
+            })}</div>
+            {draft.status==='ACTIVE'&&<p className={draft.viewerCanPick?'draft-call':'muted'}>{draft.viewerCanPick?'Your turn. Choose one civilization; the choice is final unless an administrator resets the draft.':currentTurn?'Waiting for '+playerName(currentTurn.playerId)+'.':'Waiting for the next turn.'}</p>}
+            {draft.status==='COMPLETED'&&<p className="draft-call">The civilization assignments below are now authoritative for this Game.</p>}
+            {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&<div className="draft-admin">
+              <button className="text-button small" onClick={()=>{setResetDraft(resetDraft===game.gameId?null:game.gameId);setResetReason('');setRerollDraft(false);}}>{resetDraft===game.gameId?'Cancel reset':'Reset draft'}</button>
+              {resetDraft===game.gameId&&<form className="form draft-reset-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.resetCivilizationDraft(data.match.matchId,game.gameId,resetReason.trim(),rerollDraft),'The civilization muster has been reset.')){setResetDraft(null);setResetReason('');setRerollDraft(false);onUpdated();}}}>
+                <label>Reason<textarea required maxLength={1000} value={resetReason} onChange={e=>setResetReason(e.target.value)} placeholder="Why is this draft being reset?"/></label>
+                <label className="draft-reset-check"><input type="checkbox" checked={rerollDraft} onChange={e=>setRerollDraft(e.target.checked)}/>Reroll the draft order</label>
+                <button className="primary" disabled={busy||!resetReason.trim()}>Confirm reset</button>
+              </form>}
+            </div>}
+          </>}
+        </section>}
+        <div className="game-players">{game.players.map(p=><div key={p.playerId}><Avatar player={p}/><span><strong>{p.steamName}</strong><small>{p.civilization??'Civilization not yet selected'}{p.team!=null?' · Team '+p.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(p.playerId)&&<span className="gold">Winner</span>}</div>)}</div><p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':game.result?'Final result · Revision '+game.result.revision:'Awaiting a qualified result.'}</p>
+        {dispute===game.gameId&&<form className="form dispute-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.dispute(data.match.matchId,game.gameId,category,reason.trim()),'Dispute submitted for review.')){setDispute(null);onUpdated();}}}><label>What needs correcting?<select value={category} onChange={e=>setCategory(e.target.value)}><option value="WRONG_RESULT">Wrong result</option><option value="WRONG_REPLAY">Wrong replay</option><option value="PLAYER_MISMATCH">Player mismatch</option><option value="OTHER">Other</option></select></label><label>Reason<textarea required maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="primary" disabled={busy||!reason.trim()}>Submit dispute</button></form>}
+        <div className="upload-state"><Upload size={23}/><div><strong>Replay submission is not available yet</strong><p>Keep the .aoe2record on your computer. Uploading and automatic processing will be enabled when ready.</p></div></div>
+      </article>;
+    })}
     {!data.games.length&&<Empty title="The Game plan is not ready">Your Games will appear after the match plan is approved.</Empty>}
   </>;
 }

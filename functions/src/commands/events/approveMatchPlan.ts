@@ -11,6 +11,10 @@ import type {
   ProposedMatch,
   ScoringSnapshot,
 } from "../../domain/types.js";
+import {
+  CivilizationDraftValidationError,
+  createCivilizationDraft,
+} from "../../engines/civilizationDraftEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
@@ -98,12 +102,37 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
 
     const now = Timestamp.now();
     const officialMatchIds: string[] = [];
+    const gameConfig = event.gameConfig;
+    const scoringSnapshot = event.scoringSnapshot;
+    const goldRewardSnapshot = event.goldRewardSnapshot;
 
     plan.matches.forEach((proposedMatch, index) => {
       const matchNumber = index + 1;
       const matchId = `${planId}-M${matchNumber}`;
       const matchRef = db.collection(collections.matches).doc(matchId);
       const gameRef = matchRef.collection("games").doc("G1");
+      const draftRef = matchRef.collection("civilizationDrafts").doc("G1");
+
+      let civilizationDraft = null;
+      if (gameConfig.civilizations.mode === "DRAFT") {
+        try {
+          civilizationDraft = createCivilizationDraft({
+            matchId,
+            gameId: "G1",
+            gameNumber: 1,
+            participants: proposedMatch.participants,
+            civilizationConfiguration: gameConfig.civilizations,
+          });
+        } catch (error) {
+          if (error instanceof CivilizationDraftValidationError) {
+            throw new HttpsError(
+              "failed-precondition",
+              `Match ${matchNumber} civilization draft is invalid: ${error.message}`,
+            );
+          }
+          throw error;
+        }
+      }
 
       const matchDocument = {
         seasonId: event.seasonId,
@@ -128,9 +157,9 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
           maxGames: 1,
           gamesRequiredToWin: 1,
         },
-        gameConfigSnapshot: event.gameConfig,
-        scoringSnapshot: event.scoringSnapshot,
-        goldRewardSnapshot: event.goldRewardSnapshot,
+        gameConfigSnapshot: gameConfig,
+        scoringSnapshot,
+        goldRewardSnapshot,
         canonicalResult: null,
         createdBy: actor.playerId,
         createdAt: now,
@@ -150,7 +179,9 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
         gameNumber: 1,
         status: "READY" as const,
         players: gamePlayers,
-        gameConfigSnapshot: event.gameConfig,
+        gameConfigSnapshot: gameConfig,
+        civilizationDraftId: civilizationDraft ? "G1" : null,
+        civilizationDraftStatus: civilizationDraft?.status ?? null,
         replay: null,
         canonicalResult: null,
         startedAt: null,
@@ -161,6 +192,18 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
 
       transaction.create(matchRef, matchDocument);
       transaction.create(gameRef, gameDocument);
+      if (civilizationDraft) {
+        transaction.create(draftRef, {
+          matchId,
+          gameId: "G1",
+          participantIds: proposedMatch.participants.map((participant) => participant.playerId),
+          ...civilizationDraft,
+          createdBy: actor.playerId,
+          createdAt: now,
+          updatedAt: now,
+          completedAt: null,
+        });
+      }
       officialMatchIds.push(matchId);
     });
 

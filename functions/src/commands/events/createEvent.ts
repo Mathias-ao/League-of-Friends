@@ -11,6 +11,10 @@ import type {
   MatchPlanningConfig,
   ScoringSnapshot,
 } from "../../domain/types.js";
+import {
+  CivilizationDraftValidationError,
+  validateCivilizationDraftConfiguration,
+} from "../../engines/civilizationDraftEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
@@ -99,6 +103,15 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
 
   if (!input.planningConfig || !input.gameConfig || !input.scoringSnapshot || !input.goldRewardSnapshot) {
     throw new HttpsError("invalid-argument", "Event planning, game, scoring, and Gold configurations are required.");
+  }
+
+  try {
+    validateCivilizationDraftConfiguration(input.gameConfig.civilizations);
+  } catch (error) {
+    if (error instanceof CivilizationDraftValidationError) {
+      throw new HttpsError("invalid-argument", `Invalid civilization draft configuration: ${error.message}`);
+    }
+    throw error;
   }
 
   const eventRef = db.collection(collections.events).doc();

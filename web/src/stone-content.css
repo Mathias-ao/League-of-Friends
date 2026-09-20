@@ -1315,3 +1315,176 @@ textarea:focus{border-color:#92734d}
   .modal-heading h2,.primary{color:CanvasText;text-shadow:none}
   .primary{background:ButtonFace;border:1px solid ButtonText}
 }
+
+
+/* Civilization draft — a shared muster board inside the Battle record. */
+.civilization-draft{
+  margin:22px 0;
+  padding:20px;
+  border:1px solid #66503a;
+  background:
+    radial-gradient(ellipse at 18% 0,rgba(202,151,77,.08),transparent 34%),
+    linear-gradient(176deg,#211812,#130f0c);
+  box-shadow:inset 0 1px rgba(255,229,190,.055),inset 0 -2px rgba(0,0,0,.34);
+}
+.draft-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:15px;
+}
+.draft-heading h4{
+  margin:4px 0 0;
+  font-family:var(--serif);
+  font-size:1.15rem;
+  font-weight:500;
+  color:#eadbc3;
+  letter-spacing:.035em;
+}
+.draft-rule-line{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 18px;
+  padding:10px 0 15px;
+  border-top:1px solid rgba(128,95,61,.25);
+  color:#a99a88;
+  font-size:.72rem;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+.draft-turns{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:8px;
+  margin-bottom:18px;
+}
+.draft-turns>div{
+  min-width:0;
+  padding:10px 11px;
+  border:1px solid #49392c;
+  background:rgba(8,5,4,.32);
+}
+.draft-turns>div.current{
+  border-color:#b3874f;
+  box-shadow:0 0 0 1px rgba(206,155,76,.12),inset 0 0 18px rgba(184,121,43,.08);
+}
+.draft-turns>div.done{opacity:.78}
+.draft-turns span{
+  display:block;
+  color:#8f765b;
+  font-size:.64rem;
+  letter-spacing:.09em;
+}
+.draft-turns strong{
+  display:block;
+  overflow:hidden;
+  margin-top:3px;
+  color:#ddd1c1;
+  font-size:.82rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.draft-turns small{
+  display:block;
+  overflow:hidden;
+  margin-top:4px;
+  color:#918476;
+  font-size:.68rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.draft-pool{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:9px;
+}
+.draft-civ{
+  min-height:72px;
+  padding:12px 13px;
+  text-align:left;
+  border:1px solid #594532;
+  background:
+    linear-gradient(180deg,rgba(105,75,45,.20),rgba(25,18,13,.92));
+  color:#d9cbb8;
+  box-shadow:inset 0 1px rgba(255,225,183,.04);
+}
+.draft-civ strong{
+  display:block;
+  font-family:var(--serif);
+  font-size:.88rem;
+  font-weight:500;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+.draft-civ small{
+  display:block;
+  margin-top:6px;
+  color:#908272;
+  font-size:.68rem;
+}
+.draft-civ.available{
+  cursor:pointer;
+  border-color:#9d7648;
+  background:
+    radial-gradient(ellipse at 35% 0,rgba(224,171,88,.13),transparent 55%),
+    linear-gradient(180deg,#342619,#1a120d);
+}
+.draft-civ.available:hover{
+  border-color:#c39758;
+  box-shadow:0 0 18px rgba(193,130,47,.10),inset 0 1px rgba(255,230,188,.08);
+}
+.draft-civ.claimed{
+  border-color:#42362b;
+  background:#100d0b;
+  opacity:.62;
+}
+.draft-civ.claimed strong{text-decoration:line-through;text-decoration-thickness:1px}
+.draft-call{
+  margin:16px 0 0;
+  color:#e0bb79;
+  font-family:var(--serif);
+  letter-spacing:.035em;
+}
+.draft-unopened{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+.draft-unopened p{margin:0;color:#b8aa99}
+.draft-complete{
+  border-color:#786044;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(204,156,83,.10),transparent 42%),
+    linear-gradient(176deg,#251b13,#14100d);
+}
+@media(max-width:620px){
+  .civilization-draft{padding:15px}
+  .draft-heading,.draft-unopened{align-items:stretch;flex-direction:column}
+  .draft-turns,.draft-pool{grid-template-columns:1fr 1fr}
+}
+@media(max-width:420px){
+  .draft-turns,.draft-pool{grid-template-columns:1fr}
+}
+
+.draft-admin{
+  margin-top:18px;
+  padding-top:14px;
+  border-top:1px solid rgba(128,95,61,.25);
+}
+.draft-reset-form{
+  max-width:560px;
+  margin-top:12px;
+}
+.draft-reset-check{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center;
+  gap:9px;
+  color:#b6a795;
+}
+.draft-reset-check input{
+  width:auto;
+  margin:0;
+}

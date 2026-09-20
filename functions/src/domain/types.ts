@@ -46,10 +46,26 @@ export interface MapConfiguration {
   selectionMode: "ADMIN" | "RANDOM" | "PLAYER_CHOICE" | "UNRESTRICTED";
 }
 
+export type CivilizationDraftTurnOrder = "RANDOM" | "SLOT" | "TEAM_INTERLEAVED" | "TEAM_SNAKE";
+export type CivilizationDraftReusePolicy =
+  | "RESET_EACH_GAME"
+  | "PLAYER_UNIQUE_IN_MATCH"
+  | "TEAM_UNIQUE_IN_MATCH"
+  | "MATCH_UNIQUE";
+
+export interface CivilizationDraftConfiguration {
+  ruleVersion: "AOF_CIV_DRAFT_V1";
+  turnOrder: CivilizationDraftTurnOrder;
+  reusePolicy: CivilizationDraftReusePolicy;
+  uniqueWithinGame: boolean;
+  gamePools?: Record<string, string[]>;
+}
+
 export interface CivilizationConfiguration {
-  mode: "UNRESTRICTED" | "RANDOM" | "ALLOWED_LIST" | "BANNED_LIST" | "TEAM_THEME" | "CUSTOM";
+  mode: "UNRESTRICTED" | "RANDOM" | "ALLOWED_LIST" | "BANNED_LIST" | "TEAM_THEME" | "DRAFT" | "CUSTOM";
   allowed: string[];
   banned: string[];
+  draft?: CivilizationDraftConfiguration | null;
   customRuleCode: string | null;
 }
 

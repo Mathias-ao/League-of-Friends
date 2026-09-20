@@ -1,17 +1,20 @@
 import {initializeApp} from 'firebase/app';
 import {getAuth,GoogleAuthProvider,browserLocalPersistence,setPersistence,signInWithPopup,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
+import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
 import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
   private auth=getAuth(this.app);
   private functions=getFunctions(this.app,import.meta.env.VITE_FIREBASE_REGION||'europe-west1');
+  private firestore=getFirestore(this.app);
   private ready:Promise<void>;
   constructor(){
     if(import.meta.env.VITE_USE_EMULATORS==='true'){
       connectAuthEmulator(this.auth,'http://127.0.0.1:9099',{disableWarnings:true});
       connectFunctionsEmulator(this.functions,'127.0.0.1',5001);
+      connectFirestoreEmulator(this.firestore,'127.0.0.1',8085);
     }
     this.ready=setPersistence(this.auth,browserLocalPersistence).then(()=>this.auth.authStateReady());
   }
@@ -34,6 +37,20 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async enterSeason(seasonId:string){await this.call('enterSeason',{seasonId});}
   async rsvp(eventId:string,rsvp:'YES'|'NO'){await this.call('setEventRsvp',{eventId,rsvp});}
   async checkIn(eventId:string){await this.call('checkInToEvent',{eventId});}
+  async ensureCivilizationDraft(matchId:string,gameId:string){await this.call('ensureCivilizationDraft',{matchId,gameId});}
+  async pickCivilization(matchId:string,gameId:string,civilization:string){await this.call('makeCivilizationDraftPick',{matchId,gameId,civilization});}
+  async resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean){await this.call('adminResetCivilizationDraft',{requestId:crypto.randomUUID(),matchId,gameId,reason,rerollOrder});}
+  watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void){
+    let initial=true;
+    return onSnapshot(
+      doc(this.firestore,'matches',matchId,'civilizationDrafts',gameId),
+      ()=>{
+        if(initial){initial=false;return;}
+        callback();
+      },
+      ()=>{}
+    );
+  }
   event(eventId:string){return this.call<EventDetail>('getEventDetail',{eventId});}
   match(matchId:string){return this.call<MatchDetail>('getMatchDetail',{matchId});}
   player(playerId:string){return this.call<PlayerProfile>('getPlayerProfile',{playerId});}

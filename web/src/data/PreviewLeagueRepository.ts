@@ -45,6 +45,10 @@ export class PreviewLeagueRepository implements LeagueRepository {
     e.viewer={rsvp:value,signupState:value==='YES'?'CONFIRMED':'NONE',attendanceStatus:'NOT_CHECKED'};
   }
   async checkIn(id:string){const e=this.state.events.find(e=>e.eventId===id);if(!e||!new LeagueEvent(e).canCheckIn())throw new Error('Check-in is not open.');e.viewer!.attendanceStatus='CHECKED_IN';}
+  async ensureCivilizationDraft(){throw new Error('Civilization drafting is available in live Matches.');}
+  async pickCivilization(){throw new Error('Civilization drafting is available in live Matches.');}
+  async resetCivilizationDraft(){throw new Error('Civilization draft administration is available in live Matches.');}
+  watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
     return structuredClone({event:e,viewer:e.viewer!,signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:this.state.players.filter(p=>p.playerId!=='sample-you'||e.viewer?.rsvp==='YES')},matches:[]});

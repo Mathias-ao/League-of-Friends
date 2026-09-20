@@ -52,9 +52,11 @@ The required hierarchy remains:
 - The approved Match/Game plan is authoritative for roster, teams, format and civilization rules.
 - Attendance changes may produce fewer Games, asymmetric teams or FFA.
 - Civilization drafting belongs in the web application.
+- `AOF_CIV_DRAFT_V1` provides authoritative per-Game player drafting with configurable turn order, per-Game pools, within-Game uniqueness, Match carry-over policies, immutable pick actions and admin reset/audit support.
+- Drafting operates from the approved Match roster and supports FFA, asymmetric teams and arbitrary team numbers without assuming a fixed advertised roster.
 - Players upload replays; post-match statistics are derived automatically rather than entered manually.
 
-Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning and Game creation. The player-facing React/TypeScript client lives in `web/`. Production configuration, replay upload and the complete end-to-end statistics presentation flow remain incomplete.
+Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning, Game creation and native civilization drafting. The player-facing React/TypeScript client lives in `web/`. Production configuration, replay upload and the complete end-to-end statistics presentation flow remain incomplete.
 
 ## Replay and Match Statistics foundation
 
@@ -111,6 +113,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - Restored-game clocks, complete effective diplomacy state and some initial-object semantics remain qualification areas.
 - Canonical export is not yet the mandatory normal upload path.
 - Authenticated replay upload, durable remote canonical persistence and complete backend ingestion remain unfinished.
+- Civilization drafting is series-aware, but approved Match Plans still create only `G1` with a best-of-1 SeriesRule. BO3 Game creation and series result finalization remain a separate competition-orchestration gap.
 - Lifetime Statistics persistence and Playstyle presentation are not yet wired end to end.
 - Pair History currently persists match/team/result history but not replay-derived directional interaction signals.
 - Playstyle normalization and slider definitions/weights remain undecided. Gallantry/Treachery/Chivalry earning rules and Rivalry/Hostility/Bond derivation/stages are also intentionally undecided.
@@ -134,7 +137,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 | Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, authentication mapping and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
 | Results | Submission, administrator resolution, disputes, corrections and revision foundations exist. | Replay-derived automatic result qualification and downstream invalidation. |
 | Processing | Repeat-safe jobs exist for several downstream systems; Pair History now uses the existing `RIVALRIES` step. | Wire current Match Statistics and Lifetime aggregation into versioned rebuild/storage jobs. |
-| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
+| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data; Battle details now expose the native civilization muster when a Game uses `mode: "DRAFT"`. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
 
 ## Immediate priorities
 
@@ -167,3 +170,4 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)
 - [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
+- [`../architecture/civilization-drafting-v1.md`](../architecture/civilization-drafting-v1.md)
