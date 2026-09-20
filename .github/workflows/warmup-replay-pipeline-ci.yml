@@ -1,0 +1,82 @@
+name: Warmup Replay Pipeline CI
+
+on:
+  push:
+    paths:
+      - "functions/**"
+      - "replay-tools/**"
+      - "replay-fixtures/1v1_1.aoe2record"
+      - "replay-fixtures/1v1_2.aoe2record"
+      - "scripts/bootstrap-emulator-admin.mjs"
+      - "scripts/create-emulator-season.mjs"
+      - "scripts/smoke-test-warmup-replay-pipeline.mjs"
+      - "firebase.json"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+      - ".github/workflows/warmup-replay-pipeline-ci.yml"
+  pull_request:
+    paths:
+      - "functions/**"
+      - "replay-tools/**"
+      - "replay-fixtures/1v1_1.aoe2record"
+      - "replay-fixtures/1v1_2.aoe2record"
+      - "scripts/bootstrap-emulator-admin.mjs"
+      - "scripts/create-emulator-season.mjs"
+      - "scripts/smoke-test-warmup-replay-pipeline.mjs"
+      - "firebase.json"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+      - ".github/workflows/warmup-replay-pipeline-ci.yml"
+
+jobs:
+  warmup-replay:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: functions
+
+      - name: Build backend
+        run: npm run build
+        working-directory: functions
+
+      - name: Install replay parser dependency
+        run: pip install -r replay-tools/requirements.txt
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Configure emulator-only Emperor's Favor secret
+        run: |
+          printf 'EMPERORS_FAVOR_HMAC_KEY=warmup-replay-ci-key-0123456789abcdef0123456789abcdef\n' > functions/.secret.local
+
+      - name: Run real 1v1 warmup replay pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT_ID="aof-warmup-replay-ci"
+          SEASON_START="$(date -u -d '1 day ago' --iso-8601=seconds)"
+          SEASON_END="$(date -u -d '30 days' --iso-8601=seconds)"
+
+          firebase emulators:exec \
+            --project "$PROJECT_ID" \
+            --only auth,firestore,functions \
+            "node scripts/bootstrap-emulator-admin.mjs --project $PROJECT_ID --steam 'CI Emperor' && \
+             node scripts/create-emulator-season.mjs --project $PROJECT_ID --name 'Warmup Replay CI' --starts '$SEASON_START' --ends '$SEASON_END' && \
+             node scripts/smoke-test-warmup-replay-pipeline.mjs --project $PROJECT_ID --python python"
