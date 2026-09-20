@@ -55,8 +55,25 @@ interface GameDocument {
   activeDerivedReplayStatsId?: string | null;
   activeReplayAnalysisId?: string | null;
   replayAnalysisVersion?: string | null;
+  replaySourceCount?: number;
+  canonicalStatisticsState?: string | null;
+  canonicalStatisticsProjectionVersion?: string | null;
+  activeCanonicalReplaySourceId?: string | null;
+  activeCanonicalStatisticsId?: string | null;
   startedAt?: Timestamp | null;
   completedAt?: Timestamp | null;
+}
+
+interface CanonicalBattleStatisticsDocument {
+  contractVersion?: string;
+  statisticsSchemaVersion?: string;
+  statisticsProjectionVersion?: string;
+  replaySourceId?: string;
+  sharedStatisticsHash?: string;
+  scope?: Record<string, unknown>;
+  participants?: Array<Record<string, unknown>>;
+  coverage?: Record<string, unknown>;
+  warnings?: unknown[];
 }
 
 interface SubmissionDocument {
@@ -134,6 +151,29 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       ))
       : [];
 
+    let battleStatistics = null;
+    if (game.activeCanonicalStatisticsId) {
+      const statisticsSnapshot = await gameSnapshot.ref
+        .collection("battleStatistics")
+        .doc(game.activeCanonicalStatisticsId)
+        .get();
+      if (statisticsSnapshot.exists) {
+        const statistics = statisticsSnapshot.data() as CanonicalBattleStatisticsDocument;
+        battleStatistics = {
+          statisticsId: statisticsSnapshot.id,
+          contractVersion: statistics.contractVersion ?? null,
+          statisticsSchemaVersion: statistics.statisticsSchemaVersion ?? null,
+          statisticsProjectionVersion: statistics.statisticsProjectionVersion ?? null,
+          replaySourceId: statistics.replaySourceId ?? game.activeCanonicalReplaySourceId ?? null,
+          sharedStatisticsHash: statistics.sharedStatisticsHash ?? null,
+          scope: statistics.scope ?? {},
+          participants: Array.isArray(statistics.participants) ? statistics.participants : [],
+          coverage: statistics.coverage ?? {},
+          warnings: Array.isArray(statistics.warnings) ? statistics.warnings : [],
+        };
+      }
+    }
+
     return {
       gameId: gameSnapshot.id,
       gameNumber: Number(game.gameNumber ?? 0),
@@ -183,7 +223,13 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
         derivedStatsId: game.activeDerivedReplayStatsId ?? null,
         analysisId: game.activeReplayAnalysisId ?? null,
         analysisVersion: game.replayAnalysisVersion ?? null,
+        replaySourceCount: Number(game.replaySourceCount ?? 0),
+        canonicalStatisticsState: game.canonicalStatisticsState ?? null,
+        canonicalStatisticsProjectionVersion: game.canonicalStatisticsProjectionVersion ?? null,
+        activeCanonicalReplaySourceId: game.activeCanonicalReplaySourceId ?? null,
+        activeCanonicalStatisticsId: game.activeCanonicalStatisticsId ?? null,
       },
+      battleStatistics,
       viewerSubmission,
       confirmationRequests,
     };
