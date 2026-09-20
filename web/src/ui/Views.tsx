@@ -259,7 +259,7 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
           })}</div>}
           {draft.status==='ACTIVE'&&<p className={draft.viewerCanPick?'draft-call':'muted'}>{draft.viewerCanPick?'Your turn. Choose one civilization; the choice is final unless an administrator resets the draft.':currentTurn?'Waiting for '+playerName(currentTurn.playerId)+'.':'Waiting for the next turn.'}</p>}
           {draft.status==='COMPLETED'&&<p className="draft-call">The draft record is locked. Battle Orders contain the authoritative teams and civilizations for this Game.</p>}
-          {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&<div className="draft-admin">
+          {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&draft.status!=='COMPLETED'&&<div className="draft-admin">
             <button className="text-button small" onClick={()=>{setResetDraft(resetDraft===game.gameId?null:game.gameId);setResetReason('');setRerollDraft(false);}}>{resetDraft===game.gameId?'Cancel reset':'Reset draft'}</button>
             {resetDraft===game.gameId&&<form className="form draft-reset-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.resetCivilizationDraft(data.match.matchId,game.gameId,resetReason.trim(),rerollDraft),'The civilization muster has been reset.')){setResetDraft(null);setResetReason('');setRerollDraft(false);onUpdated();}}}>
               <label>Reason<textarea required maxLength={1000} value={resetReason} onChange={e=>setResetReason(e.target.value)} placeholder="Why is this draft being reset?"/></label>
@@ -270,10 +270,21 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
         </>}
       </section>:null;
       return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{data.viewer.isParticipant&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>Dispute result</button>}</div>
-        {draft?.status==='COMPLETED'&&<div className="battle-orders-issued">
-          <div><span className="eyebrow">BATTLE ORDERS ISSUED</span><strong>The hosts are ready.</strong><p>Teams and civilizations are locked for this Game.</p></div>
-          <button className="primary" onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button>
-        </div>}
+        {draft?.status==='COMPLETED'&&<>
+          <div className="battle-orders-issued">
+            <div><span className="eyebrow">BATTLE ORDERS ISSUED</span><strong>The hosts are ready.</strong><p>Teams and civilizations are locked for this Game.</p></div>
+            <div className="battle-orders-issued-actions">
+              <button className="primary" onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button>
+              {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&<button className="text-button small admin-recovery-button" onClick={()=>{setResetDraft(resetDraft===game.gameId?null:game.gameId);setResetReason('');setRerollDraft(false);}}>{resetDraft===game.gameId?'Cancel recovery':'Reset / reroll draft'}</button>}
+            </div>
+          </div>
+          {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&resetDraft===game.gameId&&<form className="form battle-orders-admin-recovery" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.resetCivilizationDraft(data.match.matchId,game.gameId,resetReason.trim(),rerollDraft),'The civilization muster has been reset.')){setResetDraft(null);setResetReason('');setRerollDraft(false);setBattleOrdersGameId(null);onUpdated();}}}>
+            <div className="battle-orders-admin-heading"><span className="eyebrow">ADMIN ONLY · DRAFT RECOVERY</span><strong>Reset the completed draft</strong><p>All civilization picks will be cleared. Keep the existing pick order, or explicitly reroll it.</p></div>
+            <label>Reason<textarea required maxLength={1000} value={resetReason} onChange={e=>setResetReason(e.target.value)} placeholder="Why is this draft being reset?"/></label>
+            <label className="draft-reset-check"><input type="checkbox" checked={rerollDraft} onChange={e=>setRerollDraft(e.target.checked)}/>Reroll the draft order</label>
+            <button className="primary" disabled={busy||!resetReason.trim()}>{rerollDraft?'Reset and reroll draft':'Reset draft with same order'}</button>
+          </form>}
+        </>}
         {draft?.status==='COMPLETED'?<details className="draft-record-details"><summary><span><strong>View draft record</strong><small>Pick order, draft rules and administrator recovery</small></span><span className="quiet-badge">{draft.selections.length} / {draft.turns.length} CHOSEN</span></summary>{draftPanel}</details>:draftPanel}
         {draft?.status!=='COMPLETED'&&<div className="game-players">{game.players.map(player=><div key={player.playerId}><Avatar player={player}/><span><strong>{player.steamName}</strong><small>{player.civilization?civilizationName(player.civilization):'Civilization not yet selected'}{player.team!=null?' · Team '+player.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(player.playerId)&&<span className="gold">Winner</span>}</div>)}</div>}<p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':game.result?'Final result · Revision '+game.result.revision:draft?.status==='COMPLETED'?'Battle awaiting a qualified result.':'Awaiting a qualified result.'}</p>
         {dispute===game.gameId&&<form className="form dispute-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.dispute(data.match.matchId,game.gameId,category,reason.trim()),'Dispute submitted for review.')){setDispute(null);onUpdated();}}}><label>What needs correcting?<select value={category} onChange={e=>setCategory(e.target.value)}><option value="WRONG_RESULT">Wrong result</option><option value="WRONG_REPLAY">Wrong replay</option><option value="PLAYER_MISMATCH">Player mismatch</option><option value="OTHER">Other</option></select></label><label>Reason<textarea required maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="primary" disabled={busy||!reason.trim()}>Submit dispute</button></form>}
