@@ -191,7 +191,7 @@ function BattleOrdersDialog({data,game,onClose}:{data:MatchDetail;game:MatchDeta
   const teamGame=teams.some(([team])=>team!=null);
   const twoTeams=teamGame&&teams.length===2;
   return <dialog ref={ref} className="battle-orders-dialog" aria-labelledby="battle-orders-title" onCancel={onClose} onClick={event=>{if(event.target===event.currentTarget)onClose();}}>
-    <div className="battle-orders-parchment">
+    <div className="battle-orders-parchment parchment-surface parchment-surface--briefing">
       <button className="battle-orders-close" aria-label="Close Battle Orders" onClick={onClose}><X size={24}/></button>
       <header className="battle-orders-heading">
         <span className="eyebrow">BATTLE ORDERS · GAME {game.gameNumber}</span>
