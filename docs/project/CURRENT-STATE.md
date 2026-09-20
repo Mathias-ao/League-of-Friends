@@ -114,8 +114,8 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - Map Presence represents command/building geometry, not fog-of-war exploration or permanent territorial ownership.
 - Entity labels are based on the pinned reference catalog and are not yet fully qualified for every replay patch/mod.
 - Restored-game clocks, complete effective diplomacy state and some initial-object semantics remain qualification areas.
-- Canonical export is not yet the mandatory normal upload path.
-- Authenticated replay upload, durable remote canonical persistence and complete backend ingestion remain unfinished.
+- Canonical export is now the path exercised by the warmup replay pipeline, but production player upload does not yet mandate or orchestrate it automatically.
+- Authenticated player source upload, durable remote canonical artifact persistence, the bounded Python worker/deletion gate and production source-selection orchestration remain unfinished. The current backend boundary begins at a verified canonical statistics projection.
 - Civilization drafting is series-aware, but approved Match Plans still create only `G1` with a best-of-1 SeriesRule. BO3 Game creation and series result finalization remain a separate competition-orchestration gap.
 - Lifetime Statistics persistence and Playstyle presentation are not yet wired end to end.
 - Pair History currently persists match/team/result history but not replay-derived directional interaction signals.
