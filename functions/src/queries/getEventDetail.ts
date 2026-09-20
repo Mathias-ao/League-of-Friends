@@ -51,6 +51,7 @@ interface MatchDocument {
   completedAt?: Timestamp | null;
   firstCompletedAt?: Timestamp | null;
   processingState?: string | null;
+  gameConfigSnapshot?: { civilizations?: { mode?: string } };
 }
 
 export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (request) => {
@@ -99,6 +100,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
         format: match.format ?? null,
         teamSizes: match.teamSizes ?? null,
         status: match.status ?? "UNKNOWN",
+        draftRequired: match.gameConfigSnapshot?.civilizations?.mode === "DRAFT",
         processingState: match.processingState ?? null,
         completedAt: iso(match.completedAt ?? match.firstCompletedAt),
         participants: participants.map((participant) => ({

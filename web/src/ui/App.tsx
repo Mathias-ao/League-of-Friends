@@ -1,6 +1,6 @@
 import {useCallback,useEffect,useRef,useState,type Ref} from 'react';
 import {ArrowRight,ChevronLeft,ChevronRight,Pause,Play,Shield,Swords,Users,ChartNoAxesCombined,Lock,Flag,LogOut,Check,LoaderCircle} from 'lucide-react';
-import {canBrowseLeague,emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Page,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
+import {LeagueEvent,canBrowseLeague,currentLeagueEvent,emptySnapshot,isBattleOpen,type LeagueRepository,type LeagueSnapshot,type Page,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
 import {lombardia,brand} from '../data/content';
 import {Avatar,Modal,Sigil} from './Primitives';
 import {SeasonView,EventsView,BattlesView,PlayersView,StatisticsView,EventDialog,MatchDialog,ProfileDialog} from './Views';
@@ -125,8 +125,17 @@ export function App({repository}:{repository:LeagueRepository}){
     if(snapshot.season)void act(()=>repository.enterSeason(snapshot.season!.seasonId),'You have entered the season.');
   };
   const openEvent=(id:string)=>{void detail('event',id);},openMatch=(id:string)=>{void detail('match',id);},openPlayer=(id:string)=>{void detail('player',id);};
-  const next=snapshot.events.find(e=>e.status==='ACTIVE')??snapshot.events.find(e=>e.status==='PUBLISHED'&&(!e.startsAt||Date.parse(e.startsAt)>=Date.now()));
-  const actionLabel=snapshot.membership==='ACTIVE'?(!snapshot.enteredSeason?'Enter the season':next?.viewer?.rsvp==='UNANSWERED'?'Answer the call':null):null;
+  const next=currentLeagueEvent(snapshot);
+  const nextBattle=next&&snapshot.matches.find(match=>match.eventId===next.eventId&&match.format!=='ONE_V_ONE'&&match.participants.some(player=>player.playerId===snapshot.viewer?.playerId)&&isBattleOpen(match.status));
+  const nextEvent=next?new LeagueEvent(next):null;
+  const nextBattleStarted=!!next?.startsAt&&Date.parse(next.startsAt)<=Date.now();
+  const eventAction=snapshot.membership!=='ACTIVE'?null:
+    !snapshot.enteredSeason?{label:'Enter the season',run:enter}:
+    next?.viewer?.rsvp==='UNANSWERED'?{label:'Answer the call',run:()=>openEvent(next.eventId)}:
+    nextEvent?.canCheckIn()?{label:'Check in for '+next!.title,run:()=>void act(()=>repository.checkIn(next!.eventId),'You are checked in. The muster will use your banner.')}:
+    nextBattle?{label:nextBattleStarted?'Open current Battle':nextBattle.draftRequired?'Enter civilization draft':'Enter battle',run:()=>openMatch(nextBattle.matchId)}:
+    next?.viewer?.attendanceStatus==='CHECKED_IN'?{label:'Muster forming',run:()=>openEvent(next.eventId)}:
+    null;
   const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate};
   const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Battle details':dialog?.type==='player'?dialog.data.player.steamName:'';
   const showContent=sectionOpen||showSeasonGate||(!leagueEntryVisible&&!!error);
@@ -136,7 +145,7 @@ export function App({repository}:{repository:LeagueRepository}){
       {preview&&<div className="preview-bar"><span>DESIGN PREVIEW</span> Sample standings and battles · Changes last only for this visit.</div>}
       <div className="landing-stage">
         <header className="site-header"><div className="header-inner">
-          <div className="header-action">{actionLabel&&<button className="action-ribbon" onClick={()=>snapshot.enteredSeason&&next&&canBrowse?openEvent(next.eventId):enter()}><Flag size={16}/>{actionLabel}</button>}</div>
+          <div className="header-action">{eventAction&&<button className="action-ribbon" disabled={busy} onClick={eventAction.run}><Flag size={16}/>{eventAction.label}</button>}</div>
           <a className="brand" href="/" onClick={e=>{e.preventDefault();returnHome();}}><span className="brand-top">{brand.name}</span><span className="brand-bottom">AN AGE OF EMPIRES II LEAGUE</span></a>
           <div className="header-account">{snapshot.viewer?<button className="profile-button" onClick={()=>setDialog({type:'account'})}><Avatar player={snapshot.viewer}/><span>{snapshot.viewer.steamName}</span></button>:<span className="sign-in"><Shield size={16}/>League gate</span>}</div>
         </div></header>

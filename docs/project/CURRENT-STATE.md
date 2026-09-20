@@ -54,6 +54,9 @@ The required hierarchy remains:
 - Civilization drafting belongs in the web application.
 - `AOF_CIV_DRAFT_V1` provides authoritative per-Game player drafting with configurable turn order, per-Game pools, within-Game uniqueness, Match carry-over policies, immutable pick actions and admin reset/audit support.
 - Drafting operates from the approved Match roster and supports FFA, asymmetric teams and arbitrary team numbers without assuming a fixed advertised roster.
+- `AOF_CIVILIZATION_CATALOGUE_V1` provides versioned, game-derived presentation facts for all 53 civilizations in the pinned source snapshot: type label, compact identity, civilization bonuses, team bonus, unique units/technologies and future icon slots.
+- The event-day player journey is being shaped around Answer the Call → Check In → Muster Forming → Enter Civilization Draft → Battle Orders → Play, driven by authoritative Event/Match state rather than hard-coded countdowns.
+- A future Battle Civilization Expression model will combine the locked civilization choice with replay-derived evidence and feed Battle/Event statistics; strategic weights and performance judgments are intentionally not part of the catalogue.
 - Players upload replays; post-match statistics are derived automatically rather than entered manually.
 
 Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning, Game creation and native civilization drafting. The player-facing React/TypeScript client lives in `web/`. Production configuration, replay upload and the complete end-to-end statistics presentation flow remain incomplete.
@@ -137,7 +140,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 | Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, authentication mapping and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
 | Results | Submission, administrator resolution, disputes, corrections and revision foundations exist. | Replay-derived automatic result qualification and downstream invalidation. |
 | Processing | Repeat-safe jobs exist for several downstream systems; Pair History now uses the existing `RIVALRIES` step. | Wire current Match Statistics and Lifetime aggregation into versioned rebuild/storage jobs. |
-| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data; Battle details now expose the native civilization muster when a Game uses `mode: "DRAFT"`. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
+| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data; drafted Battles now support progressive event-day entry, team-organized civilization muster, civilization reference detail and completed Battle Orders. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
 
 ## Immediate priorities
 
@@ -171,3 +174,4 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
 - [`../architecture/civilization-drafting-v1.md`](../architecture/civilization-drafting-v1.md)
+- [`../architecture/civilization-catalogue-v1.md`](../architecture/civilization-catalogue-v1.md)

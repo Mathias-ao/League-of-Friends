@@ -33,7 +33,7 @@ export class LeagueEvent {
     return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>=now);
   }
 }
-export interface MatchRecord {matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
+export interface MatchRecord {matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
 export interface CivilizationDraftTurnRecord {index:number;playerId:string;team:number|null;slot:number;status:'PENDING'|'COMPLETED';civilization:string|null;}
 export interface CivilizationDraftSelectionRecord {turnIndex:number;playerId:string;team:number|null;civilization:string;}
 export interface CivilizationDraftRecord {
@@ -42,15 +42,34 @@ export interface CivilizationDraftRecord {
   uniqueWithinGame:boolean;pool:string[];available:string[];viewerAvailable:string[];currentTurnIndex:number|null;
   turns:CivilizationDraftTurnRecord[];selections:CivilizationDraftSelectionRecord[];viewerCanPick:boolean;
 }
-export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null};}
+export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null};}
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
-export interface EventDetail {event:EventRecord;viewer:{rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:PlayerRecord[]|null};matches:MatchRecord[];}
+export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:PlayerRecord[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
 export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];}
 export interface EmperorsFavorPrintable {  code:string;  emperor:string;  serialNumber:number;  total:number;  printLabel:string;}
 export interface EmperorsFavorBatch {  batchId:string;  batchName:string;  count:number;  favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
 export const emptySnapshot=():LeagueSnapshot=>({membership:'SIGNED_OUT',viewer:null,season:null,emperor:null,enteredSeason:false,hasLeagueHistory:false,standings:[],players:[],events:[],matches:[]});
+export const OPEN_BATTLE_STATUSES=['READY','ACTIVE','AWAITING_CONFIRMATION'] as const;
+export function isBattleOpen(status:string|null|undefined){
+  return OPEN_BATTLE_STATUSES.includes((status??'') as typeof OPEN_BATTLE_STATUSES[number]);
+}
+export function currentLeagueEvent(snapshot:Pick<LeagueSnapshot,'viewer'|'events'|'matches'>,now=Date.now()){
+  const viewerId=snapshot.viewer?.playerId;
+  const currentBattle=viewerId?snapshot.matches.find(match=>
+    !!match.eventId
+    && isBattleOpen(match.status)
+    && match.participants.some(player=>player.playerId===viewerId)
+    && snapshot.events.some(event=>event.eventId===match.eventId&&event.status!=='COMPLETED')
+  ):null;
+  if(currentBattle?.eventId){
+    const event=snapshot.events.find(candidate=>candidate.eventId===currentBattle.eventId);
+    if(event)return event;
+  }
+  return snapshot.events.find(event=>event.status==='ACTIVE')
+    ??snapshot.events.find(event=>event.status==='PUBLISHED'&&(!event.startsAt||Date.parse(event.startsAt)>=now));
+}
 export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){
   return snapshot.membership==='ACTIVE'&&(snapshot.enteredSeason||snapshot.hasLeagueHistory);
 }
