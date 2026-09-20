@@ -26,12 +26,13 @@ const firestorePort = readArg("--firestore-port") ?? "8085";
 const canonicalRoot = readArg("--canonical-root") ?? "replay-ingest-output";
 const dryRun = args.includes("--dry-run");
 const manualMappings = readRepeatedArg("--map");
+const manualSlotMappings = readRepeatedArg("--map-slot");
 
 if (!projectId || !matchId || !replayFile) {
   console.error(
     "Usage: node scripts/ingest-replay-file.mjs --project <project-id> --match <match-id> --file <replay.aoe2record> " +
     "[--game G1] [--python python] [--canonical-root replay-ingest-output] " +
-    "[--map \"Replay Name=playerId\"] [--dry-run]",
+    "[--map \"Replay Name=playerId\"] [--map-slot \"1=playerId\"] [--dry-run]",
   );
   process.exit(1);
 }
@@ -58,6 +59,29 @@ function parseManualMappings(values) {
     const sourceName = value.slice(0, separator).trim();
     const playerId = value.slice(separator + 1).trim();
     mappings.set(normalizeName(sourceName), playerId);
+  }
+  return mappings;
+}
+
+function parseManualSlotMappings(values) {
+  const mappings = new Map();
+  for (const value of values) {
+    const separator = value.indexOf("=");
+    const slot = Number(value.slice(0, separator));
+    const playerId = value.slice(separator + 1).trim();
+    if (
+      separator <= 0 ||
+      !Number.isInteger(slot) ||
+      slot < 1 ||
+      slot > 8 ||
+      !playerId
+    ) {
+      throw new Error("Invalid --map-slot value '" + value + "'. Expected \"1=playerId\".");
+    }
+    if (mappings.has(slot)) {
+      throw new Error("Duplicate --map-slot supplied for replay slot " + slot + ".");
+    }
+    mappings.set(slot, playerId);
   }
   return mappings;
 }
@@ -178,6 +202,7 @@ function runReplayPipeline() {
 
 try {
   const overrides = parseManualMappings(manualMappings);
+  const slotOverrides = parseManualSlotMappings(manualSlotMappings);
   console.log("Parsing replay: " + path.resolve(replayFile));
   const { parsed, statistics, canonicalDir } = runReplayPipeline();
 
@@ -220,13 +245,18 @@ try {
 
   for (const source of parsed.sourcePlayers ?? []) {
     const normalizedSource = normalizeName(source.sourceName);
-    const overridePlayerId = overrides.get(normalizedSource);
+    const slotOverridePlayerId = slotOverrides.get(source.replaySlot);
+    const nameOverridePlayerId = overrides.get(normalizedSource);
+    const overridePlayerId = slotOverridePlayerId ?? nameOverridePlayerId;
     let matches;
 
     if (overridePlayerId) {
       matches = candidates.filter((candidate) => candidate.playerId === overridePlayerId);
       if (matches.length !== 1) {
-        throw new Error("Manual mapping for '" + source.sourceName + "' points to non-participant " + overridePlayerId + ".");
+        const mappingLabel = slotOverridePlayerId
+          ? "Replay slot " + source.replaySlot
+          : "Replay player '" + source.sourceName + "'";
+        throw new Error(mappingLabel + " maps to non-participant " + overridePlayerId + ".");
       }
     } else {
       matches = candidates.filter((candidate) => candidate.normalizedSteamName === normalizedSource);
