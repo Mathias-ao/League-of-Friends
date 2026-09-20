@@ -97,10 +97,7 @@ export const adminIngestCanonicalBattleStatistics = onCall<IngestCanonicalBattle
       contractVersion: projection.contractVersion,
       statisticsSchemaVersion: projection.statisticsSchemaVersion,
       statisticsProjectionVersion: projection.statisticsProjectionVersion,
-      scope: projection.scope,
       participants: projection.participants,
-      coverage: projection.coverage,
-      warnings: projection.warnings,
     }));
     const statisticsId = sha256(canonicalJson({
       contractVersion: CANONICAL_BATTLE_STATISTICS_CONTRACT_VERSION,
