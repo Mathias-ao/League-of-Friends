@@ -53,6 +53,6 @@ test('completed draft recovery is visible only to administrators',async()=>{
   const playerSnapshot={...snapshot,viewer:{...snapshot.viewer!,role:'PLAYER' as const}};
   const adminMarkup=renderToStaticMarkup(React.createElement(MatchDialog,{...baseProps,snapshot:adminSnapshot,data:detail}));
   const playerMarkup=renderToStaticMarkup(React.createElement(MatchDialog,{...baseProps,snapshot:playerSnapshot,data:detail}));
-  assert.match(adminMarkup,/Reset \\/ reroll draft/);
-  assert.doesNotMatch(playerMarkup,/Reset \\/ reroll draft/);
+  assert.ok(adminMarkup.includes('Reset / reroll draft'));
+  assert.ok(!playerMarkup.includes('Reset / reroll draft'));
 });
