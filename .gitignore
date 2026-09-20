@@ -13,6 +13,7 @@ ui-debug.log
 # Replay tooling local artifacts
 .venv-replay/
 replay-output*.json
+replay-ingest-output/
 
 # Environment / secrets
 .env
