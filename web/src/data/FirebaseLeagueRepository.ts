@@ -14,7 +14,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     if(import.meta.env.VITE_USE_EMULATORS==='true'){
       connectAuthEmulator(this.auth,'http://127.0.0.1:9099',{disableWarnings:true});
       connectFunctionsEmulator(this.functions,'127.0.0.1',5001);
-      connectFirestoreEmulator(this.firestore,'127.0.0.1',8080);
+      connectFirestoreEmulator(this.firestore,'127.0.0.1',8085);
     }
     this.ready=setPersistence(this.auth,browserLocalPersistence).then(()=>this.auth.authStateReady());
   }
