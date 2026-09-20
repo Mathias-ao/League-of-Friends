@@ -1,0 +1,70 @@
+name: Warmup Replay Integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+      - "replay-tools/**"
+      - "replay-fixtures/1v1_1.aoe2record"
+      - "replay-fixtures/1v1_2.aoe2record"
+      - "scripts/ingest-replay-file.mjs"
+      - "scripts/bootstrap-emulator-admin.mjs"
+      - "scripts/create-emulator-season.mjs"
+      - "scripts/smoke-test-warmup-replay-flow.mjs"
+      - "firebase.json"
+      - "firestore.rules"
+      - ".github/workflows/warmup-replay-integration.yml"
+  pull_request:
+    paths:
+      - "functions/**"
+      - "replay-tools/**"
+      - "replay-fixtures/1v1_1.aoe2record"
+      - "replay-fixtures/1v1_2.aoe2record"
+      - "scripts/ingest-replay-file.mjs"
+      - "scripts/bootstrap-emulator-admin.mjs"
+      - "scripts/create-emulator-season.mjs"
+      - "scripts/smoke-test-warmup-replay-flow.mjs"
+      - "firebase.json"
+      - "firestore.rules"
+      - ".github/workflows/warmup-replay-integration.yml"
+
+jobs:
+  warmup-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Java for Firestore emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install replay parser dependencies
+        run: pip install -r replay-tools/requirements.txt
+
+      - name: Install and build Functions
+        working-directory: functions
+        run: |
+          npm install
+          npm run lint
+          npm run build
+          npm test
+
+      - name: Run warmup replay integration
+        run: |
+          npx --yes firebase-tools emulators:exec             --project demo-age-of-friends-warmup             --only auth,firestore,functions             'node scripts/bootstrap-emulator-admin.mjs --project demo-age-of-friends-warmup --steam "Emulator Emperor" && node scripts/create-emulator-season.mjs --project demo-age-of-friends-warmup && node scripts/smoke-test-warmup-replay-flow.mjs --project demo-age-of-friends-warmup --python python'
