@@ -1488,3 +1488,244 @@ textarea:focus{border-color:#92734d}
   width:auto;
   margin:0;
 }
+
+
+/* Event-day progression and direct Battle entry. */
+.detail-act-link{
+  position:relative;
+  width:100%;
+  padding:18px;
+  text-align:left;
+  border:1px solid #594532;
+  background:rgba(17,12,9,.42);
+  color:inherit;
+  cursor:pointer;
+}
+.detail-act-link:hover,.detail-act-link:focus-visible{
+  border-color:#a97d47;
+  background:rgba(57,39,24,.48);
+  outline:none;
+}
+.detail-act-link>svg:last-child{
+  position:absolute;
+  right:16px;
+  top:18px;
+  color:#cba065;
+}
+.detail-act-link.main-event-link{
+  box-shadow:inset 0 0 24px rgba(179,126,58,.055);
+}
+.participation-status.checked-in{
+  border-color:#6f6548;
+  background:rgba(121,103,60,.09);
+}
+.check-in-action{box-shadow:0 0 18px rgba(188,136,62,.09)}
+
+/* Approved teams are the primary draft structure; pick order remains explicit. */
+.draft-team-board{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+  margin:0 0 20px;
+}
+.draft-team-board.two-teams{
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:stretch;
+}
+.draft-versus{
+  display:grid;
+  place-items:center;
+  min-width:42px;
+  color:#8e7658;
+  font-family:var(--serif);
+  font-size:.76rem;
+  letter-spacing:.12em;
+}
+.draft-team{
+  border:1px solid #49392c;
+  background:rgba(8,5,4,.3);
+}
+.draft-team-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(128,95,61,.25);
+}
+.draft-team-heading strong{
+  color:#8f8170;
+  font-size:.67rem;
+  font-weight:500;
+}
+.draft-team-roster{display:grid}
+.draft-player{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:2px 10px;
+  padding:11px 12px;
+  border-bottom:1px solid rgba(128,95,61,.18);
+}
+.draft-player:last-child{border-bottom:0}
+.draft-player.current{
+  background:radial-gradient(ellipse at 0 50%,rgba(206,155,76,.14),transparent 70%);
+  box-shadow:inset 3px 0 #b3874f;
+}
+.draft-player.done{opacity:.76}
+.draft-pick-order{
+  grid-row:1/3;
+  align-self:center;
+  color:#9e805d;
+  font-size:.6rem;
+  letter-spacing:.09em;
+}
+.draft-player strong{color:#ddd1c1;font-size:.8rem}
+.draft-player small{color:#918476;font-size:.67rem}
+.draft-ffa-board{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:8px;
+  margin-bottom:20px;
+}
+
+/* Civilization catalogue cards. Detail is hover/focus intelligence, not draft clutter. */
+.draft-pool{overflow:visible}
+.draft-civ{
+  position:relative;
+  display:flex;
+  min-height:112px;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:13px;
+  overflow:visible;
+}
+.draft-civ:focus-visible{
+  outline:1px solid #c39758;
+  outline-offset:2px;
+}
+.draft-civ-title>strong{
+  display:block;
+  font-family:var(--serif);
+  font-size:.88rem;
+  font-weight:500;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+.draft-civ-title>span{
+  display:block;
+  margin-top:5px;
+  color:#b49a79;
+  font-size:.69rem;
+}
+.draft-civ-action{
+  width:100%;
+  margin-top:12px;
+  padding:7px 8px;
+  border:1px solid #58442f;
+  background:rgba(7,5,4,.36);
+  color:#9f917f;
+  font-size:.66rem;
+  text-align:left;
+}
+.draft-civ.available .draft-civ-action{
+  border-color:#9d7648;
+  color:#e0bb79;
+  cursor:pointer;
+}
+.draft-civ-action:disabled{cursor:default}
+.draft-civ-detail{
+  position:absolute;
+  z-index:30;
+  left:8px;
+  right:8px;
+  top:calc(100% - 4px);
+  display:none;
+  min-width:260px;
+  max-width:390px;
+  padding:14px;
+  border:1px solid #8a6842;
+  background:#18110d;
+  box-shadow:0 16px 36px rgba(0,0,0,.48);
+  color:#c7b9a6;
+  font-size:.68rem;
+  line-height:1.45;
+}
+.draft-civ:hover .draft-civ-detail,.draft-civ:focus .draft-civ-detail,.draft-civ:focus-within .draft-civ-detail{display:block}
+.draft-civ-detail>strong{display:block;margin:9px 0 4px;color:#dbc8ae;text-decoration:none}
+.draft-civ-detail ul{margin:0;padding-left:17px}
+.draft-civ-detail li+li{margin-top:3px}
+.draft-civ-detail p{margin:9px 0 0}
+.draft-civ-detail p strong,.draft-civ-detail p span{display:block;text-decoration:none}
+.draft-civ-detail p span{margin-top:3px;color:#b6a58f}
+.draft-civ.claimed .draft-civ-detail strong{text-decoration:none}
+.draft-civ.claimed .draft-civ-title>strong{text-decoration:line-through;text-decoration-thickness:1px}
+
+/* Draft completion resolves into authoritative Battle Orders. */
+.battle-orders{
+  margin:18px 0 24px;
+  padding:22px;
+  border:1px solid #846a48;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(213,164,84,.12),transparent 44%),
+    linear-gradient(176deg,#281d14,#120e0b);
+  box-shadow:inset 0 1px rgba(255,230,188,.06),0 12px 32px rgba(0,0,0,.18);
+}
+.battle-orders-heading{text-align:center}
+.battle-orders-heading h4{
+  margin:5px 0 7px;
+  color:#eadbc3;
+  font-family:var(--serif);
+  font-size:1.35rem;
+  font-weight:500;
+  letter-spacing:.05em;
+}
+.battle-orders-heading p{margin:0 auto 20px;max-width:620px;color:#aa9b88}
+.battle-orders-teams{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;
+}
+.battle-order-team{
+  border:1px solid #54412e;
+  background:rgba(7,5,4,.3);
+}
+.battle-order-team-heading{
+  display:flex;
+  justify-content:space-between;
+  padding:11px 13px;
+  border-bottom:1px solid rgba(128,95,61,.25);
+}
+.battle-order-team-heading strong{font-family:var(--serif);color:#d8c6ad}
+.battle-order-team-heading span{color:#877967;font-size:.67rem}
+.battle-order-players>div{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(128,95,61,.16);
+}
+.battle-order-players strong,.battle-order-players small{display:block}
+.battle-order-players strong{color:#d5c8b8;font-size:.78rem}
+.battle-order-players small{margin-top:2px;color:#968673;font-size:.66rem}
+.battle-order-bonuses{padding:11px 12px 12px}
+.battle-order-bonuses p{display:grid;grid-template-columns:minmax(80px,.35fr) 1fr;gap:8px;margin:7px 0 0;font-size:.65rem}
+.battle-order-bonuses p strong{color:#c3a77e}
+.battle-order-bonuses p span{color:#9b8d7b}
+.battle-orders-call{
+  margin:18px 0 0;
+  text-align:center;
+  color:#e0bb79;
+  font-family:var(--serif);
+  letter-spacing:.04em;
+}
+
+@media(max-width:760px){
+  .draft-team-board.two-teams{grid-template-columns:1fr}
+  .draft-versus{min-height:28px}
+  .battle-orders{padding:16px}
+}
+@media(max-width:520px){
+  .draft-civ-detail{position:static;display:none;min-width:0;max-width:none;margin-top:10px}
+  .draft-civ:focus .draft-civ-detail,.draft-civ:focus-within .draft-civ-detail{display:block}
+  .battle-order-bonuses p{grid-template-columns:1fr}
+}
