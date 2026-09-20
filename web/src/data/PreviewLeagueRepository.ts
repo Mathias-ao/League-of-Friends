@@ -51,7 +51,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
-    return structuredClone({event:e,viewer:e.viewer!,signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:this.state.players.filter(p=>p.playerId!=='sample-you'||e.viewer?.rsvp==='YES')},matches:[]});
+    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:this.state.players.filter(p=>p.playerId!=='sample-you'||e.viewer?.rsvp==='YES')},matches:[]});
   }
   async match(id:string):Promise<MatchDetail>{
     const m=this.state.matches.find(m=>m.matchId===id);if(!m)throw new Error('Battle not found.');
