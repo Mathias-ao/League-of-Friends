@@ -1,6 +1,6 @@
 # Age of Friends — Current State
 
-Last reviewed: 18 September 2026
+Last reviewed: 20 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
@@ -12,7 +12,7 @@ The replay pipeline produces replay-derived statistics across **Opening, Economy
 
 | Statistics section | State |
 |---|---|
-| Battle Statistics | Replay/statistics foundation implemented; Battle presentation pending |
+| Battle Statistics | Canonical replay/statistics foundation plus current Firestore ingestion/query slice implemented; Battle presentation and production upload worker pending |
 | Event Statistics | Product scope and 4–6 highlight direction defined; aggregation/presentation pending |
 | Season Statistics | Product scope and complete record-book direction defined; aggregation/presentation pending |
 | Lifetime Stats | Aggregation foundation implemented; intentionally hidden from Season I UI |
@@ -59,7 +59,7 @@ The required hierarchy remains:
 - A future Battle Civilization Expression model will combine the locked civilization choice with replay-derived evidence and feed Battle/Event statistics; strategic weights and performance judgments are intentionally not part of the catalogue.
 - Players upload replays; post-match statistics are derived automatically rather than entered manually.
 
-Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning, Game creation and native civilization drafting. The player-facing React/TypeScript client lives in `web/`. Production configuration, replay upload and the complete end-to-end statistics presentation flow remain incomplete.
+Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning, Game creation and native civilization drafting. The current `AOF_CANONICAL_STATISTICS_V1` projection now has an authenticated admin/worker ingestion boundary, separate per-Game replay-source retention in Firestore metadata, corroboration handling for alternate recordings, and a `getMatchDetail` read path. The player-facing React/TypeScript client lives in `web/`. Production source upload, durable remote canonical artifact storage/worker orchestration and the complete statistics presentation flow remain incomplete.
 
 ## Replay and Match Statistics foundation
 
@@ -75,7 +75,7 @@ The current replay/statistics foundation includes:
 - Map Presence V2, including command coverage, enemy-base contact, forward buildings, expansions, gold influence and relic interaction.
 - Forward Eco classification using the Map Presence V2 forward geometry.
 - Observed command and selection evidence for Execution statistics.
-- Versioned tests, golden projections and architecture documents for the active models.
+- Versioned tests, golden projections and architecture documents for the active models.\n- Canonical Battle Statistics ingestion that maps replay identities onto durable league players, stores alternate replay sources without silently superseding the selected source, and exposes the active five-category projection through Match detail.\n- An emulator warmup harness using the paired `1v1_1.aoe2record` / `1v1_2.aoe2record` recordings to validate a no-draft 1v1 Event, canonical extraction, corroborating multi-POV ingestion and idempotency.
 
 The statistics system preserves the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
 
@@ -145,7 +145,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 ## Immediate priorities
 
 1. Validate the current Match Statistics models against additional real replays and supported match shapes.
-2. Wire current Match Statistics into durable backend persistence and the player-facing website.
+2. Complete production replay source upload → durable canonical artifact persistence → bounded worker orchestration, then wire the persisted Battle Statistics into the player-facing website.
 3. Wire `AOF_LIFETIME_STATISTICS_V1` to persisted Match Statistics and durable rebuild/storage.
 4. Feed replay-derived directional Match Statistics into `AOF_PAIR_HISTORY_V1` once backend Match Statistics persistence exists.
 5. Build the Battle/Event/Player/Season presentation around the shared five-category vocabulary, including up to 3 curated Battle feats, 4–6 Event distinctions and the complete Season record book.
