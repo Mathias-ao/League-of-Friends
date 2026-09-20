@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import {ArrowRight,BookOpen,Users,Crown,Check,Lock,Swords,Flag,Heart,Search,Shield,Upload} from 'lucide-react';
 import {LeagueEvent,LeagueService,RelationshipPolicy,formatName,isLombardia,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {plannedEvents,lombardia} from '../data/content';
+import {civilizationById,civilizationName} from '../data/civilizations';
 import {Avatar,DateLabel,Empty,Roster,Sigil} from './Primitives';
 import type {ViewProps} from './App';
 
@@ -69,21 +70,95 @@ export function StatisticsView(){
 export function EventDialog(props:ViewProps&{data:EventDetail;onUpdated:()=>void}){
   const {data,snapshot,busy,repository,act,enter,onUpdated,openMatch}=props;
   const event=new LeagueEvent({...data.event,viewer:data.viewer});
+  const official=data.matches.filter(match=>match.status!=='PROPOSED');
+  const viewerMatches=official.filter(match=>match.participants.some(player=>player.playerId===data.viewer.playerId));
+  const warmup=viewerMatches.find(match=>match.format==='ONE_V_ONE')??official.find(match=>match.format==='ONE_V_ONE')??null;
+  const main=viewerMatches.find(match=>match.format!=='ONE_V_ONE')??official.find(match=>match.format!=='ONE_V_ONE')??null;
+  const extras=official.filter(match=>match.matchId!==warmup?.matchId&&match.matchId!==main?.matchId);
   const respond=async(value:'YES'|'NO')=>{
     if(snapshot.membership!=='ACTIVE'||value==='YES'&&!snapshot.enteredSeason){enter();return;}
     const fresh={...snapshot,events:[...snapshot.events.filter(e=>e.eventId!==event.id),{...data.event,viewer:data.viewer}]};
     if(await act(()=>new LeagueService(repository).rsvp(fresh,event.id,value),'Your event response has been saved.'))onUpdated();
   };
-  return <><div className="detail-meta"><span className="quiet-badge">{data.event.status.replaceAll('_',' ')}</span><span><DateLabel value={data.event.startsAt}/></span></div><p>{data.event.description??''}</p><div className="detail-acts"><div><Sigil kind="duel"/><span className="eyebrow">ACT I · WARM-UP</span><h3>1v1 · 30 minutes</h3><p>Pairings follow the approved match plan.</p></div><div><Sigil/><span className="eyebrow">ACT II · MAIN EVENT</span><h3>{isLombardia(data.event)?'4v4 · Lombardia':formatName(data.event.competitionStyle)}</h3><p>The final Game shape follows attendance.</p></div></div>
+  const checkIn=async()=>{
+    if(await act(()=>repository.checkIn(event.id),'You are checked in. Your banner is now eligible for the approved Match plan.'))onUpdated();
+  };
+  const checkInMessage=data.viewer.attendanceStatus==='CHECKED_IN'
+    ?(main?'Checked in · your Battle is ready.':'Checked in · the muster is forming.')
+    :data.viewer.rsvp==='YES'&&data.viewer.signupState==='CONFIRMED'
+      ?event.canCheckIn()?'Check-in is open. Confirm your attendance before the Match plan is formed.':data.event.checkInOpensAt?'Your banner is raised. Check-in opens at the time below.':'Your banner is raised. Check-in time is still to be announced.'
+      :data.viewer.signupState==='WAITING_LIST'?'Your banner is on the waiting list.':'Answer the call before event day.';
+  return <><div className="detail-meta"><span className="quiet-badge">{data.event.status.replaceAll('_',' ')}</span><span><DateLabel value={data.event.startsAt}/></span></div><p>{data.event.description??''}</p>
+    <div className="detail-acts">
+      {warmup?<button className="detail-act-link" onClick={()=>openMatch(warmup.matchId)}><Sigil kind="duel"/><span className="eyebrow">ACT I · WARM-UP</span><h3>{formatName(warmup.format)} · Open Battle</h3><p>{warmup.participants.map(player=>player.steamName).join(' · ')}</p><ArrowRight size={17}/></button>:<div><Sigil kind="duel"/><span className="eyebrow">ACT I · WARM-UP</span><h3>1v1 · 30 minutes</h3><p>Pairings follow the approved match plan.</p></div>}
+      {main?<button className="detail-act-link main-event-link" onClick={()=>openMatch(main.matchId)}><Sigil/><span className="eyebrow">ACT II · MAIN EVENT</span><h3>{formatName(main.format)} · {main.draftRequired?'Enter civilization draft':'Open Battle'}</h3><p>{main.draftRequired?'Teams are approved. Enter the muster and choose civilizations.':'The approved Battle is ready.'}</p><ArrowRight size={17}/></button>:<div><Sigil/><span className="eyebrow">ACT II · MAIN EVENT</span><h3>{isLombardia(data.event)?'4v4 · Lombardia':formatName(data.event.competitionStyle)}</h3><p>{data.viewer.attendanceStatus==='CHECKED_IN'?'Muster forming · teams appear when the Match plan is approved.':'The final Game shape follows attendance and check-in.'}</p></div>}
+    </div>
     <div className="section-heading"><h3>The muster</h3><span className="muted">{data.signup.confirmedCount} confirmed · {data.signup.waitingListCount} waiting</span></div>
     {data.signup.rosterVisible?<Roster players={data.signup.confirmed??[]}/>:<p className="muted">The roster will be revealed by the event organizer.</p>}
-    <div className="participation-status"><Check size={17}/>{data.viewer.attendanceStatus==='CHECKED_IN'?'You are checked in.':data.viewer.rsvp==='YES'?data.viewer.signupState==='WAITING_LIST'?'You are on the waiting list.':'Your banner is raised.':data.viewer.rsvp==='NO'?'You have declined this event.':'You have not answered this event yet.'}</div>
+    <div className={'participation-status '+(data.viewer.attendanceStatus==='CHECKED_IN'?'checked-in':'')}><Check size={17}/>{checkInMessage}</div>
     <div className="actions">{event.canRsvp()&&<><button className="primary" disabled={busy||data.viewer.rsvp==='YES'} onClick={()=>void respond('YES')}>{snapshot.enteredSeason?'I’m in':'Enter season first'}</button><button className="text-button" disabled={busy||data.viewer.rsvp==='NO'} onClick={()=>void respond('NO')}>Decline</button></>}
-      {event.canCheckIn()?<button className="primary" disabled={busy} onClick={async()=>{if(await act(()=>repository.checkIn(event.id),'You are checked in.'))onUpdated();}}>Check in</button>:data.viewer.attendanceStatus!=='CHECKED_IN'&&<span className="muted">{data.event.checkInOpensAt?<>Check-in opens <DateLabel value={data.event.checkInOpensAt}/></>:'Check-in time to be announced'}</span>}
-    </div><hr/><h3>Matches & civilization draft</h3>{data.matches.filter(m=>m.status!=='PROPOSED').map(m=><button className="battle-row" key={m.matchId} onClick={()=>openMatch(m.matchId)}><Sigil kind="duel"/><span><strong>{formatName(m.format)} · {m.matchId}</strong><small>{m.participants.map(p=>p.steamName).join(' · ')}</small></span><ArrowRight size={17}/></button>)}
-    <p className="muted">{!data.matches.length?'Matches will be revealed after check-in and plan approval. ':'Open your Battle to see the live civilization muster and draft order.'}</p>
+      {event.canCheckIn()&&<button className="primary check-in-action" disabled={busy} onClick={()=>void checkIn()}>Check in now<ArrowRight size={16}/></button>}
+      {data.viewer.attendanceStatus==='CHECKED_IN'&&main&&<button className="primary" onClick={()=>openMatch(main.matchId)}>{main.draftRequired?'Enter civilization draft':'Enter Battle'}<ArrowRight size={16}/></button>}
+      {data.viewer.attendanceStatus!=='CHECKED_IN'&&!event.canCheckIn()&&data.viewer.rsvp==='YES'&&data.viewer.signupState==='CONFIRMED'&&<span className="muted">{data.event.checkInOpensAt?<>Check-in opens <DateLabel value={data.event.checkInOpensAt}/></>:'Check-in time to be announced'}</span>}
+    </div>
+    {extras.length>0&&<><hr/><h3>Other Battles</h3>{extras.map(match=><button className="battle-row" key={match.matchId} onClick={()=>openMatch(match.matchId)}><Sigil kind="duel"/><span><strong>{formatName(match.format)} · {match.matchId}</strong><small>{match.participants.map(player=>player.steamName).join(' · ')}</small></span><ArrowRight size={17}/></button>)}</>}
   </>;
 }
+
+function DraftTeamBoard({data,draft,currentPlayerId}:{data:MatchDetail;draft:NonNullable<MatchDetail['games'][number]['draft']>;currentPlayerId:string|null}){
+  const teams=new Map<number|null,typeof draft.turns>();
+  for(const turn of draft.turns){
+    const list=teams.get(turn.team)??[];
+    list.push(turn);
+    teams.set(turn.team,list);
+  }
+  const entries=[...teams.entries()].sort(([left],[right])=>left==null?1:right==null?-1:left-right);
+  const teamGame=entries.some(([team])=>team!=null);
+  const playerName=(playerId:string)=>data.match.participants.find(player=>player.playerId===playerId)?.steamName??playerId;
+  const teamColumn=(team:number|null,turns:typeof draft.turns)=><section className="draft-team" key={String(team)}>
+    <div className="draft-team-heading"><span className="eyebrow">{team==null?'FREE FOR ALL':'TEAM '+team}</span><strong>{turns.length} {turns.length===1?'banner':'banners'}</strong></div>
+    <div className="draft-team-roster">{turns.sort((a,b)=>a.slot-b.slot).map(turn=><div key={turn.playerId} className={'draft-player '+(turn.status==='COMPLETED'?'done ':'')+(currentPlayerId===turn.playerId?'current':'')}>
+      <span className="draft-pick-order">PICK {String(turn.index+1).padStart(2,'0')}</span><strong>{playerName(turn.playerId)}</strong><small>{turn.civilization?civilizationName(turn.civilization):'Awaiting civilization'}</small>
+    </div>)}</div>
+  </section>;
+  if(!teamGame)return <div className="draft-ffa-board">{entries.flatMap(([team,turns])=>turns.map(turn=><div key={turn.playerId} className={'draft-player '+(turn.status==='COMPLETED'?'done ':'')+(currentPlayerId===turn.playerId?'current':'')}><span className="draft-pick-order">PICK {String(turn.index+1).padStart(2,'0')}</span><strong>{playerName(turn.playerId)}</strong><small>{turn.civilization?civilizationName(turn.civilization):'Awaiting civilization'}</small></div>))}</div>;
+  if(entries.length===2)return <div className="draft-team-board two-teams">{teamColumn(entries[0][0],entries[0][1])}<div className="draft-versus" aria-hidden="true">VS</div>{teamColumn(entries[1][0],entries[1][1])}</div>;
+  return <div className="draft-team-board">{entries.map(([team,turns])=>teamColumn(team,turns))}</div>;
+}
+
+function CivilizationDraftCard({civilization,selected,selectedBy,canPick,viewerCanPick,busy,onPick}:{civilization:string;selected:boolean;selectedBy:string;canPick:boolean;viewerCanPick:boolean;busy:boolean;onPick:()=>Promise<void>}){
+  const civ=civilizationById(civilization);
+  const detailId='civ-'+civilization.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  return <article className={'draft-civ '+(selected?'claimed ':'')+(canPick?'available':'')} tabIndex={0} aria-describedby={detailId}>
+    <div className="draft-civ-title"><strong>{civ?.name??civilizationName(civilization)}</strong><span>{civ?.identity??'Civilization profile pending'}</span></div>
+    <div id={detailId} className="draft-civ-detail" role="tooltip">
+      <span className="eyebrow">{civ?.typeLabel??'Civilization'}</span>
+      {civ?.bonuses?.length?<><strong>Civilization bonuses</strong><ul>{civ.bonuses.map(bonus=><li key={bonus}>{bonus}</li>)}</ul></>:null}
+      {civ?.teamBonus&&<p><strong>Team bonus</strong><span>{civ.teamBonus}</span></p>}
+      {civ?.uniqueUnits?.length?<p><strong>Unique {civ.uniqueUnits.length===1?'unit':'units'}</strong><span>{civ.uniqueUnits.map(unit=>unit.name+(unit.role?' · '+unit.role:'')).join(' · ')}</span></p>:null}
+    </div>
+    <button className="draft-civ-action" disabled={!canPick||busy} onClick={()=>void onPick()}>
+      {selected?'Claimed by '+selectedBy:canPick?'Choose this civilization':viewerCanPick?'Unavailable to you':'Available'}
+    </button>
+  </article>;
+}
+
+function BattleOrders({data,game}:{data:MatchDetail;game:MatchDetail['games'][number]}){
+  const teamMap=new Map<number|null,typeof game.players>();
+  for(const player of game.players){const list=teamMap.get(player.team??null)??[];list.push(player);teamMap.set(player.team??null,list);}
+  const teams=[...teamMap.entries()].sort(([a],[b])=>a==null?1:b==null?-1:a-b);
+  const teamGame=teams.some(([team])=>team!=null);
+  return <section className="battle-orders" aria-label="Battle orders">
+    <div className="battle-orders-heading"><span className="eyebrow">BATTLE ORDERS · GAME {game.gameNumber}</span><h4>The hosts are ready</h4><p>Draft complete. Open Age of Empires II: DE and form the lobby exactly as shown.</p></div>
+    <div className={'battle-orders-teams '+(teams.length===2?'two-teams':'')}>{teams.map(([team,players])=><article className="battle-order-team" key={String(team)}>
+      <div className="battle-order-team-heading"><strong>{teamGame&&team!=null?'Team '+team:'Battlefield'}</strong><span>{players.length} {players.length===1?'player':'players'}</span></div>
+      <div className="battle-order-players">{players.sort((a,b)=>(a.slot??0)-(b.slot??0)).map(player=>{const civ=civilizationById(player.civilization);return <div key={player.playerId}><Avatar player={player}/><span><strong>{player.steamName}</strong><small>{civ?.name??civilizationName(player.civilization)}{civ?.identity?' · '+civ.identity:''}</small></span></div>;})}</div>
+      {teamGame&&<div className="battle-order-bonuses"><span className="eyebrow">TEAM BONUSES</span>{players.map(player=>{const civ=civilizationById(player.civilization);return civ?.teamBonus?<p key={player.playerId}><strong>{civ.name}</strong><span>{civ.teamBonus}</span></p>:null;})}</div>}
+    </article>)}</div>
+    <p className="battle-orders-call">Battle orders confirmed · proceed to AoE2:DE.</p>
+  </section>;
+}
+
 export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
   const [dispute,setDispute]=useState<string|null>(null),[reason,setReason]=useState(''),[category,setCategory]=useState('WRONG_RESULT');
   const [resetDraft,setResetDraft]=useState<string|null>(null),[resetReason,setResetReason]=useState(''),[rerollDraft,setRerollDraft]=useState(false);
@@ -101,28 +176,26 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
     const stops=liveDraftIds.map(gameId=>repository.watchCivilizationDraft(data.match.matchId,gameId,onUpdated));
     return ()=>stops.forEach(stop=>stop());
   },[repository,data.match.matchId,liveDraftKey]);
-  return <><div className="detail-meta"><span className="eyebrow">{formatName(data.match.format)} · {data.match.matchId}</span><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></div><Roster players={data.match.participants}/>
+  return <><div className="detail-meta"><span className="eyebrow">{formatName(data.match.format)} · {data.match.matchId}</span><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></div>
     {data.games.map(game=>{
       const draft=game.draft??null;
       const currentTurn=draft?.currentTurnIndex!=null?draft.turns[draft.currentTurnIndex]??null:null;
       return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{data.viewer.isParticipant&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>Dispute result</button>}</div>
+        {draft?.status==='COMPLETED'&&<BattleOrders data={data} game={game}/>}
         {game.draftRequired&&<section className={'civilization-draft '+(draft?.status==='COMPLETED'?'draft-complete':'')}>
-          <div className="draft-heading"><div><span className="eyebrow">CIVILIZATION MUSTER</span><h4>{draft?.status==='COMPLETED'?'The hosts are ready':currentTurn?playerName(currentTurn.playerId)+' chooses next':'Awaiting the draft'}</h4></div>{draft&&<span className="quiet-badge">{draft.selections.length} / {draft.turns.length} CHOSEN</span>}</div>
+          <div className="draft-heading"><div><span className="eyebrow">{draft?.status==='COMPLETED'?'DRAFT RECORD':'CIVILIZATION MUSTER'}</span><h4>{draft?.status==='COMPLETED'?'Civilizations locked':currentTurn?playerName(currentTurn.playerId)+' chooses next':'Awaiting the draft'}</h4></div>{draft&&<span className="quiet-badge">{draft.selections.length} / {draft.turns.length} CHOSEN</span>}</div>
           {!draft?<div className="draft-unopened"><p>The Match requires a civilization draft before this Game can begin.</p>{data.viewer.isParticipant&&<button className="primary" disabled={busy} onClick={async()=>{if(await act(()=>repository.ensureCivilizationDraft(data.match.matchId,game.gameId),'The civilization muster has opened.'))onUpdated();}}>Open civilization draft</button>}</div>:<>
             <div className="draft-rule-line"><span>{draft.uniqueWithinGame?'No duplicate civilizations in this Game':'Duplicates permitted in this Game'}</span><span>{reuseLabel(draft.reusePolicy)}</span></div>
-            <div className="draft-turns" aria-label="Civilization draft order">{draft.turns.map(turn=><div key={turn.playerId} className={(turn.status==='COMPLETED'?'done ':'')+(currentTurn?.playerId===turn.playerId?'current':'')}><span>{String(turn.index+1).padStart(2,'0')}</span><strong>{playerName(turn.playerId)}</strong><small>{turn.civilization??(turn.team!=null?'Team '+turn.team:'Awaiting choice')}</small></div>)}</div>
-            <div className="draft-pool" aria-label="Civilization pool">{draft.pool.map(civilization=>{
+            <DraftTeamBoard data={data} draft={draft} currentPlayerId={currentTurn?.playerId??null}/>
+            {draft.status==='ACTIVE'&&<div className="draft-pool" aria-label="Civilization pool">{draft.pool.map(civilization=>{
               const selections=draft.selections.filter(selection=>selection.civilization===civilization);
               const selected=selections.length>0;
               const availableToViewer=draft.viewerAvailable.includes(civilization);
               const canPick=draft.viewerCanPick&&availableToViewer&&!busy;
-              return <button key={civilization} className={'draft-civ '+(selected?'claimed ':'')+(canPick?'available':'')} disabled={!canPick} onClick={async()=>{if(await act(()=>repository.pickCivilization(data.match.matchId,game.gameId,civilization),civilization.replaceAll('_',' ')+' marches beneath your banner.'))onUpdated();}}>
-                <strong>{civilization.replaceAll('_',' ')}</strong>
-                <small>{selected?'Claimed by '+selections.map(selection=>playerName(selection.playerId)).join(', '):canPick?'Choose this civilization':draft.viewerCanPick?'Unavailable to you':'Available'}</small>
-              </button>;
-            })}</div>
+              return <CivilizationDraftCard key={civilization} civilization={civilization} selected={selected} selectedBy={selections.map(selection=>playerName(selection.playerId)).join(', ')} canPick={canPick} viewerCanPick={draft.viewerCanPick} busy={busy} onPick={async()=>{if(await act(()=>repository.pickCivilization(data.match.matchId,game.gameId,civilization),civilizationName(civilization)+' marches beneath your banner.'))onUpdated();}}/>;
+            })}</div>}
             {draft.status==='ACTIVE'&&<p className={draft.viewerCanPick?'draft-call':'muted'}>{draft.viewerCanPick?'Your turn. Choose one civilization; the choice is final unless an administrator resets the draft.':currentTurn?'Waiting for '+playerName(currentTurn.playerId)+'.':'Waiting for the next turn.'}</p>}
-            {draft.status==='COMPLETED'&&<p className="draft-call">The civilization assignments below are now authoritative for this Game.</p>}
+            {draft.status==='COMPLETED'&&<p className="draft-call">The draft record is locked. Battle Orders above are authoritative for this Game.</p>}
             {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&<div className="draft-admin">
               <button className="text-button small" onClick={()=>{setResetDraft(resetDraft===game.gameId?null:game.gameId);setResetReason('');setRerollDraft(false);}}>{resetDraft===game.gameId?'Cancel reset':'Reset draft'}</button>
               {resetDraft===game.gameId&&<form className="form draft-reset-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.resetCivilizationDraft(data.match.matchId,game.gameId,resetReason.trim(),rerollDraft),'The civilization muster has been reset.')){setResetDraft(null);setResetReason('');setRerollDraft(false);onUpdated();}}}>
@@ -133,7 +206,7 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
             </div>}
           </>}
         </section>}
-        <div className="game-players">{game.players.map(p=><div key={p.playerId}><Avatar player={p}/><span><strong>{p.steamName}</strong><small>{p.civilization??'Civilization not yet selected'}{p.team!=null?' · Team '+p.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(p.playerId)&&<span className="gold">Winner</span>}</div>)}</div><p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':game.result?'Final result · Revision '+game.result.revision:'Awaiting a qualified result.'}</p>
+        <div className="game-players">{game.players.map(player=><div key={player.playerId}><Avatar player={player}/><span><strong>{player.steamName}</strong><small>{player.civilization?civilizationName(player.civilization):'Civilization not yet selected'}{player.team!=null?' · Team '+player.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(player.playerId)&&<span className="gold">Winner</span>}</div>)}</div><p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':game.result?'Final result · Revision '+game.result.revision:'Awaiting a qualified result.'}</p>
         {dispute===game.gameId&&<form className="form dispute-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.dispute(data.match.matchId,game.gameId,category,reason.trim()),'Dispute submitted for review.')){setDispute(null);onUpdated();}}}><label>What needs correcting?<select value={category} onChange={e=>setCategory(e.target.value)}><option value="WRONG_RESULT">Wrong result</option><option value="WRONG_REPLAY">Wrong replay</option><option value="PLAYER_MISMATCH">Player mismatch</option><option value="OTHER">Other</option></select></label><label>Reason<textarea required maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="primary" disabled={busy||!reason.trim()}>Submit dispute</button></form>}
         <div className="upload-state"><Upload size={23}/><div><strong>Replay submission is not available yet</strong><p>Keep the .aoe2record on your computer. Uploading and automatic processing will be enabled when ready.</p></div></div>
       </article>;
