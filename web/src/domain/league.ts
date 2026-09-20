@@ -51,6 +51,25 @@ export interface EmperorsFavorPrintable {  code:string;  emperor:string;  serial
 export interface EmperorsFavorBatch {  batchId:string;  batchName:string;  count:number;  favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
 export const emptySnapshot=():LeagueSnapshot=>({membership:'SIGNED_OUT',viewer:null,season:null,emperor:null,enteredSeason:false,hasLeagueHistory:false,standings:[],players:[],events:[],matches:[]});
+export const OPEN_BATTLE_STATUSES=['READY','ACTIVE','AWAITING_CONFIRMATION'] as const;
+export function isBattleOpen(status:string|null|undefined){
+  return OPEN_BATTLE_STATUSES.includes((status??'') as typeof OPEN_BATTLE_STATUSES[number]);
+}
+export function currentLeagueEvent(snapshot:Pick<LeagueSnapshot,'viewer'|'events'|'matches'>,now=Date.now()){
+  const viewerId=snapshot.viewer?.playerId;
+  const currentBattle=viewerId?snapshot.matches.find(match=>
+    !!match.eventId
+    && isBattleOpen(match.status)
+    && match.participants.some(player=>player.playerId===viewerId)
+    && snapshot.events.some(event=>event.eventId===match.eventId&&event.status!=='COMPLETED')
+  ):null;
+  if(currentBattle?.eventId){
+    const event=snapshot.events.find(candidate=>candidate.eventId===currentBattle.eventId);
+    if(event)return event;
+  }
+  return snapshot.events.find(event=>event.status==='ACTIVE')
+    ??snapshot.events.find(event=>event.status==='PUBLISHED'&&(!event.startsAt||Date.parse(event.startsAt)>=now));
+}
 export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){
   return snapshot.membership==='ACTIVE'&&(snapshot.enteredSeason||snapshot.hasLeagueHistory);
 }
