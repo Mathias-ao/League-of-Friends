@@ -104,7 +104,7 @@ No default slider catalogue, weights, thresholds or normalization population are
 - `AOF_PAIR_HISTORY_V1` — neutral pair history including encounters, allied/opponent history, results and directional replay-derived signals.
 - `AOF_RELATIONSHIP_ENGINE_V1` — currently implements the older Rivalry / Enemy / Friend track model and must be migrated/versioned for the newer player-currency plus Rivalry / Hostility / Bond product model.
 
-The existing `RIVALRIES` processing step now rebuilds and persists neutral Pair History in the `relationships` collection. Today that persisted history uses encounter/team/result evidence because the current Functions backend does not yet receive the replay-derived directional Match Statistics required for raids/forward pressure. Those signals are explicit future inputs rather than guessed data.
+The existing `RIVALRIES` processing step now rebuilds and persists neutral Pair History in the `relationships` collection. Today that persisted history uses encounter/team/result evidence because Pair History processing is not yet wired to the persisted replay-derived directional Battle Statistics required for raids/forward pressure. Those signals are explicit future inputs rather than guessed data.
 
 With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRIEND` tracks remain `UNCONFIGURED`. Product direction now separates player currencies (Gallantry / Treachery / Chivalry) from pair tracks (Rivalry / Hostility / Bond), so a migrated or successor engine is required before final exposure. The legacy automatic rivalry threshold no longer drives this processing step, and it no longer opens the War Room. The older `RIVALRY_ENGINE_V1` code is retained only for compatibility.
 
