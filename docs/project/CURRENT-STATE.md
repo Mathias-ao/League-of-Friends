@@ -75,7 +75,9 @@ The current replay/statistics foundation includes:
 - Map Presence V2, including command coverage, enemy-base contact, forward buildings, expansions, gold influence and relic interaction.
 - Forward Eco classification using the Map Presence V2 forward geometry.
 - Observed command and selection evidence for Execution statistics.
-- Versioned tests, golden projections and architecture documents for the active models.\n- Canonical Battle Statistics ingestion that maps replay identities onto durable league players, stores alternate replay sources without silently superseding the selected source, and exposes the active five-category projection through Match detail.\n- An emulator warmup harness using the paired `1v1_1.aoe2record` / `1v1_2.aoe2record` recordings to validate a no-draft 1v1 Event, canonical extraction, corroborating multi-POV ingestion and idempotency.
+- Versioned tests, golden projections and architecture documents for the active models.
+- Canonical Battle Statistics ingestion that maps replay identities onto durable league players, stores alternate replay sources without silently superseding the selected source, and exposes the active five-category projection through Match detail.
+- An emulator warmup harness using the paired `1v1_1.aoe2record` / `1v1_2.aoe2record` recordings to validate a no-draft 1v1 Event, canonical extraction, corroborating multi-POV ingestion and idempotency.
 
 The statistics system preserves the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
 
