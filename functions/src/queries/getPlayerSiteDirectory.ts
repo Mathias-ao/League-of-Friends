@@ -44,7 +44,7 @@ export const getPlayerSiteDirectory=onCall(callableOptions,async request=>{
     const m=doc.data();return m.status!=='PROPOSED'&&(!m.eventId||visibleIds.has(m.eventId));
   }).map(doc=>{
     const m=doc.data();
-    return {matchId:doc.id,seasonId,eventId:m.eventId??null,format:m.format??null,status:String(m.status??'UNKNOWN'),completedAt:iso(m.completedAt??m.firstCompletedAt),
+    return {matchId:doc.id,seasonId,eventId:m.eventId??null,format:m.format??null,status:String(m.status??'UNKNOWN'),draftRequired:m.gameConfigSnapshot?.civilizations?.mode==='DRAFT',completedAt:iso(m.completedAt??m.firstCompletedAt),
       participants:((m.participants??[]) as MatchParticipant[]).map(p=>({...publicPlayer(p.playerId,players.get(p.playerId)),team:p.team,slot:p.slot})),
       result:m.canonicalResult&&m.status==='COMPLETED'?{revision:Number(m.canonicalResult.revision??1),winningPlayerIds:m.canonicalResult.winningPlayerIds??[]}:null};
   });
