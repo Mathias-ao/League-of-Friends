@@ -11,6 +11,7 @@ on:
       - "scripts/test-match-analysis-corpus.mjs"
       - "scripts/summarize-replay-output.mjs"
       - "scripts/smoke-test-replay-analysis.mjs"
+      - "scripts/smoke-test-warmup-replay-pipeline.mjs"
       - "scripts/set-emulator-replay-analysis-profile.mjs"
       - ".github/workflows/replay-tools-ci.yml"
   pull_request:
@@ -23,6 +24,7 @@ on:
       - "scripts/test-match-analysis-corpus.mjs"
       - "scripts/summarize-replay-output.mjs"
       - "scripts/smoke-test-replay-analysis.mjs"
+      - "scripts/smoke-test-warmup-replay-pipeline.mjs"
       - "scripts/set-emulator-replay-analysis-profile.mjs"
       - ".github/workflows/replay-tools-ci.yml"
 
@@ -54,6 +56,7 @@ jobs:
           node --check scripts/ingest-replay-file.mjs
           node --check scripts/summarize-replay-output.mjs
           node --check scripts/smoke-test-replay-analysis.mjs
+          node --check scripts/smoke-test-warmup-replay-pipeline.mjs
           node --check scripts/set-emulator-replay-analysis-profile.mjs
           node --check scripts/test-replay-corpus.mjs
           node --check scripts/test-match-analysis-corpus.mjs
