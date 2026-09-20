@@ -121,52 +121,7 @@ function arrayValues(document, field) {
   return document?.fields?.[field]?.arrayValue?.values ?? [];
 }
 
-function parseFixturePlayers(fixturePath) {
-  const parserPath = path.resolve("replay-tools", "parse_replay.py");
-  const result = spawnSync(
-    pythonExecutable,
-    [parserPath, path.resolve(fixturePath)],
-    { encoding: "utf8", windowsHide: true },
-  );
-
-  if (result.error) {
-    throw new Error("Could not start replay parser: " + result.error.message);
-  }
-  if (result.status !== 0) {
-    throw new Error(
-      "Replay parser failed (" +
-        result.status +
-        "):\n" +
-        (result.stderr || result.stdout),
-    );
-  }
-
-  const parsed = JSON.parse(result.stdout);
-  const players = Array.isArray(parsed.sourcePlayers) ? parsed.sourcePlayers : [];
-  if (players.length !== 2) {
-    throw new Error(
-      "Warmup fixture must contain exactly two source players; found " +
-        players.length +
-        ".",
-    );
-  }
-  if (
-    players.some(
-      (player) => !player.sourceName || !String(player.sourceName).trim(),
-    )
-  ) {
-    throw new Error(
-      "Warmup fixture source players must have names for automatic league mapping.",
-    );
-  }
-  if (new Set(players.map((player) => player.sourceName)).size !== 2) {
-    throw new Error("Warmup fixture source player names must be unique.");
-  }
-
-  return players.sort((left, right) => left.replaySlot - right.replaySlot);
-}
-
-function runIngestion(matchId, fixturePath, outputRoot) {
+function runIngestion(matchId, fixturePath, outputRoot, slotMappings) {
   const result = spawnSync(
     process.execPath,
     [
@@ -185,6 +140,10 @@ function runIngestion(matchId, fixturePath, outputRoot) {
       firestorePort,
       "--canonical-root",
       outputRoot,
+      ...slotMappings.flatMap((mapping) => [
+        "--map-slot",
+        mapping.replaySlot + "=" + mapping.playerId,
+      ]),
     ],
     { stdio: "inherit", windowsHide: true },
   );
@@ -203,7 +162,10 @@ try {
   const runTag = randomUUID().replaceAll("-", "").slice(0, 10);
   const fixtureOne = path.resolve(fixtureDir, "1v1_1.aoe2record");
   const fixtureTwo = path.resolve(fixtureDir, "1v1_2.aoe2record");
-  const replayPlayers = parseFixturePlayers(fixtureOne);
+  const replayPlayers = [
+    { replaySlot: 1, sourceName: "Warmup Test Player 1" },
+    { replaySlot: 2, sourceName: "Warmup Test Player 2" },
+  ];
 
   const adminAuth = await signInAdmin();
   const adminToken = adminAuth.idToken;
@@ -293,7 +255,7 @@ try {
     );
   }
 
-  console.log("Creating two warmup players from replay identities...");
+  console.log("Creating two warmup test players for explicit replay-slot mapping...");
   const testPlayers = [];
   for (let index = 0; index < replayPlayers.length; index += 1) {
     const replayPlayer = replayPlayers[index];
@@ -400,7 +362,7 @@ try {
 
   const outputRoot = path.resolve(canonicalRoot, "warmup-" + runTag);
   console.log("Ingesting first POV fixture...");
-  runIngestion(matchId, fixtureOne, outputRoot);
+  runIngestion(matchId, fixtureOne, outputRoot, testPlayers);
 
   const gameAfterFirst = await readDocument(
     "matches/" + matchId + "/games/G1",
@@ -448,7 +410,7 @@ try {
   console.log(
     "Ingesting second POV fixture as the active replay/statistics revision...",
   );
-  runIngestion(matchId, fixtureTwo, outputRoot);
+  runIngestion(matchId, fixtureTwo, outputRoot, testPlayers);
 
   const gameAfterSecond = await readDocument(
     "matches/" + matchId + "/games/G1",
