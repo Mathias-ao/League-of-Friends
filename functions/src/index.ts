@@ -28,6 +28,7 @@ export { adminResolveGameResult } from "./commands/results/adminResolveGameResul
 export { disputeCanonicalGameResult } from "./commands/results/disputeCanonicalGameResult.js";
 export { adminResolveCanonicalResultDispute } from "./commands/results/adminResolveCanonicalResultDispute.js";
 export { adminIngestReplayStats } from "./commands/statistics/ingestReplayStats.js";
+export { adminIngestCanonicalMatchStatistics } from "./commands/statistics/ingestCanonicalMatchStatistics.js";
 export { adminProcessReplayDerivedStats } from "./commands/statistics/processReplayDerivedStats.js";
 export { adminProcessReplayAnalysis } from "./commands/statistics/processReplayAnalysis.js";
 export { adminRebuildReplayPlayerStatistics } from "./commands/statistics/rebuildReplayPlayerStatistics.js";
