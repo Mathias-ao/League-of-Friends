@@ -65,6 +65,17 @@ jobs:
           npm run build
           npm test
 
+      - name: Configure emulator-only Emperor's Favor key
+        run: |
+          python - <<'PY'
+          import secrets
+          from pathlib import Path
+          Path("functions/.secret.local").write_text(
+              "EMPERORS_FAVOR_HMAC_KEY=" + secrets.token_hex(32) + "\\n",
+              encoding="utf-8",
+          )
+          PY
+
       - name: Run warmup replay integration
         run: |
           npx --yes firebase-tools emulators:exec             --project demo-age-of-friends-warmup             --only auth,firestore,functions             'node scripts/bootstrap-emulator-admin.mjs --project demo-age-of-friends-warmup --steam "Emulator Emperor" && node scripts/create-emulator-season.mjs --project demo-age-of-friends-warmup && node scripts/smoke-test-warmup-replay-flow.mjs --project demo-age-of-friends-warmup --python python'
