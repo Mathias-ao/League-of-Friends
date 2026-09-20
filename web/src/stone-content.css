@@ -1947,3 +1947,49 @@ textarea:focus{border-color:#92734d}
   .draft-civ-detail{position:static;display:none;min-width:0;max-width:none;margin-top:10px}
   .draft-civ:focus .draft-civ-detail,.draft-civ:focus-within .draft-civ-detail{display:block}
 }
+
+
+.battle-orders-issued-actions{
+  display:flex;
+  align-items:flex-end;
+  flex-direction:column;
+  gap:9px;
+}
+.admin-recovery-button{
+  color:#c9aa7d;
+  opacity:.92;
+}
+.battle-orders-admin-recovery{
+  margin:-6px 0 18px;
+  padding:16px 18px 18px;
+  border:1px solid #684b30;
+  background:
+    linear-gradient(180deg,rgba(72,45,27,.26),rgba(21,14,10,.72));
+}
+.battle-orders-admin-heading{
+  margin-bottom:12px;
+}
+.battle-orders-admin-heading>strong{
+  display:block;
+  margin-top:4px;
+  color:#d9c6ab;
+  font-family:var(--serif);
+  font-size:.95rem;
+  font-weight:500;
+}
+.battle-orders-admin-heading>p{
+  margin:5px 0 0;
+  max-width:660px;
+  color:#9f907e;
+  font-size:.7rem;
+  line-height:1.45;
+}
+.battle-orders-admin-recovery textarea{
+  min-height:78px;
+}
+@media(max-width:560px){
+  .battle-orders-issued-actions{
+    align-items:stretch;
+    width:100%;
+  }
+}
