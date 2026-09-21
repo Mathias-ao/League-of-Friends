@@ -68,9 +68,9 @@ try{
     requestId:randomUUID(),
     title:"Replay Warmup — Emulator",
     description:"Player acceptance test: Emperor vs Player 8, ending with a real .aoe2record upload.",
-    startsAt:new Date(now+30*60*1000).toISOString(),
-    endsAt:new Date(now+3*60*60*1000).toISOString(),
-    signupDeadlineAt:new Date(now+20*60*1000).toISOString(),
+    startsAt:new Date(now+2*60*60*1000).toISOString(),
+    endsAt:new Date(now+5*60*60*1000).toISOString(),
+    signupDeadlineAt:new Date(now+90*60*1000).toISOString(),
     checkInOpensAt:new Date(now-5*60*1000).toISOString(),
     minParticipants:2,
     maxParticipants:2,
@@ -103,7 +103,7 @@ try{
   console.log("");
   console.log("Next in the website:");
   console.log("  1. Open the featured Replay Warmup event as the Emperor.");
-  console.log("  2. RSVP YES, then Check in now. Player 8 is already checked in.");
+  console.log(`  2. RSVP YES, then Check in now. ${opponent.steamName} is already checked in.`);
   console.log("  3. Use the Emperor-only Form warm-up battle action.");
   console.log("  4. Open the 1v1 Battle and upload replay-fixtures/1v1_1.aoe2record.");
 }catch(error){
