@@ -1993,3 +1993,28 @@ textarea:focus{border-color:#92734d}
     width:100%;
   }
 }
+
+
+/* Replay conclusion */
+.replay-conclusion{margin-top:1rem;padding:1.15rem;border:1px solid rgba(116,91,56,.35);background:rgba(20,18,15,.28)}
+.replay-conclusion.ready{border-color:rgba(161,132,76,.58)}
+.replay-conclusion-heading{display:flex;gap:.85rem;align-items:flex-start}
+.replay-conclusion-heading>div{display:grid;gap:.22rem}
+.replay-conclusion-heading strong{font-size:1.02rem}
+.replay-conclusion-heading p{margin:0;color:var(--muted,#a9a39a)}
+.replay-upload-form{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin-top:1rem}
+.replay-file-picker{display:inline-flex;align-items:center;min-height:42px;padding:.55rem .8rem;border:1px dashed rgba(191,160,103,.6);cursor:pointer}
+.replay-file-picker input{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.replay-file-selected{display:grid;gap:.08rem;min-width:180px}
+.replay-file-selected span{font-size:.78rem;color:var(--muted,#a9a39a)}
+.replay-qualified{display:flex;gap:.45rem;align-items:center;margin-top:1rem}
+.replay-identity-map{display:grid;gap:.4rem;margin-top:.8rem}
+.replay-identity-map>div{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:.55rem;align-items:center;padding:.55rem .7rem;background:rgba(255,255,255,.035)}
+.replay-stat-players{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.75rem;margin-top:1rem}
+.replay-stat-player{padding:.85rem;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.16)}
+.replay-stat-player h4{margin:.18rem 0 .7rem}
+.replay-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.replay-stat-grid>div{display:grid;gap:.12rem}
+.replay-stat-grid strong{font-size:1rem}
+.replay-stat-grid span{font-size:.72rem;color:var(--muted,#a9a39a);text-transform:uppercase;letter-spacing:.055em}
+@media (max-width:600px){.replay-upload-form{align-items:stretch}.replay-upload-form>*{width:100%}.replay-stat-grid{grid-template-columns:1fr}.replay-identity-map>div{grid-template-columns:1fr auto 1fr}}
