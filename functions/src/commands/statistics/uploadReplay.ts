@@ -209,7 +209,7 @@ async function resolvePlayerMapping(
 export const uploadReplay = onCall<UploadReplayInput>(
   {
     region: "europe-west1",
-    timeoutSeconds: 60,
+    timeoutSeconds: 300,
     memory: "1GiB",
   },
   async (request) => {
