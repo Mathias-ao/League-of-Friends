@@ -42,7 +42,10 @@ export interface CivilizationDraftRecord {
   uniqueWithinGame:boolean;pool:string[];available:string[];viewerAvailable:string[];currentTurnIndex:number|null;
   turns:CivilizationDraftTurnRecord[];selections:CivilizationDraftSelectionRecord[];viewerCanPick:boolean;
 }
-export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null};}
+export interface ReplayPlayerMapping {replaySlot:number;sourceName:string;playerId:string;}
+export interface ReplayUploadResult {success:boolean;alreadyProcessed:boolean;matchId:string;gameId:string;statisticsId:string;sourceHash:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;replayStatisticsRevision?:number;}
+export interface ReplayStatisticsResult {success:boolean;matchId:string;gameId:string;statisticsId:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;statistics:any;}
+export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null;statisticsId?:string|null;statisticsState?:string|null;statisticsRevision?:number|null};}
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
 export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:PlayerRecord[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
@@ -99,6 +102,8 @@ export interface LeagueRepository {
   pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;
   resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
+  uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;
+  replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;
 
   event(id:string):Promise<EventDetail>;
   match(id:string):Promise<MatchDetail>;
