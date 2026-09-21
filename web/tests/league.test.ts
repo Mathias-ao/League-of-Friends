@@ -42,12 +42,12 @@ test('brand-new players are gated until season entry, while established players 
   assert.equal(canBrowseLeague({...entered,enteredSeason:false,hasLeagueHistory:true}),true);
   assert.equal(canBrowseLeague({...entered,membership:'SIGNED_OUT'}),false);
 });
-test('preview state is isolated and no replay upload is falsely implemented',async()=>{
+test('preview state is isolated and replay upload remains live-only',async()=>{
   const repo=new PreviewLeagueRepository();await repo.signIn();await repo.requestMembership('D’Karius','','K7M4Q9');await repo.enterSeason();
   const data=await repo.load();data.events[0].confirmedCount=999;
   assert.notEqual((await repo.load()).events[0].confirmedCount,999);
   assert.equal((await new PreviewLeagueRepository().load()).enteredSeason,false);
-  assert.equal('uploadReplay' in repo,false);
+  await assert.rejects(repo.uploadReplay('sample-duel','sample-game-1',new File([], 'sample.aoe2record')),/live Matches/);
 });
 test('check-in requires confirmed RSVP and an explicit open window',()=>{
   const now=Date.parse('2026-09-20T16:00:00Z');
