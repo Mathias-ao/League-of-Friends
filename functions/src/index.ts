@@ -3,6 +3,7 @@ import { requireLeaguePlayer } from "./auth/authorization.js";
 import { callableOptions } from "./config/runtime.js";
 
 export { bootstrapEmulatorAdmin } from "./dev/bootstrapEmulatorAdmin.js";
+export { seedReplayWarmupOpponent } from "./dev/seedReplayWarmupOpponent.js";
 export { requestLeagueMembership } from "./commands/players/requestMembership.js";
 export { adminGenerateEmperorsFavors } from "./commands/admin/generateEmperorsFavors.js";
 export { adminSetMembershipStatus } from "./commands/players/setMembershipStatus.js";
