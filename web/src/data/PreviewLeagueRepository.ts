@@ -1,4 +1,4 @@
-import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
+import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult} from '../domain/league';
 import {lombardia} from './content';
 /** Explicitly illustrative and memory-only. Never mutates real league data. */
 export class PreviewLeagueRepository implements LeagueRepository {
@@ -45,9 +45,12 @@ export class PreviewLeagueRepository implements LeagueRepository {
     e.viewer={rsvp:value,signupState:value==='YES'?'CONFIRMED':'NONE',attendanceStatus:'NOT_CHECKED'};
   }
   async checkIn(id:string){const e=this.state.events.find(e=>e.eventId===id);if(!e||!new LeagueEvent(e).canCheckIn())throw new Error('Check-in is not open.');e.viewer!.attendanceStatus='CHECKED_IN';}
+  async formEventMatches(){throw new Error('Match-plan formation is available in live Events.');}
   async ensureCivilizationDraft(){throw new Error('Civilization drafting is available in live Matches.');}
   async pickCivilization(){throw new Error('Civilization drafting is available in live Matches.');}
   async resetCivilizationDraft(){throw new Error('Civilization draft administration is available in live Matches.');}
+  async uploadReplay():Promise<ReplayUploadResult>{throw new Error('Replay upload is available in live Matches.');}
+  async replayStatistics():Promise<ReplayStatisticsResult>{throw new Error('Replay statistics are available in live Matches.');}
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');

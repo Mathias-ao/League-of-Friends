@@ -31,6 +31,7 @@ interface EventForApproval {
   gameConfig?: GameConfiguration;
   scoringSnapshot?: ScoringSnapshot;
   goldRewardSnapshot?: GoldRewardConfig;
+  replayParticipantBindings?: Array<{sourceName:string;sourceNameNormalized:string;playerId:string}>;
 }
 
 interface MatchPlanForApproval {
@@ -182,6 +183,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
         gameConfigSnapshot: gameConfig,
         civilizationDraftId: civilizationDraft ? "G1" : null,
         civilizationDraftStatus: civilizationDraft?.status ?? null,
+        replayParticipantBindings: (event.replayParticipantBindings ?? []).filter((binding) => proposedMatch.participants.some((participant) => participant.playerId === binding.playerId)),
         replay: null,
         canonicalResult: null,
         startedAt: null,

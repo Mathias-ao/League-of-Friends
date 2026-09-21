@@ -18,6 +18,11 @@ import {
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
+interface ReplayParticipantBindingInput {
+  sourceName: string;
+  playerId: string;
+}
+
 interface CreateEventInput {
   requestId: string;
   title: string;
@@ -36,6 +41,7 @@ interface CreateEventInput {
   gameConfig: GameConfiguration;
   scoringSnapshot: ScoringSnapshot;
   goldRewardSnapshot: GoldRewardConfig;
+  replayParticipantBindings?: ReplayParticipantBindingInput[];
 }
 
 const competitionStyles: CompetitionStyle[] = ["ONE_V_ONE", "TWO_V_TWO", "BIG_TEAM", "FFA"];
@@ -52,6 +58,33 @@ function parseDate(value: string | null | undefined, fieldName: string, optional
   return date;
 }
 
+function normalizeReplayName(value: string): string {
+  return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
+}
+
+function validateReplayParticipantBindings(input: ReplayParticipantBindingInput[] | undefined) {
+  if (!input) return [];
+  if (!Array.isArray(input) || input.length > 8) {
+    throw new HttpsError("invalid-argument", "replayParticipantBindings must contain at most eight entries.");
+  }
+  const names = new Set<string>();
+  const players = new Set<string>();
+  return input.map((binding, index) => {
+    const sourceName = binding?.sourceName?.trim();
+    const playerId = binding?.playerId?.trim();
+    if (!sourceName || sourceName.length > 200 || !playerId || playerId.length > 200) {
+      throw new HttpsError("invalid-argument", `Invalid replayParticipantBindings[${index}].`);
+    }
+    const sourceNameNormalized = normalizeReplayName(sourceName);
+    if (names.has(sourceNameNormalized) || players.has(playerId)) {
+      throw new HttpsError("invalid-argument", "Replay participant bindings must be one-to-one.");
+    }
+    names.add(sourceNameNormalized);
+    players.add(playerId);
+    return { sourceName, sourceNameNormalized, playerId };
+  });
+}
+
 function assertIntegerOrNull(value: number | null | undefined, fieldName: string): void {
   if (value == null) return;
   if (!Number.isInteger(value) || value < 1 || value > 100) {
@@ -66,6 +99,7 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
   const title = input.title?.trim();
   const description = input.description?.trim() || "";
   const artworkUrl = input.artworkUrl?.trim() || null;
+  const replayParticipantBindings = validateReplayParticipantBindings(input.replayParticipantBindings);
 
   if (!title || title.length > 120) {
     throw new HttpsError("invalid-argument", "Event title must contain 1–120 characters.");
@@ -172,6 +206,7 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
       scoringSnapshot: input.scoringSnapshot,
       goldRewardSnapshot: input.goldRewardSnapshot,
       specialMechanics: [],
+      replayParticipantBindings,
       createdBy: actor.playerId,
       createdAt: now,
       updatedAt: now,
