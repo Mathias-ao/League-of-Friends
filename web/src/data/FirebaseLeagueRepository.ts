@@ -47,7 +47,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     const chunk=0x8000;
     for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
     const replayBase64=btoa(binary);
-    return this.call<ReplayUploadResult>('uploadReplay',{matchId,gameId,fileName:file.name,replayBase64});
+    return (await httpsCallable<unknown,ReplayUploadResult>(this.functions,'uploadReplay',{timeout:300000})({matchId,gameId,fileName:file.name,replayBase64})).data;
   }
   replayStatistics(matchId:string,gameId:string){return this.call<ReplayStatisticsResult>('getReplayStatistics',{matchId,gameId});}
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void){
