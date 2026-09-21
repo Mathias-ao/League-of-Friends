@@ -1,8 +1,13 @@
+import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 
 const args=process.argv.slice(2);
 const readArg=name=>{const i=args.indexOf(name);return i>=0?args[i+1]:undefined;};
-const projectId=readArg("--project")??"demo-aof-replay";
+let projectId=readArg("--project");
+if(!projectId){
+  try{projectId=JSON.parse(readFileSync(".firebaserc","utf8")).projects?.default;}catch{}
+}
+if(!projectId){console.error("Pass --project <firebase-project-id> or configure a default project in .firebaserc.");process.exit(1);}
 const opponentName=readArg("--opponent")??"Player 8";
 const email=process.env.AOF_EMULATOR_ADMIN_EMAIL;
 const password=process.env.AOF_EMULATOR_ADMIN_PASSWORD;
