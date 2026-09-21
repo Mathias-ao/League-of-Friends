@@ -47,7 +47,7 @@ export interface ReplayUploadResult {success:boolean;alreadyProcessed:boolean;ma
 export interface ReplayStatisticsResult {success:boolean;matchId:string;gameId:string;statisticsId:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;statistics:any;}
 export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null;statisticsId?:string|null;statisticsState?:string|null;statisticsRevision?:number|null};}
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
-export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:PlayerRecord[]|null};matches:MatchRecord[];}
+export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
 export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];}
 export interface EmperorsFavorPrintable {  code:string;  emperor:string;  serialNumber:number;  total:number;  printLabel:string;}
@@ -98,6 +98,7 @@ export interface LeagueRepository {
 
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;
   checkIn(eventId:string):Promise<void>;
+  formEventMatches(eventId:string):Promise<void>;
   ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;
   pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;
   resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;
