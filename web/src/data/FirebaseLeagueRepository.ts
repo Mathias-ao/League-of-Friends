@@ -1,5 +1,5 @@
 import {initializeApp} from 'firebase/app';
-import {getAuth,GoogleAuthProvider,browserLocalPersistence,setPersistence,signInWithPopup,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
+import {getAuth,GoogleAuthProvider,browserLocalPersistence,setPersistence,signInWithEmailAndPassword,signInWithPopup,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
 import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult} from '../domain/league';
@@ -30,7 +30,14 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     ]);
     return {membership:'ACTIVE',viewer:bootstrap.viewer,season:bootstrap.activeSeason,emperor:bootstrap.emperor,standings:bootstrap.leaderboard,players:directory.players,matches:directory.matches,enteredSeason:directory.enteredSeason,hasLeagueHistory:directory.hasLeagueHistory??false,events:directory.events.map(e=>e.eventId===bootstrap.upcomingEvent?.eventId?{...e,...bootstrap.upcomingEvent}:e)};
   }
-  async signIn(){await this.ready;await signInWithPopup(this.auth,new GoogleAuthProvider());}
+  async signIn(){
+    await this.ready;
+    if(import.meta.env.VITE_USE_EMULATORS==='true'){
+      await signInWithEmailAndPassword(this.auth,'emperor@league.local','league-emulator-admin-only');
+      return;
+    }
+    await signInWithPopup(this.auth,new GoogleAuthProvider());
+  }
   async signOut(){await signOut(this.auth);}
   async requestMembership(steamName:string,discordName:string,favor:string){await this.call('requestLeagueMembership',{steamName,discordName,favor});}
   generateEmperorsFavors(batchName:string,count:number){return this.call<EmperorsFavorBatch>('adminGenerateEmperorsFavors',{batchName,count});}
