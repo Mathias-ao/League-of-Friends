@@ -13,6 +13,7 @@ $ports = [ordered]@{
   Auth      = [int]$config.emulators.auth.port
   Functions = [int]$config.emulators.functions.port
   Firestore = [int]$config.emulators.firestore.port
+  Storage   = [int]$config.emulators.storage.port
   UI        = [int]$config.emulators.ui.port
 }
 
