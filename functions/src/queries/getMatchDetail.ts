@@ -55,6 +55,9 @@ interface GameDocument {
   activeDerivedReplayStatsId?: string | null;
   activeReplayAnalysisId?: string | null;
   replayAnalysisVersion?: string | null;
+  activeReplayStatisticsId?: string | null;
+  replayStatisticsState?: string | null;
+  replayStatisticsRevision?: number | null;
   startedAt?: Timestamp | null;
   completedAt?: Timestamp | null;
 }
@@ -183,6 +186,9 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
         derivedStatsId: game.activeDerivedReplayStatsId ?? null,
         analysisId: game.activeReplayAnalysisId ?? null,
         analysisVersion: game.replayAnalysisVersion ?? null,
+        statisticsId: game.activeReplayStatisticsId ?? null,
+        statisticsState: game.replayStatisticsState ?? null,
+        statisticsRevision: game.replayStatisticsRevision ?? null,
       },
       viewerSubmission,
       confirmationRequests,
