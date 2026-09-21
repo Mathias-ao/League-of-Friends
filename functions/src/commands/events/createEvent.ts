@@ -59,7 +59,7 @@ function parseDate(value: string | null | undefined, fieldName: string, optional
 }
 
 function normalizeReplayName(value: string): string {
-  return value.normalize("NFKC").trim().replace(/\\s+/g, " ").toLocaleLowerCase("en-US");
+  return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
 }
 
 function validateReplayParticipantBindings(input: ReplayParticipantBindingInput[] | undefined) {
