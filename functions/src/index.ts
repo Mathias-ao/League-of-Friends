@@ -28,6 +28,7 @@ export { adminResolveGameResult } from "./commands/results/adminResolveGameResul
 export { disputeCanonicalGameResult } from "./commands/results/disputeCanonicalGameResult.js";
 export { adminResolveCanonicalResultDispute } from "./commands/results/adminResolveCanonicalResultDispute.js";
 export { adminIngestReplayStats } from "./commands/statistics/ingestReplayStats.js";
+export { uploadReplay } from "./commands/statistics/uploadReplay.js";
 export { adminProcessReplayDerivedStats } from "./commands/statistics/processReplayDerivedStats.js";
 export { adminProcessReplayAnalysis } from "./commands/statistics/processReplayAnalysis.js";
 export { adminRebuildReplayPlayerStatistics } from "./commands/statistics/rebuildReplayPlayerStatistics.js";
@@ -45,6 +46,7 @@ export { getEventDetail } from "./queries/getEventDetail.js";
 export { getPlayerProfile } from "./queries/getPlayerProfile.js";
 export { getWarRoom } from "./queries/getWarRoom.js";
 export { getMatchDetail } from "./queries/getMatchDetail.js";
+export { getReplayStatistics } from "./queries/getReplayStatistics.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
