@@ -4,6 +4,7 @@ import base64
 import hashlib
 import io
 import json
+import hmac
 import os
 import tempfile
 import zipfile
@@ -58,7 +59,9 @@ def process_replay(file_name: str, replay_base64: str) -> dict[str, Any]:
         if not adapter["payload"]["body"]["bodyParseComplete"]:
             raise ValueError("Replay body extraction is incomplete.")
 
-        statistics = project_statistics(bundle_dir)
+        # build_payload seals and validates the CanonicalReplay bundle once.
+        # Do not repeat the full bundle validation before projection.
+        statistics = project_statistics(bundle_dir, validate=False)
         statistics_path = bundle_dir / "statistics.json"
         statistics_path.write_text(
             json.dumps(statistics, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n",
@@ -104,6 +107,12 @@ class Handler(BaseHTTPRequestHandler):
         self._json(404, {"error": "not_found"})
 
     def do_POST(self) -> None:
+        expected_token = os.environ.get("AOF_REPLAY_WORKER_AUTH_TOKEN")
+        if expected_token:
+            supplied = self.headers.get("authorization", "")
+            if not hmac.compare_digest(supplied, "Bearer " + expected_token):
+                self._json(401, {"error": "unauthorized"})
+                return
         if self.path != "/process":
             self._json(404, {"error": "not_found"})
             return
