@@ -2,7 +2,7 @@ import {initializeApp} from 'firebase/app';
 import {getAuth,GoogleAuthProvider,browserLocalPersistence,setPersistence,signInWithPopup,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
-import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
+import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult} from '../domain/league';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -40,6 +40,15 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async ensureCivilizationDraft(matchId:string,gameId:string){await this.call('ensureCivilizationDraft',{matchId,gameId});}
   async pickCivilization(matchId:string,gameId:string,civilization:string){await this.call('makeCivilizationDraftPick',{matchId,gameId,civilization});}
   async resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean){await this.call('adminResetCivilizationDraft',{requestId:crypto.randomUUID(),matchId,gameId,reason,rerollOrder});}
+  async uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>{
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    let binary='';
+    const chunk=0x8000;
+    for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+    const replayBase64=btoa(binary);
+    return this.call<ReplayUploadResult>('uploadReplay',{matchId,gameId,fileName:file.name,replayBase64});
+  }
+  replayStatistics(matchId:string,gameId:string){return this.call<ReplayStatisticsResult>('getReplayStatistics',{matchId,gameId});}
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void){
     let initial=true;
     return onSnapshot(
