@@ -48,6 +48,8 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async ensureCivilizationDraft(){throw new Error('Civilization drafting is available in live Matches.');}
   async pickCivilization(){throw new Error('Civilization drafting is available in live Matches.');}
   async resetCivilizationDraft(){throw new Error('Civilization draft administration is available in live Matches.');}
+  async uploadReplay(){throw new Error('Replay upload is available in live Matches.');}
+  async replayStatistics(){throw new Error('Replay statistics are available in live Matches.');}
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
