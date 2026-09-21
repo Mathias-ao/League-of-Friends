@@ -27,6 +27,7 @@ interface GameForReplayUpload {
   replayParticipantBindings?: ReplayBinding[];
   replayStatisticsRevision?: number;
   activeReplayStatisticsId?: string | null;
+  replay?: Record<string, unknown> | null;
 }
 
 interface WorkerPlayer {
@@ -334,10 +335,13 @@ export const uploadReplay = onCall<UploadReplayInput>(
         replayStatisticsState: "READY",
         replayStatisticsRevision: revision,
         replayStatisticsUpdatedAt: now,
-        "replay.status": "PARSED",
-        "replay.sourceHash": localSourceHash,
-        "replay.statisticsId": localSourceHash,
-        "replay.statisticsState": "READY",
+        replay: {
+          ...(freshGame.replay ?? {}),
+          status: "PARSED",
+          sourceHash: localSourceHash,
+          statisticsId: localSourceHash,
+          statisticsState: "READY",
+        },
         updatedAt: now,
       });
       return { alreadyProcessed: false, revision };
