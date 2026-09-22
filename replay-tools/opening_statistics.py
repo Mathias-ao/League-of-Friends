@@ -48,21 +48,29 @@ def _first_research_time(research: list[dict[str, Any]], technology_id: int) -> 
     return None
 
 
-def _latest_research_time(research: list[dict[str, Any]], technology_id: int) -> int | None:
-    times = [
-        event["atMs"]
+def _latest_research_event(
+    research: list[dict[str, Any]], technology_id: int,
+) -> dict[str, Any] | None:
+    candidates = [
+        event
         for event in research
         if event.get("technologyId") == technology_id and isinstance(event.get("atMs"), int)
     ]
-    return max(times) if times else None
+    return max(
+        candidates,
+        key=lambda event: (event["atMs"], str(event.get("sourceEventId") or "")),
+        default=None,
+    )
 
 
 def _age_up(research: list[dict[str, Any]], age: str) -> dict[str, Any]:
-    click = _latest_research_time(research, AGE_TECH_IDS[age])
+    click_event = _latest_research_event(research, AGE_TECH_IDS[age])
+    click = click_event["atMs"] if click_event is not None else None
     duration = AGE_RESEARCH_MS[age]
     return {
         "layer": "inferred",
         "clickAtMs": click,
+        "clickSourceEventId": click_event.get("sourceEventId") if click_event is not None else None,
         "ageUpAtMs": click + duration if click is not None else None,
         "researchDurationMs": duration,
         "basis": f"latest observed research request for technology {AGE_TECH_IDS[age]} + fixed {duration}ms",
@@ -200,6 +208,7 @@ def _villagers_before_feudal(
     player_id: int,
     catalog: dict[str, Any],
     feudal_click_ms: int | None,
+    feudal_click_source_event_id: str | None,
 ) -> dict[str, Any]:
     starting = _initial_villager_count(initial_objects, player_id, catalog)
     if feudal_click_ms is None:
@@ -214,8 +223,18 @@ def _villagers_before_feudal(
     unknown_amount_commands = 0
     for event in production:
         at_ms = event.get("atMs")
-        if not isinstance(at_ms, int) or at_ms >= feudal_click_ms:
+        if not isinstance(at_ms, int):
             continue
+        if at_ms > feudal_click_ms:
+            continue
+        if at_ms == feudal_click_ms:
+            source_event_id = event.get("sourceEventId")
+            if (
+                not isinstance(source_event_id, str)
+                or not isinstance(feudal_click_source_event_id, str)
+                or source_event_id >= feudal_click_source_event_id
+            ):
+                continue
         if "villager" not in _roles(catalog, "units", event.get("unitId")):
             continue
         signed = event.get("signedAmount")
@@ -254,6 +273,7 @@ def project_opening_statistics(
 
         age_up = {age: _age_up(research, age) for age in ("feudal", "castle", "imperial")}
         feudal_click = age_up["feudal"]["clickAtMs"]
+        feudal_click_source_event_id = age_up["feudal"]["clickSourceEventId"]
         feudal_age_up = age_up["feudal"]["ageUpAtMs"]
         castle_age_up = age_up["castle"]["ageUpAtMs"]
 
@@ -288,7 +308,12 @@ def project_opening_statistics(
                 "boundary": "feudal_age_up" if feudal_age_up is not None else "observed_end_no_feudal",
             },
             "villagersBeforeFeudalAge": _villagers_before_feudal(
-                production, initial_objects, player_id, catalog, feudal_click,
+                production,
+                initial_objects,
+                player_id,
+                catalog,
+                feudal_click,
+                feudal_click_source_event_id,
             ),
             "loomTiming": {
                 "layer": "observed",
