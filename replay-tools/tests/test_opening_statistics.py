@@ -130,6 +130,60 @@ class OpeningStatisticsTests(unittest.TestCase):
         self.assertEqual(villagers["populationCapAtFeudalClick"], 10)
         self.assertEqual(villagers["populationBlockedMs"], 5_000)
 
+    def test_incomplete_header_objects_use_standard_spanish_start_floor(self):
+        spanish_manifest = {
+            "participants": [{"playerId": 1, "civilization": {"rawId": 14}}],
+            "match": {"settings": {"population": 200, "startingAgeId": 0}},
+        }
+        incomplete_initial = [
+            {"objectInstanceIds": [100], "payload": {"ownerPlayerId": 1, "objectId": 109}},
+            {"objectInstanceIds": [101], "payload": {"ownerPlayerId": 1, "objectId": 83}},
+            {"objectInstanceIds": [104], "payload": {"ownerPlayerId": 1, "objectId": 448}},
+        ]
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 400_000, "technologyId": 101,
+                 "producerObjectIds": [9999], "sourceEventId": "op-000000100"},
+            ],
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 0, "unitId": 83, "signedAmount": 15,
+                 "requestedAmountPositive": 15, "producerObjectIds": [9999],
+                 "sourceEventId": "op-000000001"},
+            ],
+            "buildEvents": [
+                {"replaySlot": 1, "atMs": 20_000, "buildingId": 70,
+                 "builderObjectIds": [101], "sourceEventId": "op-000000010"},
+                {"replaySlot": 1, "atMs": 150_000, "buildingId": 70,
+                 "builderObjectIds": [101], "sourceEventId": "op-000000020"},
+                {"replaySlot": 1, "atMs": 280_000, "buildingId": 70,
+                 "builderObjectIds": [101], "sourceEventId": "op-000000030"},
+            ],
+        }, initial_objects=incomplete_initial, manifest=spanish_manifest)
+        villagers = result["villagersBeforeFeudalAge"]
+        self.assertEqual(villagers["startingVillagersObserved"], 1)
+        self.assertEqual(villagers["startingVillagersUsed"], 3)
+        self.assertEqual(
+            villagers["startingVillagerCountSource"],
+            "standard_dark_age_civilization_floor_due_incomplete_header_objects",
+        )
+        self.assertEqual(villagers["startingPopulationUsedObserved"], 2)
+        self.assertEqual(villagers["startingPopulationUsedReconstructed"], 4)
+        self.assertEqual(villagers["count"], 18)
+
+    def test_complete_standard_start_keeps_header_source(self):
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 100_000, "technologyId": 101,
+                 "sourceEventId": "op-000000100"},
+            ],
+        })
+        villagers = result["villagersBeforeFeudalAge"]
+        self.assertEqual(villagers["startingVillagersObserved"], 3)
+        self.assertEqual(villagers["startingVillagersUsed"], 3)
+        self.assertEqual(villagers["startingVillagerCountSource"], "header_initial_objects")
+        self.assertEqual(villagers["startingPopulationUsedObserved"], 4)
+        self.assertEqual(villagers["startingPopulationUsedReconstructed"], 4)
+
     def test_starting_villagers_come_from_replay_and_chinese_tc_population_is_used(self):
         chinese_manifest = {
             "participants": [{"playerId": 1, "civilization": {"rawId": 6}}],
