@@ -47,7 +47,7 @@ The required hierarchy remains:
 
 - A Match is one planned competitive encounter and may contain one or more Games.
 - One `.aoe2record` represents one Game.
-- Players join the league once, enter each season separately and sign up for each event separately.
+- Players authenticate with Google, join the league once through a one-time Emperor's Favor, enter each season separately and sign up for each event separately.
 - RSVP and check-in determine the available players.
 - The approved Match/Game plan is authoritative for roster, teams, format and civilization rules.
 - Attendance changes may produce fewer Games, asymmetric teams or FFA.
@@ -60,6 +60,12 @@ The required hierarchy remains:
 - Players upload replays; post-match statistics are derived automatically rather than entered manually.
 
 Backend foundations exist for membership, seasons, events, RSVP/check-in, flexible match planning, Game creation and native civilization drafting. The player-facing React/TypeScript client lives in `web/`. Production configuration, replay upload and the complete end-to-end statistics presentation flow remain incomplete.
+
+### League admission — Emperor's Favor
+
+New league identities use **Emperor's Favor** as the private admission gate after Google authentication. A Favor is a six-character, one-use code from an unambiguous 32-character alphabet. Raw codes are not stored; Firestore keeps an HMAC-SHA256 fingerprint, redemption is atomic with player/auth-link creation, and repeated failed attempts are rate-limited. Successful redemption creates an ACTIVE league membership; season entry remains a separate step.
+
+Administrators can generate and immediately print named Favor batches from the website. The initial flow defaults to **Founding Fifteen / 15 Favors**, while later batches may contain 1–50 Favors. Full implementation details live in [`../design/emperors-favor.md`](../design/emperors-favor.md).
 
 ## Replay and Match Statistics foundation
 
@@ -137,7 +143,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 
 | Area | Current state | Main gap |
 |---|---|---|
-| Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, authentication mapping and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
+| Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, Google authentication mapping, Emperor's Favor admission and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
 | Results | Submission, administrator resolution, disputes, corrections and revision foundations exist. | Replay-derived automatic result qualification and downstream invalidation. |
 | Processing | Repeat-safe jobs exist for several downstream systems; Pair History now uses the existing `RIVALRIES` step. | Wire current Match Statistics and Lifetime aggregation into versioned rebuild/storage jobs. |
 | Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data; drafted Battles now support progressive event-day entry, team-organized civilization muster, civilization reference detail and completed Battle Orders. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
@@ -175,3 +181,4 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
 - [`../architecture/civilization-drafting-v1.md`](../architecture/civilization-drafting-v1.md)
 - [`../architecture/civilization-catalogue-v1.md`](../architecture/civilization-catalogue-v1.md)
+- [`../design/emperors-favor.md`](../design/emperors-favor.md)
