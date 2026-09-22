@@ -523,7 +523,7 @@ def _villagers_before_feudal(
             if blocked_since is None:
                 blocked_since = active_finish
             return False
-        completion_time = max(active_finish, blocked_since or active_finish)
+        completion_time = max(active_finish, now if blocked_since is not None else active_finish)
         if blocked_since is not None:
             population_blocked_ms += max(0.0, completion_time - blocked_since)
             blocked_since = None
