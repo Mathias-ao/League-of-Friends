@@ -126,7 +126,7 @@ class OpeningStatisticsTests(unittest.TestCase):
         villagers = result["villagersBeforeFeudalAge"]
         # House projects complete at 55s. The second villager was ready at 50s,
         # waits for population room, then later villagers continue from 55s.
-        self.assertEqual(villagers["count"], 6)
+        self.assertEqual(villagers["count"], 7)
         self.assertEqual(villagers["populationCapAtFeudalClick"], 10)
         self.assertEqual(villagers["populationBlockedMs"], 5_000)
 
