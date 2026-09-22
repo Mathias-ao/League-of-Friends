@@ -10,29 +10,42 @@ CATALOG = {
     "buildings": {
         "12": {"name": "Barracks", "roleKeys": ["barracks", "military_production"]},
         "45": {"name": "Dock", "roleKeys": ["dock", "naval_economy", "naval_production"]},
-        "70": {"name": "House", "roleKeys": ["house"]},
+        "70": {"name": "House", "roleKeys": ["house"], "trainTime": 25},
+        "109": {"name": "Town Center", "roleKeys": ["town_center", "economy", "population_production"], "trainTime": 100},
         "72": {"name": "Palisade Wall", "roleKeys": ["wall", "fortification"]},
         "87": {"name": "Archery Range", "roleKeys": ["archery_range", "military_production"]},
     },
     "units": {
         "4": {"name": "Archer", "roleKeys": ["archer", "land_military", "ranged"]},
-        "83": {"name": "Villager", "roleKeys": ["villager", "economic_unit"]},
+        "83": {"name": "Villager", "roleKeys": ["villager", "economic_unit"], "trainTime": 25},
+        "448": {"name": "Scout Cavalry", "roleKeys": ["scout", "land_military"]},
         "13": {"name": "Fishing Ship", "roleKeys": ["fishing_ship", "economic_unit", "water_unit"]},
         "74": {"name": "Militia", "roleKeys": ["militia", "land_military"]},
         "539": {"name": "Galley", "roleKeys": ["galley", "water_military", "ranged"]},
     },
     "technologies": {
-        "22": {"name": "Loom", "roleKeys": ["loom", "eco_tech"]},
+        "22": {"name": "Loom", "roleKeys": ["loom", "eco_tech"], "researchTime": 25},
         "101": {"name": "Feudal Age", "roleKeys": ["feudal_age"]},
         "102": {"name": "Castle Age", "roleKeys": ["castle_age"]},
         "103": {"name": "Imperial Age", "roleKeys": ["imperial_age"]},
     },
 }
 
-MANIFEST = {"participants": [{"playerId": 1}]}
+MANIFEST = {
+    "participants": [{"playerId": 1, "civilization": {"rawId": 1}}],
+    "match": {"settings": {"population": 200}},
+}
+
+DEFAULT_INITIAL_OBJECTS = [
+    {"objectInstanceIds": [100], "payload": {"ownerPlayerId": 1, "objectId": 109}},
+    {"objectInstanceIds": [101], "payload": {"ownerPlayerId": 1, "objectId": 83}},
+    {"objectInstanceIds": [102], "payload": {"ownerPlayerId": 1, "objectId": 83}},
+    {"objectInstanceIds": [103], "payload": {"ownerPlayerId": 1, "objectId": 83}},
+    {"objectInstanceIds": [104], "payload": {"ownerPlayerId": 1, "objectId": 448}},
+]
 
 
-def project(body, observed_until_ms=40 * 60_000, initial_objects=None):
+def project(body, observed_until_ms=40 * 60_000, initial_objects=None, manifest=None):
     complete = {
         "researchEvents": [],
         "productionEvents": [],
@@ -41,11 +54,11 @@ def project(body, observed_until_ms=40 * 60_000, initial_objects=None):
         **body,
     }
     return project_opening_statistics(
-        manifest=MANIFEST,
+        manifest=manifest or MANIFEST,
         body=complete,
         catalog=CATALOG,
         observed_until_ms=observed_until_ms,
-        initial_objects=initial_objects or [],
+        initial_objects=DEFAULT_INITIAL_OBJECTS if initial_objects is None else initial_objects,
     )["1"]
 
 
@@ -78,39 +91,136 @@ class OpeningStatisticsTests(unittest.TestCase):
         self.assertEqual(result["ageUp"]["imperial"]["ageUpAtMs"], 28 * 60_000 + 190_000)
         self.assertEqual(result["ageUp"]["feudal"]["layer"], "inferred")
 
-    def test_villagers_before_feudal_age_uses_starting_villagers_and_net_queue_before_latest_click(self):
-        initial_objects = [
-            {"payload": {"ownerPlayerId": 1, "objectId": 83}},
-            {"payload": {"ownerPlayerId": 1, "objectId": 83}},
-            {"payload": {"ownerPlayerId": 1, "objectId": 83}},
-            {"payload": {"ownerPlayerId": 2, "objectId": 83}},
+    def test_villagers_before_feudal_age_counts_only_completed_production(self):
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 120_000, "technologyId": 101, "producerObjectIds": [100], "sourceEventId": "op-000000100"},
+            ],
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 0, "unitId": 83, "signedAmount": 10, "requestedAmountPositive": 10,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000001"},
+            ],
+        })
+        villagers = result["villagersBeforeFeudalAge"]
+        # Starting pop is 4/5 (3 villagers + scout). One villager completes at 25s,
+        # then the TC is population blocked because no House was completed.
+        self.assertEqual(villagers["count"], 4)
+        self.assertEqual(villagers["startingVillagersObserved"], 3)
+        self.assertEqual(villagers["villagersProjectedCompletedBeforeFeudalClick"], 1)
+        self.assertGreater(villagers["populationBlockedMs"], 0)
+
+    def test_villager_backorders_resume_after_projected_house_completion(self):
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 120_000, "technologyId": 101, "producerObjectIds": [100], "sourceEventId": "op-000000100"},
+            ],
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 0, "unitId": 83, "signedAmount": 10, "requestedAmountPositive": 10,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000001"},
+            ],
+            "buildEvents": [
+                {"replaySlot": 1, "atMs": 30_000, "buildingId": 70, "builderObjectIds": [101],
+                 "sourceEventId": "op-000000010"},
+            ],
+        })
+        villagers = result["villagersBeforeFeudalAge"]
+        # House projects complete at 55s. The second villager was ready at 50s,
+        # waits for population room, then later villagers continue from 55s.
+        self.assertEqual(villagers["count"], 7)
+        self.assertEqual(villagers["populationCapAtFeudalClick"], 10)
+        self.assertEqual(villagers["populationBlockedMs"], 5_000)
+
+    def test_starting_villagers_come_from_replay_and_chinese_tc_population_is_used(self):
+        chinese_manifest = {
+            "participants": [{"playerId": 1, "civilization": {"rawId": 6}}],
+            "match": {"settings": {"population": 200}},
+        }
+        chinese_initial = [
+            {"objectInstanceIds": [100], "payload": {"ownerPlayerId": 1, "objectId": 109}},
+            *[
+                {"objectInstanceIds": [101 + i], "payload": {"ownerPlayerId": 1, "objectId": 83}}
+                for i in range(6)
+            ],
+            {"objectInstanceIds": [120], "payload": {"ownerPlayerId": 1, "objectId": 448}},
         ]
         result = project({
             "researchEvents": [
-                {"replaySlot": 1, "atMs": 6 * 60_000, "technologyId": 101},
-                {"replaySlot": 1, "atMs": 7 * 60_000, "technologyId": 101},
+                {"replaySlot": 1, "atMs": 100_000, "technologyId": 101, "producerObjectIds": [100], "sourceEventId": "op-000000100"},
             ],
             "productionEvents": [
-                {"replaySlot": 1, "atMs": 60_000, "unitId": 83, "signedAmount": 5, "requestedAmountPositive": 5},
-                {"replaySlot": 1, "atMs": 2 * 60_000, "unitId": 83, "signedAmount": -1, "requestedAmountPositive": 0},
-                {"replaySlot": 1, "atMs": 6 * 60_000 + 30_000, "unitId": 83, "signedAmount": 2, "requestedAmountPositive": 2},
-                {"replaySlot": 1, "atMs": 7 * 60_000 + 1, "unitId": 83, "signedAmount": 4, "requestedAmountPositive": 4},
-                {"replaySlot": 1, "atMs": 3 * 60_000, "unitId": 4, "signedAmount": 2, "requestedAmountPositive": 2},
+                {"replaySlot": 1, "atMs": 0, "unitId": 83, "signedAmount": 10, "requestedAmountPositive": 10,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000001"},
             ],
-        }, initial_objects=initial_objects)
+        }, initial_objects=chinese_initial, manifest=chinese_manifest)
         villagers = result["villagersBeforeFeudalAge"]
-        self.assertEqual(villagers["count"], 9)
-        self.assertEqual(villagers["startingVillagersObserved"], 3)
-        self.assertEqual(villagers["netDecodedVillagerQueueAmount"], 6)
-        self.assertEqual(villagers["boundary"], "latest_feudal_click")
+        self.assertEqual(villagers["startingVillagersObserved"], 6)
+        self.assertEqual(villagers["initialPopulationCapReconstructed"], 15)
+        self.assertEqual(villagers["count"], 10)
 
-    def test_villagers_before_feudal_age_is_unavailable_when_villager_queue_amount_is_unknown(self):
+    def test_persian_dark_age_tc_work_rate_shortens_villager_clock(self):
+        persian_manifest = {
+            "participants": [{"playerId": 1, "civilization": {"rawId": 8}}],
+            "match": {"settings": {"population": 200}},
+        }
+        initial = DEFAULT_INITIAL_OBJECTS + [
+            {"objectInstanceIds": [130], "payload": {"ownerPlayerId": 1, "objectId": 70}},
+        ]
         result = project({
-            "researchEvents": [{"replaySlot": 1, "atMs": 5 * 60_000, "technologyId": 101}],
-            "productionEvents": [
-                {"replaySlot": 1, "atMs": 60_000, "unitId": 83, "signedAmount": None, "requestedAmountPositive": None},
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 96_000, "technologyId": 101, "producerObjectIds": [100], "sourceEventId": "op-000000100"},
             ],
-        }, initial_objects=[{"payload": {"ownerPlayerId": 1, "objectId": 83}}])
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 0, "unitId": 83, "signedAmount": 10, "requestedAmountPositive": 10,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000001"},
+            ],
+        }, initial_objects=initial, manifest=persian_manifest)
+        villagers = result["villagersBeforeFeudalAge"]
+        self.assertEqual(villagers["villagersProjectedCompletedBeforeFeudalClick"], 4)
+        self.assertAlmostEqual(villagers["villagerTrainTimeMs"], 25_000 / 1.05, places=3)
+
+    def test_villager_queue_cancellation_removes_backorder(self):
+        initial = DEFAULT_INITIAL_OBJECTS + [
+            {"objectInstanceIds": [130], "payload": {"ownerPlayerId": 1, "objectId": 70}},
+        ]
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 100_000, "technologyId": 101, "producerObjectIds": [100], "sourceEventId": "op-000000100"},
+            ],
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 0, "unitId": 83, "signedAmount": 4, "requestedAmountPositive": 4,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000001"},
+                {"replaySlot": 1, "atMs": 10_000, "unitId": 83, "signedAmount": -2, "requestedAmountPositive": 0,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000002"},
+            ],
+        }, initial_objects=initial)
+        self.assertEqual(result["villagersBeforeFeudalAge"]["villagersProjectedCompletedBeforeFeudalClick"], 2)
+
+    def test_loom_occupies_tc_before_feudal(self):
+        initial = DEFAULT_INITIAL_OBJECTS + [
+            {"objectInstanceIds": [130], "payload": {"ownerPlayerId": 1, "objectId": 70}},
+        ]
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 0, "technologyId": 22, "producerObjectIds": [100], "sourceEventId": "op-000000001"},
+                {"replaySlot": 1, "atMs": 80_000, "technologyId": 101, "producerObjectIds": [100], "sourceEventId": "op-000000100"},
+            ],
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 1_000, "unitId": 83, "signedAmount": 10, "requestedAmountPositive": 10,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000002"},
+            ],
+        }, initial_objects=initial)
+        self.assertEqual(result["villagersBeforeFeudalAge"]["villagersProjectedCompletedBeforeFeudalClick"], 2)
+
+    def test_unknown_villager_queue_amount_remains_unavailable(self):
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 300_000, "technologyId": 101, "producerObjectIds": [100], "sourceEventId": "op-000000100"},
+            ],
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 60_000, "unitId": 83, "signedAmount": None, "requestedAmountPositive": None,
+                 "producerObjectIds": [100], "sourceEventId": "op-000000001"},
+            ],
+        })
         self.assertIsNone(result["villagersBeforeFeudalAge"]["count"])
         self.assertEqual(result["villagersBeforeFeudalAge"]["unknownAmountVillagerQueueCommands"], 1)
 

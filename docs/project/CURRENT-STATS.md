@@ -31,7 +31,7 @@ Battle Statistics are the player-facing detailed record. The underlying replay m
 - Unique wall tiles before Feudal.
 - Wall style: Open / Partially Walled / Fully Walled.
 - Houses before Feudal.
-- Villagers before Feudal age: starting villagers plus net decoded villager queue amounts before the latest observed Feudal click; unavailable when a relevant queue amount is unknown.
+- Villagers before Feudal age: inferred completed Villagers at the latest observed Feudal click. V3 starts from the replay's observed initial Villagers and reconstructs Town Center production from queue/cancel order, nominal Villager/Loom timings, population room, projected House/Folwark completion and supported civilization modifiers. Queue backorders alone do not count.
 - Loom timing.
 - Loom before Feudal: Yes / No.
 
@@ -102,7 +102,7 @@ The existing `AOF_RELATIONSHIP_ENGINE_V1` still uses the older `RIVALRY / ENEMY 
 Current models include:
 
 - `AOF_BUILD_ORDER_V2`
-- `AOF_OPENING_STATISTICS_V2`
+- `AOF_OPENING_STATISTICS_V3`
 - `AOF_RAID_DETECTION_V1`
 - `AOF_MAP_PRESENCE_V2`
 - `AOF_FORWARD_ECO_V1`
