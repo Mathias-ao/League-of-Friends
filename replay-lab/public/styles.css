@@ -64,6 +64,7 @@ aside { padding: 16px; border-right: 1px solid var(--line); background: #141510;
 .lab { min-width: 0; background: var(--panel); }
 .empty-state { padding: 100px 40px; text-align: center; }
 .run-header { padding: 22px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+.run-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
 .tabs { display: flex; flex-wrap: wrap; gap: 0; padding: 0 16px; border-bottom: 1px solid var(--line); background: #161711; }
