@@ -11,6 +11,7 @@ firestore-debug.log
 ui-debug.log
 
 # Replay tooling local artifacts
+.replay-lab/
 .venv-replay/
 replay-output*.json
 

@@ -1,0 +1,345 @@
+import http from "node:http";
+import { spawn } from "node:child_process";
+import { createReadStream } from "node:fs";
+import fs from "node:fs/promises";
+import { createGunzip } from "node:zlib";
+import readline from "node:readline";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
+import { safeFileName, semanticDiff, unresolvedEntities } from "./lib.mjs";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(HERE, "..");
+const PUBLIC = path.join(HERE, "public");
+const WORK_ROOT = path.resolve(process.env.AOF_REPLAY_LAB_HOME || path.join(ROOT, ".replay-lab"));
+const PYTHON = process.env.PYTHON || "python";
+const PORT = Number(process.env.AOF_REPLAY_LAB_PORT || 4317);
+const HOST = process.env.AOF_REPLAY_LAB_HOST || "127.0.0.1";
+const MAX_UPLOAD_BYTES = Number(process.env.AOF_REPLAY_LAB_MAX_BYTES || 128 * 1024 * 1024);
+
+const PARSER = path.join(ROOT, "replay-tools", "parse_replay.py");
+const STATISTICS = path.join(ROOT, "replay-tools", "statistics_projector.py");
+
+await fs.mkdir(WORK_ROOT, { recursive: true });
+
+function json(res, status, value) {
+  const body = Buffer.from(JSON.stringify(value, null, 2));
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": body.length,
+    "cache-control": "no-store",
+  });
+  res.end(body);
+}
+
+async function readJson(file, fallback = null) {
+  try {
+    return JSON.parse(await fs.readFile(file, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return fallback;
+    throw error;
+  }
+}
+
+async function writeJson(file, value) {
+  await fs.writeFile(file, JSON.stringify(value, null, 2) + "\n", "utf8");
+}
+
+function runDir(id) {
+  if (!/^[a-zA-Z0-9._-]+$/.test(id)) throw new Error("Invalid run id");
+  return path.join(WORK_ROOT, id);
+}
+
+function runCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { cwd: ROOT, windowsHide: true });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error((stderr || stdout || `${command} exited ${code}`).trim()));
+        return;
+      }
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
+async function receiveUpload(req, destination) {
+  const handle = await fs.open(destination, "wx");
+  let total = 0;
+  try {
+    for await (const chunk of req) {
+      total += chunk.length;
+      if (total > MAX_UPLOAD_BYTES) throw new Error(`Replay exceeds ${MAX_UPLOAD_BYTES} byte lab limit`);
+      await handle.write(chunk);
+    }
+  } finally {
+    await handle.close();
+  }
+  if (!total) throw new Error("Empty replay upload");
+  return total;
+}
+
+function uniqueWarnings(...collections) {
+  const seen = new Set();
+  const result = [];
+  for (const collection of collections) {
+    for (const item of collection ?? []) {
+      const value = typeof item === "string" ? { message: item } : item;
+      const key = JSON.stringify(value);
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(value);
+      }
+    }
+  }
+  return result;
+}
+
+async function loadRun(id) {
+  const directory = runDir(id);
+  const [metadata, adapter, canonical, statistics, coverage, comparison] = await Promise.all([
+    readJson(path.join(directory, "metadata.json")),
+    readJson(path.join(directory, "adapter.json")),
+    readJson(path.join(directory, "canonical", "canonical-replay.json")),
+    readJson(path.join(directory, "statistics-current.json")),
+    readJson(path.join(directory, "canonical", "coverage-report.json")),
+    readJson(path.join(directory, "comparison-latest.json")),
+  ]);
+  if (!metadata) return null;
+
+  const unknownActions = canonical?.factStore?.unknownActionCounts ?? {};
+  const unresolved = unresolvedEntities(statistics);
+  return {
+    metadata,
+    replay: adapter?.payload?.replay ?? null,
+    settings: adapter?.payload?.settings ?? null,
+    players: adapter?.payload?.players ?? [],
+    canonical,
+    statistics,
+    comparison,
+    diagnostics: {
+      compatibility: canonical?.source?.compatibility ?? null,
+      unknownActions,
+      unknownActionCount: Object.values(unknownActions).reduce((sum, value) => sum + Number(value || 0), 0),
+      unresolvedEntities: unresolved,
+      warnings: uniqueWarnings(adapter?.warnings, canonical?.warnings, coverage?.warnings, statistics?.warnings),
+      coverage,
+    },
+  };
+}
+
+async function listRuns() {
+  const names = await fs.readdir(WORK_ROOT, { withFileTypes: true });
+  const result = [];
+  for (const entry of names) {
+    if (!entry.isDirectory()) continue;
+    const metadata = await readJson(path.join(WORK_ROOT, entry.name, "metadata.json"));
+    if (metadata) result.push(metadata);
+  }
+  return result.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+
+async function extractReplay(req) {
+  const encodedName = String(req.headers["x-aof-filename"] || "replay.aoe2record");
+  let decodedName;
+  try { decodedName = decodeURIComponent(encodedName); } catch { decodedName = encodedName; }
+  const fileName = safeFileName(decodedName);
+  if (!fileName.toLowerCase().endsWith(".aoe2record")) throw new Error("Replay Lab accepts .aoe2record files only");
+
+  const id = `${Date.now()}-${randomUUID().slice(0, 8)}`;
+  const directory = runDir(id);
+  const canonical = path.join(directory, "canonical");
+  const source = path.join(directory, fileName);
+  const adapter = path.join(directory, "adapter.json");
+  const statistics = path.join(directory, "statistics-current.json");
+  await fs.mkdir(directory, { recursive: false });
+
+  try {
+    const byteLength = await receiveUpload(req, source);
+    await runCommand(PYTHON, [PARSER, source, "--canonical-dir", canonical, "--out", adapter, "--pretty"]);
+    const parsed = await readJson(adapter);
+    const metadata = {
+      id,
+      fileName,
+      createdAt: new Date().toISOString(),
+      byteLength,
+      sourceHash: parsed?.sourceHash ?? null,
+      parserName: parsed?.parserName ?? null,
+      parserVersion: parsed?.parserVersion ?? null,
+      adapterSchemaVersion: parsed?.schemaVersion ?? null,
+      statisticsRevision: 0,
+      status: "canonical_extracted",
+    };
+    await writeJson(path.join(directory, "metadata.json"), metadata);
+
+    await runCommand(PYTHON, [STATISTICS, canonical, "--out", statistics]);
+    metadata.statisticsRevision = 1;
+    metadata.status = "ready";
+    metadata.statisticsUpdatedAt = new Date().toISOString();
+    await writeJson(path.join(directory, "metadata.json"), metadata);
+    return id;
+  } finally {
+    // The browser upload is a disposable local copy. Canonical evidence remains.
+    await fs.rm(source, { force: true });
+  }
+}
+
+async function recalculate(id) {
+  const directory = runDir(id);
+  const metadataPath = path.join(directory, "metadata.json");
+  const metadata = await readJson(metadataPath);
+  if (!metadata) throw Object.assign(new Error("Run not found"), { statusCode: 404 });
+
+  const current = path.join(directory, "statistics-current.json");
+  const canonical = path.join(directory, "canonical");
+  const before = await readJson(current);
+  const previousRevision = Number(metadata.statisticsRevision || 0);
+  const history = path.join(directory, "history");
+  await fs.mkdir(history, { recursive: true });
+  if (before) await fs.copyFile(current, path.join(history, `statistics-r${previousRevision}.json`));
+
+  const next = path.join(directory, "statistics-next.json");
+  await fs.rm(next, { force: true });
+  await runCommand(PYTHON, [STATISTICS, canonical, "--out", next]);
+  const after = await readJson(next);
+  const changes = semanticDiff(before, after);
+  await fs.rename(next, current);
+
+  metadata.statisticsRevision = previousRevision + 1;
+  metadata.statisticsUpdatedAt = new Date().toISOString();
+  metadata.status = "ready";
+  await writeJson(metadataPath, metadata);
+  await writeJson(path.join(directory, "comparison-latest.json"), {
+    beforeRevision: previousRevision,
+    afterRevision: metadata.statisticsRevision,
+    generatedAt: metadata.statisticsUpdatedAt,
+    changeCount: changes.length,
+    truncatedAt: 500,
+    changes,
+  });
+}
+
+async function timeline(id, search) {
+  const directory = runDir(id);
+  const canonicalDir = path.join(directory, "canonical");
+  const manifest = await readJson(path.join(canonicalDir, "canonical-replay.json"));
+  if (!manifest) throw Object.assign(new Error("Run not found"), { statusCode: 404 });
+
+  const limit = Math.max(1, Math.min(1000, Number(search.get("limit") || 250)));
+  const player = search.get("player") ? Number(search.get("player")) : null;
+  const action = (search.get("action") || "").trim().toUpperCase();
+  const q = (search.get("q") || "").trim().toLowerCase();
+  const fromMs = search.get("fromMs") ? Number(search.get("fromMs")) : null;
+  const toMs = search.get("toMs") ? Number(search.get("toMs")) : null;
+  const includeRaw = search.get("includeRaw") === "1";
+  const rows = [];
+  let matched = 0;
+
+  outer:
+  for (const ref of manifest.factStore?.chunks ?? []) {
+    const stream = createReadStream(path.join(canonicalDir, ref.uri)).pipe(createGunzip());
+    const lines = readline.createInterface({ input: stream, crlfDelay: Infinity });
+    for await (const line of lines) {
+      const event = JSON.parse(line);
+      if (player !== null && event.actorPlayerId !== player) continue;
+      if (action && String(event.sourceActionName || event.sourceOperation || "").toUpperCase() !== action) continue;
+      if (fromMs !== null && event.timestampMs < fromMs) continue;
+      if (toMs !== null && event.timestampMs > toMs) continue;
+      if (q && !JSON.stringify(event).toLowerCase().includes(q)) continue;
+      matched += 1;
+      if (!includeRaw) {
+        if (event.payload) {
+          event.payload = { ...event.payload };
+          delete event.payload._rawOperationBase64;
+        }
+        if (event.decode) {
+          event.decode = { ...event.decode };
+          delete event.decode.unknownBytesBase64;
+        }
+      }
+      rows.push(event);
+      if (rows.length >= limit) {
+        lines.close();
+        stream.destroy();
+        break outer;
+      }
+    }
+  }
+  return { rows, matchedAtLeast: matched, limit, truncated: rows.length >= limit };
+}
+
+const contentTypes = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+};
+
+async function serveStatic(urlPath, res) {
+  const requested = urlPath === "/" ? "index.html" : urlPath.replace(/^\/+/, "");
+  const file = path.resolve(PUBLIC, requested);
+  if (!file.startsWith(PUBLIC + path.sep) && file !== path.join(PUBLIC, "index.html")) return false;
+  try {
+    const body = await fs.readFile(file);
+    res.writeHead(200, {
+      "content-type": contentTypes[path.extname(file)] || "application/octet-stream",
+      "content-length": body.length,
+    });
+    res.end(body);
+    return true;
+  } catch (error) {
+    if (error?.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    if (req.method === "GET" && url.pathname === "/api/health") {
+      return json(res, 200, { ok: true, workRoot: WORK_ROOT, python: PYTHON });
+    }
+    if (req.method === "GET" && url.pathname === "/api/runs") return json(res, 200, await listRuns());
+    if (req.method === "POST" && url.pathname === "/api/runs") {
+      const id = await extractReplay(req);
+      return json(res, 201, await loadRun(id));
+    }
+
+    const runMatch = url.pathname.match(/^\/api\/runs\/([^/]+)$/);
+    if (runMatch && req.method === "GET") {
+      const value = await loadRun(runMatch[1]);
+      return value ? json(res, 200, value) : json(res, 404, { error: "Run not found" });
+    }
+
+    const recalcMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/recalculate$/);
+    if (recalcMatch && req.method === "POST") {
+      await recalculate(recalcMatch[1]);
+      return json(res, 200, await loadRun(recalcMatch[1]));
+    }
+
+    const timelineMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/timeline$/);
+    if (timelineMatch && req.method === "GET") {
+      return json(res, 200, await timeline(timelineMatch[1], url.searchParams));
+    }
+
+    if (req.method === "GET" && await serveStatic(url.pathname, res)) return;
+    json(res, 404, { error: "Not found" });
+  } catch (error) {
+    console.error(error);
+    json(res, error?.statusCode || 500, { error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`AoF Replay Lab: http://${HOST}:${PORT}`);
+  console.log(`Work data: ${WORK_ROOT}`);
+  console.log("Development only — no Firebase, no production writes.");
+});

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AoF Replay Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">AGE OF FRIENDS · DEVELOPMENT ONLY</div>
+      <h1>Replay Lab</h1>
+      <p>Canonical evidence → statistics → inspection. No Firebase. No league writes.</p>
+    </div>
+    <div id="health" class="status-pill">checking…</div>
+  </header>
+
+  <main>
+    <section class="upload-panel">
+      <label id="dropZone" class="drop-zone">
+        <input id="fileInput" type="file" accept=".aoe2record">
+        <strong>Drop an .aoe2record here</strong>
+        <span>or click to choose a recording</span>
+      </label>
+      <div class="upload-actions">
+        <button id="extractButton" disabled>Extract replay</button>
+        <span id="selectedFile">No replay selected</span>
+      </div>
+      <div id="progress" class="progress hidden"></div>
+    </section>
+
+    <div class="workspace">
+      <aside>
+        <div class="aside-title">Runs</div>
+        <div id="runList" class="run-list"></div>
+      </aside>
+
+      <section class="lab">
+        <div id="emptyState" class="empty-state">
+          <h2>No run selected</h2>
+          <p>Extract a recording or choose a prior local run.</p>
+        </div>
+
+        <div id="runView" class="hidden">
+          <div class="run-header">
+            <div>
+              <div id="runKicker" class="eyebrow"></div>
+              <h2 id="runTitle"></h2>
+              <div id="runMeta" class="muted"></div>
+            </div>
+            <button id="recalcButton">Recalculate statistics</button>
+          </div>
+
+          <nav id="tabs" class="tabs"></nav>
+          <div id="boundary" class="boundary"></div>
+          <div id="content" class="content"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
