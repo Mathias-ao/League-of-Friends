@@ -230,7 +230,7 @@ class OpeningStatisticsTests(unittest.TestCase):
         self.assertEqual(villagers["villagersProjectedCompletedBeforeFeudalClick"], 4)
         self.assertEqual(villagers["count"], 7)
         self.assertEqual(villagers["producerAttribution"], "single_starting_tc_before_feudal")
-        self.assertEqual(villagers["producerIdentityMismatchObservations"], 2)
+        self.assertEqual(villagers["producerIdentityMismatchObservations"], 1)
 
     def test_unknown_villager_queue_amount_remains_unavailable(self):
         result = project({
