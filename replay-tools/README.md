@@ -7,11 +7,14 @@ python -m pip install -r replay-tools/requirements.txt
 python replay-tools/parse_replay.py replay.aoe2record --canonical-dir output/new-run --out output/adapter.json
 python replay-tools/canonical_run.py output/new-run
 python replay-tools/canonical_run.py output/new-run --out output/command-projection.json
+python replay-tools/analysis_dataset.py output/new-run --out output/analysis.json
 python replay-tools/statistics_registry.py --out output/statistics-eligibility.json
-python replay-tools/statistics_projector.py output/new-run --out output/statistics.json
+python replay-tools/statistics_projector.py --analysis output/analysis.json --out output/statistics.json
 ```
 
 All commands after extraction need no replay and do not import the decoder. The first `canonical_run.py` invocation verifies the bundle; `--out` also projects the compatibility command report and `AOF_COMMAND_FUNDAMENTALS_V2`. Projection envelope V2 separates age-advance request candidates from unavailable `AgeAdvanceStarted`, observed `AgeReached` and projected completion facts. Artifact hashes, all chunks and schemas are checked before projection. Use a fresh bundle directory for each run. A framing failure writes diagnostic evidence, exits unsuccessfully, and must not be ingested as complete. Invalid headers or required fields fail publication and leave the input intact.
+
+The compact `AOF_REPLAY_ANALYSIS_V1` dataset is a rebuildable analysis cache, not canonical evidence. It removes raw operation byte payloads while retaining canonical source event IDs, decoded action fields, initial objects, coverage and source hashes. Statistics can therefore iterate over `analysis.json` without reopening the replay or rescanning Base64-heavy canonical facts. CanonicalReplay remains the lossless source of truth.
 
 The statistics commands also need no replay. `statistics_registry.py` materializes `AOF_STATISTICS_ELIGIBILITY_V1` from all 320 source-matrix rows. `statistics_projector.py` validates `AOF_CANONICAL_STATISTICS_V1`, adds raw-ID-preserving reference catalog labels and keeps request/placement facts distinct from game outcomes. See the [statistics milestone](../docs/architecture/canonical-statistics-v1.md).
 
