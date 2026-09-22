@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V3"
+OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V4"
 AGE_TECH_IDS = {"feudal": 101, "castle": 102, "imperial": 103}
 AGE_RESEARCH_MS = {"feudal": 130_000, "castle": 160_000, "imperial": 190_000}
 LOOM_TECH_ID = 22
 FULLY_WALLED_MINIMUM_TILES = 20
-VILLAGER_PRODUCTION_MODEL_VERSION = "AOF_VILLAGER_PRODUCTION_V1"
+VILLAGER_PRODUCTION_MODEL_VERSION = "AOF_VILLAGER_PRODUCTION_V2"
 
 # Base AoE2 DE civilization IDs used only for modifiers that affect Dark-Age
 # villager throughput/population. Starting villagers are observed from the replay,
@@ -420,13 +420,7 @@ def _villagers_before_feudal(
         }
 
     tc_ids = town_centers[0].get("objectInstanceIds") or []
-    if len(tc_ids) != 1:
-        return {
-            **common,
-            "count": None,
-            "unavailableReason": "Starting Town Center instance identity is unavailable.",
-        }
-    tc_id = tc_ids[0]
+    tc_id = tc_ids[0] if len(tc_ids) == 1 else None
 
     initial_pop_used = _initial_population_used(initial_objects, player_id, catalog)
     population_cap = _initial_population_cap(
@@ -441,18 +435,15 @@ def _villagers_before_feudal(
 
     timeline: list[dict[str, Any]] = []
     unknown_amount_commands = 0
-    ambiguous_producer_commands = 0
+    producer_identity_mismatches = 0
     for event in production:
         if not _event_before_boundary(event, feudal_click_ms, feudal_click_source_event_id):
             continue
         if "villager" not in _roles(catalog, "units", event.get("unitId")):
             continue
         producers = event.get("producerObjectIds") or []
-        if producers and tc_id not in producers:
-            continue
-        if len(set(producers)) > 1:
-            ambiguous_producer_commands += 1
-            continue
+        if producers and tc_id is not None and tc_id not in producers:
+            producer_identity_mismatches += 1
         signed = event.get("signedAmount")
         if type(signed) is not int:
             unknown_amount_commands += 1
@@ -470,8 +461,8 @@ def _villagers_before_feudal(
         if not _event_before_boundary(event, feudal_click_ms, feudal_click_source_event_id):
             continue
         producers = event.get("producerObjectIds") or []
-        if producers and tc_id not in producers:
-            continue
+        if producers and tc_id is not None and tc_id not in producers:
+            producer_identity_mismatches += 1
         timeline.append({
             "atMs": event["atMs"],
             "sourceEventId": event.get("sourceEventId") or "",
@@ -485,15 +476,15 @@ def _villagers_before_feudal(
         str(event.get("sourceEventId") or ""),
     ))
 
-    if unknown_amount_commands or ambiguous_producer_commands:
+    if unknown_amount_commands:
         return {
             **common,
             "count": None,
             "initialPopulationUsedObserved": initial_pop_used,
             "initialPopulationCapReconstructed": population_cap,
             "unknownAmountVillagerQueueCommands": unknown_amount_commands,
-            "ambiguousProducerVillagerQueueCommands": ambiguous_producer_commands,
-            "unavailableReason": "Villager queue quantity or producer attribution is incomplete.",
+            "producerIdentityMismatchObservations": producer_identity_mismatches,
+            "unavailableReason": "Villager queue quantity is incomplete.",
         }
 
     villager_ms = _villager_train_ms(civ_id, catalog)
@@ -608,14 +599,19 @@ def _villagers_before_feudal(
         "populationBlockedMs": round(population_blocked_ms, 3),
         "populationCapAtFeudalClick": population_cap,
         "civilizationAdjustments": adjustments,
+        "producerAttribution": "single_starting_tc_before_feudal",
+        "producerIdentityMismatchObservations": producer_identity_mismatches,
         "basis": (
-            "observed starting villagers + projected Town Center villager completions before the latest "
-            "Feudal click, using queue/cancel order, Loom occupancy, projected population-building "
-            "completion, population capacity and supported civilization modifiers"
+            "observed starting villagers + projected production from all observed Villager queue/cancel "
+            "commands before the latest Feudal click, assigned to the sole observed starting Town Center; "
+            "uses Loom occupancy, projected population-building completion, population capacity and "
+            "supported civilization modifiers"
         ),
         "note": (
-            "House/Folwark completion is inferred from placement time, decoded builder count and nominal "
-            "construction time; walking, retasking, destruction and other engine-state interruptions are not observable."
+            "Pre-Feudal Villager/Loom producer instance IDs are diagnostic only: with exactly one observed starting "
+            "Town Center they are not used as a hard filter. House/Folwark completion is inferred from placement time, "
+            "decoded builder count and nominal construction time; walking, retasking, destruction and other engine-state "
+            "interruptions are not observable."
         ),
     }
 

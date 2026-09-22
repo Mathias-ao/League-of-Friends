@@ -67,7 +67,7 @@
       "imperialAgeUpAtMs": null,
       "loomAtMs": null,
       "loomBeforeFeudal": false,
-      "modelVersion": "AOF_OPENING_STATISTICS_V3",
+      "modelVersion": "AOF_OPENING_STATISTICS_V4",
       "playerId": 1,
       "wallStyle": "open",
       "wallTilesBeforeFeudal": 0
@@ -84,7 +84,7 @@
       "imperialAgeUpAtMs": null,
       "loomAtMs": null,
       "loomBeforeFeudal": null,
-      "modelVersion": "AOF_OPENING_STATISTICS_V3",
+      "modelVersion": "AOF_OPENING_STATISTICS_V4",
       "playerId": 2,
       "wallStyle": "open",
       "wallTilesBeforeFeudal": 0

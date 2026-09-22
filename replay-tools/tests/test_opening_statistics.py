@@ -211,6 +211,27 @@ class OpeningStatisticsTests(unittest.TestCase):
         }, initial_objects=initial)
         self.assertEqual(result["villagersBeforeFeudalAge"]["villagersProjectedCompletedBeforeFeudalClick"], 2)
 
+    def test_pre_feudal_villager_queue_does_not_require_header_tc_instance_id_match(self):
+        initial = DEFAULT_INITIAL_OBJECTS + [
+            {"objectInstanceIds": [130], "payload": {"ownerPlayerId": 1, "objectId": 70}},
+        ]
+        result = project({
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 100_000, "technologyId": 101,
+                 "producerObjectIds": [9999], "sourceEventId": "op-000000100"},
+            ],
+            "productionEvents": [
+                {"replaySlot": 1, "atMs": 0, "unitId": 83, "signedAmount": 4,
+                 "requestedAmountPositive": 4, "producerObjectIds": [9999],
+                 "sourceEventId": "op-000000001"},
+            ],
+        }, initial_objects=initial)
+        villagers = result["villagersBeforeFeudalAge"]
+        self.assertEqual(villagers["villagersProjectedCompletedBeforeFeudalClick"], 4)
+        self.assertEqual(villagers["count"], 7)
+        self.assertEqual(villagers["producerAttribution"], "single_starting_tc_before_feudal")
+        self.assertEqual(villagers["producerIdentityMismatchObservations"], 1)
+
     def test_unknown_villager_queue_amount_remains_unavailable(self):
         result = project({
             "researchEvents": [
