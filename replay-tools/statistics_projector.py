@@ -94,6 +94,7 @@ def project_statistics_from_analysis(
         body=body,
         catalog=catalog,
         observed_until_ms=body["durationMs"],
+        initial_objects=initial_objects,
     )
     resource_commitment_statistics = project_resource_commitment(
         manifest=manifest,
