@@ -212,6 +212,8 @@ def seal_local(directory: Path, run: dict) -> dict:
     run['coverageReport'] = artifact_ref(directory / 'coverage-report.json', 'identity')
     run['state'] = 'verified_local'
     (directory / 'extraction-manifest.json').write_bytes(json_bytes(run))
+    return validation
+
 
 def project_bundle(directory: Path, *, validate: bool = True) -> dict:
     if validate:
