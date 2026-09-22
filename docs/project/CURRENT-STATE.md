@@ -1,6 +1,6 @@
 # Age of Friends — Current State
 
-Last reviewed: 18 September 2026
+Last reviewed: 22 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
@@ -55,7 +55,7 @@ The required hierarchy remains:
 - `AOF_CIV_DRAFT_V1` provides authoritative per-Game player drafting with configurable turn order, per-Game pools, within-Game uniqueness, Match carry-over policies, immutable pick actions and admin reset/audit support.
 - Drafting operates from the approved Match roster and supports FFA, asymmetric teams and arbitrary team numbers without assuming a fixed advertised roster.
 - `AOF_CIVILIZATION_CATALOGUE_V1` provides versioned, game-derived presentation facts for all 53 civilizations in the pinned source snapshot: type label, compact identity, civilization bonuses, team bonus, unique units/technologies and future icon slots.
-- The event-day player journey is being shaped around Answer the Call → Check In → Muster Forming → Enter Civilization Draft → Battle Orders → Play, driven by authoritative Event/Match state rather than hard-coded countdowns.
+- The civilization draft experience is implemented on `main`: Answer the Call → Check In → Muster Forming → Enter Civilization Draft → Battle Orders → Play, with team-organized drafting, civilization reference detail, completed Battle Orders and admin-only reset/reroll recovery.
 - A future Battle Civilization Expression model will combine the locked civilization choice with replay-derived evidence and feed Battle/Event statistics; strategic weights and performance judgments are intentionally not part of the catalogue.
 - Players upload replays; post-match statistics are derived automatically rather than entered manually.
 
