@@ -7,7 +7,8 @@ It is a thin shell over the existing replay foundation:
 ```text
 .aoe2record
   -> replay-tools/parse_replay.py
-  -> CanonicalReplay evidence
+  -> CanonicalReplay evidence (lossless, fully verified once)
+  -> AOF_REPLAY_ANALYSIS_V1 (compact rebuildable cache)
   -> replay-tools/statistics_projector.py
   -> Replay Lab inspection / comparison
 ```
@@ -51,13 +52,16 @@ Optional environment variables:
 ## Workflow
 
 1. Drop a local `.aoe2record`.
-2. **Extract replay** creates and validates a CanonicalReplay bundle and the current statistics projection.
-3. Inspect player sections, the canonical event timeline, raw evidence, coverage warnings, unknown actions and unresolved entity IDs.
-4. Change a statistics model in `replay-tools/`.
-5. Click **Recalculate statistics**. This reuses CanonicalReplay and does **not** parse the replay again.
-6. Open **Comparison** to inspect JSON-pointer-level changes between the previous and current projections.
+2. **Extract replay** creates CanonicalReplay, performs full conformance verification once, creates a compact `analysis.json`, then projects statistics.
+3. Inspect the Overview timing cards to see upload, parse/canonical write, canonical verification, analysis-cache generation and statistics time separately.
+4. Inspect player sections, the canonical event timeline, raw evidence, coverage warnings, unknown actions and unresolved entity IDs.
+5. Change a statistics model in `replay-tools/`.
+6. Click **Recalculate statistics**. This reads `analysis.json`; it does **not** reparse the replay and does **not** redo full canonical validation.
+7. Open **Comparison** to inspect JSON-pointer-level changes between the previous and current projections.
 
-The temporary browser-upload copy of the recording is deleted after extraction. The user's original recording is untouched. Local canonical/statistics artifacts remain under the lab work directory and are ignored by Git.
+The temporary browser-upload copy of the recording is deleted after extraction. The user's original recording is untouched. Local canonical, analysis-cache and statistics artifacts remain under the lab work directory and are ignored by Git.
+
+Older Replay Lab runs without `analysis.json` are migrated on their next recalculation by generating the compact cache once from their already-verified canonical bundle.
 
 ## Truth boundaries
 
