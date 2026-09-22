@@ -8,11 +8,32 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V2"
+OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V3"
 AGE_TECH_IDS = {"feudal": 101, "castle": 102, "imperial": 103}
 AGE_RESEARCH_MS = {"feudal": 130_000, "castle": 160_000, "imperial": 190_000}
 LOOM_TECH_ID = 22
 FULLY_WALLED_MINIMUM_TILES = 20
+VILLAGER_PRODUCTION_MODEL_VERSION = "AOF_VILLAGER_PRODUCTION_V1"
+
+# Base AoE2 DE civilization IDs used only for modifiers that affect Dark-Age
+# villager throughput/population. Starting villagers are observed from the replay,
+# not hard-coded here.
+CIV_GOTHS = 3
+CIV_CHINESE = 6
+CIV_PERSIANS = 8
+CIV_SPANISH = 14
+CIV_HUNS = 17
+CIV_INCAS = 21
+CIV_PORTUGUESE = 24
+CIV_POLES = 38
+CIV_ROMANS = 43
+
+FOLWARK_BUILDING_ID = 1734
+BASE_TOWN_CENTER_POP_SUPPORT = 5
+CHINESE_TOWN_CENTER_POP_SUPPORT = 15
+BASE_HOUSE_POP_SUPPORT = 5
+INCA_HOUSE_POP_SUPPORT = 10
+POLISH_FOLWARK_POP_SUPPORT = 5
 
 
 def _roles(catalog: dict[str, Any], section: str, raw_id: Any) -> set[str]:
@@ -191,66 +212,411 @@ def _count_houses(builds: list[dict[str, Any]], catalog: dict[str, Any], before_
     )
 
 
+def _initial_owned_objects(
+    initial_objects: list[dict[str, Any]], player_id: int,
+) -> list[dict[str, Any]]:
+    return [
+        event
+        for event in initial_objects
+        if (event.get("payload") or {}).get("ownerPlayerId") == player_id
+    ]
+
+
 def _initial_villager_count(
     initial_objects: list[dict[str, Any]], player_id: int, catalog: dict[str, Any],
 ) -> int:
     return sum(
         1
-        for event in initial_objects
-        if (event.get("payload") or {}).get("ownerPlayerId") == player_id
-        and "villager" in _roles(catalog, "units", (event.get("payload") or {}).get("objectId"))
+        for event in _initial_owned_objects(initial_objects, player_id)
+        if "villager" in _roles(catalog, "units", (event.get("payload") or {}).get("objectId"))
+    )
+
+
+def _civilization_id(participant: dict[str, Any]) -> int | None:
+    raw_id = (participant.get("civilization") or {}).get("rawId")
+    return raw_id if type(raw_id) is int else None
+
+
+def _initial_town_centers(
+    initial_objects: list[dict[str, Any]], player_id: int, catalog: dict[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        event
+        for event in _initial_owned_objects(initial_objects, player_id)
+        if "town_center" in _roles(catalog, "buildings", (event.get("payload") or {}).get("objectId"))
+    ]
+
+
+def _initial_population_used(
+    initial_objects: list[dict[str, Any]], player_id: int, catalog: dict[str, Any],
+) -> int:
+    # For normal openings, all initially owned trainable units consume one slot.
+    # This is an explicit reconstruction boundary; exotic half-pop/scenario units
+    # should be handled by a future patch-qualified population-cost catalogue.
+    return sum(
+        1
+        for event in _initial_owned_objects(initial_objects, player_id)
+        if str((event.get("payload") or {}).get("objectId")) in (catalog.get("units") or {})
+    )
+
+
+def _population_support_for_initial_object(
+    object_id: Any, civ_id: int | None, catalog: dict[str, Any],
+) -> int:
+    roles = _roles(catalog, "buildings", object_id)
+    if "town_center" in roles:
+        return CHINESE_TOWN_CENTER_POP_SUPPORT if civ_id == CIV_CHINESE else BASE_TOWN_CENTER_POP_SUPPORT
+    if "house" in roles:
+        return INCA_HOUSE_POP_SUPPORT if civ_id == CIV_INCAS else BASE_HOUSE_POP_SUPPORT
+    if civ_id == CIV_POLES and object_id == FOLWARK_BUILDING_ID:
+        return POLISH_FOLWARK_POP_SUPPORT
+    return 0
+
+
+def _initial_population_cap(
+    initial_objects: list[dict[str, Any]],
+    player_id: int,
+    civ_id: int | None,
+    catalog: dict[str, Any],
+    maximum_population: int | None,
+) -> int:
+    if civ_id == CIV_HUNS and isinstance(maximum_population, int):
+        return maximum_population
+    cap = sum(
+        _population_support_for_initial_object(
+            (event.get("payload") or {}).get("objectId"), civ_id, catalog,
+        )
+        for event in _initial_owned_objects(initial_objects, player_id)
+    )
+    return min(cap, maximum_population) if isinstance(maximum_population, int) else cap
+
+
+def _builder_speed_multiplier(civ_id: int | None) -> float:
+    if civ_id == CIV_SPANISH:
+        return 1.30
+    if civ_id == CIV_ROMANS:
+        return 1.05
+    return 1.0
+
+
+def _projected_house_completion_events(
+    builds: list[dict[str, Any]],
+    civ_id: int | None,
+    catalog: dict[str, Any],
+    before_ms: int,
+) -> list[dict[str, Any]]:
+    if civ_id == CIV_HUNS:
+        return []
+    result: list[dict[str, Any]] = []
+    speed = _builder_speed_multiplier(civ_id)
+    for event in builds:
+        at_ms = event.get("atMs")
+        if not isinstance(at_ms, int) or at_ms >= before_ms:
+            continue
+        building_id = event.get("buildingId")
+        roles = _roles(catalog, "buildings", building_id)
+        is_house = "house" in roles
+        is_folwark = civ_id == CIV_POLES and building_id == FOLWARK_BUILDING_ID
+        if not is_house and not is_folwark:
+            continue
+        item = (catalog.get("buildings") or {}).get(str(building_id)) or {}
+        base_seconds = item.get("trainTime")
+        if not isinstance(base_seconds, (int, float)):
+            base_seconds = 40 if is_folwark else 25
+        builders = max(1, len(event.get("builderObjectIds") or []))
+        seconds = (3 * float(base_seconds) / (builders + 2)) / speed
+        support = POLISH_FOLWARK_POP_SUPPORT if is_folwark else (
+            INCA_HOUSE_POP_SUPPORT if civ_id == CIV_INCAS else BASE_HOUSE_POP_SUPPORT
+        )
+        result.append({
+            "atMs": at_ms + int(round(seconds * 1000)),
+            "kind": "population",
+            "populationSupport": support,
+            "sourceEventId": event.get("sourceEventId"),
+            "basis": "projected_build_completion",
+        })
+    return result
+
+
+def _villager_train_ms(civ_id: int | None, catalog: dict[str, Any]) -> float:
+    villager = next(
+        (
+            item for item in (catalog.get("units") or {}).values()
+            if "villager" in set(item.get("roleKeys") or [])
+        ),
+        {},
+    )
+    base_seconds = villager.get("trainTime")
+    base_ms = float(base_seconds if isinstance(base_seconds, (int, float)) else 25) * 1000
+    return base_ms / 1.05 if civ_id == CIV_PERSIANS else base_ms
+
+
+def _loom_research_ms(civ_id: int | None, catalog: dict[str, Any]) -> float:
+    if civ_id == CIV_GOTHS:
+        return 0.0
+    loom = (catalog.get("technologies") or {}).get(str(LOOM_TECH_ID)) or {}
+    seconds = loom.get("researchTime")
+    base_ms = float(seconds if isinstance(seconds, (int, float)) else 25) * 1000
+    # Portuguese team bonus applies to the Portuguese player as well.
+    return base_ms / 1.25 if civ_id == CIV_PORTUGUESE else base_ms
+
+
+def _event_before_boundary(
+    event: dict[str, Any], boundary_ms: int, boundary_event_id: str | None,
+) -> bool:
+    at_ms = event.get("atMs")
+    if not isinstance(at_ms, int):
+        return False
+    if at_ms < boundary_ms:
+        return True
+    if at_ms > boundary_ms:
+        return False
+    source_event_id = event.get("sourceEventId")
+    return (
+        isinstance(source_event_id, str)
+        and isinstance(boundary_event_id, str)
+        and source_event_id < boundary_event_id
     )
 
 
 def _villagers_before_feudal(
     production: list[dict[str, Any]],
+    research: list[dict[str, Any]],
+    builds: list[dict[str, Any]],
     initial_objects: list[dict[str, Any]],
-    player_id: int,
+    participant: dict[str, Any],
+    manifest: dict[str, Any],
     catalog: dict[str, Any],
     feudal_click_ms: int | None,
     feudal_click_source_event_id: str | None,
 ) -> dict[str, Any]:
-    starting = _initial_villager_count(initial_objects, player_id, catalog)
+    player_id = int(participant["playerId"])
+    civ_id = _civilization_id(participant)
+    starting_villagers = _initial_villager_count(initial_objects, player_id, catalog)
+    town_centers = _initial_town_centers(initial_objects, player_id, catalog)
+    maximum_population = ((manifest.get("match") or {}).get("settings") or {}).get("population")
+    maximum_population = maximum_population if type(maximum_population) is int else None
+
+    common = {
+        "layer": "inferred",
+        "modelVersion": VILLAGER_PRODUCTION_MODEL_VERSION,
+        "boundary": "latest_feudal_click" if feudal_click_ms is not None else "no_feudal_click_observed",
+        "startingVillagersObserved": starting_villagers,
+        "civilizationRawId": civ_id,
+    }
     if feudal_click_ms is None:
         return {
-            "layer": "reconstructed",
+            **common,
             "count": None,
-            "basis": "starting villagers + net decoded villager queue amounts before latest observed Feudal click",
-            "boundary": "no_feudal_click_observed",
+            "unavailableReason": "No Feudal research request was observed.",
+        }
+    if len(town_centers) != 1:
+        return {
+            **common,
+            "count": None,
+            "unavailableReason": (
+                "V1 villager production reconstruction requires exactly one observed starting Town Center."
+            ),
         }
 
-    net_queued = 0
+    tc_ids = town_centers[0].get("objectInstanceIds") or []
+    if len(tc_ids) != 1:
+        return {
+            **common,
+            "count": None,
+            "unavailableReason": "Starting Town Center instance identity is unavailable.",
+        }
+    tc_id = tc_ids[0]
+
+    initial_pop_used = _initial_population_used(initial_objects, player_id, catalog)
+    population_cap = _initial_population_cap(
+        initial_objects, player_id, civ_id, catalog, maximum_population,
+    )
+    if population_cap <= 0 and civ_id != CIV_HUNS:
+        return {
+            **common,
+            "count": None,
+            "unavailableReason": "Initial population capacity could not be reconstructed.",
+        }
+
+    timeline: list[dict[str, Any]] = []
     unknown_amount_commands = 0
+    ambiguous_producer_commands = 0
     for event in production:
-        at_ms = event.get("atMs")
-        if not isinstance(at_ms, int):
+        if not _event_before_boundary(event, feudal_click_ms, feudal_click_source_event_id):
             continue
-        if at_ms > feudal_click_ms:
-            continue
-        if at_ms == feudal_click_ms:
-            source_event_id = event.get("sourceEventId")
-            if (
-                not isinstance(source_event_id, str)
-                or not isinstance(feudal_click_source_event_id, str)
-                or source_event_id >= feudal_click_source_event_id
-            ):
-                continue
         if "villager" not in _roles(catalog, "units", event.get("unitId")):
             continue
+        producers = event.get("producerObjectIds") or []
+        if producers and tc_id not in producers:
+            continue
+        if len(set(producers)) > 1:
+            ambiguous_producer_commands += 1
+            continue
         signed = event.get("signedAmount")
-        if type(signed) is int:
-            net_queued += signed
-        else:
+        if type(signed) is not int:
             unknown_amount_commands += 1
+            continue
+        timeline.append({
+            "atMs": event["atMs"],
+            "sourceEventId": event.get("sourceEventId") or "",
+            "kind": "queue",
+            "amount": signed,
+        })
+
+    for event in research:
+        if event.get("technologyId") != LOOM_TECH_ID:
+            continue
+        if not _event_before_boundary(event, feudal_click_ms, feudal_click_source_event_id):
+            continue
+        producers = event.get("producerObjectIds") or []
+        if producers and tc_id not in producers:
+            continue
+        timeline.append({
+            "atMs": event["atMs"],
+            "sourceEventId": event.get("sourceEventId") or "",
+            "kind": "loom",
+        })
+
+    timeline.extend(_projected_house_completion_events(builds, civ_id, catalog, feudal_click_ms))
+    timeline.sort(key=lambda event: (
+        event["atMs"],
+        0 if event["kind"] == "population" else 1,
+        str(event.get("sourceEventId") or ""),
+    ))
+
+    if unknown_amount_commands or ambiguous_producer_commands:
+        return {
+            **common,
+            "count": None,
+            "initialPopulationUsedObserved": initial_pop_used,
+            "initialPopulationCapReconstructed": population_cap,
+            "unknownAmountVillagerQueueCommands": unknown_amount_commands,
+            "ambiguousProducerVillagerQueueCommands": ambiguous_producer_commands,
+            "unavailableReason": "Villager queue quantity or producer attribution is incomplete.",
+        }
+
+    villager_ms = _villager_train_ms(civ_id, catalog)
+    loom_ms = _loom_research_ms(civ_id, catalog)
+    queue: list[dict[str, Any]] = []
+    active: dict[str, Any] | None = None
+    active_finish = 0.0
+    current_time = 0.0
+    pop_used = initial_pop_used
+    completed_villagers = 0
+    population_blocked_ms = 0.0
+    blocked_since: float | None = None
+
+    def start_next(now: float) -> None:
+        nonlocal active, active_finish
+        if active is not None or not queue:
+            return
+        active = queue.pop(0)
+        duration = villager_ms if active["kind"] == "villager" else loom_ms
+        active_finish = now + duration
+
+    def try_complete(now: float) -> bool:
+        nonlocal active, active_finish, pop_used, completed_villagers, blocked_since, population_blocked_ms
+        if active is None or active_finish > now:
+            return False
+        if active["kind"] == "villager" and pop_used >= population_cap:
+            if blocked_since is None:
+                blocked_since = active_finish
+            return False
+        completion_time = max(active_finish, blocked_since or active_finish)
+        if blocked_since is not None:
+            population_blocked_ms += max(0.0, completion_time - blocked_since)
+            blocked_since = None
+        if active["kind"] == "villager":
+            pop_used += 1
+            completed_villagers += 1
+        active = None
+        active_finish = completion_time
+        start_next(completion_time)
+        return True
+
+    def advance_to(target: float) -> None:
+        nonlocal current_time
+        while active is not None and active_finish <= target:
+            if not try_complete(target):
+                break
+        current_time = target
+
+    for event in timeline:
+        event_time = float(event["atMs"])
+        advance_to(event_time)
+        if event["kind"] == "population":
+            population_cap += int(event["populationSupport"])
+            if maximum_population is not None:
+                population_cap = min(population_cap, maximum_population)
+            if active is not None and active_finish <= event_time:
+                try_complete(event_time)
+            continue
+        if event["kind"] == "loom":
+            queue.append({"kind": "loom"})
+        else:
+            amount = int(event["amount"])
+            if amount > 0:
+                queue.extend({"kind": "villager"} for _ in range(amount))
+            elif amount < 0:
+                for _ in range(abs(amount)):
+                    removed = False
+                    for index in range(len(queue) - 1, -1, -1):
+                        if queue[index]["kind"] == "villager":
+                            del queue[index]
+                            removed = True
+                            break
+                    if not removed and active is not None and active["kind"] == "villager":
+                        active = None
+                        blocked_since = None
+                        start_next(event_time)
+        start_next(event_time)
+
+    advance_to(float(feudal_click_ms))
+    if blocked_since is not None:
+        population_blocked_ms += max(0.0, float(feudal_click_ms) - blocked_since)
+
+    adjustments = []
+    if civ_id == CIV_PERSIANS:
+        adjustments.append("Persian Dark Age Town Center +5% work rate")
+    if civ_id == CIV_CHINESE:
+        adjustments.append("Chinese Town Center supports 15 population")
+    if civ_id == CIV_HUNS:
+        adjustments.append("Huns use lobby population cap without Houses")
+    if civ_id == CIV_INCAS:
+        adjustments.append("Inca Houses support 10 population")
+    if civ_id == CIV_SPANISH:
+        adjustments.append("Spanish Villagers construct Houses +30% faster")
+    if civ_id == CIV_ROMANS:
+        adjustments.append("Roman Villagers construct Houses +5% faster")
+    if civ_id == CIV_GOTHS:
+        adjustments.append("Goth Loom research is instantaneous")
+    if civ_id == CIV_PORTUGUESE:
+        adjustments.append("Portuguese Loom research uses +25% technology research speed")
+    if civ_id == CIV_POLES:
+        adjustments.append("Polish Folwark provides 5 population")
 
     return {
-        "layer": "reconstructed",
-        "count": starting + net_queued if unknown_amount_commands == 0 else None,
-        "basis": "starting villagers + net decoded villager queue amounts before latest observed Feudal click",
-        "boundary": "latest_feudal_click",
-        "startingVillagersObserved": starting,
-        "netDecodedVillagerQueueAmount": net_queued,
-        "unknownAmountVillagerQueueCommands": unknown_amount_commands,
+        **common,
+        "count": starting_villagers + completed_villagers,
+        "startingPopulationUsedObserved": initial_pop_used,
+        "initialPopulationCapReconstructed": _initial_population_cap(
+            initial_objects, player_id, civ_id, catalog, maximum_population,
+        ),
+        "villagersProjectedCompletedBeforeFeudalClick": completed_villagers,
+        "villagerTrainTimeMs": round(villager_ms, 3),
+        "populationBlockedMs": round(population_blocked_ms, 3),
+        "populationCapAtFeudalClick": population_cap,
+        "civilizationAdjustments": adjustments,
+        "basis": (
+            "observed starting villagers + projected Town Center villager completions before the latest "
+            "Feudal click, using queue/cancel order, Loom occupancy, projected population-building "
+            "completion, population capacity and supported civilization modifiers"
+        ),
+        "note": (
+            "House/Folwark completion is inferred from placement time, decoded builder count and nominal "
+            "construction time; walking, retasking, destruction and other engine-state interruptions are not observable."
+        ),
     }
 
 
@@ -309,8 +675,11 @@ def project_opening_statistics(
             },
             "villagersBeforeFeudalAge": _villagers_before_feudal(
                 production,
+                research,
+                builds,
                 initial_objects,
-                player_id,
+                participant,
+                manifest,
                 catalog,
                 feudal_click,
                 feudal_click_source_event_id,
