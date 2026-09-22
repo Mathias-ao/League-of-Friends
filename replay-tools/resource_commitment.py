@@ -49,17 +49,19 @@ def _player_events(events: Iterable[dict[str, Any]], player_id: int) -> list[dic
     )
 
 
-def _first_research_time(research: list[dict[str, Any]], technology_id: int) -> int | None:
-    for event in research:
-        if event.get("technologyId") == technology_id and isinstance(event.get("atMs"), int):
-            return event["atMs"]
-    return None
+def _latest_research_time(research: list[dict[str, Any]], technology_id: int) -> int | None:
+    times = [
+        event["atMs"]
+        for event in research
+        if event.get("technologyId") == technology_id and isinstance(event.get("atMs"), int)
+    ]
+    return max(times) if times else None
 
 
 def _age_boundaries(research: list[dict[str, Any]]) -> dict[str, int | None]:
     result: dict[str, int | None] = {}
     for age in ("feudal", "castle", "imperial"):
-        click = _first_research_time(research, AGE_TECH_IDS[age])
+        click = _latest_research_time(research, AGE_TECH_IDS[age])
         result[age] = click + AGE_RESEARCH_MS[age] if click is not None else None
     return result
 
@@ -146,7 +148,7 @@ def project_resource_commitment(
                 "feudalAgeUpAtMs": boundaries["feudal"],
                 "castleAgeUpAtMs": boundaries["castle"],
                 "imperialAgeUpAtMs": boundaries["imperial"],
-                "basis": "same fixed reconstructed age-up durations as AOF_OPENING_STATISTICS_V1",
+                "basis": "latest observed age-click request + same fixed inferred age-up durations as Opening",
             },
             "coverage": {
                 "pricedRequestCommands": priced_requests,

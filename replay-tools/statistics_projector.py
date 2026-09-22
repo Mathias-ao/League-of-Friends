@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from analysis_dataset import build_analysis_dataset, validate_analysis_dataset
 from build_order_classifier import classify_build_orders
+from economy_statistics import project_economy_statistics
 from canonical_io import ROOT, json_bytes, read_json, sha256
 from forward_eco import project_forward_eco
 from map_presence_v2 import project_map_presence
@@ -101,6 +102,13 @@ def project_statistics_from_analysis(
         body=body,
         catalog=catalog,
     )
+    economy_statistics = project_economy_statistics(
+        manifest=manifest,
+        body=body,
+        catalog=catalog,
+        initial_objects=initial_objects,
+        action_events=analysis["actionEvents"],
+    )
     map_presence_statistics = project_map_presence(
         manifest=manifest,
         catalog=catalog,
@@ -132,6 +140,7 @@ def project_statistics_from_analysis(
             "buildOrder": build_orders[player],
             "opening": opening_statistics[player],
             "economy": {
+                **economy_statistics[player],
                 "resourceCommitment": resource_commitment_statistics[player],
             },
             "combat": raid_statistics[player],
@@ -165,6 +174,7 @@ def project_statistics_from_analysis(
         {"code": "RAIDS_ARE_INFERRED", "message": "Raid counts are inferred hostile-command episodes inside reconstructed economic zones; they do not imply damage or kills."},
         {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and building placements; command coverage is not fog-of-war exploration and gold control is not resource gathering."},
         {"code": "RESOURCE_COMMITMENT_IS_ESTIMATED", "message": "Resource commitment uses pinned base catalog costs for decoded requests/placements; it does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute."},
+        {"code": "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED", "message": "Economy V1 separates command observations from reconstructions. Villagers trained is a queue-derived proxy; TC idle/gap metrics infer workload from decoded producer streams; animal counts are targeted-interaction proxies, not kill/gather outcomes."},
     ]
     source = analysis["source"]
     result = {
