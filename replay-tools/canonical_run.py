@@ -9,8 +9,10 @@ import json
 from pathlib import Path
 import uuid
 
-from canonical_io import (ROOT, SCHEMA_VERSION, artifact_ref, json_bytes, read_json,
-                          sha256, iter_store, validate_bundle, write_gzip)
+from canonical_io import (ROOT, SCHEMA_VERSION, ConformanceError, artifact_ref, json_bytes,
+                          read_json, sha256, iter_store, validate_bundle, validate_schema,
+                          schema_validator, write_gzip)
+from jsonschema import Draft202012Validator, FormatChecker
 from canonical_projector import CompactProjector
 
 EXPORTER_VERSION = "AOF_CANONICAL_EXTRACTOR_V1"
@@ -130,6 +132,78 @@ def stage_run(directory: Path, manifest: dict, header: dict, prefix: bytes,
     return run
 
 
+def _fast_artifact_check(directory: Path, ref: dict, label: str) -> None:
+    """Cheap same-process publication check: path safety, existence and byte length."""
+    uri = ref.get('uri')
+    if not isinstance(uri, str) or not uri or Path(uri).name != uri or '\\' in uri:
+        raise ConformanceError(f"{label}: invalid local artifact URI")
+    path = directory / uri
+    if path.is_symlink() or not path.is_file():
+        raise ConformanceError(f"{label}: missing or non-regular artifact {uri}")
+    if path.stat().st_size != ref.get('byteLength'):
+        raise ConformanceError(f"{label}: artifact byte length mismatch {uri}")
+
+
+def _fast_store_check(directory: Path, store: dict, label: str) -> None:
+    chunks = store.get('chunks')
+    if not isinstance(chunks, list):
+        raise ConformanceError(f"{label}: missing chunk list")
+    declared_total = store.get('recordCount')
+    if type(declared_total) is not int or declared_total < 0:
+        raise ConformanceError(f"{label}: invalid record count")
+    total = 0
+    expected_first = 0
+    for index, ref in enumerate(chunks):
+        _fast_artifact_check(directory, ref, f"{label}[{index}]")
+        count = ref.get('recordCount')
+        first = ref.get('firstOrdinal')
+        last = ref.get('lastOrdinal')
+        if type(count) is not int or count <= 0:
+            raise ConformanceError(f"{label}[{index}]: invalid chunk record count")
+        if first != expected_first or last != first + count - 1:
+            raise ConformanceError(f"{label}[{index}]: non-contiguous ordinal metadata")
+        total += count
+        expected_first = last + 1
+    if total != declared_total:
+        raise ConformanceError(f"{label}: chunk totals do not match recordCount")
+
+
+def seal_local_fast(directory: Path, run: dict) -> None:
+    """Fast development seal; exhaustive event conformance remains a separate audit."""
+    manifest = read_json(directory / 'canonical-replay.json')
+    validate_schema(manifest, schema_validator(), 'manifest')
+    run_schema = read_json(ROOT / 'extraction-manifest-v1.schema.json')
+    validate_schema(run, Draft202012Validator(run_schema, format_checker=FormatChecker()), 'run')
+    if run.get('state') != 'staged':
+        raise ConformanceError('Fast seal requires a staged extraction run')
+    if run.get('sourceSha256') != manifest.get('source', {}).get('sha256'):
+        raise ConformanceError('Fast seal source identity mismatch')
+    if run.get('canonicalManifest', {}).get('sha256') != sha256(directory / 'canonical-replay.json'):
+        raise ConformanceError('Fast seal canonical manifest changed after staging')
+
+    report = read_json(directory / 'coverage-report.json')
+    if report.get('framing', {}).get('status') != 'complete':
+        raise ConformanceError('Fast seal refuses an incomplete framed body')
+
+    _fast_artifact_check(directory, run['headerEvidence']['rawPrefix'], 'header raw prefix')
+    _fast_artifact_check(directory, run['headerEvidence']['decodedHeader'], 'decoded header')
+    _fast_artifact_check(directory, run['fieldClaims'], 'field claims')
+    _fast_store_check(directory, manifest['factStore'], 'factStore')
+    _fast_store_check(directory, manifest['initialState']['objectStore'], 'initial object store')
+    _fast_store_check(directory, manifest['initialState']['map']['terrainStore'], 'terrain store')
+
+    report['fastSeal'] = {
+        'sealVersion': 'AOF_FAST_SEAL_V1',
+        'status': 'passed',
+        'scope': 'same-process structural publication checks only; no event-by-event schema validation, raw-byte replay reconstruction, or whole-store semantic reconciliation',
+        'fullConformanceRequiredForVerifiedLocal': True,
+    }
+    (directory / 'coverage-report.json').write_bytes(json_bytes(report))
+    run['coverageReport'] = artifact_ref(directory / 'coverage-report.json', 'identity')
+    run['state'] = 'sealed_local_fast'
+    (directory / 'extraction-manifest.json').write_bytes(json_bytes(run))
+
+
 def seal_local(directory: Path, run: dict) -> None:
     validation = validate_bundle(directory)
     report = read_json(directory / 'coverage-report.json')
@@ -138,7 +212,6 @@ def seal_local(directory: Path, run: dict) -> None:
     run['coverageReport'] = artifact_ref(directory / 'coverage-report.json', 'identity')
     run['state'] = 'verified_local'
     (directory / 'extraction-manifest.json').write_bytes(json_bytes(run))
-
 
 def project_bundle(directory: Path, *, validate: bool = True) -> dict:
     if validate:
@@ -199,8 +272,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='Validate/project canonical bundles without a replay or decoder.')
     parser.add_argument('bundle', type=Path)
     parser.add_argument('--out', type=Path, help='Write canonical command fundamentals and compact compatibility body.')
+    parser.add_argument('--full-audit', action='store_true', help='Run exhaustive conformance and upgrade the run to verified_local.')
     args = parser.parse_args()
-    if args.out:
+    if args.full_audit:
+        run = read_json(args.bundle / 'extraction-manifest.json')
+        seal_local(args.bundle, run)
+        print(json.dumps(validate_bundle(args.bundle), indent=2))
+    elif args.out:
         args.out.write_bytes(json_bytes(project_bundle(args.bundle)))
         print(f'Wrote canonical projection to {args.out}')
     else:
