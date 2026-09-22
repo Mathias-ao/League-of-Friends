@@ -204,7 +204,7 @@ def seal_local_fast(directory: Path, run: dict) -> None:
     (directory / 'extraction-manifest.json').write_bytes(json_bytes(run))
 
 
-def seal_local(directory: Path, run: dict) -> None:
+def seal_local(directory: Path, run: dict) -> dict:
     validation = validate_bundle(directory)
     report = read_json(directory / 'coverage-report.json')
     report['validation'] = validation
@@ -276,8 +276,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.full_audit:
         run = read_json(args.bundle / 'extraction-manifest.json')
-        seal_local(args.bundle, run)
-        print(json.dumps(validate_bundle(args.bundle), indent=2))
+        validation = seal_local(args.bundle, run)
+        print(json.dumps(validation, indent=2))
     elif args.out:
         args.out.write_bytes(json_bytes(project_bundle(args.bundle)))
         print(f'Wrote canonical projection to {args.out}')
