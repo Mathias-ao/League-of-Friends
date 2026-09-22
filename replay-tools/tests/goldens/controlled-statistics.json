@@ -20,6 +20,36 @@
     }]
   },
   "camera": {"pointCount": 1, "recorderPlayerIds": [1], "scope": "recording_perspective_only"},
+  "economy": [
+    {
+      "ecoTechs": 0,
+      "farmsPlaced": 0,
+      "firstExtraTcAtMs": null,
+      "marketTransactions": 0,
+      "marketVolume": 0,
+      "modelVersion": "AOF_ECONOMY_STATISTICS_V1",
+      "playerId": 1,
+      "tcIdleDarkAgeMs": 100.0,
+      "thirdTcAtMs": null,
+      "townCenters": 1,
+      "villagersBy20Minutes": null,
+      "villagersTrained": null
+    },
+    {
+      "ecoTechs": 0,
+      "farmsPlaced": 0,
+      "firstExtraTcAtMs": null,
+      "marketTransactions": 0,
+      "marketVolume": 0,
+      "modelVersion": "AOF_ECONOMY_STATISTICS_V1",
+      "playerId": 2,
+      "tcIdleDarkAgeMs": null,
+      "thirdTcAtMs": null,
+      "townCenters": 1,
+      "villagersBy20Minutes": 3,
+      "villagersTrained": 0
+    }
+  ],
   "combat": [
     {"modelVersion": "AOF_RAID_DETECTION_V1", "playerId": 1, "raidsAgainstYou": 0, "raidsInitiated": 0},
     {"modelVersion": "AOF_RAID_DETECTION_V1", "playerId": 2, "raidsAgainstYou": 0, "raidsInitiated": 0}
