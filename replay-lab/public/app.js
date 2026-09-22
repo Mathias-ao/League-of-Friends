@@ -133,6 +133,29 @@ function humanizeKey(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function summarizeRowObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return formatReviewValue(value);
+  if (value.message) return value.code ? `${value.code} — ${value.message}` : String(value.message);
+  if (value.entity) {
+    const name = value.entity.name || `Raw ID ${value.entity.rawId ?? "?"}`;
+    const count = value.commandCount ?? value.count ?? value.value;
+    return count === undefined ? name : `${name} · ${formatReviewValue(count)}`;
+  }
+  const preferred = ["label", "name", "status", "type", "atMs", "count", "value", "percent", "rawId"];
+  const parts = [];
+  for (const key of preferred) {
+    if (value[key] !== undefined && value[key] !== null && typeof value[key] !== "object") {
+      parts.push(`${humanizeKey(key)}: ${formatReviewValue(value[key], key)}`);
+    }
+  }
+  if (parts.length) return parts.join(" · ");
+  const primitiveParts = Object.entries(value)
+    .filter(([key, child]) => !TECHNICAL_ROW_KEYS.has(key) && (child === null || typeof child !== "object"))
+    .slice(0, 4)
+    .map(([key, child]) => `${humanizeKey(key)}: ${formatReviewValue(child, key)}`);
+  return primitiveParts.length ? primitiveParts.join(" · ") : "Structured item";
+}
+
 function formatReviewValue(value, key = "") {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -165,11 +188,22 @@ function flattenReviewRows(value, prefix = "", context = {}, rows = []) {
   }
 
   if (Array.isArray(value)) {
-    rows.push({
-      metric: prefix || "Items",
-      value: formatReviewValue(value, prefix),
-      layer: context.layer || "",
-      note: context.scope || "",
+    if (!value.length) {
+      rows.push({
+        metric: prefix || "Items",
+        value: "None",
+        layer: context.layer || "",
+        note: context.scope || "",
+      });
+      return rows;
+    }
+    value.forEach((item, index) => {
+      rows.push({
+        metric: `${prefix || "Item"} #${index + 1}`,
+        value: summarizeRowObject(item),
+        layer: context.layer || "",
+        note: context.scope || "",
+      });
     });
     return rows;
   }
