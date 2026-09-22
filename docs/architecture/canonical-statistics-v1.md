@@ -63,7 +63,7 @@ Observed command rate, inactivity, APM variants, broader opening/playstyle label
 
 ## Build Order inference: `AOF_BUILD_ORDER_V2`
 
-For the current player-facing model only, age-up timings, building placements and positive queued-unit amounts are treated as direct inputs to the inferred Build Order statistic. This does not change their canonical evidence classification elsewhere.
+For the current player-facing model only, age-click requests, inferred age-up timings, building placements and queued-unit amounts are used by opening statistics and Build Order inference. `AOF_OPENING_STATISTICS_V2` selects the latest observed request for each age and infers completion as Feudal +130s, Castle +160s and Imperial +190s. Its `Villagers before Feudal age` value uses observed starting villagers plus the net decoded villager queue amount before the selected Feudal click, and remains unavailable when a relevant queue amount is unknown. This does not change canonical evidence classification elsewhere.
 
 The classifier emits `Drush`, `Scout Rush`, `Archer Rush`, `Tower Rush`, `Fast Castle`, `Boom`, `Naval Rush`, `Fish Boom`, or `N/A`. Man-at-Arms openings are intentionally included in the `Drush` bucket. The starting Scout never counts toward Scout Rush because only newly queued Scouts are considered.
 

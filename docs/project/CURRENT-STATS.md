@@ -24,13 +24,14 @@ Battle Statistics are the player-facing detailed record. The underlying replay m
 
 - Build Order: Drush, Scout Rush, Archer Rush, Tower Rush, Fast Castle, Boom, Naval Rush, Fish Boom, or N/A.
 - Build Order execution score.
-- Feudal, Castle and Imperial click + reconstructed age-up timing.
+- Feudal, Castle and Imperial click + inferred age-up timing. V2 uses the latest observed click for each age and adds fixed research durations: +130s Feudal, +160s Castle, +190s Imperial.
 - First military unit queued.
 - First military building placed.
 - First wall segment.
 - Unique wall tiles before Feudal.
 - Wall style: Open / Partially Walled / Fully Walled.
 - Houses before Feudal.
+- Villagers before Feudal age: starting villagers plus net decoded villager queue amounts before the latest observed Feudal click; unavailable when a relevant queue amount is unknown.
 - Loom timing.
 - Loom before Feudal: Yes / No.
 
@@ -101,7 +102,7 @@ The existing `AOF_RELATIONSHIP_ENGINE_V1` still uses the older `RIVALRY / ENEMY 
 Current models include:
 
 - `AOF_BUILD_ORDER_V2`
-- `AOF_OPENING_STATISTICS_V1`
+- `AOF_OPENING_STATISTICS_V2`
 - `AOF_RAID_DETECTION_V1`
 - `AOF_MAP_PRESENCE_V2`
 - `AOF_FORWARD_ECO_V1`

@@ -53,6 +53,7 @@ def statistics_snapshot(result):
             "wallTilesBeforeFeudal": p["opening"]["wallTilesBeforeFeudal"]["count"],
             "wallStyle": p["opening"]["wallStyle"]["label"],
             "housesBeforeFeudal": p["opening"]["housesBeforeFeudal"]["count"],
+            "villagersBeforeFeudalAge": p["opening"]["villagersBeforeFeudalAge"]["count"],
             "loomAtMs": p["opening"]["loomTiming"]["atMs"],
             "loomBeforeFeudal": p["opening"]["loomBeforeFeudal"]["value"],
         } for p in result["participants"]],
