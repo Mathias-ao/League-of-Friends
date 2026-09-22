@@ -119,6 +119,203 @@ function jsonBlock(value) {
   return `<pre>${esc(pretty(value))}</pre>`;
 }
 
+const TECHNICAL_ROW_KEYS = new Set([
+  "layer", "scope", "modelVersion", "formulaVersion", "methodVersion",
+  "referenceVersion", "catalogVersion", "catalogSourceVersion",
+  "sourceEventId", "sourceEventIds", "canonicalSourceEventId",
+  "evidence", "dependsOnEventIds",
+]);
+
+function humanizeKey(value) {
+  return String(value ?? "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatReviewValue(value, key = "") {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") {
+    if (/(^|\.)(atMs|timestampMs|durationMs|firstAtMs|lastAtMs|observedUntilMs|clickAtMs|ageUpAtMs)$/i.test(key)) {
+      return fmtTime(value);
+    }
+    return Number.isInteger(value) ? String(value) : String(Math.round(value * 1000) / 1000);
+  }
+  if (Array.isArray(value)) {
+    if (!value.length) return "None";
+    if (value.every((item) => item === null || ["string", "number", "boolean"].includes(typeof item))) {
+      const shown = value.slice(0, 8).map((item) => formatReviewValue(item)).join(", ");
+      return value.length > 8 ? `${shown} … (+${value.length - 8})` : shown;
+    }
+    return `${value.length} items`;
+  }
+  return String(value);
+}
+
+function flattenReviewRows(value, prefix = "", context = {}, rows = []) {
+  if (value === null || value === undefined || typeof value !== "object") {
+    rows.push({
+      metric: prefix || "Value",
+      value: formatReviewValue(value, prefix),
+      layer: context.layer || "",
+      note: context.scope || "",
+    });
+    return rows;
+  }
+
+  if (Array.isArray(value)) {
+    rows.push({
+      metric: prefix || "Items",
+      value: formatReviewValue(value, prefix),
+      layer: context.layer || "",
+      note: context.scope || "",
+    });
+    return rows;
+  }
+
+  const nextContext = {
+    layer: value.layer || context.layer || "",
+    scope: value.scope || context.scope || "",
+  };
+  const entries = Object.entries(value).filter(([key]) => !TECHNICAL_ROW_KEYS.has(key));
+
+  if (!entries.length) {
+    rows.push({
+      metric: prefix || "Value",
+      value: "—",
+      layer: nextContext.layer,
+      note: nextContext.scope,
+    });
+    return rows;
+  }
+
+  for (const [key, child] of entries) {
+    const label = prefix ? `${prefix} › ${humanizeKey(key)}` : humanizeKey(key);
+    if (child !== null && typeof child === "object" && !Array.isArray(child)) {
+      flattenReviewRows(child, label, nextContext, rows);
+    } else {
+      rows.push({
+        metric: label,
+        value: formatReviewValue(child, key),
+        layer: nextContext.layer,
+        note: nextContext.scope,
+      });
+    }
+  }
+  return rows;
+}
+
+function reviewTable(rows, { showLayer = true, showNote = true } = {}) {
+  if (!rows?.length) return '<div class="empty-inline">No items.</div>';
+  const layerColumn = showLayer ? "<th>Layer</th>" : "";
+  const noteColumn = showNote ? "<th>Notes</th>" : "";
+  return `
+    <div class="review-table-wrap">
+      <table class="review-table">
+        <thead><tr><th>Item</th><th>Value</th>${layerColumn}${noteColumn}</tr></thead>
+        <tbody>
+          ${rows.map((row) => `
+            <tr>
+              <td class="review-key">${esc(row.metric)}</td>
+              <td class="review-value">${esc(row.value)}</td>
+              ${showLayer ? `<td class="review-layer">${esc(row.layer || "—")}</td>` : ""}
+              ${showNote ? `<td class="review-note" title="${esc(row.note || "")}">${esc(row.note || "—")}</td>` : ""}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function playerReviewSection(title, values) {
+  return `<h3>${esc(title)}</h3>` + values.map((row) => `
+    <details open class="player-review">
+      <summary><strong>P${row.playerId} · ${esc(row.name)}</strong></summary>
+      ${reviewTable(flattenReviewRows(row.value))}
+    </details>
+  `).join("");
+}
+
+function militaryReviewRows(evidence, players) {
+  const names = Object.fromEntries((players || []).map((p) => [String(p.replaySlot), p.name]));
+  const rows = [];
+  const inventories = [
+    ["Queue requests", evidence?.queueRequestsByPlayerAndUnit],
+    ["Research requests", evidence?.researchRequestsByPlayerAndTechnology],
+    ["Building placements", evidence?.buildingPlacementsByPlayerAndBuilding],
+  ];
+  for (const [type, byPlayer] of inventories) {
+    for (const [playerId, items] of Object.entries(byPlayer || {})) {
+      for (const item of items || []) {
+        rows.push({
+          player: `P${playerId} · ${names[playerId] || "Unknown"}`,
+          type,
+          item: item?.entity?.name || `Raw ID ${item?.entity?.rawId ?? "?"}`,
+          value: item?.commandCount ?? "—",
+          rawId: item?.entity?.rawId ?? "—",
+        });
+      }
+    }
+  }
+  for (const [playerId, units] of Object.entries(evidence?.positiveEncodedQueueAmountsByPlayerAndRawUnit || {})) {
+    for (const [rawId, amount] of Object.entries(units || {})) {
+      rows.push({
+        player: `P${playerId} · ${names[playerId] || "Unknown"}`,
+        type: "Positive encoded queue amount",
+        item: `Raw unit ${rawId}`,
+        value: amount,
+        rawId,
+      });
+    }
+  }
+  return rows;
+}
+
+function militaryTable(rows) {
+  if (!rows.length) return '<div class="empty-inline">No military command items.</div>';
+  return `
+    <div class="review-table-wrap">
+      <table class="review-table military-table">
+        <thead><tr><th>Player</th><th>Type</th><th>Item</th><th>Value</th><th>Raw ID</th></tr></thead>
+        <tbody>
+          ${rows.map((row) => `
+            <tr>
+              <td>${esc(row.player)}</td>
+              <td>${esc(row.type)}</td>
+              <td class="review-key">${esc(row.item)}</td>
+              <td class="review-value">${esc(row.value)}</td>
+              <td class="mono">${esc(row.rawId)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function comparisonTable(changes) {
+  if (!changes?.length) return '<div class="empty-inline">No statistic changes.</div>';
+  return `
+    <div class="review-table-wrap">
+      <table class="review-table comparison-table">
+        <thead><tr><th>Item</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+        <tbody>
+          ${changes.map((change) => `
+            <tr>
+              <td class="review-key">${esc(change.path)}</td>
+              <td>${esc(formatReviewValue(change.before))}</td>
+              <td>${esc(formatReviewValue(change.after))}</td>
+              <td>${esc(change.change || "changed")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 function participant(section) {
   return state.run?.statistics?.participants?.map((player) => ({
     playerId: player.playerId,
@@ -128,12 +325,7 @@ function participant(section) {
 }
 
 function playerSection(title, values) {
-  return `<h3>${esc(title)}</h3>` + values.map((row) => `
-    <details open>
-      <summary><strong>P${row.playerId} · ${esc(row.name)}</strong></summary>
-      ${jsonBlock(row.value)}
-    </details>
-  `).join("");
+  return playerReviewSection(title, values);
 }
 
 async function renderTimeline(includeRaw = false) {
@@ -198,11 +390,11 @@ async function renderTab() {
         <div class="player-card"><strong>P${esc(p.replaySlot)} · ${esc(p.name)}</strong><span>civ ${esc(p.civilizationId ?? "?")} · team ${esc(p.teamId ?? "?")}</span></div>
       `).join("")}</div>
       <h3>Canonical result state</h3>
-      ${jsonBlock({
+      ${reviewTable(flattenReviewRows({
         completionStatus: run.canonical?.match?.completionStatus,
         winnerPlayerIds: run.canonical?.match?.winnerPlayerIds,
         winnerTeamIds: run.canonical?.match?.winnerTeamIds,
-      })}
+      }), { showLayer: false, showNote: false })}
     `;
   } else if (state.tab === "players") {
     html = playerSection("Player statistics", stats?.participants ?? []);
@@ -214,12 +406,7 @@ async function renderTab() {
   } else if (state.tab === "economy") {
     html = playerSection("Economy", participant("economy"));
   } else if (state.tab === "military") {
-    html = `<h3>Military command evidence</h3>${jsonBlock({
-      queueRequestsByPlayerAndUnit: stats?.commandEvidence?.queueRequestsByPlayerAndUnit,
-      positiveEncodedQueueAmountsByPlayerAndRawUnit: stats?.commandEvidence?.positiveEncodedQueueAmountsByPlayerAndRawUnit,
-      researchRequestsByPlayerAndTechnology: stats?.commandEvidence?.researchRequestsByPlayerAndTechnology,
-      buildingPlacementsByPlayerAndBuilding: stats?.commandEvidence?.buildingPlacementsByPlayerAndBuilding,
-    })}`;
+    html = `<h3>Military command evidence</h3>${militaryTable(militaryReviewRows(stats?.commandEvidence, run.players))}`;
   } else if (state.tab === "battle") {
     html = playerSection("Combat / raid inference", participant("combat"));
   } else if (state.tab === "map-presence") {
@@ -241,14 +428,18 @@ async function renderTab() {
         ${card("Unresolved catalogue IDs", run.diagnostics.unresolvedEntities.length)}
         ${card("Compatibility", run.diagnostics.compatibility?.status ?? "unknown")}
       </div>
-      <h3>Unknown action codes</h3>${jsonBlock(run.diagnostics.unknownActions)}
-      <h3>Unresolved object catalogue IDs</h3>${jsonBlock(run.diagnostics.unresolvedEntities)}
-      <h3>Warnings</h3>${jsonBlock(run.diagnostics.warnings)}
-      <h3>Coverage report</h3>${jsonBlock(run.diagnostics.coverage)}
+      <h3>Unknown action codes</h3>
+      ${reviewTable(flattenReviewRows(run.diagnostics.unknownActions), { showLayer: false, showNote: false })}
+      <h3>Unresolved object catalogue IDs</h3>
+      ${reviewTable(flattenReviewRows(run.diagnostics.unresolvedEntities), { showLayer: false, showNote: false })}
+      <h3>Warnings</h3>
+      ${reviewTable(flattenReviewRows(run.diagnostics.warnings), { showLayer: false, showNote: false })}
+      <h3>Coverage report</h3>
+      ${reviewTable(flattenReviewRows(run.diagnostics.coverage), { showLayer: false, showNote: false })}
     `;
   } else if (state.tab === "comparison") {
     html = run.comparison
-      ? `<div class="metrics">${card("Changes", run.comparison.changeCount)}${card("Before", `r${run.comparison.beforeRevision}`)}${card("After", `r${run.comparison.afterRevision}`)}</div>${jsonBlock(run.comparison.changes)}`
+      ? `<div class="metrics">${card("Changes", run.comparison.changeCount)}${card("Before", `r${run.comparison.beforeRevision}`)}${card("After", `r${run.comparison.afterRevision}`)}</div>${comparisonTable(run.comparison.changes)}`
       : '<div class="empty-inline">Recalculate statistics once to create a same-evidence comparison.</div>';
   }
 
