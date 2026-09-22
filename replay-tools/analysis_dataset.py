@@ -1,4 +1,4 @@
-"""Compact replay-analysis dataset projected from verified CanonicalReplay evidence.
+"""Compact replay-analysis dataset projected from sealed CanonicalReplay evidence.
 
 This is a disposable/rebuildable development and analysis cache. CanonicalReplay
 remains the lossless source of truth. Raw operation bytes are intentionally not
