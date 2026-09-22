@@ -1,0 +1,23 @@
+name: Replay Lab CI
+
+on:
+  push:
+    paths:
+      - "replay-lab/**"
+      - ".github/workflows/replay-lab-ci.yml"
+  pull_request:
+    paths:
+      - "replay-lab/**"
+      - ".github/workflows/replay-lab-ci.yml"
+
+jobs:
+  replay-lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm --prefix replay-lab test
+      - run: node --check replay-lab/server.mjs
+      - run: node --check replay-lab/public/app.js
