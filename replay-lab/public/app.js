@@ -160,6 +160,9 @@ async function renderTab() {
   let html = "";
 
   if (state.tab === "overview") {
+    const timing = run.metadata?.timings ?? {};
+    const recalc = run.metadata?.lastRecalculation ?? null;
+    const analysisSummary = run.metadata?.analysisDataset?.summary ?? {};
     html = `
       <div class="metrics">
         ${card("Duration", fmtTime(run.canonical?.match?.durationMs))}
@@ -168,6 +171,23 @@ async function renderTab() {
         ${card("Unknown actions", run.diagnostics.unknownActionCount)}
         ${card("Unresolved catalogue IDs", run.diagnostics.unresolvedEntities.length)}
         ${card("Statistics revision", run.metadata.statisticsRevision)}
+      </div>
+      <h3>Pipeline timing</h3>
+      <div class="metrics">
+        ${card("Upload copy", timing.uploadMs != null ? `${Math.round(timing.uploadMs)} ms` : "—")}
+        ${card("Parse + canonical write", timing.replayParseCanonicalWriteMs != null ? `${Math.round(timing.replayParseCanonicalWriteMs)} ms` : "—")}
+        ${card("Canonical verification", timing.canonicalVerificationMs != null ? `${Math.round(timing.canonicalVerificationMs)} ms` : "—", "full conformance once")}
+        ${card("Analysis dataset", timing.analysisDatasetMs != null ? `${Math.round(timing.analysisDatasetMs)} ms` : "—")}
+        ${card("Statistics projection", timing.statisticsProjectionMs != null ? `${Math.round(timing.statisticsProjectionMs)} ms` : "—")}
+        ${card("First-run total", timing.totalMs != null ? `${Math.round(timing.totalMs)} ms` : "—")}
+      </div>
+      ${recalc ? `<div class="timeline-note">Last recalculation: ${Math.round(recalc.totalMs)} ms · replay reparsed: ${recalc.replayReparsed ? "yes" : "no"} · canonical revalidated: ${recalc.canonicalRevalidated ? "yes" : "no"}</div>` : ""}
+      <h3>Compact analysis cache</h3>
+      <div class="metrics">
+        ${card("Action events", analysisSummary.actionEventCount ?? "—")}
+        ${card("Initial objects", analysisSummary.initialObjectCount ?? "—")}
+        ${card("Camera events", analysisSummary.cameraEventCount ?? "—")}
+        ${card("Raw operation bytes copied", analysisSummary.rawOperationBytesCopied === false ? "No" : analysisSummary.rawOperationBytesCopied ?? "—")}
       </div>
       <h3>Participants</h3>
       <div class="player-grid">${run.players.map((p) => `
@@ -274,7 +294,8 @@ $("extractButton").addEventListener("click", async () => {
     $("fileInput").value = "";
     $("selectedFile").textContent = "No replay selected";
     await refreshRuns(run.metadata.id);
-    showProgress("Run ready.");
+    const total = run.metadata?.timings?.totalMs;
+    showProgress(total != null ? `Run ready in ${Math.round(total)} ms. Stage timings are on Overview.` : "Run ready.");
     setTimeout(hideProgress, 1800);
   } catch (error) {
     showProgress(error.message, true);
@@ -292,7 +313,8 @@ $("recalcButton").addEventListener("click", async () => {
     await refreshRuns();
     renderShell();
     await renderTab();
-    showProgress(`Statistics revision ${state.run.metadata.statisticsRevision} ready.`);
+    const ms = state.run.metadata?.lastRecalculation?.totalMs;
+    showProgress(`Statistics revision ${state.run.metadata.statisticsRevision} ready${ms != null ? ` in ${Math.round(ms)} ms` : ""} — replay not reparsed.`);
     setTimeout(hideProgress, 1800);
   } catch (error) {
     showProgress(error.message, true);
