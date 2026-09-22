@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V1"
+OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V2"
 AGE_TECH_IDS = {"feudal": 101, "castle": 102, "imperial": 103}
 AGE_RESEARCH_MS = {"feudal": 130_000, "castle": 160_000, "imperial": 190_000}
 LOOM_TECH_ID = 22
@@ -48,15 +48,24 @@ def _first_research_time(research: list[dict[str, Any]], technology_id: int) -> 
     return None
 
 
+def _latest_research_time(research: list[dict[str, Any]], technology_id: int) -> int | None:
+    times = [
+        event["atMs"]
+        for event in research
+        if event.get("technologyId") == technology_id and isinstance(event.get("atMs"), int)
+    ]
+    return max(times) if times else None
+
+
 def _age_up(research: list[dict[str, Any]], age: str) -> dict[str, Any]:
-    click = _first_research_time(research, AGE_TECH_IDS[age])
+    click = _latest_research_time(research, AGE_TECH_IDS[age])
     duration = AGE_RESEARCH_MS[age]
     return {
-        "layer": "reconstructed",
+        "layer": "inferred",
         "clickAtMs": click,
         "ageUpAtMs": click + duration if click is not None else None,
         "researchDurationMs": duration,
-        "basis": f"first research request for technology {AGE_TECH_IDS[age]} + fixed {duration}ms",
+        "basis": f"latest observed research request for technology {AGE_TECH_IDS[age]} + fixed {duration}ms",
     }
 
 
@@ -174,10 +183,68 @@ def _count_houses(builds: list[dict[str, Any]], catalog: dict[str, Any], before_
     )
 
 
+def _initial_villager_count(
+    initial_objects: list[dict[str, Any]], player_id: int, catalog: dict[str, Any],
+) -> int:
+    return sum(
+        1
+        for event in initial_objects
+        if (event.get("payload") or {}).get("ownerPlayerId") == player_id
+        and "villager" in _roles(catalog, "units", (event.get("payload") or {}).get("objectId"))
+    )
+
+
+def _villagers_before_feudal(
+    production: list[dict[str, Any]],
+    initial_objects: list[dict[str, Any]],
+    player_id: int,
+    catalog: dict[str, Any],
+    feudal_click_ms: int | None,
+) -> dict[str, Any]:
+    starting = _initial_villager_count(initial_objects, player_id, catalog)
+    if feudal_click_ms is None:
+        return {
+            "layer": "reconstructed",
+            "count": None,
+            "basis": "starting villagers + net decoded villager queue amounts before latest observed Feudal click",
+            "boundary": "no_feudal_click_observed",
+        }
+
+    net_queued = 0
+    unknown_amount_commands = 0
+    for event in production:
+        at_ms = event.get("atMs")
+        if not isinstance(at_ms, int) or at_ms >= feudal_click_ms:
+            continue
+        if "villager" not in _roles(catalog, "units", event.get("unitId")):
+            continue
+        signed = event.get("signedAmount")
+        if type(signed) is int:
+            net_queued += signed
+        else:
+            unknown_amount_commands += 1
+
+    return {
+        "layer": "reconstructed",
+        "count": starting + net_queued if unknown_amount_commands == 0 else None,
+        "basis": "starting villagers + net decoded villager queue amounts before latest observed Feudal click",
+        "boundary": "latest_feudal_click",
+        "startingVillagersObserved": starting,
+        "netDecodedVillagerQueueAmount": net_queued,
+        "unknownAmountVillagerQueueCommands": unknown_amount_commands,
+    }
+
+
 def project_opening_statistics(
-    *, manifest: dict[str, Any], body: dict[str, Any], catalog: dict[str, Any], observed_until_ms: int,
+    *,
+    manifest: dict[str, Any],
+    body: dict[str, Any],
+    catalog: dict[str, Any],
+    observed_until_ms: int,
+    initial_objects: list[dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     results: dict[str, dict[str, Any]] = {}
+    initial_objects = initial_objects or []
     for participant in manifest.get("participants", []):
         player_id = int(participant["playerId"])
         research = _player_events(body.get("researchEvents", []), player_id)
@@ -220,6 +287,9 @@ def project_opening_statistics(
                 "count": _count_houses(builds, catalog, feudal_boundary),
                 "boundary": "feudal_age_up" if feudal_age_up is not None else "observed_end_no_feudal",
             },
+            "villagersBeforeFeudalAge": _villagers_before_feudal(
+                production, initial_objects, player_id, catalog, feudal_click,
+            ),
             "loomTiming": {
                 "layer": "observed",
                 "atMs": loom_at,
