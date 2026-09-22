@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V4"
+OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V5"
 AGE_TECH_IDS = {"feudal": 101, "castle": 102, "imperial": 103}
 AGE_RESEARCH_MS = {"feudal": 130_000, "castle": 160_000, "imperial": 190_000}
 LOOM_TECH_ID = 22
 FULLY_WALLED_MINIMUM_TILES = 20
-VILLAGER_PRODUCTION_MODEL_VERSION = "AOF_VILLAGER_PRODUCTION_V2"
+VILLAGER_PRODUCTION_MODEL_VERSION = "AOF_VILLAGER_PRODUCTION_V3"
 
 # Base AoE2 DE civilization IDs used only for modifiers that affect Dark-Age
 # villager throughput/population. Starting villagers are observed from the replay,
@@ -22,6 +22,7 @@ CIV_GOTHS = 3
 CIV_CHINESE = 6
 CIV_PERSIANS = 8
 CIV_SPANISH = 14
+CIV_MAYANS = 16
 CIV_HUNS = 17
 CIV_INCAS = 21
 CIV_PORTUGUESE = 24
@@ -237,6 +238,22 @@ def _civilization_id(participant: dict[str, Any]) -> int | None:
     return raw_id if type(raw_id) is int else None
 
 
+def _standard_starting_villagers(civ_id: int | None) -> int:
+    if civ_id == CIV_CHINESE:
+        return 6
+    if civ_id == CIV_MAYANS:
+        return 4
+    return 3
+
+
+def _normal_dark_age_start_qualified(
+    manifest: dict[str, Any], town_centers: list[dict[str, Any]],
+) -> bool:
+    settings = ((manifest.get("match") or {}).get("settings") or {})
+    starting_age = settings.get("startingAgeId")
+    return len(town_centers) == 1 and starting_age in (None, 0)
+
+
 def _initial_town_centers(
     initial_objects: list[dict[str, Any]], player_id: int, catalog: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -392,8 +409,16 @@ def _villagers_before_feudal(
 ) -> dict[str, Any]:
     player_id = int(participant["playerId"])
     civ_id = _civilization_id(participant)
-    starting_villagers = _initial_villager_count(initial_objects, player_id, catalog)
+    starting_villagers_observed = _initial_villager_count(initial_objects, player_id, catalog)
     town_centers = _initial_town_centers(initial_objects, player_id, catalog)
+    normal_start_qualified = _normal_dark_age_start_qualified(manifest, town_centers)
+    standard_starting_villagers = _standard_starting_villagers(civ_id)
+    if normal_start_qualified and starting_villagers_observed < standard_starting_villagers:
+        starting_villagers = standard_starting_villagers
+        starting_villager_source = "standard_dark_age_civilization_floor_due_incomplete_header_objects"
+    else:
+        starting_villagers = starting_villagers_observed
+        starting_villager_source = "header_initial_objects"
     maximum_population = ((manifest.get("match") or {}).get("settings") or {}).get("population")
     maximum_population = maximum_population if type(maximum_population) is int else None
 
@@ -401,7 +426,9 @@ def _villagers_before_feudal(
         "layer": "inferred",
         "modelVersion": VILLAGER_PRODUCTION_MODEL_VERSION,
         "boundary": "latest_feudal_click" if feudal_click_ms is not None else "no_feudal_click_observed",
-        "startingVillagersObserved": starting_villagers,
+        "startingVillagersObserved": starting_villagers_observed,
+        "startingVillagersUsed": starting_villagers,
+        "startingVillagerCountSource": starting_villager_source,
         "civilizationRawId": civ_id,
     }
     if feudal_click_ms is None:
@@ -422,7 +449,14 @@ def _villagers_before_feudal(
     tc_ids = town_centers[0].get("objectInstanceIds") or []
     tc_id = tc_ids[0] if len(tc_ids) == 1 else None
 
-    initial_pop_used = _initial_population_used(initial_objects, player_id, catalog)
+    initial_pop_used_observed = _initial_population_used(initial_objects, player_id, catalog)
+    standard_initial_pop_used = standard_starting_villagers + 1
+    if normal_start_qualified and initial_pop_used_observed < standard_initial_pop_used:
+        initial_pop_used = standard_initial_pop_used
+        initial_population_source = "standard_dark_age_population_floor_due_incomplete_header_objects"
+    else:
+        initial_pop_used = initial_pop_used_observed
+        initial_population_source = "header_initial_objects"
     population_cap = _initial_population_cap(
         initial_objects, player_id, civ_id, catalog, maximum_population,
     )
@@ -480,7 +514,9 @@ def _villagers_before_feudal(
         return {
             **common,
             "count": None,
-            "initialPopulationUsedObserved": initial_pop_used,
+            "startingPopulationUsedObserved": initial_pop_used_observed,
+            "startingPopulationUsedReconstructed": initial_pop_used,
+            "startingPopulationCountSource": initial_population_source,
             "initialPopulationCapReconstructed": population_cap,
             "unknownAmountVillagerQueueCommands": unknown_amount_commands,
             "producerIdentityMismatchObservations": producer_identity_mismatches,
@@ -590,7 +626,9 @@ def _villagers_before_feudal(
     return {
         **common,
         "count": starting_villagers + completed_villagers,
-        "startingPopulationUsedObserved": initial_pop_used,
+        "startingPopulationUsedObserved": initial_pop_used_observed,
+        "startingPopulationUsedReconstructed": initial_pop_used,
+        "startingPopulationCountSource": initial_population_source,
         "initialPopulationCapReconstructed": _initial_population_cap(
             initial_objects, player_id, civ_id, catalog, maximum_population,
         ),
@@ -602,12 +640,14 @@ def _villagers_before_feudal(
         "producerAttribution": "single_starting_tc_before_feudal",
         "producerIdentityMismatchObservations": producer_identity_mismatches,
         "basis": (
-            "observed starting villagers + projected production from all observed Villager queue/cancel "
+            "qualified starting-villager baseline + projected production from all observed Villager queue/cancel "
             "commands before the latest Feudal click, assigned to the sole observed starting Town Center; "
             "uses Loom occupancy, projected population-building completion, population capacity and "
             "supported civilization modifiers"
         ),
         "note": (
+            "Initial header object search is non-exhaustive; for a qualified one-TC Dark Age start, a civilization-aware "
+            "standard starting Villager/population floor is used when fewer starting units are observed. "
             "Pre-Feudal Villager/Loom producer instance IDs are diagnostic only: with exactly one observed starting "
             "Town Center they are not used as a hard filter. House/Folwark completion is inferred from placement time, "
             "decoded builder count and nominal construction time; walking, retasking, destruction and other engine-state "
