@@ -58,7 +58,7 @@ def header():
             'players': [], 'lock_teams': False}, 'lobby': {'lock_teams': False}, 'scenario': {}}
 
 
-def export_fixture(directory: Path, *, body=None, fixture_header=None, chunk_records=3):
+def export_fixture(directory: Path, *, body=None, fixture_header=None, chunk_records=3, seal_mode='full'):
     source = directory / 'controlled.bin'
     source.write_bytes(PREFIX + (controlled_body() if body is None else body))
     bundle = directory / 'canonical'
@@ -69,5 +69,5 @@ def export_fixture(directory: Path, *, body=None, fixture_header=None, chunk_rec
     with patch.object(parse_replay, 'parse_header', side_effect=read_header), \
          patch.object(parse_replay, 'preflight_source'), \
          patch.object(parse_replay, 'JsonlGzipWriter', side_effect=lambda p: writer(p, max_records=chunk_records)):
-        adapter = parse_replay.build_payload(source, bundle)
+        adapter = parse_replay.build_payload(source, bundle, seal_mode=seal_mode)
     return source, bundle, adapter

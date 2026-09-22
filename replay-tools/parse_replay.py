@@ -21,7 +21,7 @@ from mgz.fast.header import parse as parse_header
 from canonical_io import EventWriter, SCHEMA_VERSION, json_bytes
 from canonical_stream import frames, command_layout, ExactReader
 from canonical_projector import CompactProjector
-from canonical_run import stage_run, seal_local, compatibility
+from canonical_run import stage_run, seal_local, seal_local_fast, compatibility
 
 ADAPTER_SCHEMA_VERSION = "LOF_MGZ_FAST_ADAPTER_V4"
 CANONICAL_SCHEMA_VERSION = SCHEMA_VERSION
@@ -761,7 +761,8 @@ def build_canonical_manifest(
 
 def build_payload(
     path: Path, canonical_dir: Path | None = None, *,
-    timing_sink: dict[str, float] | None = None,
+    timing_sink: dict[str, Any] | None = None,
+    seal_mode: str = "full",
 ) -> dict[str, Any]:
     """Stage and validate before publishing; never replace an existing bundle.
 
@@ -769,14 +770,14 @@ def build_payload(
     It uses the same canonical event projector but is not archival extraction.
     """
     if canonical_dir is None:
-        return _build_payload(path, None, timing_sink=timing_sink)
+        return _build_payload(path, None, timing_sink=timing_sink, seal_mode=seal_mode)
     canonical_dir = canonical_dir.resolve()
     if canonical_dir.exists():
         raise FileExistsError(f"Canonical bundle already exists: {canonical_dir}; select a new run directory")
     canonical_dir.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".canonical-stage-", dir=canonical_dir.parent))
     try:
-        result = _build_payload(path, staging, timing_sink=timing_sink)
+        result = _build_payload(path, staging, timing_sink=timing_sink, seal_mode=seal_mode)
         if canonical_dir.exists():
             raise FileExistsError(f"Canonical destination appeared during extraction: {canonical_dir}")
         staging.rename(canonical_dir)
@@ -788,8 +789,11 @@ def build_payload(
 
 def _build_payload(
     path: Path, canonical_dir: Path | None, *,
-    timing_sink: dict[str, float] | None = None,
+    timing_sink: dict[str, Any] | None = None,
+    seal_mode: str = "full",
 ) -> dict[str, Any]:
+    if seal_mode not in {"full", "fast"}:
+        raise ValueError("seal_mode must be 'full' or 'fast'")
     warnings: list[str] = []
     structured_warnings: list[dict[str, Any]] = []
     total_started = time.perf_counter()
@@ -846,12 +850,20 @@ def _build_payload(
         run = stage_run(canonical_dir, canonical, header, prefix, body, players, json_safe(header))
         if timing_sink is not None:
             timing_sink["replayDecodeCanonicalWriteMs"] = round((time.perf_counter() - decode_started) * 1000, 3)
-        verification_started = time.perf_counter()
-        seal_local(canonical_dir, run)
+        seal_started = time.perf_counter()
+        if seal_mode == "fast":
+            seal_local_fast(canonical_dir, run)
+        else:
+            seal_local(canonical_dir, run)
         if timing_sink is not None:
-            timing_sink["canonicalVerificationMs"] = round((time.perf_counter() - verification_started) * 1000, 3)
+            seal_ms = round((time.perf_counter() - seal_started) * 1000, 3)
+            timing_sink["canonicalSealMs"] = seal_ms
+            timing_sink["canonicalSealMode"] = seal_mode
+            timing_sink["canonicalVerificationMs"] = seal_ms if seal_mode == "full" else 0.0
     elif timing_sink is not None:
         timing_sink["replayDecodeCanonicalWriteMs"] = round((time.perf_counter() - decode_started) * 1000, 3)
+        timing_sink["canonicalSealMs"] = 0.0
+        timing_sink["canonicalSealMode"] = "none"
         timing_sink["canonicalVerificationMs"] = 0.0
 
     if timing_sink is not None:
@@ -913,6 +925,12 @@ def main() -> None:
     parser.add_argument("--canonical-dir", type=Path, help="Optional directory for CanonicalReplay manifest + gzipped fact stores.")
     parser.add_argument("--pretty", action="store_true", help="Pretty-print adapter JSON.")
     parser.add_argument("--timings-out", type=Path, help="Optional JSON file for extraction stage timings.")
+    parser.add_argument(
+        "--seal-mode",
+        choices=("full", "fast"),
+        default="full",
+        help="Canonical publication seal. 'full' is exhaustive conformance; 'fast' is a structural development seal.",
+    )
     args = parser.parse_args()
 
     replay_path = args.replay.expanduser().resolve()
@@ -920,8 +938,8 @@ def main() -> None:
         raise SystemExit(f"Replay file not found: {replay_path}")
 
     canonical_dir = args.canonical_dir.expanduser().resolve() if args.canonical_dir else None
-    timings: dict[str, float] = {}
-    result = build_payload(replay_path, canonical_dir, timing_sink=timings)
+    timings: dict[str, Any] = {}
+    result = build_payload(replay_path, canonical_dir, timing_sink=timings, seal_mode=args.seal_mode)
     serialized = json.dumps(result, indent=2 if args.pretty else None, ensure_ascii=False, allow_nan=False)
 
     if args.out:

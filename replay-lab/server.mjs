@@ -21,6 +21,7 @@ const MAX_UPLOAD_BYTES = Number(process.env.AOF_REPLAY_LAB_MAX_BYTES || 128 * 10
 
 const PARSER = path.join(ROOT, "replay-tools", "parse_replay.py");
 const ANALYSIS_DATASET = path.join(ROOT, "replay-tools", "analysis_dataset.py");
+const CANONICAL_RUN = path.join(ROOT, "replay-tools", "canonical_run.py");
 const STATISTICS = path.join(ROOT, "replay-tools", "statistics_projector.py");
 
 await fs.mkdir(WORK_ROOT, { recursive: true });
@@ -120,10 +121,11 @@ function uniqueWarnings(...collections) {
 
 async function loadRun(id) {
   const directory = runDir(id);
-  const [metadata, adapter, canonical, statistics, coverage, comparison] = await Promise.all([
+  const [metadata, adapter, canonical, extraction, statistics, coverage, comparison] = await Promise.all([
     readJson(path.join(directory, "metadata.json")),
     readJson(path.join(directory, "adapter.json")),
     readJson(path.join(directory, "canonical", "canonical-replay.json")),
+    readJson(path.join(directory, "canonical", "extraction-manifest.json")),
     readJson(path.join(directory, "statistics-current.json")),
     readJson(path.join(directory, "canonical", "coverage-report.json")),
     readJson(path.join(directory, "comparison-latest.json")),
@@ -138,6 +140,7 @@ async function loadRun(id) {
     settings: adapter?.payload?.settings ?? null,
     players: adapter?.payload?.players ?? [],
     canonical,
+    canonicalRun: extraction,
     statistics,
     comparison,
     diagnostics: {
@@ -191,6 +194,7 @@ async function extractReplay(req) {
       "--out", adapter,
       "--pretty",
       "--timings-out", parserTimingsPath,
+      "--seal-mode", "fast",
     ]);
     const [parsed, parserTimings] = await Promise.all([
       readJson(adapter),
@@ -201,7 +205,7 @@ async function extractReplay(req) {
     await runCommand(PYTHON, [
       ANALYSIS_DATASET, canonical,
       "--out", analysis,
-      "--already-validated",
+      "--already-sealed",
     ]);
     const analysisDatasetMs = roundedMs(analysisStarted);
     const analysisDocument = await readJson(analysis);
@@ -235,6 +239,8 @@ async function extractReplay(req) {
       timings: {
         uploadMs,
         replayParseCanonicalWriteMs: Math.round(parseCanonicalWriteMs * 1000) / 1000,
+        canonicalSealMs: Number(parserTimings?.canonicalSealMs || 0),
+        canonicalSealMode: parserTimings?.canonicalSealMode ?? "unknown",
         canonicalVerificationMs: Number(parserTimings?.canonicalVerificationMs || 0),
         analysisDatasetMs,
         statisticsProjectionMs,
@@ -242,6 +248,8 @@ async function extractReplay(req) {
         parserDetail: parserTimings,
       },
     };
+    const extraction = await readJson(path.join(canonical, "extraction-manifest.json"));
+    metadata.canonicalState = extraction?.state ?? null;
     await writeJson(path.join(directory, "metadata.json"), metadata);
     return id;
   } finally {
@@ -271,7 +279,7 @@ async function recalculate(id) {
     await runCommand(PYTHON, [
       ANALYSIS_DATASET, canonical,
       "--out", analysis,
-      "--already-validated",
+      "--already-sealed",
     ]);
     analysisDatasetMs = roundedMs(analysisStarted);
     const analysisDocument = await readJson(analysis);
@@ -312,6 +320,26 @@ async function recalculate(id) {
     truncatedAt: 500,
     changes,
   });
+}
+
+async function fullAudit(id) {
+  const directory = runDir(id);
+  const metadataPath = path.join(directory, "metadata.json");
+  const metadata = await readJson(metadataPath);
+  if (!metadata) throw Object.assign(new Error("Run not found"), { statusCode: 404 });
+
+  const canonical = path.join(directory, "canonical");
+  const started = performance.now();
+  await runCommand(PYTHON, [CANONICAL_RUN, canonical, "--full-audit"]);
+  const durationMs = roundedMs(started);
+  const extraction = await readJson(path.join(canonical, "extraction-manifest.json"));
+  metadata.canonicalState = extraction?.state ?? null;
+  metadata.lastFullAudit = {
+    durationMs,
+    state: extraction?.state ?? null,
+    completedAt: new Date().toISOString(),
+  };
+  await writeJson(metadataPath, metadata);
 }
 
 async function timeline(id, search) {
@@ -410,6 +438,12 @@ const server = http.createServer(async (req, res) => {
     if (recalcMatch && req.method === "POST") {
       await recalculate(recalcMatch[1]);
       return json(res, 200, await loadRun(recalcMatch[1]));
+    }
+
+    const auditMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/audit$/);
+    if (auditMatch && req.method === "POST") {
+      await fullAudit(auditMatch[1]);
+      return json(res, 200, await loadRun(auditMatch[1]));
     }
 
     const timelineMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/timeline$/);

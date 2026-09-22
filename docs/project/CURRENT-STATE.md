@@ -82,7 +82,7 @@ The current replay/statistics foundation includes:
 - Forward Eco classification using the Map Presence V2 forward geometry.
 - Observed command and selection evidence for Execution statistics.
 - Versioned tests, golden projections and architecture documents for the active models.
-- Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.\n- Replay Lab now inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between verified CanonicalReplay and statistics. Full canonical conformance runs once on extraction; routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating every canonical fact.
+- Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.\n- Replay Lab inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between CanonicalReplay and statistics. Its default development import uses explicit `sealed_local_fast` structural publication checks instead of exhaustive event conformance; a separate Full Conformance Audit upgrades a run to `verified_local`. Routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating canonical facts.
 
 The statistics system preserves the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
 

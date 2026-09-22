@@ -50,14 +50,14 @@ class AnalysisDatasetTests(unittest.TestCase):
         diff = semantic_diff(expected, actual)
         self.assertEqual(diff, [], json.dumps(diff[:5], indent=2))
 
-    def test_skip_validation_requires_verified_local_bundle(self):
+    def test_skip_validation_requires_sealed_or_verified_bundle(self):
         run_path = self.bundle / "extraction-manifest.json"
         run = json.loads(run_path.read_text())
         original = run["state"]
         run["state"] = "staged"
         run_path.write_text(json.dumps(run))
         try:
-            with self.assertRaisesRegex(ValueError, "verified_local"):
+            with self.assertRaisesRegex(ValueError, "sealed_local_fast or verified_local"):
                 build_analysis_dataset(self.bundle, validate=False)
         finally:
             run["state"] = original

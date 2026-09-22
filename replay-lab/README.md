@@ -7,7 +7,7 @@ It is a thin shell over the existing replay foundation:
 ```text
 .aoe2record
   -> replay-tools/parse_replay.py
-  -> CanonicalReplay evidence (lossless, fully verified once)
+  -> CanonicalReplay evidence (lossless, fast-sealed for development)
   -> AOF_REPLAY_ANALYSIS_V1 (compact rebuildable cache)
   -> replay-tools/statistics_projector.py
   -> Replay Lab inspection / comparison
@@ -52,8 +52,8 @@ Optional environment variables:
 ## Workflow
 
 1. Drop a local `.aoe2record`.
-2. **Extract replay** creates CanonicalReplay, performs full conformance verification once, creates a compact `analysis.json`, then projects statistics.
-3. Inspect the Overview timing cards to see upload, parse/canonical write, canonical verification, analysis-cache generation and statistics time separately.
+2. **Extract replay** creates CanonicalReplay, applies a fast structural seal, creates compact `analysis.json`, then projects statistics. The fast seal is explicitly marked `sealed_local_fast`, not fully verified.
+3. Inspect the Overview timing cards to see upload, parse/canonical write, canonical seal, analysis-cache generation and statistics time separately.
 4. Inspect player sections, the canonical event timeline, raw evidence, coverage warnings, unknown actions and unresolved entity IDs.
 5. Change a statistics model in `replay-tools/`.
 6. Click **Recalculate statistics**. This reads `analysis.json`; it does **not** reparse the replay and does **not** redo full canonical validation.
@@ -61,7 +61,13 @@ Optional environment variables:
 
 The temporary browser-upload copy of the recording is deleted after extraction. The user's original recording is untouched. Local canonical, analysis-cache and statistics artifacts remain under the lab work directory and are ignored by Git.
 
-Older Replay Lab runs without `analysis.json` are migrated on their next recalculation by generating the compact cache once from their already-verified canonical bundle.
+Older Replay Lab runs without `analysis.json` are migrated on their next recalculation by generating the compact cache once from their existing sealed/verified canonical bundle.
+
+## Fast seal vs full conformance
+
+Replay Lab optimizes the interactive development path. Its default fast seal validates the manifest, source identity, completed framing, artifact existence/length, chunk totals and ordinal metadata without decompressing and schema-validating every event or reconstructing the full replay bytes. Use **Full conformance audit** when you want exhaustive event validation and source-byte reconstruction; a passing audit upgrades the run to `verified_local`.
+
+Parser qualification, CI, controlled fixtures and release-quality evidence checks continue to use full conformance.
 
 ## Truth boundaries
 

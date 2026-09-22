@@ -95,8 +95,10 @@ function renderShell() {
   $("runTitle").textContent = run.metadata.fileName;
   $("runKicker").textContent = `STATISTICS REVISION ${run.metadata.statisticsRevision}`;
   const compat = run.canonical?.source?.compatibility?.status ?? "unknown";
+  const canonicalState = run.canonicalRun?.state ?? run.metadata?.canonicalState ?? "unknown";
   $("runMeta").textContent =
-    `save ${run.replay?.saveVersion ?? "?"} · build ${run.replay?.build ?? "?"} · ${run.players.length} players · compatibility ${compat}`;
+    `save ${run.replay?.saveVersion ?? "?"} · build ${run.replay?.build ?? "?"} · ${run.players.length} players · compatibility ${compat} · canonical ${canonicalState}`;
+  $("auditButton").disabled = canonicalState === "verified_local";
   $("tabs").innerHTML = tabs.map(([id, label]) =>
     `<button class="${state.tab === id ? "active" : ""}" data-tab="${id}">${label}</button>`
   ).join("");
@@ -176,11 +178,13 @@ async function renderTab() {
       <div class="metrics">
         ${card("Upload copy", timing.uploadMs != null ? `${Math.round(timing.uploadMs)} ms` : "—")}
         ${card("Parse + canonical write", timing.replayParseCanonicalWriteMs != null ? `${Math.round(timing.replayParseCanonicalWriteMs)} ms` : "—")}
-        ${card("Canonical verification", timing.canonicalVerificationMs != null ? `${Math.round(timing.canonicalVerificationMs)} ms` : "—", "full conformance once")}
+        ${card("Canonical seal", timing.canonicalSealMs != null ? `${Math.round(timing.canonicalSealMs)} ms` : "—", timing.canonicalSealMode === "fast" ? "fast structural seal" : "full conformance")}
         ${card("Analysis dataset", timing.analysisDatasetMs != null ? `${Math.round(timing.analysisDatasetMs)} ms` : "—")}
         ${card("Statistics projection", timing.statisticsProjectionMs != null ? `${Math.round(timing.statisticsProjectionMs)} ms` : "—")}
         ${card("First-run total", timing.totalMs != null ? `${Math.round(timing.totalMs)} ms` : "—")}
       </div>
+      <div class="timeline-note">Canonical state: ${esc(run.canonicalRun?.state ?? run.metadata?.canonicalState ?? "unknown")}. Fast seal is sufficient for Replay Lab development; verified_local requires the explicit full conformance audit.</div>
+      ${run.metadata?.lastFullAudit ? `<div class="timeline-note">Last full audit: ${Math.round(run.metadata.lastFullAudit.durationMs)} ms · state ${esc(run.metadata.lastFullAudit.state)}</div>` : ""}
       ${recalc ? `<div class="timeline-note">Last recalculation: ${Math.round(recalc.totalMs)} ms · replay reparsed: ${recalc.replayReparsed ? "yes" : "no"} · canonical revalidated: ${recalc.canonicalRevalidated ? "yes" : "no"}</div>` : ""}
       <h3>Compact analysis cache</h3>
       <div class="metrics">
@@ -280,7 +284,7 @@ $("dropZone").addEventListener("drop", (event) => {
 $("extractButton").addEventListener("click", async () => {
   if (!state.file) return;
   $("extractButton").disabled = true;
-  showProgress("Extracting canonical evidence and projecting statistics…");
+  showProgress("Extracting canonical evidence, applying fast seal, and projecting statistics…");
   try {
     const run = await api("/api/runs", {
       method: "POST",
@@ -304,10 +308,28 @@ $("extractButton").addEventListener("click", async () => {
   }
 });
 
+$("auditButton").addEventListener("click", async () => {
+  if (!state.run) return;
+  $("auditButton").disabled = true;
+  showProgress("Running exhaustive canonical conformance audit…");
+  try {
+    state.run = await api(`/api/runs/${encodeURIComponent(state.run.metadata.id)}/audit`, { method: "POST" });
+    await refreshRuns();
+    renderShell();
+    await renderTab();
+    const ms = state.run.metadata?.lastFullAudit?.durationMs;
+    showProgress(`Full conformance audit passed${ms != null ? ` in ${Math.round(ms)} ms` : ""}. Canonical state is verified_local.`);
+    setTimeout(hideProgress, 1800);
+  } catch (error) {
+    showProgress(error.message, true);
+  } finally {
+    $("auditButton").disabled = state.run?.canonicalRun?.state === "verified_local";
+  }
+});
 $("recalcButton").addEventListener("click", async () => {
   if (!state.run) return;
   $("recalcButton").disabled = true;
-  showProgress("Recalculating statistics from canonical evidence — replay parsing is not rerun.");
+  showProgress("Recalculating statistics from the compact analysis cache — replay parsing is not rerun.");
   try {
     state.run = await api(`/api/runs/${encodeURIComponent(state.run.metadata.id)}/recalculate`, { method: "POST" });
     await refreshRuns();

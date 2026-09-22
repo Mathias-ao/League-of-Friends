@@ -1,4 +1,4 @@
-"""Compact replay-analysis dataset projected from verified CanonicalReplay evidence.
+"""Compact replay-analysis dataset projected from sealed CanonicalReplay evidence.
 
 This is a disposable/rebuildable development and analysis cache. CanonicalReplay
 remains the lossless source of truth. Raw operation bytes are intentionally not
@@ -124,9 +124,9 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
 
     if validate:
         validate_bundle(directory)
-    elif run.get("state") != "verified_local":
+    elif run.get("state") not in {"sealed_local_fast", "verified_local"}:
         raise ValueError(
-            "Skipping canonical validation is only allowed for a verified_local extraction run"
+            "Skipping canonical validation is only allowed for a sealed_local_fast or verified_local extraction run"
         )
 
     slots = {int(player["playerId"]) for player in manifest.get("participants", [])}
@@ -170,7 +170,7 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
         "schemaVersion": ANALYSIS_SCHEMA_VERSION,
         "datasetVersion": ANALYSIS_DATASET_VERSION,
         "layer": "replay_analysis_cache",
-        "rebuildPolicy": "derived_from_verified_canonical_replay",
+        "rebuildPolicy": "derived_from_sealed_canonical_replay",
         "source": {
             "replaySha256": manifest["source"]["sha256"],
             "canonicalManifestSha256": run["canonicalManifest"]["sha256"],
@@ -206,11 +206,13 @@ def main() -> None:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument(
         "--already-validated",
+        "--already-sealed",
+        dest="already_sealed",
         action="store_true",
-        help="Skip expensive canonical revalidation only when extraction-manifest state is verified_local.",
+        help="Skip exhaustive canonical validation when the extraction run is already fast-sealed or fully verified.",
     )
     args = parser.parse_args()
-    result = build_analysis_dataset(args.bundle, validate=not args.already_validated)
+    result = build_analysis_dataset(args.bundle, validate=not args.already_sealed)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(json_bytes(result))
     print(
