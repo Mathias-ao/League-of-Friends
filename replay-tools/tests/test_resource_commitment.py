@@ -73,6 +73,24 @@ class ResourceCommitmentTests(unittest.TestCase):
         })
         self.assertEqual(result["coverage"]["pricedWallTiles"], 3)
 
+    def test_age_boundaries_use_latest_repeated_click(self):
+        body = {
+            "productionEvents": [],
+            "researchEvents": [
+                {"replaySlot": 1, "atMs": 80_000, "technologyId": 101},
+                {"replaySlot": 1, "atMs": 100_000, "technologyId": 101},
+                {"replaySlot": 1, "atMs": 280_000, "technologyId": 102},
+                {"replaySlot": 1, "atMs": 300_000, "technologyId": 102},
+            ],
+            "buildEvents": [],
+            "wallEvents": [],
+        }
+        result = project_resource_commitment(
+            manifest=self.manifest, body=body, catalog=self.catalog,
+        )["1"]
+        self.assertEqual(result["ageBoundaries"]["feudalAgeUpAtMs"], 230_000)
+        self.assertEqual(result["ageBoundaries"]["castleAgeUpAtMs"], 460_000)
+
     def test_missing_feudal_boundary_goes_to_unknown_age(self):
         body = {
             "productionEvents": [
