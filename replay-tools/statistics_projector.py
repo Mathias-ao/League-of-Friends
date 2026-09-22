@@ -10,9 +10,9 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from analysis_dataset import build_analysis_dataset, validate_analysis_dataset
 from build_order_classifier import classify_build_orders
-from canonical_io import ROOT, iter_store, json_bytes, read_json, sha256, validate_bundle
-from canonical_run import project_bundle
+from canonical_io import ROOT, json_bytes, read_json, sha256
 from forward_eco import project_forward_eco
 from map_presence_v2 import project_map_presence
 from opening_statistics import project_opening_statistics
@@ -45,12 +45,12 @@ def _inventory(counts: dict[str, Counter], catalog: dict, kind: str) -> dict[str
             for player, values in sorted(counts.items(), key=lambda item: int(item[0]))}
 
 
-def project_statistics(directory: Path, *, validate: bool = True, catalog_path: Path = ENTITY_CATALOG) -> dict:
-    if validate:
-        validate_bundle(directory)
-    manifest = read_json(directory / "canonical-replay.json")
-    run = read_json(directory / "extraction-manifest.json")
-    compact = project_bundle(directory, validate=False)
+def project_statistics_from_analysis(
+    analysis: dict[str, Any], *, catalog_path: Path = ENTITY_CATALOG,
+) -> dict:
+    """Project statistics from compact analysis data without reopening CanonicalReplay."""
+    validate_analysis_dataset(analysis)
+    manifest = analysis["manifest"]
     registry = build_registry()
     catalog = read_json(catalog_path)
     slots = {p["playerId"] for p in manifest["participants"]}
@@ -60,8 +60,8 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
     selection_sizes: dict[str, list[int]] = defaultdict(list)
     formation_modes: dict[str, set[str]] = defaultdict(set)
     spatial_action_events: list[dict[str, Any]] = []
-    for event in iter_store(directory, manifest["factStore"]):
-        if event["sourceOperation"] != "ACTION" or event.get("actorPlayerId") not in slots:
+    for event in analysis["actionEvents"]:
+        if event.get("actorPlayerId") not in slots:
             continue
         spatial_action_events.append(event)
         player = str(event["actorPlayerId"])
@@ -76,9 +76,9 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
                     formation_modes[player].add(str(payload[key]))
                     break
 
-    body = compact["body"]
-    fundamentals = compact["fundamentals"]
-    initial_objects = list(iter_store(directory, manifest["initialState"]["objectStore"]))
+    body = analysis["body"]
+    fundamentals = analysis["fundamentals"]
+    initial_objects = analysis["initialObjects"]
     build_orders = classify_build_orders(
         manifest=manifest, body=body, catalog=catalog, initial_objects=initial_objects,
     )
@@ -156,7 +156,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
     research_counts = {p: Counter(v) for p, v in fundamentals["researchCommandCountsByPlayerAndRawTechnology"].items()}
     building_counts = {p: Counter(v) for p, v in fundamentals["buildingPlacementCountsByPlayerAndRawBuilding"].items()}
     available = [m["metricId"] for m in registry["metrics"] if m["eligibility"] == "available_canonical"]
-    warnings = list(compact["coverage"].get("warnings", [])) + [
+    warnings = list(analysis["coverage"].get("warnings", [])) + [
         {"code": "OBSERVED_INTERVAL_ONLY", "message": "Totals cover the decoded recorded interval; full-game origin/completeness is not asserted."},
         {"code": "REQUESTS_NOT_OUTCOMES", "message": "Queue, research and building values are requests or placement commands, not trained units, accepted research, or completed buildings."},
         {"code": "ENTITY_LABELS_UNQUALIFIED", "message": "Raw IDs are authoritative. Catalog names and role keys are reference labels not qualified against this replay patch or data mods."},
@@ -165,6 +165,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and building placements; command coverage is not fog-of-war exploration and gold control is not resource gathering."},
         {"code": "RESOURCE_COMMITMENT_IS_ESTIMATED", "message": "Resource commitment uses pinned base catalog costs for decoded requests/placements; it does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute."},
     ]
+    source = analysis["source"]
     result = {
         "statisticsSchemaVersion": STATISTICS_SCHEMA_VERSION,
         "statisticsSchemaSha256": sha256(STATISTICS_SCHEMA),
@@ -173,11 +174,11 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         "eligibilityRegistryVersion": registry["registryVersion"],
         "entityCatalogVersion": catalog["schemaVersion"],
         "source": {
-            "replaySha256": manifest["source"]["sha256"],
-            "canonicalManifestSha256": run["canonicalManifest"]["sha256"],
-            "extractionRunId": run["extractionRunId"],
-            "canonicalSchemaVersion": manifest["schemaVersion"],
-            "parserVersion": manifest["versions"]["parserVersion"],
+            "replaySha256": source["replaySha256"],
+            "canonicalManifestSha256": source["canonicalManifestSha256"],
+            "extractionRunId": source["extractionRunId"],
+            "canonicalSchemaVersion": source["canonicalSchemaVersion"],
+            "parserVersion": source["parserVersion"],
         },
         "scope": {"clock": body["durationBasis"], "observedUntilMs": body["durationMs"],
                   "decodeCoveragePercent": body["decodeCoveragePercent"],
@@ -201,7 +202,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
         "townBellEligibility": {"metricCount": registry["metricCount"],
                                 "counts": registry["eligibilityCounts"],
                                 "availableMetricIds": available},
-        "coverage": compact["coverage"],
+        "coverage": analysis["coverage"],
         "warnings": warnings,
     }
     schema = read_json(STATISTICS_SCHEMA)
@@ -213,13 +214,26 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
     return result
 
 
+def project_statistics(directory: Path, *, validate: bool = True, catalog_path: Path = ENTITY_CATALOG) -> dict:
+    """Compatibility entrypoint: canonical bundle -> compact cache -> statistics."""
+    analysis = build_analysis_dataset(directory, validate=validate)
+    return project_statistics_from_analysis(analysis, catalog_path=catalog_path)
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Project conservative statistics from canonical evidence only.")
-    parser.add_argument("bundle", type=Path)
+    parser = argparse.ArgumentParser(
+        description="Project conservative statistics from CanonicalReplay or a compact analysis dataset."
+    )
+    parser.add_argument("bundle", type=Path, nargs="?")
+    parser.add_argument("--analysis", type=Path, help="Compact AOF_REPLAY_ANALYSIS_V1 JSON input.")
     parser.add_argument("--out", type=Path)
     parser.add_argument("--catalog", type=Path, default=ENTITY_CATALOG)
     args = parser.parse_args()
-    result = project_statistics(args.bundle, catalog_path=args.catalog)
+    if bool(args.bundle) == bool(args.analysis):
+        parser.error("Provide exactly one canonical bundle or --analysis dataset")
+    if args.analysis:
+        result = project_statistics_from_analysis(read_json(args.analysis), catalog_path=args.catalog)
+    else:
+        result = project_statistics(args.bundle, catalog_path=args.catalog)
     if args.out:
         args.out.write_bytes(json_bytes(result))
         print(f"Wrote canonical statistics projection to {args.out}")

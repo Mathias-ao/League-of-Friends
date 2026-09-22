@@ -9,6 +9,7 @@ import math
 import tempfile
 import shutil
 import struct
+import time
 import zlib
 from datetime import datetime, timezone
 from importlib.metadata import version as package_version
@@ -758,21 +759,24 @@ def build_canonical_manifest(
     }
 
 
-def build_payload(path: Path, canonical_dir: Path | None = None) -> dict[str, Any]:
+def build_payload(
+    path: Path, canonical_dir: Path | None = None, *,
+    timing_sink: dict[str, float] | None = None,
+) -> dict[str, Any]:
     """Stage and validate before publishing; never replace an existing bundle.
 
     The legacy compact-only call remains available for current admin ingestion.
     It uses the same canonical event projector but is not archival extraction.
     """
     if canonical_dir is None:
-        return _build_payload(path, None)
+        return _build_payload(path, None, timing_sink=timing_sink)
     canonical_dir = canonical_dir.resolve()
     if canonical_dir.exists():
         raise FileExistsError(f"Canonical bundle already exists: {canonical_dir}; select a new run directory")
     canonical_dir.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".canonical-stage-", dir=canonical_dir.parent))
     try:
-        result = _build_payload(path, staging)
+        result = _build_payload(path, staging, timing_sink=timing_sink)
         if canonical_dir.exists():
             raise FileExistsError(f"Canonical destination appeared during extraction: {canonical_dir}")
         staging.rename(canonical_dir)
@@ -782,10 +786,16 @@ def build_payload(path: Path, canonical_dir: Path | None = None) -> dict[str, An
             shutil.rmtree(staging)
 
 
-def _build_payload(path: Path, canonical_dir: Path | None) -> dict[str, Any]:
+def _build_payload(
+    path: Path, canonical_dir: Path | None, *,
+    timing_sink: dict[str, float] | None = None,
+) -> dict[str, Any]:
     warnings: list[str] = []
     structured_warnings: list[dict[str, Any]] = []
+    total_started = time.perf_counter()
     parsed_at = datetime.now(timezone.utc).isoformat()
+
+    source_started = time.perf_counter()
     preflight_source(path)
     source_hash = file_sha256(path)
 
@@ -795,8 +805,11 @@ def _build_payload(path: Path, canonical_dir: Path | None) -> dict[str, Any]:
         body_offset = handle.tell()
         handle.seek(0)
         prefix = handle.read(body_offset)
+    if timing_sink is not None:
+        timing_sink["sourcePreflightHeaderMs"] = round((time.perf_counter() - source_started) * 1000, 3)
 
     players = extract_players(header, warnings)
+    decode_started = time.perf_counter()
     fact_writer: JsonlGzipWriter | None = None
     terrain_store: dict[str, Any] | None = None
     object_store: dict[str, Any] | None = None
@@ -831,7 +844,18 @@ def _build_payload(path: Path, canonical_dir: Path | None) -> dict[str, Any]:
         manifest_path = canonical_dir / "canonical-replay.json"
         manifest_path.write_bytes(json_bytes(canonical))
         run = stage_run(canonical_dir, canonical, header, prefix, body, players, json_safe(header))
+        if timing_sink is not None:
+            timing_sink["replayDecodeCanonicalWriteMs"] = round((time.perf_counter() - decode_started) * 1000, 3)
+        verification_started = time.perf_counter()
         seal_local(canonical_dir, run)
+        if timing_sink is not None:
+            timing_sink["canonicalVerificationMs"] = round((time.perf_counter() - verification_started) * 1000, 3)
+    elif timing_sink is not None:
+        timing_sink["replayDecodeCanonicalWriteMs"] = round((time.perf_counter() - decode_started) * 1000, 3)
+        timing_sink["canonicalVerificationMs"] = 0.0
+
+    if timing_sink is not None:
+        timing_sink["parserTotalMs"] = round((time.perf_counter() - total_started) * 1000, 3)
 
     de = header.get("de") or {}
     replay = {
@@ -888,6 +912,7 @@ def main() -> None:
     parser.add_argument("--out", type=Path, help="Adapter JSON output path. Defaults to stdout.")
     parser.add_argument("--canonical-dir", type=Path, help="Optional directory for CanonicalReplay manifest + gzipped fact stores.")
     parser.add_argument("--pretty", action="store_true", help="Pretty-print adapter JSON.")
+    parser.add_argument("--timings-out", type=Path, help="Optional JSON file for extraction stage timings.")
     args = parser.parse_args()
 
     replay_path = args.replay.expanduser().resolve()
@@ -895,7 +920,8 @@ def main() -> None:
         raise SystemExit(f"Replay file not found: {replay_path}")
 
     canonical_dir = args.canonical_dir.expanduser().resolve() if args.canonical_dir else None
-    result = build_payload(replay_path, canonical_dir)
+    timings: dict[str, float] = {}
+    result = build_payload(replay_path, canonical_dir, timing_sink=timings)
     serialized = json.dumps(result, indent=2 if args.pretty else None, ensure_ascii=False, allow_nan=False)
 
     if args.out:
@@ -907,6 +933,10 @@ def main() -> None:
             print(f"Wrote CanonicalReplay bundle to {canonical_dir}")
     else:
         print(serialized)
+    if args.timings_out:
+        timings_path = args.timings_out.expanduser().resolve()
+        timings_path.parent.mkdir(parents=True, exist_ok=True)
+        timings_path.write_text(json.dumps(timings, indent=2) + "\n", encoding="utf-8")
     if not result["payload"]["body"]["bodyParseComplete"]:
         raise SystemExit("Incomplete body extraction; diagnostic evidence retained, source must not be deleted or ingested as complete.")
 

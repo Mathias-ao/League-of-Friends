@@ -7,6 +7,7 @@ import readline from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
 import { safeFileName, semanticDiff, unresolvedEntities } from "./lib.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,7 @@ const HOST = process.env.AOF_REPLAY_LAB_HOST || "127.0.0.1";
 const MAX_UPLOAD_BYTES = Number(process.env.AOF_REPLAY_LAB_MAX_BYTES || 128 * 1024 * 1024);
 
 const PARSER = path.join(ROOT, "replay-tools", "parse_replay.py");
+const ANALYSIS_DATASET = path.join(ROOT, "replay-tools", "analysis_dataset.py");
 const STATISTICS = path.join(ROOT, "replay-tools", "statistics_projector.py");
 
 await fs.mkdir(WORK_ROOT, { recursive: true });
@@ -44,6 +46,19 @@ async function readJson(file, fallback = null) {
 
 async function writeJson(file, value) {
   await fs.writeFile(file, JSON.stringify(value, null, 2) + "\n", "utf8");
+}
+
+async function fileExists(file) {
+  try {
+    await fs.access(file);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function roundedMs(started) {
+  return Math.round((performance.now() - started) * 1000) / 1000;
 }
 
 function runDir(id) {
@@ -159,13 +174,46 @@ async function extractReplay(req) {
   const canonical = path.join(directory, "canonical");
   const source = path.join(directory, fileName);
   const adapter = path.join(directory, "adapter.json");
+  const parserTimingsPath = path.join(directory, "parser-timings.json");
+  const analysis = path.join(directory, "analysis.json");
   const statistics = path.join(directory, "statistics-current.json");
+  const totalStarted = performance.now();
   await fs.mkdir(directory, { recursive: false });
 
   try {
+    const uploadStarted = performance.now();
     const byteLength = await receiveUpload(req, source);
-    await runCommand(PYTHON, [PARSER, source, "--canonical-dir", canonical, "--out", adapter, "--pretty"]);
-    const parsed = await readJson(adapter);
+    const uploadMs = roundedMs(uploadStarted);
+
+    await runCommand(PYTHON, [
+      PARSER, source,
+      "--canonical-dir", canonical,
+      "--out", adapter,
+      "--pretty",
+      "--timings-out", parserTimingsPath,
+    ]);
+    const [parsed, parserTimings] = await Promise.all([
+      readJson(adapter),
+      readJson(parserTimingsPath, {}),
+    ]);
+
+    const analysisStarted = performance.now();
+    await runCommand(PYTHON, [
+      ANALYSIS_DATASET, canonical,
+      "--out", analysis,
+      "--already-validated",
+    ]);
+    const analysisDatasetMs = roundedMs(analysisStarted);
+    const analysisDocument = await readJson(analysis);
+
+    const statisticsStarted = performance.now();
+    await runCommand(PYTHON, [STATISTICS, "--analysis", analysis, "--out", statistics]);
+    const statisticsProjectionMs = roundedMs(statisticsStarted);
+
+    const parseCanonicalWriteMs =
+      Number(parserTimings?.sourcePreflightHeaderMs || 0) +
+      Number(parserTimings?.replayDecodeCanonicalWriteMs || 0);
+
     const metadata = {
       id,
       fileName,
@@ -175,15 +223,25 @@ async function extractReplay(req) {
       parserName: parsed?.parserName ?? null,
       parserVersion: parsed?.parserVersion ?? null,
       adapterSchemaVersion: parsed?.schemaVersion ?? null,
-      statisticsRevision: 0,
-      status: "canonical_extracted",
+      statisticsRevision: 1,
+      status: "ready",
+      statisticsUpdatedAt: new Date().toISOString(),
+      analysisDataset: {
+        fileName: "analysis.json",
+        schemaVersion: analysisDocument?.schemaVersion ?? null,
+        datasetVersion: analysisDocument?.datasetVersion ?? null,
+        summary: analysisDocument?.summary ?? null,
+      },
+      timings: {
+        uploadMs,
+        replayParseCanonicalWriteMs: Math.round(parseCanonicalWriteMs * 1000) / 1000,
+        canonicalVerificationMs: Number(parserTimings?.canonicalVerificationMs || 0),
+        analysisDatasetMs,
+        statisticsProjectionMs,
+        totalMs: roundedMs(totalStarted),
+        parserDetail: parserTimings,
+      },
     };
-    await writeJson(path.join(directory, "metadata.json"), metadata);
-
-    await runCommand(PYTHON, [STATISTICS, canonical, "--out", statistics]);
-    metadata.statisticsRevision = 1;
-    metadata.status = "ready";
-    metadata.statisticsUpdatedAt = new Date().toISOString();
     await writeJson(path.join(directory, "metadata.json"), metadata);
     return id;
   } finally {
@@ -200,15 +258,37 @@ async function recalculate(id) {
 
   const current = path.join(directory, "statistics-current.json");
   const canonical = path.join(directory, "canonical");
+  const analysis = path.join(directory, "analysis.json");
   const before = await readJson(current);
   const previousRevision = Number(metadata.statisticsRevision || 0);
   const history = path.join(directory, "history");
   await fs.mkdir(history, { recursive: true });
   if (before) await fs.copyFile(current, path.join(history, `statistics-r${previousRevision}.json`));
 
+  let analysisDatasetMs = 0;
+  if (!(await fileExists(analysis))) {
+    const analysisStarted = performance.now();
+    await runCommand(PYTHON, [
+      ANALYSIS_DATASET, canonical,
+      "--out", analysis,
+      "--already-validated",
+    ]);
+    analysisDatasetMs = roundedMs(analysisStarted);
+    const analysisDocument = await readJson(analysis);
+    metadata.analysisDataset = {
+      fileName: "analysis.json",
+      schemaVersion: analysisDocument?.schemaVersion ?? null,
+      datasetVersion: analysisDocument?.datasetVersion ?? null,
+      summary: analysisDocument?.summary ?? null,
+      migratedFromLegacyRun: true,
+    };
+  }
+
   const next = path.join(directory, "statistics-next.json");
   await fs.rm(next, { force: true });
-  await runCommand(PYTHON, [STATISTICS, canonical, "--out", next]);
+  const statisticsStarted = performance.now();
+  await runCommand(PYTHON, [STATISTICS, "--analysis", analysis, "--out", next]);
+  const statisticsProjectionMs = roundedMs(statisticsStarted);
   const after = await readJson(next);
   const changes = semanticDiff(before, after);
   await fs.rename(next, current);
@@ -216,6 +296,13 @@ async function recalculate(id) {
   metadata.statisticsRevision = previousRevision + 1;
   metadata.statisticsUpdatedAt = new Date().toISOString();
   metadata.status = "ready";
+  metadata.lastRecalculation = {
+    analysisDatasetMs,
+    statisticsProjectionMs,
+    totalMs: Math.round((analysisDatasetMs + statisticsProjectionMs) * 1000) / 1000,
+    replayReparsed: false,
+    canonicalRevalidated: false,
+  };
   await writeJson(metadataPath, metadata);
   await writeJson(path.join(directory, "comparison-latest.json"), {
     beforeRevision: previousRevision,
