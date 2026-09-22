@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "AOF_AIREF_DE_SOURCE_POLICY_V1",
+  "purpose": "Guardrail for any future AIRef enrichment of the Age of Friends entity catalogue.",
+  "allowed": {
+    "repository": "airef/airef.github.io",
+    "tablePath": "tables/objects.html",
+    "requiredApplicabilityField": "de",
+    "requiredApplicabilityValue": 1,
+    "game": "Age of Empires II: Definitive Edition"
+  },
+  "excludedTablePaths": [
+    "tables/objects-ror.html",
+    "tables/objects-bfg.html"
+  ],
+  "provenanceRequired": [
+    "sourceCommit",
+    "sourceTablePath",
+    "rawObjectId",
+    "deApplicability"
+  ],
+  "notes": [
+    "Do not infer DE applicability solely from an object appearing on the main table.",
+    "Do not collapse version-dependent IDs into one timeless mapping.",
+    "Dead-object and projectile relationships are catalogue metadata, not evidence that an outcome occurred in a replay."
+  ]
+}
