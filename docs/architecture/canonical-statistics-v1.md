@@ -12,6 +12,7 @@ Date: 13 September 2026. This milestone defines a conservative, replay-free stat
 | Formula set | `AOF_OBSERVED_COMMAND_FORMULAS_V1` | Defines command count, first/last command, first-five-observed-minutes, active seconds, rate and selection-size summaries. |
 | Build-order classifier | `AOF_BUILD_ORDER_V2` | Classifies a player's primary opening from age, placement, production and start-position evidence while retaining versioned execution/difficulty scores and trigger evidence. |
 | Raid detector | `AOF_RAID_DETECTION_V1` | Counts directional hostile-command episodes inside time-aware enemy economic zones while retaining attacker, victim and episode evidence. |
+| Economy statistics | `AOF_ECONOMY_STATISTICS_V1` | Projects queue-derived Villager checkpoints, TC placement/activity, eco-tech, Farm, market, food-animal interaction and 20-minute commitment metrics while retaining evidence boundaries. |
 | Entity labels | `AOF_ENTITY_CATALOG_V1_1` | Adds reference names and role keys while retaining raw IDs. Labels are explicitly unqualified for the replay patch/data mods. |
 | Corpus report | `AOF_STATISTICS_CORPUS_V1` | Produces privacy-minimized comparable totals across canonical bundles. |
 
@@ -86,6 +87,22 @@ Victim resolution first uses known target-instance ownership when that target is
 Observations for the same attacker→victim pair are grouped into one episode while consecutive evidence remains within 60 seconds. An episode counts as a raid only if it contains at least one strong hostile signal. The output retains the attacker, victim, start/end times, command types, strong/supporting command counts, evidence event IDs and victim-resolution methods.
 
 This model does **not** claim that damage occurred, that a unit reached the destination, that villagers were killed, or that the raid succeeded. It is a deterministic inference over hostile command evidence inside reconstructed economic zones.
+
+## Economy inference: `AOF_ECONOMY_STATISTICS_V1`
+
+Economy V1 deliberately mixes three clearly labeled evidence classes. Farm/TC placement and market-command counts/times are observed commands. Villager checkpoints, economic-technology completion and resource commitment are reconstructions from decoded request quantities and pinned nominal timings/costs. TC idle/gap measures and Gaia-food-source measures are inferences.
+
+`Villagers trained` follows the TownBell-control convention: it is the sum of positive decoded Villager queue amounts. It is not an engine completion claim. `Villagers by 20 minutes` starts from the same qualified civilization-aware starting baseline used by Opening V5 and applies net decoded Villager queue amounts through 20:00; survival, deaths and exact queue completion are not available.
+
+TC count/timing uses qualified starting TC evidence plus Town Center placement commands. The catalog contains multiple raw Town Center IDs, so Economy V1 recognizes the reference name or `town_center` role rather than only one raw ID. First-extra and third-TC times are placement times. Dark-Age TC idle time models nominal starting-TC workload through the latest Feudal click from Villager queue work and Loom. Longest idle gap / gaps over 30s use decoded producer-object streams and remain inference because producer identity, multi-selection queue distribution, population blocking, resource starvation, cancellation semantics and exact engine acceptance are not fully qualified.
+
+Economic technology output uses an explicit DE economic-tech set. The latest observed request is used for each supported technology and nominal research duration gives an inferred completion time. Farms-before-Horse-Collar and eco-upgrades-by-Castle compare placement/request-derived completions against inferred boundaries, not observed technology completion.
+
+Market transaction count/type/time is decoded command evidence. Market volume is the sum of absolute decoded BUY/SELL command amounts; it does not simulate dynamic prices, fees or gold proceeds.
+
+Food-animal metrics are conservative interaction proxies. Economy V1 recognizes DE-family raw object IDs for Wild/Iron Boar/Javelina, Deer, and a conservative Sheep/Turkey livestock set, then counts distinct initial objects targeted by player ORDER commands. These metrics do not claim kills or food gathered. Because canonical initial-object extraction is currently non-exhaustive, the counts may undercount and expose coverage diagnostics.
+
+The 20-minute eco:military ratio prices classified queue/research/build-placement requests using the pinned base entity catalog and excludes age-up costs. It retains unclassified/unpriced commitment separately; it is not resources gathered, floated or exact spend.
 
 ## Remaining research boundary
 
