@@ -54,7 +54,7 @@ Optional environment variables:
 1. Drop a local `.aoe2record`.
 2. **Extract replay** creates CanonicalReplay, applies a fast structural seal, creates compact `analysis.json`, then projects statistics. The fast seal is explicitly marked `sealed_local_fast`, not fully verified.
 3. Inspect the Overview timing cards to see upload, parse/canonical write, canonical seal, analysis-cache generation and statistics time separately.
-4. Inspect player sections, the canonical event timeline, raw evidence, coverage warnings, unknown actions and unresolved entity IDs.
+4. Inspect player sections as compact review tables: one statistic/item per row with value, evidence layer and notes. Timeline/Raw Evidence keep their expandable raw JSON because those tabs are explicitly for evidence inspection.
 5. Change a statistics model in `replay-tools/`.
 6. Click **Recalculate statistics**. This reads `analysis.json`; it does **not** reparse the replay and does **not** redo full canonical validation.
 7. Open **Comparison** to inspect JSON-pointer-level changes between the previous and current projections.
