@@ -89,4 +89,12 @@ npm --prefix functions run build
 firebase emulators:start --project demo-league-of-friends
 ```
 
+For rapid statistics iteration without Firebase or the player website, run the development-only **AoF Replay Lab**:
+
+```bash
+npm --prefix replay-lab start
+```
+
+It extracts CanonicalReplay once, then recalculates statistics from retained canonical evidence without reparsing the recording. See [`replay-lab/README.md`](replay-lab/README.md).
+
 Replay installation and corpus instructions are in [`README-TEST.md`](README-TEST.md). V1.4 analysis instructions are in [`README-MATCH-ANALYSIS-V1_4.md`](README-MATCH-ANALYSIS-V1_4.md). Never commit service-account keys, replay files containing private player data, or other secrets.
