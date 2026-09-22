@@ -82,6 +82,7 @@ The current replay/statistics foundation includes:
 - Forward Eco classification using the Map Presence V2 forward geometry.
 - Observed command and selection evidence for Execution statistics.
 - Versioned tests, golden projections and architecture documents for the active models.
+- Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.
 
 The statistics system preserves the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
 
