@@ -25,8 +25,8 @@ from opening_statistics import (
     _villager_train_ms,
 )
 
-ECONOMY_STATISTICS_VERSION = "AOF_ECONOMY_STATISTICS_V1"
-TC_ACTIVITY_MODEL_VERSION = "AOF_TC_ACTIVITY_V1"
+ECONOMY_STATISTICS_VERSION = "AOF_ECONOMY_STATISTICS_V2"
+TC_ACTIVITY_MODEL_VERSION = "AOF_TC_ACTIVITY_V2"
 COMMITMENT_RATIO_VERSION = "AOF_ECO_MILITARY_COMMITMENT_20M_V1"
 
 CHECKPOINT_20_MIN_MS = 20 * 60_000
@@ -37,7 +37,11 @@ ECO_TECH_IDS = {
     12,   # Crop Rotation
     13,   # Heavy Plow
     14,   # Horse Collar
+    15,   # Guilds
+    17,   # Banking
     22,   # Loom
+    23,   # Coinage
+    48,   # Caravan
     55,   # Gold Mining
     65,   # Gillnets
     182,  # Gold Shaft Mining
@@ -51,7 +55,9 @@ ECO_TECH_IDS = {
     906,  # Fishing Lines
 }
 HORSE_COLLAR_TECH_ID = 14
-TC_RESEARCH_IDS = ECO_TECH_IDS | set(AGE_TECH_IDS.values())
+TC_RESEARCH_IDS = {8, 22, 213, 249, 280} | set(AGE_TECH_IDS.values())
+ECO_UPGRADE_BY_CASTLE_IDS = ECO_TECH_IDS - {22}
+MARKET_LOT_RESOURCE_AMOUNT = 100
 
 # AIRef AoE2 object identities used only for targeted Gaia-food interaction
 # inference. These are not Return of Rome / Chronicles tables.
@@ -91,6 +97,13 @@ def _latest_event(events: list[dict[str, Any]], key: str, raw_id: int) -> dict[s
     return candidates[-1] if candidates else None
 
 
+def _first_event(events: list[dict[str, Any]], key: str, raw_id: int) -> dict[str, Any] | None:
+    for event in events:
+        if event.get(key) == raw_id and isinstance(event.get("atMs"), int):
+            return event
+    return None
+
+
 def _age_up_at(research: list[dict[str, Any]], age: str) -> int | None:
     event = _latest_event(research, "technologyId", AGE_TECH_IDS[age])
     return event["atMs"] + AGE_RESEARCH_MS[age] if event is not None else None
@@ -111,20 +124,20 @@ def _eco_techs(
     research: list[dict[str, Any]],
     civ_id: int | None,
     catalog: dict[str, Any],
-    castle_age_up_ms: int | None,
+    castle_click_ms: int | None,
 ) -> tuple[list[dict[str, Any]], int]:
     rows: list[dict[str, Any]] = []
     by_castle = 0
     for tech_id in sorted(ECO_TECH_IDS):
-        event = _latest_event(research, "technologyId", tech_id)
+        event = _first_event(research, "technologyId", tech_id)
         if event is None:
             continue
         duration = _tech_research_ms(civ_id, tech_id, catalog)
         complete = event["atMs"] + duration if duration is not None else None
         before_castle = (
-            complete is not None
-            and castle_age_up_ms is not None
-            and complete <= castle_age_up_ms
+            tech_id in ECO_UPGRADE_BY_CASTLE_IDS
+            and castle_click_ms is not None
+            and event["atMs"] < castle_click_ms
         )
         if before_castle:
             by_castle += 1
@@ -132,7 +145,7 @@ def _eco_techs(
             "technology": _entity(catalog, "technologies", tech_id),
             "researchRequestedAtMs": event["atMs"],
             "inferredCompleteAtMs": round(complete, 3) if complete is not None else None,
-            "completedByCastleAgeUp": before_castle if castle_age_up_ms is not None else None,
+            "requestedBeforeCastleClick": before_castle if castle_click_ms is not None else None,
             "sourceEventId": event.get("sourceEventId"),
         })
     rows.sort(key=lambda row: (row["researchRequestedAtMs"], row["technology"]["rawId"]))
@@ -359,12 +372,13 @@ def _tc_activity_gaps(
 
     return {
         "layer": "inferred",
+        "modelVersion": TC_ACTIVITY_MODEL_VERSION,
         "longestGapMs": round(max(gaps), 3) if gaps else (0 if streams else None),
         "gapCountOver30s": sum(gap > IDLE_GAP_THRESHOLD_MS for gap in gaps) if streams else None,
         "producerStreamCount": len(streams),
         "activityCommandsWithoutProducerIds": unresolved,
-        "basis": "gaps between reconstructed Villager/TC-research workload intervals on decoded producer-object streams",
-        "note": "Producer identities and multi-selection queue distribution are replay-command inference, not engine-state TC utilization.",
+        "basis": "gaps between reconstructed Villager and Town-Center-only research workload intervals on decoded producer-object streams",
+        "note": "Only TC technologies (ages, Loom, Wheelbarrow, Hand Cart, Town Watch/Patrol) can contribute research workload. Producer identities and multi-selection queue distribution remain replay-command inference.",
     }
 
 
@@ -372,7 +386,7 @@ def _market_metrics(market: list[dict[str, Any]]) -> dict[str, Any]:
     transactions = len(market)
     sales = sum(event.get("type") == "SELL" for event in market)
     purchases = sum(event.get("type") == "BUY" for event in market)
-    decoded_amounts = [
+    decoded_lots = [
         abs(event["amount"]) for event in market if isinstance(event.get("amount"), (int, float))
     ]
     first = min((event["atMs"] for event in market if isinstance(event.get("atMs"), int)), default=None)
@@ -380,9 +394,11 @@ def _market_metrics(market: list[dict[str, Any]]) -> dict[str, Any]:
         "transactions": {"layer": "observed", "count": transactions},
         "volumeTraded": {
             "layer": "observed",
-            "amount": sum(decoded_amounts),
-            "decodedAmountEventCount": len(decoded_amounts),
-            "basis": "sum of absolute decoded BUY/SELL command amounts; not gold proceeds after market pricing",
+            "amount": sum(decoded_lots) * MARKET_LOT_RESOURCE_AMOUNT,
+            "decodedLotCount": sum(decoded_lots),
+            "resourceAmountPerLot": MARKET_LOT_RESOURCE_AMOUNT,
+            "decodedAmountEventCount": len(decoded_lots),
+            "basis": "decoded market amount is a count of 100-resource lots; volume is absolute lots × 100, not gold proceeds after market pricing",
         },
         "firstUse": {"layer": "observed", "atMs": first},
         "sales": {"layer": "observed", "count": sales},
@@ -488,18 +504,32 @@ def _animal_interactions(
     action_events: list[dict[str, Any]],
 ) -> dict[str, Any]:
     targets: dict[int, int] = {}
+    food_objects: list[dict[str, Any]] = []
     for event in initial_objects:
         ids = event.get("objectInstanceIds") or []
         raw_id = (event.get("payload") or {}).get("objectId")
+        position = event.get("position") or {}
         if len(ids) == 1 and isinstance(ids[0], int) and isinstance(raw_id, int):
             targets[ids[0]] = raw_id
+            if raw_id in BOAR_OBJECT_IDS | DEER_OBJECT_IDS | LIVESTOCK_OBJECT_IDS:
+                x, y = position.get("x"), position.get("y")
+                if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                    food_objects.append({
+                        "instanceId": ids[0],
+                        "rawId": raw_id,
+                        "x": float(x),
+                        "y": float(y),
+                    })
 
     ordered = sorted(
         (
             event for event in action_events
             if event.get("actorPlayerId") == player_id
             and event.get("sourceActionName") == "ORDER"
-            and isinstance(event.get("targetInstanceId"), int)
+            and (
+                isinstance(event.get("targetInstanceId"), int)
+                or isinstance((event.get("position") or {}).get("x"), (int, float))
+            )
         ),
         key=lambda event: (event.get("timestampMs", 0), event.get("operationOrdinal", 0)),
     )
@@ -507,12 +537,39 @@ def _animal_interactions(
     deer: dict[int, int] = {}
     livestock: dict[int, int] = {}
     unresolved_targets = 0
+    spatial_fallback_matches = 0
+
+    def resolve(event: dict[str, Any]) -> tuple[int, int] | None:
+        nonlocal spatial_fallback_matches
+        target_id = event.get("targetInstanceId")
+        raw_id = targets.get(target_id) if isinstance(target_id, int) else None
+        if raw_id is not None:
+            return int(target_id), raw_id
+
+        position = event.get("position") or {}
+        x, y = position.get("x"), position.get("y")
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+            return None
+        candidates = []
+        for item in food_objects:
+            distance2 = (float(x) - item["x"]) ** 2 + (float(y) - item["y"]) ** 2
+            if distance2 <= 1.5 ** 2:
+                candidates.append((distance2, item))
+        candidates.sort(key=lambda row: row[0])
+        if not candidates:
+            return None
+        if len(candidates) > 1 and abs(candidates[1][0] - candidates[0][0]) < 0.25:
+            return None
+        spatial_fallback_matches += 1
+        item = candidates[0][1]
+        return item["instanceId"], item["rawId"]
+
     for event in ordered:
-        target_id = event["targetInstanceId"]
-        raw_id = targets.get(target_id)
-        if raw_id is None:
+        resolved = resolve(event)
+        if resolved is None:
             unresolved_targets += 1
             continue
+        target_id, raw_id = resolved
         at = int(event.get("timestampMs") or 0)
         if raw_id in BOAR_OBJECT_IDS:
             boars.setdefault(target_id, at)
@@ -525,7 +582,7 @@ def _animal_interactions(
         "firstBoarLure": {
             "layer": "inferred",
             "atMs": min(boars.values()) if boars else None,
-            "basis": "first player ORDER targeting a known boar-family initial object",
+            "basis": "first player ORDER resolved to a known boar-family initial object by target identity or tight target-position fallback",
         },
         "boarsTaken": {
             "layer": "inferred",
@@ -544,11 +601,13 @@ def _animal_interactions(
         },
         "animalInteractionCoverage": {
             "initialObjectIdentityCount": len(targets),
+            "knownFoodObjectsWithPositions": len(food_objects),
             "orderTargetsUnresolvedAgainstInitialObjects": unresolved_targets,
+            "spatialFallbackMatches": spatial_fallback_matches,
             "knownBoarRawIds": sorted(BOAR_OBJECT_IDS),
             "knownDeerRawIds": sorted(DEER_OBJECT_IDS),
             "knownLivestockRawIds": sorted(LIVESTOCK_OBJECT_IDS),
-            "note": "Initial-object search is non-exhaustive, so these animal counts can undercount.",
+            "note": "Initial-object search is non-exhaustive, so these animal counts can undercount; spatial fallback only uses known food objects within 1.5 tiles.",
         },
     }
 
@@ -583,6 +642,8 @@ def project_economy_statistics(
         )
         feudal_click_event = _latest_event(research, "technologyId", AGE_TECH_IDS["feudal"])
         feudal_click = feudal_click_event["atMs"] if feudal_click_event is not None else None
+        castle_click_event = _latest_event(research, "technologyId", AGE_TECH_IDS["castle"])
+        castle_click = castle_click_event["atMs"] if castle_click_event is not None else None
         castle_age_up = _age_up_at(research, "castle")
 
         tc_placements = [event for event in builds if _is_town_center(catalog, event.get("buildingId"))]
@@ -598,8 +659,8 @@ def project_economy_statistics(
             else None
         )
 
-        eco_tech_rows, eco_by_castle = _eco_techs(research, civ_id, catalog, castle_age_up)
-        horse = _latest_event(research, "technologyId", HORSE_COLLAR_TECH_ID)
+        eco_tech_rows, eco_by_castle = _eco_techs(research, civ_id, catalog, castle_click)
+        horse = _first_event(research, "technologyId", HORSE_COLLAR_TECH_ID)
         horse_duration = _tech_research_ms(civ_id, HORSE_COLLAR_TECH_ID, catalog)
         horse_complete = (
             horse["atMs"] + horse_duration
@@ -609,12 +670,12 @@ def project_economy_statistics(
 
         farms = [event for event in builds if _is_farm(catalog, event.get("buildingId"))]
         farms_before_horse = (
-            sum(event["atMs"] < horse_complete for event in farms)
-            if horse_complete is not None else None
+            sum(event["atMs"] < horse["atMs"] for event in farms)
+            if horse is not None else None
         )
         farms_before_castle = (
-            sum(event["atMs"] < castle_age_up for event in farms)
-            if castle_age_up is not None else None
+            sum(event["atMs"] < castle_click for event in farms)
+            if castle_click is not None else None
         )
 
         dark_idle = _busy_intervals_single_tc_dark_age(
@@ -670,13 +731,13 @@ def project_economy_statistics(
                 "layer": "inferred",
                 "count": len(eco_tech_rows),
                 "technologies": eco_tech_rows,
-                "basis": "distinct supported eco-tech latest research requests with nominal completion timing",
+                "basis": "distinct supported economic technologies using the first observed research request; includes Market economy technologies",
             },
             "ecoUpgradesByCastle": {
                 "layer": "inferred",
-                "count": eco_by_castle if castle_age_up is not None else None,
-                "castleAgeUpAtMs": castle_age_up,
-                "basis": "supported eco-tech inferred completion at or before inferred Castle age-up",
+                "count": eco_by_castle if castle_click is not None else None,
+                "castleClickAtMs": castle_click,
+                "basis": "supported economic upgrade research requests before the latest Castle click; Loom excluded from this TownBell-compatible count",
             },
             "horseCollar": {
                 "layer": "inferred",
@@ -695,14 +756,14 @@ def project_economy_statistics(
             "farmsBeforeHorseCollar": {
                 "layer": "reconstructed",
                 "count": farms_before_horse,
-                "boundaryMs": round(horse_complete, 3) if horse_complete is not None else None,
-                "basis": "Farm placements before inferred Horse Collar completion; null if Horse Collar absent",
+                "boundaryMs": horse["atMs"] if horse is not None else None,
+                "basis": "Farm placements before the first observed Horse Collar research request; null if Horse Collar absent",
             },
             "farmsBeforeCastle": {
                 "layer": "reconstructed",
                 "count": farms_before_castle,
-                "boundaryMs": castle_age_up,
-                "basis": "Farm placements before inferred Castle age-up",
+                "boundaryMs": castle_click,
+                "basis": "Farm placements before the latest observed Castle research request",
             },
             "market": _market_metrics(market),
             "ecoMilitaryRatioAt20Minutes": _commitment_ratio_20m(

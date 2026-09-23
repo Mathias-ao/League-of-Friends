@@ -31,7 +31,7 @@ const ECONOMY_TOWNBELL_MAP = {
   "tcIdleGapsOver30s.count": { id: "idle_gaps_over_30s" },
   "economicTechsResearched.count": { id: "eco_techs_researched" },
   "ecoUpgradesByCastle.count": { id: "eco_upgrades_by_castle" },
-  "horseCollar.inferredCompleteAtMs": { id: "horse_collar_time", unit: "duration" },
+  "horseCollar.researchRequestedAtMs": { id: "horse_collar_time", unit: "duration" },
   "farmsPlaced.count": { id: "farms_built" },
   "firstFarm.atMs": { id: "first_farm", unit: "duration" },
   "farmsBeforeHorseCollar.count": { id: "farms_before_horse_collar" },
