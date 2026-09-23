@@ -372,12 +372,13 @@ def _tc_activity_gaps(
 
     return {
         "layer": "inferred",
+        "modelVersion": TC_ACTIVITY_MODEL_VERSION,
         "longestGapMs": round(max(gaps), 3) if gaps else (0 if streams else None),
         "gapCountOver30s": sum(gap > IDLE_GAP_THRESHOLD_MS for gap in gaps) if streams else None,
         "producerStreamCount": len(streams),
         "activityCommandsWithoutProducerIds": unresolved,
-        "basis": "gaps between reconstructed Villager/TC-research workload intervals on decoded producer-object streams",
-        "note": "Producer identities and multi-selection queue distribution are replay-command inference, not engine-state TC utilization.",
+        "basis": "gaps between reconstructed Villager and Town-Center-only research workload intervals on decoded producer-object streams",
+        "note": "Only TC technologies (ages, Loom, Wheelbarrow, Hand Cart, Town Watch/Patrol) can contribute research workload. Producer identities and multi-selection queue distribution remain replay-command inference.",
     }
 
 
