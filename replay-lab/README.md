@@ -54,12 +54,14 @@ Optional environment variables:
 1. Drop a local `.aoe2record`.
 2. **Extract replay** creates CanonicalReplay, applies a fast structural seal, creates compact `analysis.json`, then projects statistics. The fast seal is explicitly marked `sealed_local_fast`, not fully verified.
 3. Inspect the Overview timing cards to see upload, parse/canonical write, canonical seal, analysis-cache generation and statistics time separately.
-4. Inspect player sections as compact review tables: one statistic/item per row with value, evidence layer and notes. Timeline/Raw Evidence keep their expandable raw JSON because those tabs are explicitly for evidence inspection.
-5. Change a statistics model in `replay-tools/`.
-6. Click **Recalculate statistics**. This reads `analysis.json`; it does **not** reparse the replay and does **not** redo full canonical validation.
-7. Open **Comparison** to inspect JSON-pointer-level changes between the previous and current projections.
+4. Inspect player sections as compact review tables. The Economy tab uses a row-wise review matrix.
+5. Optionally click **Attach TownBell report** and choose the TownBell exported JSON for the same replay. Replay Lab stores a normalized local control next to the run and maps TownBell player numbers to AoF replay slots. TownBell remains a comparison control, never canonical evidence.
+6. With a TownBell control attached, Economy renders one row per AoF metric leaf and paired columns for every player: **AoF** then **TownBell**. Known comparable metrics are mapped by explicit metric ID; AoF-only diagnostic/basis rows stay visible with blank TownBell cells. Duration values are normalized to the same display clock.
+7. Change a statistics model in `replay-tools/`.
+8. Click **Recalculate statistics**. This reads `analysis.json`; it does **not** reparse the replay and does **not** redo full canonical validation. The attached TownBell control remains in place.
+9. Open **Comparison** to inspect JSON-pointer-level changes between the previous and current AoF projections.
 
-The temporary browser-upload copy of the recording is deleted after extraction. The user's original recording is untouched. Local canonical, analysis-cache and statistics artifacts remain under the lab work directory and are ignored by Git.
+The temporary browser-upload copy of the recording is deleted after extraction. The user's original recording is untouched. Local canonical, analysis-cache, statistics and normalized TownBell-control artifacts remain under the lab work directory and are ignored by Git.
 
 Older Replay Lab runs without `analysis.json` are migrated on their next recalculation by generating the compact cache once from their existing sealed/verified canonical bundle.
 
