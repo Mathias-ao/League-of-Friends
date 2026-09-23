@@ -9,12 +9,19 @@ from economy_statistics import project_economy_statistics
 
 CATALOG = {
     "buildings": {
-        "50": {"id": 50, "name": "Farm", "roleKeys": ["farm", "economy"], "cost": {"Wood": 60}, "trainTime": 15},
+        "45": {"id": 45, "name": "Dock", "internalName": "DOCK", "roleKeys": ["dock", "naval_economy"], "cost": {"Wood": 150}, "trainTime": 35},
+        "50": {"id": 50, "name": "Farm", "internalName": "FARM", "roleKeys": ["farm", "economy"], "cost": {"Wood": 60}, "trainTime": 15},
+        "68": {"id": 68, "name": "Mill", "internalName": "MILL", "roleKeys": ["mill", "economy"], "cost": {"Wood": 100}, "trainTime": 35},
         "70": {"id": 70, "name": "House", "roleKeys": ["house"], "cost": {"Wood": 25}, "trainTime": 25},
-        "84": {"id": 84, "name": "Market", "roleKeys": ["market", "economy"], "cost": {"Wood": 175}, "trainTime": 60},
+        "84": {"id": 84, "name": "Market", "internalName": "MRKT", "roleKeys": ["market", "economy"], "cost": {"Wood": 175}, "trainTime": 60},
         "87": {"id": 87, "name": "Archery Range", "roleKeys": ["archery_range", "military_production"], "cost": {"Wood": 175}, "trainTime": 50},
-        "109": {"id": 109, "name": "Town Center", "roleKeys": ["town_center", "economy", "population_production"], "cost": {"Wood": 275, "Stone": 100}, "trainTime": 100},
-        "621": {"id": 621, "name": "Town Center", "roleKeys": ["town_center", "economy", "population_production"], "cost": {"Wood": 275, "Stone": 100}, "trainTime": 150},
+        "109": {"id": 109, "name": "Town Center", "internalName": "RTWC", "roleKeys": ["town_center", "economy", "population_production"], "cost": {"Wood": 275, "Stone": 100}, "trainTime": 100},
+        "562": {"id": 562, "name": "Lumber Camp", "internalName": "SMIL", "roleKeys": ["lumber_camp", "economy"], "cost": {"Wood": 100}, "trainTime": 35},
+        "584": {"id": 584, "name": "Mining Camp", "internalName": "MINE", "roleKeys": ["mining_camp", "economy"], "cost": {"Wood": 100}, "trainTime": 35},
+        "621": {"id": 621, "name": "Town Center", "internalName": "RTWC1X", "roleKeys": ["town_center", "economy", "population_production"], "cost": {"Wood": 275, "Stone": 100}, "trainTime": 150},
+        "1021": {"id": 1021, "name": "FEITO", "internalName": "FEITO", "roleKeys": [], "cost": {"Wood": 500, "Stone": 300}, "trainTime": 120},
+        "1189": {"id": 1189, "name": "Harbor", "internalName": "HARBOR", "roleKeys": [], "cost": {"Wood": 150}, "trainTime": 35},
+        "1734": {"id": 1734, "name": "FOLWARK1", "internalName": "FOLWARK1", "roleKeys": [], "cost": {"Wood": 100}, "trainTime": 35},
     },
     "units": {
         "4": {"id": 4, "name": "Archer", "roleKeys": ["land_military"], "cost": {"Wood": 25, "Gold": 45}},
@@ -205,6 +212,43 @@ class EconomyStatisticsTests(unittest.TestCase):
         ))
         self.assertEqual(result["longestTcIdleGap"]["valueMs"], 5_000)
         self.assertEqual(result["tcIdleGapsOver30s"]["count"], 0)
+
+    def test_economy_buildings_group_counts_placements_and_net_fish_trap_requests(self):
+        result = self.project(body(
+            buildEvents=[
+                {"replaySlot": 1, "atMs": 10_000, "buildingId": 68},
+                {"replaySlot": 1, "atMs": 20_000, "buildingId": 1734},
+                {"replaySlot": 1, "atMs": 30_000, "buildingId": 50},
+                {"replaySlot": 1, "atMs": 40_000, "buildingId": 45},
+                {"replaySlot": 1, "atMs": 50_000, "buildingId": 1189},
+                {"replaySlot": 1, "atMs": 60_000, "buildingId": 584},
+                {"replaySlot": 1, "atMs": 70_000, "buildingId": 562},
+                {"replaySlot": 1, "atMs": 80_000, "buildingId": 84},
+                {"replaySlot": 1, "atMs": 90_000, "buildingId": 621},
+                {"replaySlot": 1, "atMs": 100_000, "buildingId": 1021},
+            ],
+        ), actions=[
+            {"actorPlayerId": 1, "sourceActionName": "GAME", "payload": {"mode": "fishtrap_queue", "amount": 5}},
+            {"actorPlayerId": 1, "sourceActionName": "GAME", "payload": {"mode": "fishtrap_unqueue", "amount": 2}},
+        ])
+        buildings = result["economyBuildings"]
+        self.assertEqual(buildings["byType"]["mills"]["count"], 2)
+        self.assertEqual(buildings["byType"]["farms"]["count"], 1)
+        self.assertEqual(buildings["byType"]["docks"]["count"], 2)
+        self.assertEqual(buildings["byType"]["miningCamps"]["count"], 1)
+        self.assertEqual(buildings["byType"]["lumberCamps"]["count"], 1)
+        self.assertEqual(buildings["byType"]["markets"]["count"], 1)
+        self.assertEqual(buildings["byType"]["townCenters"]["count"], 1)
+        self.assertEqual(buildings["byType"]["feitorias"]["count"], 1)
+        self.assertEqual(buildings["byType"]["fishTraps"]["count"], 3)
+        self.assertEqual(buildings["totalPlacementOrNetRequestCount"], 13)
+
+    def test_economy_building_fish_traps_are_unavailable_if_queue_amount_is_unknown(self):
+        result = self.project(body(), actions=[
+            {"actorPlayerId": 1, "sourceActionName": "GAME", "payload": {"mode": "fishtrap_queue", "amount": None}},
+        ])
+        self.assertIsNone(result["economyBuildings"]["byType"]["fishTraps"]["count"])
+        self.assertIsNone(result["economyBuildings"]["totalPlacementOrNetRequestCount"])
 
     def test_commitment_ratio_at_20m_uses_classified_base_costs(self):
         result = self.project(body(
