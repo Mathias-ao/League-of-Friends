@@ -420,6 +420,18 @@ def project_military_statistics(
             )
         ]
 
+        raw_unit_queue_summary = {}
+        for row in unit_rows:
+            unit = row["unit"]
+            raw_id = unit.get("rawId")
+            name = unit.get("name") or unit.get("internalName") or f"Raw ID {raw_id}"
+            producers = ",".join(str(value) for value in row["producerBuildingTypeIds"]) or "?"
+            raw_unit_queue_summary[str(raw_id)] = (
+                f"{name} · class {row['class'] or 'unclassified'} · "
+                f"+{row['positiveQueueAmount']} / -{row['negativeQueueAmount']} · "
+                f"producer type {producers}"
+            )
+
         buildings = _military_buildings(builds, catalog, castle_click)
         broad_spend = _broad_military_spend(
             production=production,
@@ -461,7 +473,8 @@ def project_military_statistics(
                 "dominantUnit": _entity(catalog, "units", dominant_unit_id) if dominant_unit_id is not None else None,
                 "productionDiversity": distinct_units,
                 "unitRows": unit_rows,
-                "basis": "positive queue amounts classified by catalog role and/or decoded producer-building type",
+                "rawUnitQueueSummary": raw_unit_queue_summary,
+                "basis": "positive queue amounts classified by catalog role and/or decoded DE producer-building type",
             },
             "firstMilitaryProduction": {
                 "layer": "observed",
