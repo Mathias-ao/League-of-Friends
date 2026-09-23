@@ -18,6 +18,7 @@ const PYTHON = process.env.PYTHON || "python";
 const PORT = Number(process.env.AOF_REPLAY_LAB_PORT || 4317);
 const HOST = process.env.AOF_REPLAY_LAB_HOST || "127.0.0.1";
 const MAX_UPLOAD_BYTES = Number(process.env.AOF_REPLAY_LAB_MAX_BYTES || 128 * 1024 * 1024);
+const ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V2";
 
 const PARSER = path.join(ROOT, "replay-tools", "parse_replay.py");
 const ANALYSIS_DATASET = path.join(ROOT, "replay-tools", "analysis_dataset.py");
@@ -288,7 +289,12 @@ async function recalculate(id) {
   if (before) await fs.copyFile(current, path.join(history, `statistics-r${previousRevision}.json`));
 
   let analysisDatasetMs = 0;
-  if (!(await fileExists(analysis))) {
+  const existingAnalysis = await readJson(analysis);
+  const rebuildAnalysis = (
+    !existingAnalysis
+    || existingAnalysis?.datasetVersion !== ANALYSIS_DATASET_VERSION
+  );
+  if (rebuildAnalysis) {
     const analysisStarted = performance.now();
     await runCommand(PYTHON, [
       ANALYSIS_DATASET, canonical,
@@ -302,7 +308,8 @@ async function recalculate(id) {
       schemaVersion: analysisDocument?.schemaVersion ?? null,
       datasetVersion: analysisDocument?.datasetVersion ?? null,
       summary: analysisDocument?.summary ?? null,
-      migratedFromLegacyRun: true,
+      migratedFromLegacyRun: !existingAnalysis,
+      rebuiltForDatasetVersion: existingAnalysis?.datasetVersion ?? null,
     };
   }
 
@@ -324,6 +331,7 @@ async function recalculate(id) {
     totalMs: Math.round((analysisDatasetMs + statisticsProjectionMs) * 1000) / 1000,
     replayReparsed: false,
     canonicalRevalidated: false,
+    analysisCacheRebuilt: rebuildAnalysis,
   };
   await writeJson(metadataPath, metadata);
   await writeJson(path.join(directory, "comparison-latest.json"), {
