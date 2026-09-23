@@ -25,7 +25,7 @@ from opening_statistics import (
     _villager_train_ms,
 )
 
-ECONOMY_STATISTICS_VERSION = "AOF_ECONOMY_STATISTICS_V3"
+ECONOMY_STATISTICS_VERSION = "AOF_ECONOMY_STATISTICS_V4"
 TC_ACTIVITY_MODEL_VERSION = "AOF_TC_ACTIVITY_V2"
 COMMITMENT_RATIO_VERSION = "AOF_ECO_MILITARY_COMMITMENT_20M_V1"
 
@@ -160,6 +160,113 @@ def _is_town_center(catalog: dict[str, Any], building_id: Any) -> bool:
 def _is_farm(catalog: dict[str, Any], building_id: Any) -> bool:
     item = _catalog_item(catalog, "buildings", building_id)
     return item.get("name") == "Farm" or "farm" in set(item.get("roleKeys") or [])
+
+
+def _economy_building_type(catalog: dict[str, Any], building_id: Any) -> str | None:
+    item = _catalog_item(catalog, "buildings", building_id)
+    name = str(item.get("name") or "")
+    internal = str(item.get("internalName") or "")
+    roles = set(item.get("roleKeys") or [])
+
+    if name == "Farm" or "farm" in roles:
+        return "farms"
+    if name == "Mill" or "mill" in roles or internal.startswith("FOLWARK"):
+        return "mills"
+    if name in {"Dock", "Harbor"} or "dock" in roles:
+        return "docks"
+    if name == "Mining Camp" or "mining_camp" in roles:
+        return "miningCamps"
+    if name == "Lumber Camp" or "lumber_camp" in roles:
+        return "lumberCamps"
+    if name == "Market" or "market" in roles:
+        return "markets"
+    if _is_town_center(catalog, building_id):
+        return "townCenters"
+    if name == "Feitoria" or internal == "FEITO" or building_id == 1021:
+        return "feitorias"
+    return None
+
+
+def _fish_trap_queue_amounts(
+    action_events: list[dict[str, Any]], player_id: int,
+) -> tuple[int, int, int]:
+    queued = 0
+    unqueued = 0
+    unknown = 0
+    for event in action_events:
+        if event.get("actorPlayerId") != player_id or event.get("sourceActionName") != "GAME":
+            continue
+        payload = event.get("payload") or {}
+        mode = payload.get("mode")
+        if mode not in {"fishtrap_queue", "fishtrap_unqueue"}:
+            continue
+        amount = payload.get("amount")
+        if type(amount) is not int:
+            unknown += 1
+            continue
+        if mode == "fishtrap_queue":
+            queued += amount
+        else:
+            unqueued += amount
+    return queued, unqueued, unknown
+
+
+def _economy_buildings(
+    builds: list[dict[str, Any]],
+    action_events: list[dict[str, Any]],
+    player_id: int,
+    catalog: dict[str, Any],
+) -> dict[str, Any]:
+    counts = {
+        "mills": 0,
+        "farms": 0,
+        "docks": 0,
+        "miningCamps": 0,
+        "lumberCamps": 0,
+        "markets": 0,
+        "townCenters": 0,
+        "feitorias": 0,
+    }
+    for event in builds:
+        kind = _economy_building_type(catalog, event.get("buildingId"))
+        if kind is not None:
+            counts[kind] += 1
+
+    fish_queued, fish_unqueued, fish_unknown = _fish_trap_queue_amounts(action_events, player_id)
+    fish_net = fish_queued - fish_unqueued if fish_unknown == 0 else None
+    placed_total = sum(counts.values())
+
+    return {
+        "layer": "mixed",
+        "totalPlacementOrNetRequestCount": placed_total + fish_net if fish_net is not None else None,
+        "byType": {
+            "mills": {"layer": "observed", "count": counts["mills"]},
+            "farms": {"layer": "observed", "count": counts["farms"]},
+            "docks": {"layer": "observed", "count": counts["docks"]},
+            "miningCamps": {"layer": "observed", "count": counts["miningCamps"]},
+            "lumberCamps": {"layer": "observed", "count": counts["lumberCamps"]},
+            "markets": {"layer": "observed", "count": counts["markets"]},
+            "townCenters": {
+                "layer": "observed",
+                "count": counts["townCenters"],
+                "note": "placement commands only; starting Town Centers are excluded",
+            },
+            "fishTraps": {
+                "layer": "reconstructed",
+                "count": fish_net,
+                "positiveQueueAmount": fish_queued,
+                "negativeQueueAmount": fish_unqueued,
+                "unknownAmountCommands": fish_unknown,
+                "basis": "net GAME fishtrap_queue minus fishtrap_unqueue amounts; not proof of completed/surviving traps",
+            },
+            "feitorias": {"layer": "observed", "count": counts["feitorias"]},
+        },
+        "basis": (
+            "observed BUILD placement commands for Mill/Folwark, Farm, Dock/Harbor, Mining Camp, "
+            "Lumber Camp, Market, Town Center and Feitoria; Fish Trap uses net queue/unqueue requests"
+        ),
+        "note": "Counts are buildings placed/requested during the replay, not surviving buildings; starting Town Centers are excluded.",
+    }
 
 
 def _starting_villager_state(
@@ -755,6 +862,9 @@ def project_economy_statistics(
                 "researchRequestedAtMs": horse["atMs"] if horse is not None else None,
                 "inferredCompleteAtMs": round(horse_complete, 3) if horse_complete is not None else None,
             },
+            "economyBuildings": _economy_buildings(
+                builds, action_events, player_id, catalog,
+            ),
             "farmsPlaced": {
                 "layer": "observed",
                 "count": len(farms),

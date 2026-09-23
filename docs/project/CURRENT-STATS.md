@@ -37,7 +37,7 @@ Battle Statistics are the player-facing detailed record. The underlying replay m
 
 ### Economy
 
-`AOF_ECONOMY_STATISTICS_V3` adds a reviewable Economy layer over canonical command evidence:
+`AOF_ECONOMY_STATISTICS_V4` adds a reviewable Economy layer over canonical command evidence:
 
 - Villagers trained: sum of positive decoded Villager queue amounts. This intentionally matches the TownBell-control convention and is a queue-derived proxy, not proof that every unit completed.
 - Villagers by 20 minutes: qualified starting Villagers plus net decoded Villager queue amount through 20:00; it does not assert survival or exact completion.
@@ -47,6 +47,7 @@ Battle Statistics are the player-facing detailed record. The underlying replay m
 - Longest TC idle gap and TC idle gaps over 30 seconds: inferred gaps between Villager and Town-Center-only research workload intervals. V2 no longer mistakes Mill/Lumber/Mining/Market research streams for Town Centers.
 - Economic techs researched includes the supported farming, wood, mining, Villager, fishing and Market economy technologies (Coinage, Banking, Guilds, Caravan). Eco upgrades by Castle excludes Loom and uses research requests before the Castle click.
 - Horse Collar: latest observed request plus inferred completion timing. For normal one-time technologies, a later request supersedes an earlier cancelled/failed attempt; TownBell remains a control and may use an earlier click.
+- Economy Buildings: grouped placement/request counts for Mills (including Folwark), Farms, Docks (including Harbor), Mining Camps, Lumber Camps, Markets, Town Centers, Fish Traps and Feitorias. Ordinary buildings use observed BUILD placements; Fish Traps use net `fishtrap_queue - fishtrap_unqueue` requests. Starting Town Centers are excluded.
 - Farms placed and first Farm are placement-command metrics. Farms before Horse Collar uses the latest Horse Collar click because Horse Collar is a normal one-time technology; Farms before Castle uses the latest Castle click.
 - First boar lure, boars taken, deer taken and livestock taken: inferred distinct targeted Gaia-food interactions. V2 resolves by target identity first and can use a tight 1.5-tile known-food-object position fallback; these remain interaction proxies and can undercount because initial-object search is non-exhaustive.
 - Market transactions, first use, sales and purchases are decoded commands. The decoded BUY/SELL amount is a count of 100-resource market lots, so Market volume is `abs(lots) × 100`; it is still not gold proceeds after market pricing.
@@ -120,7 +121,7 @@ Current models include:
 - `AOF_RAID_DETECTION_V1`
 - `AOF_MAP_PRESENCE_V2`
 - `AOF_FORWARD_ECO_V1`
-- `AOF_ECONOMY_STATISTICS_V3`
+- `AOF_ECONOMY_STATISTICS_V4`
 - `AOF_TC_ACTIVITY_V2`
 - `AOF_ECO_MILITARY_COMMITMENT_20M_V1`
 - `AOF_RESOURCE_COMMITMENT_V1`

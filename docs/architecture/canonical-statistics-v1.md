@@ -12,7 +12,7 @@ Date: 13 September 2026. This milestone defines a conservative, replay-free stat
 | Formula set | `AOF_OBSERVED_COMMAND_FORMULAS_V1` | Defines command count, first/last command, first-five-observed-minutes, active seconds, rate and selection-size summaries. |
 | Build-order classifier | `AOF_BUILD_ORDER_V2` | Classifies a player's primary opening from age, placement, production and start-position evidence while retaining versioned execution/difficulty scores and trigger evidence. |
 | Raid detector | `AOF_RAID_DETECTION_V1` | Counts directional hostile-command episodes inside time-aware enemy economic zones while retaining attacker, victim and episode evidence. |
-| Economy statistics | `AOF_ECONOMY_STATISTICS_V3` | Projects queue-derived Villager checkpoints, TC placement/activity, eco-tech, Farm, market, food-animal interaction and 20-minute commitment metrics while retaining evidence boundaries. |
+| Economy statistics | `AOF_ECONOMY_STATISTICS_V4` | Projects queue-derived Villager checkpoints, TC placement/activity, eco-tech, Farm, market, food-animal interaction and 20-minute commitment metrics while retaining evidence boundaries. |
 | Entity labels | `AOF_ENTITY_CATALOG_V1_1` | Adds reference names and role keys while retaining raw IDs. Labels are explicitly unqualified for the replay patch/data mods. |
 | Corpus report | `AOF_STATISTICS_CORPUS_V1` | Produces privacy-minimized comparable totals across canonical bundles. |
 
@@ -101,6 +101,8 @@ Economic technology output uses an explicit DE economic-tech set including Coina
 Market transaction count/type/time is decoded command evidence. The decoded BUY/SELL `amount` is a count of 100-resource lots, so V2 reports market resource volume as `sum(abs(amount)) × 100`; it does not simulate dynamic prices, fees or gold proceeds.
 
 Food-animal metrics are conservative interaction proxies. Economy V3 recognizes DE-family raw object IDs for Wild/Iron Boar/Javelina, Deer, and a conservative Sheep/Turkey livestock set, then counts distinct initial objects targeted by player ORDER commands. When target instance identity is unresolved, it may resolve an ORDER to a known food object only when the recorded target position is within 1.5 tiles and is not spatially ambiguous. These metrics do not claim kills or food gathered. Because canonical initial-object extraction is currently non-exhaustive, the counts may undercount and expose coverage diagnostics.
+
+`Economy Buildings` groups economic construction intent by function. Mill includes Folwark; Dock includes Harbor; Feitoria is recognized through the DE catalogue identity/internal name. Farm, Mill/Folwark, Dock/Harbor, Mining Camp, Lumber Camp, Market, Town Center and Feitoria use observed BUILD placement commands. Fish Trap is different in the replay protocol and uses net decoded `GAME` `fishtrap_queue` minus `fishtrap_unqueue` amounts. Starting Town Centers are excluded from this placement/request metric. None of these counts claim construction completion or survival.
 
 The 20-minute eco:military ratio prices classified queue/research/build-placement requests using the pinned base entity catalog and excludes age-up costs. It retains unclassified/unpriced commitment separately; it is not resources gathered, floated or exact spend.
 
