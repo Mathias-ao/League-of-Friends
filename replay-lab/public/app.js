@@ -20,11 +20,37 @@ const tabs = [
   ["comparison", "Comparison"],
 ];
 
+const ECONOMY_TOWNBELL_MAP = {
+  "villagersTrained.count": { id: "villagers_trained" },
+  "villagersBy20Minutes.count": { id: "villagers_at_20min" },
+  "tcIdleTimeDarkAge.valueMs": { id: "tc_idle_dark_age", unit: "duration" },
+  "townCenters.count": { id: "town_center_count" },
+  "firstExtraTownCenterTime.atMs": { id: "second_town_center", unit: "duration" },
+  "thirdTownCenterTime.atMs": { id: "third_town_center", unit: "duration" },
+  "longestTcIdleGap.valueMs": { id: "longest_idle_gap", unit: "duration" },
+  "tcIdleGapsOver30s.count": { id: "idle_gaps_over_30s" },
+  "economicTechsResearched.count": { id: "eco_techs_researched" },
+  "ecoUpgradesByCastle.count": { id: "eco_upgrades_by_castle" },
+  "horseCollar.inferredCompleteAtMs": { id: "horse_collar_time", unit: "duration" },
+  "farmsPlaced.count": { id: "farms_built" },
+  "firstFarm.atMs": { id: "first_farm", unit: "duration" },
+  "farmsBeforeHorseCollar.count": { id: "farms_before_horse_collar" },
+  "farmsBeforeCastle.count": { id: "farms_before_castle" },
+  "firstBoarLure.atMs": { id: "first_boar_lure", unit: "duration" },
+  "boarsTaken.count": { id: "boars_taken" },
+  "deerTaken.count": { id: "deer_taken" },
+  "market.transactions.count": { id: "market_transactions" },
+  "market.volumeTraded.amount": { id: "market_volume" },
+  "market.firstUse.atMs": { id: "market_first_use", unit: "duration" },
+  "market.sales.count": { id: "market_sells" },
+  "market.purchases.count": { id: "market_buys" },
+};
+
 const boundaries = {
   overview: "Mixed presentation — inspect section labels before treating values as facts.",
   players: "Mixed canonical identity and projected statistics.",
   opening: "Reconstructed / inferred. Build-order labels are models, not raw replay fields.",
-  economy: "Estimated / reconstructed. Resource commitment is not actual resource spend.",
+  economy: "Estimated / reconstructed. When a TownBell report is attached, rows compare AoF against TownBell control values; blank TownBell cells mean no direct mapping.",
   military: "Observed command requests. Queue requests are not proof that units trained.",
   battle: "Inferred combat episodes. Raids do not prove kills or damage.",
   "map-presence": "Reconstructed / inferred spatial proxies.",
@@ -99,6 +125,7 @@ function renderShell() {
   $("runMeta").textContent =
     `save ${run.replay?.saveVersion ?? "?"} · build ${run.replay?.build ?? "?"} · ${run.players.length} players · compatibility ${compat} · canonical ${canonicalState}`;
   $("auditButton").disabled = canonicalState === "verified_local";
+  $("townBellButton").textContent = run.townBellControl ? "Replace TownBell report" : "Attach TownBell report";
   $("tabs").innerHTML = tabs.map(([id, label]) =>
     `<button class="${state.tab === id ? "active" : ""}" data-tab="${id}">${label}</button>`
   ).join("");
@@ -174,6 +201,152 @@ function formatReviewValue(value, key = "") {
     return `${value.length} items`;
   }
   return String(value);
+}
+
+function fmtSeconds(seconds) {
+  if (!Number.isFinite(Number(seconds))) return "—";
+  const value = Number(seconds);
+  const minutes = Math.floor(value / 60);
+  const remainder = value - minutes * 60;
+  const text = Number.isInteger(remainder)
+    ? String(remainder).padStart(2, "0")
+    : remainder.toFixed(1).padStart(4, "0");
+  return `${minutes}:${text}`;
+}
+
+function flattenControlLeaves(value, prefix = "", path = "", context = {}, rows = []) {
+  if (value === null || value === undefined || typeof value !== "object") {
+    rows.push({
+      metric: prefix || "Value",
+      path,
+      rawValue: value,
+      displayValue: formatReviewValue(value, path),
+      layer: context.layer || "",
+      note: context.scope || "",
+    });
+    return rows;
+  }
+
+  if (Array.isArray(value)) {
+    rows.push({
+      metric: prefix || "Items",
+      path,
+      rawValue: value,
+      displayValue: formatReviewValue(value, path),
+      layer: context.layer || "",
+      note: context.scope || "",
+    });
+    return rows;
+  }
+
+  const nextContext = {
+    layer: value.layer || context.layer || "",
+    scope: value.scope || context.scope || "",
+  };
+  for (const [key, child] of Object.entries(value)) {
+    if (TECHNICAL_ROW_KEYS.has(key)) continue;
+    const label = prefix ? `${prefix} › ${humanizeKey(key)}` : humanizeKey(key);
+    const childPath = path ? `${path}.${key}` : key;
+    if (child !== null && typeof child === "object" && !Array.isArray(child)) {
+      flattenControlLeaves(child, label, childPath, nextContext, rows);
+    } else {
+      rows.push({
+        metric: label,
+        path: childPath,
+        rawValue: child,
+        displayValue: formatReviewValue(child, key),
+        layer: nextContext.layer,
+        note: nextContext.scope,
+      });
+    }
+  }
+  return rows;
+}
+
+function formatTownBellValue(metric, mapping) {
+  if (!metric) return "—";
+  if (metric.value === null || metric.value === undefined) {
+    return metric.naReason ? `— (${metric.naReason})` : "—";
+  }
+  if (mapping?.unit === "duration") return fmtSeconds(metric.value);
+  return formatReviewValue(metric.value);
+}
+
+function formatAofControlValue(row, mapping) {
+  if (!row) return "—";
+  if (mapping?.unit === "duration") {
+    return Number.isFinite(Number(row.rawValue)) ? fmtSeconds(Number(row.rawValue) / 1000) : "—";
+  }
+  return row.displayValue;
+}
+
+function economyControlMatrix(run) {
+  const participants = run.statistics?.participants ?? [];
+  const playerOrder = participants.map((player) => ({
+    playerId: Number(player.playerId),
+    name: player.displayName || `P${player.playerId}`,
+    economy: player.economy || {},
+  }));
+  if (!playerOrder.length) return '<div class="empty-inline">No player economy statistics.</div>';
+
+  const byPlayerRows = new Map();
+  const rowDefinitions = new Map();
+  for (const player of playerOrder) {
+    const rows = flattenControlLeaves(player.economy);
+    byPlayerRows.set(player.playerId, new Map(rows.map((row) => [row.path, row])));
+    for (const row of rows) {
+      if (!rowDefinitions.has(row.path)) rowDefinitions.set(row.path, row);
+    }
+  }
+
+  const controlPlayers = new Map(
+    (run.townBellControl?.players || []).map((player) => [Number(player.number), player])
+  );
+  const mismatch = (run.townBellControl?.playerMatches || []).filter((match) => match.nameMatches === false);
+  const controlNote = run.townBellControl
+    ? `TownBell control: ${esc(run.townBellControl.fileName || "attached report")} · ${run.townBellControl.playerCount || 0} players`
+    : "No TownBell report attached. Use “Attach TownBell report” above to populate the control columns.";
+  const mismatchNote = mismatch.length
+    ? `<div class="warning">Player-number control mapping has ${mismatch.length} name mismatch(es): ${mismatch.map((item) => `P${esc(item.replaySlot)} AoF “${esc(item.aofName)}” vs TownBell “${esc(item.townBellName)}”`).join("; ")}.</div>`
+    : "";
+
+  const headers = playerOrder.map((player) => {
+    const control = controlPlayers.get(player.playerId);
+    const controlName = control?.name && control.name !== player.name ? ` · ${esc(control.name)}` : "";
+    return `<th>${esc(player.name)} · AoF</th><th>${esc(player.name)}${controlName} · TownBell</th>`;
+  }).join("");
+
+  const body = [...rowDefinitions.entries()].map(([path, definition]) => {
+    const mapping = ECONOMY_TOWNBELL_MAP[path];
+    const cells = playerOrder.map((player) => {
+      const aofRow = byPlayerRows.get(player.playerId)?.get(path);
+      const townBellMetric = mapping
+        ? controlPlayers.get(player.playerId)?.metrics?.[mapping.id]
+        : null;
+      const mappedTitle = mapping ? `TownBell: ${mapping.id}` : "No direct TownBell mapping";
+      return `
+        <td class="review-value">${esc(formatAofControlValue(aofRow, mapping))}</td>
+        <td class="control-value ${mapping ? "mapped" : "unmapped"}" title="${esc(mappedTitle)}">${esc(formatTownBellValue(townBellMetric, mapping))}</td>
+      `;
+    }).join("");
+    return `
+      <tr>
+        <td class="review-key" title="${esc(path)}">${esc(definition.metric)}</td>
+        ${cells}
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="timeline-note">${controlNote}</div>
+    ${mismatchNote}
+    <div class="review-table-wrap control-matrix-wrap">
+      <table class="review-table control-matrix">
+        <thead><tr><th>Metric</th>${headers}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function flattenReviewRows(value, prefix = "", context = {}, rows = []) {
@@ -438,7 +611,7 @@ async function renderTab() {
       value: { buildOrder: stats.participants[i].buildOrder, opening: row.value },
     })));
   } else if (state.tab === "economy") {
-    html = playerSection("Economy", participant("economy"));
+    html = `<h3>Economy review matrix</h3>${economyControlMatrix(run)}`;
   } else if (state.tab === "military") {
     html = `<h3>Military command evidence</h3>${militaryTable(militaryReviewRows(stats?.commandEvidence, run.players))}`;
   } else if (state.tab === "battle") {
@@ -530,6 +703,39 @@ $("extractButton").addEventListener("click", async () => {
     showProgress(error.message, true);
   } finally {
     $("extractButton").disabled = !state.file;
+  }
+});
+
+$("townBellButton").addEventListener("click", () => {
+  if (!state.run) return;
+  $("townBellInput").click();
+});
+
+$("townBellInput").addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file || !state.run) return;
+  $("townBellButton").disabled = true;
+  showProgress("Attaching TownBell report as a local comparison control…");
+  try {
+    state.run = await api(`/api/runs/${encodeURIComponent(state.run.metadata.id)}/townbell`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-aof-filename": encodeURIComponent(file.name),
+      },
+      body: file,
+    });
+    await refreshRuns();
+    renderShell();
+    await renderTab();
+    const mismatches = state.run.metadata?.townBellControl?.nameMismatchCount || 0;
+    showProgress(`TownBell control attached for ${state.run.townBellControl?.playerCount || 0} players${mismatches ? ` · ${mismatches} player-name mismatch(es)` : ""}.`);
+    setTimeout(hideProgress, 1800);
+  } catch (error) {
+    showProgress(error.message, true);
+  } finally {
+    $("townBellInput").value = "";
+    $("townBellButton").disabled = false;
   }
 });
 
