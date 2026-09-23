@@ -106,6 +106,18 @@ Food-animal metrics are conservative interaction proxies. Economy V3 recognizes 
 
 The 20-minute eco:military ratio prices classified queue/research/build-placement requests using the pinned base entity catalog and excludes age-up costs. It retains unclassified/unpriced commitment separately; it is not resources gathered, floated or exact spend.
 
+## Military production: `AOF_MILITARY_STATISTICS_V1`
+
+Military V1 is intentionally command-derived. `Military units trained` follows the same review convention as the Villager metric: positive decoded queue amount, not observed completion. Negative queue amounts are retained separately as cancellation/backorder evidence. Military spend prices only positive military unit queue requests using the pinned base catalog; it is commitment, not exact engine spend.
+
+Unit composition is classified from raw unit ID evidence plus two reference signals: catalog unit roles and decoded producer-building type. Barracks, Archery Range, Stable, Siege Workshop, Monastery, Castle/Donjon/Krepost and Dock queues provide fallback production context when the pinned entity catalog has incomplete upgraded/unique-unit labels. Known Villager/Fishing/Trade/Transport economic roles are excluded. Unknown Dock units are not automatically called warships; only catalog-qualified water military queues enter the Warship bucket.
+
+First production timings are queue-request times. Military building counts/timings are BUILD placement commands, not construction completion or survival. `Military buildings at Castle click` uses the latest observed Castle research request as its boundary.
+
+Production diversity is a simple count of distinct positively queued raw military unit IDs. It is not mapped to TownBell `composition_diversity`, whose weighting/entropy semantics are not established by the public control export.
+
+Exact kills, losses, damage, surviving army value and buildings destroyed remain outside Military V1 because current canonical evidence does not support those as direct outcomes.
+
 ## Remaining research boundary
 
 - **Controlled fixtures:** action-subtype layouts; queue/cancel/requeue/autoqueue; research acceptance/cancel; construction cancel/delete/completion; market execution; tribute/fees; unilateral diplomacy and effective state; age notifications; pause/chat attribution; restored clocks and clean result termination.
