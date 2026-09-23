@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
-import { safeFileName, semanticDiff, unresolvedEntities } from "./lib.mjs";
+import { normalizeTownBellControl, safeFileName, semanticDiff, unresolvedEntities } from "./lib.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
@@ -47,6 +47,18 @@ async function readJson(file, fallback = null) {
 
 async function writeJson(file, value) {
   await fs.writeFile(file, JSON.stringify(value, null, 2) + "\n", "utf8");
+}
+
+async function readJsonBody(req, maxBytes = 16 * 1024 * 1024) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of req) {
+    total += chunk.length;
+    if (total > maxBytes) throw new Error(`JSON upload exceeds ${maxBytes} byte lab limit`);
+    chunks.push(chunk);
+  }
+  if (!total) throw new Error("Empty JSON upload");
+  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
 async function fileExists(file) {
@@ -121,7 +133,7 @@ function uniqueWarnings(...collections) {
 
 async function loadRun(id) {
   const directory = runDir(id);
-  const [metadata, adapter, canonical, extraction, statistics, coverage, comparison] = await Promise.all([
+  const [metadata, adapter, canonical, extraction, statistics, coverage, comparison, townBellControl] = await Promise.all([
     readJson(path.join(directory, "metadata.json")),
     readJson(path.join(directory, "adapter.json")),
     readJson(path.join(directory, "canonical", "canonical-replay.json")),
@@ -129,6 +141,7 @@ async function loadRun(id) {
     readJson(path.join(directory, "statistics-current.json")),
     readJson(path.join(directory, "canonical", "coverage-report.json")),
     readJson(path.join(directory, "comparison-latest.json")),
+    readJson(path.join(directory, "townbell-control.json")),
   ]);
   if (!metadata) return null;
 
@@ -143,6 +156,7 @@ async function loadRun(id) {
     canonicalRun: extraction,
     statistics,
     comparison,
+    townBellControl,
     diagnostics: {
       compatibility: canonical?.source?.compatibility ?? null,
       unknownActions,
@@ -322,6 +336,52 @@ async function recalculate(id) {
   });
 }
 
+async function attachTownBellControl(id, req) {
+  const directory = runDir(id);
+  const metadataPath = path.join(directory, "metadata.json");
+  const metadata = await readJson(metadataPath);
+  if (!metadata) throw Object.assign(new Error("Run not found"), { statusCode: 404 });
+
+  const report = await readJsonBody(req);
+  const control = normalizeTownBellControl(report);
+  const encodedName = String(req.headers["x-aof-filename"] || "townbell-report.json");
+  let decodedName;
+  try { decodedName = decodeURIComponent(encodedName); } catch { decodedName = encodedName; }
+
+  const aofPlayers = (await readJson(path.join(directory, "adapter.json")))?.payload?.players ?? [];
+  const byNumber = new Map(control.players.map((player) => [Number(player.number), player]));
+  const playerMatches = aofPlayers.map((player) => {
+    const townBell = byNumber.get(Number(player.replaySlot)) ?? null;
+    return {
+      replaySlot: player.replaySlot,
+      aofName: player.name ?? null,
+      townBellName: townBell?.name ?? null,
+      nameMatches: (
+        !player.name || !townBell?.name
+          ? null
+          : String(player.name).trim().toLowerCase() === String(townBell.name).trim().toLowerCase()
+      ),
+    };
+  });
+
+  const saved = {
+    ...control,
+    fileName: safeFileName(decodedName),
+    attachedAt: new Date().toISOString(),
+    playerMatches,
+  };
+  await writeJson(path.join(directory, "townbell-control.json"), saved);
+  metadata.townBellControl = {
+    fileName: saved.fileName,
+    attachedAt: saved.attachedAt,
+    schemaVersion: saved.schemaVersion,
+    playerCount: saved.playerCount,
+    nameMismatchCount: playerMatches.filter((match) => match.nameMatches === false).length,
+  };
+  await writeJson(metadataPath, metadata);
+}
+
+
 async function fullAudit(id) {
   const directory = runDir(id);
   const metadataPath = path.join(directory, "metadata.json");
@@ -432,6 +492,12 @@ const server = http.createServer(async (req, res) => {
     if (runMatch && req.method === "GET") {
       const value = await loadRun(runMatch[1]);
       return value ? json(res, 200, value) : json(res, 404, { error: "Run not found" });
+    }
+
+    const townBellMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/townbell$/);
+    if (townBellMatch && req.method === "POST") {
+      await attachTownBellControl(townBellMatch[1], req);
+      return json(res, 200, await loadRun(townBellMatch[1]));
     }
 
     const recalcMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/recalculate$/);
