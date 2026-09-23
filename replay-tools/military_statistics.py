@@ -9,14 +9,22 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from economy_statistics import ECO_TECH_IDS
 from opening_statistics import AGE_TECH_IDS, _latest_research_event, _roles
 
-MILITARY_STATISTICS_VERSION = "AOF_MILITARY_STATISTICS_V1"
+MILITARY_STATISTICS_VERSION = "AOF_MILITARY_STATISTICS_V2"
 CHECKPOINT_CASTLE_CLICK_TECH_ID = AGE_TECH_IDS["castle"]
 
 ECONOMIC_UNIT_ROLES = {
-    "villager", "economic_unit", "fishing_ship", "trade_unit", "transport_ship"
+    "villager", "economic_unit", "fishing_ship", "trade_unit"
 }
+AGE_TECH_ID_SET = set(AGE_TECH_IDS.values())
+ECONOMY_BUILDING_ROLES = {
+    "economy", "farm", "house", "mill", "lumber_camp", "mining_camp",
+    "market", "town_center", "population_production", "naval_economy",
+    "mobile_dropoff",
+}
+NON_MILITARY_UTILITY_TECH_IDS = {8, 280}  # Town Watch / Town Patrol
 
 
 def _player_events(events: list[dict[str, Any]], player_id: int) -> list[dict[str, Any]]:
@@ -71,18 +79,20 @@ def _building_type(catalog: dict[str, Any], raw_id: Any) -> str | None:
 
 
 def _military_class(
-    catalog: dict[str, Any], unit_id: Any, producer_building_id: Any,
+    catalog: dict[str, Any], unit_id: Any, producer_building_type_id: Any,
 ) -> str | None:
     item = _catalog_item(catalog, "units", unit_id)
     roles = set(item.get("roleKeys") or [])
     name = str(item.get("name") or "")
     internal = str(item.get("internalName") or "")
-    producer = _building_type(catalog, producer_building_id)
+    producer = _building_type(catalog, producer_building_type_id)
 
     if roles.intersection(ECONOMIC_UNIT_ROLES):
         return None
     if "water_military" in roles:
         return "warships"
+    if "transport_ship" in roles:
+        return "navalSupport"
     if "monk" in roles or producer == "monasteries":
         return "monks"
     if "infantry" in roles or producer == "barracks":
@@ -107,9 +117,9 @@ def _military_class(
 
 
 def _is_military_unit(
-    catalog: dict[str, Any], unit_id: Any, producer_building_id: Any,
+    catalog: dict[str, Any], unit_id: Any, producer_building_type_id: Any,
 ) -> bool:
-    return _military_class(catalog, unit_id, producer_building_id) is not None
+    return _military_class(catalog, unit_id, producer_building_type_id) is not None
 
 
 def _unit_cost(catalog: dict[str, Any], unit_id: Any) -> float | None:
@@ -123,6 +133,106 @@ def _unit_cost(catalog: dict[str, Any], unit_id: Any) -> float | None:
     if not all(isinstance(value, (int, float)) for value in values):
         return None
     return float(sum(values))
+
+
+def _entity_cost(catalog: dict[str, Any], section: str, raw_id: Any) -> float | None:
+    item = _catalog_item(catalog, section, raw_id)
+    if not item:
+        return None
+    cost = item.get("cost") or {}
+    if not cost:
+        return 0.0
+    values = list(cost.values())
+    if not all(isinstance(value, (int, float)) for value in values):
+        return None
+    return float(sum(values))
+
+
+def _is_economy_building(catalog: dict[str, Any], building_id: Any) -> bool:
+    item = _catalog_item(catalog, "buildings", building_id)
+    roles = set(item.get("roleKeys") or [])
+    name = str(item.get("name") or "")
+    internal = str(item.get("internalName") or "")
+    if roles.intersection(ECONOMY_BUILDING_ROLES):
+        return True
+    return (
+        name in {"Dock", "Harbor", "Feitoria"}
+        or internal in {"DOCK", "HARBOR", "FEITO"}
+        or internal.startswith("FOLWARK")
+    )
+
+
+def _broad_military_spend(
+    *,
+    production: list[dict[str, Any]],
+    research: list[dict[str, Any]],
+    builds: list[dict[str, Any]],
+    walls: list[dict[str, Any]],
+    catalog: dict[str, Any],
+) -> dict[str, Any]:
+    units = 0.0
+    buildings = 0.0
+    technologies = 0.0
+    unpriced = 0
+
+    for event in production:
+        amount = event.get("requestedAmountPositive")
+        if type(amount) is not int or amount <= 0:
+            continue
+        unit_id = event.get("unitId")
+        producer_type = event.get("producerBuildingTypeId")
+        if not _is_military_unit(catalog, unit_id, producer_type):
+            continue
+        cost = _unit_cost(catalog, unit_id)
+        if cost is None:
+            unpriced += amount
+        else:
+            units += cost * amount
+
+    for event in builds:
+        building_id = event.get("buildingId")
+        if _is_economy_building(catalog, building_id):
+            continue
+        cost = _entity_cost(catalog, "buildings", building_id)
+        if cost is None:
+            unpriced += 1
+        else:
+            buildings += cost
+
+    for event in walls:
+        building_id = event.get("buildingId")
+        if _is_economy_building(catalog, building_id):
+            continue
+        cost = _entity_cost(catalog, "buildings", building_id)
+        if cost is None:
+            unpriced += 1
+        else:
+            buildings += cost
+
+    for event in research:
+        tech_id = event.get("technologyId")
+        if tech_id in AGE_TECH_ID_SET or tech_id in ECO_TECH_IDS or tech_id in NON_MILITARY_UTILITY_TECH_IDS:
+            continue
+        cost = _entity_cost(catalog, "technologies", tech_id)
+        if cost is None:
+            unpriced += 1
+        else:
+            technologies += cost
+
+    total = units + buildings + technologies
+    return {
+        "layer": "reconstructed",
+        "resources": int(total) if total.is_integer() else round(total, 3),
+        "unitQueueResources": int(units) if units.is_integer() else round(units, 3),
+        "buildingPlacementResources": int(buildings) if buildings.is_integer() else round(buildings, 3),
+        "technologyRequestResources": int(technologies) if technologies.is_integer() else round(technologies, 3),
+        "unpricedMilitaryCommandAmount": unpriced,
+        "basis": (
+            "TownBell-control-compatible broad command-spend partition: positive military unit queues + "
+            "non-economic building/wall placements + non-age/non-economic technology requests, using pinned base costs"
+        ),
+        "note": "Command commitment, not exact engine spend; civilization discounts, refunds and resource availability are not simulated.",
+    }
 
 
 def _military_buildings(
@@ -203,6 +313,7 @@ def project_military_statistics(
         production = _player_events(body.get("productionEvents", []), player_id)
         research = _player_events(body.get("researchEvents", []), player_id)
         builds = _player_events(body.get("buildEvents", []), player_id)
+        walls = _player_events(body.get("wallEvents", []), player_id)
 
         castle_event = _latest_research_event(research, CHECKPOINT_CASTLE_CLICK_TECH_ID)
         castle_click = castle_event.get("atMs") if castle_event else None
@@ -217,8 +328,8 @@ def project_military_statistics(
 
         for event in production:
             unit_id = event.get("unitId")
-            producer_building_id = event.get("buildingId")
-            unit_class = _military_class(catalog, unit_id, producer_building_id)
+            producer_building_type_id = event.get("producerBuildingTypeId")
+            unit_class = _military_class(catalog, unit_id, producer_building_type_id)
             if unit_class is None:
                 continue
 
@@ -233,7 +344,9 @@ def project_military_statistics(
                 "class": unit_class,
                 "signedAmount": amount,
                 "sourceEventId": event.get("sourceEventId"),
-                "producerBuildingId": producer_building_id,
+                "producerBuildingTypeId": producer_building_type_id,
+                "producerBuildingTypeSource": event.get("producerBuildingTypeSource"),
+                "producerObjectIds": list(event.get("producerObjectIds") or []),
             })
 
             if amount > 0:
@@ -284,6 +397,18 @@ def project_military_statistics(
                 "unit": _entity(catalog, "units", raw_id),
                 "positiveQueueAmount": amount,
                 "negativeQueueAmount": negative_by_unit.get(raw_id, 0),
+                "class": next(
+                    (
+                        event["class"] for event in military_events
+                        if event.get("unitId") == raw_id and event.get("signedAmount", 0) > 0
+                    ),
+                    None,
+                ),
+                "producerBuildingTypeIds": sorted({
+                    event.get("producerBuildingTypeId")
+                    for event in military_events
+                    if event.get("unitId") == raw_id and event.get("producerBuildingTypeId") is not None
+                }),
             }
             for raw_id, amount in sorted(
                 positive_by_unit.items(), key=lambda row: (-row[1], row[0])
@@ -291,6 +416,13 @@ def project_military_statistics(
         ]
 
         buildings = _military_buildings(builds, catalog, castle_click)
+        broad_spend = _broad_military_spend(
+            production=production,
+            research=research,
+            builds=builds,
+            walls=walls,
+            catalog=catalog,
+        )
 
         results[str(player_id)] = {
             "modelVersion": MILITARY_STATISTICS_VERSION,
@@ -302,12 +434,13 @@ def project_military_statistics(
                 "unknownAmountCommands": unknown_amount_commands,
                 "basis": "sum of positive decoded military-unit queue amounts; queue-derived proxy, not observed unit completion",
             },
-            "militarySpend": {
+            "militaryUnitCommitment": {
                 "layer": "reconstructed",
                 "resources": int(spend) if spend.is_integer() else round(spend, 3),
                 "unpricedQueuedUnitAmount": unpriced_amount,
-                "basis": "pinned base-catalog unit cost × positive military queue amount; excludes building/technology cost and civ discounts",
+                "basis": "pinned base-catalog military unit cost × positive queue amount only",
             },
+            "militarySpend": broad_spend,
             "composition": {
                 "layer": "reconstructed",
                 "infantry": class_counts["infantry"],
@@ -316,6 +449,7 @@ def project_military_statistics(
                 "siege": class_counts["siege"],
                 "monks": class_counts["monks"],
                 "warships": class_counts["warships"],
+                "navalSupport": class_counts["navalSupport"],
                 "otherLandMilitary": class_counts["otherLandMilitary"],
                 "specialMilitary": class_counts["specialMilitary"],
                 "dominantClass": dominant_class,
