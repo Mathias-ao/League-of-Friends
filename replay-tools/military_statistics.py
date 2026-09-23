@@ -10,7 +10,7 @@ from collections import Counter
 from typing import Any
 
 from economy_statistics import ECO_TECH_IDS
-from opening_statistics import AGE_TECH_IDS, _latest_research_event, _roles
+from opening_statistics import AGE_TECH_IDS, _latest_research_event, _line_tiles, _roles
 
 MILITARY_STATISTICS_VERSION = "AOF_MILITARY_STATISTICS_V2"
 CHECKPOINT_CASTLE_CLICK_TECH_ID = AGE_TECH_IDS["castle"]
@@ -203,11 +203,16 @@ def _broad_military_spend(
         building_id = event.get("buildingId")
         if _is_economy_building(catalog, building_id):
             continue
+        tiles = len(set(_line_tiles(
+            event.get("x"), event.get("y"), event.get("xEnd"), event.get("yEnd"),
+        )))
+        if tiles <= 0:
+            continue
         cost = _entity_cost(catalog, "buildings", building_id)
         if cost is None:
-            unpriced += 1
+            unpriced += tiles
         else:
-            buildings += cost
+            buildings += cost * tiles
 
     for event in research:
         tech_id = event.get("technologyId")
