@@ -61,9 +61,22 @@ Launch presentation should start with familiar numerical tables. A restrained **
 
 ### Military
 
+`AOF_MILITARY_STATISTICS_V1` adds the player-facing production/army-decision layer:
+
+- Military units trained: sum of positive decoded military queue amounts. This is a queue-derived proxy, not proof that every unit completed.
+- Military spend: pinned base-catalog unit cost × positive military queue amount; excludes military building/technology costs and civilization discounts.
+- Composition: Infantry, Archers, Cavalry, Siege, Monks, Warships, Other Land Military and Special/Castle-produced Military.
+- Dominant unit and dominant class by positive queue amount.
+- Production diversity: number of distinct raw military unit IDs positively queued. This is intentionally not equated with TownBell's weighted composition-diversity metric.
+- First military production, first Siege, first Monk and first Warship: first positive queue-request timings.
+- Military buildings: total placement commands and counts for Barracks, Archery Ranges, Stables, Siege Workshops, Monasteries, Castles, Donjons and Kreposts.
+- First military building placement.
+- Military buildings at Castle click: military-building placements before the latest Castle research request.
 - Raids initiated.
 - Raids against the player.
 - Raid episode details: opponent, start/end timing and supporting command evidence.
+
+Military production classification uses catalog roles when available and decoded producer-building type as a fallback, which is important for upgraded/unique raw unit IDs not fully labeled by the pinned catalog. Known economic Dock units are excluded rather than automatically treating every Dock queue as a warship. Queue/placement values do not assert completed units/buildings, surviving army, kills, deaths or damage.
 
 Raids are inferred hostile-command episodes inside reconstructed economic zones; they do not assert damage or kills.
 
@@ -118,6 +131,7 @@ Current models include:
 
 - `AOF_BUILD_ORDER_V2`
 - `AOF_OPENING_STATISTICS_V5`
+- `AOF_MILITARY_STATISTICS_V1`
 - `AOF_RAID_DETECTION_V1`
 - `AOF_MAP_PRESENCE_V2`
 - `AOF_FORWARD_ECO_V1`

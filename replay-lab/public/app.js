@@ -46,12 +46,33 @@ const ECONOMY_TOWNBELL_MAP = {
   "market.purchases.count": { id: "market_buys" },
 };
 
+const MILITARY_TOWNBELL_MAP = {
+  "militaryUnitsTrained.count": { id: "military_units_trained" },
+  "militarySpend.resources": { id: "military_spend" },
+  "composition.infantry": { id: "infantry_trained" },
+  "composition.archers": { id: "archers_trained" },
+  "composition.cavalry": { id: "cavalry_trained" },
+  "composition.siege": { id: "siege_trained" },
+  "composition.monks": { id: "monks_trained" },
+  "composition.warships": { id: "warships_trained" },
+  "firstMilitaryProduction.atMs": { id: "first_military_unit", unit: "duration" },
+  "firstSiege.atMs": { id: "first_siege_unit", unit: "duration" },
+  "firstMonk.atMs": { id: "first_monk_time", unit: "duration" },
+  "militaryBuildings.count": { id: "military_buildings_total" },
+  "militaryBuildings.atCastleClick.count": { id: "military_buildings_at_castle" },
+  "militaryBuildings.first.atMs": { id: "first_military_building", unit: "duration" },
+  "militaryBuildings.byType.barracks": { id: "barracks_built" },
+  "militaryBuildings.byType.archeryRanges": { id: "ranges_built" },
+  "militaryBuildings.byType.stables": { id: "stables_built" },
+  "militaryBuildings.byType.siegeWorkshops": { id: "siege_workshops_built" },
+};
+
 const boundaries = {
   overview: "Mixed presentation — inspect section labels before treating values as facts.",
   players: "Mixed canonical identity and projected statistics.",
   opening: "Reconstructed / inferred. Build-order labels are models, not raw replay fields.",
   economy: "Estimated / reconstructed. When a TownBell report is attached, rows compare AoF against TownBell control values; blank TownBell cells mean no direct mapping.",
-  military: "Observed command requests. Queue requests are not proof that units trained.",
+  military: "Queue-derived / observed placement evidence. TownBell control values are shown only for explicitly mapped comparable rows; kills, deaths, damage and surviving army are not claimed.",
   battle: "Inferred combat episodes. Raids do not prove kills or damage.",
   "map-presence": "Reconstructed / inferred spatial proxies.",
   execution: "Observed decoded commands and selection evidence.",
@@ -349,6 +370,75 @@ function economyControlMatrix(run) {
   `;
 }
 
+function militaryControlMatrix(run) {
+  const participants = run.statistics?.participants ?? [];
+  const playerOrder = participants.map((player) => ({
+    playerId: Number(player.playerId),
+    name: player.displayName || `P${player.playerId}`,
+    military: player.military || {},
+  }));
+  if (!playerOrder.length) return '<div class="empty-inline">No player military statistics.</div>';
+
+  const byPlayerRows = new Map();
+  const rowDefinitions = new Map();
+  for (const player of playerOrder) {
+    const rows = flattenControlLeaves(player.military);
+    byPlayerRows.set(player.playerId, new Map(rows.map((row) => [row.path, row])));
+    for (const row of rows) {
+      if (!rowDefinitions.has(row.path)) rowDefinitions.set(row.path, row);
+    }
+  }
+
+  const controlPlayers = new Map(
+    (run.townBellControl?.players || []).map((player) => [Number(player.number), player])
+  );
+  const mismatch = (run.townBellControl?.playerMatches || []).filter((match) => match.nameMatches === false);
+  const controlNote = run.townBellControl
+    ? `TownBell control: ${esc(run.townBellControl.fileName || "attached report")} · ${run.townBellControl.playerCount || 0} players`
+    : "No TownBell report attached. Use “Attach TownBell report” above to populate the control columns.";
+  const mismatchNote = mismatch.length
+    ? `<div class="warning">Player-number control mapping has ${mismatch.length} name mismatch(es).</div>`
+    : "";
+
+  const headers = playerOrder.map((player) => {
+    const control = controlPlayers.get(player.playerId);
+    const controlName = control?.name && control.name !== player.name ? ` · ${esc(control.name)}` : "";
+    return `<th>${esc(player.name)} · AoF</th><th>${esc(player.name)}${controlName} · TownBell</th>`;
+  }).join("");
+
+  const body = [...rowDefinitions.entries()].map(([path, definition]) => {
+    const mapping = MILITARY_TOWNBELL_MAP[path];
+    const cells = playerOrder.map((player) => {
+      const aofRow = byPlayerRows.get(player.playerId)?.get(path);
+      const townBellMetric = mapping
+        ? controlPlayers.get(player.playerId)?.metrics?.[mapping.id]
+        : null;
+      const mappedTitle = mapping ? `TownBell: ${mapping.id}` : "No direct TownBell mapping";
+      return `
+        <td class="review-value">${esc(formatAofControlValue(aofRow, mapping))}</td>
+        <td class="control-value ${mapping ? "mapped" : "unmapped"}" title="${esc(mappedTitle)}">${esc(formatTownBellValue(townBellMetric, mapping))}</td>
+      `;
+    }).join("");
+    return `
+      <tr>
+        <td class="review-key" title="${esc(path)}">${esc(definition.metric)}</td>
+        ${cells}
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="timeline-note">${controlNote}</div>
+    ${mismatchNote}
+    <div class="review-table-wrap control-matrix-wrap">
+      <table class="review-table control-matrix">
+        <thead><tr><th>Metric</th>${headers}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 function flattenReviewRows(value, prefix = "", context = {}, rows = []) {
   if (value === null || value === undefined || typeof value !== "object") {
     rows.push({
@@ -613,7 +703,7 @@ async function renderTab() {
   } else if (state.tab === "economy") {
     html = `<h3>Economy review matrix</h3>${economyControlMatrix(run)}`;
   } else if (state.tab === "military") {
-    html = `<h3>Military command evidence</h3>${militaryTable(militaryReviewRows(stats?.commandEvidence, run.players))}`;
+    html = `<h3>Military review matrix</h3>${militaryControlMatrix(run)}`;
   } else if (state.tab === "battle") {
     html = playerSection("Combat / raid inference", participant("combat"));
   } else if (state.tab === "map-presence") {
