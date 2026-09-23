@@ -25,7 +25,7 @@ from opening_statistics import (
     _villager_train_ms,
 )
 
-ECONOMY_STATISTICS_VERSION = "AOF_ECONOMY_STATISTICS_V2"
+ECONOMY_STATISTICS_VERSION = "AOF_ECONOMY_STATISTICS_V3"
 TC_ACTIVITY_MODEL_VERSION = "AOF_TC_ACTIVITY_V2"
 COMMITMENT_RATIO_VERSION = "AOF_ECO_MILITARY_COMMITMENT_20M_V1"
 
@@ -129,7 +129,7 @@ def _eco_techs(
     rows: list[dict[str, Any]] = []
     by_castle = 0
     for tech_id in sorted(ECO_TECH_IDS):
-        event = _first_event(research, "technologyId", tech_id)
+        event = _latest_event(research, "technologyId", tech_id)
         if event is None:
             continue
         duration = _tech_research_ms(civ_id, tech_id, catalog)
@@ -533,18 +533,18 @@ def _animal_interactions(
         ),
         key=lambda event: (event.get("timestampMs", 0), event.get("operationOrdinal", 0)),
     )
-    boars: dict[int, int] = {}
-    deer: dict[int, int] = {}
-    livestock: dict[int, int] = {}
+    boars: dict[int, dict[str, Any]] = {}
+    deer: dict[int, dict[str, Any]] = {}
+    livestock: dict[int, dict[str, Any]] = {}
     unresolved_targets = 0
     spatial_fallback_matches = 0
 
-    def resolve(event: dict[str, Any]) -> tuple[int, int] | None:
+    def resolve(event: dict[str, Any]) -> tuple[int, int, str] | None:
         nonlocal spatial_fallback_matches
         target_id = event.get("targetInstanceId")
         raw_id = targets.get(target_id) if isinstance(target_id, int) else None
         if raw_id is not None:
-            return int(target_id), raw_id
+            return int(target_id), raw_id, "target_instance_id"
 
         position = event.get("position") or {}
         x, y = position.get("x"), position.get("y")
@@ -562,27 +562,38 @@ def _animal_interactions(
             return None
         spatial_fallback_matches += 1
         item = candidates[0][1]
-        return item["instanceId"], item["rawId"]
+        return item["instanceId"], item["rawId"], "target_position_within_1_5_tiles"
 
     for event in ordered:
         resolved = resolve(event)
         if resolved is None:
             unresolved_targets += 1
             continue
-        target_id, raw_id = resolved
+        target_id, raw_id, method = resolved
         at = int(event.get("timestampMs") or 0)
+        evidence = {
+            "atMs": at,
+            "resolutionMethod": method,
+            "sourceEventId": event.get("canonicalSourceEventId"),
+            "operationOrdinal": event.get("operationOrdinal"),
+            "targetInstanceId": event.get("targetInstanceId"),
+            "resolvedAnimalInstanceId": target_id,
+            "animalRawId": raw_id,
+            "targetPosition": event.get("position"),
+        }
         if raw_id in BOAR_OBJECT_IDS:
-            boars.setdefault(target_id, at)
+            boars.setdefault(target_id, evidence)
         if raw_id in DEER_OBJECT_IDS:
-            deer.setdefault(target_id, at)
+            deer.setdefault(target_id, evidence)
         if raw_id in LIVESTOCK_OBJECT_IDS:
-            livestock.setdefault(target_id, at)
+            livestock.setdefault(target_id, evidence)
 
     return {
         "firstBoarLure": {
             "layer": "inferred",
-            "atMs": min(boars.values()) if boars else None,
-            "basis": "first player ORDER resolved to a known boar-family initial object by target identity or tight target-position fallback",
+            "atMs": min((row["atMs"] for row in boars.values()), default=None),
+            "evidence": min(boars.values(), key=lambda row: row["atMs"]) if boars else None,
+            "basis": "first player ORDER resolved to a known boar-family initial object by target identity or tight target-position fallback; this is stricter than an approach/move-toward-boar heuristic",
         },
         "boarsTaken": {
             "layer": "inferred",
@@ -660,7 +671,7 @@ def project_economy_statistics(
         )
 
         eco_tech_rows, eco_by_castle = _eco_techs(research, civ_id, catalog, castle_click)
-        horse = _first_event(research, "technologyId", HORSE_COLLAR_TECH_ID)
+        horse = _latest_event(research, "technologyId", HORSE_COLLAR_TECH_ID)
         horse_duration = _tech_research_ms(civ_id, HORSE_COLLAR_TECH_ID, catalog)
         horse_complete = (
             horse["atMs"] + horse_duration
@@ -731,7 +742,7 @@ def project_economy_statistics(
                 "layer": "inferred",
                 "count": len(eco_tech_rows),
                 "technologies": eco_tech_rows,
-                "basis": "distinct supported economic technologies using the first observed research request; includes Market economy technologies",
+                "basis": "distinct supported normal one-time economic technologies using the latest observed research request as the effective-attempt candidate; includes Market economy technologies",
             },
             "ecoUpgradesByCastle": {
                 "layer": "inferred",
@@ -757,7 +768,7 @@ def project_economy_statistics(
                 "layer": "reconstructed",
                 "count": farms_before_horse,
                 "boundaryMs": horse["atMs"] if horse is not None else None,
-                "basis": "Farm placements before the first observed Horse Collar research request; null if Horse Collar absent",
+                "basis": "Farm placements before the latest observed Horse Collar research request; for a normal one-time technology, a later request supersedes an earlier cancelled/failed attempt",
             },
             "farmsBeforeCastle": {
                 "layer": "reconstructed",

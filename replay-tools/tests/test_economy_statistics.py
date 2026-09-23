@@ -111,11 +111,11 @@ class EconomyStatisticsTests(unittest.TestCase):
         self.assertEqual(result["firstExtraTownCenterTime"]["atMs"], 800_000)
         self.assertEqual(result["thirdTownCenterTime"]["atMs"], 1_100_000)
         self.assertEqual(result["farmsPlaced"]["count"], 2)
-        self.assertEqual(result["farmsBeforeHorseCollar"]["count"], 1)
-        self.assertEqual(result["farmsBeforeHorseCollar"]["boundaryMs"], 500_000)
+        self.assertEqual(result["farmsBeforeHorseCollar"]["count"], 2)
+        self.assertEqual(result["farmsBeforeHorseCollar"]["boundaryMs"], 1_100_000)
         self.assertEqual(result["farmsBeforeCastle"]["count"], 2)
-        self.assertEqual(result["horseCollar"]["researchRequestedAtMs"], 500_000)
-        self.assertEqual(result["horseCollar"]["inferredCompleteAtMs"], 520_000)
+        self.assertEqual(result["horseCollar"]["researchRequestedAtMs"], 1_100_000)
+        self.assertEqual(result["horseCollar"]["inferredCompleteAtMs"], 1_120_000)
         self.assertEqual(result["economicTechsResearched"]["count"], 2)
         self.assertEqual(result["market"]["transactions"]["count"], 2)
         self.assertEqual(result["market"]["volumeTraded"]["amount"], 300)
@@ -144,8 +144,36 @@ class EconomyStatisticsTests(unittest.TestCase):
         ]
         result = self.project(body(), actions)
         self.assertEqual(result["firstBoarLure"]["atMs"], 50_000)
+        self.assertEqual(
+            result["firstBoarLure"]["evidence"]["resolutionMethod"],
+            "target_position_within_1_5_tiles",
+        )
         self.assertEqual(result["boarsTaken"]["count"], 1)
         self.assertEqual(result["animalInteractionCoverage"]["spatialFallbackMatches"], 1)
+
+    def test_one_time_eco_tech_uses_latest_request_candidate(self):
+        result = self.project(body(
+            researchEvents=[
+                {"replaySlot": 1, "atMs": 200_000, "technologyId": 14, "sourceEventId": "hc-cancelled"},
+                {"replaySlot": 1, "atMs": 300_000, "technologyId": 102, "sourceEventId": "castle-click"},
+                {"replaySlot": 1, "atMs": 500_000, "technologyId": 14, "sourceEventId": "hc-retry"},
+            ],
+            buildEvents=[
+                {"replaySlot": 1, "atMs": 150_000, "buildingId": 50},
+                {"replaySlot": 1, "atMs": 250_000, "buildingId": 50},
+                {"replaySlot": 1, "atMs": 400_000, "buildingId": 50},
+            ],
+        ))
+        self.assertEqual(result["horseCollar"]["researchRequestedAtMs"], 500_000)
+        self.assertEqual(result["horseCollar"]["inferredCompleteAtMs"], 520_000)
+        self.assertEqual(result["farmsBeforeHorseCollar"]["count"], 3)
+        self.assertEqual(result["ecoUpgradesByCastle"]["count"], 0)
+        row = next(
+            row for row in result["economicTechsResearched"]["technologies"]
+            if row["technology"]["rawId"] == 14
+        )
+        self.assertEqual(row["researchRequestedAtMs"], 500_000)
+        self.assertFalse(row["requestedBeforeCastleClick"])
 
     def test_market_economy_techs_are_counted_and_loom_is_not_upgrade_by_castle(self):
         result = self.project(body(
