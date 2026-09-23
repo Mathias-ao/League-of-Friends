@@ -503,18 +503,32 @@ def _animal_interactions(
     action_events: list[dict[str, Any]],
 ) -> dict[str, Any]:
     targets: dict[int, int] = {}
+    food_objects: list[dict[str, Any]] = []
     for event in initial_objects:
         ids = event.get("objectInstanceIds") or []
         raw_id = (event.get("payload") or {}).get("objectId")
+        position = event.get("position") or {}
         if len(ids) == 1 and isinstance(ids[0], int) and isinstance(raw_id, int):
             targets[ids[0]] = raw_id
+            if raw_id in BOAR_OBJECT_IDS | DEER_OBJECT_IDS | LIVESTOCK_OBJECT_IDS:
+                x, y = position.get("x"), position.get("y")
+                if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                    food_objects.append({
+                        "instanceId": ids[0],
+                        "rawId": raw_id,
+                        "x": float(x),
+                        "y": float(y),
+                    })
 
     ordered = sorted(
         (
             event for event in action_events
             if event.get("actorPlayerId") == player_id
             and event.get("sourceActionName") == "ORDER"
-            and isinstance(event.get("targetInstanceId"), int)
+            and (
+                isinstance(event.get("targetInstanceId"), int)
+                or isinstance((event.get("position") or {}).get("x"), (int, float))
+            )
         ),
         key=lambda event: (event.get("timestampMs", 0), event.get("operationOrdinal", 0)),
     )
@@ -522,12 +536,39 @@ def _animal_interactions(
     deer: dict[int, int] = {}
     livestock: dict[int, int] = {}
     unresolved_targets = 0
+    spatial_fallback_matches = 0
+
+    def resolve(event: dict[str, Any]) -> tuple[int, int] | None:
+        nonlocal spatial_fallback_matches
+        target_id = event.get("targetInstanceId")
+        raw_id = targets.get(target_id) if isinstance(target_id, int) else None
+        if raw_id is not None:
+            return int(target_id), raw_id
+
+        position = event.get("position") or {}
+        x, y = position.get("x"), position.get("y")
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+            return None
+        candidates = []
+        for item in food_objects:
+            distance2 = (float(x) - item["x"]) ** 2 + (float(y) - item["y"]) ** 2
+            if distance2 <= 1.5 ** 2:
+                candidates.append((distance2, item))
+        candidates.sort(key=lambda row: row[0])
+        if not candidates:
+            return None
+        if len(candidates) > 1 and abs(candidates[1][0] - candidates[0][0]) < 0.25:
+            return None
+        spatial_fallback_matches += 1
+        item = candidates[0][1]
+        return item["instanceId"], item["rawId"]
+
     for event in ordered:
-        target_id = event["targetInstanceId"]
-        raw_id = targets.get(target_id)
-        if raw_id is None:
+        resolved = resolve(event)
+        if resolved is None:
             unresolved_targets += 1
             continue
+        target_id, raw_id = resolved
         at = int(event.get("timestampMs") or 0)
         if raw_id in BOAR_OBJECT_IDS:
             boars.setdefault(target_id, at)
@@ -540,7 +581,7 @@ def _animal_interactions(
         "firstBoarLure": {
             "layer": "inferred",
             "atMs": min(boars.values()) if boars else None,
-            "basis": "first player ORDER targeting a known boar-family initial object",
+            "basis": "first player ORDER resolved to a known boar-family initial object by target identity or tight target-position fallback",
         },
         "boarsTaken": {
             "layer": "inferred",
@@ -559,11 +600,13 @@ def _animal_interactions(
         },
         "animalInteractionCoverage": {
             "initialObjectIdentityCount": len(targets),
+            "knownFoodObjectsWithPositions": len(food_objects),
             "orderTargetsUnresolvedAgainstInitialObjects": unresolved_targets,
+            "spatialFallbackMatches": spatial_fallback_matches,
             "knownBoarRawIds": sorted(BOAR_OBJECT_IDS),
             "knownDeerRawIds": sorted(DEER_OBJECT_IDS),
             "knownLivestockRawIds": sorted(LIVESTOCK_OBJECT_IDS),
-            "note": "Initial-object search is non-exhaustive, so these animal counts can undercount.",
+            "note": "Initial-object search is non-exhaustive, so these animal counts can undercount; spatial fallback only uses known food objects within 1.5 tiles.",
         },
     }
 
@@ -687,12 +730,12 @@ def project_economy_statistics(
                 "layer": "inferred",
                 "count": len(eco_tech_rows),
                 "technologies": eco_tech_rows,
-                "basis": "distinct supported eco-tech latest research requests with nominal completion timing",
+                "basis": "distinct supported economic technologies using the first observed research request; includes Market economy technologies",
             },
             "ecoUpgradesByCastle": {
                 "layer": "inferred",
-                "count": eco_by_castle if castle_age_up is not None else None,
-                "castleAgeUpAtMs": castle_age_up,
+                "count": eco_by_castle if castle_click is not None else None,
+                "castleClickAtMs": castle_click,
                 "basis": "supported economic upgrade research requests before the latest Castle click; Loom excluded from this TownBell-compatible count",
             },
             "horseCollar": {
