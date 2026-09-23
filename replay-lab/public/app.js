@@ -294,7 +294,7 @@ function formatTownBellValue(metric, mapping) {
 }
 
 function formatAofControlValue(row, mapping) {
-  if (!row) return "—";
+  if (!row || row.rawValue === null || row.rawValue === undefined || row.rawValue === "") return "—";
   if (mapping?.unit === "duration") {
     return Number.isFinite(Number(row.rawValue)) ? fmtSeconds(Number(row.rawValue) / 1000) : "—";
   }

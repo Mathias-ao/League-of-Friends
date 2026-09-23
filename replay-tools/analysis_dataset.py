@@ -17,7 +17,7 @@ from canonical_projector import CompactProjector
 from canonical_run import fundamentals
 
 ANALYSIS_SCHEMA_VERSION = "1.0.0"
-ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V1"
+ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V2"
 
 _RAW_PAYLOAD_KEYS = {
     "_rawOperationBase64",
