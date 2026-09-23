@@ -151,6 +151,42 @@ aside { padding: 16px; border-right: 1px solid var(--line); background: #141510;
   text-overflow: ellipsis;
 }
 
+.control-matrix-wrap {
+  max-height: 72vh;
+  overflow: auto;
+}
+.control-matrix {
+  min-width: max-content;
+}
+.control-matrix th:first-child,
+.control-matrix td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 300px;
+  max-width: 440px;
+  background: #171814;
+}
+.control-matrix thead th:first-child {
+  z-index: 4;
+  background: #202118;
+}
+.control-matrix th:not(:first-child),
+.control-matrix td:not(:first-child) {
+  min-width: 150px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.control-matrix .control-value.mapped {
+  background: #1c1e18;
+}
+.control-matrix .control-value.unmapped {
+  color: #686a60;
+}
+.control-matrix tbody tr:hover td:first-child {
+  background: #202119;
+}
+
 details { border: 1px solid var(--line); background: #171814; margin: 8px 0; }
 summary { padding: 10px 12px; cursor: pointer; color: #dcd7c7; }
 pre {

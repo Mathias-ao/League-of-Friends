@@ -91,3 +91,80 @@ export function sectionBoundary(section) {
     comparison: "derived diff",
   }[section] ?? "mixed";
 }
+
+
+function findTownBellMetricPlayers(node, depth = 0) {
+  if (!node || typeof node !== "object" || depth > 6) return null;
+  if (!Array.isArray(node.players) && node.players && typeof node.players === "object") {
+    const values = Object.values(node.players);
+    if (values.length && values.every((value) => value && typeof value === "object" && value.metrics && typeof value.metrics === "object")) {
+      return node.players;
+    }
+  }
+  for (const value of Object.values(node)) {
+    if (value && typeof value === "object") {
+      const found = findTownBellMetricPlayers(value, depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function findTownBellIdentityPlayers(node, depth = 0) {
+  if (!node || typeof node !== "object" || depth > 6) return null;
+  if (Array.isArray(node.players) && node.players.every((value) => value && typeof value === "object")) {
+    if (node.players.some((value) => value.number != null || value.name != null)) return node.players;
+  }
+  for (const value of Object.values(node)) {
+    if (value && typeof value === "object") {
+      const found = findTownBellIdentityPlayers(value, depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+export function normalizeTownBellControl(report) {
+  if (!report || typeof report !== "object" || Array.isArray(report)) {
+    throw new Error("TownBell control must be a JSON object");
+  }
+  const metricPlayers = findTownBellMetricPlayers(report);
+  if (!metricPlayers) throw new Error("TownBell report does not contain player metric blocks");
+  const identities = findTownBellIdentityPlayers(report) || [];
+  const byNumber = new Map(
+    identities
+      .filter((player) => player?.number != null)
+      .map((player) => [String(player.number), player])
+  );
+
+  const players = Object.entries(metricPlayers)
+    .map(([key, row]) => {
+      const number = Number(key);
+      const identity = byNumber.get(String(key)) || {};
+      const metrics = {};
+      for (const [metricId, metric] of Object.entries(row?.metrics || {})) {
+        metrics[metricId] = {
+          value: metric?.value ?? null,
+          naReason: metric?.na_reason ?? null,
+        };
+      }
+      return {
+        number: Number.isFinite(number) ? number : key,
+        name: identity.name ?? null,
+        civilization: identity.civilization ?? null,
+        civilizationId: identity.civilization_id ?? null,
+        metrics,
+      };
+    })
+    .sort((a, b) => Number(a.number) - Number(b.number));
+
+  return {
+    source: "townbell_report",
+    schemaVersion: report.schema_version ?? null,
+    durationMs: report.meta?.duration_ms ?? null,
+    gameBuild: report.meta?.game_build ?? null,
+    saveVersion: report.meta?.save_version ?? null,
+    playerCount: players.length,
+    players,
+  };
+}
