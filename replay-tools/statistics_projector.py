@@ -182,7 +182,7 @@ def project_statistics_from_analysis(
         {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and building placements; command coverage is not fog-of-war exploration and gold control is not resource gathering."},
         {"code": "RESOURCE_COMMITMENT_IS_ESTIMATED", "message": "Resource commitment uses pinned base catalog costs for decoded requests/placements; it does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute."},
         {"code": "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED", "message": "Economy separates command observations from reconstructions. Villagers trained is a queue-derived proxy; TC idle/gap metrics infer workload from decoded producer streams; animal counts are targeted-interaction proxies, not kill/gather outcomes."},
-        {"code": "MILITARY_PRODUCTION_IS_QUEUE_DERIVED", "message": "Military V1 counts positive decoded military queue amounts and placement commands. It does not assert completed units/buildings, surviving army, kills, deaths or damage."},
+        {"code": "MILITARY_PRODUCTION_IS_QUEUE_DERIVED", "message": "Military V2 counts positive decoded military queue amounts and placement commands, using promoted DE producer-building type where needed. It does not assert completed units/buildings, surviving army, kills, deaths or damage."},
     ]
     source = analysis["source"]
     result = {
