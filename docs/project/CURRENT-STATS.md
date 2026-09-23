@@ -37,19 +37,19 @@ Battle Statistics are the player-facing detailed record. The underlying replay m
 
 ### Economy
 
-`AOF_ECONOMY_STATISTICS_V1` adds a reviewable Economy layer over canonical command evidence:
+`AOF_ECONOMY_STATISTICS_V2` adds a reviewable Economy layer over canonical command evidence:
 
 - Villagers trained: sum of positive decoded Villager queue amounts. This intentionally matches the TownBell-control convention and is a queue-derived proxy, not proof that every unit completed.
 - Villagers by 20 minutes: qualified starting Villagers plus net decoded Villager queue amount through 20:00; it does not assert survival or exact completion.
 - TC idle time in Dark Age: inferred idle workload on the qualified starting TC before the latest Feudal click, using Villager queue work and Loom occupancy.
 - Town Centers: qualified starting count plus observed TC placement commands.
 - First extra TC and third TC timing: placement-command timestamps, not construction completion.
-- Longest TC idle gap and TC idle gaps over 30 seconds: inferred gaps between decoded Villager/TC-research workload intervals on producer streams.
-- Economic techs researched and eco upgrades by Castle: supported eco-tech requests with nominal completion timing; Castle uses the same inferred age-up boundary as Opening.
-- Horse Collar: request and inferred completion timing.
-- Farms placed, first Farm, Farms before Horse Collar and Farms before Castle: placement-command metrics against inferred technology/age boundaries.
-- First boar lure, boars taken, deer taken and livestock taken: inferred distinct targeted Gaia-food interactions. These are interaction proxies, not kills or exact food gathered, and can undercount because initial-object search is non-exhaustive.
-- Market transactions, market volume, first market use, sales and purchases: decoded market commands. Volume is the sum of decoded BUY/SELL command amounts, not gold proceeds after market pricing.
+- Longest TC idle gap and TC idle gaps over 30 seconds: inferred gaps between Villager and Town-Center-only research workload intervals. V2 no longer mistakes Mill/Lumber/Mining/Market research streams for Town Centers.
+- Economic techs researched includes the supported farming, wood, mining, Villager, fishing and Market economy technologies (Coinage, Banking, Guilds, Caravan). Eco upgrades by Castle excludes Loom and uses research requests before the Castle click.
+- Horse Collar: first observed request plus inferred completion timing. TownBell comparison uses the request/click timing.
+- Farms placed and first Farm are placement-command metrics. Farms before Horse Collar uses the first Horse Collar click; Farms before Castle uses the Castle click, matching the TownBell control definitions.
+- First boar lure, boars taken, deer taken and livestock taken: inferred distinct targeted Gaia-food interactions. V2 resolves by target identity first and can use a tight 1.5-tile known-food-object position fallback; these remain interaction proxies and can undercount because initial-object search is non-exhaustive.
+- Market transactions, first use, sales and purchases are decoded commands. The decoded BUY/SELL amount is a count of 100-resource market lots, so Market volume is `abs(lots) × 100`; it is still not gold proceeds after market pricing.
 - Eco:military ratio at 20 minutes: reconstructed base-catalog resource commitment of classified economic versus military requests/placements through 20:00.
 - Resource Commitment: Food, Wood, Gold, Stone and total.
 - Resource Commitment by age: Dark, Feudal, Castle and Imperial, plus Unknown when the model cannot support age assignment.
@@ -120,8 +120,8 @@ Current models include:
 - `AOF_RAID_DETECTION_V1`
 - `AOF_MAP_PRESENCE_V2`
 - `AOF_FORWARD_ECO_V1`
-- `AOF_ECONOMY_STATISTICS_V1`
-- `AOF_TC_ACTIVITY_V1`
+- `AOF_ECONOMY_STATISTICS_V2`
+- `AOF_TC_ACTIVITY_V2`
 - `AOF_ECO_MILITARY_COMMITMENT_20M_V1`
 - `AOF_RESOURCE_COMMITMENT_V1`
 - `AOF_CANONICAL_STATISTICS_V1`
