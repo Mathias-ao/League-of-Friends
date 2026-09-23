@@ -25,13 +25,22 @@ class AnalysisDatasetTests(unittest.TestCase):
     def test_compact_dataset_strips_raw_operation_bytes_and_keeps_provenance(self):
         analysis = build_analysis_dataset(self.bundle, validate=False)
         validate_analysis_dataset(analysis)
-        self.assertEqual(analysis["datasetVersion"], "AOF_REPLAY_ANALYSIS_V1")
+        self.assertEqual(analysis["datasetVersion"], "AOF_REPLAY_ANALYSIS_V2")
         self.assertFalse(analysis["summary"]["rawOperationBytesCopied"])
         self.assertGreater(analysis["summary"]["actionEventCount"], 0)
         for event in analysis["actionEvents"]:
             self.assertEqual(event["canonicalSourceEventId"], event["eventId"])
             self.assertNotIn("_rawOperationBase64", event["payload"])
             self.assertNotIn("_rawLayout", event["payload"])
+        de_queue_events = [
+            event for event in analysis["body"]["productionEvents"]
+            if event.get("commandType") == "DE_QUEUE"
+        ]
+        if de_queue_events:
+            self.assertTrue(any(
+                event.get("producerBuildingTypeId") is not None
+                for event in de_queue_events
+            ))
         serialized = json.dumps(analysis)
         self.assertNotIn("_rawOperationBase64", serialized)
         self.assertNotIn("unknownBytesBase64", serialized)
