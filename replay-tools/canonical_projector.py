@@ -64,10 +64,20 @@ class CompactProjector:
                 x=pos.get('x'), y=pos.get('y'), xEnd=end.get('x'), yEnd=end.get('y'))
         elif name in ('QUEUE', 'DE_QUEUE', 'MULTIQUEUE', 'MAKE'):
             amount = p.get('amount') if type(p.get('amount')) is int else None
+            raw_layout = p.get('_rawLayout') or {}
+            producer_building_type = None
+            producer_type_source = None
+            if name == 'DE_QUEUE' and type(raw_layout.get('buildingTypeIdRaw')) is int:
+                producer_building_type = raw_layout.get('buildingTypeIdRaw')
+                producer_type_source = 'de_queue_raw_layout'
+            elif name == 'MAKE' and type(p.get('building_id')) is int:
+                producer_building_type = p.get('building_id')
+                producer_type_source = 'make_decoded_building_id'
             add('productionEvents', commandType=name, unitId=p.get('unit_id'), amount=amount,
                 signedAmount=amount, requestedAmountPositive=max(0, amount) if amount is not None else None,
                 amountStatus='decoded_raw' if amount is not None else 'insufficient_evidence',
-                buildingId=p.get('building_id'), producerObjectIds=ids)
+                buildingId=p.get('building_id'), producerBuildingTypeId=producer_building_type,
+                producerBuildingTypeSource=producer_type_source, producerObjectIds=ids)
         elif name in ('BUY', 'SELL'):
             add('marketEvents', type=name, resourceId=p.get('resource_id'), amount=p.get('amount'), marketObjectIds=ids)
         elif name in ('TRIBUTE', 'DE_TRIBUTE'):
