@@ -70,6 +70,7 @@ def statistics_snapshot(result):
             "farmsPlaced": p["economy"]["farmsPlaced"]["count"],
             "marketTransactions": p["economy"]["market"]["transactions"]["count"],
             "marketVolume": p["economy"]["market"]["volumeTraded"]["amount"],
+            "economyBuildingsTotal": p["economy"]["economyBuildings"]["totalPlacementOrNetRequestCount"],
         } for p in result["participants"]],
         "combat": [{
             "playerId": p["playerId"],
