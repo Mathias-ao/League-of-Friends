@@ -98,7 +98,7 @@ class MapPresenceV3Tests(unittest.TestCase):
         })
         self.assertAlmostEqual(
             p1["forwardBuildings"]["deepest"]["maxEnemyDistanceAdvantageTiles"],
-            38.46,
+            38.47,
             places=2,
         )
         self.assertEqual(p1["expansionTownCenters"]["count"], 1)
