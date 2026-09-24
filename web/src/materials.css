@@ -1,0 +1,154 @@
+/* Age of Friends material system.
+   Imported after stone-content.css so material roles stay centralized and reversible. */
+
+:root{
+  --aof-limestone:#c9b894;
+  --aof-limestone-light:#dfd0ad;
+  --aof-limestone-mid:#b6a27d;
+  --aof-limestone-edge:#7d6a4f;
+  --aof-stone-ink:#3d3124;
+  --aof-archive-deep:#0b0806;
+  --aof-archive-warm:#21150e;
+  --aof-parchment-ink:#352619;
+  --aof-parchment-muted:#71563a;
+}
+
+/* Archive environment: the image is material, not scenery.
+   Broad lighting and edge falloff keep the grain subordinate to the records. */
+.content-region{
+  background-color:var(--aof-archive-deep);
+  background-image:
+    linear-gradient(180deg,rgba(8,5,3,.34),rgba(5,3,2,.54)),
+    url('/materials/wood/archive-wood-dark.webp');
+  background-size:auto,760px 760px;
+  background-position:center,center top;
+  background-repeat:no-repeat,repeat;
+  background-blend-mode:normal,normal;
+  box-shadow:
+    inset 0 48px 82px rgba(0,0,0,.20),
+    inset 0 0 150px rgba(0,0,0,.24);
+}
+
+/* Reusable parchment surfaces. The texture asset supplies fibre and wear;
+   CSS supplies legibility, tone and responsive presentation. */
+.parchment-surface{
+  --aof-parchment-image:none;
+  color:var(--aof-parchment-ink);
+  background-color:transparent;
+  background-image:var(--aof-parchment-image);
+  background-position:center;
+  background-size:100% 100%;
+  background-repeat:no-repeat;
+}
+.parchment-surface--clean{
+  --aof-parchment-image:url('/materials/parchment/parchment-clean.webp');
+}
+.parchment-surface--briefing{
+  --aof-parchment-image:url('/materials/parchment/parchment-briefing.webp');
+}
+.parchment-surface--weathered{
+  --aof-parchment-image:url('/materials/parchment/parchment-weathered.webp');
+}
+
+/* Major league record: limestone, not parchment.
+   The event card is institutional UI, so its precise geometry belongs to stone. */
+.next-event.panel{
+  overflow:hidden;
+  color:var(--aof-stone-ink);
+  border:1px solid var(--aof-limestone-edge);
+  background-color:var(--aof-limestone);
+  background-image:
+    radial-gradient(ellipse at 18% 8%,rgba(255,251,232,.28),transparent 34%),
+    radial-gradient(ellipse at 84% 78%,rgba(91,70,44,.07),transparent 36%),
+    linear-gradient(176deg,var(--aof-limestone-light) 0%,#cbb993 48%,var(--aof-limestone-mid) 100%);
+  box-shadow:
+    0 18px 46px rgba(0,0,0,.28),
+    inset 0 2px rgba(255,252,235,.48),
+    inset 0 -3px rgba(73,53,34,.18);
+}
+.next-event.panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  border:0;
+  background:
+    linear-gradient(90deg,rgba(89,67,43,.045),transparent 7%,transparent 93%,rgba(89,67,43,.04)),
+    radial-gradient(ellipse at 34% 0,rgba(255,255,241,.16),transparent 38%);
+}
+.next-event.panel::after{
+  content:"";
+  position:absolute;
+  inset:6px;
+  z-index:0;
+  pointer-events:none;
+  border:1px solid rgba(87,65,42,.18);
+  background:none;
+}
+.next-event.panel>*{position:relative;z-index:1}
+.next-event .event-intro{
+  background:rgba(255,251,235,.07);
+  border-color:rgba(93,71,46,.25);
+}
+.next-event .acts{
+  background:rgba(83,62,39,.055);
+  border-color:rgba(93,71,46,.29);
+}
+.next-event .act+.act{border-color:rgba(93,71,46,.29)}
+.next-event .event-footer{
+  background:rgba(87,64,39,.06);
+  border-color:rgba(93,71,46,.29);
+}
+.next-event .eyebrow{color:#684d31}
+.next-event h2,
+.next-event h3{color:#35281c;text-shadow:0 1px rgba(255,249,228,.48)}
+.next-event .event-title>.sigil{
+  color:#68472c;
+  border-color:#80664a;
+  background:linear-gradient(150deg,rgba(255,247,218,.26),rgba(100,73,46,.09));
+  box-shadow:inset 0 1px rgba(255,252,235,.52),inset 0 -2px rgba(74,52,31,.15);
+}
+.next-event .countdown strong{color:#70501f;text-shadow:none}
+.next-event .act svg{color:#604b38}
+.next-event .act p,
+.next-event .attendance{color:#4b3928}
+.next-event .act .text-button,
+.next-event .event-footer .text-button{color:#3c2c1e}
+.next-event .act .text-button:hover:not(:disabled),
+.next-event .event-footer .text-button:hover:not(:disabled){color:#754b1d}
+
+/* Battle Orders: authored tactical document on the briefing parchment.
+   The source image now supplies the paper character; keep the UI framing light. */
+.battle-orders-parchment.parchment-surface{
+  overflow:visible;
+  border:0;
+  background-color:transparent;
+  background-image:var(--aof-parchment-image);
+  background-position:center;
+  background-size:100% 100%;
+  background-repeat:no-repeat;
+  box-shadow:none;
+  filter:
+    drop-shadow(0 24px 28px rgba(0,0,0,.46))
+    drop-shadow(0 5px 8px rgba(0,0,0,.32));
+}
+.battle-orders-parchment::before,
+.battle-orders-parchment::after{
+  display:none;
+}
+
+@media(max-width:820px){
+  .parchment-surface{background-size:100% 100%}
+}
+
+@media(forced-colors:active){
+  .content-region,
+  .next-event.panel,
+  .parchment-surface{
+    background:Canvas;
+    color:CanvasText;
+    box-shadow:none;
+    border-color:CanvasText;
+  }
+}
