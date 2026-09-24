@@ -61,7 +61,7 @@ Launch presentation should start with familiar numerical tables. A restrained **
 
 ### Military
 
-`AOF_MILITARY_STATISTICS_V2` adds the player-facing production/army-decision layer:
+`AOF_MILITARY_STATISTICS_V3` adds the player-facing production/army-decision layer:
 
 - Military units trained: sum of positive decoded military queue amounts. This is a queue-derived proxy, not proof that every unit completed.
 - Military Unit Commitment: pinned base-catalog unit cost × positive military queue amount.
@@ -69,6 +69,13 @@ Launch presentation should start with familiar numerical tables. A restrained **
 - Composition: Infantry, Archers, Cavalry, Siege, Monks, Warships, Other Land Military and Special/Castle-produced Military.
 - Dominant unit and dominant class by positive queue amount.
 - Production diversity: number of distinct raw military unit IDs positively queued. This is intentionally not equated with TownBell's weighted composition-diversity metric.
+- Army commitment checkpoints at 10, 15 and 20 minutes: base-catalog value of positive military queues, with decoded queue cancellations and unpriced coverage shown separately. This is not surviving army value.
+- Trash units trained and trash army share: positive queue amount from the Spear, Skirmisher and Scout/Light Cavalry/Hussar lines, plus its share of all positive military queue amount. Raw IDs are pinned to the DE tech-tree source.
+- Production buildings used: distinct decoded producer object IDs selected on positive military queue commands, with coverage for queue events lacking producer IDs. Multi-selection means this is a reconstructed usage proxy rather than proof every selected building received a unit.
+- Castles and first Castle: Castle placement-command count/timing.
+- Blacksmith buildings, Blacksmith upgrades and first Blacksmith upgrade: placement evidence plus distinct supported Blacksmith technology requests; each tech retains first/latest request times.
+- University buildings, University technologies and first University tech: placement evidence plus a source-pinned DE University technology set.
+- Ballistics and Chemistry: latest observed request timing, kept as direct diagnostic fundamentals for later line-specific upgrade-lag work.
 - First military production, first Siege, first Monk and first Warship: first positive queue-request timings.
 - Military buildings: total placement commands and counts for Barracks, Archery Ranges, Stables, Siege Workshops, Monasteries, Castles, Donjons and Kreposts.
 - First military building placement.
@@ -77,7 +84,7 @@ Launch presentation should start with familiar numerical tables. A restrained **
 - Raids against the player.
 - Raid episode details: opponent, start/end timing and supporting command evidence.
 
-Military production classification uses catalog roles when available and the DE queue's promoted raw producer-building type as a fallback. `mgz-fast` discards this field from its normal DE_QUEUE payload, but CanonicalReplay retains it in the raw layout; Analysis V2 promotes it into `productionEvents.producerBuildingTypeId`. This is important for siege and upgraded/unique raw unit IDs not fully labeled by the pinned catalog. Known economic Dock units are excluded rather than automatically treating every Dock queue as a warship. Queue/placement values do not assert completed units/buildings, surviving army, kills, deaths or damage.
+Military production classification uses catalog roles when available and the DE queue's promoted raw producer-building type as a fallback. Upgrade-quality scores are intentionally deferred: V3 exposes the raw fundamentals and timings needed to validate later dominant-line upgrade coverage/lag without judging player choices yet. `mgz-fast` discards this field from its normal DE_QUEUE payload, but CanonicalReplay retains it in the raw layout; Analysis V2 promotes it into `productionEvents.producerBuildingTypeId`. This is important for siege and upgraded/unique raw unit IDs not fully labeled by the pinned catalog. Known economic Dock units are excluded rather than automatically treating every Dock queue as a warship. Queue/placement values do not assert completed units/buildings, surviving army, kills, deaths or damage.
 
 Raids are inferred hostile-command episodes inside reconstructed economic zones; they do not assert damage or kills.
 
@@ -132,7 +139,7 @@ Current models include:
 
 - `AOF_BUILD_ORDER_V2`
 - `AOF_OPENING_STATISTICS_V5`
-- `AOF_MILITARY_STATISTICS_V2`
+- `AOF_MILITARY_STATISTICS_V3`
 - `AOF_RAID_DETECTION_V1`
 - `AOF_MAP_PRESENCE_V2`
 - `AOF_FORWARD_ECO_V1`
