@@ -124,19 +124,21 @@ Blacksmith fundamentals use the standard attack/armor technology IDs: Fletching/
 
 Dominant-line upgrade scoring, missing-upgrade judgments and upgrade-lag scores remain deferred until these raw request timings and civilization availability can be qualified across controls. Exact kills, losses, damage, surviving army value and buildings destroyed remain outside Military V3 because current canonical evidence does not support those as direct outcomes.
 
-## Map Presence: `AOF_MAP_PRESENCE_V3`
+## Map Presence: `AOF_MAP_PRESENCE_V4`
 
-Map Presence V3 remains a spatial reconstruction over recorded command/building coordinates. Its starting anchors require an observed initial Town Center; if the non-exhaustive header-object search does not supply one, anchor-dependent metrics return unavailable rather than inventing a start position.
+Map Presence V4 remains a replay-free spatial reconstruction over retained command selections/coordinates, initial objects and placement geometry. Starting-anchor metrics still require an observed initial Town Center; missing anchors yield unavailable values rather than invented coordinates.
 
-Command map coverage is the fraction of fixed 8-tile map cells touched by recorded command positions/endpoints. Enemy-side command presence classifies positioned command events geometrically: in a classified event, a coordinate is on the opponent side when it is closer to a non-teammate starting Town Center than to the player's starting Town Center. Multiplayer near-ties within two tiles of nearest-enemy distance are left ambiguous. This is a command-location proxy, not continuous army presence.
+Command map coverage remains the fraction of fixed 8-tile map cells touched by recorded command positions/endpoints. V4 adds `scoutCoverageAt5Minutes`: only commands before 5:00 whose decoded `objectInstanceIds` include an observed starting Scout Cavalry, Eagle Scout or Camel Scout contribute. The metric therefore measures scouting-command attention. Selection-reuse commands that omit object IDs may undercount, and neither map-coverage metric asserts fog-of-war visibility or unit arrival.
 
-Building spread uses the maximum pairwise distance across the player's starting-TC anchor and observed BUILD placement coordinates, and separately reports the furthest placement from home. Forward-building geometry inherits V2: the nearest enemy starting TC must be within 40 tiles and at least six tiles closer than the player's own starting TC. V3 adds building-category and depth diagnostics while keeping placement—not completion—as the evidence.
+V4 replaces the fixed 40-tile / 6-tile forward-building rule with normalized **Enemy Progress %**. For a coordinate, let H be distance to the player's starting TC, E distance to an enemy starting TC and D the separation between those TCs. Progress is `50 × (1 + (H - E) / D)`, clamped to 0–100. AoF evaluates every non-teammate and uses the highest progress: Home <=35%, Mid-map between 35% and 65%, Forward >=65%. Forward Buildings, Forward Eco and Forward Towers share that definition. Building spread is renamed **Building Placement Range** while preserving its two raw distances: maximum placement span and furthest placement from home.
 
-Expansion Town Centers are TC placements at least 30 tiles from the starting TC and are not equated to TownBell `expansions_claimed`, whose exported values demonstrate a broader concept. Enemy base contact is the first recorded command coordinate within 14 tiles of an unambiguous enemy starting TC; it is not visibility and is not mapped to TownBell's camera/observation-like `first_enemy_base_look`.
+Wall output reconstructs unique Palisade and Stone/Fortified placement tiles from WALL endpoints. Towers report placement count/timing plus the forward subset. Camp distance reports Mining/Lumber Camp placement distance from the starting TC; it intentionally does not duplicate Enemy Progress because Forward Eco already represents forward economic placement.
 
-Gold control remains a weighted final-placement influence proxy over supported neutral gold clusters. First relic touch remains the first ORDER/SPECIAL targeting a known initial relic and does not establish pickup.
+Gold control is now weighted by supported initial gold-deposit count instead of giving every cluster equal weight. Infrastructure is applied in timestamp order and each cluster retains inferred controller changes, including enemy takeovers. This still cannot answer how much gold remains after mining because the fast initial-object evidence does not retain live/depleted resource amounts, and old placement influence cannot be removed when a building is destroyed.
 
-V3 deliberately does not infer raids, battles, territory ownership, visibility, pathing or continuous positions. Its home/opponent geometry and building regions are reusable inputs for the future spatiotemporal engagement detector.
+Relic analysis still exposes First Relic Touch for compatibility and adds a V4 holding-state inference over unique initial relic IDs. A qualifying ORDER/SPECIAL touch assigns inferred held ownership to the touching player; a later touch by a different lobby non-teammate is an inferred theft, while teammate transfers are not theft. Monastery deposit is deliberately not required. These are model semantics over command touches, not direct proof of pickup, drop, monk death or deposit.
+
+Expansion Town Centers and enemy-base contact keep their existing conservative placement/contact definitions. V4 still does not infer raids, battles, visibility, pathing, continuous positions, construction completion or resource depletion.
 
 ## Remaining research boundary
 
