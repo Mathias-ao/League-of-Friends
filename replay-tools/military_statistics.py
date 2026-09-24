@@ -1,7 +1,7 @@
 """Player-facing Military statistics from canonical replay-analysis evidence.
 
 Queue requests and building placements are commands, not proof of completed
-units/buildings. Military V1 therefore uses queue-derived production proxies and
+units/buildings. Military V3 therefore uses queue-derived production proxies and
 retains unresolved/unpriced coverage.
 """
 from __future__ import annotations
