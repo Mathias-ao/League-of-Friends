@@ -81,7 +81,8 @@ const MILITARY_TOWNBELL_MAP = {
 
 const MAP_PRESENCE_TOWNBELL_MAP = {
   "commandMapCoverage.percent": { id: "map_command_coverage" },
-  "scoutCoverageAt5Minutes.percent": { id: "scout_coverage_5min" },\n  "scoutCoverageAt5Minutes.orderCount": { id: "scout_commands_5min" },
+  "scoutCoverageAt5Minutes.percent": { id: "scout_coverage_5min" },
+  "scoutCoverageAt5Minutes.orderCount": { id: "scout_commands_5min" },
   "enemySideCommandPresence.percent": { id: "enemy_half_presence" },
   "forwardBuildings.count": { id: "forward_buildings" },
   "wallTiles.totalWallTiles": { id: "wall_tiles_total" },
@@ -90,7 +91,8 @@ const MAP_PRESENCE_TOWNBELL_MAP = {
   "towers.count": { id: "towers_built" },
   "towers.forwardCount": { id: "forward_towers" },
   "towers.firstAtMs": { id: "first_tower", unit: "duration" },
-  "ecoCampDistanceFromHomeTownCenter.averageTiles": { id: "camps_avg_distance" },\n  "expansionZones.count": { id: "expansions_claimed" },
+  "ecoCampDistanceFromHomeTownCenter.averageTiles": { id: "camps_avg_distance" },
+  "expansionZones.count": { id: "expansions_claimed" },
   "firstRelicTouch.atMs": { id: "first_relic_touch", unit: "duration" },
   "relicControl.totalRelicCommands": { id: "relic_commands" },
 };
