@@ -15,7 +15,7 @@ from build_order_classifier import classify_build_orders
 from economy_statistics import project_economy_statistics
 from canonical_io import ROOT, json_bytes, read_json, sha256
 from forward_eco import project_forward_eco
-from map_presence_v2 import project_map_presence
+from map_presence_v3 import project_map_presence
 from military_statistics import project_military_statistics
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids

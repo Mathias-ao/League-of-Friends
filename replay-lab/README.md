@@ -54,9 +54,9 @@ Optional environment variables:
 1. Drop a local `.aoe2record`.
 2. **Extract replay** creates CanonicalReplay, applies a fast structural seal, creates compact `analysis.json`, then projects statistics. The fast seal is explicitly marked `sealed_local_fast`, not fully verified.
 3. Inspect the Overview timing cards to see upload, parse/canonical write, canonical seal, analysis-cache generation and statistics time separately.
-4. Inspect player sections as compact review tables. The Economy tab uses a row-wise review matrix.
+4. Inspect player sections as compact review tables. Economy, Military and Map Presence use row-wise review matrices.
 5. Optionally click **Attach TownBell report** and choose the TownBell exported JSON for the same replay. Replay Lab stores a normalized local control next to the run and maps TownBell player numbers to AoF replay slots. TownBell remains a comparison control, never canonical evidence.
-6. With a TownBell control attached, Economy renders one row per AoF metric leaf and paired columns for every player: **AoF** then **TownBell**. Known comparable metrics are mapped by explicit metric ID; AoF-only diagnostic/basis rows stay visible with blank TownBell cells. Duration values are normalized to the same display clock.
+6. With a TownBell control attached, Economy, Military and Map Presence render one row per AoF metric leaf and paired columns for every player: **AoF** then **TownBell**. Known comparable metrics are mapped by explicit metric ID; AoF-only diagnostic/basis rows stay visible with blank TownBell cells. Duration values are normalized to the same display clock. Map Presence intentionally leaves TownBell `expansions_claimed`, `deepest_forward_building`, `first_enemy_base_look` and `gold_control_share` unmapped where AoF's current definition is materially different or the control semantics are unclear.
 7. Change a statistics model in `replay-tools/`.
 8. Click **Recalculate statistics**. This normally reads `analysis.json`; it does **not** reparse the replay and does **not** redo full canonical validation. If the compact analysis dataset version changed, Replay Lab rebuilds `analysis.json` once from the existing sealed CanonicalReplay facts, then projects statistics. The attached TownBell control remains in place.
 9. Open **Comparison** to inspect JSON-pointer-level changes between the previous and current AoF projections.
@@ -77,7 +77,7 @@ Replay Lab intentionally displays evidence boundaries:
 
 - Military queue values are observed **requests**, not trained units.
 - Resource Commitment is an estimate/reconstruction, not actual spending.
-- Raid/Battle outputs are inferred episodes, not proof of kills or damage.
+- Existing raid output remains inferred and is not proof of kills or damage. The standalone Battle tab is intentionally removed; future raids/engagements will live under Military → Combat after the first statistics-tab review.
 - Timeline and Raw Evidence show parser facts retained from the recording.
 - Coverage/compatibility warnings remain visible instead of being converted to zeros.
 

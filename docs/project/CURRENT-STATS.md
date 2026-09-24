@@ -90,15 +90,19 @@ Raids are inferred hostile-command episodes inside reconstructed economic zones;
 
 ### Map Presence
 
-- Command map coverage.
-- Enemy base found timing, including first contact by enemy.
-- Forward buildings: count, first timing and building types.
-- Forward eco: count, first timing and eligible economic building types.
-- Expansions: distant Town Center placements and first timing.
-- Gold control: weighted spatial influence over supported neutral gold clusters.
-- First relic touch.
+`AOF_MAP_PRESENCE_V3` exposes spatial fundamentals over starting-TC anchors, command coordinates and observed building placements:
 
-Map Presence is based on command/building geometry and does not assert fog-of-war visibility, resource gathering or permanent territorial control.
+- Command map coverage: share of fixed 8-tile map cells touched by recorded command coordinates/endpoints.
+- Enemy-side command presence: share of positioned command events whose recorded coordinate is closer to an opponent starting Town Center than to the player's starting Town Center; teammates are excluded.
+- Building spread: maximum pairwise distance across the starting Town Center and observed BUILD placement coordinates, plus maximum placement distance from home.
+- Forward buildings: count, first timing, building/category breakdown and depth diagnostics. A qualifying placement is within 40 tiles of an enemy starting TC and at least 6 tiles closer to that enemy TC than to the player's starting TC.
+- Forward eco: count, first timing and eligible economic building types using the same V2 forward geometry.
+- Expansion Town Centers: TC placements at least 30 tiles from the player's starting TC. This is intentionally not mapped to TownBell `expansions_claimed`, whose control values imply a broader definition.
+- Enemy base contact: first recorded command coordinate within 14 tiles of an unambiguous enemy starting TC. It is command contact, not fog-of-war visibility, and is intentionally not equated with TownBell `first_enemy_base_look`.
+- Gold control: weighted final-placement influence over supported neutral gold clusters.
+- First relic touch: first ORDER/SPECIAL targeting a known initial relic, not proof of pickup.
+
+Map Presence is based on command/building geometry and does not assert continuous unit positions, fog-of-war visibility, completed construction, resource gathering or permanent territorial control. These spatial primitives are intended to feed the later engagement/raid detector without embedding combat inference in Map Presence itself.
 
 ### Execution
 
@@ -141,7 +145,7 @@ Current models include:
 - `AOF_OPENING_STATISTICS_V5`
 - `AOF_MILITARY_STATISTICS_V4`
 - `AOF_RAID_DETECTION_V1`
-- `AOF_MAP_PRESENCE_V2`
+- `AOF_MAP_PRESENCE_V3`
 - `AOF_FORWARD_ECO_V1`
 - `AOF_ECONOMY_STATISTICS_V4`
 - `AOF_TC_ACTIVITY_V2`
