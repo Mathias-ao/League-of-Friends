@@ -124,6 +124,20 @@ Blacksmith fundamentals use the standard attack/armor technology IDs: Fletching/
 
 Dominant-line upgrade scoring, missing-upgrade judgments and upgrade-lag scores remain deferred until these raw request timings and civilization availability can be qualified across controls. Exact kills, losses, damage, surviving army value and buildings destroyed remain outside Military V3 because current canonical evidence does not support those as direct outcomes.
 
+## Map Presence: `AOF_MAP_PRESENCE_V3`
+
+Map Presence V3 remains a spatial reconstruction over recorded command/building coordinates. Its starting anchors require an observed initial Town Center; if the non-exhaustive header-object search does not supply one, anchor-dependent metrics return unavailable rather than inventing a start position.
+
+Command map coverage is the fraction of fixed 8-tile map cells touched by recorded command positions/endpoints. Enemy-side command presence classifies positioned command events geometrically: in a classified event, a coordinate is on the opponent side when it is closer to a non-teammate starting Town Center than to the player's starting Town Center. Multiplayer near-ties within two tiles of nearest-enemy distance are left ambiguous. This is a command-location proxy, not continuous army presence.
+
+Building spread uses the maximum pairwise distance across the player's starting-TC anchor and observed BUILD placement coordinates, and separately reports the furthest placement from home. Forward-building geometry inherits V2: the nearest enemy starting TC must be within 40 tiles and at least six tiles closer than the player's own starting TC. V3 adds building-category and depth diagnostics while keeping placement—not completion—as the evidence.
+
+Expansion Town Centers are TC placements at least 30 tiles from the starting TC and are not equated to TownBell `expansions_claimed`, whose exported values demonstrate a broader concept. Enemy base contact is the first recorded command coordinate within 14 tiles of an unambiguous enemy starting TC; it is not visibility and is not mapped to TownBell's camera/observation-like `first_enemy_base_look`.
+
+Gold control remains a weighted final-placement influence proxy over supported neutral gold clusters. First relic touch remains the first ORDER/SPECIAL targeting a known initial relic and does not establish pickup.
+
+V3 deliberately does not infer raids, battles, territory ownership, visibility, pathing or continuous positions. Its home/opponent geometry and building regions are reusable inputs for the future spatiotemporal engagement detector.
+
 ## Remaining research boundary
 
 - **Controlled fixtures:** action-subtype layouts; queue/cancel/requeue/autoqueue; research acceptance/cancel; construction cancel/delete/completion; market execution; tribute/fees; unilateral diplomacy and effective state; age notifications; pause/chat attribution; restored clocks and clean result termination.
