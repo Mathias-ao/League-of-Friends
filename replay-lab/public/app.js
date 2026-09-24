@@ -11,7 +11,6 @@ const tabs = [
   ["opening", "Opening"],
   ["economy", "Economy"],
   ["military", "Military"],
-  ["battle", "Battle"],
   ["map-presence", "Map Presence"],
   ["execution", "Execution"],
   ["timeline", "Timeline"],
@@ -80,14 +79,21 @@ const MILITARY_TOWNBELL_MAP = {
   "ballistics.atMs": { id: "ballistics_time", unit: "duration" },
 };
 
+const MAP_PRESENCE_TOWNBELL_MAP = {
+  "commandMapCoverage.percent": { id: "map_command_coverage" },
+  "enemySideCommandPresence.percent": { id: "enemy_half_presence" },
+  "buildingSpread.maxPairwiseDistanceTiles": { id: "building_spread" },
+  "forwardBuildings.count": { id: "forward_buildings" },
+  "firstRelicTouch.atMs": { id: "first_relic_touch", unit: "duration" },
+};
+
 const boundaries = {
   overview: "Mixed presentation — inspect section labels before treating values as facts.",
   players: "Mixed canonical identity and projected statistics.",
   opening: "Reconstructed / inferred. Build-order labels are models, not raw replay fields.",
   economy: "Estimated / reconstructed. When a TownBell report is attached, rows compare AoF against TownBell control values; blank TownBell cells mean no direct mapping.",
   military: "Queue-derived / observed placement evidence. TownBell control values are shown only for explicitly mapped comparable rows; kills, deaths, damage and surviving army are not claimed.",
-  battle: "Inferred combat episodes. Raids do not prove kills or damage.",
-  "map-presence": "Reconstructed / inferred spatial proxies.",
+  "map-presence": "Reconstructed / inferred spatial proxies. TownBell values appear only for directly comparable rows; command presence is not continuous unit presence or map ownership.",
   execution: "Observed decoded commands and selection evidence.",
   timeline: "Observed parser facts in replay order.",
   raw: "Observed retained event evidence. Raw bytes can be shown explicitly.",
@@ -452,6 +458,75 @@ function militaryControlMatrix(run) {
   `;
 }
 
+function mapPresenceControlMatrix(run) {
+  const participants = run.statistics?.participants ?? [];
+  const playerOrder = participants.map((player) => ({
+    playerId: Number(player.playerId),
+    name: player.displayName || `P${player.playerId}`,
+    mapPresence: player.mapPresence || {},
+  }));
+  if (!playerOrder.length) return '<div class="empty-inline">No player map-presence statistics.</div>';
+
+  const byPlayerRows = new Map();
+  const rowDefinitions = new Map();
+  for (const player of playerOrder) {
+    const rows = flattenControlLeaves(player.mapPresence);
+    byPlayerRows.set(player.playerId, new Map(rows.map((row) => [row.path, row])));
+    for (const row of rows) {
+      if (!rowDefinitions.has(row.path)) rowDefinitions.set(row.path, row);
+    }
+  }
+
+  const controlPlayers = new Map(
+    (run.townBellControl?.players || []).map((player) => [Number(player.number), player])
+  );
+  const mismatch = (run.townBellControl?.playerMatches || []).filter((match) => match.nameMatches === false);
+  const controlNote = run.townBellControl
+    ? `TownBell control: ${esc(run.townBellControl.fileName || "attached report")} · ${run.townBellControl.playerCount || 0} players`
+    : "No TownBell report attached. Use “Attach TownBell report” above to populate the control columns.";
+  const mismatchNote = mismatch.length
+    ? `<div class="warning">Player-number control mapping has ${mismatch.length} name mismatch(es).</div>`
+    : "";
+
+  const headers = playerOrder.map((player) => {
+    const control = controlPlayers.get(player.playerId);
+    const controlName = control?.name && control.name !== player.name ? ` · ${esc(control.name)}` : "";
+    return `<th>${esc(player.name)} · AoF</th><th>${esc(player.name)}${controlName} · TownBell</th>`;
+  }).join("");
+
+  const body = [...rowDefinitions.entries()].map(([path, definition]) => {
+    const mapping = MAP_PRESENCE_TOWNBELL_MAP[path];
+    const cells = playerOrder.map((player) => {
+      const aofRow = byPlayerRows.get(player.playerId)?.get(path);
+      const townBellMetric = mapping
+        ? controlPlayers.get(player.playerId)?.metrics?.[mapping.id]
+        : null;
+      const mappedTitle = mapping ? `TownBell: ${mapping.id}` : "No direct TownBell mapping";
+      return `
+        <td class="review-value">${esc(formatAofControlValue(aofRow, mapping))}</td>
+        <td class="control-value ${mapping ? "mapped" : "unmapped"}" title="${esc(mappedTitle)}">${esc(formatTownBellValue(townBellMetric, mapping))}</td>
+      `;
+    }).join("");
+    return `
+      <tr>
+        <td class="review-key" title="${esc(path)}">${esc(definition.metric)}</td>
+        ${cells}
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="timeline-note">${controlNote}</div>
+    ${mismatchNote}
+    <div class="review-table-wrap control-matrix-wrap">
+      <table class="review-table control-matrix">
+        <thead><tr><th>Metric</th>${headers}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 function flattenReviewRows(value, prefix = "", context = {}, rows = []) {
   if (value === null || value === undefined || typeof value !== "object") {
     rows.push({
@@ -717,10 +792,8 @@ async function renderTab() {
     html = `<h3>Economy review matrix</h3>${economyControlMatrix(run)}`;
   } else if (state.tab === "military") {
     html = `<h3>Military review matrix</h3>${militaryControlMatrix(run)}`;
-  } else if (state.tab === "battle") {
-    html = playerSection("Combat / raid inference", participant("combat"));
   } else if (state.tab === "map-presence") {
-    html = playerSection("Map Presence", participant("mapPresence"));
+    html = `<h3>Map Presence review matrix</h3>${mapPresenceControlMatrix(run)}`;
   } else if (state.tab === "execution") {
     html = playerSection("Execution evidence", stats?.participants?.map((p) => ({
       playerId: p.playerId,
