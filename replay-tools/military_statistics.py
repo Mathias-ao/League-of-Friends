@@ -12,7 +12,7 @@ from typing import Any
 from economy_statistics import ECO_TECH_IDS
 from opening_statistics import AGE_TECH_IDS, _latest_research_event, _line_tiles, _roles
 
-MILITARY_STATISTICS_VERSION = "AOF_MILITARY_STATISTICS_V3"
+MILITARY_STATISTICS_VERSION = "AOF_MILITARY_STATISTICS_V4"
 CHECKPOINT_CASTLE_CLICK_TECH_ID = AGE_TECH_IDS["castle"]
 
 ECONOMIC_UNIT_ROLES = {
@@ -304,9 +304,12 @@ def _technology_group(
             "sourceEventId": latest.get("sourceEventId"),
         })
     first_event = min(first_requests, key=lambda event: event["atMs"], default=None)
+    request_count_total = sum(row["requestCount"] for row in rows)
     return {
         "layer": "observed",
         "count": len(rows),
+        "requestCountTotal": request_count_total,
+        "repeatRequestCount": request_count_total - len(rows),
         "firstAtMs": first_event.get("atMs") if first_event else None,
         "technologies": rows,
         "basis": basis,
