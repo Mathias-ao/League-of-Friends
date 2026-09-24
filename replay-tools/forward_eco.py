@@ -1,17 +1,17 @@
-"""Forward Eco inference over Map Presence V2 forward geometry."""
+"""Forward Eco inference over Map Presence V4 normalized forward geometry."""
 from __future__ import annotations
 
 from collections import Counter
 from typing import Any, Iterable
 
 import map_presence as v1
-from map_presence_v2 import (
-    FORWARD_ENEMY_ADVANTAGE_TILES,
-    FORWARD_MAX_ENEMY_DISTANCE_TILES,
+from map_presence_v4 import (
+    FORWARD_MIN_PROGRESS_PERCENT,
+    HOME_SECTOR_MAX_PROGRESS_PERCENT,
     _forward_placement,
 )
 
-FORWARD_ECO_RULE_VERSION = "AOF_FORWARD_ECO_V1"
+FORWARD_ECO_RULE_VERSION = "AOF_FORWARD_ECO_V2"
 FORWARD_ECO_ROLE_KEYS = {"mining_camp", "lumber_camp", "mill", "town_center"}
 FORWARD_ECO_NAMES = {"Mining Camp", "Lumber Camp", "Mill", "Town Center"}
 
@@ -34,7 +34,7 @@ def project_forward_eco(
     """Return per-player forward economic building placements.
 
     A placement qualifies only when it is a Mining Camp, Lumber Camp, Mill, or
-    Town Center and satisfies the exact Map Presence V2 Forward Building geometry.
+    Town Center and reaches the Map Presence V4 forward sector.
     """
     initial_objects = list(initial_objects)
     build_events = list(build_events)
@@ -84,14 +84,14 @@ def project_forward_eco(
             "byBuilding": dict(sorted(counts.items())),
             "eligibleBuildingTypes": sorted(FORWARD_ECO_NAMES),
             "thresholds": {
-                "maximumEnemyTownCenterDistanceTiles": FORWARD_MAX_ENEMY_DISTANCE_TILES,
-                "minimumEnemyDistanceAdvantageTiles": FORWARD_ENEMY_ADVANTAGE_TILES,
+                "homeMaximumEnemyProgressPercent": HOME_SECTOR_MAX_PROGRESS_PERCENT,
+                "forwardMinimumEnemyProgressPercent": FORWARD_MIN_PROGRESS_PERCENT,
             },
             "evidence": evidence,
             "scope": (
-                "Mining Camp, Lumber Camp, Mill, or Town Center placement satisfying "
-                "AOF_MAP_PRESENCE_V2 Forward Building geometry; placement is the model "
-                "input and completion is not asserted"
+                "Mining Camp, Lumber Camp, Mill, or Town Center placement with "
+                "Enemy Progress >= 65%; placement is the model input and completion "
+                "is not asserted"
             ),
         }
     return result

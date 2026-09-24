@@ -90,19 +90,23 @@ Raids are inferred hostile-command episodes inside reconstructed economic zones;
 
 ### Map Presence
 
-`AOF_MAP_PRESENCE_V3` exposes spatial fundamentals over starting-TC anchors, command coordinates and observed building placements:
+`AOF_MAP_PRESENCE_V4` exposes spatial fundamentals over starting-TC anchors, command coordinates and observed placements:
 
 - Command map coverage: share of fixed 8-tile map cells touched by recorded command coordinates/endpoints.
+- Scout coverage @5:00: fixed-cell coverage and command count from actions whose decoded selection includes an observed starting Scout/Eagle/Camel Scout during the first five minutes. This is scouting attention, not fog-of-war exploration.
 - Enemy-side command presence: share of positioned command events whose recorded coordinate is closer to an opponent starting Town Center than to the player's starting Town Center; teammates are excluded.
-- Building spread: maximum pairwise distance across the starting Town Center and observed BUILD placement coordinates, plus maximum placement distance from home.
-- Forward buildings: count, first timing, building/category breakdown and depth diagnostics. A qualifying placement is within 40 tiles of an enemy starting TC and at least 6 tiles closer to that enemy TC than to the player's starting TC.
-- Forward eco: count, first timing and eligible economic building types using the same V2 forward geometry.
-- Expansion Town Centers: TC placements at least 30 tiles from the player's starting TC. This is intentionally not mapped to TownBell `expansions_claimed`, whose control values imply a broader definition.
-- Enemy base contact: first recorded command coordinate within 14 tiles of an unambiguous enemy starting TC. It is command contact, not fog-of-war visibility, and is intentionally not equated with TownBell `first_enemy_base_look`.
-- Gold control: weighted final-placement influence over supported neutral gold clusters.
-- First relic touch: first ORDER/SPECIAL targeting a known initial relic, not proof of pickup.
+- Building placement range: maximum straight-line span across the starting-TC anchor and BUILD placement coordinates, plus the furthest placement from home.
+- Home / Mid-map / Forward sectors: Enemy Progress % normalizes each placement between the player's starting TC (0%), the equal-distance line (50%) and the most relevant enemy starting TC (100%). Home is <=35%, Mid-map is between 35% and 65%, and Forward is >=65%.
+- Forward buildings and Forward Eco use the same normalized 65% Enemy Progress threshold, replacing the old fixed 40/6-tile rule.
+- Walls: reconstructed Palisade, Stone/Fortified and total wall tiles from WALL placement endpoints.
+- Towers: total placements, first timing and forward-tower count.
+- Camp distance from home TC: Mining/Lumber Camp placement distances only; forwardness is intentionally left to Forward Eco instead of duplicating another camp-progress statistic.
+- Expansion Town Centers: TC placements at least 30 tiles from the player's starting TC.
+- Enemy base contact: first recorded command coordinate within 14 tiles of an unambiguous enemy starting TC; it is command contact, not fog-of-war visibility.
+- Gold control: supported gold deposits are weighted by deposit count rather than equal cluster count; placement-influence leadership is recalculated as infrastructure appears so inferred control takeovers are retained. Mined/depleted gold and destroyed infrastructure are not observable here.
+- Relics: unique relic touches, total relic commands and an inferred held-relay state. A later touch by a different non-teammate is classified as inferred theft; monastery deposit is not required. Touch remains an inference proxy rather than direct pickup proof.
 
-Map Presence is based on command/building geometry and does not assert continuous unit positions, fog-of-war visibility, completed construction, resource gathering or permanent territorial control. These spatial primitives are intended to feed the later engagement/raid detector without embedding combat inference in Map Presence itself.
+Map Presence remains reconstructed/inferred geometry rather than continuous unit position, fog-of-war visibility, completed construction, resource depletion or permanent territorial ownership.
 
 ### Execution
 

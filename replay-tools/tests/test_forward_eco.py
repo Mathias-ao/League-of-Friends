@@ -47,7 +47,7 @@ CATALOG = {
 
 
 class ForwardEcoTests(unittest.TestCase):
-    def test_counts_only_forward_eco_buildings_using_map_presence_v2_geometry(self):
+    def test_counts_only_forward_eco_buildings_using_map_presence_v4_geometry(self):
         manifest = {
             "participants": [participant(1), participant(2)],
             "initialState": {"map": {"width": 100, "height": 100}},
@@ -57,12 +57,12 @@ class ForwardEcoTests(unittest.TestCase):
             initial("p2-tc", 2, 109, 201, 90, 10),
         ]
         build_events = [
-            build("mining", 1, 1_000, 584, 55, 10),
-            build("lumber", 1, 2_000, 562, 56, 10),
-            build("mill", 1, 3_000, 68, 57, 10),
-            build("tc", 1, 4_000, 109, 58, 10),
-            build("forward-barracks", 1, 5_000, 12, 59, 10),
-            build("eco-not-forward", 1, 6_000, 584, 49, 10),
+            build("mining", 1, 1_000, 584, 65, 10),
+            build("lumber", 1, 2_000, 562, 66, 10),
+            build("mill", 1, 3_000, 68, 67, 10),
+            build("tc", 1, 4_000, 109, 68, 10),
+            build("forward-barracks", 1, 5_000, 12, 69, 10),
+            build("eco-not-forward", 1, 6_000, 584, 55, 10),
         ]
 
         result = project_forward_eco(
@@ -86,8 +86,8 @@ class ForwardEcoTests(unittest.TestCase):
             [item["sourceEventId"] for item in result["evidence"]],
             ["mining", "lumber", "mill", "tc"],
         )
-        self.assertEqual(result["thresholds"]["maximumEnemyTownCenterDistanceTiles"], 40.0)
-        self.assertEqual(result["thresholds"]["minimumEnemyDistanceAdvantageTiles"], 6.0)
+        self.assertEqual(result["thresholds"]["homeMaximumEnemyProgressPercent"], 35.0)
+        self.assertEqual(result["thresholds"]["forwardMinimumEnemyProgressPercent"], 65.0)
 
     def test_forward_tc_can_independently_be_an_expansion_elsewhere(self):
         manifest = {
@@ -102,7 +102,7 @@ class ForwardEcoTests(unittest.TestCase):
             manifest=manifest,
             catalog=CATALOG,
             initial_objects=initial_objects,
-            build_events=[build("tc", 1, 10_000, 109, 58, 10)],
+            build_events=[build("tc", 1, 10_000, 109, 68, 10)],
         )["1"]
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["byBuilding"], {"Town Center": 1})

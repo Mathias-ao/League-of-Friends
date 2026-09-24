@@ -81,10 +81,18 @@ const MILITARY_TOWNBELL_MAP = {
 
 const MAP_PRESENCE_TOWNBELL_MAP = {
   "commandMapCoverage.percent": { id: "map_command_coverage" },
+  "scoutCoverageAt5Minutes.percent": { id: "scout_coverage_5min" },
   "enemySideCommandPresence.percent": { id: "enemy_half_presence" },
-  "buildingSpread.maxPairwiseDistanceTiles": { id: "building_spread" },
   "forwardBuildings.count": { id: "forward_buildings" },
+  "wallTiles.totalWallTiles": { id: "wall_tiles_total" },
+  "wallTiles.palisadeWallTiles": { id: "palisade_tiles" },
+  "wallTiles.stoneWallTiles": { id: "stone_wall_tiles" },
+  "towers.count": { id: "towers_built" },
+  "towers.forwardCount": { id: "forward_towers" },
+  "towers.firstAtMs": { id: "first_tower", unit: "duration" },
+  "campDistanceFromHomeTownCenter.averageTiles": { id: "camps_avg_distance" },
   "firstRelicTouch.atMs": { id: "first_relic_touch", unit: "duration" },
+  "relicControl.totalRelicCommands": { id: "relic_commands" },
 };
 
 const boundaries = {
@@ -93,7 +101,7 @@ const boundaries = {
   opening: "Reconstructed / inferred. Build-order labels are models, not raw replay fields.",
   economy: "Estimated / reconstructed. When a TownBell report is attached, rows compare AoF against TownBell control values; blank TownBell cells mean no direct mapping.",
   military: "Queue-derived / observed placement evidence. TownBell control values are shown only for explicitly mapped comparable rows; kills, deaths, damage and surviving army are not claimed.",
-  "map-presence": "Reconstructed / inferred spatial proxies. TownBell values appear only for directly comparable rows; command presence is not continuous unit presence or map ownership.",
+  "map-presence": "Reconstructed / inferred spatial proxies. TownBell values appear only for directly comparable rows; scout coverage is command attention, relic holding is touch-inferred, and gold control is placement influence rather than mined/remaining resource state.",
   execution: "Observed decoded commands and selection evidence.",
   timeline: "Observed parser facts in replay order.",
   raw: "Observed retained event evidence. Raw bytes can be shown explicitly.",

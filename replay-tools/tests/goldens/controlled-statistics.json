@@ -6,20 +6,31 @@
     "projectedAgeCompletion": "not_observable"
   },
   "buildings": {
-    "1": [{
-      "commandCount": 1,
-      "entity": {
-        "catalogSourceVersion": "aoe2techtree@b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
-        "catalogVersion": "AOF_ENTITY_CATALOG_V1_1",
-        "kind": "building",
-        "name": "Archery Range",
-        "rawId": 87,
-        "resolutionStatus": "reference_catalog_unqualified_for_replay_patch",
-        "roleKeys": ["archery_range", "military_production"]
+    "1": [
+      {
+        "commandCount": 1,
+        "entity": {
+          "catalogSourceVersion": "aoe2techtree@b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
+          "catalogVersion": "AOF_ENTITY_CATALOG_V1_1",
+          "kind": "building",
+          "name": "Archery Range",
+          "rawId": 87,
+          "resolutionStatus": "reference_catalog_unqualified_for_replay_patch",
+          "roleKeys": [
+            "archery_range",
+            "military_production"
+          ]
+        }
       }
-    }]
+    ]
   },
-  "camera": {"pointCount": 1, "recorderPlayerIds": [1], "scope": "recording_perspective_only"},
+  "camera": {
+    "pointCount": 1,
+    "recorderPlayerIds": [
+      1
+    ],
+    "scope": "recording_perspective_only"
+  },
   "economy": [
     {
       "ecoTechs": 0,
@@ -107,20 +118,71 @@
     }
   ],
   "combat": [
-    {"modelVersion": "AOF_RAID_DETECTION_V1", "playerId": 1, "raidsAgainstYou": 0, "raidsInitiated": 0},
-    {"modelVersion": "AOF_RAID_DETECTION_V1", "playerId": 2, "raidsAgainstYou": 0, "raidsInitiated": 0}
+    {
+      "modelVersion": "AOF_RAID_DETECTION_V1",
+      "playerId": 1,
+      "raidsAgainstYou": 0,
+      "raidsInitiated": 0
+    },
+    {
+      "modelVersion": "AOF_RAID_DETECTION_V1",
+      "playerId": 2,
+      "raidsAgainstYou": 0,
+      "raidsInitiated": 0
+    }
   ],
-  "diplomacy": {"1->2": [[1, 2, 3, 7], [1, 2, 0, 9]], "2->1": [[2, 1, 0, 8]]},
+  "diplomacy": {
+    "1->2": [
+      [
+        1,
+        2,
+        3,
+        7
+      ],
+      [
+        1,
+        2,
+        0,
+        9
+      ]
+    ],
+    "2->1": [
+      [
+        2,
+        1,
+        0,
+        8
+      ]
+    ]
+  },
   "eligibility": {
-    "availableMetricIds": ["market_transactions", "market_first_use", "market_sells", "market_buys", "flares_used", "actions_total", "avg_selection_size", "max_selection_size", "command_type_breadth", "first_command_time", "first_five_min_commands", "median_selection_size", "flares_sent"],
-    "counts": {"available_canonical": 13, "inferred_with_confidence": 25, "needs_controlled_fixture": 59, "needs_engine_simulation": 98, "needs_parser_research": 125},
+    "availableMetricIds": [
+      "market_transactions",
+      "market_first_use",
+      "market_sells",
+      "market_buys",
+      "flares_used",
+      "actions_total",
+      "avg_selection_size",
+      "max_selection_size",
+      "command_type_breadth",
+      "first_command_time",
+      "first_five_min_commands",
+      "median_selection_size",
+      "flares_sent"
+    ],
+    "counts": {
+      "available_canonical": 13,
+      "inferred_with_confidence": 25,
+      "needs_controlled_fixture": 59,
+      "needs_engine_simulation": 98,
+      "needs_parser_research": 125
+    },
     "metricCount": 320
   },
   "mapPresence": [
     {
-      "buildingSpreadTiles": 1.25,
       "commandCoveragePercent": 100.0,
-      "deepestForwardAdvantageTiles": null,
       "enemyBaseContactAtMs": 100,
       "enemyBaseContactPlayerId": 2,
       "enemySidePresencePercent": 0.0,
@@ -128,13 +190,21 @@
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V3",
-      "playerId": 1
+      "modelVersion": "AOF_MAP_PRESENCE_V4",
+      "playerId": 1,
+      "scoutCoverage5mPercent": 0.0,
+      "scoutOrders5m": 0,
+      "deepestForwardProgressPercent": null,
+      "buildingPlacementSpanTiles": 1.25,
+      "wallTilesTotal": 0,
+      "towers": 0,
+      "forwardTowers": 0,
+      "campAverageDistanceTiles": null,
+      "uniqueRelicsTouched": 0,
+      "inferredRelicsHeldAtEnd": 0
     },
     {
-      "buildingSpreadTiles": 0.0,
       "commandCoveragePercent": 0.0,
-      "deepestForwardAdvantageTiles": null,
       "enemyBaseContactAtMs": null,
       "enemyBaseContactPlayerId": null,
       "enemySidePresencePercent": null,
@@ -142,8 +212,18 @@
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V3",
-      "playerId": 2
+      "modelVersion": "AOF_MAP_PRESENCE_V4",
+      "playerId": 2,
+      "scoutCoverage5mPercent": 0.0,
+      "scoutOrders5m": 0,
+      "deepestForwardProgressPercent": null,
+      "buildingPlacementSpanTiles": 0.0,
+      "wallTilesTotal": 0,
+      "towers": 0,
+      "forwardTowers": 0,
+      "campAverageDistanceTiles": null,
+      "uniqueRelicsTouched": 0,
+      "inferredRelicsHeldAtEnd": 0
     }
   ],
   "opening": [
@@ -183,40 +263,96 @@
     }
   ],
   "participantCommands": [
-    {"count": 10, "firstAtMs": 100, "firstFiveObservedMinutesCount": 10, "isRecorder": true, "lastAtMs": 100, "playerId": 1},
-    {"count": 1, "firstAtMs": 100, "firstFiveObservedMinutesCount": 1, "isRecorder": false, "lastAtMs": 100, "playerId": 2}
+    {
+      "count": 10,
+      "firstAtMs": 100,
+      "firstFiveObservedMinutesCount": 10,
+      "isRecorder": true,
+      "lastAtMs": 100,
+      "playerId": 1
+    },
+    {
+      "count": 1,
+      "firstAtMs": 100,
+      "firstFiveObservedMinutesCount": 1,
+      "isRecorder": false,
+      "lastAtMs": 100,
+      "playerId": 2
+    }
   ],
   "queue": {
-    "1": [{
-      "commandCount": 4,
-      "entity": {
-        "catalogSourceVersion": "aoe2techtree@b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
-        "catalogVersion": "AOF_ENTITY_CATALOG_V1_1",
-        "kind": "unit",
-        "name": "Villager",
-        "rawId": 83,
-        "resolutionStatus": "reference_catalog_unqualified_for_replay_patch",
-        "roleKeys": ["villager", "economic_unit"]
+    "1": [
+      {
+        "commandCount": 4,
+        "entity": {
+          "catalogSourceVersion": "aoe2techtree@b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
+          "catalogVersion": "AOF_ENTITY_CATALOG_V1_1",
+          "kind": "unit",
+          "name": "Villager",
+          "rawId": 83,
+          "resolutionStatus": "reference_catalog_unqualified_for_replay_patch",
+          "roleKeys": [
+            "villager",
+            "economic_unit"
+          ]
+        }
       }
-    }]
+    ]
   },
-  "queueAmounts": {"1": {"83": 5}},
+  "queueAmounts": {
+    "1": {
+      "83": 5
+    }
+  },
   "research": {
-    "1": [{
-      "commandCount": 1,
-      "entity": {
-        "catalogSourceVersion": "aoe2techtree@b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
-        "catalogVersion": "AOF_ENTITY_CATALOG_V1_1",
-        "kind": "technology",
-        "name": "Feudal Age",
-        "rawId": 101,
-        "resolutionStatus": "reference_catalog_unqualified_for_replay_patch",
-        "roleKeys": ["feudal_age"]
+    "1": [
+      {
+        "commandCount": 1,
+        "entity": {
+          "catalogSourceVersion": "aoe2techtree@b9d494df6921d4080df69b22f9dbb7a4d1dcd9f0",
+          "catalogVersion": "AOF_ENTITY_CATALOG_V1_1",
+          "kind": "technology",
+          "name": "Feudal Age",
+          "rawId": 101,
+          "resolutionStatus": "reference_catalog_unqualified_for_replay_patch",
+          "roleKeys": [
+            "feudal_age"
+          ]
+        }
       }
-    }]
+    ]
   },
-  "scope": {"clock": "sum_of_observed_sync_increments", "decodeCoverageMeaning": "recognized_action_fraction_not_semantic_coverage", "decodeCoveragePercent": 91.667, "observedUntilMs": 100},
-  "source": {"canonicalSchemaVersion": "1.1.0", "parserVersion": "mgz-fast/1.0.0", "replaySha256": "b0211f083280b672d371074ba093dcf3631a250543272e97a48ccbfb170711c3"},
-  "versions": {"eligibilityRegistryVersion": "AOF_STATISTICS_ELIGIBILITY_V1", "entityCatalogVersion": "AOF_ENTITY_CATALOG_V1_1", "formulaVersion": "AOF_OBSERVED_COMMAND_FORMULAS_V1", "statisticsProjectionVersion": "AOF_CANONICAL_STATISTICS_V1", "statisticsSchemaVersion": "1.0.0"},
-  "warningCodes": ["PARTIAL_DECODE", "HEADER_SEMANTICS_UNQUALIFIED", "RELATION_STATE_UNQUALIFIED", "NO_SOURCE_DELETION", "OBSERVED_INTERVAL_ONLY", "REQUESTS_NOT_OUTCOMES", "ENTITY_LABELS_UNQUALIFIED", "RECORDER_CAMERA_ONLY", "RAIDS_ARE_INFERRED", "MAP_PRESENCE_IS_INFERRED", "RESOURCE_COMMITMENT_IS_ESTIMATED", "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED", "MILITARY_PRODUCTION_IS_QUEUE_DERIVED"]
+  "scope": {
+    "clock": "sum_of_observed_sync_increments",
+    "decodeCoverageMeaning": "recognized_action_fraction_not_semantic_coverage",
+    "decodeCoveragePercent": 91.667,
+    "observedUntilMs": 100
+  },
+  "source": {
+    "canonicalSchemaVersion": "1.1.0",
+    "parserVersion": "mgz-fast/1.0.0",
+    "replaySha256": "b0211f083280b672d371074ba093dcf3631a250543272e97a48ccbfb170711c3"
+  },
+  "versions": {
+    "eligibilityRegistryVersion": "AOF_STATISTICS_ELIGIBILITY_V1",
+    "entityCatalogVersion": "AOF_ENTITY_CATALOG_V1_1",
+    "formulaVersion": "AOF_OBSERVED_COMMAND_FORMULAS_V1",
+    "statisticsProjectionVersion": "AOF_CANONICAL_STATISTICS_V1",
+    "statisticsSchemaVersion": "1.0.0"
+  },
+  "warningCodes": [
+    "PARTIAL_DECODE",
+    "HEADER_SEMANTICS_UNQUALIFIED",
+    "RELATION_STATE_UNQUALIFIED",
+    "NO_SOURCE_DELETION",
+    "OBSERVED_INTERVAL_ONLY",
+    "REQUESTS_NOT_OUTCOMES",
+    "ENTITY_LABELS_UNQUALIFIED",
+    "RECORDER_CAMERA_ONLY",
+    "RAIDS_ARE_INFERRED",
+    "MAP_PRESENCE_IS_INFERRED",
+    "RESOURCE_COMMITMENT_IS_ESTIMATED",
+    "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED",
+    "MILITARY_PRODUCTION_IS_QUEUE_DERIVED"
+  ]
 }
