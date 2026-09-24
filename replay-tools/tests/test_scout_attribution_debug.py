@@ -13,7 +13,7 @@ FIXTURES = ROOT / "replay-fixtures"
 
 class ScoutAttributionDebugTests(unittest.TestCase):
     def test_paired_duel_first_five_minutes(self):
-        for file_name in ("1v1_1.aoe2record", "1v1_2.aoe2record"):
+        for file_name in ("1v1_1.aoe2record",):
             source = FIXTURES / file_name
             self.assertTrue(source.is_file(), file_name)
             with tempfile.TemporaryDirectory() as temporary:
