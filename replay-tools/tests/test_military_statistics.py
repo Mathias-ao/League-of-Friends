@@ -20,6 +20,9 @@ CATALOG = {
         "13": {"id": 13, "name": "Fishing Ship", "internalName": "FSHIP", "roleKeys": ["fishing_ship", "economic_unit"], "cost": {"Wood": 75}},
         "280": {"id": 280, "name": "Mangonel", "internalName": "MANGONEL", "roleKeys": [], "cost": {"Wood": 160, "Gold": 135}},
         "999": {"id": 999, "name": "Unique Unit", "internalName": "UU", "roleKeys": [], "cost": {"Food": 50, "Gold": 50}},
+        "93": {"id": 93, "name": "Spearman", "internalName": "PKEMN", "roleKeys": ["spearman", "land_military", "infantry"], "cost": {"Food": 35, "Wood": 25}},
+        "7": {"id": 7, "name": "Skirmisher", "internalName": "XBOWM", "roleKeys": ["skirmisher", "land_military", "ranged"], "cost": {"Food": 25, "Wood": 35}},
+        "448": {"id": 448, "name": "Scout Cavalry", "internalName": "SCOUT", "roleKeys": ["scout_cavalry", "land_military", "cavalry"], "cost": {"Food": 80}},
     },
     "buildings": {
         "12": {"id": 12, "name": "Barracks", "internalName": "Barracks Age1", "roleKeys": ["barracks", "military_production"], "cost": {"Wood": 175}},
@@ -30,11 +33,17 @@ CATALOG = {
         "87": {"id": 87, "name": "Archery Range", "internalName": "ARRG", "roleKeys": ["archery_range", "military_production"], "cost": {"Wood": 175}},
         "101": {"id": 101, "name": "Stable", "internalName": "STBL", "roleKeys": ["stable", "military_production"], "cost": {"Wood": 175}},
         "104": {"id": 104, "name": "CRCH", "internalName": "CRCH", "roleKeys": [], "cost": {"Wood": 175}},
+        "103": {"id": 103, "name": "Blacksmith", "internalName": "BLAC", "roleKeys": ["blacksmith", "military_upgrade"], "cost": {"Wood": 150}},
+        "209": {"id": 209, "name": "University", "internalName": "UNIV", "roleKeys": [], "cost": {"Wood": 200}},
     },
     "technologies": {
         "101": {"id": 101, "name": "Feudal Age", "roleKeys": ["feudal_age"], "cost": {"Food": 500}},
         "102": {"id": 102, "name": "Castle Age", "roleKeys": ["castle_age"], "cost": {"Food": 800, "Gold": 200}},
+        "47": {"id": 47, "name": "Chemistry", "roleKeys": [], "cost": {"Food": 300, "Gold": 200}},
+        "67": {"id": 67, "name": "Forging", "roleKeys": [], "cost": {"Food": 150}},
+        "93": {"id": 93, "name": "Ballistics", "roleKeys": [], "cost": {"Wood": 300, "Gold": 175}},
         "199": {"id": 199, "name": "Fletching", "roleKeys": [], "cost": {"Food": 100, "Gold": 50}},
+        "200": {"id": 200, "name": "Bodkin Arrow", "roleKeys": [], "cost": {"Food": 200, "Gold": 100}},
         "202": {"id": 202, "name": "Double-Bit Axe", "roleKeys": ["eco_tech"], "cost": {"Food": 100, "Wood": 50}},
     },
 }
@@ -162,6 +171,97 @@ class MilitaryStatisticsTests(unittest.TestCase):
         self.assertEqual(buildings["byType"]["archeryRanges"], 1)
         self.assertEqual(buildings["byType"]["stables"], 1)
         self.assertEqual(buildings["byType"]["siegeWorkshops"], 1)
+
+    def test_army_commitment_checkpoints_keep_gross_and_cancellation_adjusted_values(self):
+        result = self.project(body(
+            productionEvents=[
+                {"replaySlot": 1, "atMs": 5 * 60_000, "unitId": 4,
+                 "producerBuildingTypeId": 87, "signedAmount": 2, "requestedAmountPositive": 2},
+                {"replaySlot": 1, "atMs": 12 * 60_000, "unitId": 38,
+                 "producerBuildingTypeId": 101, "signedAmount": 1, "requestedAmountPositive": 1},
+                {"replaySlot": 1, "atMs": 14 * 60_000, "unitId": 4,
+                 "producerBuildingTypeId": 87, "signedAmount": -1, "requestedAmountPositive": 0},
+            ],
+        ))
+        checkpoints = result["armyCommitmentCheckpoints"]
+        self.assertEqual(checkpoints["at10Minutes"]["grossPositiveQueueResources"], 140)
+        self.assertEqual(checkpoints["at10Minutes"]["netQueueResources"], 140)
+        self.assertEqual(checkpoints["at15Minutes"]["grossPositiveQueueResources"], 275)
+        self.assertEqual(checkpoints["at15Minutes"]["cancelledQueueResources"], 70)
+        self.assertEqual(checkpoints["at15Minutes"]["netQueueResources"], 205)
+        self.assertEqual(checkpoints["at20Minutes"]["netQueueResources"], 205)
+
+    def test_trash_units_and_share_use_explicit_three_line_ids(self):
+        result = self.project(body(
+            productionEvents=[
+                {"replaySlot": 1, "atMs": 10_000, "unitId": 93,
+                 "producerBuildingTypeId": 12, "signedAmount": 3, "requestedAmountPositive": 3},
+                {"replaySlot": 1, "atMs": 20_000, "unitId": 7,
+                 "producerBuildingTypeId": 87, "signedAmount": 2, "requestedAmountPositive": 2},
+                {"replaySlot": 1, "atMs": 30_000, "unitId": 448,
+                 "producerBuildingTypeId": 101, "signedAmount": 5, "requestedAmountPositive": 5},
+                {"replaySlot": 1, "atMs": 40_000, "unitId": 4,
+                 "producerBuildingTypeId": 87, "signedAmount": 10, "requestedAmountPositive": 10},
+            ],
+        ))
+        self.assertEqual(result["trashUnits"]["count"], 10)
+        self.assertEqual(result["trashUnits"]["byLine"]["spearLine"], 3)
+        self.assertEqual(result["trashUnits"]["byLine"]["skirmisherLine"], 2)
+        self.assertEqual(result["trashUnits"]["byLine"]["lightCavalryLine"], 5)
+        self.assertEqual(result["trashArmyShare"]["percent"], 50.0)
+
+    def test_production_buildings_used_counts_distinct_decoded_producer_objects(self):
+        result = self.project(body(
+            productionEvents=[
+                {"replaySlot": 1, "atMs": 10_000, "unitId": 4,
+                 "producerBuildingTypeId": 87, "producerObjectIds": [100, 101],
+                 "signedAmount": 2, "requestedAmountPositive": 2},
+                {"replaySlot": 1, "atMs": 20_000, "unitId": 4,
+                 "producerBuildingTypeId": 87, "producerObjectIds": [101, 102],
+                 "signedAmount": 1, "requestedAmountPositive": 1},
+                {"replaySlot": 1, "atMs": 30_000, "unitId": 38,
+                 "producerBuildingTypeId": 101, "producerObjectIds": [],
+                 "signedAmount": 1, "requestedAmountPositive": 1},
+            ],
+        ))
+        used = result["productionBuildingsUsed"]
+        self.assertEqual(used["count"], 3)
+        self.assertEqual(used["eventsWithoutProducerObjectIds"], 1)
+        self.assertEqual(used["byProducerBuildingTypeId"]["87"], 3)
+
+    def test_castles_blacksmith_and_university_fundamentals(self):
+        result = self.project(body(
+            buildEvents=[
+                {"replaySlot": 1, "atMs": 500_000, "buildingId": 103},
+                {"replaySlot": 1, "atMs": 700_000, "buildingId": 209},
+                {"replaySlot": 1, "atMs": 800_000, "buildingId": 82},
+                {"replaySlot": 1, "atMs": 1_000_000, "buildingId": 82},
+            ],
+            researchEvents=[
+                {"replaySlot": 1, "atMs": 600_000, "technologyId": 199, "sourceEventId": "f1"},
+                {"replaySlot": 1, "atMs": 650_000, "technologyId": 67, "sourceEventId": "forge"},
+                {"replaySlot": 1, "atMs": 900_000, "technologyId": 199, "sourceEventId": "f2"},
+                {"replaySlot": 1, "atMs": 920_000, "technologyId": 93, "sourceEventId": "ballistics1"},
+                {"replaySlot": 1, "atMs": 950_000, "technologyId": 47, "sourceEventId": "chem"},
+                {"replaySlot": 1, "atMs": 970_000, "technologyId": 93, "sourceEventId": "ballistics2"},
+            ],
+        ))
+        self.assertEqual(result["castles"]["count"], 2)
+        self.assertEqual(result["castles"]["firstAtMs"], 800_000)
+        self.assertEqual(result["blacksmithBuildings"]["count"], 1)
+        self.assertEqual(result["blacksmithUpgrades"]["count"], 2)
+        self.assertEqual(result["blacksmithUpgrades"]["firstAtMs"], 600_000)
+        fletching = next(
+            row for row in result["blacksmithUpgrades"]["technologies"]
+            if row["technology"]["rawId"] == 199
+        )
+        self.assertEqual(fletching["firstRequestedAtMs"], 600_000)
+        self.assertEqual(fletching["latestRequestedAtMs"], 900_000)
+        self.assertEqual(fletching["requestCount"], 2)
+        self.assertEqual(result["universityBuildings"]["count"], 1)
+        self.assertEqual(result["universityTechs"]["count"], 2)
+        self.assertEqual(result["ballistics"]["atMs"], 970_000)
+        self.assertEqual(result["chemistry"]["atMs"], 950_000)
 
     def test_unknown_amount_makes_total_unavailable_but_keeps_known_coverage(self):
         result = self.project(body(
