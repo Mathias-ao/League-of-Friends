@@ -59,7 +59,7 @@ class ScoutAttributionDebugTests(unittest.TestCase):
                         samples[actor].append({
                             "at": elapsed_ms, "actor": actor, "name": name,
                             "ids": ids, "x": data.get("x"), "y": data.get("y"),
-                            "layout": command_layout(raw, name), "ordinal": ordinal,
+                            "layout": layout, "ordinal": ordinal,
                         })
 
         print("SCOUT_DEBUG_ACTION_COUNTS", {k: dict(v) for k, v in counts.items()})
