@@ -78,8 +78,8 @@ The current replay/statistics foundation includes:
 - Player-facing Opening statistics and Build Order classification.
 - Resource Commitment estimates by resource and age.
 - Raid episode detection with attacker/victim attribution.
-- Map Presence V5, including command/scout coverage, normalized Home/Mid/Forward geometry, building placement range, walls, towers, camp distance, enemy-base contact, expansions, time-aware deposit-weighted gold influence and relic holding/theft inference.
-- Forward Eco V2 classification using the same Map Presence V5 Enemy Progress >=65% forward geometry.
+- Map Presence V6, including command/scout coverage, normalized Home/Mid/Forward geometry, building placement range, walls, towers, camp distance, enemy-base contact, expansions, time-aware deposit-weighted gold influence and relic holding/theft inference.
+- Forward Eco V2 classification using the same Map Presence V6 Enemy Progress >=65% forward geometry.
 - Observed command and selection evidence for Execution statistics.
 - Versioned tests, golden projections and architecture documents for the active models.
 - Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.\n- Replay Lab inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between CanonicalReplay and statistics. Its default development import uses explicit `sealed_local_fast` structural publication checks instead of exhaustive event conformance; a separate Full Conformance Audit upgrades a run to `verified_local`. Routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating canonical facts.
@@ -183,4 +183,4 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - [`../architecture/civilization-drafting-v1.md`](../architecture/civilization-drafting-v1.md)
 - [`../architecture/civilization-catalogue-v1.md`](../architecture/civilization-catalogue-v1.md)
 - [`../design/emperors-favor.md`](../design/emperors-favor.md)
-\n- Map Presence V5: buffered Scout Coverage @5:00 with attribution diagnostics; Eco Camps include Mill/Folwark + Lumber/Mining Camps; Expansion Zones cluster remote qualifying economy/territorial placements and preserve Home/Mid-map/Forward sectors; pairwise enemy-base-contact evidence remains available for relationship analysis.\n
+\n- Map Presence V6: buffered Scout Coverage @5:00 with attribution diagnostics; Eco Camps include Mill/Folwark + Lumber/Mining Camps; Expansion Zones cluster remote qualifying economy/territorial placements and preserve Home/Mid-map/Forward sectors; pairwise enemy-base-contact evidence remains available for relationship analysis.\n\n- Map Presence V6 repairs Scout Coverage @5:00 attribution for the qualified save-68 MOVE/ORDER selected-ID shift defect while preserving original parser facts. The committed paired-duel regression now reproduces the reviewed 45/36 scout-command control counts; implicit empty selections remain excluded.\n
