@@ -65,6 +65,19 @@ const MILITARY_TOWNBELL_MAP = {
   "militaryBuildings.byType.archeryRanges": { id: "ranges_built" },
   "militaryBuildings.byType.stables": { id: "stables_built" },
   "militaryBuildings.byType.siegeWorkshops": { id: "siege_workshops_built" },
+  "armyCommitmentCheckpoints.at10Minutes.grossPositiveQueueResources": { id: "army_value_10min" },
+  "armyCommitmentCheckpoints.at15Minutes.grossPositiveQueueResources": { id: "army_value_15min" },
+  "armyCommitmentCheckpoints.at20Minutes.grossPositiveQueueResources": { id: "army_value_20min" },
+  "trashUnits.count": { id: "trash_units_trained" },
+  "trashArmyShare.percent": { id: "trash_army_share" },
+  "productionBuildingsUsed.count": { id: "production_buildings_used" },
+  "castles.count": { id: "castles_built" },
+  "castles.firstAtMs": { id: "first_castle", unit: "duration" },
+  "blacksmithBuildings.count": { id: "blacksmith_count" },
+  "blacksmithUpgrades.count": { id: "blacksmith_upgrades" },
+  "blacksmithUpgrades.firstAtMs": { id: "first_blacksmith_upgrade", unit: "duration" },
+  "universityTechs.count": { id: "university_techs" },
+  "ballistics.atMs": { id: "ballistics_time", unit: "duration" },
 };
 
 const boundaries = {
