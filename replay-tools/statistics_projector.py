@@ -89,7 +89,7 @@ def project_statistics_from_analysis(
         catalog=catalog,
         initial_objects=initial_objects,
         build_events=body["buildEvents"],
-        wall_events=body["wallEvents"],
+        wall_events=body.get("wallEvents", []),
         action_events=spatial_action_events,
     )
     opening_statistics = project_opening_statistics(
