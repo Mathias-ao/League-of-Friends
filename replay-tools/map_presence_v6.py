@@ -271,7 +271,7 @@ def _scout_coverage_at_five_minutes(
             "scout candidate during 0:00-5:00. Save-68 MOVE/ORDER selected IDs may be normalized "
             "only when their decoded 32-bit value is the exact 16-bit-left-shifted form of that "
             "known candidate. Empty/implicit selections are excluded. This is a scouting-attention "
-            "proxy, not fog-of-war visibility or actual unit movement"
+            "proxy with a versioned 3.25-tile effective corridor, not literal line of sight, fog-of-war visibility, or actual unit movement"
         ),
     }
 
