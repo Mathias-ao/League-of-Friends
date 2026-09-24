@@ -1,6 +1,6 @@
 # Age of Friends — Current State
 
-Last reviewed: 22 September 2026
+Last reviewed: 24 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
@@ -82,7 +82,8 @@ The current replay/statistics foundation includes:
 - Forward Eco V2 classification using the same Map Presence V6 Enemy Progress >=65% forward geometry.
 - Observed command and selection evidence for Execution statistics.
 - Versioned tests, golden projections and architecture documents for the active models.
-- Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.\n- Replay Lab inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between CanonicalReplay and statistics. Its default development import uses explicit `sealed_local_fast` structural publication checks instead of exhaustive event conformance; a separate Full Conformance Audit upgrades a run to `verified_local`. Routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating canonical facts.
+- Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.
+- Replay Lab inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between CanonicalReplay and statistics. Its default development import uses explicit `sealed_local_fast` structural publication checks instead of exhaustive event conformance; a separate Full Conformance Audit upgrades a run to `verified_local`. Routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating canonical facts.
 
 The statistics system preserves the distinction between observed evidence, reconstructed evidence and inferred analysis. Commands, queue requests and building placements must not be silently presented as confirmed completed game-state outcomes.
 
@@ -183,4 +184,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - [`../architecture/civilization-drafting-v1.md`](../architecture/civilization-drafting-v1.md)
 - [`../architecture/civilization-catalogue-v1.md`](../architecture/civilization-catalogue-v1.md)
 - [`../design/emperors-favor.md`](../design/emperors-favor.md)
-\n- Map Presence V6: buffered Scout Coverage @5:00 with attribution diagnostics; Eco Camps include Mill/Folwark + Lumber/Mining Camps; Expansion Zones cluster remote qualifying economy/territorial placements and preserve Home/Mid-map/Forward sectors; pairwise enemy-base-contact evidence remains available for relationship analysis.\n\n- Map Presence V6 repairs Scout Coverage @5:00 attribution for the qualified save-68 MOVE/ORDER selected-ID shift defect while preserving original parser facts. The committed paired-duel regression now reproduces the reviewed 45/36 scout-command control counts; implicit empty selections remain excluded. The V6 coverage corridor is 3.25 tiles, producing 15.38% / 9.83% on that replay versus the reviewed 15.3% / 10.4% control.\n
+
+- Map Presence V6: buffered Scout Coverage @5:00 with attribution diagnostics; Eco Camps include Mill/Folwark + Lumber/Mining Camps; Expansion Zones cluster remote qualifying economy/territorial placements and preserve Home/Mid-map/Forward sectors; pairwise enemy-base-contact evidence remains available for relationship analysis.
+
+- Map Presence V6 repairs Scout Coverage @5:00 attribution for the qualified save-68 MOVE/ORDER selected-ID shift defect while preserving original parser facts. The committed paired-duel regression now reproduces the reviewed 45/36 scout-command control counts; implicit empty selections remain excluded. The V6 coverage corridor is 3.25 tiles, producing 15.38% / 9.83% on that replay versus the reviewed 15.3% / 10.4% control.
