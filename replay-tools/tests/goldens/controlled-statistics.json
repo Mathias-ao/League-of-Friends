@@ -186,11 +186,10 @@
       "enemyBaseContactAtMs": 100,
       "enemyBaseContactPlayerId": 2,
       "enemySidePresencePercent": 0.0,
-      "expansionTownCenters": 0,
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V4",
+      "modelVersion": "AOF_MAP_PRESENCE_V5",
       "playerId": 1,
       "scoutCoverage5mPercent": 0.0,
       "scoutOrders5m": 0,
@@ -199,20 +198,20 @@
       "wallTilesTotal": 0,
       "towers": 0,
       "forwardTowers": 0,
-      "campAverageDistanceTiles": null,
       "uniqueRelicsTouched": 0,
-      "inferredRelicsHeldAtEnd": 0
+      "inferredRelicsHeldAtEnd": 0,
+      "ecoCampAverageDistanceTiles": null,
+      "expansionZones": 0
     },
     {
       "commandCoveragePercent": 0.0,
       "enemyBaseContactAtMs": null,
       "enemyBaseContactPlayerId": null,
       "enemySidePresencePercent": null,
-      "expansionTownCenters": 0,
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
-      "modelVersion": "AOF_MAP_PRESENCE_V4",
+      "modelVersion": "AOF_MAP_PRESENCE_V5",
       "playerId": 2,
       "scoutCoverage5mPercent": 0.0,
       "scoutOrders5m": 0,
@@ -221,9 +220,10 @@
       "wallTilesTotal": 0,
       "towers": 0,
       "forwardTowers": 0,
-      "campAverageDistanceTiles": null,
       "uniqueRelicsTouched": 0,
-      "inferredRelicsHeldAtEnd": 0
+      "inferredRelicsHeldAtEnd": 0,
+      "ecoCampAverageDistanceTiles": null,
+      "expansionZones": 0
     }
   ],
   "opening": [
