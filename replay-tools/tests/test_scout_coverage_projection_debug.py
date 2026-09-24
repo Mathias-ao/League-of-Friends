@@ -21,7 +21,7 @@ class ScoutCoverageProjectionDebugTests(unittest.TestCase):
                 int(row["playerId"]): row.get("name")
                 for row in analysis["manifest"]["participants"]
             }
-            for radius in (2.0, 3.0, 4.0, 5.0, 6.0):
+            for radius in (3.0, 3.25, 3.5, 3.75, 4.0):
                 with patch.object(v5, "SCOUT_ROUTE_RADIUS_TILES", radius):
                     result = project_map_presence(
                         manifest=analysis["manifest"],
