@@ -250,6 +250,8 @@ class MilitaryStatisticsTests(unittest.TestCase):
         self.assertEqual(result["castles"]["firstAtMs"], 800_000)
         self.assertEqual(result["blacksmithBuildings"]["count"], 1)
         self.assertEqual(result["blacksmithUpgrades"]["count"], 2)
+        self.assertEqual(result["blacksmithUpgrades"]["requestCountTotal"], 3)
+        self.assertEqual(result["blacksmithUpgrades"]["repeatRequestCount"], 1)
         self.assertEqual(result["blacksmithUpgrades"]["firstAtMs"], 600_000)
         fletching = next(
             row for row in result["blacksmithUpgrades"]["technologies"]

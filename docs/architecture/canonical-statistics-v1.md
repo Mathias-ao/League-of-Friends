@@ -106,7 +106,7 @@ Food-animal metrics are conservative interaction proxies. Economy V3 recognizes 
 
 The 20-minute eco:military ratio prices classified queue/research/build-placement requests using the pinned base entity catalog and excludes age-up costs. It retains unclassified/unpriced commitment separately; it is not resources gathered, floated or exact spend.
 
-## Military production: `AOF_MILITARY_STATISTICS_V3`
+## Military production: `AOF_MILITARY_STATISTICS_V4`
 
 Military V2 is intentionally command-derived. `Military units trained` follows the same review convention as the Villager metric: positive decoded queue amount, not observed completion. Negative queue amounts are retained separately as cancellation/backorder evidence. `Military Unit Commitment` prices only positive military unit queue requests. `Military Spend` is the broader TownBell-control comparison metric: positive military unit queues plus non-economic building/wall placements and non-age/non-economic technology requests, all at pinned base-catalog cost. Both remain commitment estimates rather than exact engine spend.
 
@@ -120,7 +120,7 @@ V3 adds military fundamentals without claiming game-state outcomes. Army commitm
 
 Trash production uses source-pinned DE raw unit IDs for the Spear, Skirmisher and Scout/Light Cavalry/Hussar lines; trash share is positive trash queue amount divided by all positive military queue amount. Production-buildings-used counts distinct decoded producer object IDs appearing in positive military queue commands and retains missing-producer coverage because multi-selection can overstate buildings that actually received work.
 
-Blacksmith fundamentals use the standard attack/armor technology IDs: Fletching/Bodkin/Bracer, Forging/Iron Casting/Blast Furnace, and the three infantry/archer/cavalry armor chains. University fundamentals use the source-pinned DE set for Ballistics, Chemistry, Masonry, Architecture, Treadmill Crane, tower/wall upgrades, Murder Holes, Heated Shot, Siege Engineers and Arrowslits. Counts are distinct technology IDs requested; rows retain first/latest request times. Ballistics and Chemistry have dedicated timing outputs.
+Blacksmith fundamentals use the standard attack/armor technology IDs: Fletching/Bodkin/Bracer, Forging/Iron Casting/Blast Furnace, and the three infantry/archer/cavalry armor chains. University fundamentals use the source-pinned DE set for Ballistics, Chemistry, Masonry, Architecture, Treadmill Crane, tower/wall upgrades, Murder Holes, Heated Shot, Siege Engineers and Arrowslits. Counts are distinct technology IDs requested; V4 also exposes total request count and repeat-request count, and rows retain first/latest request times. Ballistics and Chemistry have dedicated timing outputs.
 
 Dominant-line upgrade scoring, missing-upgrade judgments and upgrade-lag scores remain deferred until these raw request timings and civilization availability can be qualified across controls. Exact kills, losses, damage, surviving army value and buildings destroyed remain outside Military V3 because current canonical evidence does not support those as direct outcomes.
 
