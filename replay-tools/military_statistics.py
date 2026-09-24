@@ -12,7 +12,7 @@ from typing import Any
 from economy_statistics import ECO_TECH_IDS
 from opening_statistics import AGE_TECH_IDS, _latest_research_event, _line_tiles, _roles
 
-MILITARY_STATISTICS_VERSION = "AOF_MILITARY_STATISTICS_V2"
+MILITARY_STATISTICS_VERSION = "AOF_MILITARY_STATISTICS_V3"
 CHECKPOINT_CASTLE_CLICK_TECH_ID = AGE_TECH_IDS["castle"]
 
 ECONOMIC_UNIT_ROLES = {
@@ -25,6 +25,36 @@ ECONOMY_BUILDING_ROLES = {
     "mobile_dropoff",
 }
 NON_MILITARY_UTILITY_TECH_IDS = {8, 280}  # Town Watch / Town Patrol
+
+# Source-pinned DE raw unit IDs (SiegeEngineers/aoe2techtree commit
+# 3bb43b1439eef88dfe7fe892d7f7dc41ac9dd76f). These are the three
+# conventional zero-gold "trash" lines requested for the player-facing metric.
+TRASH_UNIT_LINES = {
+    "spearLine": {93, 358, 359},
+    "skirmisherLine": {7, 6, 1155},
+    "lightCavalryLine": {448, 546, 441, 1707},
+}
+TRASH_UNIT_IDS = set().union(*TRASH_UNIT_LINES.values())
+
+BLACKSMITH_TECH_IDS = {
+    67, 68, 75,                 # infantry/cavalry melee attack
+    199, 200, 201,              # ranged attack/range
+    74, 76, 77,                 # infantry armor
+    211, 212, 219,              # archer armor
+    81, 82, 80,                 # cavalry armor
+}
+UNIVERSITY_TECH_IDS = {
+    47, 50, 51, 54, 63, 64, 93, 140, 194, 322, 377, 380, 608,
+}
+BALLISTICS_TECH_ID = 93
+CHEMISTRY_TECH_ID = 47
+BLACKSMITH_BUILDING_ID = 103
+UNIVERSITY_BUILDING_ID = 209
+ARMY_COMMITMENT_CHECKPOINTS = {
+    "at10Minutes": 10 * 60 * 1000,
+    "at15Minutes": 15 * 60 * 1000,
+    "at20Minutes": 20 * 60 * 1000,
+}
 
 
 def _player_events(events: list[dict[str, Any]], player_id: int) -> list[dict[str, Any]]:
@@ -240,6 +270,178 @@ def _broad_military_spend(
     }
 
 
+
+def _latest_research_by_id(
+    research: list[dict[str, Any]], tech_id: int,
+) -> dict[str, Any] | None:
+    return _latest_research_event(research, tech_id)
+
+
+def _technology_group(
+    *,
+    research: list[dict[str, Any]],
+    tech_ids: set[int],
+    catalog: dict[str, Any],
+    basis: str,
+) -> dict[str, Any]:
+    first_requests: list[dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
+    for tech_id in sorted(tech_ids):
+        matching = [
+            event for event in research
+            if event.get("technologyId") == tech_id and isinstance(event.get("atMs"), int)
+        ]
+        if not matching:
+            continue
+        first = matching[0]
+        latest = matching[-1]
+        first_requests.append(first)
+        rows.append({
+            "technology": _entity(catalog, "technologies", tech_id),
+            "firstRequestedAtMs": first["atMs"],
+            "latestRequestedAtMs": latest["atMs"],
+            "requestCount": len(matching),
+            "sourceEventId": latest.get("sourceEventId"),
+        })
+    first_event = min(first_requests, key=lambda event: event["atMs"], default=None)
+    return {
+        "layer": "observed",
+        "count": len(rows),
+        "firstAtMs": first_event.get("atMs") if first_event else None,
+        "technologies": rows,
+        "basis": basis,
+    }
+
+
+def _building_placements(
+    builds: list[dict[str, Any]],
+    building_id: int,
+    catalog: dict[str, Any],
+    label: str,
+) -> dict[str, Any]:
+    events = [
+        event for event in builds
+        if event.get("buildingId") == building_id and isinstance(event.get("atMs"), int)
+    ]
+    return {
+        "layer": "observed",
+        "count": len(events),
+        "firstAtMs": events[0]["atMs"] if events else None,
+        "building": _entity(catalog, "buildings", building_id),
+        "basis": f"observed {label} BUILD placement commands; not completion/survival",
+    }
+
+
+def _army_commitment_checkpoints(
+    production: list[dict[str, Any]],
+    catalog: dict[str, Any],
+) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, boundary_ms in ARMY_COMMITMENT_CHECKPOINTS.items():
+        gross = 0.0
+        cancelled = 0.0
+        unpriced = 0
+        unknown_amount_commands = 0
+        for event in production:
+            at_ms = event.get("atMs")
+            if not isinstance(at_ms, int) or at_ms > boundary_ms:
+                continue
+            unit_id = event.get("unitId")
+            producer_type = event.get("producerBuildingTypeId")
+            if not _is_military_unit(catalog, unit_id, producer_type):
+                continue
+            amount = event.get("signedAmount")
+            if type(amount) is not int:
+                unknown_amount_commands += 1
+                continue
+            cost = _unit_cost(catalog, unit_id)
+            if cost is None:
+                unpriced += abs(amount)
+                continue
+            if amount > 0:
+                gross += cost * amount
+            elif amount < 0:
+                cancelled += cost * abs(amount)
+        net = gross - cancelled
+        result[key] = {
+            "layer": "reconstructed",
+            "boundaryMs": boundary_ms,
+            "grossPositiveQueueResources": int(gross) if gross.is_integer() else round(gross, 3),
+            "cancelledQueueResources": int(cancelled) if cancelled.is_integer() else round(cancelled, 3),
+            "netQueueResources": int(net) if net.is_integer() else round(net, 3),
+            "unpricedUnitAmount": unpriced,
+            "unknownAmountCommands": unknown_amount_commands,
+            "basis": (
+                "base-catalog value of military queue requests through checkpoint; "
+                "gross and decoded cancellation-adjusted values are shown separately"
+            ),
+            "note": "Army commitment proxy only; deaths/surviving army are not observable.",
+        }
+    return result
+
+
+def _production_buildings_used(
+    military_events: list[dict[str, Any]],
+) -> dict[str, Any]:
+    object_ids: set[int] = set()
+    by_type: dict[str, set[int]] = {}
+    positive_events = 0
+    events_without_ids = 0
+    for event in military_events:
+        if event.get("signedAmount", 0) <= 0:
+            continue
+        positive_events += 1
+        ids = [value for value in (event.get("producerObjectIds") or []) if isinstance(value, int)]
+        if not ids:
+            events_without_ids += 1
+            continue
+        producer_type = str(event.get("producerBuildingTypeId") or "unknown")
+        by_type.setdefault(producer_type, set()).update(ids)
+        object_ids.update(ids)
+    return {
+        "layer": "reconstructed",
+        "count": len(object_ids),
+        "positiveMilitaryQueueEvents": positive_events,
+        "eventsWithoutProducerObjectIds": events_without_ids,
+        "producerObjectIds": sorted(object_ids),
+        "byProducerBuildingTypeId": {
+            key: len(values) for key, values in sorted(by_type.items())
+        },
+        "basis": (
+            "distinct decoded producer object IDs selected on positive military queue commands; "
+            "multi-selection can overstate buildings that actually received queued units"
+        ),
+    }
+
+
+def _trash_metrics(
+    positive_by_unit: Counter[int],
+    total_positive: int,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    by_line = {
+        line: sum(positive_by_unit.get(raw_id, 0) for raw_id in raw_ids)
+        for line, raw_ids in TRASH_UNIT_LINES.items()
+    }
+    trash_total = sum(by_line.values())
+    share = (100.0 * trash_total / total_positive) if total_positive > 0 else None
+    return (
+        {
+            "layer": "reconstructed",
+            "count": trash_total,
+            "byLine": by_line,
+            "rawUnitIds": sorted(TRASH_UNIT_IDS),
+            "basis": "positive queue amounts for Spear, Skirmisher and Scout/Light Cavalry/Hussar lines",
+        },
+        {
+            "layer": "reconstructed",
+            "percent": round(share, 3) if share is not None else None,
+            "trashPositiveQueueAmount": trash_total,
+            "militaryPositiveQueueAmount": total_positive,
+            "basis": "trash-line positive queue amount / all positive military queue amount × 100",
+        },
+    )
+
+
 def _military_buildings(
     builds: list[dict[str, Any]],
     catalog: dict[str, Any],
@@ -433,6 +635,26 @@ def project_military_statistics(
             )
 
         buildings = _military_buildings(builds, catalog, castle_click)
+        trash_units, trash_share = _trash_metrics(positive_by_unit, total_positive)
+        blacksmith_upgrades = _technology_group(
+            research=research,
+            tech_ids=BLACKSMITH_TECH_IDS,
+            catalog=catalog,
+            basis="distinct supported Blacksmith technology requests; latest request retained per one-time technology",
+        )
+        university_techs = _technology_group(
+            research=research,
+            tech_ids=UNIVERSITY_TECH_IDS,
+            catalog=catalog,
+            basis="distinct supported University technology requests from the source-pinned DE technology set",
+        )
+        ballistics_event = _latest_research_by_id(research, BALLISTICS_TECH_ID)
+        chemistry_event = _latest_research_by_id(research, CHEMISTRY_TECH_ID)
+        castle_events = [
+            event for event in builds
+            if _building_type(catalog, event.get("buildingId")) == "castles"
+            and isinstance(event.get("atMs"), int)
+        ]
         broad_spend = _broad_military_spend(
             production=production,
             research=research,
@@ -458,6 +680,38 @@ def project_military_statistics(
                 "basis": "pinned base-catalog military unit cost × positive queue amount only",
             },
             "militarySpend": broad_spend,
+            "armyCommitmentCheckpoints": _army_commitment_checkpoints(
+                production, catalog,
+            ),
+            "trashUnits": trash_units,
+            "trashArmyShare": trash_share,
+            "productionBuildingsUsed": _production_buildings_used(military_events),
+            "castles": {
+                "layer": "observed",
+                "count": len(castle_events),
+                "firstAtMs": castle_events[0]["atMs"] if castle_events else None,
+                "basis": "Castle BUILD placement commands; not completion/survival",
+            },
+            "blacksmithBuildings": _building_placements(
+                builds, BLACKSMITH_BUILDING_ID, catalog, "Blacksmith",
+            ),
+            "blacksmithUpgrades": blacksmith_upgrades,
+            "universityBuildings": _building_placements(
+                builds, UNIVERSITY_BUILDING_ID, catalog, "University",
+            ),
+            "universityTechs": university_techs,
+            "ballistics": {
+                "layer": "observed",
+                "atMs": ballistics_event.get("atMs") if ballistics_event else None,
+                "technology": _entity(catalog, "technologies", BALLISTICS_TECH_ID),
+                "basis": "latest observed Ballistics research request",
+            },
+            "chemistry": {
+                "layer": "observed",
+                "atMs": chemistry_event.get("atMs") if chemistry_event else None,
+                "technology": _entity(catalog, "technologies", CHEMISTRY_TECH_ID),
+                "basis": "latest observed Chemistry research request",
+            },
             "composition": {
                 "layer": "reconstructed",
                 "infantry": class_counts["infantry"],
