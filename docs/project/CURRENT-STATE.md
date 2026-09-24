@@ -78,8 +78,8 @@ The current replay/statistics foundation includes:
 - Player-facing Opening statistics and Build Order classification.
 - Resource Commitment estimates by resource and age.
 - Raid episode detection with attacker/victim attribution.
-- Map Presence V2, including command coverage, enemy-base contact, forward buildings, expansions, gold influence and relic interaction.
-- Forward Eco classification using the Map Presence V2 forward geometry.
+- Map Presence V4, including command/scout coverage, normalized Home/Mid/Forward geometry, building placement range, walls, towers, camp distance, enemy-base contact, expansions, time-aware deposit-weighted gold influence and relic holding/theft inference.
+- Forward Eco V2 classification using the same Map Presence V4 Enemy Progress >=65% forward geometry.
 - Observed command and selection evidence for Execution statistics.
 - Versioned tests, golden projections and architecture documents for the active models.
 - Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.\n- Replay Lab inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between CanonicalReplay and statistics. Its default development import uses explicit `sealed_local_fast` structural publication checks instead of exhaustive event conformance; a separate Full Conformance Audit upgrades a run to `verified_local`. Routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating canonical facts.
