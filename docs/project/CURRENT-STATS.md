@@ -1,6 +1,6 @@
 # Age of Friends — Current Statistics
 
-Last reviewed: 22 September 2026
+Last reviewed: 24 September 2026
 
 Purpose: Concise source of truth for player-facing statistics status. Technical definitions and evidence limits live in the versioned architecture/model documents. The player-facing scope and presentation contract lives in [`../design/statistics-experience.md`](../design/statistics-experience.md).
 
@@ -93,7 +93,7 @@ Raids are inferred hostile-command episodes inside reconstructed economic zones;
 `AOF_MAP_PRESENCE_V4` exposes spatial fundamentals over starting-TC anchors, command coordinates and observed placements:
 
 - Command map coverage: share of fixed 8-tile map cells touched by recorded command coordinates/endpoints.
-- Scout coverage @5:00: fixed-cell coverage and command count from actions whose decoded selection includes an observed starting Scout/Eagle/Camel Scout during the first five minutes. This is scouting attention, not fog-of-war exploration.
+- Scout Coverage @5:00: buffered command-route coverage and command count from actions attributable to an observed starting Scout/Eagle/Camel Scout during the first five minutes. V6 includes the qualified save-68 MOVE/ORDER selected-ID normalization and uses a 3.25-tile effective corridor. This is scouting attention, not fog-of-war exploration.
 - Enemy-side command presence: share of positioned command events whose recorded coordinate is closer to an opponent starting Town Center than to the player's starting Town Center; teammates are excluded.
 - Building placement range: maximum straight-line span across the starting-TC anchor and BUILD placement coordinates, plus the furthest placement from home.
 - Home / Mid-map / Forward sectors: Enemy Progress % normalizes each placement between the player's starting TC (0%), the equal-distance line (50%) and the most relevant enemy starting TC (100%). Home is <=35%, Mid-map is between 35% and 65%, and Forward is >=65%.
@@ -149,7 +149,7 @@ Current models include:
 - `AOF_OPENING_STATISTICS_V5`
 - `AOF_MILITARY_STATISTICS_V4`
 - `AOF_RAID_DETECTION_V1`
-- `AOF_MAP_PRESENCE_V3`
+- `AOF_MAP_PRESENCE_V6`
 - `AOF_FORWARD_ECO_V1`
 - `AOF_ECONOMY_STATISTICS_V4`
 - `AOF_TC_ACTIVITY_V2`
@@ -162,4 +162,18 @@ Current models include:
 - `AOF_RELATIONSHIP_ENGINE_V1`
 
 All statistics and interpretations must retain their evidence/model/rule versions. Battle measurement, player currencies, player identity and pair relationship interpretation are separate layers.
-\n\n### Map Presence V5 refinements\n\n- Scout Coverage @5:00 now rasterizes a buffered command-directed route from the starting scout candidate rather than only destination cells. Candidate attribution diagnostics are retained, including a conservative behavioral fallback when the scout identity is not catalog-labelled. It remains a scouting-attention proxy, not fog-of-war visibility or actual movement.\n- Eco Camp distance uses Mill/Folwark, Lumber Camp and Mining Camp placements.\n- Expansion Zones replace TC-only expansion counting. Qualifying remote economy/territorial buildings (Mill/Folwark, Lumber Camp, Mining Camp, Market, Town Center, Dock/Harbor, Feitoria and Castle) are clustered with a 12-tile link distance after a map-scaled 13% home-radius exclusion. Zones are classified Home/Mid-map/Forward from their centroid using the existing Enemy Progress model. Farms, houses, walls, towers and military-production buildings do not create expansion zones.\n- Enemy Base Contact keeps its complete `firstByEnemy` directional package for future relationship analysis; UI surfaces may intentionally show only summaries.\n
+
+
+### Map Presence V6 refinements
+
+- Scout Coverage @5:00 now rasterizes a buffered command-directed route from the starting scout candidate rather than only destination cells. Candidate attribution diagnostics are retained, including a conservative behavioral fallback when the scout identity is not catalog-labelled. It remains a scouting-attention proxy, not fog-of-war visibility or actual movement.
+- Eco Camp distance uses Mill/Folwark, Lumber Camp and Mining Camp placements.
+- Expansion Zones replace TC-only expansion counting. Qualifying remote economy/territorial buildings (Mill/Folwark, Lumber Camp, Mining Camp, Market, Town Center, Dock/Harbor, Feitoria and Castle) are clustered with a 12-tile link distance after a map-scaled 13% home-radius exclusion. Zones are classified Home/Mid-map/Forward from their centroid using the existing Enemy Progress model. Farms, houses, walls, towers and military-production buildings do not create expansion zones.
+- Enemy Base Contact keeps its complete `firstByEnemy` directional package for future relationship analysis; UI surfaces may intentionally show only summaries.
+
+### Scout Coverage V6 attribution fix
+
+- Starting Scout/Eagle/Camel Scout identity remains anchored to initial owned objects.
+- For `MOVE` and `ORDER` only, Map Presence V6 recognizes the save-68 decoder pattern where a selected starting-scout instance ID appears as `instanceId << 16`. The canonical/compact parser value is not rewritten; the normalized ID exists only inside the inferred scout-attribution model.
+- Empty/implicit selections are not inherited. The committed two-recorder duel regression yields 45 positioned starting-scout commands for player 1 and 36 for player 2, exactly matching the reviewed TownBell control counts. The V6 route footprint is a versioned 3.25-tile effective corridor; on the same replay it produces 15.38% and 9.83% versus the reviewed 15.3% and 10.4% control values.
+- `SPECIAL` and other action families are deliberately not shift-normalized because save-68 selected-ID decoding for those families is not independently qualified.
