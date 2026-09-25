@@ -58,7 +58,7 @@ The smallest reviewable product candidate is:
 6. resignation command time when present;
 7. directed diplomacy-command history for FFA evidence, with no inferred mutual state;
 8. inferred Build Order from `AOF_BUILD_ORDER_V2`, displayed only when its execution score is strictly greater than 75;
-9. inferred Combat counts `Raids initiated` and `Raids against you` from `AOF_RAID_DETECTION_V1`.
+9. inferred Military engagement counts from `AOF_RAID_DETECTION_V2` and `AOF_ENGAGEMENT_STATISTICS_V1`, stored under `participant.military.engagements`.
 
 Observed command rate, inactivity, APM variants, broader opening/playstyle labels and recorder-camera measures should remain internal until formula, completeness and comparability policies are selected. Reference entity names may be displayed only alongside raw IDs or after patch/mod qualification.
 
@@ -74,19 +74,19 @@ Fast Castle scoring is 100 at or before 14:00, declines to 75 at 17:00, and can 
 
 All thresholds, difficulty values, execution scores and precedence rules are model parameters, not replay facts. Changing them requires a successor rule version if historical outputs must remain reproducible.
 
-## Raid inference: `AOF_RAID_DETECTION_V1`
+## Raid inference: `AOF_RAID_DETECTION_V2`
 
-The player-facing Combat statistics are `Raids initiated` and `Raids against you`. Each raid episode has exactly one attacker and one victim. This is required even in FFA and other matches with more than two players; ambiguous victim attribution is discarded rather than guessed.
+Raids are Military engagement statistics. They are stored with the other engagement outputs under `participant.military.engagements`, not in a separate Combat category. Each raid episode has exactly one attacker and one victim. Ambiguous victim attribution is discarded rather than guessed.
 
-The model builds time-aware economic zones around observed economic infrastructure. Initial Town Centers/economic objects are active from time zero. Later economic building placements expand that player's zone from the placement timestamp. Current radii are 14 tiles around Town Centers, 10 tiles around other economic buildings, and 6 tiles around Farms. These zones describe local economic activity areas, not map ownership or visibility.
+The model builds time-aware **local economic zones** only around Town Centers, Mills/Folwarks, Lumber Camps and Mining Camps. Current radii are 14 tiles around Town Centers and 10 tiles around the other qualifying camps. Initial qualifying buildings are active from time zero; later qualifying placements activate from their placement timestamp. Farms, Markets, Docks, houses and generic economy-role buildings do not create land raid zones.
 
-A command can contribute to a raid only when its recorded target/destination position is inside an enemy economic zone. `DE_ATTACK_MOVE` and `ATTACK_GROUND` are strong hostile signals. `ORDER` is strong when it targets an initial object whose owner is known to be the victim. `MOVE`, `PATROL`, and untargeted positional `ORDER` are supporting signals only and cannot create a raid by themselves.
+Direct `ORDER` targeting of a known enemy Villager, Fishing Ship, Trade Cart or Trade Cog is strong raid evidence even outside those land zones. Inside a qualifying economic zone, `DE_ATTACK_MOVE` and `ATTACK_GROUND` are strong hostile signals; targeted hostile `ORDER` can also be strong. `MOVE`, `PATROL` and untargeted positional `ORDER` are supporting signals only and cannot create a raid by themselves.
 
-Victim resolution first uses known target-instance ownership when that target is inside its owner's economic zone. Otherwise it uses the uniquely nearest eligible enemy economic zone. Teammates are excluded. If two enemy zones are too close to distinguish (within a two-tile distance margin), no victim is assigned and the command is not counted as raid evidence.
+Victim resolution prefers strong known economic-target ownership, then other known hostile target ownership with zone context, then the uniquely nearest eligible enemy economic zone. Teammates are excluded. If two enemy zones are too close to distinguish within the configured ambiguity margin, no victim is assigned.
 
-Observations for the same attacker→victim pair are grouped into one episode while consecutive evidence remains within 60 seconds. An episode counts as a raid only if it contains at least one strong hostile signal. The output retains the attacker, victim, start/end times, command types, strong/supporting command counts, evidence event IDs and victim-resolution methods.
+Observations for the same attacker→victim pair are grouped while consecutive evidence remains within 60 seconds. An episode counts only if it contains at least one strong hostile signal. `startedAtMs` is anchored to the first strong hostile evidence; earlier supporting evidence is retained separately as `firstObservedAtMs`.
 
-This model does **not** claim that damage occurred, that a unit reached the destination, that villagers were killed, or that the raid succeeded. It is a deterministic inference over hostile command evidence inside reconstructed economic zones.
+This model does **not** claim that damage occurred, that a unit reached the destination, that civilians were killed, or that the raid succeeded. It is a deterministic inference over hostile command evidence and reconstructed economic context.
 
 ## Economy inference: `AOF_ECONOMY_STATISTICS_V1`
 

@@ -74,6 +74,13 @@
       "castles": 0,
       "cavalry": 0,
       "chemistryAtMs": null,
+      "engagements": {
+        "raidsInitiated": 0,
+        "raidsAgainstYou": 0,
+        "raidModelVersion": "AOF_RAID_DETECTION_V2",
+        "battlesFought": 0,
+        "engagementModelVersion": "AOF_ENGAGEMENT_STATISTICS_V1"
+      },
       "firstMilitaryProductionAtMs": null,
       "firstSiegeAtMs": null,
       "infantry": 0,
@@ -100,6 +107,13 @@
       "castles": 0,
       "cavalry": 0,
       "chemistryAtMs": null,
+      "engagements": {
+        "raidsInitiated": 0,
+        "raidsAgainstYou": 0,
+        "raidModelVersion": "AOF_RAID_DETECTION_V2",
+        "battlesFought": 0,
+        "engagementModelVersion": "AOF_ENGAGEMENT_STATISTICS_V1"
+      },
       "firstMilitaryProductionAtMs": null,
       "firstSiegeAtMs": null,
       "infantry": 0,
@@ -115,20 +129,6 @@
       "trashUnits": 0,
       "universityTechs": 0,
       "warships": 0
-    }
-  ],
-  "combat": [
-    {
-      "modelVersion": "AOF_RAID_DETECTION_V2",
-      "playerId": 1,
-      "raidsAgainstYou": 0,
-      "raidsInitiated": 0
-    },
-    {
-      "modelVersion": "AOF_RAID_DETECTION_V2",
-      "playerId": 2,
-      "raidsAgainstYou": 0,
-      "raidsInitiated": 0
     }
   ],
   "diplomacy": {

@@ -61,6 +61,8 @@ Launch presentation should start with familiar numerical tables. A restrained **
 
 ### Military
 
+Canonical participant output keeps the engagement family inside Military at `participant.military.engagements`; there is no separate player-facing Combat category.
+
 `AOF_MILITARY_STATISTICS_V4` adds the player-facing production/army-decision layer:
 
 - Military units trained: sum of positive decoded military queue amounts. This is a queue-derived proxy, not proof that every unit completed.

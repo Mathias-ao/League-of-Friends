@@ -97,12 +97,13 @@ def statistics_snapshot(result):
             "universityTechs": p["military"]["universityTechs"]["count"],
             "ballisticsAtMs": p["military"]["ballistics"]["atMs"],
             "chemistryAtMs": p["military"]["chemistry"]["atMs"],
-        } for p in result["participants"]],
-        "combat": [{
-            "playerId": p["playerId"],
-            "raidsInitiated": p["combat"]["raidsInitiated"],
-            "raidsAgainstYou": p["combat"]["raidsAgainstYou"],
-            "modelVersion": p["combat"]["modelVersion"],
+            "engagements": {
+                "raidsInitiated": p["military"]["engagements"]["raidsInitiated"],
+                "raidsAgainstYou": p["military"]["engagements"]["raidsAgainstYou"],
+                "raidModelVersion": p["military"]["engagements"]["modelVersion"],
+                "battlesFought": p["military"]["engagements"]["battlesFought"],
+                "engagementModelVersion": p["military"]["engagements"]["engagementModelVersion"],
+            },
         } for p in result["participants"]],
         "mapPresence": [{
             "playerId": p["playerId"],
