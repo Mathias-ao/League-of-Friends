@@ -103,15 +103,18 @@ class EngagementStatisticsTests(unittest.TestCase):
 
         reciprocal = project(
             actions=[
+                action("p1-approach", 1, 9_000, "MOVE", 49, 50),
                 action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50),
                 action("p2-patrol", 2, 12_000, "PATROL", 51, 50),
             ],
-            fights=[fight(9_000, 15_000, 50, 50)],
+            fights=[fight(8_000, 15_000, 50, 50)],
         )
         self.assertEqual(reciprocal["1"]["battlesFought"], 1)
         self.assertEqual(reciprocal["2"]["battlesFought"], 1)
         battle = reciprocal["1"]["engagementEvidence"]["battles"][0]
         self.assertEqual(battle["participantPlayerIds"], [1, 2])
+        self.assertEqual(battle["startedAtMs"], 10_000)
+        self.assertEqual(battle["firstContributionAtMsByPlayer"]["1"], 10_000)
         self.assertEqual(battle["modelVersion"], ENGAGEMENT_MODEL_VERSION)
 
     def test_defensive_assistance_requires_defended_ally_base(self):
