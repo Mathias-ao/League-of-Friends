@@ -325,7 +325,7 @@ class EngagementStatisticsV3Tests(unittest.TestCase):
         self.assertTrue(battle["greatBattle"])
         self.assertEqual(result["1"]["greatBattlesFought"], 1)
         self.assertGreaterEqual(
-            battle["combatEligibleSelectedObjectCount"],
+            battle["potentialCombatSelectedObjectCount"],
             80,
         )
 
