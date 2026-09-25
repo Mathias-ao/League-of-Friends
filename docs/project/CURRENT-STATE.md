@@ -1,6 +1,6 @@
 # Age of Friends — Current State
 
-Last reviewed: 24 September 2026
+Last reviewed: 25 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
@@ -80,7 +80,7 @@ The current replay/statistics foundation includes:
 - Raid episode detection with attacker/victim attribution.
 - Map Presence V6, including command/scout coverage, normalized Home/Mid/Forward geometry, building placement range, walls, towers, camp distance, enemy-base contact, expansions, time-aware deposit-weighted gold influence and relic holding/theft inference.
 - Forward Eco V2 classification using the same Map Presence V6 Enemy Progress >=65% forward geometry.
-- Observed command and selection evidence for Execution statistics.
+- Execution V1 with raw APM/action gaps, explicit control-command counts, raid response/garrison context, shared Fight Detection V1, APM in fights, conservative eco-under-fight counts, terrain elevation delta and disengage-command inference.
 - Versioned tests, golden projections and architecture documents for the active models.
 - Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.
 - Replay Lab inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between CanonicalReplay and statistics. Its default development import uses explicit `sealed_local_fast` structural publication checks instead of exhaustive event conformance; a separate Full Conformance Audit upgrades a run to `verified_local`. Routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating canonical facts.
@@ -118,7 +118,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 
 - Queue requests, research requests and placements do not by themselves prove completion, survival, damage or kills.
 - Resource Commitment is an estimate from pinned base costs and does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute.
-- Raid detection is command-episode inference and does not prove raid success or damage.
+- Raid and Fight detection are command-episode inference and do not prove raid/fight success, damage, kills, surviving army or continuous positions.
 - Map Presence represents command/building geometry, not fog-of-war exploration or permanent territorial ownership.
 - Entity labels are based on the pinned reference catalog and are not yet fully qualified for every replay patch/mod.
 - Restored-game clocks, complete effective diplomacy state and some initial-object semantics remain qualification areas.
@@ -188,3 +188,4 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - Map Presence V6: buffered Scout Coverage @5:00 with attribution diagnostics; Eco Camps include Mill/Folwark + Lumber/Mining Camps; Expansion Zones cluster remote qualifying economy/territorial placements and preserve Home/Mid-map/Forward sectors; pairwise enemy-base-contact evidence remains available for relationship analysis.
 
 - Map Presence V6 repairs Scout Coverage @5:00 attribution for the qualified save-68 MOVE/ORDER selected-ID shift defect while preserving original parser facts. The committed paired-duel regression now reproduces the reviewed 45/36 scout-command control counts; implicit empty selections remain excluded. The V6 coverage corridor is 3.25 tiles, producing 15.38% / 9.83% on that replay versus the reviewed 15.3% / 10.4% control.
+\n- Analysis Dataset V3 adds compact terrain elevation to the disposable analysis cache so fight-context statistics can be recalculated from sealed CanonicalReplay without reparsing the original recording.\n- Execution V1 is now reviewable in Replay Lab with paired AoF/TownBell columns. Direct command metrics are high-confidence observations; raid response, fights, elevation and disengagement remain explicitly inferred.\n
