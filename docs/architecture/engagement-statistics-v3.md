@@ -90,7 +90,7 @@ V3 requires all of:
 
 - at least **4 contributing players**;
 - at least **60 seconds** of Battle evidence;
-- at least **80 combat-eligible distinct selected instances** after excluding directly
+- at least **80 potential-combat distinct selected instances after excluding directly known non-military selections** after excluding directly
   known civilian/building selections;
 - at least **10 strong Skirmish commands**.
 
