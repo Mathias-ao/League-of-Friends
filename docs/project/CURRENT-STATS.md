@@ -1,8 +1,28 @@
 # Age of Friends — Current Statistics
 
-Last reviewed: 25 September 2026
+Last reviewed: 26 September 2026
 
 Purpose: Concise source of truth for player-facing statistics status. Technical definitions and evidence limits live in the versioned architecture/model documents. The player-facing scope and presentation contract lives in [`../design/statistics-experience.md`](../design/statistics-experience.md).
+
+## AoF v1 checkpoint — 26 September 2026
+
+**State:** Battle measurement is close to AoF v1 freeze. The five-category model family is implemented; the remaining gate is broader replay/match-shape validation, final player-facing metric/record selection, and durable storage/UI wiring. This should not trigger a redesign of the replay-truth architecture.
+
+**Keep these development rules:**
+- CanonicalReplay is durable evidence; statistics must be rebuildable without the original replay.
+- Keep observed facts, deterministic reconstruction, inferred analysis and league interpretation separate, versioned and traceable.
+- Commands are not outcomes: queue ≠ trained, placement ≠ completed, command/selection ≠ movement, vision, damage or kills. Unsupported/ambiguous evidence is N/A or a coverage warning, never a guessed zero.
+- Prefer conservative precision. Ambiguous object, victim or opponent attribution is discarded rather than guessed.
+- One statistic has one owning definition. Later enrichment may add context but must not silently change a locked base count; Skirmish compatibility is the current example.
+- TownBell is a comparison control, not canonical truth. Match its semantics only when AoF evidence supports the same claim.
+- Parse once, then iterate replay-free: CanonicalReplay → compact versioned analysis cache → statistics projection. Reparse only when extraction of a required source primitive changes.
+- Historical reproducibility wins over silent tuning: material model/rule changes require a successor version.
+
+**Current launch-candidate model family:** `AOF_BUILD_ORDER_V2`, `AOF_OPENING_STATISTICS_V5`, `AOF_ECONOMY_STATISTICS_V4`, `AOF_MILITARY_STATISTICS_V4`, `AOF_RAID_DETECTION_V3`, `AOF_SKIRMISH_DETECTION_V1`, `AOF_UNIT_CLASS_FAMILIES_V1`, `AOF_ENGAGEMENT_STATISTICS_V3`, `AOF_EXECUTION_STATISTICS_V1`, `AOF_MAP_PRESENCE_V6`, `AOF_FORWARD_ECO_V1`, `AOF_RESOURCE_COMMITMENT_V1` and `AOF_CANONICAL_STATISTICS_V1`.
+
+**Outside this freeze:** playstyle-slider rules, Gallantry/Treachery/Chivalry rules, Rivalry/Hostility/Bond rules and Lifetime UI. These consume the statistics layer later; they must not redefine replay truth.
+
+**Freeze gate:** validate more real replays and supported match shapes → lock player-facing eligibility/null/tie/record semantics → persist and present the Battle statistics. Avoid expanding v1 merely because another proxy can be computed.
 
 ## Statistics structure
 
