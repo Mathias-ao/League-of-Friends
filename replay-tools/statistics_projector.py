@@ -179,10 +179,12 @@ def project_statistics_from_analysis(
                 **economy_statistics[player],
                 "resourceCommitment": resource_commitment_statistics[player],
             },
-            "military": military_statistics[player],
-            "combat": {
-                **raid_statistics[player],
-                **engagement_statistics[player],
+            "military": {
+                **military_statistics[player],
+                "engagements": {
+                    **raid_statistics[player],
+                    **engagement_statistics[player],
+                },
             },
             "mapPresence": map_presence_statistics[player],
             "execution": execution_statistics[player],
