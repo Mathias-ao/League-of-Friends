@@ -1,4 +1,4 @@
-"""Player-facing Military Engagement statistics V2.
+"""Player-facing Military Engagement statistics V3.
 
 Hierarchy:
 - Skirmish: broad local hostile episode from AOF_SKIRMISH_DETECTION_V1.
@@ -18,8 +18,13 @@ import math
 from typing import Any, Iterable
 
 from skirmish_detector import SKIRMISH_LINK_DISTANCE_TILES
+from unit_classification import (
+    UNIT_CLASS_FAMILY_VERSION,
+    build_initial_instance_classification,
+    summarize_selected_instances,
+)
 
-ENGAGEMENT_MODEL_VERSION = "AOF_ENGAGEMENT_STATISTICS_V2"
+ENGAGEMENT_MODEL_VERSION = "AOF_ENGAGEMENT_STATISTICS_V3"
 
 BASE_ZONE_RADIUS_TILES = 22.0
 BASE_AMBIGUITY_MARGIN_TILES = 3.0
@@ -27,10 +32,10 @@ REINFORCEMENT_EPISODE_GAP_MS = 60_000
 BATTLE_SUPPORT_ACTIONS = {"MOVE", "ORDER", "PATROL", "DE_ATTACK_MOVE", "ATTACK_GROUND"}
 REINFORCEMENT_ACTIONS = {"PATROL", "DE_ATTACK_MOVE", "ATTACK_GROUND"}
 
-GREAT_BATTLE_MIN_DURATION_MS = 45_000
-GREAT_BATTLE_MIN_SELECTED_OBJECTS = 40
-GREAT_BATTLE_MIN_STRONG_COMMANDS = 6
-GREAT_BATTLE_1V1_SELECTED_OBJECTS = 60
+GREAT_BATTLE_MIN_DURATION_MS = 60_000
+GREAT_BATTLE_MIN_POTENTIAL_COMBAT_SELECTED_OBJECTS = 80
+GREAT_BATTLE_MIN_STRONG_COMMANDS = 10
+GREAT_BATTLE_MIN_PARTICIPANTS = 4
 
 
 def _participants(manifest: dict[str, Any]) -> dict[int, dict[str, Any]]:
@@ -188,6 +193,55 @@ def _inside_skirmish_area(event: dict[str, Any], skirmish: dict[str, Any]) -> bo
     return math.hypot(point[0] - center["x"], point[1] - center["y"]) <= SKIRMISH_LINK_DISTANCE_TILES * 1.5
 
 
+
+def _unit_class_evidence_by_player(
+    *,
+    events: list[dict[str, Any]],
+    player_ids: set[int],
+    classification_by_instance: dict[int, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    evidence: dict[str, dict[str, Any]] = {}
+    for player_id in sorted(player_ids):
+        selected = {
+            int(instance)
+            for event in events
+            if event.get("actorPlayerId") == player_id
+            for instance in (event.get("objectInstanceIds") or [])
+            if isinstance(instance, int)
+        }
+        summary = summarize_selected_instances(
+            selected,
+            classification_by_instance=classification_by_instance,
+        )
+        # If every observed selected instance is typed and all are known
+        # non-military, this contributor is clearly a civilian/building-only
+        # responder. Unknown type never disqualifies a player.
+        summary["clearNonMilitaryOnly"] = bool(
+            summary["distinctObservedSelectedInstances"] > 0
+            and summary["unknownClassInstances"] == 0
+            and summary["ambiguousClassInstances"] == 0
+            and summary["militaryClassInstances"] == 0
+            and summary["knownNonMilitaryClassInstances"]
+            == summary["distinctObservedSelectedInstances"]
+        )
+        evidence[str(player_id)] = summary
+    return evidence
+
+
+def _filter_pair_evidence(
+    rows: list[dict[str, Any]],
+    *,
+    participant_ids: set[int],
+    pair_field: str,
+) -> list[dict[str, Any]]:
+    filtered: list[dict[str, Any]] = []
+    for row in rows:
+        ids = row.get(pair_field) or []
+        if len(ids) == 2 and all(int(player_id) in participant_ids for player_id in ids):
+            filtered.append(row)
+    return filtered
+
+
 def _battle_from_skirmish(
     *,
     index: int,
@@ -196,25 +250,13 @@ def _battle_from_skirmish(
     participants: dict[int, dict[str, Any]],
     zones_by_player: dict[int, list[dict[str, Any]]],
     raids: list[dict[str, Any]],
+    classification_by_instance: dict[int, dict[str, Any]],
 ) -> dict[str, Any] | None:
     contributing = {
         int(player_id)
         for player_id in skirmish.get("contributingPlayerIds", [])
         if player_id in participants
     }
-
-    # V2 intentionally treats response/control activity as participation. Unlike
-    # V1, both sides do not need a narrow "strong" attack command. A one-sided
-    # targeted episode remains a Skirmish, while opposing command contributors
-    # promote it to Battle.
-    hostile_contributor_pairs = [
-        (left, right)
-        for left in sorted(contributing)
-        for right in sorted(contributing)
-        if left < right and _hostile(left, right, participants)
-    ]
-    if not hostile_contributor_pairs:
-        return None
 
     nearby = [
         event for event in action_events
@@ -226,6 +268,38 @@ def _battle_from_skirmish(
         return None
     nearby.sort(key=lambda event: (event.get("timestampMs", 0), event.get("operationOrdinal", 0)))
 
+    class_evidence = _unit_class_evidence_by_player(
+        events=nearby,
+        player_ids=contributing,
+        classification_by_instance=classification_by_instance,
+    )
+    battle_contributors = {
+        player_id
+        for player_id in contributing
+        if not class_evidence[str(player_id)]["clearNonMilitaryOnly"]
+    }
+
+    # Battle remains a promotion of the unchanged legacy Skirmish episodes.
+    # Unit classes only strengthen the promotion: a contributor whose complete
+    # observed selection footprint is known civilian/building-only cannot by
+    # itself make the episode a Battle. Unknown later-spawned type never causes
+    # rejection.
+    hostile_contributor_pairs = [
+        (left, right)
+        for left in sorted(battle_contributors)
+        for right in sorted(battle_contributors)
+        if left < right and _hostile(left, right, participants)
+    ]
+    if not hostile_contributor_pairs:
+        return None
+
+    nearby = [
+        event for event in nearby
+        if event.get("actorPlayerId") in battle_contributors
+    ]
+    if not nearby:
+        return None
+
     started_at = min(int(event["timestampMs"]) for event in nearby)
     ended_at = max(int(event["timestampMs"]) for event in nearby)
     first_by_player = {
@@ -234,7 +308,7 @@ def _battle_from_skirmish(
             for event in nearby
             if int(event["actorPlayerId"]) == player_id
         )
-        for player_id in sorted(contributing)
+        for player_id in sorted(battle_contributors)
         if any(int(event["actorPlayerId"]) == player_id for event in nearby)
     }
     selected_ids = {
@@ -252,14 +326,21 @@ def _battle_from_skirmish(
     base_owner = base_match[0] if base_match is not None else None
 
     duration_ms = max(0, ended_at - started_at)
-    great_battle = (
-        duration_ms >= GREAT_BATTLE_MIN_DURATION_MS
-        and len(selected_ids) >= GREAT_BATTLE_MIN_SELECTED_OBJECTS
-        and int(skirmish.get("strongCommandCount", 0)) >= GREAT_BATTLE_MIN_STRONG_COMMANDS
-        and (
-            len(contributing) >= 4
-            or len(selected_ids) >= GREAT_BATTLE_1V1_SELECTED_OBJECTS
+    known_non_military_ids = {
+        instance_id
+        for instance_id in selected_ids
+        if (
+            classification_by_instance.get(instance_id, {}).get("militaryStatus")
+            == "non_military"
         )
+    }
+    potential_combat_selected_count = len(selected_ids - known_non_military_ids)
+    great_battle = (
+        len(battle_contributors) >= GREAT_BATTLE_MIN_PARTICIPANTS
+        and duration_ms >= GREAT_BATTLE_MIN_DURATION_MS
+        and potential_combat_selected_count
+        >= GREAT_BATTLE_MIN_POTENTIAL_COMBAT_SELECTED_OBJECTS
+        and int(skirmish.get("strongCommandCount", 0)) >= GREAT_BATTLE_MIN_STRONG_COMMANDS
     )
 
     overlapping_raids = [
@@ -268,8 +349,8 @@ def _battle_from_skirmish(
         if raid.get("raidId")
         and raid.get("startedAtMs", 0) <= ended_at
         and raid.get("endedAtMs", 0) >= started_at
-        and raid.get("attackerPlayerId") in contributing
-        and raid.get("victimPlayerId") in contributing
+        and raid.get("attackerPlayerId") in battle_contributors
+        and raid.get("victimPlayerId") in battle_contributors
     ]
 
     return {
@@ -279,19 +360,44 @@ def _battle_from_skirmish(
         "endedAtMs": ended_at,
         "durationMs": duration_ms,
         "center": center,
-        "participantPlayerIds": sorted(contributing),
+        "participantPlayerIds": sorted(battle_contributors),
         "sidePlayerIds": [
-            sorted(player_id for player_id in side if player_id in contributing)
+            sorted(player_id for player_id in side if player_id in battle_contributors)
             for side in skirmish.get("sidePlayerIds", [])
-            if any(player_id in contributing for player_id in side)
+            if any(player_id in battle_contributors for player_id in side)
         ],
         "firstContributionAtMsByPlayer": first_by_player,
-        "directedInteractionEdges": list(skirmish.get("directedInteractionEdges") or []),
-        "opponentInteractionPairs": list(skirmish.get("opponentInteractionPairs") or []),
+        "unitClassFamilyVersion": UNIT_CLASS_FAMILY_VERSION,
+        "unitClassEvidenceByPlayer": {
+            str(player_id): class_evidence[str(player_id)]
+            for player_id in sorted(battle_contributors)
+        },
+        "directedInteractionEdges": [
+            row for row in (skirmish.get("directedInteractionEdges") or [])
+            if row.get("fromPlayerId") in battle_contributors
+            and row.get("toPlayerId") in battle_contributors
+        ],
+        "opponentInteractionPairs": _filter_pair_evidence(
+            list(skirmish.get("opponentInteractionPairs") or []),
+            participant_ids=battle_contributors,
+            pair_field="playerIds",
+        ),
         "baseOwnerPlayerId": base_owner,
         "greatBattle": great_battle,
         "distinctSelectedObjectCount": len(selected_ids),
+        "knownNonMilitarySelectedObjectCount": len(known_non_military_ids),
+        "potentialCombatSelectedObjectCount": potential_combat_selected_count,
         "strongCommandCount": int(skirmish.get("strongCommandCount", 0)),
+        "greatBattleQualification": {
+            "minimumParticipants": GREAT_BATTLE_MIN_PARTICIPANTS,
+            "minimumDurationMs": GREAT_BATTLE_MIN_DURATION_MS,
+            "minimumPotentialCombatSelectedObjects": GREAT_BATTLE_MIN_POTENTIAL_COMBAT_SELECTED_OBJECTS,
+            "minimumStrongCommands": GREAT_BATTLE_MIN_STRONG_COMMANDS,
+            "participantCount": len(battle_contributors),
+            "durationMs": duration_ms,
+            "potentialCombatSelectedObjectCount": potential_combat_selected_count,
+            "strongCommandCount": int(skirmish.get("strongCommandCount", 0)),
+        },
         "overlappingRaidIds": sorted(overlapping_raids),
         "sourceEventIds": sorted({
             str(event["eventId"]) for event in nearby if event.get("eventId")
@@ -428,6 +534,7 @@ def _standalone_reinforcements(
     participants: dict[int, dict[str, Any]],
     zones_by_player: dict[int, list[dict[str, Any]]],
     battles: list[dict[str, Any]],
+    classification_by_instance: dict[int, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     candidates: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for event in action_events:
@@ -487,6 +594,20 @@ def _standalone_reinforcements(
             }
             if len(group) < 2 and len(selected) < 3:
                 continue
+            class_evidence = summarize_selected_instances(
+                selected,
+                classification_by_instance=classification_by_instance,
+            )
+            clear_non_military_only = bool(
+                class_evidence["distinctObservedSelectedInstances"] > 0
+                and class_evidence["unknownClassInstances"] == 0
+                and class_evidence["ambiguousClassInstances"] == 0
+                and class_evidence["militaryClassInstances"] == 0
+                and class_evidence["knownNonMilitaryClassInstances"]
+                == class_evidence["distinctObservedSelectedInstances"]
+            )
+            if clear_non_military_only:
+                continue
             episodes.append({
                 "reinforcementId": None,
                 "helperPlayerId": helper,
@@ -495,6 +616,8 @@ def _standalone_reinforcements(
                 "endedAtMs": group[-1]["atMs"],
                 "commandCount": len(group),
                 "distinctSelectedObjectCount": len(selected),
+                "unitClassFamilyVersion": UNIT_CLASS_FAMILY_VERSION,
+                "unitClassEvidence": class_evidence,
                 "sourceEventIds": [
                     row["sourceEventId"] for row in group if row.get("sourceEventId")
                 ],
@@ -566,6 +689,10 @@ def project_engagement_statistics(
     participants = _participants(manifest)
     initial_objects = list(initial_objects)
     action_events = list(action_events)
+    classification_by_instance = build_initial_instance_classification(
+        initial_objects,
+        catalog=catalog,
+    )
     zones_by_player = build_base_zones(
         manifest=manifest,
         catalog=catalog,
@@ -573,7 +700,28 @@ def project_engagement_statistics(
         build_events=build_events,
     )
     raids = _all_raids(raid_statistics)
-    skirmishes = list(skirmish_statistics.get("episodes") or [])
+    skirmishes = [dict(row) for row in (skirmish_statistics.get("episodes") or [])]
+
+    # Attach class-family evidence after Skirmish detection. This enrichment is
+    # forbidden from changing Skirmish existence, timing or count.
+    for skirmish in skirmishes:
+        contributor_ids = {
+            int(player_id)
+            for player_id in skirmish.get("contributingPlayerIds", [])
+            if player_id in participants
+        }
+        skirmish_events = [
+            event for event in action_events
+            if event.get("actorPlayerId") in contributor_ids
+            and event.get("sourceActionName") in BATTLE_SUPPORT_ACTIONS
+            and _inside_skirmish_area(event, skirmish)
+        ]
+        skirmish["unitClassFamilyVersion"] = UNIT_CLASS_FAMILY_VERSION
+        skirmish["unitClassEvidenceByPlayer"] = _unit_class_evidence_by_player(
+            events=skirmish_events,
+            player_ids=contributor_ids,
+            classification_by_instance=classification_by_instance,
+        )
 
     battles: list[dict[str, Any]] = []
     for skirmish in skirmishes:
@@ -584,6 +732,7 @@ def project_engagement_statistics(
             participants=participants,
             zones_by_player=zones_by_player,
             raids=raids,
+            classification_by_instance=classification_by_instance,
         )
         if battle is not None:
             battle["battleId"] = f"battle-{len(battles) + 1}"
@@ -598,6 +747,7 @@ def project_engagement_statistics(
             participants=participants,
             zones_by_player=zones_by_player,
             battles=battles,
+            classification_by_instance=classification_by_instance,
         )
     else:
         defensive = []
@@ -634,6 +784,8 @@ def project_engagement_statistics(
         results[str(player_id)] = {
             "engagementModelVersion": ENGAGEMENT_MODEL_VERSION,
             "skirmishModelVersion": skirmish_statistics.get("modelVersion"),
+            "skirmishCompatibilityBasis": skirmish_statistics.get("compatibilityBasis"),
+            "unitClassFamilyVersion": UNIT_CLASS_FAMILY_VERSION,
             "skirmishes": len(player_skirmishes),
             "battlesFought": len(player_battles),
             "greatBattlesFought": len(great_battles),
@@ -659,11 +811,14 @@ def project_engagement_statistics(
                 "cooperativeAttacks": cooperative_for_player,
             },
             "engagementScope": (
-                "Skirmish is the broad hostile-command episode. Battle promotes a Skirmish when "
-                "actual command contributors exist on opposing sides; it no longer requires both "
-                "sides to issue a narrow strong-attack command. Pairwise interaction edges track "
-                "which opponents actually overlapped or directly targeted each other for future "
-                "relationship history. Great Battle remains conservative. Ally metrics are null/N/A "
+                "Skirmish is a rename/relocation of the legacy Fight V1 episode detector and keeps "
+                "its count/timing unchanged. Battle promotes a Skirmish when actual command "
+                "contributors exist on opposing sides, while direct AoE2 class evidence can reject "
+                "a clearly civilian/building-only responder without penalizing unresolved later-"
+                "spawned types. Pairwise interaction edges track which opponents actually overlapped "
+                "or directly targeted each other for future relationship history. Great Battle "
+                "requires at least four contributing players plus a large, sustained command-selection "
+                "footprint, so it is impossible in 1v1. Ally metrics are null/N/A "
                 "when structurally impossible or when diplomacy-enabled FFA relation semantics are "
                 "not yet qualified. No damage, kills, exact army size or continuous-position claim."
             ),

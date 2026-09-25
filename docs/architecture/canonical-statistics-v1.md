@@ -12,8 +12,9 @@ Date: 13 September 2026. This milestone defines a conservative, replay-free stat
 | Formula set | `AOF_OBSERVED_COMMAND_FORMULAS_V1` | Defines command count, first/last command, first-five-observed-minutes, active seconds, rate and selection-size summaries. |
 | Build-order classifier | `AOF_BUILD_ORDER_V2` | Classifies a player's primary opening from age, placement, production and start-position evidence while retaining versioned execution/difficulty scores and trigger evidence. |
 | Raid detector | `AOF_RAID_DETECTION_V3` | Counts directional hostile-command episodes around local enemy economic zones and uses time-aware selected-object control evidence for later-created targeted objects. |
-| Skirmish detector | `AOF_SKIRMISH_DETECTION_V1` | Broad local hostile episodes with participants, sides and pairwise opponent interaction evidence. |
-| Engagement projector | `AOF_ENGAGEMENT_STATISTICS_V2` | Promotes Skirmishes with opposing command contributors to Battles and adds Great Battle / qualified ally interactions. |
+| Skirmish detector | `AOF_SKIRMISH_DETECTION_V1` | Rename/relocation of Fight Detection V1 with identical episode formation/count/timing; pairwise evidence is post-detection enrichment. |
+| Unit-class families | `AOF_UNIT_CLASS_FAMILIES_V1` | Maps replay-observed AoE2 class IDs into engagement families without guessing unresolved spawned-object type. |
+| Engagement projector | `AOF_ENGAGEMENT_STATISTICS_V3` | Promotes Skirmishes with opposing contributors to Battles, uses class evidence to reject clearly non-military-only participation, and reserves Great Battle for huge 4+ player engagements. |
 | Economy statistics | `AOF_ECONOMY_STATISTICS_V4` | Projects queue-derived Villager checkpoints, TC placement/activity, eco-tech, Farm, market, food-animal interaction and 20-minute commitment metrics while retaining evidence boundaries. |
 | Entity labels | `AOF_ENTITY_CATALOG_V1_1` | Adds reference names and role keys while retaining raw IDs. Labels are explicitly unqualified for the replay patch/data mods. |
 | Corpus report | `AOF_STATISTICS_CORPUS_V1` | Produces privacy-minimized comparable totals across canonical bundles. |
@@ -60,7 +61,7 @@ The smallest reviewable product candidate is:
 6. resignation command time when present;
 7. directed diplomacy-command history for FFA evidence, with no inferred mutual state;
 8. inferred Build Order from `AOF_BUILD_ORDER_V2`, displayed only when its execution score is strictly greater than 75;
-9. inferred Military engagement counts from `AOF_RAID_DETECTION_V3`, `AOF_SKIRMISH_DETECTION_V1` and `AOF_ENGAGEMENT_STATISTICS_V2`, stored under `participant.military.engagements`.
+9. inferred Military engagement counts from `AOF_RAID_DETECTION_V3`, `AOF_SKIRMISH_DETECTION_V1`, `AOF_UNIT_CLASS_FAMILIES_V1` and `AOF_ENGAGEMENT_STATISTICS_V3`, stored under `participant.military.engagements`.
 
 Observed command rate, inactivity, APM variants, broader opening/playstyle labels and recorder-camera measures should remain internal until formula, completeness and comparability policies are selected. Reference entity names may be displayed only alongside raw IDs or after patch/mod qualification.
 

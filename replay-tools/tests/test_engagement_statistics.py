@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from engagement_statistics import ENGAGEMENT_MODEL_VERSION, project_engagement_statistics
 from skirmish_detector import detect_skirmishes
+from unit_classification import UNIT_CLASS_FAMILY_VERSION
 
 
 CATALOG = {
@@ -15,7 +16,11 @@ CATALOG = {
         "562": {"roleKeys": ["lumber_camp", "economy"]},
         "584": {"roleKeys": ["mining_camp", "economy"]},
     },
-    "units": {},
+    "units": {
+        "38": {"roleKeys": ["knight", "land_military", "cavalry"]},
+        "74": {"roleKeys": ["militia", "land_military", "infantry"]},
+        "83": {"roleKeys": ["villager", "economic_unit"]},
+    },
 }
 
 
@@ -39,12 +44,26 @@ def initial_objects(player_count=3):
             "payload": {
                 "ownerPlayerId": player_id,
                 "objectId": 109,
+                "classId": 3,
                 "instanceId": player_id * 100 + 1,
             },
             "position": {"x": positions[player_id - 1][0], "y": positions[player_id - 1][1]},
         }
         for player_id in range(1, player_count + 1)
     ]
+
+
+def classed_object(event_id, player_id, instance_id, object_id, class_id, x=50, y=50):
+    return {
+        "eventId": event_id,
+        "payload": {
+            "ownerPlayerId": player_id,
+            "objectId": object_id,
+            "classId": class_id,
+            "instanceId": instance_id,
+        },
+        "position": {"x": x, "y": y},
+    }
 
 
 def action(event_id, actor, at_ms, name, x, y, selected=None, target=None):
@@ -85,7 +104,7 @@ def project(*, game_manifest, actions, objects=None):
     )
 
 
-class EngagementStatisticsV2Tests(unittest.TestCase):
+class EngagementStatisticsV3Tests(unittest.TestCase):
     def test_skirmish_is_player_facing_and_opposing_response_promotes_battle(self):
         result = project(
             game_manifest=manifest(teams=(1, 2)),
@@ -99,9 +118,56 @@ class EngagementStatisticsV2Tests(unittest.TestCase):
         self.assertEqual(result["1"]["skirmishes"], 1)
         self.assertEqual(result["2"]["skirmishes"], 1)
         self.assertEqual(result["1"]["battlesFought"], 1)
+        self.assertLessEqual(result["1"]["battlesFought"], result["1"]["skirmishes"])
         battle = result["1"]["engagementEvidence"]["battles"][0]
         self.assertEqual(battle["participantPlayerIds"], [1, 2])
         self.assertEqual(battle["sourceSkirmishId"], "skirmish-1")
+
+    def test_known_civilian_only_response_does_not_promote_battle(self):
+        objects = initial_objects(2) + [
+            classed_object("p1-knight", 1, 111, 38, 12),
+            classed_object("p2-villager", 2, 222, 83, 4),
+        ]
+        result = project(
+            game_manifest=manifest(teams=(1, 2)),
+            actions=[
+                action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50, selected=[111]),
+                action("p2-villager-response", 2, 12_000, "MOVE", 51, 50, selected=[222]),
+            ],
+            objects=objects,
+        )
+        self.assertEqual(result["1"]["skirmishes"], 1)
+        self.assertEqual(result["1"]["battlesFought"], 0)
+        skirmish = result["1"]["engagementEvidence"]["skirmishes"][0]
+        p1 = skirmish["unitClassEvidenceByPlayer"]["1"]
+        p2 = skirmish["unitClassEvidenceByPlayer"]["2"]
+        self.assertEqual(p1["familyCounts"]["cavalry"], 1)
+        self.assertEqual(p1["militaryClassInstances"], 1)
+        self.assertTrue(p2["clearNonMilitaryOnly"])
+
+    def test_known_military_classes_strengthen_battle_evidence(self):
+        objects = initial_objects(2) + [
+            classed_object("p1-knight", 1, 111, 38, 12),
+            classed_object("p2-militia", 2, 222, 74, 6),
+        ]
+        result = project(
+            game_manifest=manifest(teams=(1, 2)),
+            actions=[
+                action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50, selected=[111]),
+                action("p2-response", 2, 12_000, "MOVE", 51, 50, selected=[222]),
+            ],
+            objects=objects,
+        )
+        battle = result["1"]["engagementEvidence"]["battles"][0]
+        self.assertEqual(battle["unitClassFamilyVersion"], UNIT_CLASS_FAMILY_VERSION)
+        self.assertEqual(
+            battle["unitClassEvidenceByPlayer"]["1"]["familyCounts"]["cavalry"],
+            1,
+        )
+        self.assertEqual(
+            battle["unitClassEvidenceByPlayer"]["2"]["familyCounts"]["infantry"],
+            1,
+        )
 
     def test_one_sided_targeted_episode_stays_skirmish_not_battle(self):
         objects = initial_objects(2)
@@ -196,17 +262,16 @@ class EngagementStatisticsV2Tests(unittest.TestCase):
         self.assertEqual(event["attackerPlayerIds"], [1, 2])
         self.assertEqual(event["targetPlayerIds"], [3])
 
-    def test_great_battle_remains_conservative(self):
+    def test_great_battle_is_impossible_in_one_v_one_even_with_huge_selection(self):
         actions = []
-        p1_ids = list(range(1000, 1030))
-        p2_ids = list(range(2000, 2030))
-        for index, at_ms in enumerate((0, 20_000, 40_000)):
+        p1_ids = list(range(1000, 1060))
+        p2_ids = list(range(2000, 2060))
+        for index, at_ms in enumerate((0, 15_000, 30_000, 45_000, 60_000)):
             actions.append(action(
                 f"p1-{index}", 1, at_ms, "DE_ATTACK_MOVE", 50, 50, selected=p1_ids,
             ))
-        for index, at_ms in enumerate((10_000, 30_000, 50_000)):
             actions.append(action(
-                f"p2-{index}", 2, at_ms, "DE_ATTACK_MOVE", 51, 50, selected=p2_ids,
+                f"p2-{index}", 2, at_ms + 5_000, "DE_ATTACK_MOVE", 51, 50, selected=p2_ids,
             ))
         result = project(
             game_manifest=manifest(teams=(1, 2)),
@@ -214,8 +279,55 @@ class EngagementStatisticsV2Tests(unittest.TestCase):
             objects=initial_objects(2),
         )
         battle = result["1"]["engagementEvidence"]["battles"][0]
+        self.assertFalse(battle["greatBattle"])
+        self.assertEqual(result["1"]["greatBattlesFought"], 0)
+        self.assertEqual(
+            battle["greatBattleQualification"]["minimumParticipants"],
+            4,
+        )
+
+    def test_great_battle_requires_many_players_and_large_sustained_footprint(self):
+        actions = []
+        selections = {
+            1: list(range(1000, 1025)),
+            2: list(range(2000, 2025)),
+            3: list(range(3000, 3025)),
+            4: list(range(4000, 4025)),
+        }
+        schedule = [
+            (1, 0),
+            (3, 8_000),
+            (2, 16_000),
+            (4, 24_000),
+            (1, 32_000),
+            (3, 40_000),
+            (2, 48_000),
+            (4, 56_000),
+            (1, 64_000),
+            (2, 72_000),
+        ]
+        for index, (player_id, at_ms) in enumerate(schedule):
+            actions.append(action(
+                f"attack-{index}",
+                player_id,
+                at_ms,
+                "DE_ATTACK_MOVE",
+                50 + (player_id % 2),
+                50,
+                selected=selections[player_id],
+            ))
+        result = project(
+            game_manifest=manifest(teams=(1, 2, 1, 2)),
+            actions=actions,
+            objects=initial_objects(4),
+        )
+        battle = result["1"]["engagementEvidence"]["battles"][0]
         self.assertTrue(battle["greatBattle"])
         self.assertEqual(result["1"]["greatBattlesFought"], 1)
+        self.assertGreaterEqual(
+            battle["potentialCombatSelectedObjectCount"],
+            80,
+        )
 
 
 if __name__ == "__main__":

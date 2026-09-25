@@ -103,6 +103,8 @@ def statistics_snapshot(result):
                 "raidModelVersion": p["military"]["engagements"]["modelVersion"],
                 "skirmishes": p["military"]["engagements"]["skirmishes"],
                 "skirmishModelVersion": p["military"]["engagements"]["skirmishModelVersion"],
+                "skirmishCompatibilityBasis": p["military"]["engagements"]["skirmishCompatibilityBasis"],
+                "unitClassFamilyVersion": p["military"]["engagements"]["unitClassFamilyVersion"],
                 "battlesFought": p["military"]["engagements"]["battlesFought"],
                 "engagementModelVersion": p["military"]["engagements"]["engagementModelVersion"],
                 "allyInteractionApplicability": p["military"]["engagements"]["allyInteractionApplicability"]["status"],
