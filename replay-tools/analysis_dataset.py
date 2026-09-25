@@ -150,10 +150,15 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
         for event in iter_store(directory, manifest["initialState"]["objectStore"])
     ]
     map_data = (manifest.get("initialState") or {}).get("map") or {}
-    terrain_values = [
-        (event.get("payload") or {}).get("elevation")
-        for event in iter_store(directory, manifest["initialState"]["terrainStore"])
-    ]
+    terrain_store = (manifest.get("initialState") or {}).get("terrainStore")
+    terrain_values = (
+        [
+            (event.get("payload") or {}).get("elevation")
+            for event in iter_store(directory, terrain_store)
+        ]
+        if isinstance(terrain_store, dict)
+        else []
+    )
     manifest_context = {
         "schemaVersion": manifest.get("schemaVersion"),
         "participants": manifest.get("participants") or [],
