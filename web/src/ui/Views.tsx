@@ -62,7 +62,7 @@ export function StatisticsView(){
   const [scope,setScope]=useState('season'),[category,setCategory]=useState('Economy');
   const groups:Record<string,{label:string;description:string}[]>={
     Economy:[{label:'Economy & tribute',description:'Qualified economy and support measures will appear here.'},{label:'Age progression',description:'Observed age timings will be distinguished from estimates.'}],
-    Military:[{label:'Military production',description:'Completed units need evidence beyond a queue request.'},{label:'Engagements',description:'Raids, Battles, Great Battles, allied reinforcement, defensive assistance and cooperative attacks belong to Military.'}],
+    Military:[{label:'Military production',description:'Completed units need evidence beyond a queue request.'},{label:'Engagements',description:'Skirmishes, Battles, Great Battles, Raids and qualified ally interactions belong to Military.'}],
     'Map Presence':[{label:'Map activity',description:'Spatial activity will carry its evidence and coverage.'},{label:'Territory & zones',description:'Forward presence, economic zones and base geography stay spatial; engagement statistics remain under Military.'}],
     Execution:[{label:'Player commands',description:'Command counts exist in the extraction foundation; the player-facing contract is pending.'},{label:'Research requests',description:'Research requests do not prove an age was reached.'}]
   };
