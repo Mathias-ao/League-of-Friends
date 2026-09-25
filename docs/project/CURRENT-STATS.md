@@ -82,10 +82,10 @@ Canonical participant output keeps the engagement family inside Military at `par
 - Military buildings: total placement commands and counts for Barracks, Archery Ranges, Stables, Siege Workshops, Monasteries, Castles, Donjons and Kreposts.
 - First military building placement.
 - Military buildings at Castle click: military-building placements before the latest Castle research request.
-- Skirmishes: broad local hostile-command episodes from `AOF_SKIRMISH_DETECTION_V1`. This is the authoritative encounter count; Execution only reuses the windows for context metrics.
+- Skirmishes: player-facing rename/relocation of the former `AOF_FIGHT_DETECTION_V1` episodes. `AOF_SKIRMISH_DETECTION_V1` is locked to identical episode formation/count/timing via `AOF_FIGHT_DETECTION_V1_RENAME_ONLY`; relationship enrichment cannot create extra Skirmishes. Execution only reuses the windows for context metrics.
 - Raids initiated / against the player, with opponent, start/end timing, local economic-zone evidence and direct economic-unit targeting where known.
-- Battles fought: Skirmishes with actual command contributors on opposing sides. V2 accepts credible response/control contribution rather than requiring both sides to issue a narrow strong-attack command.
-- Great Battles fought: conservative promotion of Battle only when duration, selected-object footprint and command evidence make exceptional scale unmistakable.
+- Battles fought: Skirmishes with actual command contributors on opposing sides. `AOF_UNIT_CLASS_FAMILIES_V1` strengthens promotion when replay-observed class IDs show a contributor is clearly civilian/building-only, while unresolved later-spawned types do not cause false negatives.
+- Great Battles fought: exceptional multiplayer-only promotion requiring at least 4 contributing players, 60 seconds, 80 combat-eligible distinct selected instances and 10 strong Skirmish commands. A 1v1 cannot be a Great Battle.
 - Ally Reinforcements sent / received: high-confidence allied military-control evidence inside the supported player's TC-anchored base while no active defensive Battle is present.
 - Defensive Assists given / received: an ally contributes to an active Battle inside the defended player's TC-anchored base.
 - Cooperative Attacks: two or more allied contributors have pairwise interaction evidence against the same opponent outside defensive-base semantics.
@@ -95,7 +95,7 @@ Military production classification uses catalog roles when available and the DE 
 
 Raids use `AOF_RAID_DETECTION_V3`: V2 economic-zone radii remain unchanged, but later-created target control can now be reconstructed from prior player selections. This improves targeted Raid attribution without enlarging economy zones merely to chase an external count. Known Villagers, Fishing Ships, Trade Carts and Trade Cogs remain strong direct-target evidence. Raids do not assert damage or kills.
 
-`AOF_ENGAGEMENT_STATISTICS_V2` uses `AOF_SKIRMISH_DETECTION_V1` as the broad encounter layer. Battle promotes a Skirmish when actual command contributors exist on opposing sides; target-only victims remain Skirmish-only. Skirmishes and Battles retain directed/pairwise opponent evidence for future relationship history. Great Battle remains conservative. Reinforcement and Defensive Assistance require the supported player's TC-anchored base. Ally interaction metrics are null/N/A in 1v1 and locked-diplomacy FFA; diplomacy-enabled FFA remains pending until raw diplomacy modes are controlled-test-qualified into stance intervals. Exact unit composition, army size, kills, damage and fight outcome remain outside V2.
+`AOF_ENGAGEMENT_STATISTICS_V3` keeps Skirmish count semantics identical to the old Fight V1 detector, then enriches those fixed episodes with pairwise opponent evidence and replay-observed AoE2 unit-class families. Battle promotion can reject a fully typed civilian/building-only responder; unknown class stays eligible. Great Battle is multiplayer-only and intentionally rare. Reinforcement uses the same military-class guard where available. Ally interaction metrics are null/N/A in 1v1 and locked-diplomacy FFA; diplomacy-enabled FFA remains pending until raw diplomacy modes are controlled-test-qualified into stance intervals. Exact unit composition, army size, kills, damage and fight outcome remain outside V3.
 
 ### Map Presence
 
@@ -165,7 +165,7 @@ Current models include:
 - `AOF_MILITARY_STATISTICS_V4`
 - `AOF_RAID_DETECTION_V3`
 - `AOF_FIGHT_DETECTION_V1`
-- `AOF_ENGAGEMENT_STATISTICS_V2`
+- `AOF_ENGAGEMENT_STATISTICS_V3`
 - `AOF_EXECUTION_STATISTICS_V1`
 - `AOF_MAP_PRESENCE_V6`
 - `AOF_FORWARD_ECO_V1`
