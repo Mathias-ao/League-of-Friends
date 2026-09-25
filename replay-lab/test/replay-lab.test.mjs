@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { normalizeTownBellControl, safeFileName, semanticDiff, unresolvedEntities, sectionBoundary } from "../lib.mjs";
 
 test("safeFileName strips paths and unsafe characters", () => {
@@ -54,4 +57,19 @@ test("normalizeTownBellControl extracts identities and metric values", () => {
   assert.equal(control.players[0].name, "Mr Greed");
   assert.equal(control.players[0].metrics.villagers_trained.value, 17);
   assert.equal(control.players[1].metrics.tc_idle_dark_age.naReason, "unobservable");
+});
+
+
+test("Replay Lab analysis version stays synchronized with Python analysis dataset", async () => {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const root = path.resolve(here, "..", "..");
+  const [serverSource, pythonSource] = await Promise.all([
+    fs.readFile(path.join(root, "replay-lab", "server.mjs"), "utf8"),
+    fs.readFile(path.join(root, "replay-tools", "analysis_dataset.py"), "utf8"),
+  ]);
+  const serverMatch = serverSource.match(/ANALYSIS_DATASET_VERSION\s*=\s*"([^"]+)"/);
+  const pythonMatch = pythonSource.match(/ANALYSIS_DATASET_VERSION\s*=\s*"([^"]+)"/);
+  assert.ok(serverMatch, "server analysis dataset version declaration missing");
+  assert.ok(pythonMatch, "Python analysis dataset version declaration missing");
+  assert.equal(serverMatch[1], pythonMatch[1]);
 });
