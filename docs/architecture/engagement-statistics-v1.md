@@ -5,6 +5,8 @@ Models: `AOF_RAID_DETECTION_V2`, `AOF_FIGHT_DETECTION_V1`, `AOF_ENGAGEMENT_STATI
 
 ## Purpose
 
+Engagement Statistics V1 belongs to the **Military** statistics category and is projected at `participant.military.engagements`. It is not a separate Combat tab/category.
+
 Engagement Statistics V1 turns conservative replay-command evidence into a small set of player-facing interaction statistics:
 
 - **Raid**
