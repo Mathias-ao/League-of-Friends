@@ -16,7 +16,7 @@ from collections import defaultdict
 import math
 from typing import Any, Iterable
 
-RAID_MODEL_VERSION = "AOF_RAID_DETECTION_V2"
+RAID_MODEL_VERSION = "AOF_RAID_DETECTION_V3"
 RAID_EPISODE_GAP_MS = 60_000
 VICTIM_AMBIGUITY_MARGIN_TILES = 2.0
 
@@ -124,6 +124,50 @@ def _initial_instance_info(
     return result
 
 
+def _control_ledger(
+    initial_objects: Iterable[dict[str, Any]],
+    action_events: Iterable[dict[str, Any]],
+) -> dict[int, list[tuple[int, int, int]]]:
+    ledger: dict[int, list[tuple[int, int, int]]] = defaultdict(list)
+    for event in initial_objects:
+        payload = event.get("payload") or {}
+        instance = payload.get("instanceId")
+        owner = payload.get("ownerPlayerId")
+        if isinstance(instance, int) and isinstance(owner, int):
+            ledger[instance].append((0, -1, owner))
+    for event in action_events:
+        actor = event.get("actorPlayerId")
+        at_ms = event.get("timestampMs")
+        ordinal = event.get("operationOrdinal")
+        if not isinstance(actor, int) or not isinstance(at_ms, int):
+            continue
+        order = int(ordinal) if isinstance(ordinal, int) else 0
+        for instance in event.get("objectInstanceIds") or []:
+            if isinstance(instance, int):
+                ledger[instance].append((at_ms, order, actor))
+    for rows in ledger.values():
+        rows.sort(key=lambda row: (row[0], row[1]))
+    return dict(ledger)
+
+
+def _controller_at(
+    ledger: dict[int, list[tuple[int, int, int]]],
+    instance_id: Any,
+    *,
+    at_ms: int,
+    operation_ordinal: int,
+) -> int | None:
+    if not isinstance(instance_id, int):
+        return None
+    owner = None
+    for row_at, row_ordinal, row_owner in ledger.get(instance_id, []):
+        if (row_at, row_ordinal) <= (at_ms, operation_ordinal):
+            owner = row_owner
+        else:
+            break
+    return owner
+
+
 def build_economic_zones(
     *,
     manifest: dict[str, Any],
@@ -227,6 +271,7 @@ def _resolve_victim(
     participants: dict[int, dict[str, Any]],
     zones: dict[int, list[dict[str, Any]]],
     initial_instance_info: dict[int, dict[str, Any]],
+    control_ledger: dict[int, list[tuple[int, int, int]]],
 ) -> tuple[int, dict[str, Any] | None, float | None, str, str | None] | None:
     at_ms = event.get("timestampMs")
     point = _point(event)
@@ -235,7 +280,13 @@ def _resolve_victim(
 
     target_instance = event.get("targetInstanceId")
     target_info = initial_instance_info.get(target_instance) if isinstance(target_instance, int) else None
-    direct_owner = target_info.get("ownerPlayerId") if target_info else None
+    ordinal = event.get("operationOrdinal")
+    direct_owner = _controller_at(
+        control_ledger,
+        target_instance,
+        at_ms=at_ms,
+        operation_ordinal=int(ordinal) if isinstance(ordinal, int) else 0,
+    )
     target_type = target_info.get("economicTargetType") if target_info else None
 
     # Direct targeting of a known economic unit is strong raid evidence even
@@ -263,7 +314,7 @@ def _resolve_victim(
             match = _zone_match(zones.get(int(direct_owner), []), at_ms=at_ms, x=point[0], y=point[1])
             if match is not None:
                 distance, zone = match
-                return int(direct_owner), zone, distance, "target_instance_owner", None
+                return int(direct_owner), zone, distance, "target_instance_controller", None
 
     if point is None:
         return None
@@ -288,7 +339,7 @@ def _resolve_victim(
 def _observation_strength(
     event: dict[str, Any],
     victim_id: int,
-    initial_object_owners: dict[int, int],
+    victim_resolution_method: str,
     economic_target_type: str | None,
 ) -> str:
     action = event.get("sourceActionName")
@@ -296,10 +347,11 @@ def _observation_strength(
         return "strong"
     if action in STRONG_POSITIONAL_ACTIONS:
         return "strong"
-    if action == "ORDER":
-        target_instance = event.get("targetInstanceId")
-        if isinstance(target_instance, int) and initial_object_owners.get(target_instance) == victim_id:
-            return "strong"
+    if action == "ORDER" and victim_resolution_method in {
+        "economic_target_instance",
+        "target_instance_controller",
+    }:
+        return "strong"
     if action in SUPPORTING_POSITIONAL_ACTIONS:
         return "supporting"
     return "ignored"
@@ -369,13 +421,15 @@ def detect_raids(
     """Return directional raid counts and auditable evidence per participant."""
     participants = _participant_by_id(manifest)
     initial_objects = list(initial_objects)
-    zones, initial_object_owners = build_economic_zones(
+    action_events = list(action_events)
+    zones, _initial_object_owners = build_economic_zones(
         manifest=manifest,
         catalog=catalog,
         initial_objects=initial_objects,
         build_events=build_events,
     )
     initial_instance_info = _initial_instance_info(initial_objects, catalog)
+    control_ledger = _control_ledger(initial_objects, action_events)
 
     observations_by_pair: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for event in action_events:
@@ -390,6 +444,7 @@ def detect_raids(
             participants=participants,
             zones=zones,
             initial_instance_info=initial_instance_info,
+            control_ledger=control_ledger,
         )
         if resolved is None:
             continue
@@ -397,7 +452,7 @@ def detect_raids(
         strength = _observation_strength(
             event,
             victim_id,
-            initial_object_owners,
+            resolution_method,
             economic_target_type,
         )
         if strength == "ignored":
@@ -454,8 +509,9 @@ def detect_raids(
             "modelVersion": RAID_MODEL_VERSION,
             "scope": (
                 "hostile command episodes in local TC/Mill/Lumber/Mining economic zones "
-                "or direct targeting of known Villagers/Fishing Ships/Trade Carts/Trade Cogs; "
-                "no kill/damage claim"
+                "or direct targeting of known Villagers/Fishing Ships/Trade Carts/Trade Cogs. "
+                "Later-created target ownership can be reconstructed from prior player selections "
+                "when the target is inside a qualifying economic zone; no kill/damage claim"
             ),
             "raidEvidence": {
                 "initiatedEpisodes": initiated,
