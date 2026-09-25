@@ -33,7 +33,7 @@ BATTLE_SUPPORT_ACTIONS = {"MOVE", "ORDER", "PATROL", "DE_ATTACK_MOVE", "ATTACK_G
 REINFORCEMENT_ACTIONS = {"PATROL", "DE_ATTACK_MOVE", "ATTACK_GROUND"}
 
 GREAT_BATTLE_MIN_DURATION_MS = 60_000
-GREAT_BATTLE_MIN_COMBAT_ELIGIBLE_SELECTED_OBJECTS = 80
+GREAT_BATTLE_MIN_POTENTIAL_COMBAT_SELECTED_OBJECTS = 80
 GREAT_BATTLE_MIN_STRONG_COMMANDS = 10
 GREAT_BATTLE_MIN_PARTICIPANTS = 4
 
@@ -334,12 +334,12 @@ def _battle_from_skirmish(
             == "non_military"
         )
     }
-    combat_eligible_selected_count = len(selected_ids - known_non_military_ids)
+    potential_combat_selected_count = len(selected_ids - known_non_military_ids)
     great_battle = (
         len(battle_contributors) >= GREAT_BATTLE_MIN_PARTICIPANTS
         and duration_ms >= GREAT_BATTLE_MIN_DURATION_MS
-        and combat_eligible_selected_count
-        >= GREAT_BATTLE_MIN_COMBAT_ELIGIBLE_SELECTED_OBJECTS
+        and potential_combat_selected_count
+        >= GREAT_BATTLE_MIN_POTENTIAL_COMBAT_SELECTED_OBJECTS
         and int(skirmish.get("strongCommandCount", 0)) >= GREAT_BATTLE_MIN_STRONG_COMMANDS
     )
 
@@ -386,16 +386,16 @@ def _battle_from_skirmish(
         "greatBattle": great_battle,
         "distinctSelectedObjectCount": len(selected_ids),
         "knownNonMilitarySelectedObjectCount": len(known_non_military_ids),
-        "combatEligibleSelectedObjectCount": combat_eligible_selected_count,
+        "potentialCombatSelectedObjectCount": potential_combat_selected_count,
         "strongCommandCount": int(skirmish.get("strongCommandCount", 0)),
         "greatBattleQualification": {
             "minimumParticipants": GREAT_BATTLE_MIN_PARTICIPANTS,
             "minimumDurationMs": GREAT_BATTLE_MIN_DURATION_MS,
-            "minimumCombatEligibleSelectedObjects": GREAT_BATTLE_MIN_COMBAT_ELIGIBLE_SELECTED_OBJECTS,
+            "minimumPotentialCombatSelectedObjects": GREAT_BATTLE_MIN_POTENTIAL_COMBAT_SELECTED_OBJECTS,
             "minimumStrongCommands": GREAT_BATTLE_MIN_STRONG_COMMANDS,
             "participantCount": len(battle_contributors),
             "durationMs": duration_ms,
-            "combatEligibleSelectedObjectCount": combat_eligible_selected_count,
+            "potentialCombatSelectedObjectCount": potential_combat_selected_count,
             "strongCommandCount": int(skirmish.get("strongCommandCount", 0)),
         },
         "overlappingRaidIds": sorted(overlapping_raids),
