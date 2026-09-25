@@ -1,4 +1,4 @@
-"""Player-facing Military Engagement statistics V2.
+"""Player-facing Military Engagement statistics V3.
 
 Hierarchy:
 - Skirmish: broad local hostile episode from AOF_SKIRMISH_DETECTION_V1.
@@ -534,6 +534,7 @@ def _standalone_reinforcements(
     participants: dict[int, dict[str, Any]],
     zones_by_player: dict[int, list[dict[str, Any]]],
     battles: list[dict[str, Any]],
+    classification_by_instance: dict[int, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     candidates: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for event in action_events:
@@ -593,6 +594,20 @@ def _standalone_reinforcements(
             }
             if len(group) < 2 and len(selected) < 3:
                 continue
+            class_evidence = summarize_selected_instances(
+                selected,
+                classification_by_instance=classification_by_instance,
+            )
+            clear_non_military_only = bool(
+                class_evidence["distinctObservedSelectedInstances"] > 0
+                and class_evidence["unknownClassInstances"] == 0
+                and class_evidence["ambiguousClassInstances"] == 0
+                and class_evidence["militaryClassInstances"] == 0
+                and class_evidence["knownNonMilitaryClassInstances"]
+                == class_evidence["distinctObservedSelectedInstances"]
+            )
+            if clear_non_military_only:
+                continue
             episodes.append({
                 "reinforcementId": None,
                 "helperPlayerId": helper,
@@ -601,6 +616,8 @@ def _standalone_reinforcements(
                 "endedAtMs": group[-1]["atMs"],
                 "commandCount": len(group),
                 "distinctSelectedObjectCount": len(selected),
+                "unitClassFamilyVersion": UNIT_CLASS_FAMILY_VERSION,
+                "unitClassEvidence": class_evidence,
                 "sourceEventIds": [
                     row["sourceEventId"] for row in group if row.get("sourceEventId")
                 ],
@@ -683,7 +700,28 @@ def project_engagement_statistics(
         build_events=build_events,
     )
     raids = _all_raids(raid_statistics)
-    skirmishes = list(skirmish_statistics.get("episodes") or [])
+    skirmishes = [dict(row) for row in (skirmish_statistics.get("episodes") or [])]
+
+    # Attach class-family evidence after Skirmish detection. This enrichment is
+    # forbidden from changing Skirmish existence, timing or count.
+    for skirmish in skirmishes:
+        contributor_ids = {
+            int(player_id)
+            for player_id in skirmish.get("contributingPlayerIds", [])
+            if player_id in participants
+        }
+        skirmish_events = [
+            event for event in action_events
+            if event.get("actorPlayerId") in contributor_ids
+            and event.get("sourceActionName") in BATTLE_SUPPORT_ACTIONS
+            and _inside_skirmish_area(event, skirmish)
+        ]
+        skirmish["unitClassFamilyVersion"] = UNIT_CLASS_FAMILY_VERSION
+        skirmish["unitClassEvidenceByPlayer"] = _unit_class_evidence_by_player(
+            events=skirmish_events,
+            player_ids=contributor_ids,
+            classification_by_instance=classification_by_instance,
+        )
 
     battles: list[dict[str, Any]] = []
     for skirmish in skirmishes:
@@ -709,6 +747,7 @@ def project_engagement_statistics(
             participants=participants,
             zones_by_player=zones_by_player,
             battles=battles,
+            classification_by_instance=classification_by_instance,
         )
     else:
         defensive = []
