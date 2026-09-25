@@ -18,7 +18,7 @@ const PYTHON = process.env.PYTHON || "python";
 const PORT = Number(process.env.AOF_REPLAY_LAB_PORT || 4317);
 const HOST = process.env.AOF_REPLAY_LAB_HOST || "127.0.0.1";
 const MAX_UPLOAD_BYTES = Number(process.env.AOF_REPLAY_LAB_MAX_BYTES || 128 * 1024 * 1024);
-const ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V2";
+const ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V3";
 
 const PARSER = path.join(ROOT, "replay-tools", "parse_replay.py");
 const ANALYSIS_DATASET = path.join(ROOT, "replay-tools", "analysis_dataset.py");
