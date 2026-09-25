@@ -229,7 +229,7 @@ def _battle_from_fight(
     nearby.sort(key=lambda event: (event.get("timestampMs", 0), event.get("operationOrdinal", 0)))
 
     strong_actors: set[int] = set()
-    strong_event_ids: set[str] = set()
+    strong_rows: list[dict[str, Any]] = []
     for event in nearby:
         actor = int(event["actorPlayerId"])
         action = event.get("sourceActionName")
@@ -241,8 +241,7 @@ def _battle_from_fight(
         )
         if strong:
             strong_actors.add(actor)
-            if event.get("eventId"):
-                strong_event_ids.add(str(event["eventId"]))
+            strong_rows.append(event)
 
     # Battle is stricter than Fight V1: at least two actual command contributors
     # from hostile sides must be present.
@@ -256,14 +255,15 @@ def _battle_from_fight(
     ):
         return None
 
+    started_at = min(int(event["timestampMs"]) for event in strong_rows)
     contribution_rows = [
         event for event in nearby
         if int(event["actorPlayerId"]) in strong_actors
+        and int(event["timestampMs"]) >= started_at
     ]
     if not contribution_rows:
         return None
 
-    started_at = min(int(event["timestampMs"]) for event in contribution_rows)
     ended_at = max(int(event["timestampMs"]) for event in contribution_rows)
     points = [_point(event) for event in contribution_rows]
     positioned = [point for point in points if point is not None]
@@ -274,7 +274,7 @@ def _battle_from_fight(
     first_by_player = {
         str(player_id): min(
             int(event["timestampMs"])
-            for event in contribution_rows
+            for event in strong_rows
             if int(event["actorPlayerId"]) == player_id
         )
         for player_id in sorted(strong_actors)
@@ -293,7 +293,7 @@ def _battle_from_fight(
     base_owner = base_match[0] if base_match is not None else None
 
     duration_ms = max(0, ended_at - started_at)
-    strong_count = len(strong_event_ids)
+    strong_count = len(strong_rows)
     participant_count = len(strong_actors)
     great_battle = (
         duration_ms >= GREAT_BATTLE_MIN_DURATION_MS
