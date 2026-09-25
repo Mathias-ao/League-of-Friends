@@ -326,12 +326,15 @@ def _episode_from_observations(
         for item in observations
         if item.get("economicTargetType") is not None
     ]
+    first_strong_at = min(item["atMs"] for item in strong)
+    post_start = [item for item in observations if item["atMs"] >= first_strong_at]
     return {
         "raidId": None,
         "attackerPlayerId": attacker_id,
         "victimPlayerId": victim_id,
-        "startedAtMs": observations[0]["atMs"],
-        "endedAtMs": observations[-1]["atMs"],
+        "firstObservedAtMs": observations[0]["atMs"],
+        "startedAtMs": first_strong_at,
+        "endedAtMs": post_start[-1]["atMs"],
         "center": (
             {
                 "x": round(sum(point[0] for point in points) / len(points), 2),
