@@ -77,9 +77,12 @@
       "engagements": {
         "raidsInitiated": 0,
         "raidsAgainstYou": 0,
-        "raidModelVersion": "AOF_RAID_DETECTION_V2",
+        "raidModelVersion": "AOF_RAID_DETECTION_V3",
+        "skirmishes": 0,
+        "skirmishModelVersion": "AOF_SKIRMISH_DETECTION_V1",
         "battlesFought": 0,
-        "engagementModelVersion": "AOF_ENGAGEMENT_STATISTICS_V1"
+        "engagementModelVersion": "AOF_ENGAGEMENT_STATISTICS_V2",
+        "allyInteractionApplicability": "not_applicable"
       },
       "firstMilitaryProductionAtMs": null,
       "firstSiegeAtMs": null,
@@ -110,9 +113,12 @@
       "engagements": {
         "raidsInitiated": 0,
         "raidsAgainstYou": 0,
-        "raidModelVersion": "AOF_RAID_DETECTION_V2",
+        "raidModelVersion": "AOF_RAID_DETECTION_V3",
+        "skirmishes": 0,
+        "skirmishModelVersion": "AOF_SKIRMISH_DETECTION_V1",
         "battlesFought": 0,
-        "engagementModelVersion": "AOF_ENGAGEMENT_STATISTICS_V1"
+        "engagementModelVersion": "AOF_ENGAGEMENT_STATISTICS_V2",
+        "allyInteractionApplicability": "not_applicable"
       },
       "firstMilitaryProductionAtMs": null,
       "firstSiegeAtMs": null,
