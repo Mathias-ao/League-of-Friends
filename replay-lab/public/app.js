@@ -79,6 +79,47 @@ const MILITARY_TOWNBELL_MAP = {
   "ballistics.atMs": { id: "ballistics_time", unit: "duration" },
 };
 
+const EXECUTION_TOWNBELL_MAP = {
+  "actionsTotal": { id: "actions_total" },
+  "apm": { id: "apm" },
+  "firstCommandAtMs": { id: "first_command_time", unit: "duration" },
+  "longestInactivityMs": { id: "longest_inactivity", unit: "duration" },
+  "medianActionGapMs": { id: "median_action_gap", unit: "duration" },
+  "formationsSet": { id: "formations_set" },
+  "stanceChanges": { id: "stance_changes" },
+  "patrolCommands": { id: "patrol_commands" },
+  "attackGroundCommands": { id: "attack_ground_commands" },
+  "attackMoveCommands": { id: "attack_move_commands" },
+  "garrisonCommands": { id: "garrison_commands" },
+  "ungarrisonCommands": { id: "ungarrison_commands" },
+  "backToWorkCommands": { id: "back_to_work_commands" },
+  "townBellUses": { id: "town_bell_uses" },
+  "repairCommands": { id: "repair_commands" },
+  "deletions": { id: "deletions" },
+  "stopCommands": { id: "stop_commands" },
+  "attackGroundPerQueuedSiege": { id: "attack_ground_per_siege" },
+  "raidsSuffered": { id: "raids_suffered" },
+  "raidResponse.averageSeconds": { id: "raid_response_time" },
+  "garrisonsDuringRaids": { id: "garrisons_during_raids" },
+  "fights.count": { id: "fights_count" },
+  "fights.firstAtMs": { id: "first_fight", unit: "duration" },
+  "fights.totalTimeMs": { id: "total_fight_time", unit: "duration" },
+  "fights.commandSharePercent": { id: "fight_command_share" },
+  "fights.apm": { id: "apm_in_fights" },
+  "fights.ecoActions": { id: "eco_actions_during_fights" },
+  "fights.elevationDelta": { id: "fight_elevation_delta" },
+  "fights.disengageMoves": { id: "disengage_moves" },
+};
+
+const EXECUTION_REVIEW_PATHS = new Set([
+  ...Object.keys(EXECUTION_TOWNBELL_MAP),
+  "queuedSiegeCountBasis",
+  "raidResponse.medianSeconds",
+  "raidResponse.respondedRaidCount",
+  "raidResponse.receivedRaidCount",
+  "fights.elevationFightCount",
+]);
+
 const MAP_PRESENCE_TOWNBELL_MAP = {
   "commandMapCoverage.percent": { id: "map_command_coverage" },
   "scoutCoverageAt5Minutes.percent": { id: "scout_coverage_5min" },
@@ -104,7 +145,7 @@ const boundaries = {
   economy: "Estimated / reconstructed. When a TownBell report is attached, rows compare AoF against TownBell control values; blank TownBell cells mean no direct mapping.",
   military: "Queue-derived / observed placement evidence. TownBell control values are shown only for explicitly mapped comparable rows; kills, deaths, damage and surviving army are not claimed.",
   "map-presence": "Reconstructed / inferred spatial proxies. TownBell values appear only for directly comparable rows; scout coverage is command attention, relic holding is touch-inferred, and gold control is placement influence rather than mined/remaining resource state.",
-  execution: "Observed decoded commands and selection evidence.",
+  execution: "Observed command/clock fundamentals plus inferred raid and fight-context execution. TownBell controls are shown for comparable rows; fight windows are command-derived, not damage/kill telemetry.",
   timeline: "Observed parser facts in replay order.",
   raw: "Observed retained event evidence. Raw bytes can be shown explicitly.",
   diagnostics: "Coverage, compatibility and parser diagnostics.",
@@ -468,6 +509,75 @@ function militaryControlMatrix(run) {
   `;
 }
 
+function executionControlMatrix(run) {
+  const participants = run.statistics?.participants ?? [];
+  const playerOrder = participants.map((player) => ({
+    playerId: Number(player.playerId),
+    name: player.displayName || `P${player.playerId}`,
+    execution: player.execution || {},
+  }));
+  if (!playerOrder.length) return '<div class="empty-inline">No player execution statistics.</div>';
+
+  const byPlayerRows = new Map();
+  const rowDefinitions = new Map();
+  for (const player of playerOrder) {
+    const rows = flattenControlLeaves(player.execution).filter((row) => EXECUTION_REVIEW_PATHS.has(row.path));
+    byPlayerRows.set(player.playerId, new Map(rows.map((row) => [row.path, row])));
+    for (const row of rows) {
+      if (!rowDefinitions.has(row.path)) rowDefinitions.set(row.path, row);
+    }
+  }
+
+  const controlPlayers = new Map(
+    (run.townBellControl?.players || []).map((player) => [Number(player.number), player])
+  );
+  const mismatch = (run.townBellControl?.playerMatches || []).filter((match) => match.nameMatches === false);
+  const controlNote = run.townBellControl
+    ? `TownBell control: ${esc(run.townBellControl.fileName || "attached report")} · ${run.townBellControl.playerCount || 0} players`
+    : "No TownBell report attached. Use “Attach TownBell report” above to populate the control columns.";
+  const mismatchNote = mismatch.length
+    ? `<div class="warning">Player-number control mapping has ${mismatch.length} name mismatch(es).</div>`
+    : "";
+
+  const headers = playerOrder.map((player) => {
+    const control = controlPlayers.get(player.playerId);
+    const controlName = control?.name && control.name !== player.name ? ` · ${esc(control.name)}` : "";
+    return `<th>${esc(player.name)} · AoF</th><th>${esc(player.name)}${controlName} · TownBell</th>`;
+  }).join("");
+
+  const body = [...rowDefinitions.entries()].map(([path, definition]) => {
+    const mapping = EXECUTION_TOWNBELL_MAP[path];
+    const cells = playerOrder.map((player) => {
+      const aofRow = byPlayerRows.get(player.playerId)?.get(path);
+      const townBellMetric = mapping
+        ? controlPlayers.get(player.playerId)?.metrics?.[mapping.id]
+        : null;
+      const mappedTitle = mapping ? `TownBell: ${mapping.id}` : "AoF diagnostic";
+      return `
+        <td class="review-value">${esc(formatAofControlValue(aofRow, mapping))}</td>
+        <td class="control-value ${mapping ? "mapped" : "unmapped"}" title="${esc(mappedTitle)}">${esc(formatTownBellValue(townBellMetric, mapping))}</td>
+      `;
+    }).join("");
+    return `
+      <tr>
+        <td class="review-key" title="${esc(path)}">${esc(definition.metric)}</td>
+        ${cells}
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="timeline-note">${controlNote}</div>
+    ${mismatchNote}
+    <div class="review-table-wrap control-matrix-wrap">
+      <table class="review-table control-matrix">
+        <thead><tr><th>Metric</th>${headers}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 function mapPresenceControlMatrix(run) {
   const participants = run.statistics?.participants ?? [];
   const playerOrder = participants.map((player) => ({
@@ -805,11 +915,7 @@ async function renderTab() {
   } else if (state.tab === "map-presence") {
     html = `<h3>Map Presence review matrix</h3>${mapPresenceControlMatrix(run)}`;
   } else if (state.tab === "execution") {
-    html = playerSection("Execution evidence", stats?.participants?.map((p) => ({
-      playerId: p.playerId,
-      name: p.displayName,
-      value: { observedCommands: p.observedCommands, selectionEvidence: p.selectionEvidence },
-    })) ?? []);
+    html = `<h3>Execution review matrix</h3>${executionControlMatrix(run)}`;
   } else if (state.tab === "timeline") {
     html = await renderTimeline(false);
   } else if (state.tab === "raw") {
