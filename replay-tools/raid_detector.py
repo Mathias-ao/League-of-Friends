@@ -1,9 +1,14 @@
 """Directional raid detection over canonical command evidence.
 
-A raid is an inferred hostile-command episode inside another player's economic
-zone. The model never claims damage, kills, unit survival, or continuous unit
+A raid is inferred hostile pressure against another player's economy. V2 keeps
+land economic geography deliberately local: only Town Centers, Mills/Folwarks,
+Lumber Camps, and Mining Camps create economic zones. Direct targeting of a
+known Villager, Fishing Ship, Trade Cart, or Trade Cog is also strong raid
+evidence, including away from those land zones.
+
+The model never claims damage, kills, unit survival, or continuous unit
 positions. Every episode has one identifiable attacker and one identifiable
-victim, including FFA and other multi-player matches.
+victim.
 """
 from __future__ import annotations
 
@@ -11,26 +16,27 @@ from collections import defaultdict
 import math
 from typing import Any, Iterable
 
-RAID_MODEL_VERSION = "AOF_RAID_DETECTION_V1"
+RAID_MODEL_VERSION = "AOF_RAID_DETECTION_V2"
 RAID_EPISODE_GAP_MS = 60_000
 VICTIM_AMBIGUITY_MARGIN_TILES = 2.0
 
-# Economic zones are intentionally local. They describe the area around known
-# economic infrastructure, not ownership/control of all surrounding terrain.
+# Economic zones are local camp zones rather than broad territory claims.
 TOWN_CENTER_ZONE_RADIUS_TILES = 14.0
-ECONOMIC_BUILDING_ZONE_RADIUS_TILES = 10.0
-FARM_ZONE_RADIUS_TILES = 6.0
-
-ECONOMIC_ROLE_KEYS = {
+ECONOMIC_CAMP_ZONE_RADIUS_TILES = 10.0
+ECONOMIC_ZONE_ROLE_KEYS = {
     "town_center",
-    "economy",
-    "farm",
+    "mill",
     "lumber_camp",
     "mining_camp",
-    "mill",
-    "market",
-    "mobile_dropoff",
-    "population_production",
+}
+
+# These are the economic units the V1 product definition explicitly treats as
+# strong raid targets. The catalog roles let upgraded/variant IDs participate
+# without hard-coding only one raw object ID.
+RAID_ECONOMIC_UNIT_ROLES = {
+    "villager",
+    "fishing_ship",
+    "trade_unit",
 }
 
 OBSERVED_RAID_ACTIONS = {
@@ -53,43 +59,87 @@ def _is_same_team(left: dict[str, Any], right: dict[str, Any]) -> bool:
     return isinstance(a, int) and isinstance(b, int) and a > 0 and a == b
 
 
-def _catalog_building(catalog: dict[str, Any], raw_id: Any) -> dict[str, Any] | None:
+def _catalog_item(catalog: dict[str, Any], section: str, raw_id: Any) -> dict[str, Any] | None:
     try:
         key = str(int(raw_id))
     except (TypeError, ValueError):
         return None
-    item = (catalog.get("buildings") or {}).get(key)
+    item = (catalog.get(section) or {}).get(key)
     return item if isinstance(item, dict) else None
 
 
-def _is_economic_building(catalog: dict[str, Any], raw_id: Any) -> bool:
-    item = _catalog_building(catalog, raw_id)
+def _is_economic_zone_building(catalog: dict[str, Any], raw_id: Any) -> bool:
+    item = _catalog_item(catalog, "buildings", raw_id)
     if not item:
         return False
-    roles = set(item.get("roleKeys") or [])
-    return bool(roles & ECONOMIC_ROLE_KEYS)
+    return bool(set(item.get("roleKeys") or []) & ECONOMIC_ZONE_ROLE_KEYS)
 
 
 def _zone_radius(catalog: dict[str, Any], raw_id: Any) -> float:
-    item = _catalog_building(catalog, raw_id) or {}
+    item = _catalog_item(catalog, "buildings", raw_id) or {}
     roles = set(item.get("roleKeys") or [])
     if "town_center" in roles:
         return TOWN_CENTER_ZONE_RADIUS_TILES
-    if "farm" in roles:
-        return FARM_ZONE_RADIUS_TILES
-    return ECONOMIC_BUILDING_ZONE_RADIUS_TILES
+    return ECONOMIC_CAMP_ZONE_RADIUS_TILES
+
+
+def _economic_target_type(catalog: dict[str, Any], raw_id: Any) -> str | None:
+    item = _catalog_item(catalog, "units", raw_id)
+    if not item:
+        return None
+    roles = set(item.get("roleKeys") or [])
+    if not (roles & RAID_ECONOMIC_UNIT_ROLES):
+        return None
+    if "villager" in roles:
+        return "villager"
+    if "fishing_ship" in roles:
+        return "fishing_ship"
+    if "trade_unit" in roles:
+        name = str(item.get("name") or "").lower()
+        if "cog" in name:
+            return "trade_cog"
+        if "cart" in name:
+            return "trade_cart"
+        return "trade_unit"
+    return None
+
+
+def _initial_instance_info(
+    initial_objects: Iterable[dict[str, Any]],
+    catalog: dict[str, Any],
+) -> dict[int, dict[str, Any]]:
+    result: dict[int, dict[str, Any]] = {}
+    for event in initial_objects:
+        payload = event.get("payload") or {}
+        instance_id = payload.get("instanceId")
+        owner = payload.get("ownerPlayerId")
+        raw_id = payload.get("objectId")
+        if not isinstance(instance_id, int) or not isinstance(owner, int):
+            continue
+        result[instance_id] = {
+            "ownerPlayerId": owner,
+            "rawId": raw_id,
+            "economicTargetType": _economic_target_type(catalog, raw_id),
+        }
+    return result
 
 
 def build_economic_zones(
-    *, manifest: dict[str, Any], catalog: dict[str, Any],
-    initial_objects: Iterable[dict[str, Any]], build_events: Iterable[dict[str, Any]],
+    *,
+    manifest: dict[str, Any],
+    catalog: dict[str, Any],
+    initial_objects: Iterable[dict[str, Any]],
+    build_events: Iterable[dict[str, Any]],
 ) -> tuple[dict[int, list[dict[str, Any]]], dict[int, int]]:
-    """Build time-aware economic-zone seeds and initial object ownership.
+    """Build time-aware local economic zones and initial object ownership.
 
-    Initial economic objects are active from time zero. Later economic building
-    placements become active at their placement timestamp. Placement is treated as
-    a direct input for this inferred model, consistent with current player-facing
-    statistics policy.
+    Initial qualifying buildings are active from time zero. Later qualifying
+    placements become active at placement time. Placement remains evidence for
+    an inferred zone; it does not assert completed construction.
+
+    Only Town Centers, Mills/Folwarks, Lumber Camps, and Mining Camps create
+    zones. Farms, Markets, Docks, houses, and generic economy-role buildings do
+    not create raid zones in this model.
     """
     participants = _participant_by_id(manifest)
     zones: dict[int, list[dict[str, Any]]] = defaultdict(list)
@@ -104,7 +154,7 @@ def build_economic_zones(
         instance_id = payload.get("instanceId")
         if isinstance(instance_id, int) and isinstance(owner, int):
             initial_object_owners[instance_id] = owner
-        if owner not in participants or not _is_economic_building(catalog, raw_id):
+        if owner not in participants or not _is_economic_zone_building(catalog, raw_id):
             continue
         if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
             continue
@@ -123,7 +173,7 @@ def build_economic_zones(
         raw_id = event.get("buildingId")
         at_ms = event.get("atMs")
         x, y = event.get("x"), event.get("y")
-        if owner not in participants or not _is_economic_building(catalog, raw_id):
+        if owner not in participants or not _is_economic_zone_building(catalog, raw_id):
             continue
         if not isinstance(at_ms, int) or not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
             continue
@@ -150,7 +200,13 @@ def _point(event: dict[str, Any]) -> tuple[float, float] | None:
     return float(x), float(y)
 
 
-def _zone_match(zones: list[dict[str, Any]], *, at_ms: int, x: float, y: float) -> tuple[float, dict[str, Any]] | None:
+def _zone_match(
+    zones: list[dict[str, Any]],
+    *,
+    at_ms: int,
+    x: float,
+    y: float,
+) -> tuple[float, dict[str, Any]] | None:
     best: tuple[float, dict[str, Any]] | None = None
     for zone in zones:
         if zone["activeFromMs"] > at_ms:
@@ -165,30 +221,58 @@ def _zone_match(zones: list[dict[str, Any]], *, at_ms: int, x: float, y: float) 
 
 
 def _resolve_victim(
-    *, event: dict[str, Any], attacker: dict[str, Any], participants: dict[int, dict[str, Any]],
-    zones: dict[int, list[dict[str, Any]]], initial_object_owners: dict[int, int],
-) -> tuple[int, dict[str, Any], float, str] | None:
+    *,
+    event: dict[str, Any],
+    attacker: dict[str, Any],
+    participants: dict[int, dict[str, Any]],
+    zones: dict[int, list[dict[str, Any]]],
+    initial_instance_info: dict[int, dict[str, Any]],
+) -> tuple[int, dict[str, Any] | None, float | None, str, str | None] | None:
     at_ms = event.get("timestampMs")
     point = _point(event)
-    if not isinstance(at_ms, int) or point is None:
+    if not isinstance(at_ms, int):
         return None
-    x, y = point
 
     target_instance = event.get("targetInstanceId")
-    direct_owner = initial_object_owners.get(target_instance) if isinstance(target_instance, int) else None
-    if direct_owner in participants and direct_owner != attacker.get("playerId"):
-        victim = participants[direct_owner]
+    target_info = initial_instance_info.get(target_instance) if isinstance(target_instance, int) else None
+    direct_owner = target_info.get("ownerPlayerId") if target_info else None
+    target_type = target_info.get("economicTargetType") if target_info else None
+
+    # Direct targeting of a known economic unit is strong raid evidence even
+    # away from a land economic camp (notably Fishing Ships and trade units).
+    if (
+        event.get("sourceActionName") == "ORDER"
+        and direct_owner in participants
+        and direct_owner != attacker.get("playerId")
+        and target_type is not None
+    ):
+        victim = participants[int(direct_owner)]
         if not _is_same_team(attacker, victim):
-            match = _zone_match(zones.get(direct_owner, []), at_ms=at_ms, x=x, y=y)
+            zone = None
+            distance = None
+            if point is not None:
+                match = _zone_match(zones.get(int(direct_owner), []), at_ms=at_ms, x=point[0], y=point[1])
+                if match is not None:
+                    distance, zone = match
+            return int(direct_owner), zone, distance, "economic_target_instance", str(target_type)
+
+    # Other direct hostile targets still require economic-zone context.
+    if point is not None and direct_owner in participants and direct_owner != attacker.get("playerId"):
+        victim = participants[int(direct_owner)]
+        if not _is_same_team(attacker, victim):
+            match = _zone_match(zones.get(int(direct_owner), []), at_ms=at_ms, x=point[0], y=point[1])
             if match is not None:
                 distance, zone = match
-                return direct_owner, zone, distance, "target_instance_owner"
+                return int(direct_owner), zone, distance, "target_instance_owner", None
+
+    if point is None:
+        return None
 
     matches: list[tuple[float, int, dict[str, Any]]] = []
     for victim_id, victim in participants.items():
         if victim_id == attacker.get("playerId") or _is_same_team(attacker, victim):
             continue
-        match = _zone_match(zones.get(victim_id, []), at_ms=at_ms, x=x, y=y)
+        match = _zone_match(zones.get(victim_id, []), at_ms=at_ms, x=point[0], y=point[1])
         if match is not None:
             distance, zone = match
             matches.append((distance, victim_id, zone))
@@ -198,11 +282,18 @@ def _resolve_victim(
     if len(matches) > 1 and matches[1][0] - matches[0][0] < VICTIM_AMBIGUITY_MARGIN_TILES:
         return None
     distance, victim_id, zone = matches[0]
-    return victim_id, zone, distance, "economic_zone_proximity"
+    return victim_id, zone, distance, "economic_zone_proximity", None
 
 
-def _observation_strength(event: dict[str, Any], victim_id: int, initial_object_owners: dict[int, int]) -> str:
+def _observation_strength(
+    event: dict[str, Any],
+    victim_id: int,
+    initial_object_owners: dict[int, int],
+    economic_target_type: str | None,
+) -> str:
     action = event.get("sourceActionName")
+    if action == "ORDER" and economic_target_type is not None:
+        return "strong"
     if action in STRONG_POSITIONAL_ACTIONS:
         return "strong"
     if action == "ORDER":
@@ -214,36 +305,74 @@ def _observation_strength(event: dict[str, Any], victim_id: int, initial_object_
     return "ignored"
 
 
-def _episode_from_observations(attacker_id: int, victim_id: int, observations: list[dict[str, Any]]) -> dict[str, Any]:
+def _episode_from_observations(
+    attacker_id: int,
+    victim_id: int,
+    observations: list[dict[str, Any]],
+) -> dict[str, Any]:
     strong = [item for item in observations if item["strength"] == "strong"]
+    points = [
+        (item["x"], item["y"])
+        for item in observations
+        if isinstance(item.get("x"), (int, float)) and isinstance(item.get("y"), (int, float))
+    ]
+    distances = [
+        item["distanceTiles"]
+        for item in observations
+        if isinstance(item.get("distanceTiles"), (int, float))
+    ]
+    economic_targets = [
+        item["economicTargetType"]
+        for item in observations
+        if item.get("economicTargetType") is not None
+    ]
     return {
+        "raidId": None,
         "attackerPlayerId": attacker_id,
         "victimPlayerId": victim_id,
         "startedAtMs": observations[0]["atMs"],
         "endedAtMs": observations[-1]["atMs"],
+        "center": (
+            {
+                "x": round(sum(point[0] for point in points) / len(points), 2),
+                "y": round(sum(point[1] for point in points) / len(points), 2),
+            }
+            if points else None
+        ),
         "commandCount": len(observations),
         "strongCommandCount": len(strong),
         "supportingCommandCount": len(observations) - len(strong),
-        "sourceEventIds": [item["sourceEventId"] for item in observations if item.get("sourceEventId")],
+        "insideEconomicZoneCommandCount": sum(item.get("economicSeed") is not None for item in observations),
+        "economicTargetCommandCount": len(economic_targets),
+        "economicTargetTypes": sorted(set(economic_targets)),
+        "sourceEventIds": [
+            item["sourceEventId"] for item in observations if item.get("sourceEventId")
+        ],
         "commandTypes": sorted({item["action"] for item in observations}),
         "victimResolutionMethods": sorted({item["victimResolutionMethod"] for item in observations}),
-        "minimumDistanceToEconomicSeedTiles": round(min(item["distanceTiles"] for item in observations), 2),
+        "minimumDistanceToEconomicSeedTiles": round(min(distances), 2) if distances else None,
         "modelVersion": RAID_MODEL_VERSION,
     }
 
 
 def detect_raids(
-    *, manifest: dict[str, Any], catalog: dict[str, Any], initial_objects: Iterable[dict[str, Any]],
-    build_events: Iterable[dict[str, Any]], action_events: Iterable[dict[str, Any]],
+    *,
+    manifest: dict[str, Any],
+    catalog: dict[str, Any],
+    initial_objects: Iterable[dict[str, Any]],
+    build_events: Iterable[dict[str, Any]],
+    action_events: Iterable[dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     """Return directional raid counts and auditable evidence per participant."""
     participants = _participant_by_id(manifest)
+    initial_objects = list(initial_objects)
     zones, initial_object_owners = build_economic_zones(
         manifest=manifest,
         catalog=catalog,
         initial_objects=initial_objects,
         build_events=build_events,
     )
+    initial_instance_info = _initial_instance_info(initial_objects, catalog)
 
     observations_by_pair: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for event in action_events:
@@ -257,26 +386,38 @@ def detect_raids(
             attacker=attacker,
             participants=participants,
             zones=zones,
-            initial_object_owners=initial_object_owners,
+            initial_instance_info=initial_instance_info,
         )
         if resolved is None:
             continue
-        victim_id, zone, distance, resolution_method = resolved
-        strength = _observation_strength(event, victim_id, initial_object_owners)
+        victim_id, zone, distance, resolution_method, economic_target_type = resolved
+        strength = _observation_strength(
+            event,
+            victim_id,
+            initial_object_owners,
+            economic_target_type,
+        )
         if strength == "ignored":
             continue
+        point = _point(event)
         observations_by_pair[(int(attacker_id), victim_id)].append({
             "atMs": int(event["timestampMs"]),
             "action": action,
             "strength": strength,
             "sourceEventId": event.get("eventId"),
+            "x": point[0] if point is not None else None,
+            "y": point[1] if point is not None else None,
             "distanceTiles": distance,
             "victimResolutionMethod": resolution_method,
-            "economicSeed": {
-                "buildingId": zone.get("buildingId"),
-                "source": zone.get("source"),
-                "sourceEventId": zone.get("sourceEventId"),
-            },
+            "economicTargetType": economic_target_type,
+            "economicSeed": (
+                {
+                    "buildingId": zone.get("buildingId"),
+                    "source": zone.get("source"),
+                    "sourceEventId": zone.get("sourceEventId"),
+                }
+                if zone is not None else None
+            ),
         })
 
     episodes: list[dict[str, Any]] = []
@@ -293,8 +434,13 @@ def detect_raids(
             episodes.append(_episode_from_observations(attacker_id, victim_id, current))
 
     episodes.sort(key=lambda episode: (
-        episode["startedAtMs"], episode["attackerPlayerId"], episode["victimPlayerId"],
+        episode["startedAtMs"],
+        episode["attackerPlayerId"],
+        episode["victimPlayerId"],
     ))
+    for index, episode in enumerate(episodes, start=1):
+        episode["raidId"] = f"raid-{index}"
+
     results: dict[str, dict[str, Any]] = {}
     for player_id in sorted(participants):
         initiated = [episode for episode in episodes if episode["attackerPlayerId"] == player_id]
@@ -303,7 +449,11 @@ def detect_raids(
             "raidsInitiated": len(initiated),
             "raidsAgainstYou": len(received),
             "modelVersion": RAID_MODEL_VERSION,
-            "scope": "hostile command episodes inside time-aware economic zones; no kill/damage claim",
+            "scope": (
+                "hostile command episodes in local TC/Mill/Lumber/Mining economic zones "
+                "or direct targeting of known Villagers/Fishing Ships/Trade Carts/Trade Cogs; "
+                "no kill/damage claim"
+            ),
             "raidEvidence": {
                 "initiatedEpisodes": initiated,
                 "receivedEpisodes": received,
