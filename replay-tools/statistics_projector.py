@@ -13,6 +13,8 @@ from jsonschema import Draft202012Validator, FormatChecker
 from analysis_dataset import build_analysis_dataset, validate_analysis_dataset
 from build_order_classifier import classify_build_orders
 from economy_statistics import project_economy_statistics
+from execution_statistics import project_execution_statistics
+from fight_detector import detect_fights
 from canonical_io import ROOT, json_bytes, read_json, sha256
 from forward_eco import project_forward_eco
 from map_presence_v6 import project_map_presence
@@ -115,6 +117,23 @@ def project_statistics_from_analysis(
         body=body,
         catalog=catalog,
     )
+    fight_statistics = detect_fights(
+        manifest=manifest,
+        initial_objects=initial_objects,
+        action_events=spatial_action_events,
+    )
+    execution_statistics = project_execution_statistics(
+        manifest=manifest,
+        catalog=catalog,
+        initial_objects=initial_objects,
+        action_events=analysis["actionEvents"],
+        duration_ms=body["durationMs"],
+        raid_statistics=raid_statistics,
+        fight_statistics=fight_statistics,
+        military_statistics=military_statistics,
+        terrain_elevation=analysis.get("terrainElevation") or {},
+        build_events=body["buildEvents"],
+    )
     map_presence_statistics = project_map_presence(
         manifest=manifest,
         catalog=catalog,
@@ -153,6 +172,7 @@ def project_statistics_from_analysis(
             "military": military_statistics[player],
             "combat": raid_statistics[player],
             "mapPresence": map_presence_statistics[player],
+            "execution": execution_statistics[player],
             "observedCommands": {
                 "count": sum(counts.values()), "byRawActionName": dict(sorted(counts.items())),
                 "firstAtMs": min(times) if times else None, "lastAtMs": max(times) if times else None,

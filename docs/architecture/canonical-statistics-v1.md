@@ -175,3 +175,22 @@ V5 preserves V4 Enemy Progress geometry and evidence boundaries, but replaces TC
 ## Map Presence: AOF_MAP_PRESENCE_V6 scout attribution
 
 V6 changes only starting-scout command attribution over the V5 spatial model. The committed save-68 paired duel demonstrates that `MOVE`/`ORDER` selected object IDs decoded by the pinned fast parser can appear as `instanceId << 16`. For this inferred metric only, a decoded MOVE/ORDER ID is normalized when its low 16 bits are zero and its upper 16 bits exactly match an already-established starting-scout candidate. Canonical `objectInstanceIds` are never rewritten. Empty/implicit selections are excluded rather than inherited. The real-fixture regression produces 45 positioned scout commands for player 1 (38 normalized MOVE/ORDER + 7 directly decoded PATROL) and 36 for player 2 (36 normalized MOVE), matching the reviewed comparison control. No equivalent normalization is applied to `SPECIAL` or other action families without separate qualification. V6 uses a versioned 3.25-tile effective route corridor; on the same replay the resulting coverage is 15.38% for player 1 and 9.83% for player 2 versus the reviewed comparison values 15.3% and 10.4%. This radius is an inferred spatial proxy parameter, not a claim about literal unit line of sight or fog-of-war visibility.
+
+
+## Execution and Fight Detection V1
+
+`AOF_EXECUTION_STATISTICS_V1` separates direct ACTION-clock mechanics from contextual inference.
+
+Direct fundamentals are decoded player ACTION count, APM over the observed replay duration, first command, longest consecutive action gap, median action gap, and explicit FORMATION / STANCE / PATROL / ATTACK_GROUND / DE_ATTACK_MOVE / UNGARRISON / BACK_TO_WORK / TOWN_BELL / REPAIR / DELETE / STOP counts. These are command facts under the declared decoder/inclusion rule; they are not effectiveness scores.
+
+The decoder does not expose a dedicated GARRISON action. V1 therefore counts a garrison only when an ORDER targets an owned initial structure whose catalog identity supports garrisoning (Town Center/tower or named Castle/Krepost/Donjon/Keep). This is deliberately conservative and can miss later-built garrison targets because their runtime instance-to-building identity is not reconstructed.
+
+`AOF_FIGHT_DETECTION_V1` provides one shared engagement basis for all fight-context Execution metrics. Strong seeds are DE_ATTACK_MOVE, ATTACK_GROUND, and ORDER commands targeting a known enemy initial object. Strong seeds connect when they occur within 20 seconds and 20 tiles. Nearby MOVE/ORDER/PATROL/attack commands may support the episode in a -4s/+8s envelope. An episode must resolve at least two opposing participants. This detects hostile command activity only; it does not simulate combat, health, damage, deaths, live armies, movement or visibility.
+
+Per-player fight windows are unioned before computing total fight time and APM-in-fights to avoid double-counting overlapping inferred episodes. Economy-actions-during-fights uses catalog-qualified economic queue/build/research commands plus market/rally/back-to-work actions and ORDER commands from initially observed economic units. This can undercount later-produced Villager tasking.
+
+Fight elevation uses the initial canonical terrain elevation raster promoted into `AOF_REPLAY_ANALYSIS_V3`. For each supported fight, the player's average sampled command-coordinate elevation is compared with sampled opposing command-coordinate elevation; the per-fight deltas are then averaged. Positive means higher sampled command ground, negative lower. It is not a claim about exact unit position at attack resolution.
+
+Disengage moves are inferred from repeated selected-object command destinations inside a fight: a MOVE counts when the same decoded selection previously had a positional command within the fight radius and the new destination increases distance from the fight center by at least eight tiles. This is command intent, not pathing or successful retreat.
+
+Raid response reuses `AOF_RAID_DETECTION_V1`. V1 records the first qualifying defender control command within 30 seconds of raid onset and exposes average/median delays plus full evidence. Garrisons-during-raids count conservative garrison orders during the inferred received-raid window plus a 10-second tail. Causal attribution remains inferred.
