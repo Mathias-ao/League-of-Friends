@@ -119,13 +119,13 @@
   ],
   "combat": [
     {
-      "modelVersion": "AOF_RAID_DETECTION_V1",
+      "modelVersion": "AOF_RAID_DETECTION_V2",
       "playerId": 1,
       "raidsAgainstYou": 0,
       "raidsInitiated": 0
     },
     {
-      "modelVersion": "AOF_RAID_DETECTION_V1",
+      "modelVersion": "AOF_RAID_DETECTION_V2",
       "playerId": 2,
       "raidsAgainstYou": 0,
       "raidsInitiated": 0
@@ -350,6 +350,7 @@
     "ENTITY_LABELS_UNQUALIFIED",
     "RECORDER_CAMERA_ONLY",
     "RAIDS_ARE_INFERRED",
+    "ENGAGEMENTS_ARE_INFERRED",
     "MAP_PRESENCE_IS_INFERRED",
     "RESOURCE_COMMITMENT_IS_ESTIMATED",
     "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED",

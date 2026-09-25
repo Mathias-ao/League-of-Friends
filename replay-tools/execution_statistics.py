@@ -8,7 +8,7 @@ from typing import Any, Iterable
 
 from economy_statistics import ECO_TECH_IDS
 from fight_detector import FIGHT_LINK_DISTANCE_TILES
-from raid_detector import build_economic_zones
+from raid_detector import RAID_MODEL_VERSION, build_economic_zones
 
 EXECUTION_MODEL_VERSION = "AOF_EXECUTION_STATISTICS_V1"
 RAID_RESPONSE_MAX_MS = 30_000
@@ -529,7 +529,7 @@ def project_execution_statistics(
             ),
             "scope": (
                 "APM/action gaps and explicit control counts use decoded ACTION timestamps. Raid and "
-                "fight-context values intersect those facts with inferred AOF_RAID_DETECTION_V1 and "
+                f"fight-context values intersect those facts with inferred {RAID_MODEL_VERSION} and "
                 "AOF_FIGHT_DETECTION_V1 windows. Fight elevation samples initial terrain at recorded "
                 "command coordinates; disengage moves are command-destination inference, not unit pathing."
             ),

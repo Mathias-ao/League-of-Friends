@@ -14,7 +14,13 @@ CATALOG = {
         "109": {"roleKeys": ["town_center", "economy", "population_production"]},
         "562": {"roleKeys": ["lumber_camp", "economy"]},
         "584": {"roleKeys": ["mining_camp", "economy"]},
-    }
+    },
+    "units": {
+        "13": {"name": "Fishing Ship", "roleKeys": ["fishing_ship", "economic_unit", "water_unit"]},
+        "17": {"name": "Trade Cog", "roleKeys": ["trade_unit", "economic_unit", "water_unit"]},
+        "83": {"name": "Villager", "roleKeys": ["villager", "economic_unit"]},
+        "128": {"name": "Trade Cart", "roleKeys": ["trade_unit", "economic_unit"]},
+    },
 }
 
 
@@ -105,7 +111,8 @@ class RaidDetectorTests(unittest.TestCase):
         self.assertEqual(result["1"]["raidsInitiated"], 1)
         self.assertEqual(result["2"]["raidsAgainstYou"], 1)
         episode = result["1"]["raidEvidence"]["initiatedEpisodes"][0]
-        self.assertIn("target_instance_owner", episode["victimResolutionMethods"])
+        self.assertIn("economic_target_instance", episode["victimResolutionMethods"])
+        self.assertEqual(episode["economicTargetTypes"], ["villager"])
 
     def test_plain_movement_inside_enemy_economy_does_not_create_a_raid(self):
         result = detect(actions=[
@@ -126,6 +133,9 @@ class RaidDetectorTests(unittest.TestCase):
         self.assertEqual(episode["commandCount"], 3)
         self.assertEqual(episode["strongCommandCount"], 1)
         self.assertEqual(episode["supportingCommandCount"], 2)
+        self.assertEqual(episode["firstObservedAtMs"], 10 * 60_000)
+        self.assertEqual(episode["startedAtMs"], 10 * 60_000 + 20_000)
+        self.assertEqual(episode["endedAtMs"], 10 * 60_000 + 40_000)
 
     def test_commands_within_sixty_seconds_are_one_raid_then_new_episode_after_gap(self):
         result = detect(actions=[
@@ -178,6 +188,73 @@ class RaidDetectorTests(unittest.TestCase):
         self.assertEqual(result["1"]["raidsInitiated"], 0)
         self.assertEqual(result["2"]["raidsAgainstYou"], 0)
         self.assertEqual(result["3"]["raidsAgainstYou"], 0)
+
+
+    def test_farms_and_markets_do_not_create_raid_zones(self):
+        builds = [
+            {
+                "replaySlot": 2,
+                "atMs": 5 * 60_000,
+                "buildingId": 50,
+                "x": 50,
+                "y": 50,
+                "sourceEventId": "p2-farm",
+            },
+            {
+                "replaySlot": 2,
+                "atMs": 5 * 60_000,
+                "buildingId": 84,
+                "x": 52,
+                "y": 50,
+                "sourceEventId": "p2-market",
+            },
+        ]
+        result = detect(builds=builds, actions=[
+            action("farm-area", 1, 6 * 60_000, "DE_ATTACK_MOVE", 50, 50),
+            action("market-area", 1, 6 * 60_000 + 20_000, "ATTACK_GROUND", 52, 50),
+        ])
+        self.assertEqual(result["1"]["raidsInitiated"], 0)
+        self.assertEqual(result["2"]["raidsAgainstYou"], 0)
+
+    def test_direct_economic_unit_targets_are_raids_even_outside_land_eco_zones(self):
+        objects = initial_objects()
+        objects[2]["position"] = {"x": 50, "y": 50}
+        objects.extend([
+            {
+                "eventId": "p2-fishing-ship",
+                "payload": {"ownerPlayerId": 2, "objectId": 13, "instanceId": 223},
+                "position": {"x": 50, "y": 52},
+            },
+            {
+                "eventId": "p2-trade-cart",
+                "payload": {"ownerPlayerId": 2, "objectId": 128, "instanceId": 224},
+                "position": {"x": 52, "y": 50},
+            },
+            {
+                "eventId": "p2-trade-cog",
+                "payload": {"ownerPlayerId": 2, "objectId": 17, "instanceId": 225},
+                "position": {"x": 52, "y": 52},
+            },
+        ])
+        result = detect(objects=objects, actions=[
+            action("villager-target", 1, 2 * 60_000, "ORDER", 50, 50, target_instance=222),
+            action("fishing-target", 1, 4 * 60_000, "ORDER", 50, 52, target_instance=223),
+            action("cart-target", 1, 6 * 60_000, "ORDER", 52, 50, target_instance=224),
+            action("cog-target", 1, 8 * 60_000, "ORDER", 52, 52, target_instance=225),
+        ])
+        self.assertEqual(result["1"]["raidsInitiated"], 4)
+        target_types = {
+            episode["economicTargetTypes"][0]
+            for episode in result["1"]["raidEvidence"]["initiatedEpisodes"]
+        }
+        self.assertEqual(
+            target_types,
+            {"villager", "fishing_ship", "trade_cart", "trade_cog"},
+        )
+        self.assertTrue(all(
+            "economic_target_instance" in episode["victimResolutionMethods"]
+            for episode in result["1"]["raidEvidence"]["initiatedEpisodes"]
+        ))
 
 
 if __name__ == "__main__":

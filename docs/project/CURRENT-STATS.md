@@ -82,11 +82,18 @@ Launch presentation should start with familiar numerical tables. A restrained **
 - Military buildings at Castle click: military-building placements before the latest Castle research request.
 - Raids initiated.
 - Raids against the player.
-- Raid episode details: opponent, start/end timing and supporting command evidence.
+- Raid episode details: opponent, start/end timing, local economic-zone evidence and direct economic-unit targeting where known.
+- Battles fought: reciprocal hostile command episodes with actual qualifying command contributors on opposing sides, plus start/end evidence time, location and participant sides.
+- Great Battles fought: conservative promotion of Battle only when duration, selected-object footprint and command evidence make exceptional scale unmistakable.
+- Ally Reinforcements sent / received: high-confidence allied military-control evidence inside the supported player's TC-anchored base while no active defensive Battle is present.
+- Defensive Assists given / received: an ally contributes to an active Battle inside the defended player's TC-anchored base.
+- Cooperative Attacks: two or more allied contributors participate offensively on the same Battle side against another player/side; this does not claim planning or communication.
 
 Military production classification uses catalog roles when available and the DE queue's promoted raw producer-building type as a fallback. Upgrade-quality scores are intentionally deferred: V3 exposes the raw fundamentals and timings needed to validate later dominant-line upgrade coverage/lag without judging player choices yet. `mgz-fast` discards this field from its normal DE_QUEUE payload, but CanonicalReplay retains it in the raw layout; Analysis V3 retains it in `productionEvents.producerBuildingTypeId` and also carries compact terrain elevation for fight-context statistics. This is important for siege and upgraded/unique raw unit IDs not fully labeled by the pinned catalog. Known economic Dock units are excluded rather than automatically treating every Dock queue as a warship. Queue/placement values do not assert completed units/buildings, surviving army, kills, deaths or damage.
 
-Raids are inferred hostile-command episodes inside reconstructed economic zones; they do not assert damage or kills.
+Raids use `AOF_RAID_DETECTION_V2`: land economic zones are local to Town Centers, Mills/Folwarks, Lumber Camps and Mining Camps, while direct targeting of known Villagers, Fishing Ships, Trade Carts or Trade Cogs is strong raid evidence even away from those land zones. Raids do not assert damage or kills.
+
+`AOF_ENGAGEMENT_STATISTICS_V1` keeps interaction logic deliberately conservative. Battle requires reciprocal hostile command contribution. Great Battle is only a high-confidence promotion; uncertain large fights remain Battle. Reinforcement and Defensive Assistance require the supported player's TC-anchored base and therefore never credit neutral/enemy-territory activity as defense. Cooperative Attack describes overlapping allied offensive participation without claiming coordination intent. Exact unit composition, army size, kills, damage and fight outcome remain outside V1.
 
 ### Map Presence
 
@@ -117,7 +124,7 @@ Map Presence remains reconstructed/inferred geometry rather than continuous unit
 - Explicit control-command counts: formations, stance changes, patrol, attack-ground, attack-move, ungarrison, back-to-work, Town Bell, repair, delete and stop.
 - Garrison commands: conservative inference from ORDER commands targeting an owned garrison-capable **initial** structure. Later-built target instance identity is not reconstructed yet, so this can undercount and must not be treated as complete.
 - Attack Ground per queued Siege: attack-ground command count divided by positive queue amount classified as siege. The denominator is queue-derived, not live/surviving siege.
-- Raid response: intersects received `AOF_RAID_DETECTION_V1` episodes with the first qualifying defender control command inside a 30-second response window. Average and median response remain inferred because raid onset and causal response are model-defined.
+- Raid response: intersects received `AOF_RAID_DETECTION_V2` episodes with the first qualifying defender control command inside a 30-second response window. Average and median response remain inferred because raid onset and causal response are model-defined.
 - Garrisons during raids: conservative garrison orders inside received raid windows plus a 10-second tail.
 - `AOF_FIGHT_DETECTION_V1`: shared spatial-temporal command episode model seeded by attack-move, attack-ground or targeted enemy ORDER evidence, with nearby MOVE/ORDER/PATROL support. It does not claim damage, kills, live army or continuous unit positions.
 - Fight-context outputs: fights count, first fight, union fight time, command share, APM in fights, economy actions during fights, average fight elevation delta and inferred disengage moves.
@@ -154,8 +161,9 @@ Current models include:
 - `AOF_BUILD_ORDER_V2`
 - `AOF_OPENING_STATISTICS_V5`
 - `AOF_MILITARY_STATISTICS_V4`
-- `AOF_RAID_DETECTION_V1`
+- `AOF_RAID_DETECTION_V2`
 - `AOF_FIGHT_DETECTION_V1`
+- `AOF_ENGAGEMENT_STATISTICS_V1`
 - `AOF_EXECUTION_STATISTICS_V1`
 - `AOF_MAP_PRESENCE_V6`
 - `AOF_FORWARD_ECO_V1`

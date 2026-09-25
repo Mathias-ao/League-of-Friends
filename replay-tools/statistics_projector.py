@@ -13,6 +13,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from analysis_dataset import build_analysis_dataset, validate_analysis_dataset
 from build_order_classifier import classify_build_orders
 from economy_statistics import project_economy_statistics
+from engagement_statistics import project_engagement_statistics
 from execution_statistics import project_execution_statistics
 from fight_detector import detect_fights
 from canonical_io import ROOT, json_bytes, read_json, sha256
@@ -122,6 +123,15 @@ def project_statistics_from_analysis(
         initial_objects=initial_objects,
         action_events=spatial_action_events,
     )
+    engagement_statistics = project_engagement_statistics(
+        manifest=manifest,
+        catalog=catalog,
+        initial_objects=initial_objects,
+        build_events=body["buildEvents"],
+        action_events=spatial_action_events,
+        fight_statistics=fight_statistics,
+        raid_statistics=raid_statistics,
+    )
     execution_statistics = project_execution_statistics(
         manifest=manifest,
         catalog=catalog,
@@ -170,7 +180,10 @@ def project_statistics_from_analysis(
                 "resourceCommitment": resource_commitment_statistics[player],
             },
             "military": military_statistics[player],
-            "combat": raid_statistics[player],
+            "combat": {
+                **raid_statistics[player],
+                **engagement_statistics[player],
+            },
             "mapPresence": map_presence_statistics[player],
             "execution": execution_statistics[player],
             "observedCommands": {
@@ -199,7 +212,8 @@ def project_statistics_from_analysis(
         {"code": "REQUESTS_NOT_OUTCOMES", "message": "Queue, research and building values are requests or placement commands, not trained units, accepted research, or completed buildings."},
         {"code": "ENTITY_LABELS_UNQUALIFIED", "message": "Raw IDs are authoritative. Catalog names and role keys are reference labels not qualified against this replay patch or data mods."},
         {"code": "RECORDER_CAMERA_ONLY", "message": "Camera points represent the recording perspective and are not a comparable all-player statistic."},
-        {"code": "RAIDS_ARE_INFERRED", "message": "Raid counts are inferred hostile-command episodes inside reconstructed economic zones; they do not imply damage or kills."},
+        {"code": "RAIDS_ARE_INFERRED", "message": "Raid counts are inferred hostile-command episodes around local TC/Mill/Lumber/Mining economic zones or direct known economic-unit targets; they do not imply damage or kills."},
+        {"code": "ENGAGEMENTS_ARE_INFERRED", "message": "Battle, Great Battle, reinforcement, defensive-assistance and cooperative-attack outputs are command-derived interaction inferences. They do not assert damage, kills, exact army size, continuous positions or coordination intent."},
         {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and placement geometry; command/scout coverage is not fog-of-war exploration, relic holding is touch-inferred, and gold control is not resource gathering or remaining-gold state."},
         {"code": "RESOURCE_COMMITMENT_IS_ESTIMATED", "message": "Resource commitment uses pinned base catalog costs for decoded requests/placements; it does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute."},
         {"code": "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED", "message": "Economy separates command observations from reconstructions. Villagers trained is a queue-derived proxy; TC idle/gap metrics infer workload from decoded producer streams; animal counts are targeted-interaction proxies, not kill/gather outcomes."},
