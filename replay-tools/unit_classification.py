@@ -98,10 +98,14 @@ def build_initial_instance_classification(
         class_id = payload.get("classId")
         raw_id = payload.get("objectId")
         family = family_for_class_id(class_id)
+        try:
+            normalized_class_id = int(class_id)
+        except (TypeError, ValueError):
+            normalized_class_id = None
         result[instance_id] = {
             "instanceId": instance_id,
             "rawObjectId": raw_id,
-            "classId": int(class_id) if isinstance(class_id, int) else None,
+            "classId": normalized_class_id,
             "family": family,
             "militaryStatus": military_status_for_family(
                 family,
