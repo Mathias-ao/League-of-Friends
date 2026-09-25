@@ -62,8 +62,8 @@ export function StatisticsView(){
   const [scope,setScope]=useState('season'),[category,setCategory]=useState('Economy');
   const groups:Record<string,{label:string;description:string}[]>={
     Economy:[{label:'Economy & tribute',description:'Qualified economy and support measures will appear here.'},{label:'Age progression',description:'Observed age timings will be distinguished from estimates.'}],
-    Military:[{label:'Military production',description:'Completed units need evidence beyond a queue request.'},{label:'Fights & raids',description:'Combat and raid estimates are awaiting validation.'}],
-    'Map Presence':[{label:'Map activity',description:'Spatial activity will carry its evidence and coverage.'},{label:'Pressure & support',description:'Directed interaction measures are still being qualified.'}],
+    Military:[{label:'Military production',description:'Completed units need evidence beyond a queue request.'},{label:'Engagements',description:'Raids, Battles, Great Battles, allied reinforcement, defensive assistance and cooperative attacks belong to Military.'}],
+    'Map Presence':[{label:'Map activity',description:'Spatial activity will carry its evidence and coverage.'},{label:'Territory & zones',description:'Forward presence, economic zones and base geography stay spatial; engagement statistics remain under Military.'}],
     Execution:[{label:'Player commands',description:'Command counts exist in the extraction foundation; the player-facing contract is pending.'},{label:'Research requests',description:'Research requests do not prove an age was reached.'}]
   };
   const categories=Object.keys(groups);
@@ -258,7 +258,7 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
         return <article key={participant.replaySlot} className="replay-stat-player"><span className="eyebrow">{participant.displayName??'REPLAY PLAYER'}</span><h4>{name}</h4><div className="replay-stat-grid">
           <div><strong>{buildOrderLabel(participant.buildOrder)}</strong><span>Build order</span></div>
           <div><strong>{participant.observedCommands?.count??'—'}</strong><span>Observed commands</span></div>
-          <div><strong>{participant.combat?.raidsInitiated??'—'}</strong><span>Raids initiated</span></div>
+          <div><strong>{participant.military?.engagements?.raidsInitiated??participant.combat?.raidsInitiated??'—'}</strong><span>Raids initiated</span></div>
           <div><strong>{participant.mapPresence?.commandCoveragePercent!=null?participant.mapPresence.commandCoveragePercent+'%':'—'}</strong><span>Command map coverage</span></div>
         </div></article>;
       })}</div>
