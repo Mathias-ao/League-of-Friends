@@ -17,7 +17,7 @@ from canonical_projector import CompactProjector
 from canonical_run import fundamentals
 
 ANALYSIS_SCHEMA_VERSION = "1.0.0"
-ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V2"
+ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V3"
 
 _RAW_PAYLOAD_KEYS = {
     "_rawOperationBase64",
@@ -111,6 +111,9 @@ def validate_analysis_dataset(dataset: dict[str, Any]) -> None:
         raise ValueError("Analysis dataset is missing initialObjects")
     if not isinstance(dataset.get("actionEvents"), list):
         raise ValueError("Analysis dataset is missing actionEvents")
+    terrain = dataset.get("terrainElevation") or {}
+    if not isinstance(terrain, dict) or not isinstance(terrain.get("values"), list):
+        raise ValueError("Analysis dataset is missing terrainElevation")
     for event in dataset["actionEvents"]:
         payload = event.get("payload") or {}
         if any(key in payload for key in _RAW_PAYLOAD_KEYS):
@@ -147,6 +150,10 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
         for event in iter_store(directory, manifest["initialState"]["objectStore"])
     ]
     map_data = (manifest.get("initialState") or {}).get("map") or {}
+    terrain_values = [
+        (event.get("payload") or {}).get("elevation")
+        for event in iter_store(directory, manifest["initialState"]["terrainStore"])
+    ]
     manifest_context = {
         "schemaVersion": manifest.get("schemaVersion"),
         "participants": manifest.get("participants") or [],
@@ -183,6 +190,12 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
         "body": body,
         "fundamentals": fundamentals(body),
         "initialObjects": initial_objects,
+        "terrainElevation": {
+            "width": map_data.get("width"),
+            "height": map_data.get("height"),
+            "values": terrain_values,
+            "basis": "initial parser-fact terrain tile elevation in canonical tile order",
+        },
         "actionEvents": action_events,
         "cameraEvents": camera_events,
         "coverage": coverage,
