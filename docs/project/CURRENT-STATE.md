@@ -78,8 +78,9 @@ The current replay/statistics foundation includes:
 - Player-facing Opening statistics and Build Order classification.
 - Resource Commitment estimates by resource and age.
 - Raid Detection V3 with unchanged local TC/Mill/Lumber/Mining economic zones plus time-aware selected-object control evidence for later-created targeted objects.
-- Skirmish Detection V1 as the broad Military encounter layer, retaining multiplayer sides, directed opponent edges and pairwise interaction evidence.
-- Engagement Statistics V2 with more inclusive Battle promotion from Skirmishes, conservative Great Battle promotion, TC-base-only Ally Reinforcement/Defensive Assistance, pair-qualified Cooperative Attack, and explicit ally-metric applicability/N/A semantics.
+- Skirmish Detection V1 as a strict rename/relocation of Fight Detection V1 episode semantics; count/timing are regression-locked while multiplayer relationship evidence is attached afterward.
+- Unit Class Families V1 uses replay-observed AoE2 class IDs to distinguish Infantry, Cavalry, Archers, Cavalry Archers, Monks, Siege, Ships, civilian/trade/king classes and Buildings when instance class evidence exists.
+- Engagement Statistics V3 uses class evidence to suppress clearly civilian/building-only Battle/Reinforcement participation, keeps unresolved spawned objects unknown, and makes Great Battle a 4+ player / large-footprint multiplayer event only.
 - Map Presence V6, including command/scout coverage, normalized Home/Mid/Forward geometry, building placement range, walls, towers, camp distance, enemy-base contact, expansions, time-aware deposit-weighted gold influence and relic holding/theft inference.
 - Forward Eco V2 classification using the same Map Presence V6 Enemy Progress >=65% forward geometry.
 - Execution V1 with raw APM/action gaps, explicit control-command counts, raid response/garrison context, shared Skirmish windows for APM/elevation/disengage context, and no duplicate player-facing encounter count.
@@ -182,7 +183,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - [`../design/statistics-experience.md`](../design/statistics-experience.md)
 - [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md)
 - [`../architecture/opening-statistics-v1.md`](../architecture/opening-statistics-v1.md)
-- [`../architecture/engagement-statistics-v2.md`](../architecture/engagement-statistics-v2.md)
+- [`../architecture/engagement-statistics-v3.md`](../architecture/engagement-statistics-v3.md)
 - [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)
 - [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)
