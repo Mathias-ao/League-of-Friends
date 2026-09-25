@@ -259,7 +259,7 @@ def _fight_elevation_delta(
             delta = sum(own) / len(own) - sum(enemy) / len(enemy)
             deltas.append(delta)
             evidence.append({
-                "fightId": episode["fightId"],
+                "skirmishId": episode["skirmishId"],
                 "playerAverageElevation": round(sum(own) / len(own), 3),
                 "opponentAverageElevation": round(sum(enemy) / len(enemy), 3),
                 "delta": round(delta, 3),
@@ -311,7 +311,7 @@ def _disengage_moves(
                 ):
                     count += 1
                     evidence.append({
-                        "fightId": episode["fightId"],
+                        "skirmishId": episode["skirmishId"],
                         "atMs": event["timestampMs"],
                         "distanceBeforeTiles": round(before, 2),
                         "distanceAfterTiles": round(after, 2),
