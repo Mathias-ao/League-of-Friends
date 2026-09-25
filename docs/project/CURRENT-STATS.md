@@ -124,7 +124,7 @@ Map Presence remains reconstructed/inferred geometry rather than continuous unit
 - Explicit control-command counts: formations, stance changes, patrol, attack-ground, attack-move, ungarrison, back-to-work, Town Bell, repair, delete and stop.
 - Garrison commands: conservative inference from ORDER commands targeting an owned garrison-capable **initial** structure. Later-built target instance identity is not reconstructed yet, so this can undercount and must not be treated as complete.
 - Attack Ground per queued Siege: attack-ground command count divided by positive queue amount classified as siege. The denominator is queue-derived, not live/surviving siege.
-- Raid response: intersects received `AOF_RAID_DETECTION_V1` episodes with the first qualifying defender control command inside a 30-second response window. Average and median response remain inferred because raid onset and causal response are model-defined.
+- Raid response: intersects received `AOF_RAID_DETECTION_V2` episodes with the first qualifying defender control command inside a 30-second response window. Average and median response remain inferred because raid onset and causal response are model-defined.
 - Garrisons during raids: conservative garrison orders inside received raid windows plus a 10-second tail.
 - `AOF_FIGHT_DETECTION_V1`: shared spatial-temporal command episode model seeded by attack-move, attack-ground or targeted enemy ORDER evidence, with nearby MOVE/ORDER/PATROL support. It does not claim damage, kills, live army or continuous unit positions.
 - Fight-context outputs: fights count, first fight, union fight time, command share, APM in fights, economy actions during fights, average fight elevation delta and inferred disengage moves.
