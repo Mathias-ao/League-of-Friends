@@ -1,6 +1,6 @@
 # Age of Friends — Current Statistics
 
-Last reviewed: 24 September 2026
+Last reviewed: 25 September 2026
 
 Purpose: Concise source of truth for player-facing statistics status. Technical definitions and evidence limits live in the versioned architecture/model documents. The player-facing scope and presentation contract lives in [`../design/statistics-experience.md`](../design/statistics-experience.md).
 
@@ -84,7 +84,7 @@ Launch presentation should start with familiar numerical tables. A restrained **
 - Raids against the player.
 - Raid episode details: opponent, start/end timing and supporting command evidence.
 
-Military production classification uses catalog roles when available and the DE queue's promoted raw producer-building type as a fallback. Upgrade-quality scores are intentionally deferred: V3 exposes the raw fundamentals and timings needed to validate later dominant-line upgrade coverage/lag without judging player choices yet. `mgz-fast` discards this field from its normal DE_QUEUE payload, but CanonicalReplay retains it in the raw layout; Analysis V2 promotes it into `productionEvents.producerBuildingTypeId`. This is important for siege and upgraded/unique raw unit IDs not fully labeled by the pinned catalog. Known economic Dock units are excluded rather than automatically treating every Dock queue as a warship. Queue/placement values do not assert completed units/buildings, surviving army, kills, deaths or damage.
+Military production classification uses catalog roles when available and the DE queue's promoted raw producer-building type as a fallback. Upgrade-quality scores are intentionally deferred: V3 exposes the raw fundamentals and timings needed to validate later dominant-line upgrade coverage/lag without judging player choices yet. `mgz-fast` discards this field from its normal DE_QUEUE payload, but CanonicalReplay retains it in the raw layout; Analysis V3 retains it in `productionEvents.producerBuildingTypeId` and also carries compact terrain elevation for fight-context statistics. This is important for siege and upgraded/unique raw unit IDs not fully labeled by the pinned catalog. Known economic Dock units are excluded rather than automatically treating every Dock queue as a warship. Queue/placement values do not assert completed units/buildings, surviving army, kills, deaths or damage.
 
 Raids are inferred hostile-command episodes inside reconstructed economic zones; they do not assert damage or kills.
 
@@ -110,16 +110,22 @@ Map Presence remains reconstructed/inferred geometry rather than continuous unit
 
 ### Execution
 
-- Total observed commands.
-- Command rate per observed minute.
-- First command timing.
-- Commands in the first five observed minutes.
-- Active seconds.
-- Raw command-type breakdown.
-- Average selection size.
-- Median selection size.
-- Maximum selection size.
-- Raw formation modes used.
+`AOF_EXECUTION_STATISTICS_V1` promotes command mechanics into a first-class Battle section while retaining the old raw command/selection evidence underneath.
+
+- Raw APM: decoded player ACTION operations divided by observed replay minutes. This is an input-rate baseline, not an effectiveness score.
+- First command, longest inactivity and median action gap: ACTION-clock timing fundamentals. Longest inactivity is the largest gap between consecutive decoded player actions; it excludes the pre-first-command and post-last-command edges.
+- Explicit control-command counts: formations, stance changes, patrol, attack-ground, attack-move, ungarrison, back-to-work, Town Bell, repair, delete and stop.
+- Garrison commands: conservative inference from ORDER commands targeting an owned garrison-capable **initial** structure. Later-built target instance identity is not reconstructed yet, so this can undercount and must not be treated as complete.
+- Attack Ground per queued Siege: attack-ground command count divided by positive queue amount classified as siege. The denominator is queue-derived, not live/surviving siege.
+- Raid response: intersects received `AOF_RAID_DETECTION_V1` episodes with the first qualifying defender control command inside a 30-second response window. Average and median response remain inferred because raid onset and causal response are model-defined.
+- Garrisons during raids: conservative garrison orders inside received raid windows plus a 10-second tail.
+- `AOF_FIGHT_DETECTION_V1`: shared spatial-temporal command episode model seeded by attack-move, attack-ground or targeted enemy ORDER evidence, with nearby MOVE/ORDER/PATROL support. It does not claim damage, kills, live army or continuous unit positions.
+- Fight-context outputs: fights count, first fight, union fight time, command share, APM in fights, economy actions during fights, average fight elevation delta and inferred disengage moves.
+- Fight elevation delta samples the initial terrain grid at recorded command coordinates: negative means the player's sampled fight commands were lower than opponents, zero means level on average, positive means higher. This is command-location terrain context, not proof of unit elevation at impact.
+- Disengage moves require a selected-object command sequence where a MOVE destination increases distance from the inferred fight center by at least 8 tiles. It is a retreat-intent proxy, not actual pathing.
+- Economy actions during fights are conservative: economy queue/research/build/market/rally/back-to-work commands plus ORDER commands from initially observed economic units. Later-produced Villager tasking can undercount because produced-unit instance identity is not reconstructed.
+
+The previous total-command, active-second, selection-size and raw action-name diagnostics remain available as evidence but are not the primary player-facing Execution metrics.
 
 ## Lifetime Stats
 
@@ -149,6 +155,8 @@ Current models include:
 - `AOF_OPENING_STATISTICS_V5`
 - `AOF_MILITARY_STATISTICS_V4`
 - `AOF_RAID_DETECTION_V1`
+- `AOF_FIGHT_DETECTION_V1`
+- `AOF_EXECUTION_STATISTICS_V1`
 - `AOF_MAP_PRESENCE_V6`
 - `AOF_FORWARD_ECO_V1`
 - `AOF_ECONOMY_STATISTICS_V4`
