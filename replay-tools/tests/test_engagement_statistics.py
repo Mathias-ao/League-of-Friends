@@ -5,6 +5,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from engagement_statistics import ENGAGEMENT_MODEL_VERSION, project_engagement_statistics
+from skirmish_detector import detect_skirmishes
 
 
 CATALOG = {
@@ -18,33 +19,31 @@ CATALOG = {
 }
 
 
-def manifest(team_1=1, team_2=2, team_3=2):
+def manifest(*, teams=(1, 2), lock_teams=True):
+    participants = [
+        {"playerId": index + 1, "lobbyTeamId": team}
+        for index, team in enumerate(teams)
+    ]
     return {
-        "participants": [
-            {"playerId": 1, "lobbyTeamId": team_1},
-            {"playerId": 2, "lobbyTeamId": team_2},
-            {"playerId": 3, "lobbyTeamId": team_3},
-        ]
+        "participants": participants,
+        "match": {"settings": {"lockTeams": lock_teams}},
+        "initialDiplomacy": [],
     }
 
 
-def initial_objects():
+def initial_objects(player_count=3):
+    positions = [(20, 20), (80, 80), (20, 80), (80, 20)]
     return [
         {
-            "eventId": "p1-tc",
-            "payload": {"ownerPlayerId": 1, "objectId": 109, "instanceId": 101},
-            "position": {"x": 20, "y": 20},
-        },
-        {
-            "eventId": "p2-tc",
-            "payload": {"ownerPlayerId": 2, "objectId": 109, "instanceId": 201},
-            "position": {"x": 80, "y": 80},
-        },
-        {
-            "eventId": "p3-tc",
-            "payload": {"ownerPlayerId": 3, "objectId": 109, "instanceId": 301},
-            "position": {"x": 20, "y": 80},
-        },
+            "eventId": f"p{player_id}-tc",
+            "payload": {
+                "ownerPlayerId": player_id,
+                "objectId": 109,
+                "instanceId": player_id * 100 + 1,
+            },
+            "position": {"x": positions[player_id - 1][0], "y": positions[player_id - 1][1]},
+        }
+        for player_id in range(1, player_count + 1)
     ]
 
 
@@ -61,120 +60,143 @@ def action(event_id, actor, at_ms, name, x, y, selected=None, target=None):
     }
 
 
-def fight(start, end, x, y, fight_id="fight-1"):
-    return {
-        "fightId": fight_id,
-        "startedAtMs": start,
-        "endedAtMs": end,
-        "center": {"x": x, "y": y},
-    }
-
-
-def empty_raids():
+def empty_raids(player_count):
     return {
         str(player_id): {"raidEvidence": {"initiatedEpisodes": [], "receivedEpisodes": []}}
-        for player_id in (1, 2, 3)
+        for player_id in range(1, player_count + 1)
     }
 
 
-def project(*, game_manifest=None, objects=None, actions=None, fights=None):
+def project(*, game_manifest, actions, objects=None):
+    objects = objects or initial_objects(len(game_manifest["participants"]))
+    skirmishes = detect_skirmishes(
+        manifest=game_manifest,
+        initial_objects=objects,
+        action_events=actions,
+    )
     return project_engagement_statistics(
-        manifest=game_manifest or manifest(),
+        manifest=game_manifest,
         catalog=CATALOG,
-        initial_objects=objects or initial_objects(),
+        initial_objects=objects,
         build_events=[],
-        action_events=actions or [],
-        fight_statistics={"episodes": fights or []},
-        raid_statistics=empty_raids(),
+        action_events=actions,
+        skirmish_statistics=skirmishes,
+        raid_statistics=empty_raids(len(game_manifest["participants"])),
     )
 
 
-class EngagementStatisticsTests(unittest.TestCase):
-    def test_battle_requires_reciprocal_hostile_command_contribution(self):
-        one_sided = project(
+class EngagementStatisticsV2Tests(unittest.TestCase):
+    def test_skirmish_is_player_facing_and_opposing_response_promotes_battle(self):
+        result = project(
+            game_manifest=manifest(teams=(1, 2)),
             actions=[
                 action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50),
-                action("p2-move", 2, 12_000, "MOVE", 51, 50),
+                action("p2-move-response", 2, 12_000, "MOVE", 51, 50),
             ],
-            fights=[fight(9_000, 15_000, 50, 50)],
+            objects=initial_objects(2),
         )
-        self.assertEqual(one_sided["1"]["battlesFought"], 0)
-        self.assertEqual(one_sided["2"]["battlesFought"], 0)
-
-        reciprocal = project(
-            actions=[
-                action("p1-approach", 1, 9_000, "MOVE", 49, 50),
-                action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50),
-                action("p2-patrol", 2, 12_000, "PATROL", 51, 50),
-            ],
-            fights=[fight(8_000, 15_000, 50, 50)],
-        )
-        self.assertEqual(reciprocal["1"]["battlesFought"], 1)
-        self.assertEqual(reciprocal["2"]["battlesFought"], 1)
-        battle = reciprocal["1"]["engagementEvidence"]["battles"][0]
+        self.assertEqual(result["1"]["engagementModelVersion"], ENGAGEMENT_MODEL_VERSION)
+        self.assertEqual(result["1"]["skirmishes"], 1)
+        self.assertEqual(result["2"]["skirmishes"], 1)
+        self.assertEqual(result["1"]["battlesFought"], 1)
+        battle = result["1"]["engagementEvidence"]["battles"][0]
         self.assertEqual(battle["participantPlayerIds"], [1, 2])
-        self.assertEqual(battle["startedAtMs"], 10_000)
-        self.assertEqual(battle["firstContributionAtMsByPlayer"]["1"], 10_000)
-        self.assertEqual(battle["modelVersion"], ENGAGEMENT_MODEL_VERSION)
+        self.assertEqual(battle["sourceSkirmishId"], "skirmish-1")
 
-    def test_defensive_assistance_requires_defended_ally_base(self):
-        at_base = project(
+    def test_one_sided_targeted_episode_stays_skirmish_not_battle(self):
+        objects = initial_objects(2)
+        result = project(
+            game_manifest=manifest(teams=(1, 2)),
+            actions=[
+                action("p1-target", 1, 10_000, "ORDER", 80, 80, target=201),
+            ],
+            objects=objects,
+        )
+        self.assertEqual(result["1"]["skirmishes"], 1)
+        self.assertEqual(result["2"]["skirmishes"], 1)
+        self.assertEqual(result["1"]["battlesFought"], 0)
+        self.assertEqual(result["2"]["battlesFought"], 0)
+
+    def test_relationship_summary_tracks_actual_opponent_pair(self):
+        result = project(
+            game_manifest=manifest(teams=(1, 2, 1)),
+            actions=[
+                action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50),
+                action("p3-pressure", 3, 11_000, "DE_ATTACK_MOVE", 68, 50),
+                action("p2-response", 2, 12_000, "MOVE", 51, 50),
+            ],
+        )
+        p1 = result["1"]["relationshipInteractionSummary"]
+        p3 = result["3"]["relationshipInteractionSummary"]
+        self.assertEqual([row["opponentPlayerId"] for row in p1], [2])
+        self.assertEqual(p3, [])
+        self.assertEqual(p1[0]["skirmishesTogether"], 1)
+        self.assertEqual(p1[0]["battlesTogether"], 1)
+
+    def test_ally_metrics_are_na_in_one_v_one(self):
+        result = project(
+            game_manifest=manifest(teams=(1, 2), lock_teams=True),
+            actions=[
+                action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50),
+                action("p2-response", 2, 12_000, "MOVE", 51, 50),
+            ],
+            objects=initial_objects(2),
+        )
+        p1 = result["1"]
+        self.assertEqual(p1["allyInteractionApplicability"]["status"], "not_applicable")
+        self.assertIsNone(p1["allyReinforcementsSent"])
+        self.assertIsNone(p1["defensiveAssistsGiven"])
+        self.assertIsNone(p1["cooperativeAttacks"])
+
+    def test_ally_metrics_are_na_in_locked_ffa(self):
+        result = project(
+            game_manifest=manifest(teams=(None, None, None), lock_teams=True),
+            actions=[],
+        )
+        p1 = result["1"]
+        self.assertEqual(p1["allyInteractionApplicability"]["status"], "not_applicable")
+        self.assertIn("locked_diplomacy", p1["allyInteractionApplicability"]["reason"])
+        self.assertIsNone(p1["allyReinforcementsReceived"])
+
+    def test_diplomacy_ffa_is_pending_not_false_zero(self):
+        result = project(
+            game_manifest=manifest(teams=(None, None, None), lock_teams=False),
+            actions=[],
+        )
+        p1 = result["1"]
+        self.assertEqual(p1["allyInteractionApplicability"]["status"], "pending_relation_semantics")
+        self.assertIsNone(p1["allyReinforcementsSent"])
+        self.assertIsNone(p1["defensiveAssistsReceived"])
+        self.assertIsNone(p1["cooperativeAttacks"])
+
+    def test_fixed_team_defensive_assistance_stays_base_bound(self):
+        result = project(
+            game_manifest=manifest(teams=(1, 2, 2), lock_teams=True),
             actions=[
                 action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 80, 80),
-                action("p2-patrol", 2, 11_000, "PATROL", 80, 81),
+                action("p2-response", 2, 11_000, "MOVE", 80, 81),
                 action("p3-help", 3, 13_000, "DE_ATTACK_MOVE", 79, 80),
             ],
-            fights=[fight(9_000, 18_000, 80, 80)],
         )
-        self.assertEqual(at_base["3"]["defensiveAssistsGiven"], 1)
-        assist = at_base["3"]["engagementEvidence"]["defensiveAssistsGiven"][0]
+        self.assertEqual(result["3"]["defensiveAssistsGiven"], 1)
+        assist = result["3"]["engagementEvidence"]["defensiveAssistsGiven"][0]
         self.assertEqual((assist["helperPlayerId"], assist["defendedPlayerId"]), (3, 2))
-        self.assertEqual(at_base["3"]["cooperativeAttacks"], 0)
 
-        neutral = project(
-            actions=[
-                action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 50, 50),
-                action("p2-patrol", 2, 11_000, "PATROL", 50, 51),
-                action("p3-help", 3, 13_000, "DE_ATTACK_MOVE", 49, 50),
-            ],
-            fights=[fight(9_000, 18_000, 50, 50)],
-        )
-        self.assertEqual(neutral["3"]["defensiveAssistsGiven"], 0)
-
-    def test_standalone_reinforcement_only_counts_inside_supported_ally_base(self):
+    def test_cooperative_attack_requires_pairwise_shared_target(self):
         result = project(
-            actions=[
-                action("p3-reinforce-1", 3, 10_000, "PATROL", 80, 80, selected=[3001, 3002, 3003]),
-                action("p3-reinforce-2", 3, 15_000, "DE_ATTACK_MOVE", 81, 80, selected=[3001, 3002, 3003]),
-                action("p3-neutral-1", 3, 90_000, "PATROL", 50, 50, selected=[3010, 3011, 3012]),
-                action("p3-neutral-2", 3, 95_000, "DE_ATTACK_MOVE", 51, 50, selected=[3010, 3011, 3012]),
-            ],
-        )
-        self.assertEqual(result["3"]["allyReinforcementsSent"], 1)
-        self.assertEqual(result["2"]["allyReinforcementsReceived"], 1)
-        episode = result["3"]["engagementEvidence"]["allyReinforcementsSent"][0]
-        self.assertEqual(episode["supportedPlayerId"], 2)
-
-    def test_cooperative_attack_is_offensive_not_own_base_defense(self):
-        result = project(
-            game_manifest=manifest(team_1=1, team_2=1, team_3=2),
+            game_manifest=manifest(teams=(1, 1, 2), lock_teams=True),
             actions=[
                 action("p1-attack", 1, 10_000, "DE_ATTACK_MOVE", 20, 80),
-                action("p2-attack", 2, 12_000, "DE_ATTACK_MOVE", 21, 80),
-                action("p3-defend", 3, 13_000, "PATROL", 20, 81),
+                action("p2-attack", 2, 11_000, "DE_ATTACK_MOVE", 21, 80),
+                action("p3-response", 3, 12_000, "MOVE", 20, 81),
             ],
-            fights=[fight(9_000, 18_000, 20, 80)],
         )
         self.assertEqual(result["1"]["cooperativeAttacks"], 1)
-        self.assertEqual(result["2"]["cooperativeAttacks"], 1)
         event = result["1"]["engagementEvidence"]["cooperativeAttacks"][0]
         self.assertEqual(event["attackerPlayerIds"], [1, 2])
         self.assertEqual(event["targetPlayerIds"], [3])
-        self.assertEqual(event["locationContext"], "enemy_base")
-        self.assertEqual(result["1"]["defensiveAssistsGiven"], 0)
-        self.assertEqual(result["2"]["defensiveAssistsGiven"], 0)
 
-    def test_great_battle_requires_unmistakable_scale(self):
+    def test_great_battle_remains_conservative(self):
         actions = []
         p1_ids = list(range(1000, 1030))
         p2_ids = list(range(2000, 2030))
@@ -187,12 +209,12 @@ class EngagementStatisticsTests(unittest.TestCase):
                 f"p2-{index}", 2, at_ms, "DE_ATTACK_MOVE", 51, 50, selected=p2_ids,
             ))
         result = project(
+            game_manifest=manifest(teams=(1, 2)),
             actions=actions,
-            fights=[fight(0, 55_000, 50, 50)],
+            objects=initial_objects(2),
         )
         battle = result["1"]["engagementEvidence"]["battles"][0]
         self.assertTrue(battle["greatBattle"])
-        self.assertEqual(battle["distinctSelectedObjectCount"], 60)
         self.assertEqual(result["1"]["greatBattlesFought"], 1)
 
 

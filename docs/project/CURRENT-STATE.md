@@ -77,11 +77,12 @@ The current replay/statistics foundation includes:
 - Replay-free statistics projection from canonical evidence.
 - Player-facing Opening statistics and Build Order classification.
 - Resource Commitment estimates by resource and age.
-- Raid Detection V2 with attacker/victim attribution, local TC/Mill/Lumber/Mining economic zones and strong direct-target evidence for known Villagers, Fishing Ships, Trade Carts and Trade Cogs.
-- Engagement Statistics V1 with reciprocal Battles, conservative Great Battle promotion, TC-base-only Ally Reinforcement and Defensive Assistance, and Cooperative Attack evidence.
+- Raid Detection V3 with unchanged local TC/Mill/Lumber/Mining economic zones plus time-aware selected-object control evidence for later-created targeted objects.
+- Skirmish Detection V1 as the broad Military encounter layer, retaining multiplayer sides, directed opponent edges and pairwise interaction evidence.
+- Engagement Statistics V2 with more inclusive Battle promotion from Skirmishes, conservative Great Battle promotion, TC-base-only Ally Reinforcement/Defensive Assistance, pair-qualified Cooperative Attack, and explicit ally-metric applicability/N/A semantics.
 - Map Presence V6, including command/scout coverage, normalized Home/Mid/Forward geometry, building placement range, walls, towers, camp distance, enemy-base contact, expansions, time-aware deposit-weighted gold influence and relic holding/theft inference.
 - Forward Eco V2 classification using the same Map Presence V6 Enemy Progress >=65% forward geometry.
-- Execution V1 with raw APM/action gaps, explicit control-command counts, raid response/garrison context, shared Fight Detection V1, APM in fights, conservative eco-under-fight counts, terrain elevation delta and disengage-command inference.
+- Execution V1 with raw APM/action gaps, explicit control-command counts, raid response/garrison context, shared Skirmish windows for APM/elevation/disengage context, and no duplicate player-facing encounter count.
 - Versioned tests, golden projections and architecture documents for the active models.
 - Development-only **AoF Replay Lab** for local recording extraction, replay-free statistics recalculation, evidence inspection, diagnostics and same-evidence projection comparison; it bypasses Firebase and production league state.
 - Replay Lab inserts a compact `AOF_REPLAY_ANALYSIS_V1` cache between CanonicalReplay and statistics. Its default development import uses explicit `sealed_local_fast` structural publication checks instead of exhaustive event conformance; a separate Full Conformance Audit upgrades a run to `verified_local`. Routine statistics recalculation consumes the compact cache without reparsing the recording or revalidating canonical facts.
@@ -119,9 +120,9 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 
 - Queue requests, research requests and placements do not by themselves prove completion, survival, damage or kills.
 - Resource Commitment is an estimate from pinned base costs and does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute.
-- Raid, Fight and Engagement detection are command-episode inference and do not prove success, damage, kills, surviving army, exact army size or continuous positions. Great Battle deliberately favors precision over recall.
-- V1 support/defense uses conservative TC-anchored base zones. This can undercount legitimate help at non-TC settlements, but prevents neutral/enemy-territory activity from being credited as defensive reinforcement.
-- Engagement ally/opponent grouping currently follows lobby teams; dynamic-diplomacy FFA remains a qualification area until relation-at-time is wired into the engagement layer.
+- Raid, Skirmish and Engagement detection are command-episode inference and do not prove success, damage, kills, surviving army, exact army size or continuous positions. Great Battle deliberately favors precision over recall.
+- V2 support/defense uses conservative TC-anchored base zones. This can undercount legitimate help at non-TC settlements, but prevents neutral/enemy-territory activity from being credited as defensive reinforcement.
+- Multiplayer opponent relationships are retained pairwise rather than inferred from co-participation. Fixed-team ally interactions are available; 1v1 and locked-diplomacy FFA return N/A. Diplomacy-enabled FFA is marked pending rather than false-zero until raw diplomacy modes 0/3 are controlled-test-qualified into stance intervals.
 - Map Presence represents command/building geometry, not fog-of-war exploration or permanent territorial ownership.
 - Entity labels are based on the pinned reference catalog and are not yet fully qualified for every replay patch/mod.
 - Restored-game clocks, complete effective diplomacy state and some initial-object semantics remain qualification areas.
@@ -181,7 +182,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - [`../design/statistics-experience.md`](../design/statistics-experience.md)
 - [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md)
 - [`../architecture/opening-statistics-v1.md`](../architecture/opening-statistics-v1.md)
-- [`../architecture/engagement-statistics-v1.md`](../architecture/engagement-statistics-v1.md)
+- [`../architecture/engagement-statistics-v2.md`](../architecture/engagement-statistics-v2.md)
 - [`../architecture/canonical-statistics-v1.md`](../architecture/canonical-statistics-v1.md)
 - [`../architecture/replay-statistics-v1.md`](../architecture/replay-statistics-v1.md)
 - [`../architecture/replay-extraction-contract-v1.md`](../architecture/replay-extraction-contract-v1.md)

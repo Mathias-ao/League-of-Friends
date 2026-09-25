@@ -1,14 +1,15 @@
-"""V1 player-facing engagement statistics over command-derived evidence.
+"""Player-facing Military Engagement statistics V2.
 
-This layer deliberately favors simple, auditable interaction facts:
-- Battle requires reciprocal hostile command contribution.
-- Great Battle is only a conservative high-confidence promotion.
-- Ally Reinforcement and Defensive Assistance only exist inside the supported
-  player's TC-anchored base.
-- Cooperative Attack describes overlapping allied offensive participation and
-  never claims planning or communication.
+Hierarchy:
+- Skirmish: broad local hostile episode from AOF_SKIRMISH_DETECTION_V1.
+- Battle: a Skirmish with actual command contributors on opposing sides.
+- Great Battle: conservative high-confidence promotion of Battle.
+- Raid: orthogonal economy-pressure context from the raid detector.
+- Reinforcement / Defensive Assistance / Cooperative Attack: ally interactions
+  only when ally semantics are applicable and qualified.
 
-No output claims damage, kills, exact live army size, or continuous positions.
+No output claims damage, kills, battle outcome, exact live army size, or
+continuous unit positions.
 """
 from __future__ import annotations
 
@@ -16,26 +17,16 @@ from collections import defaultdict
 import math
 from typing import Any, Iterable
 
-from fight_detector import FIGHT_LINK_DISTANCE_TILES
+from skirmish_detector import SKIRMISH_LINK_DISTANCE_TILES
 
-ENGAGEMENT_MODEL_VERSION = "AOF_ENGAGEMENT_STATISTICS_V1"
+ENGAGEMENT_MODEL_VERSION = "AOF_ENGAGEMENT_STATISTICS_V2"
 
 BASE_ZONE_RADIUS_TILES = 22.0
 BASE_AMBIGUITY_MARGIN_TILES = 3.0
 REINFORCEMENT_EPISODE_GAP_MS = 60_000
-
-# A contributor must produce at least one combat-leaning command in an existing
-# Fight V1 window. MOVE and untargeted ORDER can then support that contributor's
-# episode evidence, but cannot make a player a Battle participant by themselves.
-BATTLE_STRONG_ACTIONS = {"DE_ATTACK_MOVE", "ATTACK_GROUND", "PATROL"}
 BATTLE_SUPPORT_ACTIONS = {"MOVE", "ORDER", "PATROL", "DE_ATTACK_MOVE", "ATTACK_GROUND"}
-
-# Standalone reinforcement deliberately uses only commands that are difficult to
-# confuse with routine economy movement. This is a high-precision/low-recall V1.
 REINFORCEMENT_ACTIONS = {"PATROL", "DE_ATTACK_MOVE", "ATTACK_GROUND"}
 
-# Great Battle is intentionally hard to earn. Ordinary or uncertain large fights
-# remain Battle.
 GREAT_BATTLE_MIN_DURATION_MS = 45_000
 GREAT_BATTLE_MIN_SELECTED_OBJECTS = 40
 GREAT_BATTLE_MIN_STRONG_COMMANDS = 6
@@ -85,12 +76,6 @@ def build_base_zones(
     initial_objects: Iterable[dict[str, Any]],
     build_events: Iterable[dict[str, Any]],
 ) -> dict[int, list[dict[str, Any]]]:
-    """Build conservative TC-anchored player base zones.
-
-    A remote camp, Castle, military building, or generic forward structure never
-    creates a defensive base. Later TC placements become eligible at placement
-    time; this remains an inferred territory proxy, not construction completion.
-    """
     participant_ids = set(_participants(manifest))
     zones: dict[int, list[dict[str, Any]]] = defaultdict(list)
 
@@ -102,8 +87,7 @@ def build_base_zones(
         if owner not in participant_ids or point is None or not _is_town_center(catalog, raw_id):
             continue
         zones[int(owner)].append({
-            "x": point[0],
-            "y": point[1],
+            "x": point[0], "y": point[1],
             "radiusTiles": BASE_ZONE_RADIUS_TILES,
             "activeFromMs": 0,
             "source": "initial_town_center",
@@ -120,8 +104,7 @@ def build_base_zones(
         if not isinstance(at_ms, int) or not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
             continue
         zones[int(owner)].append({
-            "x": float(x),
-            "y": float(y),
+            "x": float(x), "y": float(y),
             "radiusTiles": BASE_ZONE_RADIUS_TILES,
             "activeFromMs": at_ms,
             "source": "town_center_placement",
@@ -157,134 +140,110 @@ def _resolve_base_owner(
     return best[1], best[2], best[0]
 
 
-def _initial_owners(initial_objects: Iterable[dict[str, Any]]) -> dict[int, int]:
-    owners: dict[int, int] = {}
-    for event in initial_objects:
-        payload = event.get("payload") or {}
-        instance = payload.get("instanceId")
-        owner = payload.get("ownerPlayerId")
-        if isinstance(instance, int) and isinstance(owner, int):
-            owners[instance] = owner
-    return owners
+def _ally_interaction_applicability(manifest: dict[str, Any]) -> dict[str, Any]:
+    participants = list(manifest.get("participants") or [])
+    if len(participants) <= 2:
+        return {
+            "status": "not_applicable",
+            "reason": "one_v_one_has_no_third_party_ally_interaction",
+        }
+
+    for index, left in enumerate(participants):
+        for right in participants[index + 1:]:
+            if _same_team(left, right):
+                return {
+                    "status": "applicable",
+                    "basis": "fixed_lobby_team_relationships",
+                }
+
+    settings = (manifest.get("match") or {}).get("settings") or {}
+    lock_teams = settings.get("lockTeams")
+    if lock_teams is True:
+        return {
+            "status": "not_applicable",
+            "reason": "ffa_with_locked_diplomacy_has_no_allied_relationships",
+        }
+    if lock_teams is False:
+        return {
+            "status": "pending_relation_semantics",
+            "reason": (
+                "diplomacy_enabled_ffa_is_applicable_but_raw_modes_0_and_3_are_not_yet "
+                "controlled-test-qualified as stance intervals"
+            ),
+        }
+    return {
+        "status": "unknown",
+        "reason": "match_diplomacy_applicability_could_not_be_qualified",
+    }
 
 
-def _is_targeted_enemy_order(
-    event: dict[str, Any],
-    *,
-    actor: int,
-    owners: dict[int, int],
-    participants: dict[int, dict[str, Any]],
-) -> bool:
-    if event.get("sourceActionName") != "ORDER":
-        return False
-    target = event.get("targetInstanceId")
-    owner = owners.get(target) if isinstance(target, int) else None
-    return isinstance(owner, int) and _hostile(actor, owner, participants)
-
-
-def _inside_fight_area(event: dict[str, Any], fight: dict[str, Any]) -> bool:
+def _inside_skirmish_area(event: dict[str, Any], skirmish: dict[str, Any]) -> bool:
     at_ms = event.get("timestampMs")
     point = _point(event)
     if not isinstance(at_ms, int) or point is None:
         return False
-    if not (fight["startedAtMs"] <= at_ms <= fight["endedAtMs"]):
+    if not (skirmish["startedAtMs"] <= at_ms <= skirmish["endedAtMs"]):
         return False
-    center = fight["center"]
-    return math.hypot(point[0] - center["x"], point[1] - center["y"]) <= FIGHT_LINK_DISTANCE_TILES * 1.5
+    center = skirmish["center"]
+    return math.hypot(point[0] - center["x"], point[1] - center["y"]) <= SKIRMISH_LINK_DISTANCE_TILES * 1.5
 
 
-def _side_groups(
-    player_ids: Iterable[int],
-    participants: dict[int, dict[str, Any]],
-) -> list[list[int]]:
-    groups: list[list[int]] = []
-    for player_id in sorted(set(player_ids)):
-        placed = False
-        for group in groups:
-            if _same_team(participants[player_id], participants[group[0]]):
-                group.append(player_id)
-                placed = True
-                break
-        if not placed:
-            groups.append([player_id])
-    return groups
-
-
-def _battle_from_fight(
+def _battle_from_skirmish(
     *,
     index: int,
-    fight: dict[str, Any],
+    skirmish: dict[str, Any],
     action_events: list[dict[str, Any]],
     participants: dict[int, dict[str, Any]],
-    owners: dict[int, int],
     zones_by_player: dict[int, list[dict[str, Any]]],
     raids: list[dict[str, Any]],
 ) -> dict[str, Any] | None:
+    contributing = {
+        int(player_id)
+        for player_id in skirmish.get("contributingPlayerIds", [])
+        if player_id in participants
+    }
+
+    # V2 intentionally treats response/control activity as participation. Unlike
+    # V1, both sides do not need a narrow "strong" attack command. A one-sided
+    # targeted episode remains a Skirmish, while opposing command contributors
+    # promote it to Battle.
+    hostile_contributor_pairs = [
+        (left, right)
+        for left in sorted(contributing)
+        for right in sorted(contributing)
+        if left < right and _hostile(left, right, participants)
+    ]
+    if not hostile_contributor_pairs:
+        return None
+
     nearby = [
         event for event in action_events
-        if event.get("actorPlayerId") in participants
+        if event.get("actorPlayerId") in contributing
         and event.get("sourceActionName") in BATTLE_SUPPORT_ACTIONS
-        and _inside_fight_area(event, fight)
+        and _inside_skirmish_area(event, skirmish)
     ]
+    if not nearby:
+        return None
     nearby.sort(key=lambda event: (event.get("timestampMs", 0), event.get("operationOrdinal", 0)))
 
-    strong_actors: set[int] = set()
-    strong_rows: list[dict[str, Any]] = []
-    for event in nearby:
-        actor = int(event["actorPlayerId"])
-        action = event.get("sourceActionName")
-        strong = action in BATTLE_STRONG_ACTIONS or _is_targeted_enemy_order(
-            event,
-            actor=actor,
-            owners=owners,
-            participants=participants,
-        )
-        if strong:
-            strong_actors.add(actor)
-            strong_rows.append(event)
-
-    # Battle is stricter than Fight V1: at least two actual command contributors
-    # from hostile sides must be present.
-    if len(strong_actors) < 2:
-        return None
-    sides = _side_groups(strong_actors, participants)
-    if len(sides) < 2 or not any(
-        _hostile(left, right, participants)
-        for left in strong_actors for right in strong_actors
-        if left < right
-    ):
-        return None
-
-    started_at = min(int(event["timestampMs"]) for event in strong_rows)
-    contribution_rows = [
-        event for event in nearby
-        if int(event["actorPlayerId"]) in strong_actors
-        and int(event["timestampMs"]) >= started_at
-    ]
-    if not contribution_rows:
-        return None
-
-    ended_at = max(int(event["timestampMs"]) for event in contribution_rows)
-    points = [_point(event) for event in contribution_rows]
-    positioned = [point for point in points if point is not None]
-    center = {
-        "x": round(sum(point[0] for point in positioned) / len(positioned), 2),
-        "y": round(sum(point[1] for point in positioned) / len(positioned), 2),
-    }
+    started_at = min(int(event["timestampMs"]) for event in nearby)
+    ended_at = max(int(event["timestampMs"]) for event in nearby)
     first_by_player = {
         str(player_id): min(
             int(event["timestampMs"])
-            for event in strong_rows
+            for event in nearby
             if int(event["actorPlayerId"]) == player_id
         )
-        for player_id in sorted(strong_actors)
+        for player_id in sorted(contributing)
+        if any(int(event["actorPlayerId"]) == player_id for event in nearby)
     }
     selected_ids = {
         int(instance)
-        for event in contribution_rows
+        for event in nearby
         for instance in (event.get("objectInstanceIds") or [])
         if isinstance(instance, int)
     }
+    center = dict(skirmish["center"])
     base_match = _resolve_base_owner(
         zones_by_player,
         at_ms=started_at,
@@ -293,14 +252,12 @@ def _battle_from_fight(
     base_owner = base_match[0] if base_match is not None else None
 
     duration_ms = max(0, ended_at - started_at)
-    strong_count = len(strong_rows)
-    participant_count = len(strong_actors)
     great_battle = (
         duration_ms >= GREAT_BATTLE_MIN_DURATION_MS
         and len(selected_ids) >= GREAT_BATTLE_MIN_SELECTED_OBJECTS
-        and strong_count >= GREAT_BATTLE_MIN_STRONG_COMMANDS
+        and int(skirmish.get("strongCommandCount", 0)) >= GREAT_BATTLE_MIN_STRONG_COMMANDS
         and (
-            participant_count >= 4
+            len(contributing) >= 4
             or len(selected_ids) >= GREAT_BATTLE_1V1_SELECTED_OBJECTS
         )
     )
@@ -311,29 +268,33 @@ def _battle_from_fight(
         if raid.get("raidId")
         and raid.get("startedAtMs", 0) <= ended_at
         and raid.get("endedAtMs", 0) >= started_at
-        and raid.get("attackerPlayerId") in strong_actors
-        and raid.get("victimPlayerId") in strong_actors
+        and raid.get("attackerPlayerId") in contributing
+        and raid.get("victimPlayerId") in contributing
     ]
 
     return {
         "battleId": f"battle-{index}",
-        "sourceFightId": fight.get("fightId"),
+        "sourceSkirmishId": skirmish.get("skirmishId"),
         "startedAtMs": started_at,
         "endedAtMs": ended_at,
         "durationMs": duration_ms,
         "center": center,
-        "participantPlayerIds": sorted(strong_actors),
-        "sidePlayerIds": [sorted(side) for side in sides],
+        "participantPlayerIds": sorted(contributing),
+        "sidePlayerIds": [
+            sorted(player_id for player_id in side if player_id in contributing)
+            for side in skirmish.get("sidePlayerIds", [])
+            if any(player_id in contributing for player_id in side)
+        ],
         "firstContributionAtMsByPlayer": first_by_player,
+        "directedInteractionEdges": list(skirmish.get("directedInteractionEdges") or []),
+        "opponentInteractionPairs": list(skirmish.get("opponentInteractionPairs") or []),
         "baseOwnerPlayerId": base_owner,
         "greatBattle": great_battle,
         "distinctSelectedObjectCount": len(selected_ids),
-        "strongCommandCount": strong_count,
+        "strongCommandCount": int(skirmish.get("strongCommandCount", 0)),
         "overlappingRaidIds": sorted(overlapping_raids),
         "sourceEventIds": sorted({
-            str(event["eventId"])
-            for event in contribution_rows
-            if event.get("eventId")
+            str(event["eventId"]) for event in nearby if event.get("eventId")
         }),
         "modelVersion": ENGAGEMENT_MODEL_VERSION,
     }
@@ -361,18 +322,20 @@ def _defensive_assistance(
         defended_id = battle.get("baseOwnerPlayerId")
         if defended_id not in participants:
             continue
-        enemies = [
-            player_id for player_id in battle["participantPlayerIds"]
-            if _hostile(defended_id, player_id, participants)
-        ]
-        if not enemies:
-            continue
         helpers = [
             player_id for player_id in battle["participantPlayerIds"]
             if player_id != defended_id
             and _same_team(participants[defended_id], participants[player_id])
         ]
+        enemies = [
+            player_id for player_id in battle["participantPlayerIds"]
+            if _hostile(defended_id, player_id, participants)
+        ]
+        if not helpers or not enemies:
+            continue
         for helper_id in helpers:
+            if str(helper_id) not in battle["firstContributionAtMsByPlayer"]:
+                continue
             results.append({
                 "battleId": battle["battleId"],
                 "helperPlayerId": helper_id,
@@ -392,36 +355,54 @@ def _cooperative_attacks(
     results: list[dict[str, Any]] = []
     for battle in battles:
         base_owner = battle.get("baseOwnerPlayerId")
+        pair_rows = battle.get("opponentInteractionPairs") or []
         for side in battle["sidePlayerIds"]:
             if len(side) < 2:
                 continue
-
-            # A multi-player side fighting in its own/ally base is defensive
-            # assistance, not a cooperative attack.
             if (
                 base_owner in participants
                 and any(_same_team(participants[base_owner], participants[player_id]) for player_id in side)
             ):
                 continue
 
-            targets = [
-                player_id for player_id in battle["participantPlayerIds"]
-                if any(_hostile(attacker, player_id, participants) for attacker in side)
-            ]
+            target_to_attackers: dict[int, set[int]] = defaultdict(set)
+            for pair in pair_rows:
+                pair_ids = pair.get("playerIds") or []
+                if len(pair_ids) != 2:
+                    continue
+                left, right = pair_ids
+                if left in side and right not in side:
+                    target_to_attackers[int(right)].add(int(left))
+                if right in side and left not in side:
+                    target_to_attackers[int(left)].add(int(right))
+
+            targets = sorted(
+                target for target, attackers in target_to_attackers.items()
+                if len(attackers) >= 2
+            )
             if not targets:
                 continue
+            attackers = sorted({
+                attacker
+                for target in targets
+                for attacker in target_to_attackers[target]
+            })
             results.append({
                 "battleId": battle["battleId"],
-                "attackerPlayerIds": sorted(side),
-                "targetPlayerIds": sorted(set(targets)),
+                "attackerPlayerIds": attackers,
+                "targetPlayerIds": targets,
                 "startedAtMs": min(
                     battle["firstContributionAtMsByPlayer"][str(player_id)]
-                    for player_id in side
+                    for player_id in attackers
+                    if str(player_id) in battle["firstContributionAtMsByPlayer"]
                 ),
                 "locationContext": "enemy_base" if base_owner in targets else "neutral_or_contested",
                 "baseOwnerPlayerId": base_owner,
                 "modelVersion": ENGAGEMENT_MODEL_VERSION,
-                "scope": "overlapping allied offensive participation; no coordination-intent claim",
+                "scope": (
+                    "two or more allied contributors have pairwise interaction evidence "
+                    "against the same opposing player; no coordination-intent claim"
+                ),
             })
     return results
 
@@ -475,7 +456,6 @@ def _standalone_reinforcements(
             continue
         candidates[(int(helper), supported)].append({
             "atMs": at_ms,
-            "action": event.get("sourceActionName"),
             "selectedIds": sorted({
                 int(instance)
                 for instance in (event.get("objectInstanceIds") or [])
@@ -491,8 +471,8 @@ def _standalone_reinforcements(
     episodes: list[dict[str, Any]] = []
     for (helper, supported), rows in sorted(candidates.items()):
         rows.sort(key=lambda row: (row["atMs"], row.get("sourceEventId") or ""))
-        current: list[dict[str, Any]] = []
         groups: list[list[dict[str, Any]]] = []
+        current: list[dict[str, Any]] = []
         for row in rows:
             if current and row["atMs"] - current[-1]["atMs"] > REINFORCEMENT_EPISODE_GAP_MS:
                 groups.append(current)
@@ -503,9 +483,7 @@ def _standalone_reinforcements(
 
         for group in groups:
             selected = {
-                instance
-                for row in group
-                for instance in row["selectedIds"]
+                instance for row in group for instance in row["selectedIds"]
             }
             if len(group) < 2 and len(selected) < 3:
                 continue
@@ -522,20 +500,57 @@ def _standalone_reinforcements(
                 ],
                 "baseSeed": group[0]["baseSeed"],
                 "modelVersion": ENGAGEMENT_MODEL_VERSION,
-                "scope": (
-                    "high-confidence allied military-control evidence inside the supported player's "
-                    "TC-anchored base and outside an active defensive battle"
-                ),
             })
 
     episodes.sort(key=lambda row: (
-        row["startedAtMs"],
-        row["helperPlayerId"],
-        row["supportedPlayerId"],
+        row["startedAtMs"], row["helperPlayerId"], row["supportedPlayerId"],
     ))
     for index, episode in enumerate(episodes, start=1):
         episode["reinforcementId"] = f"reinforcement-{index}"
     return episodes
+
+
+def _relationship_summary(
+    *,
+    player_id: int,
+    skirmishes: list[dict[str, Any]],
+    battles: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: dict[int, dict[str, Any]] = {}
+
+    def touch(opponent: int) -> dict[str, Any]:
+        return rows.setdefault(opponent, {
+            "opponentPlayerId": opponent,
+            "skirmishesTogether": 0,
+            "mutualSkirmishes": 0,
+            "battlesTogether": 0,
+            "skirmishIds": [],
+            "battleIds": [],
+        })
+
+    for skirmish in skirmishes:
+        for pair in skirmish.get("opponentInteractionPairs") or []:
+            ids = pair.get("playerIds") or []
+            if player_id not in ids or len(ids) != 2:
+                continue
+            opponent = ids[0] if ids[1] == player_id else ids[1]
+            row = touch(int(opponent))
+            row["skirmishesTogether"] += 1
+            row["skirmishIds"].append(skirmish["skirmishId"])
+            if pair.get("mutualHostileEvidence"):
+                row["mutualSkirmishes"] += 1
+
+    for battle in battles:
+        for pair in battle.get("opponentInteractionPairs") or []:
+            ids = pair.get("playerIds") or []
+            if player_id not in ids or len(ids) != 2:
+                continue
+            opponent = ids[0] if ids[1] == player_id else ids[1]
+            row = touch(int(opponent))
+            row["battlesTogether"] += 1
+            row["battleIds"].append(battle["battleId"])
+
+    return [rows[key] for key in sorted(rows)]
 
 
 def project_engagement_statistics(
@@ -545,13 +560,12 @@ def project_engagement_statistics(
     initial_objects: Iterable[dict[str, Any]],
     build_events: Iterable[dict[str, Any]],
     action_events: Iterable[dict[str, Any]],
-    fight_statistics: dict[str, Any],
+    skirmish_statistics: dict[str, Any],
     raid_statistics: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     participants = _participants(manifest)
     initial_objects = list(initial_objects)
     action_events = list(action_events)
-    owners = _initial_owners(initial_objects)
     zones_by_player = build_base_zones(
         manifest=manifest,
         catalog=catalog,
@@ -559,15 +573,15 @@ def project_engagement_statistics(
         build_events=build_events,
     )
     raids = _all_raids(raid_statistics)
+    skirmishes = list(skirmish_statistics.get("episodes") or [])
 
     battles: list[dict[str, Any]] = []
-    for fight in fight_statistics.get("episodes", []):
-        battle = _battle_from_fight(
+    for skirmish in skirmishes:
+        battle = _battle_from_skirmish(
             index=len(battles) + 1,
-            fight=fight,
+            skirmish=skirmish,
             action_events=action_events,
             participants=participants,
-            owners=owners,
             zones_by_player=zones_by_player,
             raids=raids,
         )
@@ -575,48 +589,67 @@ def project_engagement_statistics(
             battle["battleId"] = f"battle-{len(battles) + 1}"
             battles.append(battle)
 
-    defensive = _defensive_assistance(battles, participants)
-    cooperative = _cooperative_attacks(battles, participants)
-    reinforcement = _standalone_reinforcements(
-        action_events=action_events,
-        participants=participants,
-        zones_by_player=zones_by_player,
-        battles=battles,
-    )
+    ally_applicability = _ally_interaction_applicability(manifest)
+    if ally_applicability["status"] == "applicable":
+        defensive = _defensive_assistance(battles, participants)
+        cooperative = _cooperative_attacks(battles, participants)
+        reinforcement = _standalone_reinforcements(
+            action_events=action_events,
+            participants=participants,
+            zones_by_player=zones_by_player,
+            battles=battles,
+        )
+    else:
+        defensive = []
+        cooperative = []
+        reinforcement = []
 
     results: dict[str, dict[str, Any]] = {}
     for player_id in sorted(participants):
-        player_battles = [
-            battle for battle in battles
-            if player_id in battle["participantPlayerIds"]
+        player_skirmishes = [
+            row for row in skirmishes if player_id in row.get("participantPlayerIds", [])
         ]
-        great_battles = [battle for battle in player_battles if battle["greatBattle"]]
+        player_battles = [
+            row for row in battles if player_id in row.get("participantPlayerIds", [])
+        ]
+        great_battles = [row for row in player_battles if row["greatBattle"]]
+
         reinforcements_sent = [
-            event for event in reinforcement if event["helperPlayerId"] == player_id
+            row for row in reinforcement if row["helperPlayerId"] == player_id
         ]
         reinforcements_received = [
-            event for event in reinforcement if event["supportedPlayerId"] == player_id
+            row for row in reinforcement if row["supportedPlayerId"] == player_id
         ]
         defensive_given = [
-            event for event in defensive if event["helperPlayerId"] == player_id
+            row for row in defensive if row["helperPlayerId"] == player_id
         ]
         defensive_received = [
-            event for event in defensive if event["defendedPlayerId"] == player_id
+            row for row in defensive if row["defendedPlayerId"] == player_id
         ]
         cooperative_for_player = [
-            event for event in cooperative if player_id in event["attackerPlayerIds"]
+            row for row in cooperative if player_id in row["attackerPlayerIds"]
         ]
 
+        ally_values_available = ally_applicability["status"] == "applicable"
         results[str(player_id)] = {
             "engagementModelVersion": ENGAGEMENT_MODEL_VERSION,
+            "skirmishModelVersion": skirmish_statistics.get("modelVersion"),
+            "skirmishes": len(player_skirmishes),
             "battlesFought": len(player_battles),
             "greatBattlesFought": len(great_battles),
-            "allyReinforcementsSent": len(reinforcements_sent),
-            "allyReinforcementsReceived": len(reinforcements_received),
-            "defensiveAssistsGiven": len(defensive_given),
-            "defensiveAssistsReceived": len(defensive_received),
-            "cooperativeAttacks": len(cooperative_for_player),
+            "allyInteractionApplicability": ally_applicability,
+            "allyReinforcementsSent": len(reinforcements_sent) if ally_values_available else None,
+            "allyReinforcementsReceived": len(reinforcements_received) if ally_values_available else None,
+            "defensiveAssistsGiven": len(defensive_given) if ally_values_available else None,
+            "defensiveAssistsReceived": len(defensive_received) if ally_values_available else None,
+            "cooperativeAttacks": len(cooperative_for_player) if ally_values_available else None,
+            "relationshipInteractionSummary": _relationship_summary(
+                player_id=player_id,
+                skirmishes=player_skirmishes,
+                battles=player_battles,
+            ),
             "engagementEvidence": {
+                "skirmishes": player_skirmishes,
                 "battles": player_battles,
                 "greatBattles": great_battles,
                 "allyReinforcementsSent": reinforcements_sent,
@@ -626,11 +659,13 @@ def project_engagement_statistics(
                 "cooperativeAttacks": cooperative_for_player,
             },
             "engagementScope": (
-                "Battles require reciprocal hostile command contributors. Great Battle is a "
-                "conservative promotion only. Reinforcement/defensive assistance require the "
-                "supported player's TC-anchored base. Cooperative Attack records overlapping "
-                "allied offensive participation without claiming coordination, damage, kills, "
-                "exact army size, or continuous positions."
+                "Skirmish is the broad hostile-command episode. Battle promotes a Skirmish when "
+                "actual command contributors exist on opposing sides; it no longer requires both "
+                "sides to issue a narrow strong-attack command. Pairwise interaction edges track "
+                "which opponents actually overlapped or directly targeted each other for future "
+                "relationship history. Great Battle remains conservative. Ally metrics are null/N/A "
+                "when structurally impossible or when diplomacy-enabled FFA relation semantics are "
+                "not yet qualified. No damage, kills, exact army size or continuous-position claim."
             ),
         }
     return results

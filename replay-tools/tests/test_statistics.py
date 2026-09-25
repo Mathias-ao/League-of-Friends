@@ -101,8 +101,11 @@ def statistics_snapshot(result):
                 "raidsInitiated": p["military"]["engagements"]["raidsInitiated"],
                 "raidsAgainstYou": p["military"]["engagements"]["raidsAgainstYou"],
                 "raidModelVersion": p["military"]["engagements"]["modelVersion"],
+                "skirmishes": p["military"]["engagements"]["skirmishes"],
+                "skirmishModelVersion": p["military"]["engagements"]["skirmishModelVersion"],
                 "battlesFought": p["military"]["engagements"]["battlesFought"],
                 "engagementModelVersion": p["military"]["engagements"]["engagementModelVersion"],
+                "allyInteractionApplicability": p["military"]["engagements"]["allyInteractionApplicability"]["status"],
             },
         } for p in result["participants"]],
         "mapPresence": [{

@@ -11,7 +11,9 @@ Date: 13 September 2026. This milestone defines a conservative, replay-free stat
 | Statistics projector | `AOF_CANONICAL_STATISTICS_V1` | Reads canonical artifacts only and emits scoped command evidence, participant command summaries, coverage and warnings. |
 | Formula set | `AOF_OBSERVED_COMMAND_FORMULAS_V1` | Defines command count, first/last command, first-five-observed-minutes, active seconds, rate and selection-size summaries. |
 | Build-order classifier | `AOF_BUILD_ORDER_V2` | Classifies a player's primary opening from age, placement, production and start-position evidence while retaining versioned execution/difficulty scores and trigger evidence. |
-| Raid detector | `AOF_RAID_DETECTION_V1` | Counts directional hostile-command episodes inside time-aware enemy economic zones while retaining attacker, victim and episode evidence. |
+| Raid detector | `AOF_RAID_DETECTION_V3` | Counts directional hostile-command episodes around local enemy economic zones and uses time-aware selected-object control evidence for later-created targeted objects. |
+| Skirmish detector | `AOF_SKIRMISH_DETECTION_V1` | Broad local hostile episodes with participants, sides and pairwise opponent interaction evidence. |
+| Engagement projector | `AOF_ENGAGEMENT_STATISTICS_V2` | Promotes Skirmishes with opposing command contributors to Battles and adds Great Battle / qualified ally interactions. |
 | Economy statistics | `AOF_ECONOMY_STATISTICS_V4` | Projects queue-derived Villager checkpoints, TC placement/activity, eco-tech, Farm, market, food-animal interaction and 20-minute commitment metrics while retaining evidence boundaries. |
 | Entity labels | `AOF_ENTITY_CATALOG_V1_1` | Adds reference names and role keys while retaining raw IDs. Labels are explicitly unqualified for the replay patch/data mods. |
 | Corpus report | `AOF_STATISTICS_CORPUS_V1` | Produces privacy-minimized comparable totals across canonical bundles. |
@@ -58,7 +60,7 @@ The smallest reviewable product candidate is:
 6. resignation command time when present;
 7. directed diplomacy-command history for FFA evidence, with no inferred mutual state;
 8. inferred Build Order from `AOF_BUILD_ORDER_V2`, displayed only when its execution score is strictly greater than 75;
-9. inferred Military engagement counts from `AOF_RAID_DETECTION_V2` and `AOF_ENGAGEMENT_STATISTICS_V1`, stored under `participant.military.engagements`.
+9. inferred Military engagement counts from `AOF_RAID_DETECTION_V3`, `AOF_SKIRMISH_DETECTION_V1` and `AOF_ENGAGEMENT_STATISTICS_V2`, stored under `participant.military.engagements`.
 
 Observed command rate, inactivity, APM variants, broader opening/playstyle labels and recorder-camera measures should remain internal until formula, completeness and comparability policies are selected. Reference entity names may be displayed only alongside raw IDs or after patch/mod qualification.
 
@@ -74,7 +76,7 @@ Fast Castle scoring is 100 at or before 14:00, declines to 75 at 17:00, and can 
 
 All thresholds, difficulty values, execution scores and precedence rules are model parameters, not replay facts. Changing them requires a successor rule version if historical outputs must remain reproducible.
 
-## Raid inference: `AOF_RAID_DETECTION_V2`
+## Raid inference: `AOF_RAID_DETECTION_V3`
 
 Raids are Military engagement statistics. They are stored with the other engagement outputs under `participant.military.engagements`, not in a separate Combat category. Each raid episode has exactly one attacker and one victim. Ambiguous victim attribution is discarded rather than guessed.
 
@@ -177,7 +179,7 @@ V5 preserves V4 Enemy Progress geometry and evidence boundaries, but replaces TC
 V6 changes only starting-scout command attribution over the V5 spatial model. The committed save-68 paired duel demonstrates that `MOVE`/`ORDER` selected object IDs decoded by the pinned fast parser can appear as `instanceId << 16`. For this inferred metric only, a decoded MOVE/ORDER ID is normalized when its low 16 bits are zero and its upper 16 bits exactly match an already-established starting-scout candidate. Canonical `objectInstanceIds` are never rewritten. Empty/implicit selections are excluded rather than inherited. The real-fixture regression produces 45 positioned scout commands for player 1 (38 normalized MOVE/ORDER + 7 directly decoded PATROL) and 36 for player 2 (36 normalized MOVE), matching the reviewed comparison control. No equivalent normalization is applied to `SPECIAL` or other action families without separate qualification. V6 uses a versioned 3.25-tile effective route corridor; on the same replay the resulting coverage is 15.38% for player 1 and 9.83% for player 2 versus the reviewed comparison values 15.3% and 10.4%. This radius is an inferred spatial proxy parameter, not a claim about literal unit line of sight or fog-of-war visibility.
 
 
-## Execution and Fight Detection V1
+## Execution context over Skirmish Detection V1
 
 `AOF_EXECUTION_STATISTICS_V1` separates direct ACTION-clock mechanics from contextual inference.
 
@@ -187,10 +189,10 @@ The decoder does not expose a dedicated GARRISON action. V1 therefore counts a g
 
 `AOF_FIGHT_DETECTION_V1` provides one shared engagement basis for all fight-context Execution metrics. Strong seeds are DE_ATTACK_MOVE, ATTACK_GROUND, and ORDER commands targeting a known enemy initial object. Strong seeds connect when they occur within 20 seconds and 20 tiles. Nearby MOVE/ORDER/PATROL/attack commands may support the episode in a -4s/+8s envelope. An episode must resolve at least two opposing participants. This detects hostile command activity only; it does not simulate combat, health, damage, deaths, live armies, movement or visibility.
 
-Per-player fight windows are unioned before computing total fight time and APM-in-fights to avoid double-counting overlapping inferred episodes. Economy-actions-during-fights uses catalog-qualified economic queue/build/research commands plus market/rally/back-to-work actions and ORDER commands from initially observed economic units. This can undercount later-produced Villager tasking.
+Per-player Skirmish windows are unioned before computing total Skirmish time and APM-in-fights to avoid double-counting overlapping inferred episodes. Economy-actions-during-fights uses catalog-qualified economic queue/build/research commands plus market/rally/back-to-work actions and ORDER commands from initially observed economic units. This can undercount later-produced Villager tasking.
 
-Fight elevation uses the initial canonical terrain elevation raster promoted into `AOF_REPLAY_ANALYSIS_V3`. For each supported fight, the player's average sampled command-coordinate elevation is compared with sampled opposing command-coordinate elevation; the per-fight deltas are then averaged. Positive means higher sampled command ground, negative lower. It is not a claim about exact unit position at attack resolution.
+Fight elevation uses the initial canonical terrain elevation raster promoted into `AOF_REPLAY_ANALYSIS_V3`. For each supported Skirmish, the player's average sampled command-coordinate elevation is compared with sampled opposing command-coordinate elevation; the per-Skirmish deltas are then averaged. Positive means higher sampled command ground, negative lower. It is not a claim about exact unit position at attack resolution.
 
-Disengage moves are inferred from repeated selected-object command destinations inside a fight: a MOVE counts when the same decoded selection previously had a positional command within the fight radius and the new destination increases distance from the fight center by at least eight tiles. This is command intent, not pathing or successful retreat.
+Disengage moves are inferred from repeated selected-object command destinations inside a fight: a MOVE counts when the same decoded selection previously had a positional command within the Skirmish radius and the new destination increases distance from the Skirmish center by at least eight tiles. This is command intent, not pathing or successful retreat.
 
-Raid response reuses `AOF_RAID_DETECTION_V1`. V1 records the first qualifying defender control command within 30 seconds of raid onset and exposes average/median delays plus full evidence. Garrisons-during-raids count conservative garrison orders during the inferred received-raid window plus a 10-second tail. Causal attribution remains inferred.
+Raid response reuses `AOF_RAID_DETECTION_V3`. V1 records the first qualifying defender control command within 30 seconds of raid onset and exposes average/median delays plus full evidence. Garrisons-during-raids count conservative garrison orders during the inferred received-raid window plus a 10-second tail. Causal attribution remains inferred.

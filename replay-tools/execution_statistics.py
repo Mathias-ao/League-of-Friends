@@ -1,4 +1,4 @@
-"""Execution V1 statistics over decoded ACTION evidence and inferred fight/raid windows."""
+"""Execution V1 statistics over decoded ACTION evidence and inferred skirmish/raid windows."""
 from __future__ import annotations
 
 from collections import Counter, defaultdict
@@ -7,7 +7,7 @@ from statistics import median
 from typing import Any, Iterable
 
 from economy_statistics import ECO_TECH_IDS
-from fight_detector import FIGHT_LINK_DISTANCE_TILES
+from skirmish_detector import SKIRMISH_LINK_DISTANCE_TILES, SKIRMISH_MODEL_VERSION
 from raid_detector import RAID_MODEL_VERSION, build_economic_zones
 
 EXECUTION_MODEL_VERSION = "AOF_EXECUTION_STATISTICS_V1"
@@ -249,7 +249,7 @@ def _fight_elevation_delta(
             point = _point(event)
             if point is None:
                 continue
-            if math.hypot(point[0] - center["x"], point[1] - center["y"]) > FIGHT_LINK_DISTANCE_TILES * 1.5:
+            if math.hypot(point[0] - center["x"], point[1] - center["y"]) > SKIRMISH_LINK_DISTANCE_TILES * 1.5:
                 continue
             elevation = _terrain_elevation(terrain, point)
             if elevation is None:
@@ -259,7 +259,7 @@ def _fight_elevation_delta(
             delta = sum(own) / len(own) - sum(enemy) / len(enemy)
             deltas.append(delta)
             evidence.append({
-                "fightId": episode["fightId"],
+                "skirmishId": episode["skirmishId"],
                 "playerAverageElevation": round(sum(own) / len(own), 3),
                 "opponentAverageElevation": round(sum(enemy) / len(enemy), 3),
                 "delta": round(delta, 3),
@@ -306,12 +306,12 @@ def _disengage_moves(
                 before = math.hypot(previous[0] - center["x"], previous[1] - center["y"])
                 after = math.hypot(point[0] - center["x"], point[1] - center["y"])
                 if (
-                    before <= FIGHT_LINK_DISTANCE_TILES
+                    before <= SKIRMISH_LINK_DISTANCE_TILES
                     and after - before >= DISENGAGE_MIN_DELTA_TILES
                 ):
                     count += 1
                     evidence.append({
-                        "fightId": episode["fightId"],
+                        "skirmishId": episode["skirmishId"],
                         "atMs": event["timestampMs"],
                         "distanceBeforeTiles": round(before, 2),
                         "distanceAfterTiles": round(after, 2),
@@ -329,7 +329,7 @@ def project_execution_statistics(
     action_events: Iterable[dict[str, Any]],
     duration_ms: int,
     raid_statistics: dict[str, dict[str, Any]],
-    fight_statistics: dict[str, Any],
+    skirmish_statistics: dict[str, Any],
     military_statistics: dict[str, dict[str, Any]],
     terrain_elevation: dict[str, Any],
     build_events: Iterable[dict[str, Any]],
@@ -426,36 +426,36 @@ def project_execution_statistics(
 
         response_times = [row["responseTimeMs"] for row in response_rows]
 
-        player_fights = list(fight_statistics.get("byPlayer", {}).get(str(player_id), []))
+        player_skirmishes = list(skirmish_statistics.get("byPlayer", {}).get(str(player_id), []))
         intervals = _merge_intervals([
             (fight["startedAtMs"], fight["endedAtMs"])
-            for fight in player_fights
+            for fight in player_skirmishes
         ])
-        fight_duration_ms = sum(end - start for start, end in intervals)
-        fight_actions = [
+        skirmish_duration_ms = sum(end - start for start, end in intervals)
+        skirmish_actions = [
             event for event in rows
             if isinstance(event.get("timestampMs"), int)
             and _inside_intervals(event["timestampMs"], intervals)
         ]
         eco_actions = [
-            event for event in fight_actions
+            event for event in skirmish_actions
             if _is_economy_action(event, catalog, instance_info)
         ]
         elevation_delta, elevation_fights, elevation_evidence = _fight_elevation_delta(
             player_id,
-            episodes=player_fights,
+            episodes=player_skirmishes,
             action_events=action_events,
             participants=participants,
             terrain=terrain_elevation,
         )
         disengage_count, disengage_evidence = _disengage_moves(
             player_id,
-            episodes=player_fights,
+            episodes=player_skirmishes,
             action_events=action_events,
         )
 
         total_minutes = duration_ms / 60_000 if duration_ms > 0 else None
-        fight_minutes = fight_duration_ms / 60_000 if fight_duration_ms > 0 else None
+        skirmish_minutes = skirmish_duration_ms / 60_000 if skirmish_duration_ms > 0 else None
         siege_queued = (
             military_statistics.get(str(player_id), {})
             .get("composition", {})
@@ -500,19 +500,19 @@ def project_execution_statistics(
                 "evidence": response_rows,
             },
             "garrisonsDuringRaids": len(garrisons_during_raids),
-            "fights": {
-                "count": len(player_fights),
-                "firstAtMs": min((row["startedAtMs"] for row in player_fights), default=None),
-                "totalTimeMs": fight_duration_ms,
-                "commandSharePercent": round(len(fight_actions) / len(rows) * 100, 3) if rows else None,
-                "apm": round(len(fight_actions) / fight_minutes, 3) if fight_minutes else None,
+            "skirmishContext": {
+                "firstAtMs": min((row["startedAtMs"] for row in player_skirmishes), default=None),
+                "totalTimeMs": skirmish_duration_ms,
+                "commandSharePercent": round(len(skirmish_actions) / len(rows) * 100, 3) if rows else None,
+                "apm": round(len(skirmish_actions) / skirmish_minutes, 3) if skirmish_minutes else None,
                 "ecoActions": len(eco_actions),
                 "elevationDelta": elevation_delta,
-                "elevationFightCount": elevation_fights,
+                "elevationSkirmishCount": elevation_fights,
                 "disengageMoves": disengage_count,
-                "episodeEvidence": player_fights,
+                "skirmishIds": [row.get("skirmishId") for row in player_skirmishes if row.get("skirmishId")],
                 "elevationEvidence": elevation_evidence,
                 "disengageEvidence": disengage_evidence,
+                "basis": "Execution context over Military Engagement Skirmish windows; authoritative Skirmish count lives under participant.military.engagements",
             },
             "garrisonDetection": {
                 "basis": "ORDER targeting an owned garrison-capable initial structure",
@@ -522,16 +522,17 @@ def project_execution_statistics(
                 ),
                 "limitation": "later-built garrison target instance identity is not reconstructed, so this can undercount",
             },
-            "ecoActionsDuringFightsScope": (
+            "ecoActionsDuringSkirmishesScope": (
                 "economy-classified queue/research/build/market/rally/back-to-work commands plus "
                 "ORDER commands whose selected unit is an initially observed economic unit; later "
                 "villager tasking can undercount because produced-unit instance identity is not reconstructed"
             ),
             "scope": (
                 "APM/action gaps and explicit control counts use decoded ACTION timestamps. Raid and "
-                f"fight-context values intersect those facts with inferred {RAID_MODEL_VERSION} and "
-                "AOF_FIGHT_DETECTION_V1 windows. Fight elevation samples initial terrain at recorded "
-                "command coordinates; disengage moves are command-destination inference, not unit pathing."
+                f"skirmish-context values intersect those facts with inferred {RAID_MODEL_VERSION} and "
+                f"{SKIRMISH_MODEL_VERSION} windows. Skirmish elevation samples initial terrain at recorded "
+                "command coordinates; disengage moves are command-destination inference, not unit pathing. "
+                "The Skirmish event count is exposed only under Military Engagements."
             ),
         }
     return results
