@@ -32,7 +32,7 @@ def event(event_id, actor, at_ms, name, x=None, y=None, selected=(), target=None
 
 
 class ExecutionStatisticsTests(unittest.TestCase):
-    def test_execution_fundamentals_raid_and_fight_context(self):
+    def test_execution_fundamentals_raid_and_skirmish_context(self):
         manifest = {
             "participants": [
                 {"playerId": 1, "lobbyTeamId": 1},
@@ -81,14 +81,14 @@ class ExecutionStatisticsTests(unittest.TestCase):
             "2": {"raidEvidence": {"receivedEpisodes": []}},
         }
         fight = {
-            "fightId": "fight-1",
+            "skirmishId": "skirmish-1",
             "startedAtMs": 20_000,
             "endedAtMs": 26_000,
             "durationMs": 6_000,
             "center": {"x": 50.0, "y": 50.0},
             "participantPlayerIds": [1, 2],
         }
-        fight_statistics = {"byPlayer": {"1": [fight], "2": [fight]}}
+        skirmish_statistics = {"byPlayer": {"1": [fight], "2": [fight]}}
         military = {
             "1": {"composition": {"siege": 2}},
             "2": {"composition": {"siege": 0}},
@@ -106,7 +106,7 @@ class ExecutionStatisticsTests(unittest.TestCase):
             action_events=actions,
             duration_ms=60_000,
             raid_statistics=raid_statistics,
-            fight_statistics=fight_statistics,
+            skirmish_statistics=skirmish_statistics,
             military_statistics=military,
             terrain_elevation={"width": width, "height": height, "values": terrain},
             build_events=[],
@@ -120,10 +120,11 @@ class ExecutionStatisticsTests(unittest.TestCase):
         self.assertEqual(result["townBellUses"], 1)
         self.assertEqual(result["garrisonsDuringRaids"], 1)
         self.assertEqual(result["raidResponse"]["averageSeconds"], 3.0)
-        self.assertEqual(result["fights"]["count"], 1)
-        self.assertEqual(result["fights"]["ecoActions"], 1)
-        self.assertEqual(result["fights"]["disengageMoves"], 1)
-        self.assertIsNotNone(result["fights"]["elevationDelta"])
+        self.assertNotIn("fights", result)
+        self.assertEqual(result["skirmishContext"]["skirmishIds"], ["skirmish-1"])
+        self.assertEqual(result["skirmishContext"]["ecoActions"], 1)
+        self.assertEqual(result["skirmishContext"]["disengageMoves"], 1)
+        self.assertIsNotNone(result["skirmishContext"]["elevationDelta"])
         self.assertEqual(result["attackGroundPerQueuedSiege"], 0.5)
 
 
