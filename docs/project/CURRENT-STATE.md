@@ -1,12 +1,12 @@
 # Age of Friends — Current State
 
-Last reviewed: 25 September 2026
+Last reviewed: 26 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
 ## Current focus
 
-The active workstream is the player-facing statistics stack and its integration into the website.
+The active workstream is the player-facing statistics stack and its integration into the website. Battle measurement is now close to AoF v1 freeze; remaining statistics work is validation, final player-facing selection, and persistence/UI wiring rather than a redesign of the replay-truth architecture.
 
 The replay pipeline produces replay-derived statistics across **Opening, Economy, Military, Map Presence and Execution**. Technical code/docs still use Match/Game terminology, while the player-facing statistics hierarchy is now **Battle → Event → Player → Season**. Lifetime aggregation remains underneath but is intentionally hidden from the Season I UI. Player currencies, Playstyle Sliders and pair Relationships remain separate rule-driven interpretation systems.
 
