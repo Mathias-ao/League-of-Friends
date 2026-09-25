@@ -1,13 +1,14 @@
 """Broad command-derived Skirmish detection for Military Engagements.
 
-Skirmish is the high-recall engagement episode used by player-facing Military
-statistics and by Execution context metrics. It describes local hostile command
-activity, not engine combat resolution, damage, deaths, live army state or exact
-continuous positions.
+IMPORTANT COMPATIBILITY CONTRACT:
+Skirmish V1 is a player-facing rename/relocation of the former
+AOF_FIGHT_DETECTION_V1 episode detector. The episode-forming logic, thresholds,
+participant inclusion, timestamps and therefore count are intentionally kept
+identical. Extra multiplayer relationship evidence is attached only after an
+episode has already been formed and must not change Skirmish detection.
 
-The detector also retains pairwise interaction evidence so multiplayer
-engagements can later feed relationship history without assuming that every
-participant fought every other participant.
+The model does not claim damage, deaths, unit survival, actual pathing, or
+engine combat resolution.
 """
 from __future__ import annotations
 
@@ -16,12 +17,15 @@ import math
 from typing import Any, Iterable
 
 SKIRMISH_MODEL_VERSION = "AOF_SKIRMISH_DETECTION_V1"
+SKIRMISH_COMPATIBILITY_BASIS = "AOF_FIGHT_DETECTION_V1_RENAME_ONLY"
 SKIRMISH_LINK_GAP_MS = 20_000
 SKIRMISH_LINK_DISTANCE_TILES = 20.0
 SKIRMISH_SUPPORT_BEFORE_MS = 4_000
 SKIRMISH_SUPPORT_AFTER_MS = 8_000
 SKIRMISH_MIN_WINDOW_MS = 5_000
 
+# Relationship-only attribution is deliberately tighter than episode formation.
+# These thresholds MUST NOT affect whether a Skirmish exists.
 PAIR_LINK_GAP_MS = 12_000
 PAIR_LINK_DISTANCE_TILES = 14.0
 
@@ -38,16 +42,6 @@ def _same_team(a: dict[str, Any], b: dict[str, Any]) -> bool:
     return isinstance(left, int) and isinstance(right, int) and left > 0 and left == right
 
 
-def _is_enemy(
-    left_id: int,
-    right_id: int,
-    participants: dict[int, dict[str, Any]],
-) -> bool:
-    if left_id == right_id or left_id not in participants or right_id not in participants:
-        return False
-    return not _same_team(participants[left_id], participants[right_id])
-
-
 def _point(event: dict[str, Any]) -> tuple[float, float] | None:
     pos = event.get("position") or {}
     x, y = pos.get("x"), pos.get("y")
@@ -56,16 +50,25 @@ def _point(event: dict[str, Any]) -> tuple[float, float] | None:
     return float(x), float(y)
 
 
-def _control_ledger(
+def _initial_owners(initial_objects: Iterable[dict[str, Any]]) -> dict[int, int]:
+    owners: dict[int, int] = {}
+    for event in initial_objects:
+        payload = event.get("payload") or {}
+        instance = payload.get("instanceId")
+        owner = payload.get("ownerPlayerId")
+        if isinstance(instance, int) and isinstance(owner, int):
+            owners[instance] = owner
+    return owners
+
+
+def _controller_ledger(
     initial_objects: Iterable[dict[str, Any]],
     action_events: Iterable[dict[str, Any]],
 ) -> dict[int, list[tuple[int, int, int, str]]]:
-    """Time-aware observed controller evidence for object instance IDs.
+    """Observed controller-at-time evidence used only for relationship edges.
 
-    Initial ownership is the first observation. Later selections are strong
-    evidence that the action actor controls that instance at that timestamp.
-    This intentionally says controller, not permanent owner, so conversions can
-    naturally replace earlier evidence.
+    This ledger is intentionally NOT used to seed or merge Skirmishes, preserving
+    exact AOF_FIGHT_DETECTION_V1 episode behavior.
     """
     ledger: dict[int, list[tuple[int, int, int, str]]] = defaultdict(list)
     for event in initial_objects:
@@ -109,54 +112,56 @@ def _controller_at(
     return (best[2], best[3]) if best is not None else None
 
 
+def _is_enemy(
+    left_id: int,
+    right_id: int,
+    participants: dict[int, dict[str, Any]],
+) -> bool:
+    if left_id == right_id or left_id not in participants or right_id not in participants:
+        return False
+    return not _same_team(participants[left_id], participants[right_id])
+
+
 def _strong_observations(
     *,
     manifest: dict[str, Any],
-    action_events: list[dict[str, Any]],
-    control_ledger: dict[int, list[tuple[int, int, int, str]]],
+    initial_objects: Iterable[dict[str, Any]],
+    action_events: Iterable[dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    """Exact former Fight V1 seed logic, renamed only."""
     participants = _participants(manifest)
+    owners = _initial_owners(initial_objects)
     rows: list[dict[str, Any]] = []
     for event in action_events:
         actor = event.get("actorPlayerId")
         at_ms = event.get("timestampMs")
-        ordinal = event.get("operationOrdinal")
         point = _point(event)
         action = event.get("sourceActionName")
         if actor not in participants or not isinstance(at_ms, int) or point is None:
             continue
-        order = int(ordinal) if isinstance(ordinal, int) else 0
         victim = None
-        victim_basis = None
         strength = None
         if action in STRONG_ACTIONS:
             strength = "strong_positional"
         elif action == "ORDER":
-            resolved = _controller_at(
-                control_ledger,
-                event.get("targetInstanceId"),
-                at_ms=at_ms,
-                operation_ordinal=order,
-            )
-            if resolved is not None and _is_enemy(int(actor), resolved[0], participants):
-                victim = resolved[0]
-                victim_basis = resolved[1]
+            target = event.get("targetInstanceId")
+            target_owner = owners.get(target) if isinstance(target, int) else None
+            if isinstance(target_owner, int) and _is_enemy(int(actor), target_owner, participants):
+                victim = target_owner
                 strength = "strong_targeted"
         if strength is None:
             continue
         rows.append({
             "atMs": at_ms,
-            "operationOrdinal": order,
             "actorPlayerId": int(actor),
             "targetVictimPlayerId": victim,
-            "targetVictimBasis": victim_basis,
             "x": point[0],
             "y": point[1],
             "action": action,
             "strength": strength,
             "sourceEventId": event.get("eventId"),
         })
-    rows.sort(key=lambda row: (row["atMs"], row["operationOrdinal"], row.get("sourceEventId") or ""))
+    rows.sort(key=lambda row: (row["atMs"], row.get("sourceEventId") or ""))
     return rows
 
 
@@ -225,10 +230,39 @@ def _side_groups(
 
 def _pairwise_edges(
     *,
-    seeds: list[dict[str, Any]],
-    support: list[dict[str, Any]],
+    episode: dict[str, Any],
+    action_events: list[dict[str, Any]],
     participants: dict[int, dict[str, Any]],
+    controller_ledger: dict[int, list[tuple[int, int, int, str]]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Attach relationship evidence without changing the Skirmish itself."""
+    center = episode["center"]
+    rows: list[dict[str, Any]] = []
+    for event in action_events:
+        actor = event.get("actorPlayerId")
+        at_ms = event.get("timestampMs")
+        point = _point(event)
+        action = event.get("sourceActionName")
+        if actor not in episode["participantPlayerIds"] or action not in SUPPORTING_ACTIONS:
+            continue
+        if not isinstance(at_ms, int) or point is None:
+            continue
+        if not (episode["startedAtMs"] <= at_ms <= episode["endedAtMs"]):
+            continue
+        if math.hypot(point[0] - center["x"], point[1] - center["y"]) > SKIRMISH_LINK_DISTANCE_TILES:
+            continue
+        rows.append({
+            "atMs": at_ms,
+            "operationOrdinal": int(event.get("operationOrdinal") or 0),
+            "actorPlayerId": int(actor),
+            "x": point[0],
+            "y": point[1],
+            "action": action,
+            "targetInstanceId": event.get("targetInstanceId"),
+            "sourceEventId": event.get("eventId"),
+        })
+    rows.sort(key=lambda row: (row["atMs"], row["operationOrdinal"], row.get("sourceEventId") or ""))
+
     directed: dict[tuple[int, int], dict[str, Any]] = {}
 
     def add_edge(
@@ -264,27 +298,35 @@ def _pairwise_edges(
         if confidence == "high":
             edge["confidence"] = "high"
 
-    # Explicit targeted hostile control is the strongest pair attribution.
-    for row in seeds:
-        victim = row.get("targetVictimPlayerId")
-        if isinstance(victim, int):
+    # Later-created target control can strengthen who-fought-whom evidence, but
+    # it is deliberately not allowed to create extra Skirmishes.
+    for row in rows:
+        if row["action"] != "ORDER":
+            continue
+        resolved = _controller_at(
+            controller_ledger,
+            row.get("targetInstanceId"),
+            at_ms=row["atMs"],
+            operation_ordinal=row["operationOrdinal"],
+        )
+        if resolved is None:
+            continue
+        target_player, basis = resolved
+        if _is_enemy(row["actorPlayerId"], target_player, participants):
             add_edge(
                 row["actorPlayerId"],
-                victim,
+                target_player,
                 at_ms=row["atMs"],
-                method="targeted_controlled_object",
+                method=f"targeted_controlled_object:{basis}",
                 source_event_id=row.get("sourceEventId"),
                 action=row.get("action"),
                 confidence="high",
             )
 
-    # For positional combat evidence, only pair opposing contributors whose
-    # commands are tightly local in both time and space. This avoids turning all
-    # participants in a large multiplayer episode into an all-to-all rivalry.
-    contributions = seeds + support
-    contributions.sort(key=lambda row: (row["atMs"], row.get("operationOrdinal", 0)))
-    for index, left in enumerate(contributions):
-        for right in contributions[index + 1:]:
+    # Positional pair attribution is tighter than Skirmish formation and never
+    # manufactures all-to-all rivalry from multiplayer co-participation.
+    for index, left in enumerate(rows):
+        for right in rows[index + 1:]:
             dt = right["atMs"] - left["atMs"]
             if dt > PAIR_LINK_GAP_MS:
                 break
@@ -360,14 +402,15 @@ def detect_skirmishes(
     participants = _participants(manifest)
     initial_objects = list(initial_objects)
     action_events = list(action_events)
-    ledger = _control_ledger(initial_objects, action_events)
     strong = _strong_observations(
         manifest=manifest,
+        initial_objects=initial_objects,
         action_events=action_events,
-        control_ledger=ledger,
     )
+    controller_ledger = _controller_ledger(initial_objects, action_events)
     episodes: list[dict[str, Any]] = []
 
+    # This block intentionally mirrors AOF_FIGHT_DETECTION_V1 exactly.
     for component in _components(strong):
         seeds = [strong[index] for index in component]
         first = min(row["atMs"] for row in seeds)
@@ -385,7 +428,6 @@ def detect_skirmishes(
         for event in action_events:
             actor = event.get("actorPlayerId")
             at_ms = event.get("timestampMs")
-            ordinal = event.get("operationOrdinal")
             action = event.get("sourceActionName")
             point = _point(event)
             if actor not in participants or action not in SUPPORTING_ACTIONS:
@@ -398,7 +440,6 @@ def detect_skirmishes(
                 continue
             support.append({
                 "atMs": at_ms,
-                "operationOrdinal": int(ordinal) if isinstance(ordinal, int) else 0,
                 "actorPlayerId": int(actor),
                 "x": point[0],
                 "y": point[1],
@@ -415,30 +456,21 @@ def detect_skirmishes(
         ]
         center_x = sum(point[0] for point in all_points) / len(all_points)
         center_y = sum(point[1] for point in all_points) / len(all_points)
-        observed_start = min([first] + [row["atMs"] for row in support] if support else [first])
+        started = min([first] + [row["atMs"] for row in support] if support else [first])
         observed_end = max([last] + [row["atMs"] for row in support] if support else [last])
-        ended = max(observed_end, observed_start + SKIRMISH_MIN_WINDOW_MS)
-        contributing_ids = sorted({
-            row["actorPlayerId"] for row in seeds + support
-        })
-        directed_edges, interaction_pairs = _pairwise_edges(
-            seeds=seeds,
-            support=support,
-            participants=participants,
-        )
+        ended = max(observed_end, started + SKIRMISH_MIN_WINDOW_MS)
 
         episodes.append({
             "skirmishId": None,
-            "startedAtMs": observed_start,
+            "startedAtMs": started,
             "endedAtMs": ended,
-            "observedEndedAtMs": observed_end,
-            "durationMs": ended - observed_start,
+            "durationMs": ended - started,
             "center": {"x": round(center_x, 2), "y": round(center_y, 2)},
             "participantPlayerIds": sorted(player_ids),
-            "contributingPlayerIds": contributing_ids,
+            "contributingPlayerIds": sorted({
+                row["actorPlayerId"] for row in seeds + support
+            }),
             "sidePlayerIds": _side_groups(player_ids, participants),
-            "directedInteractionEdges": directed_edges,
-            "opponentInteractionPairs": interaction_pairs,
             "strongCommandCount": len(seeds),
             "supportingCommandCount": len(support),
             "sourceEventIds": sorted({
@@ -447,11 +479,20 @@ def detect_skirmishes(
                 if row.get("sourceEventId")
             }),
             "modelVersion": SKIRMISH_MODEL_VERSION,
+            "compatibilityBasis": SKIRMISH_COMPATIBILITY_BASIS,
         })
 
     episodes.sort(key=lambda row: (row["startedAtMs"], row["center"]["x"], row["center"]["y"]))
     for index, episode in enumerate(episodes, start=1):
         episode["skirmishId"] = f"skirmish-{index}"
+        directed_edges, interaction_pairs = _pairwise_edges(
+            episode=episode,
+            action_events=action_events,
+            participants=participants,
+            controller_ledger=controller_ledger,
+        )
+        episode["directedInteractionEdges"] = directed_edges
+        episode["opponentInteractionPairs"] = interaction_pairs
 
     by_player: dict[str, list[dict[str, Any]]] = {}
     for player_id in sorted(participants):
@@ -461,6 +502,7 @@ def detect_skirmishes(
 
     return {
         "modelVersion": SKIRMISH_MODEL_VERSION,
+        "compatibilityBasis": SKIRMISH_COMPATIBILITY_BASIS,
         "episodes": episodes,
         "byPlayer": by_player,
         "thresholds": {
@@ -473,17 +515,16 @@ def detect_skirmishes(
             "pairLinkDistanceTiles": PAIR_LINK_DISTANCE_TILES,
         },
         "scope": (
-            "broad local hostile command episodes; targeted controlled-object orders, "
-            "attack-move and attack-ground seed episodes while nearby movement/order/patrol "
-            "can support them. Time-aware selected-object control evidence improves later-created "
-            "target attribution. Pairwise interaction edges require direct target evidence or "
-            "tight opposing command overlap; no damage, kill, live-army or continuous-position claim"
+            "player-facing rename of AOF_FIGHT_DETECTION_V1 with identical episode formation; "
+            "targeted initial-object orders, attack-move and attack-ground seed episodes while "
+            "nearby movement/order/patrol can support them. Multiplayer pair evidence is attached "
+            "after detection and cannot change the Skirmish count. No damage, kill, live-army or "
+            "continuous-position claim"
         ),
     }
 
 
-# Compatibility alias for internal callers while the old Fight name is retired
-# from player-facing statistics.
+# Compatibility aliases for internal code still importing the historical names.
 detect_fights = detect_skirmishes
 FIGHT_MODEL_VERSION = SKIRMISH_MODEL_VERSION
 FIGHT_LINK_DISTANCE_TILES = SKIRMISH_LINK_DISTANCE_TILES
