@@ -111,7 +111,8 @@ class RaidDetectorTests(unittest.TestCase):
         self.assertEqual(result["1"]["raidsInitiated"], 1)
         self.assertEqual(result["2"]["raidsAgainstYou"], 1)
         episode = result["1"]["raidEvidence"]["initiatedEpisodes"][0]
-        self.assertIn("target_instance_owner", episode["victimResolutionMethods"])
+        self.assertIn("economic_target_instance", episode["victimResolutionMethods"])
+        self.assertEqual(episode["economicTargetTypes"], ["villager"])
 
     def test_plain_movement_inside_enemy_economy_does_not_create_a_raid(self):
         result = detect(actions=[
