@@ -59,7 +59,7 @@ def initial_objects(p2=(80, 80), p3=(20, 80)):
     ]
 
 
-def action(event_id, attacker, at_ms, action_name, x, y, target_instance=None):
+def action(event_id, attacker, at_ms, action_name, x, y, target_instance=None, selected=None):
     return {
         "eventId": event_id,
         "sourceOperation": "ACTION",
@@ -68,7 +68,7 @@ def action(event_id, attacker, at_ms, action_name, x, y, target_instance=None):
         "targetInstanceId": target_instance,
         "timestampMs": at_ms,
         "position": {"x": x, "y": y},
-        "objectInstanceIds": [9001, 9002],
+        "objectInstanceIds": list(selected or [attacker * 1000 + 1, attacker * 1000 + 2]),
     }
 
 
@@ -113,6 +113,17 @@ class RaidDetectorTests(unittest.TestCase):
         episode = result["1"]["raidEvidence"]["initiatedEpisodes"][0]
         self.assertIn("economic_target_instance", episode["victimResolutionMethods"])
         self.assertEqual(episode["economicTargetTypes"], ["villager"])
+
+    def test_later_created_target_owner_is_reconstructed_from_prior_control(self):
+        result = detect(actions=[
+            action("p2-controls-new", 2, 8 * 60_000, "MOVE", 80, 80, selected=[9999]),
+            action("p1-targets-new", 1, 9 * 60_000, "ORDER", 80, 80, target_instance=9999),
+        ])
+        self.assertEqual(result["1"]["raidsInitiated"], 1)
+        self.assertEqual(result["2"]["raidsAgainstYou"], 1)
+        episode = result["1"]["raidEvidence"]["initiatedEpisodes"][0]
+        self.assertIn("target_instance_controller", episode["victimResolutionMethods"])
+        self.assertEqual(episode["strongCommandCount"], 1)
 
     def test_plain_movement_inside_enemy_economy_does_not_create_a_raid(self):
         result = detect(actions=[
