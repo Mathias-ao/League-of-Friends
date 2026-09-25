@@ -132,6 +132,9 @@ class RaidDetectorTests(unittest.TestCase):
         self.assertEqual(episode["commandCount"], 3)
         self.assertEqual(episode["strongCommandCount"], 1)
         self.assertEqual(episode["supportingCommandCount"], 2)
+        self.assertEqual(episode["firstObservedAtMs"], 10 * 60_000)
+        self.assertEqual(episode["startedAtMs"], 10 * 60_000 + 20_000)
+        self.assertEqual(episode["endedAtMs"], 10 * 60_000 + 40_000)
 
     def test_commands_within_sixty_seconds_are_one_raid_then_new_episode_after_gap(self):
         result = detect(actions=[
