@@ -10,6 +10,17 @@ The active workstream is the player-facing statistics stack and its integration 
 
 The replay pipeline produces replay-derived statistics across **Opening, Economy, Military, Map Presence and Execution**. Technical code/docs still use Match/Game terminology, while the player-facing statistics hierarchy is now **Battle → Event → Player → Season**. Lifetime aggregation remains underneath but is intentionally hidden from the Season I UI. Player currencies, Playstyle Sliders and pair Relationships remain separate rule-driven interpretation systems.
 
+The **Player profile structure is now considered settled for AoF v1; remaining work is visual polish, data wiring and rule configuration rather than another structural redesign.** The accepted profile hierarchy is:
+
+- engraved stone identity header with portrait, player name, reputation-title slot, Won/Lost/Win Rate;
+- **Novitiate / “Identity still being forged”** as the initial title state until a later reputation title is supported;
+- a horizontal **Deeds** strip directly below the header;
+- a 50/50 desktop row for **Patterns of Play** and **Reputation**;
+- Patterns of Play hidden behind an eligibility state until **3 eligible Battles** exist, after which the five evidence-based sliders may be shown;
+- Reputation presented as three distinct evolving insignia families — **Gallantry, Chivalry and Treachery** — rather than fill meters; visual rank/frame evolution may reflect point progression, but exact thresholds remain unapproved;
+- **Shared History** below Reputation as compact viewer-relative Allies / Enemies counts;
+- a horizontal side-scrolling **Battle Record** rail containing Battles only.
+
 | Statistics section | State |
 |---|---|
 | Battle Statistics | Replay/statistics foundation implemented; Battle presentation pending |
@@ -18,7 +29,7 @@ The replay pipeline produces replay-derived statistics across **Opening, Economy
 | Lifetime Stats | Aggregation foundation implemented; intentionally hidden from Season I UI |
 | Player currencies | Gallantry/Treachery/Chivalry boundary defined; earning rules intentionally unconfigured |
 | Pair relationships | Pair History foundation implemented; current engine uses superseded Enemy/Friend semantics and needs migration to Rivalry/Hostility/Bond |
-| Individual Player Stats + Playstyle Sliders | Configurable engine implemented; slider rules/normalization intentionally unconfigured |
+| Individual Player Stats + Playstyle Sliders | Configurable engine implemented; profile presentation structure anchored; slider rules/normalization intentionally unconfigured |
 
 [`CURRENT-STATS.md`](CURRENT-STATS.md) is the concise source of truth for statistics status. [`../design/statistics-experience.md`](../design/statistics-experience.md) defines the Battle/Event/Player/Season presentation contract. [`../architecture/longitudinal-systems-v1.md`](../architecture/longitudinal-systems-v1.md) defines the separation between measurement and product judgment.
 
@@ -106,6 +117,19 @@ The engine accepts normalized 0-100 longitudinal metrics plus an explicit versio
 
 No default slider catalogue, weights, thresholds or normalization population are authoritative yet.
 
+### AoF v1 Player Portraits
+
+The AoF v1 portrait direction is approved at the product level even though its evidence thresholds and family mapping rules are not yet configured.
+
+- Use existing **AoE2: Definitive Edition unit portrait/icon frames** as the v1 portrait asset language rather than waiting for bespoke player artwork.
+- Every player begins as a **Villager**.
+- Portraits evolve from sustained replay evidence toward the player’s dominant military family.
+- A cavalry/knight-heavy player is the reference progression example: **Villager → cavalry-family imagery → Knight → Cavalier → Paladin** as the identity becomes increasingly established.
+- Recent Games establish current preference; lifetime evidence stabilizes the identity so one unusual Game or short run does not cause rapid portrait switching.
+- Minimum samples, confidence requirements, upgrade/change resistance and the exact mapping from unit-family evidence to portrait tiers still require explicit product-owner rules.
+- Portrait progression is separate from reputation titles. **Novitiate / “Identity still being forged”** is the initial title presentation; later reputation titles may occupy that slot without changing the portrait progression model.
+- Clothing, weapons, headgear and bespoke cosmetic evolution remain independent future layers and are not required for AoF v1.
+
 ### Pair History and Relationships
 
 `functions/src/engines/relationshipEngine.ts` implements:
@@ -133,6 +157,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - Lifetime Statistics persistence and Playstyle presentation are not yet wired end to end.
 - Pair History currently persists match/team/result history but not replay-derived directional interaction signals.
 - Playstyle normalization and slider definitions/weights remain undecided. Gallantry/Treachery/Chivalry earning rules and Rivalry/Hostility/Bond derivation/stages are also intentionally undecided.
+- The **v1 portrait visual direction is approved**, but the exact military-family progression map, thresholds, confidence rules and persistence/reversion behavior are not yet configured. Do not infer those values from the example Knight → Cavalier → Paladin path.
 
 ## Systems pending broader statistics work
 
@@ -144,7 +169,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 | War Room | Challenge/query foundations exist; legacy automatic opening is no longer part of relationship processing. | Explicit future product decision after relationship rules are approved. |
 | Achievements | Processing scaffolding exists; final catalogue and triggers are not frozen. | Stable match/lifetime statistics and product rules. |
 | Awards and trophies | Direction exists; earning rules remain pending. | Stable match, event, season and lifetime statistics. |
-| Player portraits / playstyle | Slider engine foundation exists; actual identity model is unconfigured. | Product-owner slider definitions, normalized inputs, weights and sample rules. |
+| Player portraits / playstyle | Profile structure and AoF v1 unit-portrait direction are approved; slider engine foundation exists; portrait rules and slider interpretation remain unconfigured. | Define portrait family mappings/thresholds/sample stability rules plus player slider inputs/weights/normalization. |
 
 ## Other implementation state
 
@@ -153,7 +178,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 | Firebase backend | Node.js/TypeScript functions, Firestore rules/indexes, Google authentication mapping, Emperor's Favor admission and emulator support exist. | Production deployment and complete replay/statistics orchestration. |
 | Results | Submission, administrator resolution, disputes, corrections and revision foundations exist. | Replay-derived automatic result qualification and downstream invalidation. |
 | Processing | Repeat-safe jobs exist for several downstream systems; Pair History now uses the existing `RIVALRIES` step. | Wire current Match Statistics and Lifetime aggregation into versioned rebuild/storage jobs. |
-| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data; drafted Battles now support progressive event-day entry, team-organized civilization muster, civilization reference detail and completed Battle Orders. | Present Match/Lifetime statistics and, once configured, identity and relationship outputs. |
+| Player website | React/TypeScript client exists and consumes authenticated league/event/match/profile data; drafted Battles support progressive event-day entry and the player-profile structure is implemented on `feat/statistics-identity-experience` with only polish/data-rule wiring remaining. | Persist and present real Match/Lifetime/identity outputs, finalize portrait asset integration, and configure the still-open rule systems. |
 
 ## Immediate priorities
 
@@ -162,9 +187,10 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 3. Wire `AOF_LIFETIME_STATISTICS_V1` to persisted Match Statistics and durable rebuild/storage.
 4. Feed replay-derived directional Match Statistics into `AOF_PAIR_HISTORY_V1` once backend Match Statistics persistence exists.
 5. Build the Battle/Event/Player/Season presentation around the shared five-category vocabulary, including up to 3 curated Battle feats, 4–6 Event distinctions and the complete Season record book.
-6. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
-7. Define Gallantry / Treachery / Chivalry earning rules separately from Rivalry / Hostility / Bond relationship derivation, stages and War Room visibility.
-8. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
+6. Polish the now-anchored Player profile and integrate the AoF v1 **Villager → dominant military-family unit portrait** progression using existing AoE2DE unit portrait/icon frames; do not invent the mapping thresholds before they are approved.
+7. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
+8. Define Gallantry / Treachery / Chivalry earning rules separately from Rivalry / Hostility / Bond relationship derivation, stages and War Room visibility.
+9. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
 
 ## Task guidance
 
@@ -174,7 +200,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - Inspect latest `main` before describing behavior as implemented.
 - Keep observed facts, deterministic reconstruction, inferred analysis and league interpretation separate.
 - Keep model/rule versions attached to inferred, reconstructed and interpreted outputs.
-- Do not introduce default slider weights, relationship points or stage thresholds without explicit product-owner approval.
+- Do not introduce default slider weights, relationship points, reputation-insignia thresholds or portrait progression thresholds without explicit product-owner approval.
 - Update this file when a major implementation state or priority changes.
 
 ## Specialist sources
@@ -194,4 +220,6 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - Map Presence V6: buffered Scout Coverage @5:00 with attribution diagnostics; Eco Camps include Mill/Folwark + Lumber/Mining Camps; Expansion Zones cluster remote qualifying economy/territorial placements and preserve Home/Mid-map/Forward sectors; pairwise enemy-base-contact evidence remains available for relationship analysis.
 
 - Map Presence V6 repairs Scout Coverage @5:00 attribution for the qualified save-68 MOVE/ORDER selected-ID shift defect while preserving original parser facts. The committed paired-duel regression now reproduces the reviewed 45/36 scout-command control counts; implicit empty selections remain excluded. The V6 coverage corridor is 3.25 tiles, producing 15.38% / 9.83% on that replay versus the reviewed 15.3% / 10.4% control.
-\n- Analysis Dataset V3 adds compact terrain elevation to the disposable analysis cache so fight-context statistics can be recalculated from sealed CanonicalReplay without reparsing the original recording.\n- Execution V1 is now reviewable in Replay Lab with paired AoF/TownBell columns. Direct command metrics are high-confidence observations; raid response, fights, elevation and disengagement remain explicitly inferred.\n
+
+- Analysis Dataset V3 adds compact terrain elevation to the disposable analysis cache so fight-context statistics can be recalculated from sealed CanonicalReplay without reparsing the original recording.
+- Execution V1 is now reviewable in Replay Lab with paired AoF/TownBell columns. Direct command metrics are high-confidence observations; raid response, fights, elevation and disengagement remain explicitly inferred.
