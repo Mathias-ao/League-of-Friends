@@ -222,17 +222,17 @@ export function toLifetimeGameInput(boundBattle, winner) {
         opening: {
           buildOrder: stats.buildOrder?.label ?? null,
           executionScore: finiteOrNull(stats.buildOrder?.executionScore),
-          feudalAgeUpAtMs: finiteOrNull(opening.feudalAgeUpAtMs),
-          castleAgeUpAtMs: finiteOrNull(opening.castleAgeUpAtMs),
-          imperialAgeUpAtMs: finiteOrNull(opening.imperialAgeUpAtMs),
-          firstMilitaryUnitQueuedAtMs: finiteOrNull(opening.firstMilitaryUnitQueuedAtMs),
-          firstMilitaryBuildingAtMs: finiteOrNull(opening.firstMilitaryBuildingAtMs),
-          firstWallAtMs: finiteOrNull(opening.firstWallAtMs),
+          feudalAgeUpAtMs: finiteOrNull(opening.ageUp?.feudal?.ageUpAtMs),
+          castleAgeUpAtMs: finiteOrNull(opening.ageUp?.castle?.ageUpAtMs),
+          imperialAgeUpAtMs: finiteOrNull(opening.ageUp?.imperial?.ageUpAtMs),
+          firstMilitaryUnitQueuedAtMs: finiteOrNull(opening.firstMilitaryUnit?.atMs),
+          firstMilitaryBuildingAtMs: finiteOrNull(opening.firstMilitaryBuilding?.atMs),
+          firstWallAtMs: finiteOrNull(opening.firstWallSegment?.atMs),
           wallTilesBeforeFeudal: finiteOrNull(opening.wallTilesBeforeFeudal),
-          wallStyle: typeof opening.wallStyle === "string" ? opening.wallStyle : null,
+          wallStyle: typeof opening.wallStyle?.label === "string" ? opening.wallStyle.label : null,
           housesBeforeFeudal: finiteOrNull(opening.housesBeforeFeudal),
-          loomAtMs: finiteOrNull(opening.loomAtMs),
-          loomBeforeFeudal: typeof opening.loomBeforeFeudal === "boolean" ? opening.loomBeforeFeudal : null,
+          loomAtMs: finiteOrNull(opening.loom?.atMs),
+          loomBeforeFeudal: typeof opening.loom?.beforeFeudal === "boolean" ? opening.loom.beforeFeudal : null,
         },
         economy: {
           resourceCommitment: resourceInput(commitment),
@@ -243,13 +243,13 @@ export function toLifetimeGameInput(boundBattle, winner) {
           raidsAgainst: finiteOrNull(engagements.raidsAgainstYou),
         },
         mapPresence: {
-          commandMapCoveragePercent: finiteOrNull(map.commandCoveragePercent),
-          enemyBaseFoundAtMs: finiteOrNull(map.enemyBaseContactAtMs),
-          forwardBuildings: finiteOrNull(map.forwardBuildings),
+          commandMapCoveragePercent: finiteOrNull(map.commandMapCoverage?.percent),
+          enemyBaseFoundAtMs: finiteOrNull(map.enemyBaseContact?.atMs),
+          forwardBuildings: countOrNull(map.forwardBuildings),
           forwardEco: countOrNull(map.forwardEco),
-          expansions: countOrNull(map.expansionZones ?? map.expansions),
-          goldControlPercent: finiteOrNull(map.goldControlSharePercent),
-          firstRelicTouchAtMs: finiteOrNull(map.firstRelicTouchAtMs),
+          expansions: countOrNull(map.expansionZones ?? map.expansionTownCenters),
+          goldControlPercent: finiteOrNull(map.goldControl?.controlSharePercent),
+          firstRelicTouchAtMs: finiteOrNull(map.firstRelicTouch?.atMs),
         },
         execution: {
           totalCommands: finiteOrNull(commands.count),
@@ -280,16 +280,16 @@ export function relationshipSignalsForBattle(boundBattle) {
     const stats = source.statistics;
     const engagements = stats.military?.engagements ?? {};
     const map = stats.mapPresence ?? {};
-    const raidVersion = engagements.modelVersion ?? engagements.raidModelVersion ?? "AOF_RAID_DETECTION_V3";
+    const raidVersion = "AOF_RAID_DETECTION_V3";
     const mapVersion = map.modelVersion ?? "AOF_MAP_PRESENCE_V6";
     const forwardEco = map.forwardEco;
     const forwardEcoCount = countOrNull(forwardEco);
     const forwardEcoVersion = forwardEco?.ruleVersion ?? "AOF_FORWARD_ECO_V2";
 
     pushSignal(signals, source.playerId, target.playerId, "RAID", finiteOrNull(engagements.raidsInitiated), raidVersion);
-    pushSignal(signals, source.playerId, target.playerId, "FORWARD_BUILDING", finiteOrNull(map.forwardBuildings), mapVersion);
+    pushSignal(signals, source.playerId, target.playerId, "FORWARD_BUILDING", countOrNull(map.forwardBuildings), mapVersion);
     pushSignal(signals, source.playerId, target.playerId, "FORWARD_ECO", forwardEcoCount, forwardEcoVersion);
-    if (map.enemyBaseContactAtMs != null) {
+    if (map.enemyBaseContact?.atMs != null) {
       pushSignal(signals, source.playerId, target.playerId, "ENEMY_BASE_CONTACT", 1, mapVersion);
     }
   }
