@@ -1,9 +1,9 @@
 import {useRef,useState} from 'react';
-import {ArrowRight,ChevronLeft,ChevronRight,Handshake,Info,Skull,Sparkles,Trophy} from 'lucide-react';
+import {ArrowRight,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
 import {formatName,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {
   FREEHOLDER_TOOLTIP,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES,PLAYER_PERSONALITY_SLIDERS,REPUTATION_ESSENCES,STATISTIC_CATEGORIES,
-  type BattleStatisticsPresentation,type EventStatisticsPresentation,type PlayerIdentityPresentation,type SeasonStatisticsPresentation,type StatisticCategory,type StatisticCategoryBlock
+  type BattleStatisticsPresentation,type EventStatisticsPresentation,type PlayerIdentityPresentation,type ReputationEssenceId,type SeasonStatisticsPresentation,type StatisticCategory,type StatisticCategoryBlock
 } from '../domain/statisticsExperience';
 import {previewBattleStatistics,previewEventStatistics,previewPlayerIdentity,previewSeasonStatistics} from '../data/statisticsPreview';
 import {EventDialog,MatchDialog} from './Views';
@@ -16,6 +16,14 @@ const emptyValues:Record<StatisticCategory,string[]>={
   Military:['Military commitment @20','Army composition','Raids','Engagements','Military infrastructure','Teamplay'],
   'Map Presence':['Scout Coverage @5','Map Coverage','Forward Footprint','Expansion Zones','Enemy Base Contact','Gold Influence','Relic Activity'],
   Execution:['Raw APM','Combat APM','Economy actions during combat','Raid response']
+};
+
+const sliderTermTooltips:Record<string,[string,string]>={
+  'boomer-aggressor':['Builds economy before committing to pressure.','Commits early resources to military pressure.'],
+  'cautious-bold':['Keeps expansion and infrastructure protected.','Establishes forward positions with limited cover.'],
+  'guerrilla-frontline':['Favors raids, mobility and disruption.','Favors direct, sustained engagements.'],
+  'specialist-improviser':['Commits to a narrow plan or composition.','Uses a broad mix of tools and responses.'],
+  'compact-expansive':['Keeps economy and infrastructure concentrated.','Spreads economy and infrastructure across the map.']
 };
 
 function blankCategories():StatisticCategoryBlock[]{
@@ -72,30 +80,45 @@ export function SeasonStatisticsView({snapshot,preview,openPlayer}:{snapshot:Vie
 }
 
 function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
-  return <section className="identity-panel personality-panel"><div className="identity-heading"><div><span className="eyebrow">PLAYER PERSONALITY</span><h3>Patterns of play</h3></div><span className="quiet-badge tooltip-target" tabIndex={0} data-tooltip={`Personality positions use qualified Battles. Sliders are revealed after ${PERSONALITY_MINIMUM_ELIGIBLE_BATTLES}.`}>{identity.eligibleBattles} ELIGIBLE</span></div><div className="personality-sliders">{PLAYER_PERSONALITY_SLIDERS.map(definition=>{
+  const revealed=identity.eligibleBattles>=PERSONALITY_MINIMUM_ELIGIBLE_BATTLES&&identity.sliders.some(slider=>slider.value!=null);
+  const remaining=Math.max(0,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES-identity.eligibleBattles);
+  return <section className="identity-panel personality-panel"><div className="identity-heading"><div><span className="eyebrow">PLAYER PERSONALITY</span><h3>Patterns of play</h3></div>{!revealed&&<span className="quiet-badge tooltip-target tooltip-below" tabIndex={0} data-tooltip={`${identity.eligibleBattles} of ${PERSONALITY_MINIMUM_ELIGIBLE_BATTLES} qualified Battles recorded.`}>{remaining} TO GO</span>}</div>{revealed?<div className="personality-sliders">{PLAYER_PERSONALITY_SLIDERS.map(definition=>{
     const result=identity.sliders.find(slider=>slider.id===definition.id);
-    const ready=result?.value!=null&&identity.eligibleBattles>=PERSONALITY_MINIMUM_ELIGIBLE_BATTLES;
-    const value=ready?Math.round(result!.value!):null;
-    return <div className={'personality-slider tooltip-target '+(!ready?'developing':'')} key={definition.id} tabIndex={0} data-tooltip={definition.question} aria-label={`${definition.left} to ${definition.right}: ${value==null?'developing':value+' out of 100'}`}><div className="personality-labels"><strong>{definition.left}</strong><span>{value==null?'Developing':value+' / 100'}</span><strong>{definition.right}</strong></div><div className="personality-track" aria-hidden="true"><span className="personality-mid"/><i style={{left:value==null?'50%':`${value}%`}}/></div></div>;
-  })}</div></section>;
+    const value=result?.value==null?50:Math.round(result.value);
+    const termHelp=sliderTermTooltips[definition.id];
+    return <div className="personality-slider" key={definition.id} aria-label={`${definition.left} to ${definition.right}: ${result?.value==null?'unrated':value+' out of 100'}`}><div className="personality-labels"><strong className="slider-term tooltip-target tooltip-below" tabIndex={0} data-tooltip={termHelp[0]}>{definition.left}</strong><span>{result?.value==null?'Unrated':value+' / 100'}</span><strong className="slider-term tooltip-target tooltip-below" tabIndex={0} data-tooltip={termHelp[1]}>{definition.right}</strong></div><div className="personality-track" aria-hidden="true"><span className="personality-mid"/><i style={{left:`${value}%`}}/></div></div>;
+  })}</div>:<div className="personality-locked"><strong>Patterns locked</strong><span>{identity.eligibleBattles} / {PERSONALITY_MINIMUM_ELIGIBLE_BATTLES} eligible Battles</span><small>The profile reveals its tendencies once enough Battles exist to support them.</small></div>}</section>;
 }
 
-function ReputationPanel({identity,preview,data}:{identity:PlayerIdentityPresentation;preview:boolean;data:PlayerProfile}){
-  const icons=[Trophy,Handshake,Skull];
-  const reputationTooltip=identity.reputation.archetype==='Freeholder'?FREEHOLDER_TOOLTIP:identity.reputation.tooltip;
-  const deeds=preview?[
-    {label:'Most common opening',value:'Scout Rush',note:'Opening'},
-    {label:'Military family',value:'Cavalry',note:'Military'},
-    {label:'Fastest Castle',value:'16:42',note:'Personal record'},
-    {label:'Raids initiated',value:'11',note:'Pressure'}
-  ]:data.achievements.slice(0,4).map(item=>({label:item.name,value:'Earned',note:item.description}));
-  return <section className="identity-panel reputation-panel"><div className="identity-heading"><div><span className="eyebrow">REPUTATION</span><h3>{identity.reputation.archetype}</h3></div><span className="reputation-info tooltip-target" tabIndex={0} data-tooltip={reputationTooltip} aria-label={reputationTooltip}><Info size={15}/></span></div><div className="reputation-crests">{REPUTATION_ESSENCES.map((definition,index)=>{
+function reputationRankStage(intensity:number|null,preview:boolean){
+  if(!preview||intensity==null||intensity<=0)return 0;
+  if(intensity>=75)return 4;
+  if(intensity>=50)return 3;
+  if(intensity>=25)return 2;
+  return 1;
+}
+
+function ReputationEmblem({id}:{id:ReputationEssenceId}){
+  if(id==='gallantry')return <svg className="reputation-emblem gallantry-emblem" viewBox="0 0 100 100" aria-hidden="true"><path className="emblem-line" d="M31 20c7-7 12-10 19-10s12 3 19 10M36 23c2 8 7 12 14 12s12-4 14-12"/><path className="emblem-fill" d="M37 36c-8 4-11 11-8 18 2 4 6 6 10 6-6 5-5 13 1 17 4 3 8 2 11-1 3 3 8 4 12 1 6-4 7-12 1-17 5 0 9-2 11-6 3-7 0-14-8-18-6-3-24-3-30 0Z"/><path className="emblem-line" d="M44 59c-1 8-2 14-5 21M56 59c1 8 2 14 5 21M45 46c3 2 7 2 10 0"/><circle cx="44" cy="48" r="1.5"/><circle cx="56" cy="48" r="1.5"/></svg>;
+  if(id==='chivalry')return <svg className="reputation-emblem chivalry-emblem" viewBox="0 0 100 100" aria-hidden="true"><circle className="emblem-ring" cx="50" cy="50" r="37"/><path className="emblem-fill" d="M45 14h10l-2 22 15-16 8 8-18 14 24-2v12l-24-2 18 14-8 8-15-16 2 24H45l2-24-15 16-8-8 18-14-24 2V40l24 2-18-14 8-8 15 16-2-22Z"/><circle className="emblem-ring inner" cx="50" cy="50" r="27"/></svg>;
+  return <svg className="reputation-emblem treachery-emblem" viewBox="0 0 100 100" aria-hidden="true"><path className="emblem-line bones" d="M24 72 73 35M27 34l47 39"/><path className="emblem-fill cap" d="M29 31c5-12 15-18 28-18 10 0 18 3 25 10l-5 8H29Z"/><path className="emblem-line" d="M33 30c11 5 27 5 41 0M45 22h24"/><path className="emblem-fill skull" d="M32 39c0-10 8-17 19-17 12 0 21 7 21 18 0 8-4 13-10 16v12l-8 6-8-6-7 4-7-6V55c-1-4 0-10 0-16Z"/><circle className="skull-eye" cx="44" cy="44" r="5"/><circle className="skull-eye" cx="61" cy="44" r="5"/><path className="skull-cut" d="m52 50-4 8h8l-4-8ZM43 64h18"/></svg>;
+}
+
+type SharedHistorySummary={playerName:string;allied:number|null;opposed:number|null};
+
+function SharedHistory({summary}:{summary:SharedHistorySummary}){
+  return <div className="profile-shared-history"><span className="eyebrow">SHARED HISTORY</span><div className="shared-history-numbers"><div className="tooltip-target tooltip-above" tabIndex={0} data-tooltip={`Battles where you and ${summary.playerName} fought on the same side.`}><strong>{summary.allied??'—'}</strong><span>Allies</span></div><div className="tooltip-target tooltip-above" tabIndex={0} data-tooltip={`Battles where you and ${summary.playerName} fought on opposing sides.`}><strong>{summary.opposed??'—'}</strong><span>Enemies</span></div></div></div>;
+}
+
+function ReputationPanel({identity,preview,sharedHistory}:{identity:PlayerIdentityPresentation;preview:boolean;sharedHistory:SharedHistorySummary}){
+  return <section className="identity-panel reputation-panel"><div className="identity-heading"><span className="eyebrow">REPUTATION</span><span className="reputation-info tooltip-target tooltip-below" tabIndex={0} data-tooltip="Three independent reputations earned through league deeds." aria-label="About reputation"><Info size={15}/></span></div><div className="reputation-crests">{REPUTATION_ESSENCES.map(definition=>{
     const value=identity.reputation.essences.find(item=>item.id===definition.id);
     const intensity=value?.intensity??null;
-    const Icon=icons[index];
-    const points=value?.careerPoints==null?'Career points pending':`${value.careerPoints} career points${value.seasonPoints==null?'':` · +${value.seasonPoints} this season`}`;
-    return <article className={'reputation-crest reputation-'+definition.tone+' tooltip-target '+(intensity==null?'unrated':'')} key={definition.id} tabIndex={0} data-tooltip={`${definition.meaning}. ${points}.`} aria-label={`${definition.label}: ${intensity==null?'unrated':Math.round(intensity)+' out of 100'}`}><div className="crest-frame"><div className="crest-charge" style={{height:`${intensity==null?0:Math.max(6,intensity)}%`}}/><span className="crest-icon"><Icon size={24}/></span><strong className="crest-score">{intensity==null?'—':Math.round(intensity)}</strong></div><strong className="crest-label">{definition.label}</strong><span className="crest-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
-  })}</div><div className="deeds-heading"><span className="eyebrow">DEEDS</span>{preview&&<span className="quiet-badge">ILLUSTRATIVE</span>}</div>{deeds.length?<div className="deeds-list">{deeds.map(deed=><article className="tooltip-target" tabIndex={0} data-tooltip={deed.note} key={deed.label}><strong>{deed.value}</strong><small>{deed.label}</small></article>)}</div>:<div className="deeds-awaiting tooltip-target" tabIndex={0} data-tooltip="Evidence-backed deeds appear as qualified Battle Statistics accumulate."><strong>Chronicle unwritten</strong></div>}</section>;
+    const stage=reputationRankStage(intensity,preview);
+    const points=value?.careerPoints==null?'Points pending':`${value.careerPoints} career points${value.seasonPoints==null?'':` · +${value.seasonPoints} this season`}`;
+    const stageText=stage===0?'Unformed insignia':`Illustrative insignia stage ${stage}`;
+    return <article className={`reputation-crest reputation-${definition.id} rank-${stage}`} key={definition.id}><div className="crest-frame tooltip-target tooltip-below" tabIndex={0} data-tooltip={`${stageText}. ${points}.`} aria-label={`${definition.label}: ${points}`}><span className="crest-rank-ornaments" aria-hidden="true"><i/><i/><i/><i/></span><ReputationEmblem id={definition.id}/></div><strong className="crest-label tooltip-target tooltip-above" tabIndex={0} data-tooltip={definition.meaning}>{definition.label}</strong><span className="crest-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
+  })}</div><SharedHistory summary={sharedHistory}/></section>;
 }
 
 function playerIdentity(data:PlayerProfile,preview:boolean):PlayerIdentityPresentation{
@@ -106,9 +129,20 @@ function playerIdentity(data:PlayerProfile,preview:boolean):PlayerIdentityPresen
   };
 }
 
-export function PlayerIdentityExperience({data,preview}:{data:PlayerProfile;preview:boolean}){
+export function PlayerIdentityExperience({data,preview,sharedHistory}:{data:PlayerProfile;preview:boolean;sharedHistory?:SharedHistorySummary}){
   const identity=playerIdentity(data,preview);
-  return <section className="player-identity-experience"><div className="identity-layout"><PersonalityPanel identity={identity}/><ReputationPanel identity={identity} preview={preview} data={data}/></div></section>;
+  const history=sharedHistory??{playerName:data.player.steamName,allied:null,opposed:null};
+  return <section className="player-identity-experience"><div className="identity-layout"><PersonalityPanel identity={identity}/><ReputationPanel identity={identity} preview={preview} sharedHistory={history}/></div></section>;
+}
+
+function ProfileDeedsBar({data,preview}:{data:PlayerProfile;preview:boolean}){
+  const deeds=preview?[
+    {label:'Most common opening',value:'Scout Rush',note:'Opening'},
+    {label:'Military family',value:'Cavalry',note:'Military'},
+    {label:'Fastest Castle',value:'16:42',note:'Personal record'},
+    {label:'Raids initiated',value:'11',note:'Pressure'}
+  ]:data.achievements.slice(0,5).map(item=>({label:item.name,value:'Earned',note:item.description}));
+  return <section className="profile-deeds-bar" aria-label="Player deeds"><div className="profile-deeds-title"><span className="eyebrow">DEEDS</span></div>{deeds.length?deeds.map(deed=><article className="profile-deed tooltip-target tooltip-below" tabIndex={0} data-tooltip={deed.note} key={deed.label}><span>{deed.label}</span><strong>{deed.value}</strong></article>):<div className="profile-deed-empty"><strong>Chronicle unwritten</strong></div>}</section>;
 }
 
 function compactDate(value:string|null|undefined){
@@ -119,12 +153,15 @@ function compactDate(value:string|null|undefined){
 function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
   const {data,snapshot,preview,openMatch}=props;
   const battleRail=useRef<HTMLDivElement>(null);
+  const identity=playerIdentity(data,preview);
   const seasonStats=data.activeSeason?.competition??null;
   const winRate=seasonStats&&seasonStats.matchesPlayed>0?Math.round(seasonStats.matchesWon/seasonStats.matchesPlayed*100)+'%':'—';
   const viewerId=snapshot.viewer?.playerId;
   const sharedWithViewer=!!viewerId&&viewerId!==data.player.playerId;
   const alliedCount=sharedWithViewer?(data.teammates.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
   const opposedCount=sharedWithViewer?(data.opponents.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
+  const sharedHistory:SharedHistorySummary={playerName:data.player.steamName,allied:alliedCount,opposed:opposedCount};
+  const titleLabel=identity.reputation.archetype==='Freeholder'?'Novitiate':identity.reputation.archetype;
   const battles=snapshot.matches.filter(match=>match.participants.some(player=>player.playerId===data.player.playerId)).sort((left,right)=>{
     const leftEvent=snapshot.events.find(event=>event.eventId===left.eventId),rightEvent=snapshot.events.find(event=>event.eventId===right.eventId);
     return (right.completedAt??rightEvent?.startsAt??'').localeCompare(left.completedAt??leftEvent?.startsAt??'');
@@ -132,15 +169,17 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
   const scrollBattles=(direction:-1|1)=>battleRail.current?.scrollBy({left:direction*440,behavior:'smooth'});
   return <section className="player-profile-experience">
     <section className="profile-hero">
-      <div className="profile-portrait-card"><div className="profile-portrait-frame"><Avatar player={data.player} large/></div><span className="eyebrow">NEWCOMER</span></div>
-      <div className="profile-identity-copy"><span className="eyebrow">PERSISTENT LEAGUE IDENTITY</span><h3>{data.player.steamName}</h3><span className="profile-forging-status tooltip-target" tabIndex={0} data-tooltip="Military identity replaces Newcomer when qualified Battle evidence supports it.">Identity still being forged</span></div>
-      <div className="profile-hero-record" aria-label="Current season record and shared history"><div className="profile-record-primary"><div><strong>{seasonStats?.matchesWon??'—'}</strong><span>Won</span></div><div><strong>{seasonStats?.matchesLost??'—'}</strong><span>Lost</span></div><div><strong>{winRate}</strong><span>Win rate</span></div></div>{sharedWithViewer&&<div className="profile-shared-numbers"><div className="tooltip-target" tabIndex={0} data-tooltip={`Battles where you and ${data.player.steamName} fought on the same side.`}><strong>{alliedCount}</strong><span>Allied</span></div><div className="tooltip-target" tabIndex={0} data-tooltip={`Battles where you and ${data.player.steamName} fought on opposing sides.`}><strong>{opposedCount}</strong><span>Opposed</span></div></div>}</div>
+      <div className="profile-portrait-card"><div className="profile-portrait-frame"><Avatar player={data.player} large/></div><strong className="profile-player-name">{data.player.steamName}</strong></div>
+      <div className="profile-identity-copy"><span className="eyebrow">CURRENT TITLE</span><div className="profile-title-slot tooltip-target tooltip-below" tabIndex={0} data-tooltip="This slot becomes the player's reputation title as their league identity develops."><strong>{titleLabel}</strong>{titleLabel==='Novitiate'&&<small>Identity still being forged</small>}</div></div>
+      <div className="profile-hero-record" aria-label="Current season record"><div className="profile-record-primary"><div><strong>{seasonStats?.matchesWon??'—'}</strong><span>Won</span></div><div><strong>{seasonStats?.matchesLost??'—'}</strong><span>Lost</span></div><div><strong>{winRate}</strong><span>Win rate</span></div></div></div>
     </section>
 
-    <PlayerIdentityExperience data={data} preview={preview}/>
+    <ProfileDeedsBar data={data} preview={preview}/>
+
+    <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory}/>
 
     <section className="profile-battle-record">
-      <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span><h3>Battles</h3></div></div>
+      <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span></div></div>
       <div className="battle-carousel-shell">
         <button type="button" className="battle-carousel-arrow previous" aria-label="Scroll earlier Battles" onClick={()=>scrollBattles(-1)}><ChevronLeft size={22}/></button>
         <div className="battle-carousel" ref={battleRail}>
