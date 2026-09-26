@@ -1,0 +1,109 @@
+/* Player profile review refinements. Loaded after statistics-experience.css. */
+
+/* The profile identity row becomes the actual parchment header for player modals. */
+.modal:has(.player-profile-experience){overflow-x:hidden}
+.modal:has(.player-profile-experience) .modal-heading{position:absolute;inset:0 0 auto 0;height:0;min-height:0;padding:0;border:0;background:transparent;box-shadow:none;overflow:visible;z-index:30}
+.modal:has(.player-profile-experience) .modal-heading h2{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.modal:has(.player-profile-experience) .modal-heading .icon-button{position:absolute;top:16px;right:18px;z-index:32;color:#4b3925;border-color:rgba(70,48,27,.24);background:rgba(239,222,185,.28)}
+.modal:has(.player-profile-experience) .modal-heading .icon-button:hover{background:rgba(75,53,31,.1);color:#2e2217}
+.modal:has(.player-profile-experience) .modal-body{padding-top:0;overflow-x:clip}
+.player-profile-experience{min-width:0}
+.player-profile-experience .profile-hero{position:sticky;top:0;z-index:20;margin:0 -26px .8rem;padding:12px 62px 12px 22px;min-height:118px;display:grid;grid-template-columns:112px minmax(190px,1fr) minmax(360px,1.05fr);gap:18px;align-items:center;border:0;border-bottom:1px solid rgba(78,53,29,.4);background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0) 54%),linear-gradient(90deg,#e3d0a6 0%,#d5bf93 48%,#ead9b6 100%);box-shadow:0 9px 24px rgba(0,0,0,.24),inset 0 -1px rgba(255,255,255,.25);color:#342619}
+.player-profile-experience .profile-portrait-card{min-height:0;padding:0;border:0;background:transparent;gap:.3rem}
+.player-profile-experience .profile-portrait-frame{width:70px;height:76px;border-color:rgba(69,48,29,.48);background:linear-gradient(180deg,#3c3a33,#24251f);box-shadow:0 0 0 4px rgba(82,57,31,.12),inset 0 0 0 3px rgba(219,193,139,.08)}
+.player-profile-experience .profile-portrait-frame .avatar.large{width:58px;height:58px;font-size:1.42rem}
+.player-profile-experience .profile-portrait-card>.eyebrow{color:#5e4c38;letter-spacing:.09em}
+.player-profile-experience .profile-identity-copy{justify-content:center;align-items:flex-start}
+.player-profile-experience .profile-identity-copy>.eyebrow{display:none}
+.player-profile-experience .profile-identity-copy h3{margin:0 0 .42rem;color:#302317;font-size:1.78rem;text-shadow:0 1px rgba(255,255,255,.35)}
+.player-profile-experience .profile-forging-status{padding:.28rem .48rem;border-color:rgba(79,55,31,.34);background:rgba(79,55,31,.06);color:#4c3925;font-size:.63rem}
+.player-profile-experience .profile-hero-record{align-self:stretch;border-left:1px solid rgba(75,52,29,.22);grid-template-rows:1fr auto;min-width:0;color:#3d2e20}
+.player-profile-experience .profile-record-primary>div,.player-profile-experience .profile-shared-numbers>div{border-right-color:rgba(75,52,29,.16)}
+.player-profile-experience .profile-record-primary strong{color:#4a3823;font-size:1.42rem}
+.player-profile-experience .profile-record-primary span,.player-profile-experience .profile-shared-numbers span{color:#6e5a43}
+.player-profile-experience .profile-shared-numbers{grid-template-columns:minmax(96px,.9fr) repeat(2,minmax(70px,1fr));border-top-color:rgba(75,52,29,.22);background:rgba(84,59,33,.055);min-height:46px}
+.player-profile-experience .profile-shared-numbers:before{content:'SHARED HISTORY';display:grid;place-items:center;padding:.45rem .5rem;border-right:1px solid rgba(75,52,29,.16);font:600 .58rem Cinzel,serif;letter-spacing:.085em;color:#69553d;text-align:center}
+.player-profile-experience .profile-shared-numbers strong{color:#4b3925;font-size:.94rem}
+.player-profile-experience .profile-shared-numbers>div:first-of-type span{font-size:0}
+.player-profile-experience .profile-shared-numbers>div:first-of-type span:after{content:'ALLIES';font-size:.58rem}
+.player-profile-experience .profile-shared-numbers>div:last-of-type span{font-size:0}
+.player-profile-experience .profile-shared-numbers>div:last-of-type span:after{content:'ENEMIES';font-size:.58rem}
+.player-profile-experience .profile-hero-record:not(:has(.profile-shared-numbers)):after{content:'SHARED HISTORY   ·   — ALLIES   ·   — ENEMIES';display:grid;place-items:center;min-height:46px;padding:.45rem .55rem;border-top:1px solid rgba(75,52,29,.22);background:rgba(84,59,33,.055);font:600 .58rem Cinzel,serif;letter-spacing:.07em;color:#69553d;text-align:center}
+
+/* Pattern statistics stay hidden until their three-Battle evidence threshold is met. */
+.personality-panel:has(.personality-slider.developing){display:grid;grid-template-rows:auto 1fr;min-height:322px}
+.personality-panel:has(.personality-slider.developing) .personality-sliders{display:none}
+.personality-panel:has(.personality-slider.developing):after{content:'PATTERNS LOCKED\A 3 ELIGIBLE BATTLES REQUIRED';white-space:pre-line;align-self:stretch;display:grid;place-items:center;text-align:center;padding:1.2rem;border:1px solid rgba(191,157,86,.18);background:radial-gradient(circle at 50% 45%,rgba(191,157,86,.08),transparent 56%),rgba(0,0,0,.08);font:600 .76rem/1.8 Cinzel,serif;letter-spacing:.09em;color:#bfa66e}
+.personality-panel:has(.personality-slider.developing) .identity-heading .quiet-badge{padding:.42rem .62rem;border-color:rgba(191,157,86,.36);background:rgba(191,157,86,.08);font-size:.64rem}
+.personality-panel:not(:has(.personality-slider.developing)) .identity-heading .quiet-badge{display:none}
+
+/* Slider explanations belong to the exact endpoint term, not the entire slider. */
+.personality-slider.tooltip-target:after{display:none!important}
+.personality-slider.tooltip-target{cursor:default}
+.personality-labels strong{position:relative;width:max-content;max-width:100%;cursor:help}
+.personality-labels strong:last-child{justify-self:end}
+.personality-labels strong:after{position:absolute;top:calc(100% + 7px);z-index:70;width:max-content;max-width:205px;padding:.38rem .48rem;border:1px solid rgba(191,157,86,.3);background:#171512;color:#ddd4c3;font:500 .62rem/1.32 Inter,sans-serif;letter-spacing:0;text-align:left;white-space:normal;box-shadow:0 8px 22px rgba(0,0,0,.42);opacity:0;pointer-events:none;transition:opacity .12s ease,transform .12s ease}
+.personality-labels strong:first-child:after{left:0;transform:translateY(-3px)}
+.personality-labels strong:last-child:after{right:0;transform:translateY(-3px)}
+.personality-labels strong:hover:after{opacity:1;transform:translateY(0)}
+.personality-slider:nth-child(1) .personality-labels strong:first-child:after{content:'Builds economy before committing to pressure.'}
+.personality-slider:nth-child(1) .personality-labels strong:last-child:after{content:'Commits early resources to military pressure.'}
+.personality-slider:nth-child(2) .personality-labels strong:first-child:after{content:'Keeps expansion and infrastructure protected.'}
+.personality-slider:nth-child(2) .personality-labels strong:last-child:after{content:'Establishes forward positions with limited cover.'}
+.personality-slider:nth-child(3) .personality-labels strong:first-child:after{content:'Favors raids, mobility and disruption.'}
+.personality-slider:nth-child(3) .personality-labels strong:last-child:after{content:'Favors direct, sustained engagements.'}
+.personality-slider:nth-child(4) .personality-labels strong:first-child:after{content:'Commits to a narrow plan or composition.'}
+.personality-slider:nth-child(4) .personality-labels strong:last-child:after{content:'Uses a broad mix of tools and responses.'}
+.personality-slider:nth-child(5) .personality-labels strong:first-child:after{content:'Keeps economy and infrastructure concentrated.'}
+.personality-slider:nth-child(5) .personality-labels strong:last-child:after{content:'Spreads economy and infrastructure across the map.'}
+
+/* Reputation remains graphic; only the exact label explains the concept. */
+.reputation-crest.tooltip-target:after{display:none!important}
+.reputation-crest{cursor:default}
+.reputation-crest:hover,.reputation-crest:focus-visible{border-color:transparent;background:transparent}
+.crest-label{position:relative;display:inline-block;cursor:help}
+.crest-label:after{position:absolute;left:50%;bottom:calc(100% + 7px);z-index:70;width:190px;padding:.38rem .48rem;border:1px solid rgba(191,157,86,.3);background:#171512;color:#ddd4c3;font:500 .62rem/1.32 Inter,sans-serif;text-align:left;white-space:normal;box-shadow:0 8px 22px rgba(0,0,0,.42);opacity:0;pointer-events:none;transform:translate(-50%,3px);transition:opacity .12s ease,transform .12s ease}
+.crest-label:hover:after{opacity:1;transform:translate(-50%,0)}
+.reputation-crest:nth-child(1) .crest-label:after{content:'Daring feats and battlefield renown.'}
+.reputation-crest:nth-child(2) .crest-label:after{content:'Loyalty, aid and shared victories.'}
+.reputation-crest:nth-child(3) .crest-label:after{content:'Deceit, cruelty and hostile acts.'}
+.reputation-info.tooltip-target:after{content:'Overall reputation drawn from qualified league deeds.';left:auto;right:0;top:calc(100% + 7px);bottom:auto;max-width:210px;transform:translateY(-3px)}
+.reputation-info.tooltip-target:hover:after,.reputation-info.tooltip-target:focus-visible:after{transform:translateY(0)}
+
+/* Deeds read as a five-line ledger, even while the chronicle is sparse. */
+.deeds-list{grid-template-columns:1fr!important;gap:.26rem!important;min-height:166px;align-content:start;background:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,rgba(191,157,86,.075) 32px,transparent 33px)}
+.deeds-list article{min-height:30px;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center;gap:.65rem!important;padding:.34rem .46rem!important}
+.deeds-list article>small{grid-column:1;grid-row:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deeds-list article>strong{grid-column:2;grid-row:1;text-align:right;white-space:nowrap}
+.deeds-list article.tooltip-target:after{left:0;right:auto;max-width:220px;transform:translateY(3px)}
+.deeds-list article.tooltip-target:hover:after,.deeds-list article.tooltip-target:focus-visible:after{transform:translateY(0)}
+.deeds-awaiting{min-height:166px;display:flex;align-items:flex-start;padding:.52rem!important;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.04) 0,rgba(0,0,0,.04) 31px,rgba(191,157,86,.075) 32px,rgba(0,0,0,.04) 33px)}
+
+/* Remove the second, redundant Battle Record title. */
+.battle-record-heading h3{display:none}
+.profile-battle-record{gap:.4rem}
+
+/* Tighten remaining contextual tooltips and keep them inside the player modal. */
+.player-profile-experience .tooltip-target:after{max-width:220px;font-size:.62rem;line-height:1.3}
+.player-profile-experience .profile-forging-status.tooltip-target:after{content:'Military identity appears after enough qualified Battle evidence.';left:0;right:auto;top:calc(100% + 7px);bottom:auto;transform:translateY(-3px)}
+.player-profile-experience .profile-forging-status.tooltip-target:hover:after,.player-profile-experience .profile-forging-status.tooltip-target:focus-visible:after{transform:translateY(0)}
+.player-profile-experience .profile-shared-numbers>div.tooltip-target:after{top:calc(100% + 6px);bottom:auto;transform:translate(-50%,-3px)}
+.player-profile-experience .profile-shared-numbers>div.tooltip-target:hover:after,.player-profile-experience .profile-shared-numbers>div.tooltip-target:focus-visible:after{transform:translate(-50%,0)}
+
+@media(max-width:760px){
+  .player-profile-experience .profile-hero{position:relative;margin:0 -20px .75rem;padding:12px 50px 12px 16px;grid-template-columns:86px minmax(0,1fr);gap:12px}
+  .player-profile-experience .profile-hero-record{grid-column:1/-1;border-left:0;border-top:1px solid rgba(75,52,29,.2)}
+  .player-profile-experience .profile-portrait-frame{width:62px;height:68px}
+  .player-profile-experience .profile-portrait-frame .avatar.large{width:52px;height:52px;font-size:1.25rem}
+  .player-profile-experience .profile-identity-copy h3{font-size:1.45rem}
+  .personality-panel:has(.personality-slider.developing){min-height:250px}
+}
+
+@media(max-width:440px){
+  .player-profile-experience .profile-hero{grid-template-columns:72px minmax(0,1fr);padding-right:46px}
+  .player-profile-experience .profile-record-primary{grid-template-columns:repeat(3,1fr)}
+  .player-profile-experience .profile-shared-numbers{grid-template-columns:1fr 1fr}
+  .player-profile-experience .profile-shared-numbers:before{grid-column:1/-1;border-right:0;border-bottom:1px solid rgba(75,52,29,.16);padding:.3rem}
+  .personality-labels strong:after{max-width:165px}
+  .crest-label:after{width:160px}
+}
