@@ -39,17 +39,19 @@ function projection() {
     displayName: name,
     buildOrder: { label: slot === 1 ? "Scout Rush" : "Fast Castle", executionScore: 82.5 },
     opening: {
-      feudalAgeUpAtMs: 600000,
-      castleAgeUpAtMs: 1200000,
-      imperialAgeUpAtMs: null,
-      firstMilitaryUnitQueuedAtMs: 650000,
-      firstMilitaryBuildingAtMs: 500000,
-      firstWallAtMs: null,
+      modelVersion: "AOF_OPENING_STATISTICS_V5",
+      ageUp: {
+        feudal: { ageUpAtMs: 600000 },
+        castle: { ageUpAtMs: 1200000 },
+        imperial: { ageUpAtMs: null },
+      },
+      firstMilitaryUnit: { atMs: 650000 },
+      firstMilitaryBuilding: { atMs: 500000 },
+      firstWallSegment: { atMs: null },
       wallTilesBeforeFeudal: 0,
-      wallStyle: "open",
+      wallStyle: { label: "open" },
       housesBeforeFeudal: 3,
-      loomAtMs: 480000,
-      loomBeforeFeudal: true,
+      loom: { atMs: 480000, beforeFeudal: true },
     },
     economy: {
       resourceCommitment: {
@@ -64,20 +66,22 @@ function projection() {
     },
     military: {
       engagements: {
-        modelVersion: "AOF_RAID_DETECTION_V3",
+        modelVersion: "AOF_ENGAGEMENT_STATISTICS_V3",
         raidsInitiated: slot === 1 ? 2 : 0,
         raidsAgainstYou: slot === 2 ? 2 : 0,
       },
     },
     mapPresence: {
       modelVersion: "AOF_MAP_PRESENCE_V6",
-      commandCoveragePercent: 20 + slot,
-      enemyBaseContactAtMs: slot === 1 ? 900000 : null,
-      forwardBuildings: slot === 1 ? 3 : 0,
-      forwardEco: slot === 1 ? { count: 1, ruleVersion: "AOF_FORWARD_ECO_V2" } : { count: 0, ruleVersion: "AOF_FORWARD_ECO_V2" },
-      expansionZones: 2,
-      goldControlSharePercent: 55,
-      firstRelicTouchAtMs: null,
+      commandMapCoverage: { percent: 20 + slot },
+      enemyBaseContact: { atMs: slot === 1 ? 900000 : null },
+      forwardBuildings: { count: slot === 1 ? 3 : 0 },
+      forwardEco: slot === 1
+        ? { count: 1, ruleVersion: "AOF_FORWARD_ECO_V2" }
+        : { count: 0, ruleVersion: "AOF_FORWARD_ECO_V2" },
+      expansionZones: { count: 2 },
+      goldControl: { controlSharePercent: 55 },
+      firstRelicTouch: { atMs: null },
     },
     observedCommands: {
       count: 1000,
@@ -129,19 +133,31 @@ test("1v1 result resolves only from a single observed resignation when no overri
   });
 });
 
-test("Battle projection adapts into neutral longitudinal and directional pair inputs", () => {
+test("Battle projection adapts current nested projector output into longitudinal and pair inputs", () => {
   const value = manifest();
   const bound = bindBattleProjection(value, value.battles[0], projection());
   const winner = resolveBattleWinner(value, value.battles[0], bound);
   const lifetime = toLifetimeGameInput(bound, winner);
-  assert.equal(lifetime.players[0].opening.buildOrder, "Scout Rush");
-  assert.equal(lifetime.players[0].economy.resourceCommitment.total, 350);
-  assert.equal(lifetime.players[0].mapPresence.forwardEco, 1);
-  assert.equal(lifetime.players[0].won, true);
+  const player = lifetime.players[0];
+  assert.equal(player.opening.buildOrder, "Scout Rush");
+  assert.equal(player.opening.feudalAgeUpAtMs, 600000);
+  assert.equal(player.opening.castleAgeUpAtMs, 1200000);
+  assert.equal(player.opening.firstMilitaryBuildingAtMs, 500000);
+  assert.equal(player.opening.wallStyle, "open");
+  assert.equal(player.opening.loomAtMs, 480000);
+  assert.equal(player.economy.resourceCommitment.total, 350);
+  assert.equal(player.mapPresence.commandMapCoveragePercent, 21);
+  assert.equal(player.mapPresence.enemyBaseFoundAtMs, 900000);
+  assert.equal(player.mapPresence.forwardBuildings, 3);
+  assert.equal(player.mapPresence.forwardEco, 1);
+  assert.equal(player.mapPresence.expansions, 2);
+  assert.equal(player.mapPresence.goldControlPercent, 55);
+  assert.equal(player.won, true);
 
   const signals = relationshipSignalsForBattle(bound);
-  assert.ok(signals.some((signal) => signal.type === "RAID" && signal.count === 2));
+  assert.ok(signals.some((signal) => signal.type === "RAID" && signal.count === 2 && signal.sourceVersion === "AOF_RAID_DETECTION_V3"));
   assert.ok(signals.some((signal) => signal.type === "FORWARD_BUILDING" && signal.count === 3));
+  assert.ok(signals.some((signal) => signal.type === "FORWARD_ECO" && signal.count === 1 && signal.sourceVersion === "AOF_FORWARD_ECO_V2"));
   assert.ok(signals.some((signal) => signal.type === "ENEMY_BASE_CONTACT" && signal.count === 1));
 
   const pairInput = pairHistoryMatchInput(bound, winner);
