@@ -12,6 +12,7 @@ import './season-gate.css';
 import './league-entry.css';
 import './stone-content.css';
 import './emperors-favor.css';
+import './statistics-experience.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
 import type {LeagueRepository} from './domain/league';
