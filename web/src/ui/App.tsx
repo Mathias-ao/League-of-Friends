@@ -3,13 +3,13 @@ import {ArrowRight,ChevronLeft,ChevronRight,Pause,Play,Shield,Swords,Users,Chart
 import {LeagueEvent,canBrowseLeague,currentLeagueEvent,emptySnapshot,isBattleOpen,type LeagueRepository,type LeagueSnapshot,type Page,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
 import {lombardia,brand} from '../data/content';
 import {Avatar,Modal,Sigil} from './Primitives';
-import {SeasonView,EventsView,BattlesView,PlayersView,StatisticsView,EventDialog,MatchDialog,ProfileDialog} from './Views';
+import {SeasonView,EventsView,BattlesView,PlayersView} from './Views';
+import {SeasonStatisticsView,EventDialogWithStatistics,MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperience';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
   {id:'events',label:'Events',icon:Flag},
   {id:'battles',label:'Battles',icon:Swords},
   {id:'players',label:'Players',icon:Users},
-  {id:'war-room',label:'War Room',icon:Lock,disabled:true},
   {id:'statistics',label:'Statistics',icon:ChartNoAxesCombined}
 ];
 export interface ViewProps {
@@ -142,7 +142,7 @@ export function App({repository}:{repository:LeagueRepository}){
   return <>
     <div className={leagueEntryVisible?'league-entry-underlay':''} inert={leagueEntryVisible}>
       {showContent&&<a className="skip" href="#main-content">Skip to content</a>}
-      {preview&&<div className="preview-bar"><span>DESIGN PREVIEW</span> Sample standings and battles · Changes last only for this visit.</div>}
+      {preview&&<div className="preview-bar"><span>DESIGN PREVIEW</span> Sample standings, battles and statistics · Changes last only for this visit.</div>}
       <div className="landing-stage">
         <header className="site-header"><div className="header-inner">
           <div className="header-action">{eventAction&&<button className="action-ribbon" disabled={busy} onClick={eventAction.run}><Flag size={16}/>{eventAction.label}</button>}</div>
@@ -161,7 +161,7 @@ export function App({repository}:{repository:LeagueRepository}){
           {error&&!leagueEntryVisible&&<div className="alert" role="alert"><span>{error}</span><button onClick={()=>void refresh()}>Retry</button><button aria-label="Dismiss error" onClick={()=>setError('')}>×</button></div>}
           {loading?<div className="loading" role="status"><LoaderCircle className="spin"/>Gathering the banners…</div>:showSeasonGate?
             <SeasonAccessGate gateRef={gateRef} snapshot={snapshot} busy={busy} enter={enter}/>:
-            page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<StatisticsView/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
+            page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<SeasonStatisticsView snapshot={snapshot} preview={preview} openPlayer={openPlayer}/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
         </main>
         <footer className="site-footer"><span>AGE OF FRIENDS · SEASON I</span><span>A private Age of Empires II: DE league</span></footer>
       </div></div>}
@@ -175,9 +175,9 @@ export function App({repository}:{repository:LeagueRepository}){
        dialog.type==='account'?<><div className="account-heading">{snapshot.viewer&&<Avatar player={snapshot.viewer} large/>}<div><h3>{snapshot.viewer?.steamName}</h3><p>{snapshot.membership==='ACTIVE'?'League member':snapshot.membership.toLowerCase()}</p></div></div><p>Your league identity persists between seasons.</p><div className="stack">{snapshot.membership==='ACTIVE'&&<button className="primary" onClick={()=>snapshot.viewer&&openPlayer(snapshot.viewer.playerId)}>View profile</button>}{snapshot.viewer?.role==='ADMIN'&&<button className="primary" onClick={()=>setDialog({type:'favor-admin'})}>Issue Emperor's Favors</button>}<button className="text-button" onClick={()=>void act(()=>repository.signOut(),'Signed out.')}><LogOut size={16}/>Sign out</button></div></>:
        dialog.type==='favor-admin'?<FavorGeneratorForm busy={busy} onGenerate={generateFavors}/>:
        dialog.type==='favors'?<FavorBatchSheet batch={dialog.data}/>:
-       dialog.type==='event'?<EventDialog {...props} data={dialog.data} onUpdated={()=>openEvent(dialog.data.event.eventId)}/>:
-       dialog.type==='match'?<MatchDialog {...props} data={dialog.data} onUpdated={()=>openMatch(dialog.data.match.matchId)}/>:
-       <ProfileDialog {...props} data={dialog.data}/>}
+       dialog.type==='event'?<EventDialogWithStatistics {...props} data={dialog.data} onUpdated={()=>openEvent(dialog.data.event.eventId)}/>:
+       dialog.type==='match'?<MatchDialogWithStatistics {...props} data={dialog.data} onUpdated={()=>openMatch(dialog.data.match.matchId)}/>:
+       <ProfileDialogWithIdentity {...props} data={dialog.data}/>}
     </Modal>}
   </>;
 }
