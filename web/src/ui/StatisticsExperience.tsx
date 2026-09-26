@@ -72,27 +72,30 @@ export function SeasonStatisticsView({snapshot,preview,openPlayer}:{snapshot:Vie
 }
 
 function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
-  return <section className="identity-panel personality-panel"><div className="identity-heading"><div><span className="eyebrow">PLAYER PERSONALITY</span><h3>Patterns of play</h3></div><span className="quiet-badge">{identity.eligibleBattles} ELIGIBLE BATTLES</span></div><div className="personality-sliders">{PLAYER_PERSONALITY_SLIDERS.map(definition=>{
+  return <section className="identity-panel personality-panel"><div className="identity-heading"><div><span className="eyebrow">PLAYER PERSONALITY</span><h3>Patterns of play</h3></div><span className="quiet-badge tooltip-target" tabIndex={0} data-tooltip={`Personality positions use qualified Battles. Sliders are revealed after ${PERSONALITY_MINIMUM_ELIGIBLE_BATTLES}.`}>{identity.eligibleBattles} ELIGIBLE</span></div><div className="personality-sliders">{PLAYER_PERSONALITY_SLIDERS.map(definition=>{
     const result=identity.sliders.find(slider=>slider.id===definition.id);
     const ready=result?.value!=null&&identity.eligibleBattles>=PERSONALITY_MINIMUM_ELIGIBLE_BATTLES;
-    return <div className={'personality-slider '+(!ready?'developing':'')} key={definition.id} title={definition.question}><div className="personality-labels"><strong>{definition.left}</strong><span>{ready?Math.round(result!.value!)+' / 100':'Developing'}</span><strong>{definition.right}</strong></div><div className="personality-track" aria-label={`${definition.left} to ${definition.right}`}><span className="personality-mid"/><i style={ready?{left:`${result!.value}%`}:{left:'50%'}}/></div><p>{definition.question}</p></div>;
-  })}</div>{identity.eligibleBattles<PERSONALITY_MINIMUM_ELIGIBLE_BATTLES&&<p className="identity-footnote">Slider positions are revealed after three eligible Battles.</p>}</section>;
+    const value=ready?Math.round(result!.value!):null;
+    return <div className={'personality-slider tooltip-target '+(!ready?'developing':'')} key={definition.id} tabIndex={0} data-tooltip={definition.question} aria-label={`${definition.left} to ${definition.right}: ${value==null?'developing':value+' out of 100'}`}><div className="personality-labels"><strong>{definition.left}</strong><span>{value==null?'Developing':value+' / 100'}</span><strong>{definition.right}</strong></div><div className="personality-track" aria-hidden="true"><span className="personality-mid"/><i style={{left:value==null?'50%':`${value}%`}}/></div></div>;
+  })}</div></section>;
 }
 
 function ReputationPanel({identity,preview,data}:{identity:PlayerIdentityPresentation;preview:boolean;data:PlayerProfile}){
   const icons=[Trophy,Handshake,Skull];
+  const reputationTooltip=identity.reputation.archetype==='Freeholder'?FREEHOLDER_TOOLTIP:identity.reputation.tooltip;
   const deeds=preview?[
     {label:'Most common opening',value:'Scout Rush',note:'Opening'},
     {label:'Military family',value:'Cavalry',note:'Military'},
     {label:'Fastest Castle',value:'16:42',note:'Personal record'},
     {label:'Raids initiated',value:'11',note:'Pressure'}
   ]:data.achievements.slice(0,4).map(item=>({label:item.name,value:'Earned',note:item.description}));
-  return <section className="identity-panel reputation-panel"><div className="identity-heading"><div><span className="eyebrow">REPUTATION</span><h3>{identity.reputation.archetype}</h3></div><span className="reputation-info" title={identity.reputation.archetype==='Freeholder'?FREEHOLDER_TOOLTIP:identity.reputation.tooltip}><Info size={15}/></span></div><p className="reputation-title-copy">{identity.reputation.archetype==='Freeholder'?FREEHOLDER_TOOLTIP:identity.reputation.tooltip}</p><div className="essence-columns">{REPUTATION_ESSENCES.map((definition,index)=>{
+  return <section className="identity-panel reputation-panel"><div className="identity-heading"><div><span className="eyebrow">REPUTATION</span><h3>{identity.reputation.archetype}</h3></div><span className="reputation-info tooltip-target" tabIndex={0} data-tooltip={reputationTooltip} aria-label={reputationTooltip}><Info size={15}/></span></div><div className="reputation-crests">{REPUTATION_ESSENCES.map((definition,index)=>{
     const value=identity.reputation.essences.find(item=>item.id===definition.id);
-    const intensity=value?.intensity??0;
+    const intensity=value?.intensity??null;
     const Icon=icons[index];
-    return <article className={'essence essence-'+definition.tone} key={definition.id}><div className="essence-vessel"><div className="essence-liquid" style={{height:`${Math.max(4,intensity)}%`}}/><Icon size={18}/><span>{value?.intensity==null?'—':Math.round(value.intensity)}</span></div><strong>{definition.label}</strong><small>{definition.meaning}</small><span className="essence-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
-  })}</div><div className="deeds-heading"><span className="eyebrow">DEEDS</span>{preview&&<span className="quiet-badge">ILLUSTRATIVE</span>}</div>{deeds.length?<div className="deeds-list">{deeds.map(deed=><article key={deed.label}><span>{deed.note}</span><strong>{deed.value}</strong><small>{deed.label}</small></article>)}</div>:<div className="deeds-awaiting"><strong>The chronicle is still unwritten.</strong><span>Evidence-backed deeds will appear as Battle Statistics accumulate.</span></div>}</section>;
+    const points=value?.careerPoints==null?'Career points pending':`${value.careerPoints} career points${value.seasonPoints==null?'':` · +${value.seasonPoints} this season`}`;
+    return <article className={'reputation-crest reputation-'+definition.tone+' tooltip-target '+(intensity==null?'unrated':'')} key={definition.id} tabIndex={0} data-tooltip={`${definition.meaning}. ${points}.`} aria-label={`${definition.label}: ${intensity==null?'unrated':Math.round(intensity)+' out of 100'}`}><div className="crest-frame"><div className="crest-charge" style={{height:`${intensity==null?0:Math.max(6,intensity)}%`}}/><span className="crest-icon"><Icon size={24}/></span><strong className="crest-score">{intensity==null?'—':Math.round(intensity)}</strong></div><strong className="crest-label">{definition.label}</strong><span className="crest-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
+  })}</div><div className="deeds-heading"><span className="eyebrow">DEEDS</span>{preview&&<span className="quiet-badge">ILLUSTRATIVE</span>}</div>{deeds.length?<div className="deeds-list">{deeds.map(deed=><article className="tooltip-target" tabIndex={0} data-tooltip={deed.note} key={deed.label}><strong>{deed.value}</strong><small>{deed.label}</small></article>)}</div>:<div className="deeds-awaiting tooltip-target" tabIndex={0} data-tooltip="Evidence-backed deeds appear as qualified Battle Statistics accumulate."><strong>Chronicle unwritten</strong></div>}</section>;
 }
 
 function playerIdentity(data:PlayerProfile,preview:boolean):PlayerIdentityPresentation{
@@ -115,13 +118,14 @@ function compactDate(value:string|null|undefined){
 
 function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
   const {data,snapshot,preview,openMatch}=props;
-  const [scope,setScope]=useState<'season'|'lifetime'>('season');
   const battleRail=useRef<HTMLDivElement>(null);
   const seasonStats=data.activeSeason?.competition??null;
-  const recordStats=scope==='season'?data.activeSeason?.competition:data.lifetime.competition;
   const winRate=seasonStats&&seasonStats.matchesPlayed>0?Math.round(seasonStats.matchesWon/seasonStats.matchesPlayed*100)+'%':'—';
-  const allBattles=snapshot.matches.filter(match=>match.participants.some(player=>player.playerId===data.player.playerId));
-  const battles=allBattles.filter(match=>scope==='lifetime'||!snapshot.season?.seasonId||!match.seasonId||match.seasonId===snapshot.season.seasonId).sort((left,right)=>{
+  const viewerId=snapshot.viewer?.playerId;
+  const sharedWithViewer=!!viewerId&&viewerId!==data.player.playerId;
+  const alliedCount=sharedWithViewer?(data.teammates.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
+  const opposedCount=sharedWithViewer?(data.opponents.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
+  const battles=snapshot.matches.filter(match=>match.participants.some(player=>player.playerId===data.player.playerId)).sort((left,right)=>{
     const leftEvent=snapshot.events.find(event=>event.eventId===left.eventId),rightEvent=snapshot.events.find(event=>event.eventId===right.eventId);
     return (right.completedAt??rightEvent?.startsAt??'').localeCompare(left.completedAt??leftEvent?.startsAt??'');
   });
@@ -129,20 +133,17 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
   return <section className="player-profile-experience">
     <section className="profile-hero">
       <div className="profile-portrait-card"><div className="profile-portrait-frame"><Avatar player={data.player} large/></div><span className="eyebrow">NEWCOMER</span></div>
-      <div className="profile-identity-copy"><span className="eyebrow">PERSISTENT LEAGUE IDENTITY</span><h3>{data.player.steamName}</h3><p>Your banner outlives a single season.</p><span className="profile-forging-status">Identity still being forged</span><small>Military identity awaits qualified evidence.</small></div>
-      <div className="profile-hero-record" aria-label="Current season record"><div><strong>{seasonStats?.matchesWon??'—'}</strong><span>Won</span></div><div><strong>{seasonStats?.matchesLost??'—'}</strong><span>Lost</span></div><div><strong>{winRate}</strong><span>Win rate</span></div></div>
+      <div className="profile-identity-copy"><span className="eyebrow">PERSISTENT LEAGUE IDENTITY</span><h3>{data.player.steamName}</h3><span className="profile-forging-status tooltip-target" tabIndex={0} data-tooltip="Military identity replaces Newcomer when qualified Battle evidence supports it.">Identity still being forged</span></div>
+      <div className="profile-hero-record" aria-label="Current season record and shared history"><div className="profile-record-primary"><div><strong>{seasonStats?.matchesWon??'—'}</strong><span>Won</span></div><div><strong>{seasonStats?.matchesLost??'—'}</strong><span>Lost</span></div><div><strong>{winRate}</strong><span>Win rate</span></div></div>{sharedWithViewer&&<div className="profile-shared-numbers"><div className="tooltip-target" tabIndex={0} data-tooltip={`Battles where you and ${data.player.steamName} fought on the same side.`}><strong>{alliedCount}</strong><span>Allied</span></div><div className="tooltip-target" tabIndex={0} data-tooltip={`Battles where you and ${data.player.steamName} fought on opposing sides.`}><strong>{opposedCount}</strong><span>Opposed</span></div></div>}</div>
     </section>
 
     <PlayerIdentityExperience data={data} preview={preview}/>
 
-    <section className="profile-history-panel"><div className="profile-section-heading"><div><span className="eyebrow">SHARED HISTORY</span><h3>Companions & enemies</h3></div></div><div className="profile-history-columns"><div><span className="eyebrow">ACROSS THE BATTLEFIELD</span>{data.opponents.length?data.opponents.slice(0,4).map(item=><p key={item.player.playerId}><strong>{item.player.steamName}</strong><span>{item.matchesTogether} encounters · {item.wins}–{item.losses}</span></p>):<p className="muted">No recorded opponents yet.</p>}</div><div><span className="eyebrow">UNDER ONE BANNER</span>{data.teammates.length?data.teammates.slice(0,4).map(item=><p key={item.player.playerId}><strong>{item.player.steamName}</strong><span>{item.matchesTogether} together · {item.wins}–{item.losses}</span></p>):<p className="muted">No recorded teammates yet.</p>}</div></div><p className="profile-history-note">Relationship tracks will grow from validated Battle evidence.</p></section>
-
     <section className="profile-battle-record">
-      <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span><h3>{scope==='season'?'This season':'Lifetime archive'}</h3></div><select aria-label="Player record scope" value={scope} onChange={event=>setScope(event.target.value as 'season'|'lifetime')}><option value="season">This season</option><option value="lifetime">Lifetime</option></select></div>
+      <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span><h3>Battles</h3></div></div>
       <div className="battle-carousel-shell">
         <button type="button" className="battle-carousel-arrow previous" aria-label="Scroll earlier Battles" onClick={()=>scrollBattles(-1)}><ChevronLeft size={22}/></button>
         <div className="battle-carousel" ref={battleRail}>
-          <article className="battle-season-anchor"><span className="eyebrow">{scope==='season'?'THIS SEASON':'ALL RECORDED'}</span><strong>{recordStats?.matchesPlayed??'—'}</strong><small>Battles</small></article>
           {battles.length?battles.map(match=>{
             const event=snapshot.events.find(candidate=>candidate.eventId===match.eventId);
             const subject=match.participants.find(player=>player.playerId===data.player.playerId);
@@ -160,7 +161,7 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
               <small>{formatName(match.format)}</small>
               <span className="profile-battle-date">{compactDate(match.completedAt??event?.startsAt)}</span>
             </button>;
-          }):<div className="profile-battle-empty"><strong>No Battles in this view yet.</strong><span>The archive will fill as qualified results are recorded.</span></div>}
+          }):<div className="profile-battle-empty"><strong>No Battles yet.</strong></div>}
           {battles.length>3&&<span className="battle-carousel-peek" aria-hidden="true"/>}
         </div>
         <button type="button" className="battle-carousel-arrow next" aria-label="Scroll later Battles" onClick={()=>scrollBattles(1)}><ChevronRight size={22}/></button>
