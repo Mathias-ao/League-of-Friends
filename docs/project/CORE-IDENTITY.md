@@ -1,6 +1,6 @@
 # Age of Friends — Core Identity & Philosophy
 
-Status date: 18 September 2026  
+Status date: 26 September 2026  
 Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development
 
 ## 1. How to use this file
@@ -95,12 +95,20 @@ Relationship progression and player point awards must remain traceable to eviden
 
 A player portrait represents a persistent league identity. It develops gradually from sustained evidence, does not react to one unusual Game, and does not reset between seasons.
 
-New players begin in a peasant or newcomer state and graduate after sufficient participation.
-Later identity reflects the player’s dominant military family.
-Recent Games establish current preference, while lifetime evidence provides stability.
-Minimum sample sizes, confidence requirements and resistance to frequent changes prevent one unusual Game from rewriting the portrait.
-Military identity is based only on production or unit evidence the replay extraction system can support reliably.
-Clothing, weapons, headgear and titles are earned separately through league achievements and notable accomplishments.
+**AoF v1 portrait direction is now fixed at the product level:**
+
+- Use existing **Age of Empires II: Definitive Edition unit portrait/icon frames** as the v1 visual language instead of requiring bespoke portrait art.
+- Every new player begins visually as a **Villager**.
+- The portrait then evolves toward the player’s demonstrated dominant military family as enough reliable evidence accumulates.
+- The progression should use recognizable in-game unit steps where the family supports them. A cavalry/knight-heavy player is the reference example: **Villager → cavalry-family imagery → Knight → Cavalier → Paladin** as the identity becomes more established.
+- The exact family mappings, progression thresholds, confidence rules and minimum samples are not yet approved and must not be guessed merely to complete implementation.
+- Recent Games establish current preference, while lifetime evidence provides stability. The system should be responsive enough to reflect a genuine developing identity but resistant to rapid oscillation.
+- One unusual Game must not rewrite the portrait. Minimum sample sizes, confidence requirements and resistance to frequent changes are required before an upgrade or family change.
+- Military identity is based only on production or unit evidence the replay extraction system can support reliably.
+
+The portrait progression is separate from the player’s **reputation title**. In AoF v1 the title slot begins at **Novitiate** / “Identity still being forged” and may later show an earned reputation title without changing the portrait progression rules.
+
+Clothing, weapons, headgear and bespoke cosmetic/title unlock systems remain separate future identity layers. They are not required for the AoF v1 portrait system and should not block the unit-portrait progression.
 
 ## 6. Technical architecture
 
