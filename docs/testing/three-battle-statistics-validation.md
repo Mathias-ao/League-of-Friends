@@ -67,11 +67,15 @@ This strictness is intentional: season win/loss aggregation and Pair History sho
 
 ## Longitudinal interpretation safeguards
 
-The validation adapter follows the current `AOF_OPENING_STATISTICS_V5` nested field shapes rather than maintaining parallel legacy field names. Opening values such as first military unit queued, houses before Feudal, wall tiles before Feudal and Loom timing therefore remain available when Battle statistics are converted into longitudinal inputs.
+The validation adapter follows the current `AOF_OPENING_STATISTICS_V6` nested field shapes rather than maintaining parallel legacy field names. Opening values such as first military unit queued, houses before Feudal, wall tiles before Feudal and Loom timing therefore remain available when Battle statistics are converted into longitudinal inputs.
+
+`AOF_OPENING_STATISTICS_V6` treats **First military building** as the first land-military production building. Naval-only production buildings such as Dock are deliberately excluded because an early Dock is often an economic fishing commitment. Docks and naval production remain available to the independent Naval Rush / Fish Boom opening classifiers.
 
 Resource commitment by age only contributes a sample when that age was actually reached within the observed replay interval. An unreached age is treated as **not applicable**, not as a zero-valued sample. A genuine zero commitment inside an age that was reached remains a valid zero.
 
 Raw first-command timing remains preserved in milliseconds. For interpretation/presentation, `AOF_FIRST_COMMAND_PRESENTATION_V1` treats any first command at or before **0.800 seconds** as `Instant`. This avoids ranking sub-second startup/frame differences as meaningful player skill while retaining the raw observation for evidence.
+
+Selection evidence remains available in each Battle statistics projection for diagnostics and possible future research, but selection-size average/median/maximum are **not promoted into the launch longitudinal validation input**. AoF currently has no approved player-facing, personality, relationship or points use for those metrics.
 
 ## Deferred action: Build Order rebalance
 
