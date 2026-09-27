@@ -4,7 +4,7 @@ import {LeagueEvent,canBrowseLeague,currentLeagueEvent,emptySnapshot,isBattleOpe
 import {lombardia,brand} from '../data/content';
 import {Avatar,Modal,Sigil} from './Primitives';
 import {SeasonView,EventsView,BattlesView,PlayersView} from './Views';
-import {SeasonStatisticsView,EventDialogWithStatistics,MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperience';
+import {SeasonStatisticsView,EventDialogWithStatistics,MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperienceV2';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
   {id:'events',label:'Events',icon:Flag},
