@@ -1,5 +1,6 @@
 export const THREE_BATTLE_VALIDATION_VERSION = "AOF_THREE_BATTLE_VALIDATION_V1";
 export const PERSONALITY_REVEAL_BATTLE_THRESHOLD = 3;
+export const FIRST_COMMAND_INSTANT_THRESHOLD_MS = 800;
 
 function invariant(condition, message) {
   if (!condition) throw new Error(message);
@@ -7,6 +8,11 @@ function invariant(condition, message) {
 
 function finiteOrNull(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function rounded(value, digits = 3) {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
 }
 
 function countOrNull(value) {
@@ -187,11 +193,24 @@ function resourceInput(commitment) {
   };
 }
 
-function resourceByAgeInput(commitment) {
+function observedAgeUpAtMs(opening, age, observedUntilMs) {
+  const atMs = finiteOrNull(opening?.ageUp?.[age]?.ageUpAtMs);
+  if (atMs == null) return null;
+  if (observedUntilMs != null && atMs > observedUntilMs) return null;
+  return atMs;
+}
+
+function ageReachedInObservedInterval(opening, age, observedUntilMs) {
+  if (age === "dark") return true;
+  return observedAgeUpAtMs(opening, age, observedUntilMs) != null;
+}
+
+function resourceByAgeInput(commitment, opening, observedUntilMs) {
   const byAge = commitment?.byAge;
   if (!byAge || typeof byAge !== "object") return undefined;
   const result = {};
   for (const age of ["dark", "feudal", "castle", "imperial"]) {
+    if (!ageReachedInObservedInterval(opening, age, observedUntilMs)) continue;
     const row = byAge[age];
     if (!row || typeof row !== "object") continue;
     result[age] = {
@@ -202,7 +221,52 @@ function resourceByAgeInput(commitment) {
   return result;
 }
 
+export function firstCommandInterpretation(atMs) {
+  const rawAtMs = finiteOrNull(atMs);
+  if (rawAtMs == null) return null;
+  const rawSeconds = rounded(rawAtMs / 1000);
+  const instant = rawAtMs <= FIRST_COMMAND_INSTANT_THRESHOLD_MS;
+  const displaySeconds = instant ? FIRST_COMMAND_INSTANT_THRESHOLD_MS / 1000 : rawSeconds;
+  return {
+    rawAtMs,
+    rawSeconds,
+    classification: instant ? "INSTANT" : "TIMED",
+    instantThresholdMs: FIRST_COMMAND_INSTANT_THRESHOLD_MS,
+    instantThresholdSeconds: FIRST_COMMAND_INSTANT_THRESHOLD_MS / 1000,
+    displaySeconds,
+    display: instant ? "Instant (≤0.800 s)" : `${displaySeconds.toFixed(3)} s`,
+  };
+}
+
+export function summarizeFirstCommandTiming(games, playerId) {
+  const observations = [];
+  for (const game of games ?? []) {
+    const player = game?.players?.find((candidate) => candidate.playerId === playerId);
+    const interpreted = firstCommandInterpretation(player?.execution?.firstCommandAtMs);
+    if (!interpreted) continue;
+    observations.push({ matchId: game.matchId, gameId: game.gameId, ...interpreted });
+  }
+  const instantSamples = observations.filter((item) => item.classification === "INSTANT").length;
+  const timedSamples = observations.length - instantSamples;
+  return {
+    modelVersion: "AOF_FIRST_COMMAND_PRESENTATION_V1",
+    playerId,
+    rawSourceUnit: "milliseconds",
+    displayUnit: "seconds",
+    instantThresholdMs: FIRST_COMMAND_INSTANT_THRESHOLD_MS,
+    instantThresholdSeconds: FIRST_COMMAND_INSTANT_THRESHOLD_MS / 1000,
+    samples: observations.length,
+    instantSamples,
+    timedSamples,
+    instantRatePercent: observations.length ? rounded((instantSamples / observations.length) * 100, 2) : null,
+    display: observations.length > 0 && instantSamples === observations.length ? "Instant (≤0.800 s)" : null,
+    rawMillisecondsPreserved: true,
+    observations,
+  };
+}
+
 export function toLifetimeGameInput(boundBattle, winner) {
+  const observedUntilMs = finiteOrNull(boundBattle.projection?.scope?.observedUntilMs);
   return {
     matchId: boundBattle.battleId,
     gameId: boundBattle.gameId,
@@ -222,21 +286,21 @@ export function toLifetimeGameInput(boundBattle, winner) {
         opening: {
           buildOrder: stats.buildOrder?.label ?? null,
           executionScore: finiteOrNull(stats.buildOrder?.executionScore),
-          feudalAgeUpAtMs: finiteOrNull(opening.ageUp?.feudal?.ageUpAtMs),
-          castleAgeUpAtMs: finiteOrNull(opening.ageUp?.castle?.ageUpAtMs),
-          imperialAgeUpAtMs: finiteOrNull(opening.ageUp?.imperial?.ageUpAtMs),
-          firstMilitaryUnitQueuedAtMs: finiteOrNull(opening.firstMilitaryUnit?.atMs),
+          feudalAgeUpAtMs: observedAgeUpAtMs(opening, "feudal", observedUntilMs),
+          castleAgeUpAtMs: observedAgeUpAtMs(opening, "castle", observedUntilMs),
+          imperialAgeUpAtMs: observedAgeUpAtMs(opening, "imperial", observedUntilMs),
+          firstMilitaryUnitQueuedAtMs: finiteOrNull(opening.firstMilitaryUnitQueued?.atMs),
           firstMilitaryBuildingAtMs: finiteOrNull(opening.firstMilitaryBuilding?.atMs),
           firstWallAtMs: finiteOrNull(opening.firstWallSegment?.atMs),
-          wallTilesBeforeFeudal: finiteOrNull(opening.wallTilesBeforeFeudal),
+          wallTilesBeforeFeudal: countOrNull(opening.wallTilesBeforeFeudal),
           wallStyle: typeof opening.wallStyle?.label === "string" ? opening.wallStyle.label : null,
-          housesBeforeFeudal: finiteOrNull(opening.housesBeforeFeudal),
-          loomAtMs: finiteOrNull(opening.loom?.atMs),
-          loomBeforeFeudal: typeof opening.loom?.beforeFeudal === "boolean" ? opening.loom.beforeFeudal : null,
+          housesBeforeFeudal: countOrNull(opening.housesBeforeFeudal),
+          loomAtMs: finiteOrNull(opening.loomTiming?.atMs),
+          loomBeforeFeudal: typeof opening.loomBeforeFeudal?.value === "boolean" ? opening.loomBeforeFeudal.value : null,
         },
         economy: {
           resourceCommitment: resourceInput(commitment),
-          resourceCommitmentByAge: resourceByAgeInput(commitment),
+          resourceCommitmentByAge: resourceByAgeInput(commitment, opening, observedUntilMs),
         },
         military: {
           raidsInitiated: finiteOrNull(engagements.raidsInitiated),
