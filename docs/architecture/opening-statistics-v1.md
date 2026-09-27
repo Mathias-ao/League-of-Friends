@@ -1,6 +1,6 @@
 # Opening Statistics V1
 
-`AOF_OPENING_STATISTICS_V1` is a replay-free player-facing projection over canonical command evidence. It does not change the canonical truth classification of the underlying replay fields.
+Current implementation: `AOF_OPENING_STATISTICS_V6`. It is a replay-free player-facing projection over canonical command evidence. It does not change the canonical truth classification of the underlying replay fields.
 
 ## Player-facing Opening statistics
 
@@ -10,7 +10,7 @@
 | Castle age up | first Castle research request (`tech 102`) + 160 seconds |
 | Imperial age up | first Imperial research request (`tech 103`) + 190 seconds |
 | First military unit | first positive queued unit whose catalog roles include `land_military` or `water_military` |
-| First military building | first placement whose catalog roles include `military_production` or `naval_production` |
+| First military building | first placement whose catalog roles include `military_production`; naval-only production buildings such as Dock are excluded |
 | First wall segment | first `WALL` command, retaining timestamp, type, endpoints and rasterized tile count |
 | Wall tiles before Feudal | unique wall tiles from wall commands before projected Feudal age-up |
 | Wall style | `open` at 0 unique wall tiles before Castle, `partially_walled` at 1–19, `fully_walled` at 20+ |
@@ -27,5 +27,7 @@ For current player-facing policy, age research requests, queued units and buildi
 Wall segments are rasterized to integer map tiles and deduplicated before counting, so overlapping wall commands do not inflate the tile totals.
 
 When no Feudal/Castle request exists, the relevant pre-age wall/house window extends through the observed replay interval and the output records that boundary explicitly.
+
+`AOF_OPENING_STATISTICS_V6` narrows **First military building** to land-military production. Docks remain available as Battle evidence and continue to inform naval opening classification such as Naval Rush or Fish Boom; an economic Dock no longer makes a player's land-military-building timing appear artificially early.
 
 Changing any age duration, military role definition, wall rasterization rule, wall-style threshold or Loom-before convention requires a successor model version if historical outputs must remain reproducible.
