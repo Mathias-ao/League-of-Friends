@@ -65,6 +65,28 @@ If the replay does not expose an unambiguous result that way, the harness stops.
 
 This strictness is intentional: season win/loss aggregation and Pair History should not be built on a guessed result.
 
+## Longitudinal interpretation safeguards
+
+The validation adapter follows the current `AOF_OPENING_STATISTICS_V5` nested field shapes rather than maintaining parallel legacy field names. Opening values such as first military unit queued, houses before Feudal, wall tiles before Feudal and Loom timing therefore remain available when Battle statistics are converted into longitudinal inputs.
+
+Resource commitment by age only contributes a sample when that age was actually reached within the observed replay interval. An unreached age is treated as **not applicable**, not as a zero-valued sample. A genuine zero commitment inside an age that was reached remains a valid zero.
+
+Raw first-command timing remains preserved in milliseconds. For interpretation/presentation, `AOF_FIRST_COMMAND_PRESENTATION_V1` treats any first command at or before **0.800 seconds** as `Instant`. This avoids ranking sub-second startup/frame differences as meaningful player skill while retaining the raw observation for evidence.
+
+## Deferred action: Build Order rebalance
+
+Status: **anchored for late-stage balancing; intentionally not being tuned during this validation pass.**
+
+When the surrounding statistics, personality and points structures are settled, revisit `AOF_BUILD_ORDER_V2` as a dedicated balancing task. The review should:
+
+- separate **strategy detection** from **execution quality**, so a novice can still be classified as attempting a Scout Rush, Drush, Archer Rush, etc. even when the timing is poor;
+- validate thresholds against novice, intermediate and high-level league-style recordings rather than only expert games;
+- revisit what qualifies as `100` execution and the current `> 75` qualification coupling;
+- review precedence when multiple openings qualify in the same Battle;
+- decide how AoF should retain secondary openings, hybrid openings and transitions instead of flattening all evidence into one label.
+
+Do not rebalance these rules from the present three expert-level test games alone. This action belongs near the end of statistics-system development, when the surrounding contracts are stable enough that tuning will not be repeatedly invalidated.
+
 ## Run
 
 From the repository root:
@@ -103,6 +125,7 @@ The report records:
 - result and result basis;
 - warning codes;
 - the neutral three-Battle player aggregate;
+- derived first-command presentation with the 0.800-second Instant threshold while preserving raw milliseconds;
 - three-Battle personality eligibility plus the deliberately `UNCONFIGURED` playstyle engine result;
 - Pair History with directional replay-derived signals;
 - the deliberately `UNCONFIGURED` relationship engine result.
