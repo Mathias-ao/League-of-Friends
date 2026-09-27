@@ -10,6 +10,7 @@ import {
   pairHistoryMatchInput,
   personalityEligibility,
   resolveBattleWinner,
+  summarizeFirstCommandTiming,
   toLifetimeGameInput,
   validateValidationManifest,
 } from "./three-battle-validation-lib.mjs";
@@ -200,6 +201,7 @@ async function main() {
 
   const lifetimeInputs = boundBattles.map((battle, index) => toLifetimeGameInput(battle, winners[index]));
   const neutralSeasonAggregate = engines.lifetime.rebuildLifetimeStatistics(lifetimeInputs);
+  const firstCommandTiming = neutralSeasonAggregate.map((player) => summarizeFirstCommandTiming(lifetimeInputs, player.playerId));
 
   const pairInputs = boundBattles.map((battle, index) => pairHistoryMatchInput(battle, winners[index]));
   const pairHistory = engines.relationship.rebuildPairHistory(pairInputs);
@@ -240,6 +242,15 @@ async function main() {
         "This validation view deliberately reuses the neutral AOF_LIFETIME_STATISTICS_V1 aggregator over only these three season-scoped Battles; it does not invent an AOF_SEASON_STATISTICS model."
       ),
       players: neutralSeasonAggregate,
+      firstCommandTiming: {
+        status: "DERIVED_PRESENTATION",
+        modelVersion: "AOF_FIRST_COMMAND_PRESENTATION_V1",
+        note: (
+          "Raw first-command milliseconds remain preserved in the neutral aggregate. " +
+          "For interpretation, any observed first command at or before 0.800 seconds is treated as Instant so sub-frame/startup differences are not over-interpreted."
+        ),
+        players: firstCommandTiming,
+      },
     },
     personality: {
       revealRule: "3 eligible Battles",
