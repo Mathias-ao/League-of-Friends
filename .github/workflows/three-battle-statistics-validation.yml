@@ -1,0 +1,55 @@
+name: Three-Battle Statistics Validation
+
+on:
+  push:
+    paths:
+      - "replay-lab/three-battle-validation*.mjs"
+      - "replay-lab/fixtures/three-battle-validation.json"
+      - "replay-lab/test/three-battle-validation.test.mjs"
+      - "functions/src/engines/lifetimeStatistics.ts"
+      - "functions/src/engines/playstyleEngine.ts"
+      - "functions/src/engines/relationshipEngine.ts"
+      - "replay-tools/**"
+      - "replay-fixtures/1v1*.aoe2record"
+      - ".github/workflows/three-battle-statistics-validation.yml"
+  pull_request:
+    paths:
+      - "replay-lab/three-battle-validation*.mjs"
+      - "replay-lab/fixtures/three-battle-validation.json"
+      - "replay-lab/test/three-battle-validation.test.mjs"
+      - "functions/src/engines/lifetimeStatistics.ts"
+      - "functions/src/engines/playstyleEngine.ts"
+      - "functions/src/engines/relationshipEngine.ts"
+      - "replay-tools/**"
+      - "replay-fixtures/1v1*.aoe2record"
+      - ".github/workflows/three-battle-statistics-validation.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: replay-tools/requirements.txt
+      - run: npm ci --prefix functions
+      - run: npm --prefix functions run build
+      - run: python -m pip install -r replay-tools/requirements.txt
+      - run: npm --prefix replay-lab test
+      - run: >-
+          node replay-lab/three-battle-validation.mjs
+          --manifest replay-lab/fixtures/three-battle-validation.json
+          --out .replay-lab/ci-three-battle-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: three-battle-statistics-validation
+          path: .replay-lab/ci-three-battle-report.json
+          if-no-files-found: warn

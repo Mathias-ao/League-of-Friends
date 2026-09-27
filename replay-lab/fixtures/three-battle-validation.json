@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "AOF_THREE_BATTLE_VALIDATION_V1",
+  "seasonId": "TEST-SEASON-THREE-BATTLE",
+  "seasonLabel": "Three-Battle Statistics Validation",
+  "players": {
+    "emperor": {
+      "playerId": "validation-emperor",
+      "displayName": "Emperor"
+    },
+    "challenger": {
+      "playerId": "validation-test-player",
+      "displayName": "Test Player"
+    }
+  },
+  "battles": [
+    {
+      "battleId": "TEST-BATTLE-01",
+      "gameId": "G1",
+      "orderAtMs": 1,
+      "replayPath": "replay-fixtures/1v1.aoe2record",
+      "bindings": [
+        { "replaySlot": 1, "playerKey": "emperor" },
+        { "replaySlot": 2, "playerKey": "challenger" }
+      ]
+    },
+    {
+      "battleId": "TEST-BATTLE-02",
+      "gameId": "G2",
+      "orderAtMs": 2,
+      "replayPath": "replay-fixtures/1v1_1.aoe2record",
+      "bindings": [
+        { "replaySlot": 1, "playerKey": "emperor" },
+        { "replaySlot": 2, "playerKey": "challenger" }
+      ]
+    },
+    {
+      "battleId": "TEST-BATTLE-03",
+      "gameId": "G3",
+      "orderAtMs": 3,
+      "replayPath": "replay-fixtures/1v1_2.aoe2record",
+      "bindings": [
+        { "replaySlot": 1, "playerKey": "emperor" },
+        { "replaySlot": 2, "playerKey": "challenger" }
+      ]
+    }
+  ]
+}

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V5"
+OPENING_STATISTICS_VERSION = "AOF_OPENING_STATISTICS_V6"
 AGE_TECH_IDS = {"feudal": 101, "castle": 102, "imperial": 103}
 AGE_RESEARCH_MS = {"feudal": 130_000, "castle": 160_000, "imperial": 190_000}
 LOOM_TECH_ID = 22
@@ -123,7 +123,7 @@ def _first_military_building(builds: list[dict[str, Any]], catalog: dict[str, An
     for event in builds:
         building_id = event.get("buildingId")
         roles = _roles(catalog, "buildings", building_id)
-        if roles.intersection({"military_production", "naval_production"}):
+        if "military_production" in roles:
             return {
                 "layer": "observed",
                 "atMs": event.get("atMs"),
