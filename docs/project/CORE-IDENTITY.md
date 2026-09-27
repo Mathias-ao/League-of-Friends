@@ -1,6 +1,6 @@
 # Age of Friends — Core Identity & Philosophy
 
-Status date: 26 September 2026  
+Status date: 18 September 2026  
 Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development
 
 ## 1. How to use this file
@@ -77,38 +77,70 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 
 ## 5. Social and identity systems
 
+### Player Personality
+Player Personality describes a player's recurring strategic and behavioural tendencies across battles. It describes how they tend to play, not their character, ability, intentions, or value.
+
+Personality is expressed through six evidence-based sliders:
+- Boomer ↔ Aggressor
+- Cautious ↔ Bold
+- Guerrilla ↔ Frontline Fighter
+- Specialist ↔ Improviser
+- Compact ↔ Expansive
+
+Neither end of a slider is inherently better. Sliders are descriptive tendencies, not performance scores.
+
+Personality is longitudinal and context-sensitive. It requires sufficient eligible battles and should account for format, map, civilization constraints, team role, and other material context. Insufficient evidence produces Developing, not a neutral midpoint.
+
+Recent evidence may show current tendencies while longer-term evidence provides stability. Individual battles should not materially redefine an established profile.
+
+Slider definitions, evidence requirements, normalization, weighting, and update rules must remain explicit, versioned, and reproducible.
+
+### Player Reputation
+three independent, persistent tracks earned from tracked player actions under an explicit, versioned rule set. They represent how a player conducts themselves in battle, not their skill, results, or relationships with specific players.
+
+- **Gallantry** — bold, aggressive, or daring conduct against opponents.
+- **Cruelty** (formerly Treachery) — bRuthless, destructive, or deliberately punishing conduct against opponents.
+- **Chivalry** — meaningful protection, assistance, or sacrifice in support of allies.
+
+The tracks are non-exclusive: the same player may develop strongly in more than one. Exact qualifying actions, point values, thresholds, decay and presentation remain to be defined.
+
 ### Player relationships
+Player Relationships are persistent evidence-based paired relationsships between all the players in the league. evidence-based histories between two players. They describe competitive history, not real-world feelings, motives, or character.
 
-Relationships are persistent histories between two players. They develop through three separate, non-exclusive pair tracks rather than one blended relationship score:
+- **Rivalry** — sustained competitive significance between players whose encounters repeatedly create meaningful stakes.
+- **Hostility** — sustained adversarial history shaped by consequential opposition, pressure, reversals, or unresolved conflict.
+- **Bond** — sustained cooperative history built through meaningful shared battles, support, and success as allies.
 
-- **Rivalry**
-- **Hostility**
-- **Bond**
+Tracks are independent and may coexist.
 
-The exact stages, thresholds and visibility rules for these tracks remain under design. A future War Room experience may reveal escalated relationship state and relationship progression.
+Progression requires meaningful evidence across encounters, not participation alone. Mutual states should require reciprocal contribution; one-sided history may be recorded without declaring a mutual relationship.
 
-Separate from those pair tracks, **Gallantry, Treachery and Chivalry are player-level point currencies** earned from tracked actions under a future explicit rule set. They do not belong to a player pair and they are not aliases for Rivalry, Hostility or Bond. For example, raids are intended candidates for Gallantry and Treachery rewards, while meaningful defensive/ally-support actions are intended candidates for Chivalry; exact actions and values are not yet approved.
+Relationships may emerge, escalate, cool, resolve, or begin a new chapter. Turning points such as rematches, reversals, alliances, or decisive outcomes may change the active state without erasing prior history.
 
-Relationship progression and player point awards must remain traceable to evidence and recalculable as their versioned rules improve. The current relationship engine still reflects the older Rivalry / Enemy / Friend model and must be migrated/versioned before it becomes the final player-facing relationship system.
+Exact evidence, stages, thresholds, cooling rules, and visibility remain defined by future explicit, versioned rules.
+
+Relationship effects must remain competitively neutral. They may influence presentation, matchmaking preference, War Room activity, challenges, and historical recognition, but never competitive advantage.
+
+Player Relationships are separate from Player Reputation: Reputation belongs to one player; Rivalry, Hostility and Bond belong to a player pair.
 
 ### Player portraits
 
-A player portrait represents a persistent league identity. It develops gradually from sustained evidence, does not react to one unusual Game, and does not reset between seasons.
+Player Portraits represent a player's persistent league identity, derived from sustained evidence across battles and seasons.
 
-**AoF v1 portrait direction is now fixed at the product level:**
+Portrait progression should reflect stable tendencies, not isolated games, event formats, civilization restrictions, or temporary roles.
+- New players begin in a neutral newcomer state.
+- Portrait identities unlock only after sufficient evidence and minimum sample requirements.
+- Recent evidence may influence current expression; long-term evidence provides stability.
+- Identity may reflect dominant military or strategic tendencies only where replay evidence supports them reliably.
+- Context should be considered where event format, civilization restrictions, team role, or map meaningfully affect observed behaviour.
 
-- Use existing **Age of Empires II: Definitive Edition unit portrait/icon frames** as the v1 visual language instead of requiring bespoke portrait art.
-- Every new player begins visually as a **Villager**.
-- The portrait then evolves toward the player’s demonstrated dominant military family as enough reliable evidence accumulates.
-- The progression should use recognizable in-game unit steps where the family supports them. A cavalry/knight-heavy player is the reference example: **Villager → cavalry-family imagery → Knight → Cavalier → Paladin** as the identity becomes more established.
-- The exact family mappings, progression thresholds, confidence rules and minimum samples are not yet approved and must not be guessed merely to complete implementation.
-- Recent Games establish current preference, while lifetime evidence provides stability. The system should be responsive enough to reflect a genuine developing identity but resistant to rapid oscillation.
-- One unusual Game must not rewrite the portrait. Minimum sample sizes, confidence requirements and resistance to frequent changes are required before an upgrade or family change.
-- Military identity is based only on production or unit evidence the replay extraction system can support reliably.
+Portrait changes should be gradual and resistant to short-term variance.
 
-The portrait progression is separate from the player’s **reputation title**. In AoF v1 the title slot begins at **Novitiate** / “Identity still being forged” and may later show an earned reputation title without changing the portrait progression rules.
+Players may choose among identities they have legitimately unlocked; evidence determines eligibility, while the player determines which earned identity they present.
 
-Clothing, weapons, headgear and bespoke cosmetic/title unlock systems remain separate future identity layers. They are not required for the AoF v1 portrait system and should not block the unit-portrait progression.
+Cosmetic elements, titles, equipment, and other distinctions are earned separately through achievements and notable accomplishments.
+
+Exact identity definitions, eligibility thresholds, confidence rules, weighting, and update behavior remain governed by future explicit, versioned rules.
 
 ## 6. Technical architecture
 
