@@ -3,10 +3,12 @@ import test from "node:test";
 
 import {
   bindBattleProjection,
+  firstCommandInterpretation,
   pairHistoryMatchInput,
   personalityEligibility,
   relationshipSignalsForBattle,
   resolveBattleWinner,
+  summarizeFirstCommandTiming,
   toLifetimeGameInput,
   validateValidationManifest,
 } from "../three-battle-validation-lib.mjs";
@@ -43,15 +45,16 @@ function projection() {
       ageUp: {
         feudal: { ageUpAtMs: 600000 },
         castle: { ageUpAtMs: 1200000 },
-        imperial: { ageUpAtMs: null },
+        imperial: { ageUpAtMs: 1400000 },
       },
-      firstMilitaryUnit: { atMs: 650000 },
+      firstMilitaryUnitQueued: { atMs: 650000 },
       firstMilitaryBuilding: { atMs: 500000 },
       firstWallSegment: { atMs: null },
-      wallTilesBeforeFeudal: 0,
+      wallTilesBeforeFeudal: { boundary: "feudal_age_up", count: 4, layer: "reconstructed" },
       wallStyle: { label: "open" },
-      housesBeforeFeudal: 3,
-      loom: { atMs: 480000, beforeFeudal: true },
+      housesBeforeFeudal: { boundary: "feudal_age_up", count: 3, layer: "reconstructed" },
+      loomTiming: { atMs: 480000, layer: "observed" },
+      loomBeforeFeudal: { value: true, layer: "reconstructed" },
     },
     economy: {
       resourceCommitment: {
@@ -86,7 +89,7 @@ function projection() {
     observedCommands: {
       count: 1000,
       ratePerObservedMinute: 35,
-      firstAtMs: 1000,
+      firstAtMs: slot === 1 ? 416 : 1200,
       firstFiveObservedMinutesCount: 120,
       activeSecondCount: 700,
     },
@@ -99,6 +102,7 @@ function projection() {
   return {
     statisticsProjectionVersion: "AOF_CANONICAL_STATISTICS_V1",
     source: { replaySha256: "abc", canonicalSchemaVersion: "1.1.0" },
+    scope: { observedUntilMs: 1300000 },
     participants: [participant(1, "Raw A"), participant(2, "Raw B")],
     commandEvidence: { resignCommands: [{ actorPlayerId: 2 }] },
     warnings: [{ code: "REQUESTS_NOT_OUTCOMES" }],
@@ -142,16 +146,24 @@ test("Battle projection adapts current nested projector output into longitudinal
   assert.equal(player.opening.buildOrder, "Scout Rush");
   assert.equal(player.opening.feudalAgeUpAtMs, 600000);
   assert.equal(player.opening.castleAgeUpAtMs, 1200000);
+  assert.equal(player.opening.imperialAgeUpAtMs, null);
+  assert.equal(player.opening.firstMilitaryUnitQueuedAtMs, 650000);
   assert.equal(player.opening.firstMilitaryBuildingAtMs, 500000);
+  assert.equal(player.opening.wallTilesBeforeFeudal, 4);
   assert.equal(player.opening.wallStyle, "open");
+  assert.equal(player.opening.housesBeforeFeudal, 3);
   assert.equal(player.opening.loomAtMs, 480000);
+  assert.equal(player.opening.loomBeforeFeudal, true);
   assert.equal(player.economy.resourceCommitment.total, 350);
+  assert.equal(player.economy.resourceCommitmentByAge.castle.total, 0);
+  assert.equal(player.economy.resourceCommitmentByAge.imperial, undefined);
   assert.equal(player.mapPresence.commandMapCoveragePercent, 21);
   assert.equal(player.mapPresence.enemyBaseFoundAtMs, 900000);
   assert.equal(player.mapPresence.forwardBuildings, 3);
   assert.equal(player.mapPresence.forwardEco, 1);
   assert.equal(player.mapPresence.expansions, 2);
   assert.equal(player.mapPresence.goldControlPercent, 55);
+  assert.equal(player.execution.firstCommandAtMs, 416);
   assert.equal(player.won, true);
 
   const signals = relationshipSignalsForBattle(bound);
@@ -163,6 +175,39 @@ test("Battle projection adapts current nested projector output into longitudinal
   const pairInput = pairHistoryMatchInput(bound, winner);
   assert.deepEqual(pairInput.canonicalResult.winningPlayerIds, ["player-emperor"]);
   assert.equal(pairInput.canonicalResult.source, "TEST_VALIDATION");
+});
+
+test("first command presentation treats sub-800ms starts as instant without rewriting raw milliseconds", () => {
+  assert.deepEqual(firstCommandInterpretation(416), {
+    rawAtMs: 416,
+    rawSeconds: 0.416,
+    classification: "INSTANT",
+    instantThresholdMs: 800,
+    instantThresholdSeconds: 0.8,
+    displaySeconds: 0.8,
+    display: "Instant (≤0.800 s)",
+  });
+  assert.deepEqual(firstCommandInterpretation(1200), {
+    rawAtMs: 1200,
+    rawSeconds: 1.2,
+    classification: "TIMED",
+    instantThresholdMs: 800,
+    instantThresholdSeconds: 0.8,
+    displaySeconds: 1.2,
+    display: "1.200 s",
+  });
+
+  const value = manifest();
+  const bound = bindBattleProjection(value, value.battles[0], projection());
+  const winner = resolveBattleWinner(value, value.battles[0], bound);
+  const lifetime = toLifetimeGameInput(bound, winner);
+  const summary = summarizeFirstCommandTiming([lifetime], "player-emperor");
+  assert.equal(summary.samples, 1);
+  assert.equal(summary.instantSamples, 1);
+  assert.equal(summary.timedSamples, 0);
+  assert.equal(summary.instantRatePercent, 100);
+  assert.equal(summary.observations[0].rawAtMs, 416);
+  assert.equal(summary.display, "Instant (≤0.800 s)");
 });
 
 test("three eligible Battles unlock reveal eligibility without inventing personality rules", () => {
