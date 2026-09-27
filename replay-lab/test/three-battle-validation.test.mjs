@@ -41,7 +41,7 @@ function projection() {
     displayName: name,
     buildOrder: { label: slot === 1 ? "Scout Rush" : "Fast Castle", executionScore: 82.5 },
     opening: {
-      modelVersion: "AOF_OPENING_STATISTICS_V5",
+      modelVersion: "AOF_OPENING_STATISTICS_V6",
       ageUp: {
         feudal: { ageUpAtMs: 600000 },
         castle: { ageUpAtMs: 1200000 },
