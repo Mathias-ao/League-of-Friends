@@ -279,7 +279,6 @@ export function toLifetimeGameInput(boundBattle, winner) {
       const engagements = stats.military?.engagements ?? {};
       const map = stats.mapPresence ?? {};
       const commands = stats.observedCommands ?? {};
-      const selections = stats.selectionEvidence ?? {};
       return {
         playerId: participant.playerId,
         won: winner.status === "RESOLVED" ? winner.playerId === participant.playerId : null,
@@ -321,9 +320,6 @@ export function toLifetimeGameInput(boundBattle, winner) {
           firstCommandAtMs: finiteOrNull(commands.firstAtMs),
           firstFiveObservedMinutesCommands: finiteOrNull(commands.firstFiveObservedMinutesCount),
           activeSeconds: finiteOrNull(commands.activeSecondCount),
-          averageSelectionSize: finiteOrNull(selections.averageSelectedObjectCount),
-          medianSelectionSize: finiteOrNull(selections.medianSelectedObjectCount),
-          maximumSelectionSize: finiteOrNull(selections.maximumSelectedObjectCount),
         },
       };
     }),
