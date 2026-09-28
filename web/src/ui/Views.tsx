@@ -216,54 +216,26 @@ function BattleOrdersDialog({data,game,onClose}:{data:MatchDetail;game:MatchDeta
 function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;game:MatchDetail['games'][number];repository:ViewProps['repository'];onUpdated:()=>void}){
   const [file,setFile]=useState<File|null>(null);
   const [processing,setProcessing]=useState(false);
-  const [statistics,setStatistics]=useState<any>(null);
   const [error,setError]=useState('');
   const ready=game.replay?.statisticsState==='READY'&&!!game.replay.statisticsId;
-  const playerName=(playerId:string)=>data.match.participants.find(player=>player.playerId===playerId)?.steamName??playerId;
-  const buildOrderLabel=(value:any)=>{
-    const candidate=value?.classification?.label??value?.classification??value?.label??value?.buildOrder;
-    return typeof candidate==='string'?candidate:'N/A';
-  };
-  const load=async()=>{
-    setError('');
-    try{setStatistics(await repository.replayStatistics(data.match.matchId,game.gameId));}
-    catch(e){setError(e instanceof Error?e.message:'Battle Statistics could not be loaded.');}
-  };
   const analyze=async()=>{
     if(!file)return;
     setProcessing(true);setError('');
     try{
       await repository.uploadReplay(data.match.matchId,game.gameId,file);
-      setStatistics(await repository.replayStatistics(data.match.matchId,game.gameId));
       onUpdated();
     }catch(e){setError(e instanceof Error?e.message:'Replay processing failed.');}
     finally{setProcessing(false);}
   };
-  const participantStats=Array.isArray(statistics?.statistics?.participants)?statistics.statistics.participants:[];
-  return <section className={'replay-conclusion '+(ready||statistics?'ready':'')}>
-    <div className="replay-conclusion-heading"><Upload size={24}/><div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready||statistics?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready||statistics?'Canonical evidence and Battle Statistics are retained for this Game.':'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
-    {!ready&&!statistics&&data.viewer.isParticipant&&<div className="replay-upload-form">
+  return <section className={'replay-conclusion '+(ready?'ready':'')}>
+    <div className="replay-conclusion-heading"><Upload size={24}/><div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
+    {!ready&&data.viewer.isParticipant&&<div className="replay-upload-form">
       <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
       {file&&<div className="replay-file-selected"><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB</span></div>}
       <button className="primary" disabled={!file||processing} onClick={()=>void analyze()}>{processing?'Analyzing battle…':'Analyze battle'}</button>
       {processing&&<p className="muted">Reading recording · building canonical evidence · calculating statistics…</p>}
     </div>}
-    {(ready||statistics)&&!statistics&&<button className="primary" onClick={()=>void load()}>View Battle Statistics<ArrowRight size={16}/></button>}
-    {statistics&&<>
-      <div className="replay-qualified"><Check size={17}/><span>Recording verified · {statistics.playerMapping?.length??0} players bound to league identities</span></div>
-      <div className="replay-identity-map">{(statistics.playerMapping??[]).map((mapping:any)=><div key={mapping.replaySlot}><span>{mapping.sourceName}</span><ArrowRight size={14}/><strong>{playerName(mapping.playerId)}</strong></div>)}</div>
-      <div className="replay-stat-players">{participantStats.map((participant:any)=>{
-        const mapping=(statistics.playerMapping??[]).find((item:any)=>item.replaySlot===participant.replaySlot);
-        const name=mapping?playerName(mapping.playerId):participant.displayName??('Replay slot '+participant.replaySlot);
-        return <article key={participant.replaySlot} className="replay-stat-player"><span className="eyebrow">{participant.displayName??'REPLAY PLAYER'}</span><h4>{name}</h4><div className="replay-stat-grid">
-          <div><strong>{buildOrderLabel(participant.buildOrder)}</strong><span>Build order</span></div>
-          <div><strong>{participant.observedCommands?.count??'—'}</strong><span>Observed commands</span></div>
-          <div><strong>{participant.military?.engagements?.raidsInitiated??participant.combat?.raidsInitiated??'—'}</strong><span>Raids initiated</span></div>
-          <div><strong>{participant.mapPresence?.commandCoveragePercent!=null?participant.mapPresence.commandCoveragePercent+'%':'—'}</strong><span>Command map coverage</span></div>
-        </div></article>;
-      })}</div>
-      <p className="muted">Official result: unresolved. Replay processing does not invent or change the winner.</p>
-    </>}
+    {ready&&<button className="primary" onClick={()=>document.getElementById('battle-statistics')?.scrollIntoView({behavior:'smooth'})}>View Battle statistics<ArrowRight size={16}/></button>}
     {error&&<div className="alert" role="alert">{error}</div>}
   </section>;
 }

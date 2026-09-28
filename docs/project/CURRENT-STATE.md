@@ -1,10 +1,12 @@
 # Age of Friends — Current State
 
-Last reviewed: 26 September 2026
+Last reviewed: 28 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
 ## Current focus
+
+**Feature branch implementation:** `feature/statistics-experience-v1` now connects Battle, Event and Season statistics to active replay sources, adds comparison tables/charts/records and hidden lifetime projections, and includes a labelled test campaign. See [the V1 test-run guide](../setup/statistics-v1-test-run.md) for the implemented catalogue, eligibility rules, test commands and remaining acceptance checks. This work is not deployed.
 
 The active workstream is the player-facing statistics stack and its integration into the website. Battle measurement is now close to AoF v1 freeze; remaining statistics work is validation, final player-facing selection, and persistence/UI wiring rather than a redesign of the replay-truth architecture.
 
@@ -23,9 +25,9 @@ The **Player profile structure is now considered settled for AoF v1; remaining w
 
 | Statistics section | State |
 |---|---|
-| Battle Statistics | Replay/statistics foundation implemented; Battle presentation pending |
-| Event Statistics | Product scope and 4–6 highlight direction defined; aggregation/presentation pending |
-| Season Statistics | Product scope and complete record-book direction defined; aggregation/presentation pending |
+| Battle Statistics | Focused scorecard, five-category details, evidence drilldowns and timeline implemented on the feature branch |
+| Event Statistics | Up to four deterministic V1 highlights with source links implemented on the feature branch; richer curation/news integration remains later |
+| Season Statistics | Five-category tables, stars, record book, comparison charts and personal-best notices implemented on the feature branch |
 | Lifetime Stats | Aggregation foundation implemented; intentionally hidden from Season I UI |
 | Player currencies | Gallantry/Treachery/Chivalry boundary defined; earning rules intentionally unconfigured |
 | Pair relationships | Pair History foundation implemented; current engine uses superseded Enemy/Friend semantics and needs migration to Rivalry/Hostility/Bond |
