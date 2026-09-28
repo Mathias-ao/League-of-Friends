@@ -15,6 +15,7 @@ import './emperors-favor.css';
 import './statistics-experience.css';
 import './statistics-dashboard.css';
 import './statistics-hall.css';
+import './statistics-hall-v2.css';
 import './player-profile-refinement.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
