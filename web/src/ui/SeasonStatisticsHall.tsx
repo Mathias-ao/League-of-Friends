@@ -1,6 +1,6 @@
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState,type Ref} from 'react';
 import {ArrowRight,Crown,RefreshCw,X} from 'lucide-react';
-import {CATEGORIES,METRICS,StatisticsExperience,formatStatistic,type AggregatePlayer,type AggregationMode,type Category,type GameStatistics,type MetricDefinition,type StatisticsDataset} from '../domain/statistics';
+import {CATEGORIES,METRICS,StatisticsExperience,formatStatistic,type AggregatePlayer,type AggregationMode,type Category,type GameStatistics,type Highlight,type MetricDefinition,type StatisticsDataset} from '../domain/statistics';
 import {formatName,type PlayerRecord} from '../domain/league';
 import type {ViewProps} from './App';
 import {CompositionBars} from './StatisticsDashboardLegacy';
@@ -81,7 +81,7 @@ function EvidencePanel({selection,games,close,openMatch}:{selection:{playerId:st
   </section>;
 }
 
-function PlayerHeader({column,viewerId,openPlayer,viewerRef}:{column:SeasonColumn;viewerId?:string;openPlayer:(id:string)=>void;viewerRef?:React.Ref<HTMLTableCellElement>}){
+function PlayerHeader({column,viewerId,openPlayer,viewerRef}:{column:SeasonColumn;viewerId?:string;openPlayer:(id:string)=>void;viewerRef?:Ref<HTMLTableCellElement>}){
   const isViewer=column.playerId===viewerId;
   const detail=column.row?`${column.row.games} ${column.row.games===1?'Game':'Games'}`:'No statistics in selection';
   return <th ref={viewerRef} scope="col" className={`sx-player-head${isViewer?' sx-player-focus':''}${column.emperor?' sx-emperor-head':''}`}>
@@ -115,7 +115,7 @@ function HallTable({rows,metrics,engine,mode,allowLeaders,viewerId,standings,emp
     const frozen=emperorColumn?450:230;
     const visible=Math.max(200,container.clientWidth-frozen);
     container.scrollLeft=Math.max(0,cell.offsetLeft-frozen-visible/2+cell.clientWidth/2);
-  },[viewerId,columnKey,emperorColumn]);
+  },[viewerId,columnKey,emperorColumn?.playerId]);
   const allColumns=emperorColumn?[emperorColumn,...scrolling]:scrolling;
   return <div ref={scroller} className="sx-table-scroll sx-season-scroll sx-hall-v2-scroll"><table className="sx-table sx-season-table sx-hall-v2-table">
     <thead><tr><th scope="col" className="sx-metric-column"><span>Statistic</span></th>{allColumns.map(column=><PlayerHeader key={column.playerId} column={column} viewerId={viewerId} openPlayer={openPlayer} viewerRef={column.playerId===viewerId?viewerHeader:undefined}/>)}</tr></thead>
@@ -131,7 +131,7 @@ function RecordBook({engine,category,openMatch}:{engine:StatisticsExperience;cat
   return <section className="sx-records sx-record-gallery"><span className="eyebrow">SINGLE-GAME RECORDS</span><h3>{category} record book</h3><p>Records compare available measurements within matching approved settings and model versions. Ties share recognition.</p>{records.length?<div className="sx-record-grid">{records.map(record=><button key={record.metricId+record.contextKey+record.model+record.playerId} onClick={()=>openMatch(record.matchId)}><span>{definition(record.metricId).record==='min'?'Earliest':'Most'} · {definition(record.metricId).label}</span><strong>{formatStatistic(record.value,definition(record.metricId))}</strong><b>{record.name}</b><small>{record.civilization??'Civilization unavailable'} · {new Date(record.orderAtMs).toLocaleDateString()}</small><small>{contextLabel(record.contextKey)}</small><small>{record.matchId} / {record.gameId} · {record.model}</small><span>Source Battle →</span></button>)}</div>:<p>No qualified records for this selection yet.</p>}</section>;
 }
 
-function HighlightCards({items,openMatch}:{items:ReturnType<StatisticsExperience['leadershipChanges']>;openMatch:(id:string)=>void}){
+function HighlightCards({items,openMatch}:{items:Highlight[];openMatch:(id:string)=>void}){
   return <div className="sx-highlights">{items.map(item=><article key={item.id}><span className="eyebrow">{item.category}</span><h3>{item.title}</h3><p>{item.detail}</p><button className="text-button" onClick={()=>openMatch(item.matchId)}>Source Battle <ArrowRight size={14}/></button></article>)}</div>;
 }
 
