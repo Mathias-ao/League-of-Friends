@@ -17,3 +17,22 @@
 @media(prefers-reduced-motion:reduce){.sx-bar-track>button{transition:none}}
 
 .sx-toolbar label{min-width:0;max-width:100%}.sx-toolbar select{width:min(100%,460px)}
+
+/* Season statistics layout tuning. Kept CSS-only so the underlying statistics logic stays untouched. */
+.section.statistics-experience.sx-dashboard{display:flex;flex-direction:column;padding-top:8px}
+.section.statistics-experience.sx-dashboard>.sx-heading{display:none}
+.section.statistics-experience.sx-dashboard>.sx-panel{order:1;display:flex;flex-direction:column}
+.section.statistics-experience.sx-dashboard>.sx-personal{order:2;margin:20px 0 8px}
+.section.statistics-experience.sx-dashboard>.sx-highlights{order:3;margin:22px 0 28px}
+.section.statistics-experience.sx-dashboard>.alert,.section.statistics-experience.sx-dashboard>p[role=status]{order:0}
+.section.statistics-experience.sx-dashboard>.sx-panel>.sx-tabs{order:0;width:min(100%,780px);margin:0 0 14px;border-top:1px solid #4a493f;border-bottom:1px solid var(--sx-line);flex-wrap:nowrap}
+.section.statistics-experience.sx-dashboard>.sx-panel>.sx-tabs button{flex:1 1 0;min-height:60px;padding:17px 18px;font-size:.92rem;letter-spacing:.01em;text-align:center;justify-content:center;border-bottom-width:3px}
+.section.statistics-experience.sx-dashboard>.sx-panel>.sx-tabs button[aria-pressed=true]{background:#8e6d301b;color:#f0ca80}
+.section.statistics-experience.sx-dashboard>.sx-panel>.sx-notice{order:1;margin:0 0 6px;padding:10px 0;border-bottom:0}
+.section.statistics-experience.sx-dashboard>.sx-panel>.sx-toolbar{order:2;margin:8px 0 18px}
+.section.statistics-experience.sx-dashboard>.sx-panel>.sx-inspector{order:3}
+.section.statistics-experience.sx-dashboard>.sx-panel>section{order:4}
+.section.statistics-experience.sx-dashboard .sx-category-header{margin:0 0 18px}
+.section.statistics-experience.sx-dashboard .sx-category-header h2{display:none}
+.section.statistics-experience.sx-dashboard .sx-category-header p{margin:0;max-width:720px}
+@media(max-width:650px){.section.statistics-experience.sx-dashboard{padding-top:2px}.section.statistics-experience.sx-dashboard>.sx-panel>.sx-tabs{width:100%;overflow-x:auto;flex-wrap:nowrap;margin-bottom:12px}.section.statistics-experience.sx-dashboard>.sx-panel>.sx-tabs button{flex:0 0 auto;min-width:112px;min-height:50px;padding:13px 12px;font-size:.78rem}.section.statistics-experience.sx-dashboard>.sx-personal{margin-top:16px}}
