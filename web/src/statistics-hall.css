@@ -1,0 +1,438 @@
+/* Season Statistics — Hall of Records visual pass.
+   This layer intentionally overrides statistics-dashboard.css without touching
+   aggregation, evidence, ranking, or player-ordering logic. */
+
+.section.statistics-experience.sx-dashboard{
+  --hall-gutter:clamp(14px,3vw,42px);
+  --hall-ivory:#d8ceb8;
+  --hall-ivory-dim:#9f9685;
+  --hall-brass:#9d7d43;
+  --hall-brass-bright:#d5b66f;
+  --hall-stone:#20211d;
+  --hall-stone-2:#292a24;
+  --hall-shadow:#0d0e0c;
+  width:calc(100vw - var(--hall-gutter) - var(--hall-gutter));
+  max-width:none;
+  margin-left:calc(50% - 50vw + var(--hall-gutter));
+  margin-right:calc(50% - 50vw + var(--hall-gutter));
+  padding-top:10px;
+  background:
+    linear-gradient(90deg,transparent,rgba(220,210,187,.018) 22%,transparent 45%,rgba(220,210,187,.012) 72%,transparent),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.008) 0 1px,transparent 1px 64px);
+}
+
+.section.statistics-experience.sx-dashboard>.sx-panel{width:100%}
+
+/* ENTABLATURE / CHAPTER RAIL */
+.section.statistics-experience.sx-dashboard .sx-tabs{
+  position:relative;
+  width:100%;
+  grid-template-columns:repeat(5,minmax(150px,1fr));
+  min-height:74px;
+  overflow-x:auto;
+  border:0;
+  border-top:2px solid #a58f67;
+  border-bottom:3px double #7f673b;
+  background:
+    linear-gradient(180deg,rgba(222,213,194,.12) 0 2px,transparent 2px),
+    linear-gradient(180deg,#39352e 0,#27231e 9%,#191714 58%,#12110f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(244,236,217,.16),
+    inset 0 -1px 0 rgba(0,0,0,.8),
+    0 8px 18px rgba(0,0,0,.22);
+}
+.section.statistics-experience.sx-dashboard .sx-tabs::before,
+.section.statistics-experience.sx-dashboard .sx-tabs::after{
+  content:'';
+  position:absolute;
+  z-index:3;
+  left:0;
+  right:0;
+  pointer-events:none;
+}
+.section.statistics-experience.sx-dashboard .sx-tabs::before{
+  top:6px;
+  border-top:1px solid rgba(216,206,184,.25);
+}
+.section.statistics-experience.sx-dashboard .sx-tabs::after{
+  bottom:6px;
+  border-top:1px solid rgba(157,125,67,.35);
+}
+.section.statistics-experience.sx-dashboard .sx-tabs button{
+  min-height:70px;
+  padding:19px 22px 17px;
+  color:#d9d0bd;
+  font-size:clamp(.88rem,1.15vw,1.04rem);
+  letter-spacing:.06em;
+  border-right:1px solid rgba(216,206,184,.18);
+  background:
+    linear-gradient(90deg,rgba(236,226,204,.025),transparent 16%,transparent 84%,rgba(236,226,204,.02)),
+    linear-gradient(180deg,rgba(255,255,255,.025),transparent 38%);
+  text-shadow:0 1px 0 #000;
+}
+.section.statistics-experience.sx-dashboard .sx-tabs button::before{
+  top:13px;
+  bottom:13px;
+  background:rgba(216,206,184,.17);
+}
+.section.statistics-experience.sx-dashboard .sx-tabs button[aria-pressed=true]{
+  color:#f1e5ca;
+  background:
+    linear-gradient(90deg,rgba(226,211,179,.05),transparent 18%,transparent 82%,rgba(226,211,179,.04)),
+    linear-gradient(180deg,#4a4336 0,#312b23 28%,#211d18 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(216,206,184,.24),
+    inset 0 5px 12px rgba(255,245,220,.035),
+    inset 0 -5px 12px rgba(0,0,0,.42);
+}
+.section.statistics-experience.sx-dashboard .sx-tabs button[aria-pressed=true]::after{
+  inset:7px 9px;
+  border:1px solid rgba(213,182,111,.42);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);
+}
+
+/* Quiet control strip */
+.section.statistics-experience.sx-dashboard .sx-toolbar{
+  min-height:58px;
+  margin:0;
+  padding:12px 2px 11px;
+  border-bottom:1px solid rgba(216,206,184,.11);
+}
+.section.statistics-experience.sx-dashboard .sx-toolbar label{color:#aaa293;font-size:.72rem}
+.section.statistics-experience.sx-dashboard .sx-toolbar select{
+  min-height:36px;
+  background:#1d1f1b;
+  border-color:#514c42;
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.45);
+}
+.section.statistics-experience.sx-dashboard .sx-toolbar-meta{color:#9e9789}
+.section.statistics-experience.sx-dashboard .sx-refresh{
+  border-color:#5f533e;
+  background:#191a17;
+  color:#c6aa70;
+  box-shadow:inset 0 0 0 1px rgba(216,206,184,.03);
+}
+
+/* MAIN HALL / DATA PLATE */
+.section.statistics-experience.sx-dashboard .sx-ledger{
+  position:relative;
+  margin-top:38px;
+  padding:34px 34px 36px;
+  border:0;
+  border-top:4px solid #a18756;
+  border-bottom:2px solid #66563b;
+  background:
+    linear-gradient(112deg,transparent 0 27%,rgba(207,198,178,.025) 27.2%,transparent 27.5% 61%,rgba(207,198,178,.018) 61.2%,transparent 61.5%),
+    radial-gradient(ellipse at 50% -20%,rgba(199,184,150,.08),transparent 56%),
+    repeating-linear-gradient(90deg,rgba(221,211,189,.012) 0 1px,transparent 1px 54px),
+    linear-gradient(180deg,#2c2e28 0,#242620 38%,#1d1f1b 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(232,222,201,.11),
+    inset 0 0 0 1px rgba(0,0,0,.38),
+    0 12px 30px rgba(0,0,0,.22);
+}
+.section.statistics-experience.sx-dashboard .sx-ledger::before{
+  content:'';
+  position:absolute;
+  left:16px;
+  right:16px;
+  top:10px;
+  height:7px;
+  border-top:1px solid rgba(216,206,184,.26);
+  border-bottom:1px solid rgba(157,125,67,.2);
+  pointer-events:none;
+}
+.section.statistics-experience.sx-dashboard .sx-ledger-intro{
+  margin:0 0 28px;
+  padding:0 8px 18px;
+  border-bottom:1px solid rgba(216,206,184,.12);
+}
+.section.statistics-experience.sx-dashboard .sx-ledger-intro p{
+  margin:0;
+  max-width:840px;
+  color:#d2caba;
+  font-size:.87rem;
+}
+
+/* The transposed table becomes a colonnade: every player is an architectural bay. */
+.section.statistics-experience.sx-dashboard .sx-season-scroll{
+  position:relative;
+  margin-top:0;
+  border:0;
+  border-top:2px solid #a18756;
+  border-bottom:2px solid #5d513d;
+  background:#171915;
+  box-shadow:
+    inset 0 1px 0 rgba(236,225,201,.11),
+    0 7px 18px rgba(0,0,0,.18);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table{
+  width:100%;
+  min-width:max-content;
+  background:#191b17;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table thead{
+  background:#181914;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table thead th:first-child,
+.section.statistics-experience.sx-dashboard .sx-season-table tbody th{
+  min-width:220px;
+  max-width:260px;
+  background:
+    linear-gradient(118deg,transparent 0 34%,rgba(220,211,191,.045) 34.3%,transparent 34.8% 68%,rgba(220,211,191,.028) 68.2%,transparent 68.7%),
+    linear-gradient(180deg,#34342e,#292a24 48%,#23241f);
+  border-right:2px solid #8c764c;
+  box-shadow:
+    inset -1px 0 0 rgba(216,206,184,.2),
+    7px 0 14px rgba(0,0,0,.16);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-metric-column>span,
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-metric-column>button{
+  padding:21px 18px 18px;
+  color:#ded4c0;
+  letter-spacing:.075em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-player-head{
+  position:relative;
+  min-width:clamp(178px,15vw,270px);
+  padding:25px 18px 18px;
+  border-left:1px solid rgba(216,206,184,.19);
+  background:
+    repeating-linear-gradient(90deg,rgba(226,216,194,.026) 0 1px,transparent 1px 23px),
+    linear-gradient(90deg,rgba(232,222,200,.055),transparent 8%,transparent 92%,rgba(232,222,200,.04)),
+    linear-gradient(180deg,#302f29 0,#23241f 58%,#1a1c18 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(240,231,209,.08),
+    inset 0 -1px 0 rgba(0,0,0,.65);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-player-head::after{
+  content:'';
+  position:absolute;
+  left:12px;
+  right:12px;
+  top:8px;
+  height:6px;
+  border-top:1px solid rgba(216,206,184,.28);
+  border-bottom:1px solid rgba(157,125,67,.22);
+  pointer-events:none;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-player-focus{
+  background:
+    repeating-linear-gradient(90deg,rgba(236,221,188,.04) 0 1px,transparent 1px 23px),
+    linear-gradient(90deg,rgba(213,182,111,.11),transparent 13%,transparent 87%,rgba(213,182,111,.08)),
+    linear-gradient(180deg,#39352b 0,#28241e 58%,#1b1b17 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(243,226,190,.12),
+    inset 0 -2px 0 rgba(213,182,111,.32);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-player-focus::before{
+  top:18px;
+  bottom:16px;
+  width:3px;
+  background:#d3b36e;
+  box-shadow:0 0 9px rgba(211,179,110,.16);
+}
+.section.statistics-experience.sx-dashboard .sx-player-marker{
+  color:#c6a968;
+  font-size:.61rem;
+  letter-spacing:.16em;
+}
+.section.statistics-experience.sx-dashboard .sx-player-name{
+  color:#f0e5cf;
+  font-size:clamp(1.03rem,1.25vw,1.22rem);
+  text-shadow:0 1px 0 #000;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-player-head small{color:#aaa291}
+
+.section.statistics-experience.sx-dashboard .sx-season-table tbody th{
+  padding:14px 17px;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table tbody th .sx-metric-title{
+  color:#e2d8c3;
+  font-size:.88rem;
+  letter-spacing:.015em;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table tbody th small{color:#969080}
+
+.section.statistics-experience.sx-dashboard .sx-season-table td{
+  min-width:clamp(178px,15vw,270px);
+  border-left:1px solid rgba(216,206,184,.12);
+  border-top:1px solid rgba(130,126,111,.32);
+  background:
+    linear-gradient(90deg,rgba(228,218,197,.025),transparent 8%,transparent 92%,rgba(228,218,197,.018)),
+    linear-gradient(180deg,#1f211c,#1c1e1a);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table tbody tr:nth-child(even) td{
+  background:
+    linear-gradient(90deg,rgba(228,218,197,.024),transparent 8%,transparent 92%,rgba(228,218,197,.016)),
+    linear-gradient(180deg,#22231e,#1e201b);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table tbody tr:hover td{
+  background:
+    linear-gradient(90deg,rgba(214,187,128,.05),transparent 10%,transparent 90%,rgba(214,187,128,.035)),
+    linear-gradient(180deg,#292a23,#22241e);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table td .sx-value-button{
+  min-height:64px;
+  padding:11px 15px 10px;
+}
+.section.statistics-experience.sx-dashboard .sx-value-main{
+  color:#ebe2d0;
+  font-size:1.02rem;
+  font-variant-numeric:tabular-nums;
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-leading{
+  background:
+    radial-gradient(circle at 34% 50%,rgba(202,157,72,.14),transparent 58%),
+    linear-gradient(180deg,#29281f,#201f1a);
+  box-shadow:inset 0 0 0 1px rgba(190,146,67,.08);
+}
+.section.statistics-experience.sx-dashboard .sx-season-table .sx-leading .sx-value-main{
+  color:#f0cb7a;
+  font-weight:600;
+  text-shadow:0 0 12px rgba(218,174,90,.12);
+}
+.section.statistics-experience.sx-dashboard .sx-lead-note{
+  margin-top:4px;
+  padding:2px 5px 1px;
+  border:1px solid rgba(199,160,84,.32);
+  background:rgba(86,65,31,.22);
+  color:#d1af68;
+  letter-spacing:.14em;
+}
+
+/* Parchment is reserved for evidence/provenance: a document sitting on the stone hall. */
+.section.statistics-experience.sx-dashboard .sx-provenance{
+  margin-top:18px;
+  padding-top:10px;
+  border-top:1px solid rgba(216,206,184,.13);
+}
+.section.statistics-experience.sx-dashboard .sx-provenance summary{
+  display:inline-block;
+  padding:5px 8px;
+  color:#aaa396;
+  font-size:.7rem;
+}
+.section.statistics-experience.sx-dashboard .sx-provenance[open]{
+  margin-top:22px;
+  padding:14px 16px 15px;
+  border:1px solid #8d805e;
+  background:
+    repeating-linear-gradient(0deg,rgba(64,53,34,.035) 0 1px,transparent 1px 5px),
+    linear-gradient(112deg,rgba(255,255,255,.10),transparent 28%,rgba(98,80,48,.05) 28.4%,transparent 29%),
+    #b8aa82;
+  box-shadow:0 7px 18px rgba(0,0,0,.2),inset 0 0 0 1px rgba(255,247,220,.18);
+}
+.section.statistics-experience.sx-dashboard .sx-provenance[open] summary{
+  color:#443a2a;
+  font-weight:600;
+}
+.section.statistics-experience.sx-dashboard .sx-provenance[open] .sx-legend{
+  color:#40382b!important;
+  margin-bottom:0;
+}
+
+/* GAME RECORDS become a separate lower gallery of mounted plaques. */
+.section.statistics-experience.sx-dashboard .sx-records{
+  position:relative;
+  margin:52px -34px -36px;
+  padding:48px 34px 38px;
+  border-top:18px solid #10110f;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(174,141,76,.07),transparent 52%),
+    linear-gradient(180deg,#20211d,#181a16);
+  box-shadow:inset 0 1px 0 rgba(216,206,184,.13);
+}
+.section.statistics-experience.sx-dashboard .sx-records::before{
+  content:'';
+  position:absolute;
+  top:10px;
+  left:34px;
+  right:34px;
+  border-top:1px solid #9a814f;
+  border-bottom:1px solid rgba(216,206,184,.12);
+  height:4px;
+}
+.section.statistics-experience.sx-dashboard .sx-records>.eyebrow{
+  color:#aeb2a9;
+  letter-spacing:.16em;
+}
+.section.statistics-experience.sx-dashboard .sx-records h3{
+  margin-top:7px;
+  color:#eee1c6;
+  font-size:1.08rem;
+}
+.section.statistics-experience.sx-dashboard .sx-record-grid{
+  grid-template-columns:repeat(auto-fit,minmax(235px,1fr));
+  gap:16px;
+}
+.section.statistics-experience.sx-dashboard .sx-record-grid>button{
+  position:relative;
+  min-height:190px;
+  padding:20px 19px 18px;
+  border:1px solid #716348;
+  border-top:2px solid #a98c54;
+  background:
+    linear-gradient(110deg,transparent 0 72%,rgba(218,204,176,.03) 72.2%,transparent 72.5%),
+    linear-gradient(180deg,#353329,#2a2b24 68%,#23241f);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(235,221,192,.08),
+    0 5px 12px rgba(0,0,0,.17);
+}
+.section.statistics-experience.sx-dashboard .sx-record-grid>button::after{
+  content:'';
+  position:absolute;
+  inset:7px;
+  border:1px solid rgba(216,206,184,.06);
+  pointer-events:none;
+}
+.section.statistics-experience.sx-dashboard .sx-record-grid>button>strong{
+  color:#efc978;
+  font-size:1.82rem;
+  text-shadow:0 1px 0 #000;
+}
+
+/* Personal bests remain a private note outside the official stone record. */
+.section.statistics-experience.sx-dashboard>.sx-personal{
+  width:min(100%,920px);
+  margin:26px auto 10px;
+}
+.section.statistics-experience.sx-dashboard>.sx-highlights{
+  width:100%;
+  margin-top:24px;
+}
+
+@media(min-width:1500px){
+  .section.statistics-experience.sx-dashboard .sx-ledger{padding-left:42px;padding-right:42px}
+  .section.statistics-experience.sx-dashboard .sx-records{margin-left:-42px;margin-right:-42px;padding-left:42px;padding-right:42px}
+}
+
+@media(max-width:900px){
+  .section.statistics-experience.sx-dashboard{--hall-gutter:16px}
+  .section.statistics-experience.sx-dashboard .sx-tabs{grid-template-columns:repeat(5,minmax(160px,1fr))}
+  .section.statistics-experience.sx-dashboard .sx-ledger{padding:26px 20px 28px}
+  .section.statistics-experience.sx-dashboard .sx-records{margin-left:-20px;margin-right:-20px;margin-bottom:-28px;padding-left:20px;padding-right:20px}
+  .section.statistics-experience.sx-dashboard .sx-season-table thead th:first-child,
+  .section.statistics-experience.sx-dashboard .sx-season-table tbody th{min-width:185px;max-width:205px}
+}
+
+@media(max-width:650px){
+  .section.statistics-experience.sx-dashboard{
+    --hall-gutter:10px;
+    width:calc(100vw - 20px);
+    margin-left:calc(50% - 50vw + 10px);
+    margin-right:calc(50% - 50vw + 10px);
+  }
+  .section.statistics-experience.sx-dashboard .sx-tabs button{min-height:58px;padding:15px 16px;font-size:.8rem}
+  .section.statistics-experience.sx-dashboard .sx-ledger{margin-top:26px;padding:22px 12px 24px}
+  .section.statistics-experience.sx-dashboard .sx-ledger::before{left:8px;right:8px}
+  .section.statistics-experience.sx-dashboard .sx-ledger-intro{padding-left:2px;padding-right:2px}
+  .section.statistics-experience.sx-dashboard .sx-season-table thead th:first-child,
+  .section.statistics-experience.sx-dashboard .sx-season-table tbody th{min-width:158px;max-width:170px}
+  .section.statistics-experience.sx-dashboard .sx-season-table .sx-player-head,
+  .section.statistics-experience.sx-dashboard .sx-season-table td{min-width:154px}
+  .section.statistics-experience.sx-dashboard .sx-records{margin:38px -12px -24px;padding:42px 12px 28px}
+  .section.statistics-experience.sx-dashboard .sx-records::before{left:12px;right:12px}
+}
