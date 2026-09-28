@@ -1,5 +1,7 @@
 import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult} from '../domain/league';
 import {lombardia} from './content';
+import {illustrativeGame} from './statisticsFixtures';
+import {EXPERIENCE_VERSION,type StatisticsScope,type StatisticsDataset} from '../domain/statistics';
 /** Explicitly illustrative and memory-only. Never mutates real league data. */
 export class PreviewLeagueRepository implements LeagueRepository {
   readonly mode='preview' as const;
@@ -22,6 +24,8 @@ export class PreviewLeagueRepository implements LeagueRepository {
       {matchId:'sample-duel',seasonId:'S001',format:'ONE_V_ONE',status:'COMPLETED',completedAt:'2026-09-06T18:00:00Z',participants:[{...this.state.emperor!,team:1},{...this.state.players[0],team:2}],result:{winningPlayerIds:['sample-ragnar'],revision:1}},
       {matchId:'sample-team',seasonId:'S001',format:'TWO_V_TWO',status:'COMPLETED',completedAt:'2026-09-08T18:00:00Z',participants:this.state.players.slice(0,4).map((p,i)=>({...p,team:i<2?1:2})),result:{winningPlayerIds:['sample-ragnar','sample-steve'],revision:1}}
     ];
+    this.state.events.push({eventId:'preview-campaign',seasonId:'S001',title:'Lombardia · illustrative campaign',status:'COMPLETED',startsAt:'2026-09-10T18:00:00Z'});
+    for(let index=0;index<8;index++)this.state.matches.push({matchId:`preview-battle-${index+1}`,seasonId:'S001',eventId:'preview-campaign',format:'TWO_V_TWO',status:'COMPLETED',completedAt:`2026-09-${String(10+index).padStart(2,'0')}T18:00:00Z`,participants:[this.state.players[0],this.state.players[1],this.state.players[2],this.state.emperor!].map((p,i)=>({...p,team:i<2?1:2,slot:i+1})),result:{winningPlayerIds:index%2?['sample-baguette','sample-you']:['sample-ragnar','sample-steve'],revision:1}});
   }
   async load(){return structuredClone(this.state);}
   async signIn(){  this.state.membership='UNLINKED';  this.state.viewer=null;  this.listeners.forEach(fn=>fn());}
@@ -51,10 +55,14 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async resetCivilizationDraft(){throw new Error('Civilization draft administration is available in live Matches.');}
   async uploadReplay():Promise<ReplayUploadResult>{throw new Error('Replay upload is available in live Matches.');}
   async replayStatistics():Promise<ReplayStatisticsResult>{throw new Error('Replay statistics are available in live Matches.');}
+  async statisticsExperience(scope:StatisticsScope):Promise<StatisticsDataset>{
+    if(this.state.membership!=='ACTIVE')throw new Error('Join the league to view statistics.');
+    return {version:EXPERIENCE_VERSION,unavailableGames:0,games:this.state.matches.filter(m=>(!scope.matchId||m.matchId===scope.matchId)&&(!scope.eventId||m.eventId===scope.eventId)&&(!scope.seasonId||m.seasonId===scope.seasonId)).map(m=>illustrativeGame(m,m.matchId.startsWith('preview-battle-')?Number(m.matchId.slice('preview-battle-'.length))-1:['sample-duel','sample-team'].indexOf(m.matchId),this.state.players))};
+  }
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
-    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:this.state.players.filter(p=>p.playerId!=='sample-you'||e.viewer?.rsvp==='YES')},matches:[]});
+    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:this.state.players.filter(p=>p.playerId!=='sample-you'||e.viewer?.rsvp==='YES')},matches:this.state.matches.filter(m=>m.eventId===id)});
   }
   async match(id:string):Promise<MatchDetail>{
     const m=this.state.matches.find(m=>m.matchId===id);if(!m)throw new Error('Battle not found.');

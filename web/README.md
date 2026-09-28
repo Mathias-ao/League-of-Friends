@@ -20,6 +20,8 @@ The original frontend lockfile could not be recovered. Direct versions are pinne
 
 ## Preview and live modes
 
+For the statistics feature branch, follow the [V1 statistics test-run guide](../docs/setup/statistics-v1-test-run.md). It includes the preview Favor, an eight-Game campaign, live-backend requirements and verification steps.
+
 Without Firebase web configuration the site uses an explicitly labelled, memory-only preview. Sample names, standings and historical battles are illustrative. Signing in selects the example player; season entry, RSVP and a sample result dispute are local to the visit. The sample leaderboard is fixed illustrative content, not a simulated scoring pipeline. Reload resets the preview.
 
 Copy .env.example to .env.local and supply the Firebase web app's API key, auth domain, project ID and app ID for live mode. Partial configuration fails visibly. No service-account credential belongs in a Vite variable. Add the deployed origin to Firebase Authentication's authorized domains, enable Google sign-in and deploy the accompanying functions and rules together. Browser authentication persists between visits.

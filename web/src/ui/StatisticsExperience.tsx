@@ -1,22 +1,13 @@
 import {useRef,useState} from 'react';
 import {ArrowRight,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
-import {formatName,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
+import {formatName,type PlayerProfile} from '../domain/league';
 import {
-  FREEHOLDER_TOOLTIP,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES,PLAYER_PERSONALITY_SLIDERS,REPUTATION_ESSENCES,STATISTIC_CATEGORIES,
-  type BattleStatisticsPresentation,type EventStatisticsPresentation,type PlayerIdentityPresentation,type ReputationEssenceId,type SeasonStatisticsPresentation,type StatisticCategory,type StatisticCategoryBlock
+  FREEHOLDER_TOOLTIP,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES,PLAYER_PERSONALITY_SLIDERS,REPUTATION_ESSENCES,
+  type PlayerIdentityPresentation,type ReputationEssenceId
 } from '../domain/statisticsExperience';
-import {previewBattleStatistics,previewEventStatistics,previewPlayerIdentity,previewSeasonStatistics} from '../data/statisticsPreview';
-import {EventDialog,MatchDialog} from './Views';
+import {previewPlayerIdentity} from '../data/statisticsPreview';
 import {Avatar,Sigil} from './Primitives';
 import type {ViewProps} from './App';
-
-const emptyValues:Record<StatisticCategory,string[]>={
-  Opening:['Build order','Feudal Age','Castle Age','Imperial Age','First military unit','First military building'],
-  Economy:['Villagers @20','Dark Age TC idle','Eco upgrades by Castle','First extra TC','Third TC','Resources committed'],
-  Military:['Military commitment @20','Army composition','Raids','Engagements','Military infrastructure','Teamplay'],
-  'Map Presence':['Scout Coverage @5','Map Coverage','Forward Footprint','Expansion Zones','Enemy Base Contact','Gold Influence','Relic Activity'],
-  Execution:['Raw APM','Combat APM','Economy actions during combat','Raid response']
-};
 
 const sliderTermTooltips:Record<string,[string,string]>={
   'boomer-aggressor':['Builds economy before committing to pressure.','Commits early resources to military pressure.'],
@@ -26,58 +17,7 @@ const sliderTermTooltips:Record<string,[string,string]>={
   'compact-expansive':['Keeps economy and infrastructure concentrated.','Spreads economy and infrastructure across the map.']
 };
 
-function blankCategories():StatisticCategoryBlock[]{
-  return STATISTIC_CATEGORIES.map(category=>({category,values:emptyValues[category].map(label=>({label,value:'—'}))}));
-}
-
-function SectionTabs({active,onChange}:{active:StatisticCategory;onChange:(value:StatisticCategory)=>void}){
-  return <div className="stats-tabs" role="tablist" aria-label="Statistics category">{STATISTIC_CATEGORIES.map(category=><button key={category} role="tab" aria-selected={active===category} className={active===category?'active':''} onClick={()=>onChange(category)}>{category}</button>)}</div>;
-}
-
-function CategoryTable({block,context}:{block:StatisticCategoryBlock;context?:string}){
-  return <section className="stats-category-panel"><div className="stats-category-heading"><div><span className="eyebrow">{context??'STATISTICS'}</span><h3>{block.category}</h3></div>{block.summary&&<p>{block.summary}</p>}</div><div className="stats-value-grid">{block.values.map(item=><div className="stats-value" key={item.label}><span>{item.label}</span><strong>{item.value}</strong>{item.note&&<small>{item.note}</small>}</div>)}</div></section>;
-}
-
-function DesignDataNotice({preview}:{preview:boolean}){
-  return preview?<div className="stats-design-notice"><Sparkles size={15}/><span><strong>Design preview.</strong> Values on this surface are illustrative until the new statistics engine is connected.</span></div>:<div className="stats-design-notice neutral"><Info size={15}/><span>The player-facing structure is ready. Values appear when the new statistics projection is connected.</span></div>;
-}
-
-export function BattleStatisticsExperience({data,preview}:{data:MatchDetail;preview:boolean}){
-  const [category,setCategory]=useState<StatisticCategory>('Opening');
-  const playerNames=data.match.participants.map(player=>player.steamName);
-  const presentation:BattleStatisticsPresentation=preview?previewBattleStatistics(playerNames):{highlights:[],categories:blankCategories()};
-  const active=presentation.categories.find(item=>item.category===category)!;
-  return <section className="statistics-experience battle-statistics-experience">
-    <div className="stats-title-row"><div><span className="eyebrow">BATTLE STATISTICS</span><h2>The record of the field</h2><p>A focused reading of this Battle, followed by the detailed five-category record.</p></div><span className="quiet-badge">{preview?'ILLUSTRATIVE DATA':'ENGINE DATA PENDING'}</span></div>
-    <DesignDataNotice preview={preview}/>
-    <section className="battle-readout"><div className="stats-subheading"><span className="eyebrow">BATTLE READOUT</span><h3>What defined this Battle</h3></div>{presentation.highlights.length?<div className="battle-highlight-grid">{presentation.highlights.slice(0,3).map(highlight=><article key={highlight.eyebrow+highlight.title} className="battle-highlight"><span className="eyebrow">{highlight.eyebrow} · {highlight.category}</span><strong>{highlight.title}</strong><p>{highlight.detail}</p></article>)}</div>:<div className="stats-awaiting"><strong>Battle distinctions will appear here.</strong><p>Up to three strong, evidence-backed facts will be selected from the finished Battle rather than filling the space with weak trivia.</p></div>}</section>
-    <section className="detailed-statistics"><div className="stats-subheading"><span className="eyebrow">DETAILED STATISTICS</span><h3>Five views of the same Battle</h3></div><SectionTabs active={category} onChange={setCategory}/><CategoryTable block={active} context="BATTLE"/></section>
-  </section>;
-}
-
-export function MatchDialogWithStatistics(props:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
-  return <><MatchDialog {...props}/><hr className="statistics-divider"/><BattleStatisticsExperience data={props.data} preview={props.preview}/></>;
-}
-
-function EventStatisticsExperience({data,preview}:{data:EventDetail;preview:boolean}){
-  const [category,setCategory]=useState<StatisticCategory>('Opening');
-  const presentation:EventStatisticsPresentation=preview?previewEventStatistics(data.event.title):{eventLabel:data.event.title,battlesAnalyzed:null,distinctions:[],categories:blankCategories()};
-  const active=presentation.categories.find(item=>item.category===category)!;
-  return <section className="statistics-experience event-statistics-experience"><div className="stats-title-row"><div><span className="eyebrow">EVENT STATISTICS</span><h2>The event in numbers</h2><p>Curated distinctions and aggregates across the Battles that made up this Event.</p></div><span className="quiet-badge">{presentation.battlesAnalyzed==null?'AWAITING BATTLES':presentation.battlesAnalyzed+' BATTLES'}</span></div><DesignDataNotice preview={preview}/>{presentation.distinctions.length?<div className="event-distinction-grid">{presentation.distinctions.slice(0,6).map(item=><article className="event-distinction" key={item.title}><span className="eyebrow">{item.category}</span><strong>{item.title}</strong><p>{item.detail}</p></article>)}</div>:<div className="stats-awaiting"><strong>Event distinctions will be written by the Battles.</strong><p>Completed Events can surface four to six meaningful distinctions with provenance back to their source Battle.</p></div>}<SectionTabs active={category} onChange={setCategory}/><CategoryTable block={active} context="EVENT"/></section>;
-}
-
-export function EventDialogWithStatistics(props:ViewProps&{data:EventDetail;onUpdated:()=>void}){
-  return <><EventDialog {...props}/><hr className="statistics-divider"/><EventStatisticsExperience data={props.data} preview={props.preview}/></>;
-}
-
-export function SeasonStatisticsView({snapshot,preview,openPlayer}:{snapshot:ViewProps['snapshot'];preview:boolean;openPlayer:(id:string)=>void}){
-  const [category,setCategory]=useState<StatisticCategory>('Opening');
-  const seasonLabel=snapshot.season?.name??'Current Season';
-  const presentation:SeasonStatisticsPresentation=preview?previewSeasonStatistics(seasonLabel):{seasonLabel,battlesAnalyzed:null,categories:blankCategories(),records:[]};
-  const active=presentation.categories.find(item=>item.category===category)!;
-  const playerByName=(name:string)=>snapshot.players.find(player=>player.steamName===name);
-  return <section className="section statistics-experience season-statistics-experience"><div className="section-heading stats-page-heading"><div><span className="eyebrow">SEASON STATISTICS</span><h1>{seasonLabel}</h1><p>The statistical character of the Season — the same language used in every Battle, accumulated across the campaign.</p></div><span className="quiet-badge">{presentation.battlesAnalyzed==null?'ENGINE DATA PENDING':presentation.battlesAnalyzed+' BATTLES ANALYZED'}</span></div><DesignDataNotice preview={preview}/><section className="panel season-stat-overview"><div className="stats-subheading"><span className="eyebrow">SEASON VIEW</span><h2>Opening · Economy · Military · Map Presence · Execution</h2><p>Comparisons favor timings, rates, medians, shares and fixed checkpoints so long Battles do not automatically dominate the Season.</p></div><SectionTabs active={category} onChange={setCategory}/><CategoryTable block={active} context="SEASON"/></section><section className="panel record-book"><div className="stats-title-row"><div><span className="eyebrow">THE RECORD BOOK</span><h2>Season records</h2><p>Approved record types retain a route back to the Battle that established them.</p></div></div>{presentation.records.length?<div className="record-book-list">{presentation.records.map(record=>{const player=playerByName(record.holder);return <article key={record.label}><span>{record.label}</span><strong>{record.value}</strong>{player?<button className="text-button small" onClick={()=>openPlayer(player.playerId)}>{record.holder}<ArrowRight size={13}/></button>:<small>{record.holder}</small>}<small>{record.provenance}</small></article>;})}</div>:<div className="stats-awaiting"><strong>No Season records yet.</strong><p>The record catalogue will populate from eligible Battle Statistics.</p></div>}</section></section>;
-}
+export {BattleStatisticsExperience,MatchDialogWithStatistics,EventDialogWithStatistics,SeasonStatisticsView} from './StatisticsDashboard';
 
 function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
   const revealed=identity.eligibleBattles>=PERSONALITY_MINIMUM_ELIGIBLE_BATTLES&&identity.sliders.some(slider=>slider.value!=null);

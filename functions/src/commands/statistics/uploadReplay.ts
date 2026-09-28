@@ -6,6 +6,8 @@ import { requireLeaguePlayer } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { collections } from "../../domain/collections.js";
 import type { GamePlayer } from "../../domain/types.js";
+import {projectStatistics} from "../../engines/statisticsExperience.js";
+import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
 
 const MAX_REPLAY_BYTES = 32 * 1024 * 1024;
 
@@ -297,6 +299,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
       const revision = Number(freshGame.replayStatisticsRevision ?? 0) + 1;
       const now = Timestamp.now();
       transaction.create(sourceRef, {
+        experience: projectStatistics(worker.statistics, statisticsMetadata(matchId, gameId, matchSnapshot.data(), {...freshGame,replayStatisticsRevision:revision}, {sourceHash:localSourceHash,playerMapping})),
         state: "READY",
         matchId,
         gameId,

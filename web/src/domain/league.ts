@@ -105,6 +105,7 @@ export interface LeagueRepository {
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
   uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;
   replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;
+  statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
 
   event(id:string):Promise<EventDetail>;
   match(id:string):Promise<MatchDetail>;

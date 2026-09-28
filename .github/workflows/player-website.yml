@@ -1,7 +1,7 @@
 name: Player website
 on:
   push:
-    branches: [feat/player-facing-website]
+    branches: [feat/player-facing-website, feature/statistics-experience-v1]
     paths: ['web/**', 'functions/**', 'scripts/test-player-site-boundaries.mjs', '.github/workflows/player-website.yml', 'branding/**', 'events/**', 'seasons/**']
   pull_request:
     paths: ['web/**', 'functions/**', 'scripts/test-player-site-boundaries.mjs', '.github/workflows/player-website.yml', 'branding/**', 'events/**', 'seasons/**']
@@ -25,6 +25,8 @@ jobs:
         run: npm ci --prefix functions --no-audit --no-fund
       - name: Build backend
         run: npm run build --prefix functions
+      - name: Test statistics and backend rules
+        run: npm test --prefix functions
       - name: Test callable boundaries
         run: node scripts/test-player-site-boundaries.mjs
       - name: Retain build and generated lockfile for recovery

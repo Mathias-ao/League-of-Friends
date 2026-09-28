@@ -61,5 +61,7 @@ export const backendHealth = onCall(callableOptions, async (request) => {
 });
 
 export {getMyMembership} from "./queries/getMyMembership.js";
+export {getStatisticsExperience} from "./queries/getStatisticsExperience.js";
+export {rebuildStatisticsOnGameChange,rebuildStatisticsOnMatchChange,rebuildStatisticsOnSourceChange} from "./triggers/statisticsExperience.js";
 export {getPlayerSiteDirectory} from "./queries/getPlayerSiteDirectory.js";
 export {enterSeason} from "./commands/seasons/enterSeason.js";

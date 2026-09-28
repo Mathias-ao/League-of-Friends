@@ -57,6 +57,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     return (await httpsCallable<unknown,ReplayUploadResult>(this.functions,'uploadReplay',{timeout:300000})({matchId,gameId,fileName:file.name,replayBase64})).data;
   }
   replayStatistics(matchId:string,gameId:string){return this.call<ReplayStatisticsResult>('getReplayStatistics',{matchId,gameId});}
+  statisticsExperience(scope:import('../domain/statistics').StatisticsScope){return this.call<import('../domain/statistics').StatisticsDataset>('getStatisticsExperience',scope);}
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void){
     let initial=true;
     return onSnapshot(

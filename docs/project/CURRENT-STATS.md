@@ -1,5 +1,7 @@
 # Age of Friends — Current Statistics
 
+Presentation implementation: see [Statistics experience V1 test run](../setup/statistics-v1-test-run.md). The feature branch wires existing measurements into Battle/Event/Season views and hidden lifetime projections; no detector formulas are changed.
+
 Last reviewed: 26 September 2026
 
 Purpose: Concise source of truth for player-facing statistics status. Technical definitions and evidence limits live in the versioned architecture/model documents. The player-facing scope and presentation contract lives in [`../design/statistics-experience.md`](../design/statistics-experience.md).

@@ -161,7 +161,7 @@ export function App({repository}:{repository:LeagueRepository}){
           {error&&!leagueEntryVisible&&<div className="alert" role="alert"><span>{error}</span><button onClick={()=>void refresh()}>Retry</button><button aria-label="Dismiss error" onClick={()=>setError('')}>×</button></div>}
           {loading?<div className="loading" role="status"><LoaderCircle className="spin"/>Gathering the banners…</div>:showSeasonGate?
             <SeasonAccessGate gateRef={gateRef} snapshot={snapshot} busy={busy} enter={enter}/>:
-            page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<SeasonStatisticsView snapshot={snapshot} preview={preview} openPlayer={openPlayer}/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
+            page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<SeasonStatisticsView snapshot={snapshot} preview={preview} repository={repository} openPlayer={openPlayer} openMatch={openMatch}/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
         </main>
         <footer className="site-footer"><span>AGE OF FRIENDS · SEASON I</span><span>A private Age of Empires II: DE league</span></footer>
       </div></div>}
