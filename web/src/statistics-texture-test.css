@@ -1,32 +1,140 @@
 /* Stepwise texture test for the Season Statistics tab.
-   The uploaded ornamental metal pattern becomes the environmental surface behind
-   the Hall of Records while existing table surfaces stay readable above it. */
+   Refinement pass: larger motif, calmer contrast, stronger lighting hierarchy,
+   one coherent ledger plate, a mounted record gallery, and a clearer Emperor edge. */
 
 .section.statistics-experience.sx-season-hall-v2{
-  background-color:#120f0c;
+  background-color:#100d0b;
   background-image:
-    linear-gradient(rgba(14,11,9,.66),rgba(14,11,9,.74)),
+    radial-gradient(ellipse at 50% 18%,rgba(84,63,39,.10) 0,rgba(25,19,15,.16) 34%,rgba(8,7,6,.56) 78%,rgba(5,4,4,.74) 100%),
+    linear-gradient(90deg,rgba(4,4,4,.58) 0,rgba(12,10,8,.18) 18%,rgba(12,10,8,.12) 50%,rgba(12,10,8,.18) 82%,rgba(4,4,4,.58) 100%),
+    linear-gradient(180deg,rgba(20,15,12,.50),rgba(10,8,7,.68)),
     url('/textures/statgrid2.webp');
-  background-size:auto,440px auto;
-  background-repeat:no-repeat,repeat;
-  background-position:center top,center top;
+  background-size:auto,auto,auto,620px auto;
+  background-repeat:no-repeat,no-repeat,no-repeat,repeat;
+  background-position:center top,center top,center top,110px 0;
+  box-shadow:inset 0 26px 70px rgba(0,0,0,.20),inset 0 -40px 90px rgba(0,0,0,.30);
 }
 
-/* Let the texture register around the hall without competing with the data. */
 .section.statistics-experience.sx-season-hall-v2 .sx-panel{
   position:relative;
 }
 
-.section.statistics-experience.sx-season-hall-v2 .sx-ledger{
-  background-color:rgba(20,20,18,.94);
+/* The chapter rail stays dark, but gains a faint reflected edge from the metalwork. */
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs{
+  background:linear-gradient(180deg,rgba(42,39,34,.98),rgba(21,20,18,.99));
+  box-shadow:
+    inset 0 1px rgba(244,218,165,.06),
+    inset 0 -1px rgba(0,0,0,.70),
+    0 8px 20px rgba(0,0,0,.22);
 }
 
 .section.statistics-experience.sx-season-hall-v2 .sx-toolbar{
-  background:linear-gradient(90deg,rgba(12,10,8,.54),rgba(12,10,8,.28),rgba(12,10,8,.54));
+  margin-top:6px;
+  padding-left:8px;
+  padding-right:8px;
+  border-top:1px solid rgba(224,190,125,.07);
+  background:linear-gradient(90deg,rgba(11,9,8,.70),rgba(20,16,12,.50) 22%,rgba(20,16,12,.40) 50%,rgba(20,16,12,.50) 78%,rgba(11,9,8,.70));
+  backdrop-filter:blur(1.5px);
+}
+
+/* One smoked bronze ledger plate over the environmental texture. */
+.section.statistics-experience.sx-season-hall-v2 .sx-ledger{
+  position:relative;
+  background:
+    linear-gradient(180deg,rgba(255,244,216,.015),transparent 16%),
+    linear-gradient(180deg,rgba(24,23,20,.965),rgba(15,16,14,.955));
+  border-color:rgba(176,139,76,.30);
+  border-top-color:rgba(202,163,95,.66);
+  box-shadow:
+    inset 0 1px rgba(250,224,177,.035),
+    inset 0 0 0 1px rgba(0,0,0,.22),
+    0 14px 34px rgba(0,0,0,.34);
+  backdrop-filter:blur(2px);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-ledger-intro{
+  background:rgba(18,19,16,.86);
+  border-color:rgba(213,187,136,.10);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-scroll{
+  background:rgba(12,13,11,.96);
+  border-color:rgba(199,162,95,.18);
+  border-top-color:rgba(209,171,101,.56);
+  box-shadow:
+    inset 0 1px rgba(255,240,208,.02),
+    inset 0 0 22px rgba(0,0,0,.18);
+}
+
+/* Keep the subtle glowing bay dividers; make them the primary ornament inside the table. */
+.section.statistics-experience.sx-season-hall-v2 .sx-season-table .sx-player-head:not(.sx-emperor-head),
+.section.statistics-experience.sx-season-hall-v2 .sx-season-table td:not(.sx-emperor-cell){
+  border-left-color:rgba(199,165,99,.32);
+  box-shadow:
+    inset 1px 0 rgba(232,199,132,.11),
+    inset 9px 0 16px -15px rgba(229,184,94,.94);
+}
+
+/* Emperor stays detached at the far right with a stronger cast shadow and brass threshold. */
+.section.statistics-experience.sx-season-hall-v2 .sx-season-table .sx-emperor-head,
+.section.statistics-experience.sx-season-hall-v2 .sx-season-table .sx-emperor-cell{
+  border-left:2px solid rgba(225,189,117,.72);
+  box-shadow:
+    -18px 0 30px rgba(0,0,0,.48),
+    -2px 0 12px rgba(208,164,81,.12),
+    inset 1px 0 rgba(244,211,145,.18),
+    inset 10px 0 18px -15px rgba(231,183,87,.92);
+}
+
+/* Records become one mounted slab; the pattern remains environmental rather than filling every gap. */
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery{
+  margin-top:44px;
+  padding:26px 24px 30px;
+  border:1px solid rgba(187,149,83,.24);
+  border-top:2px solid rgba(204,164,94,.54);
+  background:
+    linear-gradient(180deg,rgba(255,239,205,.015),transparent 18%),
+    linear-gradient(180deg,rgba(20,20,18,.94),rgba(14,15,13,.93));
+  box-shadow:
+    inset 0 1px rgba(255,237,198,.025),
+    inset 0 0 0 1px rgba(0,0,0,.20),
+    0 14px 30px rgba(0,0,0,.28);
+  backdrop-filter:blur(2px);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid{
+  gap:14px;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button{
+  border-color:rgba(211,193,157,.12);
+  border-top-color:rgba(198,161,91,.46);
+  background:linear-gradient(180deg,#24241f,#1d1e1a);
+  box-shadow:
+    inset 0 1px rgba(255,245,221,.025),
+    0 4px 10px rgba(0,0,0,.16);
+}
+
+/* Make the open texture areas quieter so hierarchy comes from the content, not the motif. */
+.section.statistics-experience.sx-season-hall-v2 .sx-provenance,
+.section.statistics-experience.sx-season-hall-v2 .sx-personal,
+.section.statistics-experience.sx-season-hall-v2 .sx-highlights{
+  position:relative;
 }
 
 @media(max-width:900px){
   .section.statistics-experience.sx-season-hall-v2{
-    background-size:auto,360px auto;
+    background-size:auto,auto,auto,500px auto;
+    background-position:center top,center top,center top,40px 0;
+  }
+  .section.statistics-experience.sx-season-hall-v2 .sx-record-gallery{
+    padding:22px 16px 24px;
+  }
+}
+
+@media(max-width:650px){
+  .section.statistics-experience.sx-season-hall-v2{
+    background-size:auto,auto,auto,420px auto;
+    background-position:center top,center top,center top,-20px 0;
   }
 }
