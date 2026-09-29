@@ -9,15 +9,17 @@ export function illustrativeGame(match:MatchRecord,index:number,players:PlayerRe
   game.players=roster.map((p,i)=>{
     const identity=Math.max(0,players.findIndex(x=>x.playerId===p.playerId));
     const values=Object.fromEntries(METRICS.map(m=>[m.id,null])) as Record<string,number|null>;
-    Object.assign(values,{feudal:570000+i*23000+index*4000,castle:1150000+i*43000-index*12000,imperial:2010000+i*17000,feudalVillagers:23+i,firstMilitary:645000+i*13000,loom:532000,earlyWalls:identity*7,
-      food:10000+index*640+i*930,wood:12000+index*850+i*620,gold:8000+index*500+i*900,stone:1500+i*900,total:0,villagerRequests:70+i*6,tcIdle:12000+i*6000,extraTCs:2,secondTC:1260000+i*22000,thirdTC:1600000,
-      militaryCommitment:11000+i*1700+index*600,unitRequests:120+i*20,raidsOut:0,raidsIn:0,skirmishes:8+i,skirmishTime:360000+i*32000,assistsOut:0,assistsIn:0,cooperation:0,
-      scouting:12+i*1.8,expansions:2+(i+index)%4,forward:(i+index)%5,forwardEco:(i+index)%3,walls:10+i*18,contact:420000+i*12000,apm:35+i*8+index,combatApm:48+i*10,response:8+i*2,responded:0,received:0});
+    Object.assign(values,{feudal:570000+i*23000+index*4000,castle:1150000+i*43000-index*12000,imperial:2010000+i*17000,
+      villagers10:30+i+(index%3),commands5:155+i*18+index*3,darkAgeGap:14000+i*3200+index*600,firstLumberCamp:170000+i*6000+index*1500,firstMiningCamp:425000+i*9000+index*2500,
+      feudalVillagers:23+i,firstMilitary:645000+i*13000,loom:532000,earlyWalls:identity*7,
+      food:10000+index*640+i*930,wood:12000+index*850+i*620,gold:8000+index*500+i*900,stone:1500+i*900,total:0,housesBuilt:14+i+(index%4),tradeUnits:4+i+(index%3),tributeSent:250+i*110+index*45,tributeReceived:220+i*90+index*35,villagerRequests:70+i*6,tcIdle:12000+i*6000,extraTCs:2,secondTC:1260000+i*22000,thirdTC:1600000,
+      militaryCommitment:11000+i*1700+index*600,militaryTechs:10+i+(index%5),unitRequests:120+i*20,raidsOut:0,raidsIn:0,skirmishes:8+i,skirmishTime:360000+i*32000,assistsOut:0,assistsIn:0,cooperation:0,
+      scouting:12+i*1.8,expansionTCs:1+(i+index)%3,expansions:2+(i+index)%4,forward:(i+index)%5,forwardEco:(i+index)%3,walls:10+i*18,contact:420000+i*12000,apm:35+i*8+index,combatApm:48+i*10,response:8+i*2,responded:0,received:0});
     values.total=values.food!+values.wood!+values.gold!+values.stone!;
     const ally=roster.some(q=>q.playerId!==p.playerId&&q.team===p.team);
     if(!ally){values.assistsOut=null;values.assistsIn=null;values.cooperation=null;}
     return {playerId:p.playerId,name:p.steamName,team:p.team??null,civilization:['FRANKS','BRITONS','TEUTONS','BYZANTINES','SARACENS','ITALIANS'][identity%6],opening:['Scout Rush','Archer Rush','Fast Castle','Boom'][identity%4],mainUnit:unit[identity%6],values,
-      unavailable:Object.fromEntries(Object.entries(values).filter(([,v])=>v===null).map(([k])=>[k,'No qualified opportunity in this format.'])),models:Object.fromEntries(METRICS.map(m=>[m.id,'ILLUSTRATIVE_V1'])),
+      unavailable:Object.fromEntries(Object.entries(values).filter(([,v])=>v===null).map(([k])=>[k,'No qualified opportunity in this format.'])),models:Object.fromEntries(METRICS.map(m=>[m.id,'ILLUSTRATIVE_V2'])),
       composition:{cavalry:values.unitRequests!*(i%2===0?.6:.1),archers:values.unitRequests!*(i%2===1?.6:.1),infantry:values.unitRequests!*.2,siege:values.unitRequests!*.1},responseTimes:[],
       byAge:Object.fromEntries(['dark','feudal','castle','imperial'].map((age,a)=>[age,Object.fromEntries(['food','wood','gold','stone','total'].map(k=>[k,values[k]!*([.05,.15,.35,.45][a])]))])),
       details:[{label:'Double-Bit Axe',value:'Research request',atMs:700000,category:'Economy'},{label:'Bodkin Arrow',value:'Research request',atMs:1400000,category:'Military'}]} as PlayerMeasurement;
