@@ -1,23 +1,23 @@
 import {useEffect,useMemo,useRef,useState,type Ref} from 'react';
 import {ArrowRight,Crown,RefreshCw,X} from 'lucide-react';
-import {CATEGORIES,METRICS,StatisticsExperience,formatStatistic,type AggregatePlayer,type AggregationMode,type Category,type GameStatistics,type Highlight,type MetricDefinition,type StatisticsDataset} from '../domain/statistics';
+import {CATEGORIES,METRICS,StatisticsExperience,formatStatistic,metricEligible,type AggregatePlayer,type AggregationMode,type Category,type GameStatistics,type Highlight,type MetricDefinition,type StatisticsDataset} from '../domain/statistics';
 import {formatName,type PlayerRecord} from '../domain/league';
 import type {ViewProps} from './App';
 import {CompositionBars} from './StatisticsDashboardLegacy';
 
 const definition=(id:string)=>METRICS.find(metric=>metric.id===id)!;
 const categoryHelp:Record<Category,string>={
-  Opening:'Typical timings and recurring openings. Earlier is a timing distinction, not a strategy grade.',
-  Economy:'Base-cost resource commitment from requests and placements; not income or exact resources spent.',
-  Military:'Detected interactions and requested production. Raids and engagements do not establish damage or kills.',
-  'Map Presence':'Command and placement geometry; not explored terrain or territory owned.',
+  Opening:'Typical early-game timings and activity. Villagers @10 and camp timings come from Economy evidence; early commands and Dark Age gaps come from Execution evidence without duplicating those calculations.',
+  Economy:'Resource commitment plus recurring economy activity. Trade and Tribute compare only eligible team Games; queue and placement measurements do not claim completed units or buildings.',
+  Military:'Detected interactions and requested production. Military technologies are distinct research requests, so cancelled or repeated clicks do not inflate the count.',
+  'Map Presence':'Command and placement geometry; not explored terrain or territory owned. Enemy-base contact is command contact, and expansion TCs are placement evidence.',
   Execution:'Command activity and inferred response timing. These are descriptive measurements, not a skill score.'
 };
 const groupIds:Record<Category,string[]>={
-  Opening:['feudal','castle','imperial'],
-  Economy:['food','wood','gold','stone','total'],
-  Military:['raidsOut','raidsIn','skirmishes','skirmishTime','assistsOut','assistsIn','cooperation','militaryCommitment'],
-  'Map Presence':['scouting','expansions','forward','forwardEco','walls'],
+  Opening:['feudal','castle','imperial','villagers10','commands5','darkAgeGap','firstLumberCamp','firstMiningCamp'],
+  Economy:['food','wood','gold','stone','total','housesBuilt','tradeUnits','tributeSent','tributeReceived'],
+  Military:['militaryTechs','raidsOut','raidsIn','skirmishes','skirmishTime','assistsOut','assistsIn','cooperation','militaryCommitment'],
+  'Map Presence':['scouting','contact','expansionTCs','expansions','forward','forwardEco','walls'],
   Execution:['apm','combatApm','response','responded','received']
 };
 
@@ -72,11 +72,17 @@ function seasonColumns(rows:AggregatePlayer[],standings:PlayerRecord[],emperor:P
 function EvidencePanel({selection,games,close,openMatch}:{selection:{playerId:string;metricId:string};games:GameStatistics[];close:()=>void;openMatch:(id:string)=>void}){
   const metric=definition(selection.metricId);
   const samples=games.flatMap(game=>game.players.filter(player=>player.playerId===selection.playerId).map(player=>({game,player})));
+  const eligible=samples.filter(({game,player})=>metricEligible(metric,game,player));
+  const contributing=eligible.filter(({player})=>player.values[metric.id]!==null);
   const name=samples.at(-1)?.player.name??selection.playerId;
   return <section className="sx-inspector sx-season-evidence" aria-label="Statistic evidence" aria-live="polite">
     <div className="sx-heading"><h3>{name} · {metric.label}</h3><button onClick={close} aria-label="Close evidence"><X size={18}/></button></div>
-    <p>{samples.filter(({player})=>player.values[metric.id]!==null).length} of {samples.length} selected Games contribute to this measurement.</p>
-    <div className="sx-source-list">{samples.map(({game,player})=><button key={game.matchId+game.gameId} onClick={()=>openMatch(game.matchId)}><span>{game.matchId} / {game.gameId}<small>{player.civilization??'Civilization unavailable'} · {new Date(game.orderAtMs).toLocaleDateString()}</small></span><strong>{formatStatistic(player.values[metric.id],metric)}</strong><small>{player.values[metric.id]===null?player.unavailable[metric.id]:game.eligible?'Accepted':'Pending / disputed'}</small><ArrowRight size={14}/></button>)}</div>
+    <p>{contributing.length} of {eligible.length} eligible Games contribute to this measurement.{metric.eligibility==='team'&&<> Team eligibility requires a same-team ally in that Game.</>}</p>
+    <div className="sx-source-list">{samples.map(({game,player})=>{
+      const isEligible=metricEligible(metric,game,player);
+      const status=!isEligible?'Not eligible for this Season metric':player.values[metric.id]===null?player.unavailable[metric.id]:game.eligible?'Accepted':'Pending / disputed';
+      return <button key={game.matchId+game.gameId} onClick={()=>openMatch(game.matchId)}><span>{game.matchId} / {game.gameId}<small>{player.civilization??'Civilization unavailable'} · {new Date(game.orderAtMs).toLocaleDateString()}</small></span><strong>{isEligible?formatStatistic(player.values[metric.id],metric):'—'}</strong><small>{status}</small><ArrowRight size={14}/></button>;
+    })}</div>
     {!samples.length&&<p>No replay statistics are available for this player in the current selection.</p>}
   </section>;
 }
@@ -91,7 +97,7 @@ function PlayerHeader({column,viewerId,openPlayer,viewerRef}:{column:SeasonColum
   </th>;
 }
 
-function EmptyValue(){return <span className="sx-value-empty"><strong>—</strong><small>No data in selection</small></span>;}
+function EmptyValue({note='No data in selection'}:{note?:string}){return <span className="sx-value-empty"><strong>—</strong><small>{note}</small></span>;}
 
 function OpeningCell({column,select}:{column:SeasonColumn;select:(playerId:string,metricId:string)=>void}){
   if(!column.row?.opening)return <td className={column.emperor?'sx-emperor-cell':''}><EmptyValue/></td>;
@@ -101,8 +107,17 @@ function OpeningCell({column,select}:{column:SeasonColumn;select:(playerId:strin
 function MetricCell({column,metric,leader,select}:{column:SeasonColumn;metric:MetricDefinition;leader:boolean;select:(playerId:string,metricId:string)=>void}){
   const value=column.row?.values[metric.id];
   const classes=[leader?'sx-leading':'',column.emperor?'sx-emperor-cell':''].filter(Boolean).join(' ');
-  if(!value||value.value===null)return <td className={classes}><EmptyValue/></td>;
-  return <td className={classes}><button className="sx-value-button" aria-label={`${column.name}, ${metric.label}: ${formatStatistic(value.value,metric)}${leader?', season lead':''}. View evidence.`} onClick={()=>select(column.playerId,metric.id)}><span className="sx-value-main">{formatStatistic(value.value,metric)}</span>{leader&&<span className="sx-lead-note">Season lead</span>}{column.row&&value.samples!==column.row.games&&<small>{value.samples}/{column.row.games} Games</small>}{value.models.length>1&&<small>Mixed models</small>}</button></td>;
+  if(!value||value.value===null)return <td className={classes}><EmptyValue note={value?.eligibleGames===0?'No eligible Games':'No data in eligible Games'}/></td>;
+  const partial=value.samples!==value.eligibleGames||value.eligibleGames!==column.row?.games;
+  return <td className={classes}><button className="sx-value-button" aria-label={`${column.name}, ${metric.label}: ${formatStatistic(value.value,metric)}${leader?', season lead':''}. View evidence.`} onClick={()=>select(column.playerId,metric.id)}><span className="sx-value-main">{formatStatistic(value.value,metric)}</span>{leader&&<span className="sx-lead-note">Season lead</span>}{partial&&<small>{value.samples}/{value.eligibleGames} eligible Games</small>}{value.models.length>1&&<small>Mixed models</small>}</button></td>;
+}
+
+function metricNote(metric:MetricDefinition){
+  if(metric.eligibility==='team')return 'Team Games only · mean per eligible Game';
+  if(metric.aggregation==='mean')return 'Mean per Game';
+  if(metric.leader==='min')return 'Lower establishes the lead';
+  if(metric.leader==='max')return 'Higher establishes the lead';
+  return 'Descriptive measurement';
 }
 
 function HallTable({rows,metrics,engine,mode,allowLeaders,viewerId,standings,emperor,showOpening,select,openPlayer}:{rows:AggregatePlayer[];metrics:MetricDefinition[];engine:StatisticsExperience;mode:AggregationMode;allowLeaders:boolean;viewerId?:string;standings:PlayerRecord[];emperor:PlayerRecord|null;showOpening:boolean;select:(playerId:string,metricId:string)=>void;openPlayer:(id:string)=>void}){
@@ -121,7 +136,7 @@ function HallTable({rows,metrics,engine,mode,allowLeaders,viewerId,standings,emp
     <thead><tr><th scope="col" className="sx-metric-column"><span>Statistic</span></th>{allColumns.map(column=><PlayerHeader key={column.playerId} column={column} viewerId={viewerId} openPlayer={openPlayer} viewerRef={column.playerId===viewerId?viewerHeader:undefined}/>)}</tr></thead>
     <tbody>
       {showOpening&&<tr><th scope="row"><span className="sx-metric-title">Usual opening</span><small>Most common classified opening</small></th>{allColumns.map(column=><OpeningCell key={column.playerId} column={column} select={select}/>)}</tr>}
-      {metrics.map(metric=><tr key={metric.id}><th scope="row"><span className="sx-metric-title">{metric.label}</span><small>{metric.leader==='min'?'Lower establishes the lead':metric.leader==='max'?'Higher establishes the lead':'Descriptive measurement'}</small></th>{allColumns.map(column=><MetricCell key={column.playerId} column={column} metric={metric} leader={leaders[metric.id].includes(column.playerId)} select={select}/>)}</tr>)}
+      {metrics.map(metric=><tr key={metric.id}><th scope="row"><span className="sx-metric-title">{metric.label}</span><small>{metricNote(metric)}</small></th>{allColumns.map(column=><MetricCell key={column.playerId} column={column} metric={metric} leader={leaders[metric.id].includes(column.playerId)} select={select}/>)}</tr>)}
     </tbody>
   </table></div>;
 }
@@ -151,7 +166,7 @@ export function SeasonStatisticsView(props:Pick<ViewProps,'snapshot'|'preview'|'
   const metrics=groupIds[category].map(definition);
   const changeCategory=(next:Category)=>{setCategory(next);setInspect(null);try{localStorage.setItem('aof-statistics-category',next);}catch{/* Storage is optional. */}};
   const comparisonOptions=[...new Set(games.filter(game=>format==='all'||game.format===format).map(game=>game.contextKey))];
-  const provenance=`Measurements retain their recorded, reconstructed, or inferred meaning. ${category==='Opening'?'Age timings are medians.':category==='Map Presence'?'Counts are per-Game means; scouting coverage is a median.':category==='Execution'?'APM is the median across Games. Response latency pools detected responses; opportunity counts stay totals.':mode==='average'?'Per Game is the mean across available Games.':'Counts and commitment are season totals.'} Timing and per-Game distinctions require five samples per player with matching settings.`;
+  const provenance=`Measurements retain their recorded, reconstructed, or inferred meaning. ${category==='Opening'?'Early showcase rows reuse their owning Economy/Execution measurements; age/camp timings are summarized across Games.':category==='Economy'?'House values are placements; Trade values are queue requests; Tribute is decoded sent/received resource amount. Team-only rows divide by eligible team Games, not all Games.':category==='Map Presence'?'Counts are per-Game means; scouting coverage and enemy-base contact are medians. Contact is a command-position proxy.':category==='Military'?'Military Techs count distinct qualifying research requests; repeated/cancelled requests do not increase the distinct count.':category==='Execution'?'APM is the median across Games. Response latency pools detected responses; opportunity counts stay totals.':mode==='average'?'Per Game is the mean across available Games.':'Counts and commitment are season totals.'} Timing and per-Game distinctions require five samples per player with matching settings before a season lead is declared.`;
   if(state.error)return <section className="section statistics-experience sx-dashboard"><div className="alert" role="alert"><span>{state.error}</span><button onClick={state.retry}>Retry</button></div></section>;
   if(!state.dataset)return <section className="section statistics-experience sx-dashboard"><p role="status">Reading the battle ledger…</p></section>;
   return <section className="section statistics-experience sx-dashboard sx-season-hall-v2">
