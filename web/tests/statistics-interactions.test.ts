@@ -27,7 +27,9 @@ test('category switching, aggregation, evidence, source navigation, timeline and
     assert.match(document.querySelector('[aria-label="Statistic evidence"]')!.textContent!,/8 of 8 Games contribute/);
     await click(document.querySelector('.sx-inspector .sx-source-list button')!);assert.equal(visited[0],'preview-battle-1');
     await click(document.querySelector('[aria-label="Close evidence"]')!);assert.equal(document.querySelector('.sx-inspector'),null);
-    await click(button('Execution'));assert.equal(document.querySelectorAll('.sx-table thead th').length,6);
+    await click(button('Execution'));
+    const uniquePlayers=new Set(dataset.games.flatMap(game=>game.players.map(player=>player.playerId))).size;
+    assert.equal(document.querySelectorAll('.sx-table thead th').length,uniquePlayers+1);
     await act(async()=>root.render(React.createElement(BattleTimeline,{game:dataset.games[0]})));
     await click(document.querySelector('.sx-marker')!);assert.ok(document.querySelector('.sx-timeline-selection')?.textContent);
     await act(async()=>root.render(React.createElement(SeasonStatisticsView,{repository:repo,snapshot:await repo.load(),preview:true,openMatch:props.openMatch,openPlayer:props.openPlayer})));
