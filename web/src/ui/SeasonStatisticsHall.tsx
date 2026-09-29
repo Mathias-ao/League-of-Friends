@@ -1,17 +1,80 @@
-import {useEffect,useMemo,useRef,useState,type Ref} from 'react';
-import {ArrowRight,Crown,RefreshCw,X} from 'lucide-react';
+import {useEffect,useId,useMemo,useRef,useState,type ReactNode,type Ref} from 'react';
+import {ArrowRight,ChevronDown,Crown,Info,RefreshCw,X} from 'lucide-react';
 import type {Category,GameStatistics,StatisticsDataset} from '../domain/statistics';
-import {SEASON_CATEGORIES,SeasonStatisticsExperience,formatSeasonRecord,formatSeasonValue,seasonMetricEligible,seasonMetricsFor,type SeasonAggregatePlayer,type SeasonMetricDefinition} from '../domain/seasonStatistics';
+import {SEASON_CATEGORIES,SeasonStatisticsExperience,formatSeasonRecord,formatSeasonValue,seasonMetric,seasonMetricEligible,seasonMetricsFor,type SeasonAggregatePlayer,type SeasonDisplayMode,type SeasonMetricDefinition} from '../domain/seasonStatistics';
 import {formatName,type PlayerRecord} from '../domain/league';
 import type {ViewProps} from './App';
 
 const categoryHelp:Record<Category,string>={
-  Opening:'How players start: execution, early economy, walls, scouting and first military choices.',
-  Economy:'Per-Game economic production, expansion, technology, market and team-resource activity.',
-  Military:'Per-Game military production and engagements. Great Battles alone remain a cumulative Season total.',
-  'Map Presence':'Command and placement geometry, expansion, relic interaction and inferred resource control.',
-  Execution:'Command activity, inactivity and response behavior. These are descriptive inputs, not a skill score.'
+  Opening:'Age progression, opening intent, early economy and defensive preparation.',
+  Economy:'Growth, infrastructure, commitment, farming, technology and exchange.',
+  Military:'Production, army commitment, engagements, allied action and fortification.',
+  'Map Presence':'Command reach, pressure, expansion, fortification and map objectives.',
+  Execution:'Command tempo, inferred response behavior and control during engagements.'
 };
+
+interface TacticalFamily {label:string;ids:string[];}
+const tacticalFamilies:Record<Category,TacticalFamily[]>={
+  Opening:[
+    {label:'Age Progression',ids:['feudal','castle','imperial','villagers10']},
+    {label:'Opening Intent',ids:['buildOrderExecution','firstMilitaryUnit','commands5','scouting']},
+    {label:'Foundations & Safety',ids:['tcIdle','earlyWalls','loom','housesBeforeFeudal','darkAgeGap','firstMiningCamp','firstLumberCamp','wallStyle']},
+  ],
+  Economy:[
+    {label:'Growth & Town Centres',ids:['villagerRequests','villagers20','townCenters','secondTC','economyBuildings']},
+    {label:'Commitment & Farming',ids:['total','horseCollar','farmsPlaced','farmsBeforeCastle','boarsLured','ecoMilitary20']},
+    {label:'Technology & Exchange',ids:['economyTechs','housesBuilt','marketSales','marketPurchases','tradeUnits','tributeSent','tributeReceived']},
+  ],
+  Military:[
+    {label:'Muster & Commitment',ids:['unitRequests','militaryCommitment','militaryBuildingsCastle','army10','army15','army20']},
+    {label:'Engagements',ids:['battlesFought','battleTime','greatBattles','raidsOut','raidsIn']},
+    {label:'Allied Action',ids:['reinforcements','cooperation','assistsOut']},
+    {label:'Fortification & Upgrades',ids:['castles','firstCastle','militaryTechs','blacksmith30']},
+  ],
+  'Map Presence':[
+    {label:'Reach & Pressure',ids:['mapCoverage','enemySide','contact']},
+    {label:'Footholds & Expansion',ids:['forward','forwardEco','expansions','walls','towers']},
+    {label:'Control & Objectives',ids:['goldControl','relics','firstRelic']},
+  ],
+  Execution:[
+    {label:'Tempo',ids:['apm','firstCommand','longestInactivity']},
+    {label:'Response',ids:['response','garrisonsDuringRaids']},
+    {label:'Battle Control',ids:['ecoActionsFights','townBell','backToWork']},
+  ],
+};
+
+interface RecordSpec {metricId:string;label:string;eyebrow:string;}
+const recordSpecs:Record<Category,RecordSpec[]>={
+  Opening:[
+    {metricId:'feudal',label:'Fastest Feudal',eyebrow:'AGE UP'},
+    {metricId:'castle',label:'Fastest Castle',eyebrow:'AGE UP'},
+    {metricId:'imperial',label:'Fastest Imperial',eyebrow:'AGE UP'},
+    {metricId:'villagers10',label:'Most Villagers @10',eyebrow:'EARLY GROWTH'},
+  ],
+  Economy:[
+    {metricId:'total',label:'Resources Committed',eyebrow:'DEEPEST COMMITMENT'},
+    {metricId:'farmsBeforeCastle',label:'Farms Before Castle',eyebrow:'EARLY FARMING'},
+    {metricId:'expansions',label:'Most Eco Zones',eyebrow:'ECONOMIC FOOTPRINT'},
+  ],
+  Military:[
+    {metricId:'battlesFought',label:'Most Battles',eyebrow:'ENGAGEMENTS'},
+    {metricId:'militaryCommitment',label:'Army Commitment',eyebrow:'MUSTER'},
+    {metricId:'castles',label:'Most Castles',eyebrow:'FORTIFICATION'},
+  ],
+  'Map Presence':[
+    {metricId:'mapCoverage',label:'Widest Reach',eyebrow:'COMMAND MAP COVERAGE'},
+    {metricId:'contact',label:'Earliest Incursion',eyebrow:'ENEMY BASE CONTACT'},
+    {metricId:'goldControl',label:'Gold Control',eyebrow:'RESOURCE INFLUENCE'},
+    {metricId:'relics',label:'Most Relics',eyebrow:'RELICS TOUCHED'},
+  ],
+  Execution:[
+    {metricId:'apm',label:'Highest APM',eyebrow:'COMMAND TEMPO'},
+    {metricId:'response',label:'Swiftest Raid Response',eyebrow:'RESPONSE'},
+    {metricId:'ecoActionsFights',label:'Economy Under Pressure',eyebrow:'ECONOMY ACTIONS IN BATTLES'},
+  ],
+};
+
+const hardMetricIds=new Set(['buildOrderExecution','tcIdle','scouting','villagerRequests','total','boarsLured','ecoMilitary20','militaryCommitment','battlesFought','greatBattles','enemySide','contact','expansions','goldControl','relics','apm','response','garrisonsDuringRaids','ecoActionsFights']);
 
 function contextLabel(key:string){
   const separator=key.indexOf(' · ');
@@ -21,6 +84,15 @@ function contextLabel(key:string){
     const settings=Object.entries(config.additionalSettings??{}).map(([k,v])=>`${k}: ${v}`).join(', ');
     return `${formatName(key.slice(0,separator))} · ${maps}${config.recordScope?` · Battle ${config.recordScope}`:''}${settings?` · ${settings}`:''}`;
   }catch{return key;}
+}
+
+function ArchiveTooltip({content,children,className=''}:{content:string;children:ReactNode;className?:string}){
+  const [open,setOpen]=useState(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null),id=useId();
+  const cancel=()=>{if(timer.current){clearTimeout(timer.current);timer.current=null;}};
+  const schedule=()=>{cancel();timer.current=setTimeout(()=>{setOpen(true);timer.current=null;},500);};
+  const close=()=>{cancel();setOpen(false);};
+  useEffect(()=>()=>cancel(),[]);
+  return <span className={`sx-tooltip-anchor ${className}`.trim()} onMouseEnter={schedule} onMouseLeave={close} onFocusCapture={()=>setOpen(true)} onBlurCapture={close}>{children}{open&&<span id={id} role="tooltip" className="sx-archive-tooltip">{content}</span>}</span>;
 }
 
 function useSeasonStatistics(repository:ViewProps['repository'],seasonId:string,revision:string){
@@ -34,7 +106,7 @@ function useSeasonStatistics(repository:ViewProps['repository'],seasonId:string,
 }
 
 function CategoryRail({category,onChange}:{category:Category;onChange:(category:Category)=>void}){
-  return <nav className="sx-tabs" aria-label="Statistics categories">{SEASON_CATEGORIES.map(item=><button key={item} aria-pressed={item===category} onClick={()=>onChange(item)}>{item}</button>)}</nav>;
+  return <nav className="sx-tabs sx-archive-tabs" aria-label="Statistics categories">{SEASON_CATEGORIES.map(item=><button key={item} aria-pressed={item===category} aria-label={`${item}. ${categoryHelp[item]}`} onClick={()=>onChange(item)}>{item}</button>)}</nav>;
 }
 
 interface SeasonColumn {playerId:string;name:string;rank?:number;row:SeasonAggregatePlayer|null;standing:PlayerRecord|null;emperor:boolean;}
@@ -74,41 +146,96 @@ function EvidencePanel({selection,games,close,openMatch}:{selection:{playerId:st
 
 function PlayerHeader({column,viewerId,openPlayer,viewerRef}:{column:SeasonColumn;viewerId?:string;openPlayer:(id:string)=>void;viewerRef?:Ref<HTMLTableCellElement>}){
   const isViewer=column.playerId===viewerId,detail=column.row?`${column.row.games} ${column.row.games===1?'Game':'Games'}`:'No statistics in selection';
-  return <th ref={viewerRef} scope="col" className={`sx-player-head${isViewer?' sx-player-focus':''}${column.emperor?' sx-emperor-head':''}`}><span className="sx-player-marker">{column.emperor?<><Crown size={12}/> Emperor</>:<>{isViewer?'YOU · ':''}{column.rank?`#${column.rank}`:'UNRANKED'}</>}</span><button className="sx-player-name" onClick={()=>openPlayer(column.playerId)}>{column.name}</button><small>{detail}</small></th>;
+  return <th ref={viewerRef} scope="col" className={`sx-player-head${isViewer?' sx-player-focus':''}${column.emperor?' sx-emperor-head':''}`}>
+    <div className="sx-player-standard">
+      <span className="sx-player-marker">{column.emperor?<><Crown size={12}/> Emperor</>:<>{isViewer?'You · ':''}{column.rank?`#${column.rank}`:'Unranked'}</>}</span>
+      <span className="sx-player-cap" aria-hidden="true"/>
+      <button className="sx-player-name" onClick={()=>openPlayer(column.playerId)}>{column.name}</button>
+      <small>{detail}</small>
+    </div>
+  </th>;
 }
-function EmptyValue(){return <span className="sx-value-empty"><strong>—</strong><small>No data in selection</small></span>;}
+function EmptyValue(){return <span className="sx-value-empty" aria-label="No qualified value"><strong>—</strong></span>;}
 function MetricCell({column,metric,leader,select}:{column:SeasonColumn;metric:SeasonMetricDefinition;leader:boolean;select:(playerId:string,metric:SeasonMetricDefinition)=>void}){
-  const value=column.row?.values[metric.id],classes=[leader?'sx-leading':'',column.emperor?' sx-emperor-cell':''].filter(Boolean).join(' ');
+  const value=column.row?.values[metric.id],classes=[leader?'sx-leading':'',column.emperor?'sx-emperor-cell':''].filter(Boolean).join(' ');
   if(!value||(metric.kind==='category'?value.text===null:value.value===null))return <td className={classes}><EmptyValue/></td>;
   const formatted=formatSeasonValue(value,metric);
-  return <td className={classes}><button className="sx-value-button" aria-label={`${column.name}, ${metric.label}: ${formatted}${leader?', season lead':''}. View evidence.`} onClick={()=>select(column.playerId,metric)}><span className="sx-value-main">{formatted}</span>{leader&&<span className="sx-lead-note">Season lead</span>}{value.samples!==value.eligibleGames&&<small>{value.samples}/{value.eligibleGames} eligible Games</small>}{value.models.length>1&&<small>Mixed models</small>}</button></td>;
+  return <td className={classes}><button className="sx-value-button" aria-label={`${column.name}, ${metric.label}: ${formatted}${leader?', largest qualified comparison value':''}. View evidence.`} onClick={()=>select(column.playerId,metric)}><span className="sx-value-line"><span className="sx-value-main">{formatted}</span>{leader&&<span className="sx-lead-seal" aria-label="Largest qualified comparison value">◆</span>}</span>{value.samples!==value.eligibleGames&&<small>{value.samples}/{value.eligibleGames} eligible</small>}{value.models.length>1&&<small>Mixed models</small>}</button></td>;
 }
 
-function HallTable({rows,metrics,engine,allowLeaders,viewerId,standings,emperor,select,openPlayer}:{rows:SeasonAggregatePlayer[];metrics:SeasonMetricDefinition[];engine:SeasonStatisticsExperience;allowLeaders:boolean;viewerId?:string;standings:PlayerRecord[];emperor:PlayerRecord|null;select:(playerId:string,metric:SeasonMetricDefinition)=>void;openPlayer:(id:string)=>void}){
-  const leaders=Object.fromEntries(metrics.map(metric=>[metric.id,allowLeaders?engine.leaders(metric.id,5):[]])),{emperorColumn,scrolling}=seasonColumns(rows,standings,emperor);
-  const scroller=useRef<HTMLDivElement>(null),viewerHeader=useRef<HTMLTableCellElement>(null),allColumns=emperorColumn?[emperorColumn,...scrolling]:scrolling,columnKey=allColumns.map(column=>column.playerId).join('|');
-  useEffect(()=>{const container=scroller.current,cell=viewerHeader.current;if(!container||!cell)return;const frozen=emperorColumn?450:230,visible=Math.max(200,container.clientWidth-frozen);container.scrollLeft=Math.max(0,cell.offsetLeft-frozen-visible/2+cell.clientWidth/2);},[viewerId,columnKey,emperorColumn?.playerId]);
-  return <div ref={scroller} className="sx-table-scroll sx-season-scroll sx-hall-v2-scroll"><table className="sx-table sx-season-table sx-hall-v2-table"><thead><tr><th scope="col" className="sx-metric-column"><span>Statistic</span></th>{allColumns.map(column=><PlayerHeader key={column.playerId} column={column} viewerId={viewerId} openPlayer={openPlayer} viewerRef={column.playerId===viewerId?viewerHeader:undefined}/>)}</tr></thead><tbody>{metrics.map(metric=><tr key={metric.id}><th scope="row"><span className="sx-metric-title">{metric.label}</span><small>{metric.hint}</small></th>{allColumns.map(column=><MetricCell key={column.playerId} column={column} metric={metric} leader={leaders[metric.id].includes(column.playerId)} select={select}/>)}</tr>)}</tbody></table></div>;
+function metricTooltip(metric:SeasonMetricDefinition,mode:SeasonDisplayMode){
+  const aggregate=mode==='allTime'&&metric.allTime==='sum'?'All-time view shows a cumulative Season total. ':mode==='allTime'?'This measurement stays normalized in All-time view. ':'';
+  const eligibility=metric.eligibility==='team'?' Team-only: a same-team ally must be present.':'';
+  return `${aggregate}${metric.hint}.${eligibility}`;
 }
 
-function RecordBook({engine,category,openMatch}:{engine:SeasonStatisticsExperience;category:Category;openMatch:(id:string)=>void}){
-  const metrics=seasonMetricsFor(category),records=engine.records().filter(record=>metrics.some(metric=>metric.id===record.metricId));
-  return <section className="sx-records sx-record-gallery"><span className="eyebrow">SINGLE-GAME RECORDS</span><h3>{category} record book</h3><p>Only statistics in the Season catalogue appear here. Records retain the source Battle, settings and model version.</p>{records.length?<div className="sx-record-grid">{records.map(record=>{const metric=metrics.find(metric=>metric.id===record.metricId)!;return <button key={record.metricId+record.contextKey+record.model+record.playerId} onClick={()=>openMatch(record.matchId)}><span>{metric.record==='min'?'Earliest / Lowest':'Most / Highest'} · {metric.label}</span><strong>{formatSeasonRecord(record.value,metric)}</strong><b>{record.name}</b><small>{record.civilization??'Civilization unavailable'} · {new Date(record.orderAtMs).toLocaleDateString()}</small><small>{contextLabel(record.contextKey)}</small><small>{record.matchId} / {record.gameId} · {record.model}</small><span>Source Battle →</span></button>;})}</div>:<p>No qualified records for this selection yet.</p>}</section>;
+function MetricLabel({metric,mode}:{metric:SeasonMetricDefinition;mode:SeasonDisplayMode}){
+  return <ArchiveTooltip content={metricTooltip(metric,mode)} className="sx-metric-tooltip"><span className="sx-metric-title" tabIndex={0}>{metric.label}{hardMetricIds.has(metric.id)&&<Info className="sx-metric-info" size={11} aria-hidden="true"/>}</span></ArchiveTooltip>;
+}
+
+function metricFamilies(category:Category,metrics:SeasonMetricDefinition[]){
+  const byId=new Map(metrics.map(metric=>[metric.id,metric] as const)),claimed=new Set<string>();
+  const families=tacticalFamilies[category].map(family=>({label:family.label,metrics:family.ids.map(id=>byId.get(id)).filter((metric):metric is SeasonMetricDefinition=>{if(!metric)return false;claimed.add(metric.id);return true;})})).filter(family=>family.metrics.length);
+  const remaining=metrics.filter(metric=>!claimed.has(metric.id));
+  if(remaining.length)families.push({label:'Further Record',metrics:remaining});
+  return families;
+}
+
+function HallTable({rows,metrics,category,engine,allowLeaders,mode,viewerId,standings,emperor,select,openPlayer}:{rows:SeasonAggregatePlayer[];metrics:SeasonMetricDefinition[];category:Category;engine:SeasonStatisticsExperience;allowLeaders:boolean;mode:SeasonDisplayMode;viewerId?:string;standings:PlayerRecord[];emperor:PlayerRecord|null;select:(playerId:string,metric:SeasonMetricDefinition)=>void;openPlayer:(id:string)=>void}){
+  const leaders=Object.fromEntries(metrics.map(metric=>[metric.id,allowLeaders?engine.leaders(metric.id,5,mode):[]])),{emperorColumn,scrolling}=seasonColumns(rows,standings,emperor);
+  const scroller=useRef<HTMLDivElement>(null),viewerHeader=useRef<HTMLTableCellElement>(null),allColumns=[...scrolling,...(emperorColumn?[emperorColumn]:[])],columnKey=allColumns.map(column=>column.playerId).join('|'),families=metricFamilies(category,metrics);
+  useEffect(()=>{const container=scroller.current,cell=viewerHeader.current;if(!container||!cell)return;const frozen=230,visible=Math.max(200,container.clientWidth-frozen);container.scrollLeft=Math.max(0,cell.offsetLeft-frozen-visible/2+cell.clientWidth/2);},[viewerId,columnKey]);
+  return <div ref={scroller} className="sx-table-scroll sx-season-scroll sx-hall-v2-scroll"><table className="sx-table sx-season-table sx-hall-v2-table"><thead><tr><th scope="col" className="sx-metric-column"><span>Statistic</span></th>{allColumns.map(column=><PlayerHeader key={column.playerId} column={column} viewerId={viewerId} openPlayer={openPlayer} viewerRef={column.playerId===viewerId?viewerHeader:undefined}/>)}</tr></thead><tbody>{families.map(family=><FragmentFamily key={family.label} label={family.label} columns={allColumns.length} metrics={family.metrics} mode={mode} allColumns={allColumns} leaders={leaders} select={select}/>)}</tbody></table></div>;
+}
+
+function FragmentFamily({label,columns,metrics,mode,allColumns,leaders,select}:{label:string;columns:number;metrics:SeasonMetricDefinition[];mode:SeasonDisplayMode;allColumns:SeasonColumn[];leaders:Record<string,string[]>;select:(playerId:string,metric:SeasonMetricDefinition)=>void}){
+  return <>{<tr className="sx-family-row"><th colSpan={columns+1} scope="rowgroup"><span>{label}</span></th></tr>}{metrics.map(metric=><tr key={metric.id}><th scope="row"><MetricLabel metric={metric} mode={mode}/></th>{allColumns.map(column=><MetricCell key={column.playerId} column={column} metric={metric} leader={leaders[metric.id]?.includes(column.playerId)??false} select={select}/>)}</tr>)}</>;
+}
+
+function CuratedRecords({engine,category,openMatch}:{engine:SeasonStatisticsExperience;category:Category;openMatch:(id:string)=>void}){
+  const records=engine.records(),specs=recordSpecs[category];
+  return <section className="sx-archive-records" aria-label={`${category} records`}>
+    <div className="sx-records-heading"><span>Record Cabinet</span><small>Single-Battle records · source linked</small></div>
+    <div className="sx-record-plaque-grid">{specs.map(spec=>{
+      const metric=seasonMetric(spec.metricId),candidates=records.filter(record=>record.metricId===spec.metricId),contexts=new Set(candidates.map(record=>record.contextKey)),models=new Set(candidates.map(record=>record.model)),resolved=candidates.length>0&&contexts.size===1&&models.size===1;
+      if(!resolved){
+        const scoped=candidates.length>0&&(contexts.size>1||models.size>1);
+        return <article key={spec.metricId} className="sx-record-plaque sx-record-pending"><span>{spec.eyebrow}</span><strong>{spec.label}</strong><b>{scoped?'Scoped by settings':'—'}</b><small>{scoped?'Narrow Comparison to reveal the qualified record.':'No qualified record in this selection.'}</small></article>;
+      }
+      const record=candidates[0],ties=candidates.filter(candidate=>candidate.contextKey===record.contextKey&&candidate.model===record.model&&candidate.value===record.value),tooltip=`${contextLabel(record.contextKey)} · ${record.model} · ${record.matchId} / ${record.gameId}`;
+      return <ArchiveTooltip key={spec.metricId} content={tooltip} className="sx-record-tooltip"><button className="sx-record-plaque" onClick={()=>openMatch(record.matchId)}><span>{spec.eyebrow}</span><strong>{spec.label}</strong><b>{formatSeasonRecord(record.value,metric)}</b><em>{record.name}{ties.length>1?` · ${ties.length} tied`:''}</em><small>{record.civilization??'Civilization unavailable'} · Source Battle <ArrowRight size={11}/></small></button></ArchiveTooltip>;
+    })}</div>
+  </section>;
+}
+
+function MethodEligibility({mode,preview,unavailableGames}:{mode:SeasonDisplayMode;preview:boolean;unavailableGames:number}){
+  return <details className="sx-provenance sx-method-eligibility"><summary><span>Method &amp; eligibility</span><ChevronDown size={14}/></summary><div className="sx-method-grid">
+    <div><strong>Aggregation</strong><p>{mode==='perBattle'?'Per Battle is the default presentation: repeatable counts are normalized across eligible Games, timings use medians, and categorical rows show the most common result.':'All-time turns only semantically additive rows into cumulative Season totals. Timings, percentages, ratios and point-in-time measurements remain normalized rather than being summed.'}</p></div>
+    <div><strong>Eligibility</strong><p>Only accepted eligible Games contribute. Team-only rows require a same-team ally. Missing or ambiguous evidence remains “—”; it never becomes a guessed zero.</p></div>
+    <div><strong>Evidence</strong><p>Queue, research, placement and command measurements keep their replay-model limitations. A request is not proof of completion, and inferred engagements do not prove damage or kills.</p></div>
+    <div><strong>Records</strong><p>Record claims retain source Battle, approved-setting context and model version. When several comparison contexts are active, the cabinet asks you to narrow the Comparison instead of declaring a false cross-context record.</p></div>
+    {preview&&<p className="sx-method-preview"><strong>Illustrative preview:</strong> sample values are synthetic and exist only to exercise the presentation.</p>}
+    {unavailableGames>0&&<p className="sx-method-preview"><strong>Coverage:</strong> {unavailableGames} completed {unavailableGames===1?'Game is':'Games are'} awaiting usable statistics, so record and lead claims remain conservative.</p>}
+  </div></details>;
 }
 
 export function SeasonStatisticsView(props:Pick<ViewProps,'snapshot'|'preview'|'repository'|'openPlayer'|'openMatch'>){
   const {snapshot,preview,repository,openPlayer,openMatch}=props,revision=JSON.stringify(snapshot.matches.map(match=>[match.matchId,match.status,match.result?.revision]));
   const state=useSeasonStatistics(repository,snapshot.season?.seasonId??'unavailable',revision);
-  const [category,setCategory]=useState<Category>(()=>{try{const stored=localStorage.getItem('aof-statistics-category');return SEASON_CATEGORIES.includes(stored as Category)?stored as Category:'Opening';}catch{return 'Opening';}}),[format,setFormat]=useState('all'),[context,setContext]=useState('all'),[inspect,setInspect]=useState<{playerId:string;metric:SeasonMetricDefinition}|null>(null);
-  const games=state.dataset?.games.filter(game=>game.affectsSeason)??[],filtered=games.filter(game=>(format==='all'||game.format===format)&&(context==='all'||game.contextKey===context)),engine=useMemo(()=>new SeasonStatisticsExperience(filtered),[filtered]),rows=engine.aggregate(),metrics=seasonMetricsFor(category);
+  const [category,setCategory]=useState<Category>(()=>{try{const stored=localStorage.getItem('aof-statistics-category');return SEASON_CATEGORIES.includes(stored as Category)?stored as Category:'Opening';}catch{return 'Opening';}}),[format,setFormat]=useState('all'),[context,setContext]=useState('all'),[displayMode,setDisplayMode]=useState<SeasonDisplayMode>('perBattle'),[inspect,setInspect]=useState<{playerId:string;metric:SeasonMetricDefinition}|null>(null);
+  const games=state.dataset?.games.filter(game=>game.affectsSeason)??[],filtered=games.filter(game=>(format==='all'||game.format===format)&&(context==='all'||game.contextKey===context)),engine=useMemo(()=>new SeasonStatisticsExperience(filtered),[filtered]),rows=engine.aggregate(displayMode),metrics=seasonMetricsFor(category);
   const changeCategory=(next:Category)=>{setCategory(next);setInspect(null);try{localStorage.setItem('aof-statistics-category',next);}catch{/* optional */}},comparisonOptions=[...new Set(games.filter(game=>format==='all'||game.format===format).map(game=>game.contextKey))];
   if(state.error)return <section className="section statistics-experience sx-dashboard"><div className="alert" role="alert"><span>{state.error}</span><button onClick={state.retry}>Retry</button></div></section>;
   if(!state.dataset)return <section className="section statistics-experience sx-dashboard"><p role="status">Reading the battle ledger…</p></section>;
-  return <section className="section statistics-experience sx-dashboard sx-season-hall-v2"><div className="sx-panel">
+  return <section className="section statistics-experience sx-dashboard sx-season-hall-v2 sx-royal-archive"><div className="sx-panel">
     <CategoryRail category={category} onChange={changeCategory}/>
-    <div className="sx-toolbar" role="group" aria-label="Statistics filters"><label><span>Format</span><select value={format} onChange={event=>{setFormat(event.target.value);setContext('all');setInspect(null);}}><option value="all">All formats</option>{[...new Set(games.map(game=>game.format))].sort().map(item=><option key={item} value={item}>{formatName(item)}</option>)}</select></label><span className="sx-toolbar-rule" aria-hidden="true"/><label><span>Comparison</span><select value={context} onChange={event=>{setContext(event.target.value);setInspect(null);}}><option value="all">All approved settings</option>{comparisonOptions.map(item=><option key={item} value={item}>{contextLabel(item)}</option>)}</select></label><span className="sx-toolbar-meta">{engine.games.length} eligible Games{games.filter(game=>!game.eligible).length>0&&<> · {games.filter(game=>!game.eligible).length} pending / disputed</>}</span><button className="sx-refresh" aria-label="Refresh season statistics" onClick={state.retry}><RefreshCw size={15}/></button></div>
+    <div className="sx-toolbar sx-archive-toolbar" role="group" aria-label="Statistics controls">
+      <div className="sx-scope-switch" role="group" aria-label="Statistics view"><button aria-pressed={displayMode==='perBattle'} onClick={()=>{setDisplayMode('perBattle');setInspect(null);}}>Per Battle</button><ArchiveTooltip content="Cumulative Season totals are used only where summing the measurement is meaningful. Timings, percentages, ratios and point-in-time values stay normalized."><button aria-pressed={displayMode==='allTime'} onClick={()=>{setDisplayMode('allTime');setInspect(null);}}>All-time</button></ArchiveTooltip></div>
+      <div className="sx-quiet-filters"><label><span>Format</span><select value={format} onChange={event=>{setFormat(event.target.value);setContext('all');setInspect(null);}}><option value="all">All formats</option>{[...new Set(games.map(game=>game.format))].sort().map(item=><option key={item} value={item}>{formatName(item)}</option>)}</select></label><span className="sx-toolbar-rule" aria-hidden="true"/><label><span>Comparison</span><select value={context} onChange={event=>{setContext(event.target.value);setInspect(null);}}><option value="all">All approved settings</option>{comparisonOptions.map(item=><option key={item} value={item}>{contextLabel(item)}</option>)}</select></label></div>
+      <span className="sx-toolbar-meta">{engine.games.length} eligible Games{games.filter(game=>!game.eligible).length>0&&<> · {games.filter(game=>!game.eligible).length} pending</>}</span><button className="sx-refresh" aria-label="Refresh season statistics" onClick={state.retry}><RefreshCw size={14}/></button>
+    </div>
+    {state.dataset.unavailableGames===0&&<CuratedRecords engine={engine} category={category} openMatch={openMatch}/>} 
+    <section className="sx-ledger" aria-label={`${category} statistics`}><HallTable rows={rows} metrics={metrics} category={category} engine={engine} allowLeaders={state.dataset.unavailableGames===0} mode={displayMode} viewerId={snapshot.viewer?.playerId} standings={snapshot.standings} emperor={snapshot.emperor} select={(playerId,metric)=>setInspect({playerId,metric})} openPlayer={openPlayer}/><MethodEligibility mode={displayMode} preview={preview} unavailableGames={state.dataset.unavailableGames}/></section>
     {inspect&&<EvidencePanel selection={inspect} games={engine.games} close={()=>setInspect(null)} openMatch={openMatch}/>} 
-    <section className="sx-ledger" aria-label={`${category} statistics`}><div className="sx-ledger-intro"><p>{categoryHelp[category]}</p></div><HallTable rows={rows} metrics={metrics} engine={engine} allowLeaders={state.dataset.unavailableGames===0} viewerId={snapshot.viewer?.playerId} standings={snapshot.standings} emperor={snapshot.emperor} select={(playerId,metric)=>setInspect({playerId,metric})} openPlayer={openPlayer}/><details className="sx-provenance"><summary>Measurement provenance</summary><p className="sx-legend">{preview&&<strong>Illustrative preview · </strong>}Counts and percentages compare players per eligible Game; timings use the median; categorical rows show the most common result and its share. Great Battles is the only cumulative Season sum. Queue, research and placement evidence retains its replay-model limitations. N/A never becomes zero.{state.dataset.unavailableGames>0&&<> {state.dataset.unavailableGames} completed {state.dataset.unavailableGames===1?'Game is':'Games are'} awaiting usable statistics.</>}</p></details></section>
-    {state.dataset.unavailableGames===0&&<RecordBook engine={engine} category={category} openMatch={openMatch}/>} 
   </div></section>;
 }
