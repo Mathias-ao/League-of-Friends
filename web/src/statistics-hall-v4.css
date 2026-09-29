@@ -1,0 +1,152 @@
+/* Season Statistics — compact hierarchy pass IV.
+   Visual sequence: chapter rail → compact filter strip → bronze table.
+   The old ledger container becomes layout-only so the table can stand directly
+   on the ornamental Statistics background. */
+
+.section.statistics-experience.sx-season-hall-v2 .sx-panel{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;
+}
+
+/* Chapter rail belongs directly to the comparison surface. */
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs{
+  grid-column:1 / -1;
+  grid-row:1;
+  margin:0;
+  border-bottom-color:rgba(204,164,94,.46);
+  box-shadow:
+    inset 0 1px rgba(244,218,165,.055),
+    inset 0 -1px rgba(0,0,0,.72),
+    0 4px 12px rgba(0,0,0,.16);
+}
+
+/* One restrained control strip between chapters and data. */
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar{
+  grid-column:1 / -1;
+  grid-row:2;
+  min-height:40px;
+  margin:0;
+  padding:4px 8px;
+  gap:8px;
+  border-top:0;
+  border-bottom:1px solid rgba(195,157,91,.24);
+  background:
+    linear-gradient(180deg,rgba(28,20,15,.82),rgba(14,12,10,.88));
+  box-shadow:
+    inset 0 1px rgba(255,225,177,.025),
+    inset 0 -1px rgba(0,0,0,.26);
+  backdrop-filter:blur(1.5px);
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar label{
+  gap:6px;
+  font-size:.63rem;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar select{
+  min-height:30px;
+  padding:4px 9px;
+  font-size:.72rem;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar-rule{
+  height:14px;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar-meta{
+  font-size:.64rem;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-refresh{
+  width:28px;
+  height:28px;
+}
+
+/* Reserve the right edge of the strip for Total / Per Game when present. */
+.section.statistics-experience.sx-season-hall-v2 .sx-panel:has(.sx-toggle) .sx-toolbar{
+  padding-right:142px;
+}
+
+/* The ledger is no longer a box. Its children become the page structure. */
+.section.statistics-experience.sx-season-hall-v2 .sx-ledger,
+.section.statistics-experience.sx-season-hall-v2 .sx-ledger-intro{
+  display:contents;
+}
+
+/* The old explanatory card is removed from the primary visual path. */
+.section.statistics-experience.sx-season-hall-v2 .sx-ledger-intro>p{
+  display:none;
+}
+
+/* Move the aggregation switch into the compact control strip. */
+.section.statistics-experience.sx-season-hall-v2 .sx-toggle{
+  grid-column:2;
+  grid-row:2;
+  z-index:3;
+  align-self:center;
+  justify-self:end;
+  margin:0 8px 0 0;
+  padding:2px;
+  border-color:rgba(196,154,86,.22);
+  background:rgba(15,12,10,.90);
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toggle button{
+  min-height:26px;
+  padding:4px 9px;
+  font-size:.66rem;
+}
+
+/* The bronze matrix begins immediately after the strip and owns its own frame. */
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-scroll{
+  grid-column:1 / -1;
+  grid-row:3;
+  margin:0;
+  border-top-width:1px;
+  box-shadow:
+    inset 0 1px rgba(255,226,180,.045),
+    inset 0 0 24px rgba(176,104,52,.045),
+    0 12px 28px rgba(0,0,0,.22);
+}
+
+/* Charts and provenance now sit directly on the environmental background. */
+.section.statistics-experience.sx-season-hall-v2 .sx-bars,
+.section.statistics-experience.sx-season-hall-v2 .sx-provenance,
+.section.statistics-experience.sx-season-hall-v2 .sx-season-evidence,
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery{
+  grid-column:1 / -1;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-bars{
+  margin-top:26px;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-provenance{
+  margin-top:22px;
+  padding:10px 6px 0;
+  border-top:1px solid rgba(173,139,83,.20);
+  background:transparent;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-provenance summary{
+  color:#a9a094;
+}
+
+/* Evidence is secondary, so an opened docket follows the matrix instead of
+   interrupting the chapters → controls → data sequence. */
+.section.statistics-experience.sx-season-hall-v2 .sx-season-evidence{
+  order:20;
+  margin-top:18px;
+}
+
+@media(max-width:900px){
+  .section.statistics-experience.sx-season-hall-v2 .sx-toolbar{
+    min-height:42px;
+  }
+}
+
+@media(max-width:700px){
+  .section.statistics-experience.sx-season-hall-v2 .sx-panel:has(.sx-toggle) .sx-toolbar{
+    padding-right:8px;
+  }
+  .section.statistics-experience.sx-season-hall-v2 .sx-toggle{
+    grid-column:1 / -1;
+    grid-row:3;
+    margin:5px 0;
+  }
+  .section.statistics-experience.sx-season-hall-v2 .sx-panel:has(.sx-toggle) .sx-hall-v2-scroll{
+    grid-row:4;
+  }
+}
