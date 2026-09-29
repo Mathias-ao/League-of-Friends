@@ -7,7 +7,7 @@
   background-image:
     linear-gradient(rgba(14,11,9,.66),rgba(14,11,9,.74)),
     url('/textures/statgrid2.webp');
-  background-size:auto,700px auto;
+  background-size:auto,440px auto;
   background-repeat:no-repeat,repeat;
   background-position:center top,center top;
 }
@@ -27,6 +27,6 @@
 
 @media(max-width:900px){
   .section.statistics-experience.sx-season-hall-v2{
-    background-size:auto,560px auto;
+    background-size:auto,360px auto;
   }
 }
