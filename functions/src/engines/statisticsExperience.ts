@@ -1,26 +1,38 @@
 /** Pure, shared presentation contract. No Firebase or browser dependencies. */
-export const EXPERIENCE_VERSION = 'AOF_STATISTICS_EXPERIENCE_V1';
+export const EXPERIENCE_VERSION = 'AOF_STATISTICS_EXPERIENCE_V2';
 export const CATEGORIES = ['Opening', 'Economy', 'Military', 'Map Presence', 'Execution'] as const;
 export type Category = typeof CATEGORIES[number];
 export type AggregationMode = 'total' | 'average';
+export type MetricEligibility = 'all' | 'team';
 export interface MetricDefinition {
   id: string; label: string; category: Category; path: string; unit: 'number' | 'ms' | 'seconds' | 'percent';
   aggregation: 'volume' | 'mean' | 'median' | 'responses'; leader?: 'min' | 'max'; record?: 'min' | 'max'; detail?: boolean;
+  eligibility?: MetricEligibility;
 }
-const metric = (id: string, label: string, category: Category, path: string, unit: MetricDefinition['unit'] = 'number', aggregation: MetricDefinition['aggregation'] = 'volume', extra: Partial<MetricDefinition> = {}): MetricDefinition => ({id,label,category,path,unit,aggregation,...extra});
+const metric = (id: string, label: string, category: Category, path: string, unit: MetricDefinition['unit'] = 'number', aggregation: MetricDefinition['aggregation'] = 'volume', extra: Partial<MetricDefinition> = {}): MetricDefinition => ({id,label,category,path,unit,aggregation,eligibility:'all',...extra});
 export const METRICS: MetricDefinition[] = [
   ...['feudal','castle','imperial'].map(age => metric(age, `${age[0].toUpperCase()+age.slice(1)} timing ≈`, 'Opening', `opening.ageUp.${age}.ageUpAtMs`, 'ms', 'median', {leader:'min',record:'min'})),
+  metric('villagers10','Villagers @10 ≈','Opening','economy.villagersBy10Minutes.count','number','mean',{detail:true}),
+  metric('darkAgeGap','Longest Dark Age action gap','Opening','execution.longestActionGapDarkAge.valueMs','ms','mean',{detail:true}),
+  metric('firstMiningCamp','First Mining Camp placement','Opening','economy.firstMiningCamp.atMs','ms','median',{detail:true}),
+  metric('firstLumberCamp','First Lumber Camp placement','Opening','economy.firstLumberCamp.atMs','ms','median',{detail:true}),
+  metric('commands5','Commands in first 5 min','Opening','execution.commandsFirstFiveMinutes.count','number','mean',{detail:true}),
   metric('feudalVillagers','Villagers at Feudal click ≈','Opening','opening.villagersBeforeFeudalAge.count','number','median',{detail:true}),
   metric('firstMilitary','First military request','Opening','opening.firstMilitaryUnitQueued.atMs','ms','median',{detail:true}),
   metric('loom','Loom request','Opening','opening.loomTiming.atMs','ms','median',{detail:true}),
   metric('earlyWalls','Pre-Feudal wall tiles','Opening','opening.wallTilesBeforeFeudal.count','number','mean',{detail:true}),
   ...['food','wood','gold','stone','total'].map(resource => metric(resource,resource==='total'?'Resources committed':resource[0].toUpperCase()+resource.slice(1),'Economy',`economy.resourceCommitment.resourcesCommitted.${resource}`,'number','volume',{leader:'max',record:'max'})),
+  metric('housesBuilt','House placements','Economy','economy.housesBuilt.count','number','mean',{detail:true}),
+  metric('tradeUnits','Trade unit requests','Economy','economy.tradeUnitsTrained.count','number','mean',{detail:true,eligibility:'team'}),
+  metric('tributeSent','Tribute sent','Economy','economy.tributeSent.resourceAmount','number','mean',{detail:true,eligibility:'team'}),
+  metric('tributeReceived','Tribute received','Economy','economy.tributeReceived.resourceAmount','number','mean',{detail:true,eligibility:'team'}),
   metric('villagerRequests','Villager requests','Economy','economy.villagersTrained.count','number','volume',{detail:true}),
   metric('tcIdle','Dark Age TC idle ≈','Economy','economy.tcIdleTimeDarkAge.valueMs','ms','median',{detail:true}),
   metric('extraTCs','Additional TC placements','Economy','economy.townCenters.extraPlacementCount','number','mean',{detail:true}),
   metric('secondTC','First extra TC placement','Economy','economy.firstExtraTownCenterTime.atMs','ms','median',{detail:true}),
   metric('thirdTC','Third TC placement','Economy','economy.thirdTownCenterTime.atMs','ms','median',{detail:true}),
   metric('militaryCommitment','Military unit commitment','Military','military.militaryUnitCommitment.resources'),
+  metric('militaryTechs','Military technologies requested','Military','military.militaryTechs.count','number','mean',{detail:true}),
   metric('unitRequests','Military unit requests','Military','military.militaryUnitsTrained.count','number','volume',{detail:true}),
   metric('raidsOut','Raids initiated','Military','military.engagements.raidsInitiated','number','volume',{leader:'max',record:'max'}),
   metric('firstRaid','First detected raid','Military','military.engagements.raidEvidence.initiatedEpisodes','ms','median',{record:'min',detail:true}),
@@ -31,6 +43,7 @@ export const METRICS: MetricDefinition[] = [
   metric('assistsIn','Defensive assists received','Military','military.engagements.defensiveAssistsReceived'),
   metric('cooperation','Cooperative attacks','Military','military.engagements.cooperativeAttacks','number','volume',{leader:'max',record:'max'}),
   metric('scouting','Scout command coverage @5','Map Presence','mapPresence.scoutCoverageAt5Minutes.percent','percent','median',{record:'max'}),
+  metric('expansionTCs','Expansion TC placements','Map Presence','mapPresence.expansionTownCenters.count','number','mean',{detail:true}),
   metric('expansions','Expansion zones','Map Presence','mapPresence.expansionZones.count','number','mean',{leader:'max',record:'max'}),
   metric('forward','Forward placements','Map Presence','mapPresence.forwardBuildings.count','number','mean',{leader:'max',record:'max'}),
   metric('forwardEco','Forward economy placements','Map Presence','mapPresence.forwardEco.count','number','mean',{record:'max'}),
@@ -71,6 +84,13 @@ const number = (value:unknown):number|null => typeof value==='number'&&Number.is
 const text = (value:unknown):string|null => typeof value==='string'&&value.trim()?value:null;
 const at = (value:unknown,path:string):unknown => path.split('.').reduce<unknown>((v,key)=>object(v)[key],value);
 export const median = (values:number[]):number|null => {if(!values.length)return null;const v=[...values].sort((a,b)=>a-b),i=Math.floor(v.length/2);return v.length%2?v[i]:(v[i-1]+v[i])/2;};
+
+/** A team-only Season metric is eligible only when this player has a same-team ally in the Game. */
+export function metricEligible(metric:MetricDefinition,game:GameStatistics,player:PlayerMeasurement):boolean {
+  if((metric.eligibility??'all')!=='team')return true;
+  if(player.team==null)return false;
+  return game.players.some(other=>other.playerId!==player.playerId&&other.team===player.team);
+}
 
 /** Normalize only known canonical paths. Unknown values stay null, never zero. */
 export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):GameStatistics {
@@ -160,20 +180,22 @@ export class StatisticsExperience {
   aggregate(modeValue:AggregationMode='total'):AggregatePlayer[]{
     const ids=[...new Set(this.games.flatMap(g=>g.players.map(p=>p.playerId)))];
     return ids.map(playerId=>{
-      const samples=this.games.flatMap(g=>g.players.filter(p=>p.playerId===playerId));
+      const pairs=this.games.flatMap(game=>game.players.filter(player=>player.playerId===playerId).map(player=>({game,player})));
+      const samples=pairs.map(pair=>pair.player);
       const values:Record<string,AggregateValue>={};
       for(const m of METRICS){
-        const qualified=samples.filter(p=>p.values[m.id]!=null),numbers=qualified.map(p=>p.values[m.id]!);
-        const models=[...new Set(qualified.map(p=>p.models[m.id]))].sort();
+        const eligible=pairs.filter(({game,player})=>metricEligible(m,game,player));
+        const qualified=eligible.filter(({player})=>player.values[m.id]!=null),numbers=qualified.map(({player})=>player.values[m.id]!);
+        const models=[...new Set(qualified.map(({player})=>player.models[m.id]))].sort();
         let value:number|null=null;
         if(numbers.length){
           if(m.aggregation==='median')value=median(numbers);
-          else if(m.aggregation==='responses')value=median(qualified.flatMap(p=>p.responseTimes));
+          else if(m.aggregation==='responses')value=median(qualified.flatMap(({player})=>player.responseTimes));
           else {value=numbers.reduce((a,b)=>a+b,0);if(m.aggregation==='mean'||modeValue==='average')value/=numbers.length;}
         }
         // Response opportunity counts remain totals even in per-Game mode.
         if(['responded','received'].includes(m.id))value=numbers.length?numbers.reduce((a,b)=>a+b,0):null;
-        values[m.id]={value,samples:numbers.length,eligibleGames:samples.length,models};
+        values[m.id]={value,samples:numbers.length,eligibleGames:eligible.length,models};
       }
       const compositions=samples.map(p=>p.composition).filter((c):c is Record<string,number>=>c!==null&&Object.values(c).reduce((a,b)=>a+b,0)>0);
       const composition:Record<string,number>={};
@@ -186,7 +208,7 @@ export class StatisticsExperience {
     const rows=this.aggregate(modeValue),values=rows.map(p=>p.values[metricId]);
     if(rows.length<2||values.some(v=>v.value===null||v.samples!==v.eligibleGames)||new Set(values.flatMap(v=>v.models)).size!==1||values.some(v=>v.models.includes('unknown')))return [];
     const typical=modeValue==='average'||m.aggregation!=='volume';
-    if(typical&&(rows.some(p=>p.values[metricId].samples<minimumGames)||new Set(this.games.map(g=>g.contextKey)).size!==1))return [];
+    if(typical&&(values.some(v=>v.samples<minimumGames)||new Set(this.games.map(g=>g.contextKey)).size!==1))return [];
     const extreme=(m.leader==='max'?Math.max:Math.min)(...values.map(v=>v.value!));
     if(extreme===0||values.every(v=>v.value===extreme))return [];
     return rows.filter(p=>p.values[metricId].value===extreme).map(p=>p.playerId);
@@ -194,7 +216,7 @@ export class StatisticsExperience {
   records():StatisticRecord[]{
     const result=new Map<string,StatisticRecord[]>();
     for(const g of this.games)for(const m of METRICS.filter(m=>m.record)){
-      for(const p of g.players){const value=p.values[m.id];if(value==null||value===0||!p.models[m.id]||p.models[m.id]==='unknown')continue;
+      for(const p of g.players){if(!metricEligible(m,g,p))continue;const value=p.values[m.id];if(value==null||value===0||!p.models[m.id]||p.models[m.id]==='unknown')continue;
         const key=[m.id,g.contextKey,p.models[m.id]].join('|'),previous=result.get(key)??[];
         const record={metricId:m.id,value,playerId:p.playerId,name:p.name,matchId:g.matchId,gameId:g.gameId,civilization:p.civilization,orderAtMs:g.orderAtMs,contextKey:g.contextKey,model:p.models[m.id]};
         if(!previous.length||(m.record==='max'?value>previous[0].value:value<previous[0].value))result.set(key,[record]);
@@ -215,8 +237,8 @@ export class StatisticsExperience {
   personalBests(viewerId:string):StatisticRecord[]{
     const latest=this.games.at(-1);if(!latest)return [];
     const player=latest.players.find(p=>p.playerId===viewerId);if(!player)return [];
-    return METRICS.filter(m=>m.record).flatMap(m=>{
-      const previous=this.games.slice(0,-1).filter(g=>g.contextKey===latest.contextKey).flatMap(g=>g.players.filter(p=>p.playerId===viewerId&&p.models[m.id]===player.models[m.id]).map(p=>p.values[m.id])).filter((v):v is number=>v!=null);
+    return METRICS.filter(m=>m.record&&metricEligible(m,latest,player)).flatMap(m=>{
+      const previous=this.games.slice(0,-1).filter(g=>g.contextKey===latest.contextKey).flatMap(g=>g.players.filter(p=>p.playerId===viewerId&&metricEligible(m,g,p)&&p.models[m.id]===player.models[m.id]).map(p=>p.values[m.id])).filter((v):v is number=>v!=null);
       const value=player.values[m.id];if(previous.length<3||value==null||value===0||!player.models[m.id]||player.models[m.id]==='unknown')return [];
       if(m.record==='max'?value<=Math.max(...previous):value>=Math.min(...previous))return [];
       return [{metricId:m.id,value,playerId:viewerId,name:player.name,matchId:latest.matchId,gameId:latest.gameId,civilization:player.civilization,orderAtMs:latest.orderAtMs,contextKey:latest.contextKey,model:player.models[m.id]}];
@@ -238,7 +260,7 @@ export class StatisticsExperience {
       for(const r of records){const key=r.contextKey+'|'+r.model;groups.set(key,[...(groups.get(key)??[]),r]);}
       for(const [key,holders] of groups){
         const r=holders[0];
-        const values=this.games.filter(g=>g.contextKey===r.contextKey).flatMap(g=>g.players.filter(p=>p.models[m.id]===r.model).map(p=>p.values[m.id])).filter((v):v is number=>v!=null);
+        const values=this.games.filter(g=>g.contextKey===r.contextKey).flatMap(g=>g.players.filter(p=>metricEligible(m,g,p)&&p.models[m.id]===r.model).map(p=>p.values[m.id])).filter((v):v is number=>v!=null);
         if(values.length<2||new Set(values).size<2)continue;
         const typical=median(values)!;
         if(m.record==='min'?r.value>thresholds[m.id]||r.value>typical*.9:r.value<thresholds[m.id]||r.value<typical*1.25)continue;
