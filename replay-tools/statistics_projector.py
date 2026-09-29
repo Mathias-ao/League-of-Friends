@@ -12,14 +12,14 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from analysis_dataset import build_analysis_dataset, validate_analysis_dataset
 from build_order_classifier import classify_build_orders
-from economy_statistics import project_economy_statistics
+from economy_statistics_v5 import project_economy_statistics
 from engagement_statistics import project_engagement_statistics
-from execution_statistics import project_execution_statistics
+from execution_statistics_v2 import project_execution_statistics
 from skirmish_detector import detect_skirmishes
 from canonical_io import ROOT, json_bytes, read_json, sha256
 from forward_eco import project_forward_eco
-from map_presence_v6 import project_map_presence
-from military_statistics import project_military_statistics
+from map_presence_v7 import project_map_presence
+from military_statistics_v5 import project_military_statistics
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
 from resource_commitment import project_resource_commitment
@@ -143,6 +143,7 @@ def project_statistics_from_analysis(
         military_statistics=military_statistics,
         terrain_elevation=analysis.get("terrainElevation") or {},
         build_events=body["buildEvents"],
+        body=body,
     )
     map_presence_statistics = project_map_presence(
         manifest=manifest,
@@ -218,8 +219,8 @@ def project_statistics_from_analysis(
         {"code": "ENGAGEMENTS_ARE_INFERRED", "message": "Skirmish, Battle, Great Battle, reinforcement, defensive-assistance and cooperative-attack outputs are command-derived interaction inferences. Pairwise opponent edges are relationship evidence, not proof of damage, kills, exact army size, continuous positions or coordination intent."},
         {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and placement geometry; command/scout coverage is not fog-of-war exploration, relic holding is touch-inferred, and gold control is not resource gathering or remaining-gold state."},
         {"code": "RESOURCE_COMMITMENT_IS_ESTIMATED", "message": "Resource commitment uses pinned base catalog costs for decoded requests/placements; it does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute."},
-        {"code": "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED", "message": "Economy separates command observations from reconstructions. Villagers trained is a queue-derived proxy; TC idle/gap metrics infer workload from decoded producer streams; animal counts are targeted-interaction proxies, not kill/gather outcomes."},
-        {"code": "MILITARY_PRODUCTION_IS_QUEUE_DERIVED", "message": "Military V3 counts positive decoded military queue amounts and placement/research commands, using promoted DE producer-building type where needed. It does not assert completed units/buildings, surviving army, kills, deaths or damage."},
+        {"code": "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED", "message": "Economy separates command observations from reconstructions. Villagers/trade units trained are queue-derived proxies; TC idle/gap metrics infer workload from decoded producer streams; animal counts are targeted-interaction proxies, not kill/gather outcomes."},
+        {"code": "MILITARY_PRODUCTION_IS_QUEUE_DERIVED", "message": "Military V5 counts positive decoded military queue amounts and placement/research commands, using promoted DE producer-building type where needed. It does not assert completed units/buildings, surviving army, kills, deaths or damage."},
     ]
     source = analysis["source"]
     result = {
@@ -274,6 +275,7 @@ def project_statistics(directory: Path, *, validate: bool = True, catalog_path: 
     """Compatibility entrypoint: canonical bundle -> compact cache -> statistics."""
     analysis = build_analysis_dataset(directory, validate=validate)
     return project_statistics_from_analysis(analysis, catalog_path=catalog_path)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
