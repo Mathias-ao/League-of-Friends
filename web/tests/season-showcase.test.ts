@@ -14,6 +14,14 @@ const expected={
   Execution:['APM','First Command','Longest Inactivity','Raid Response','Garrisons During Raids','Economy Actions in Battles','Town Bell','Back to Work'],
 } as const;
 
+const expectedFamilies={
+  Opening:['Age Progression','Opening Intent','Foundations & Safety'],
+  Economy:['Growth & Town Centres','Commitment & Farming','Technology & Exchange'],
+  Military:['Muster & Commitment','Engagements','Allied Action','Fortification & Upgrades'],
+  'Map Presence':['Reach & Pressure','Footholds & Expansion','Control & Objectives'],
+  Execution:['Tempo','Response','Battle Control'],
+} as const;
+
 test('Season catalogue is the approved royal-archive ledger',()=>{
   for(const [category,labels] of Object.entries(expected))assert.deepEqual(seasonMetricsFor(category as keyof typeof expected).map(metric=>metric.label),labels);
 });
@@ -38,8 +46,11 @@ test('Season Statistics renders tactical families, records, quiet controls and t
 
     for(const [group,labels] of Object.entries(expected)){
       await click(category(group));
-      const visible=[...document.querySelectorAll('.sx-season-table .sx-metric-title')].map(node=>node.textContent?.replace(/\s+/g,' ').trim());
-      assert.deepEqual(visible,[...labels],`${group} should contain only the approved rows`);
+      const visible=[...document.querySelectorAll('.sx-season-table .sx-metric-title')].map(node=>node.textContent?.replace(/\s+/g,' ').trim()??'');
+      assert.equal(visible.length,labels.length,`${group} should render every approved row once`);
+      assert.deepEqual([...visible].sort(),[...labels].sort(),`${group} should contain only the approved rows`);
+      const families=[...document.querySelectorAll('.sx-season-table .sx-family-row span')].map(node=>node.textContent?.trim()??'');
+      assert.deepEqual(families,[...expectedFamilies[group as keyof typeof expectedFamilies]],`${group} should use the approved tactical families`);
     }
 
     await click(category('Opening'));
