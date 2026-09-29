@@ -41,8 +41,8 @@ export function illustrativeGame(match:MatchRecord,index:number,players:PlayerRe
       apm:35+i*8+index,firstCommand:9000+i*1800,response:8+i*2,garrisonsDuringRaids:(i+index)%4,ecoActionsFights:18+i*5+(index%4),
       longestInactivity:52000+i*8500+index*900,townBell:(i+index)%2,backToWork:1+(i+index)%4,
 
-      // Older aliases retained for Battle/Event previews.
-      housesBuilt:14+i+(index%4),extraTCs:2,militaryTechs:10+i+(index%5),expansionTCs:1+(i+index)%3,expansions:2+(i+index)%4,forward:(i+index)%5,forwardEco:(i+index)%3,walls:10+i*18,
+      // Distinct older aliases retained for Battle/Event previews.
+      extraTCs:2,expansions:2+(i+index)%4,
     });
     values.total=values.food!+values.wood!+values.gold!+values.stone!;
     const ally=roster.some(q=>q.playerId!==p.playerId&&q.team===p.team);
