@@ -1,6 +1,6 @@
 /* Stepwise texture test for the Season Statistics tab.
-   Refinement pass: larger motif, calmer contrast, stronger lighting hierarchy,
-   one coherent ledger plate, a mounted record gallery, and a clearer Emperor edge. */
+   Refinement pass: calmer ornamental environment, content-sized comparison hall,
+   leaderboard-inspired record book, and a clearer Emperor threshold. */
 
 .section.statistics-experience.sx-season-hall-v2{
   background-color:#100d0b;
@@ -57,13 +57,27 @@
   border-color:rgba(213,187,136,.10);
 }
 
+/*
+   The comparison hall shrink-wraps to the number of columns it actually owns.
+   Under capacity it ends after the Emperor instead of stretching into a blank field.
+   Once the intrinsic width exceeds the available viewport, max-width caps it and
+   horizontal scrolling/sticky Emperor behavior resume naturally.
+*/
 .section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-scroll{
+  width:fit-content;
+  max-width:100%;
+  overflow-x:auto;
   background:rgba(12,13,11,.96);
   border-color:rgba(199,162,95,.18);
   border-top-color:rgba(209,171,101,.56);
   box-shadow:
     inset 0 1px rgba(255,240,208,.02),
     inset 0 0 22px rgba(0,0,0,.18);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-table{
+  width:max-content;
+  min-width:max-content;
 }
 
 /* Keep the subtle glowing bay dividers; make them the primary ornament inside the table. */
@@ -86,33 +100,107 @@
     inset 10px 0 18px -15px rgba(231,183,87,.92);
 }
 
-/* Records become one mounted slab; the pattern remains environmental rather than filling every gap. */
+/*
+   Single-Game Records borrows the Season leaderboard's hierarchy:
+   a warm limestone honour-board frame containing one dark basalt record tablet.
+   Individual records read as entries on that tablet, not floating cards.
+*/
 .section.statistics-experience.sx-season-hall-v2 .sx-record-gallery{
+  position:relative;
   margin-top:44px;
-  padding:26px 24px 30px;
-  border:1px solid rgba(187,149,83,.24);
-  border-top:2px solid rgba(204,164,94,.54);
-  background:
-    linear-gradient(180deg,rgba(255,239,205,.015),transparent 18%),
-    linear-gradient(180deg,rgba(20,20,18,.94),rgba(14,15,13,.93));
+  padding:26px 22px 22px;
+  overflow:hidden;
+  border:1px solid #857354;
+  border-top:1px solid #9a825d;
+  color:#352b20;
+  background-color:#c5b28d;
+  background-image:
+    radial-gradient(ellipse at 14% 15%,rgba(255,250,231,.30),transparent 24%),
+    radial-gradient(ellipse at 88% 78%,rgba(87,65,42,.10),transparent 26%),
+    linear-gradient(109deg,transparent 0 30%,rgba(82,62,42,.09) 30.2%,transparent 30.7%),
+    linear-gradient(176deg,#d4c29f,#b8a481 52%,#c9b58f);
   box-shadow:
-    inset 0 1px rgba(255,237,198,.025),
-    inset 0 0 0 1px rgba(0,0,0,.20),
-    0 14px 30px rgba(0,0,0,.28);
-  backdrop-filter:blur(2px);
+    0 20px 52px rgba(0,0,0,.34),
+    inset 0 2px rgba(255,250,232,.38),
+    inset 0 -3px rgba(77,57,36,.20);
+  backdrop-filter:none;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery::before{
+  content:'';
+  position:absolute;
+  inset:7px 7px auto;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(95,72,47,.34),transparent);
+  pointer-events:none;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery>.eyebrow{
+  color:#69573d;
+  font-weight:600;
+  text-shadow:0 1px rgba(255,248,224,.45);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery>h3{
+  margin-top:8px;
+  color:#4a3a28;
+  text-shadow:0 1px rgba(255,248,224,.55);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery>p{
+  margin-bottom:16px;
+  color:#6b5d49;
+  text-shadow:0 1px rgba(255,248,224,.38);
 }
 
 .section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid{
-  gap:14px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:1px;
+  padding:1px;
+  border:1px solid #514b40;
+  background:#514b40;
+  box-shadow:
+    inset 0 2px 8px rgba(0,0,0,.36),
+    0 1px rgba(255,247,220,.18);
 }
 
 .section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button{
-  border-color:rgba(211,193,157,.12);
-  border-top-color:rgba(198,161,91,.46);
-  background:linear-gradient(180deg,#24241f,#1d1e1a);
-  box-shadow:
-    inset 0 1px rgba(255,245,221,.025),
-    0 4px 10px rgba(0,0,0,.16);
+  min-height:164px;
+  margin:0;
+  padding:16px 18px;
+  border:0;
+  border-top:0;
+  background:linear-gradient(180deg,#202321,#171918);
+  box-shadow:none;
+  transition:background .14s ease;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button:hover,
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button:focus-visible{
+  background:#242620;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button>span:first-child{
+  color:#bdb3a1;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button>strong{
+  color:#f0cb82;
+  text-shadow:0 0 8px rgba(214,148,43,.16);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button>b{
+  color:#eee1c8;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button>small{
+  color:#9f9488;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid>button>span:last-child{
+  margin-top:auto;
+  color:#d7b46f;
 }
 
 /* Make the open texture areas quieter so hierarchy comes from the content, not the motif. */
@@ -128,7 +216,7 @@
     background-position:center top,center top,center top,40px 0;
   }
   .section.statistics-experience.sx-season-hall-v2 .sx-record-gallery{
-    padding:22px 16px 24px;
+    padding:22px 16px 18px;
   }
 }
 
@@ -136,5 +224,8 @@
   .section.statistics-experience.sx-season-hall-v2{
     background-size:auto,auto,auto,420px auto;
     background-position:center top,center top,center top,-20px 0;
+  }
+  .section.statistics-experience.sx-season-hall-v2 .sx-record-gallery .sx-record-grid{
+    grid-template-columns:1fr;
   }
 }
