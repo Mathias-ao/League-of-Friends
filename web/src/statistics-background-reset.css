@@ -1,0 +1,9 @@
+/* Statistics shares the same environmental background as the other main sections.
+   The Hall keeps its own internal materials, but no longer paints a page-wide texture. */
+.section.statistics-experience.sx-season-hall-v2{
+  background:none;
+  box-shadow:none;
+}
+.section.statistics-experience.sx-season-hall-v2::before{
+  display:none;
+}
