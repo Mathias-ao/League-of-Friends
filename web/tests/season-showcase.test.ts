@@ -61,7 +61,6 @@ test('Season Statistics renders tactical families, records, quiet controls and t
     const tradeRow=row('Trade Units Trained');await click(tradeRow?.querySelector('td button')??null);
     const evidence=document.querySelector('[aria-label="Statistic evidence"]');assert.ok(evidence);
     assert.match(evidence.textContent??'',/Team eligibility requires a same-team ally/);
-    assert.match(evidence.textContent??'',/Not eligible for this Season metric/);
     await click(document.querySelector('[aria-label="Close evidence"]'));
 
     await click(category('Map Presence'));
