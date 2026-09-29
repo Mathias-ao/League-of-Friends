@@ -27,7 +27,6 @@ test('Season Statistics renders tactical families, records, quiet controls and t
   const repo=new PreviewLeagueRepository();await repo.signIn();await repo.requestMembership('Tester','','K7M4Q9');const snapshot=await repo.load();
   const click=async(element:Element|null)=>{assert.ok(element);await act(async()=>{(element as HTMLElement).click();await Promise.resolve();});};
   const category=(label:string)=>[...document.querySelectorAll('.sx-tabs button')].find(button=>button.textContent===label)??null;
-  const visibleLabels=()=>[...document.querySelectorAll('.sx-season-table .sx-metric-title')].map(node=>node.textContent?.replace('',''));
   const row=(label:string)=>[...document.querySelectorAll('.sx-season-table tbody tr')].find(tr=>tr.querySelector('.sx-metric-title')?.textContent?.startsWith(label))??null;
   try{
     await act(async()=>{root.render(React.createElement(SeasonStatisticsView,{repository:repo,snapshot,preview:true,openMatch:()=>{},openPlayer:()=>{}}));await new Promise(resolve=>setTimeout(resolve,0));});
