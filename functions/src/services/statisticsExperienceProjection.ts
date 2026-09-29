@@ -4,6 +4,7 @@ import {Timestamp,type Transaction,type DocumentReference,type Query} from 'fire
 import {HttpsError} from 'firebase-functions/v2/https';
 import {db} from '../config/firebase.js';
 import {EXPERIENCE_VERSION,StatisticsExperience,projectStatistics,type GameStatistics,type ProjectionMetadata,type StatisticsScope,type StatisticsDataset} from '../engines/statisticsExperience.js';
+import {SEASON_SHOWCASE_VERSION,augmentSeasonShowcase} from '../engines/seasonShowcaseProjection.js';
 
 const stable=(value:any):any=>Array.isArray(value)?value.map(stable):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value;
 export function statisticsMetadata(matchId:string,gameId:string,match:any,game:any,source:any):ProjectionMetadata {
@@ -24,14 +25,15 @@ export function statisticsMetadata(matchId:string,gameId:string,match:any,game:a
 }
 
 async function hydrateProjection(matchId:string,gameId:string,match:any,game:any,sourceRef:DocumentReference,source:any):Promise<void>{
-  if(source.experience?.version===EXPERIENCE_VERSION)return;
+  if(source.experience?.version===EXPERIENCE_VERSION&&source.experience?.seasonShowcaseVersion===SEASON_SHOWCASE_VERSION)return;
   if(!source.statistics?.path||!source.statistics?.sha256)return;
   const project=process.env.GCLOUD_PROJECT||process.env.GOOGLE_CLOUD_PROJECT;
   const bucket=process.env.REPLAY_BUCKET||`${project}.appspot.com`;
   const [bytes]=await getStorage().bucket(bucket).file(source.statistics.path).download();
   if(createHash('sha256').update(bytes).digest('hex')!==source.statistics.sha256)throw new HttpsError('data-loss','Stored statistics failed integrity verification.');
   const raw=JSON.parse(bytes.toString('utf8'));
-  const experience=projectStatistics(raw,statisticsMetadata(matchId,gameId,match,game,source));
+  const metadata=statisticsMetadata(matchId,gameId,match,game,source);
+  const experience=augmentSeasonShowcase(raw,projectStatistics(raw,metadata),metadata);
   // Immutable source revision: backfill presentation only, never promote another replay.
   await sourceRef.update({experience});
 }
@@ -58,7 +60,7 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
       const sourceRef=gameSnapshot.ref.collection('replaySources').doc(sourceId),sourceSnapshot=await read(sourceRef);
       if(!sourceSnapshot.exists||sourceSnapshot.data().state!=='READY'){unavailableGames++;continue;}
       let source=sourceSnapshot.data();
-      if(hydrate&&source.experience?.version!==EXPERIENCE_VERSION){await hydrateProjection(matchSnapshot.id,gameSnapshot.id,match,game,sourceRef,source);source=(await sourceRef.get()).data();}
+      if(hydrate&&(source.experience?.version!==EXPERIENCE_VERSION||source.experience?.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION)){await hydrateProjection(matchSnapshot.id,gameSnapshot.id,match,game,sourceRef,source);source=(await sourceRef.get()).data();}
       if(source?.experience?.version!==EXPERIENCE_VERSION){unavailableGames++;continue;}
       const metadata=statisticsMetadata(matchSnapshot.id,gameSnapshot.id,match,game,source);
       const {mapping:_,roster,...base}=metadata;
