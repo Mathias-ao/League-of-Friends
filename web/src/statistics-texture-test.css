@@ -1,0 +1,32 @@
+/* Stepwise texture test for the Season Statistics tab.
+   The uploaded ornamental metal pattern becomes the environmental surface behind
+   the Hall of Records while existing table surfaces stay readable above it. */
+
+.section.statistics-experience.sx-season-hall-v2{
+  background-color:#120f0c;
+  background-image:
+    linear-gradient(rgba(14,11,9,.66),rgba(14,11,9,.74)),
+    url('/textures/statgrid2.webp');
+  background-size:auto,700px auto;
+  background-repeat:no-repeat,repeat;
+  background-position:center top,center top;
+}
+
+/* Let the texture register around the hall without competing with the data. */
+.section.statistics-experience.sx-season-hall-v2 .sx-panel{
+  position:relative;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-ledger{
+  background-color:rgba(20,20,18,.94);
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar{
+  background:linear-gradient(90deg,rgba(12,10,8,.54),rgba(12,10,8,.28),rgba(12,10,8,.54));
+}
+
+@media(max-width:900px){
+  .section.statistics-experience.sx-season-hall-v2{
+    background-size:auto,560px auto;
+  }
+}
