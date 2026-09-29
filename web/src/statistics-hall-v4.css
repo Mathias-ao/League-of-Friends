@@ -131,7 +131,94 @@
   margin-top:18px;
 }
 
+/* Pass V: make rail + controls + comparison surface read as one bronze instrument. */
+.section.statistics-experience.sx-season-hall-v2 .sx-panel{
+  padding-top:28px;
+}
+
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs{
+  border:1px solid rgba(168,111,63,.42);
+  border-bottom:0;
+  border-top-color:rgba(226,170,99,.68);
+  background:
+    radial-gradient(circle at 18% 24%,rgba(246,196,132,.022) 0 1px,transparent 1.5px),
+    linear-gradient(180deg,rgba(255,221,171,.025),transparent 16%),
+    linear-gradient(176deg,#38241b 0%,#2b1c16 54%,#231712 100%);
+  background-size:47px 41px,auto,auto;
+  box-shadow:
+    inset 0 1px rgba(255,220,169,.075),
+    inset 0 0 20px rgba(184,104,48,.04),
+    0 8px 20px rgba(0,0,0,.18);
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs button{
+  color:#d9c8b2;
+  border-right-color:rgba(190,128,73,.30);
+  background:transparent;
+  box-shadow:inset 1px 0 rgba(242,190,126,.06);
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs button[aria-pressed=true]{
+  color:#f2dfc5;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(217,142,67,.10),transparent 72%),
+    linear-gradient(176deg,#4a3022 0%,#342219 58%,#291b15 100%);
+  box-shadow:
+    inset 0 2px rgba(239,184,105,.72),
+    inset 1px 0 rgba(255,218,158,.12),
+    inset -1px 0 rgba(0,0,0,.22),
+    inset 0 0 20px rgba(203,129,53,.05);
+}
+
+/* The filter row is the same material as the table, so it reads as the table's control header. */
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar{
+  border-left:1px solid rgba(168,111,63,.42);
+  border-right:1px solid rgba(168,111,63,.42);
+  border-bottom:1px solid rgba(190,128,73,.42);
+  background:
+    radial-gradient(circle at 22% 28%,rgba(255,213,157,.016) 0 1px,transparent 1.5px),
+    linear-gradient(180deg,rgba(255,222,171,.018),transparent 14%),
+    linear-gradient(176deg,#38251c 0%,#2b1d17 56%,#241813 100%);
+  background-size:43px 39px,auto,auto;
+  box-shadow:
+    inset 0 1px rgba(255,222,172,.04),
+    inset 0 0 18px rgba(173,96,45,.028);
+  backdrop-filter:none;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar select{
+  background:linear-gradient(180deg,#2b1d17,#201611);
+  border-color:rgba(190,128,73,.34);
+  color:#eadcc9;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toggle{
+  background:linear-gradient(180deg,#2b1d17,#201611);
+  border-color:rgba(190,128,73,.34);
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-toggle button[aria-pressed=true]{
+  background:#493021;
+  color:#f0cc8a;
+}
+
+/* Center the comparison matrix when it is narrower than the viewport.
+   Intrinsic width still grows one fixed player column at a time; after reaching
+   the viewport cap the same element becomes the horizontal scroll container. */
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-scroll{
+  justify-self:center;
+  width:max-content;
+  max-width:100%;
+  min-width:0;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-table,
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-table thead,
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-table tbody,
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-table tr{
+  width:max-content;
+  min-width:max-content;
+  max-width:none;
+}
+
 @media(max-width:900px){
+  .section.statistics-experience.sx-season-hall-v2 .sx-panel{
+    padding-top:22px;
+  }
   .section.statistics-experience.sx-season-hall-v2 .sx-toolbar{
     min-height:42px;
   }
