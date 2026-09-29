@@ -1,0 +1,102 @@
+/* Season Statistics — width + full-bleed refinement V.
+   The comparison table owns the intrinsic width. The chapter rail and compact
+   controls inherit that width, while the ornamental environment remains full-bleed. */
+
+/* Let the ornamental metal grid span the viewport independently of content width. */
+.section.statistics-experience.sx-season-hall-v2{
+  position:relative;
+  isolation:isolate;
+  background:none;
+  box-shadow:none;
+  padding-top:46px;
+}
+.section.statistics-experience.sx-season-hall-v2::before{
+  content:'';
+  position:absolute;
+  z-index:-1;
+  top:0;
+  bottom:0;
+  left:50%;
+  width:100vw;
+  transform:translateX(-50%);
+  pointer-events:none;
+  background-color:#100d0b;
+  background-image:
+    radial-gradient(ellipse at 50% 18%,rgba(84,63,39,.10) 0,rgba(25,19,15,.16) 34%,rgba(8,7,6,.56) 78%,rgba(5,4,4,.74) 100%),
+    linear-gradient(90deg,rgba(4,4,4,.58) 0,rgba(12,10,8,.18) 18%,rgba(12,10,8,.12) 50%,rgba(12,10,8,.18) 82%,rgba(4,4,4,.58) 100%),
+    linear-gradient(180deg,rgba(20,15,12,.50),rgba(10,8,7,.68)),
+    url('/textures/statgrid2.webp');
+  background-size:auto,auto,auto,620px auto;
+  background-repeat:no-repeat,no-repeat,no-repeat,repeat;
+  background-position:center top,center top,center top,110px 0;
+  box-shadow:inset 0 26px 70px rgba(0,0,0,.20),inset 0 -40px 90px rgba(0,0,0,.30);
+}
+
+/* The panel now shrink-wraps to the comparison matrix and is centered as a unit. */
+.section.statistics-experience.sx-season-hall-v2 .sx-panel{
+  width:fit-content;
+  max-width:calc(100% - 32px);
+  margin:0 auto;
+  padding-top:0;
+  background:transparent;
+}
+
+/* Tabs + filter header do not set intrinsic width: the table does.
+   Once the panel width is established, both stretch to that exact width. */
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs,
+.section.statistics-experience.sx-season-hall-v2 .sx-toolbar{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  contain:inline-size;
+  justify-self:stretch;
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs{
+  grid-template-columns:repeat(5,minmax(0,1fr));
+}
+.section.statistics-experience.sx-season-hall-v2 .sx-tabs button{
+  min-width:0;
+}
+
+/* The comparison matrix remains the sizing authority:
+   fixed columns add width one player at a time, then the max-width clamp turns
+   the same surface into the horizontal scroll container. */
+.section.statistics-experience.sx-season-hall-v2 .sx-hall-v2-scroll{
+  justify-self:center;
+  width:max-content;
+  max-width:100%;
+  min-width:0;
+}
+
+/* Secondary content follows the established panel width but cannot enlarge it. */
+.section.statistics-experience.sx-season-hall-v2 .sx-bars,
+.section.statistics-experience.sx-season-hall-v2 .sx-provenance,
+.section.statistics-experience.sx-season-hall-v2 .sx-season-evidence,
+.section.statistics-experience.sx-season-hall-v2 .sx-record-gallery{
+  width:100%;
+  min-width:0;
+  contain:inline-size;
+}
+
+@media(max-width:900px){
+  .section.statistics-experience.sx-season-hall-v2{
+    padding-top:34px;
+  }
+  .section.statistics-experience.sx-season-hall-v2::before{
+    background-size:auto,auto,auto,500px auto;
+    background-position:center top,center top,center top,40px 0;
+  }
+}
+
+@media(max-width:650px){
+  .section.statistics-experience.sx-season-hall-v2{
+    padding-top:26px;
+  }
+  .section.statistics-experience.sx-season-hall-v2 .sx-panel{
+    max-width:calc(100% - 20px);
+  }
+  .section.statistics-experience.sx-season-hall-v2::before{
+    background-size:auto,auto,auto,420px auto;
+    background-position:center top,center top,center top,-20px 0;
+  }
+}
