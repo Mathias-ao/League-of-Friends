@@ -19,7 +19,8 @@ function sumBattleTime(engagements:Bag):number|null{
   const battles=array(engagements.engagementEvidence?.battles);
   if(!battles.length)return 0;
   const durations=battles.map(row=>number(row.durationMs));
-  return durations.some(value=>value===null)?null:durations.reduce((sum,value)=>sum+(value??0),0);
+  if(durations.some(value=>value===null))return null;
+  return (durations as number[]).reduce((sum,value)=>sum+value,0);
 }
 
 function blacksmithBy30(military:Bag):number|null{
