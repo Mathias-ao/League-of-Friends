@@ -8,6 +8,9 @@
   display:block!important;
   box-sizing:border-box!important;
   max-width:calc(100vw - 20px)!important;
+  max-height:calc(100vh - 20px)!important;
+  overflow:auto!important;
+  overflow-wrap:anywhere!important;
   padding:9px 11px!important;
   color:#d8cbb8!important;
   border:1px solid rgba(178,132,72,.56)!important;
