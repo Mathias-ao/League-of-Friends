@@ -4,6 +4,7 @@ import React,{act} from 'react';
 import {JSDOM} from 'jsdom';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 import {SeasonStatisticsView} from '../src/ui/StatisticsDashboard';
+import {syncStatisticsRuntimePolish} from '../src/statistics-runtime-fixes';
 
 test('Record Cabinet ignores Comparison and display mode, while Format selects the record class',async()=>{
   const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/#statistics'});
@@ -30,7 +31,30 @@ test('Record Cabinet ignores Comparison and display mode, while Format selects t
     assert.equal(document.querySelector('.sx-record-plaque-grid')?.textContent??'',leagueRecords,'Comparison must not narrow League records');
 
     await click([...document.querySelectorAll('.sx-scope-switch button')].find(button=>button.textContent==='All-time')??null);
-    assert.equal(document.querySelector('.sx-record-plaque-grid')?.textContent??'',leagueRecords,'Per Battle / All-time must not alter records');
+    assert.equal(document.querySelector('.sx-record-plaque-grid')?.textContent??'',leagueRecords,'Per Battle / All-time must not alter ordinary Battle records');
+
+    await click([...document.querySelectorAll('.sx-tabs button')].find(button=>button.textContent==='Military')??null);
+    const playerNames=[...document.querySelectorAll('.sx-season-table thead .sx-player-name')].map(node=>node.textContent?.trim()??'');
+    const rowFor=(label:string)=>[...document.querySelectorAll<HTMLTableRowElement>('.sx-season-table tbody tr')].find(row=>row.querySelector('.sx-metric-title')?.textContent?.trim().startsWith(label));
+    const recordFor=(label:string)=>[...document.querySelectorAll<HTMLButtonElement>('button.sx-record-plaque')].find(card=>card.querySelector('strong')?.textContent?.trim()===label);
+    for(const [recordLabel,rowLabel] of [['Most Battles','Battles Fought'],['Most Castles','Castles']] as const){
+      const row=rowFor(rowLabel);assert.ok(row);
+      const totals=[...row.querySelectorAll('.sx-value-main')].map(node=>Number(node.textContent)).map((value,index)=>({value,name:playerNames[index]})).filter(item=>Number.isFinite(item.value));
+      const maximum=Math.max(...totals.map(item=>item.value));
+      const expectedHolders=totals.filter(item=>item.value===maximum).map(item=>item.name);
+      const card=recordFor(recordLabel);assert.ok(card);
+      assert.equal(Number(card.querySelector('b')?.textContent),maximum,`${recordLabel} must match the All-time ledger maximum`);
+      const holderText=card.querySelector('em')?.textContent??'';
+      assert.ok(expectedHolders.some(name=>holderText.startsWith(name)),`${recordLabel} must belong to an actual Season-total leader`);
+      if(expectedHolders.length===1)assert.doesNotMatch(holderText,/tied/i,`${recordLabel} must not report a false tie`);
+      else assert.match(holderText,new RegExp(`${expectedHolders.length} tied`,'i'));
+    }
+
+    await click([...document.querySelectorAll('.sx-tabs button')].find(button=>button.textContent==='Opening')??null);
+    const info=document.querySelector<HTMLElement>('.sx-metric-info-trigger');assert.ok(info);
+    await act(async()=>{info.dispatchEvent(new dom.window.MouseEvent('mouseover',{bubbles:true}));await new Promise(resolve=>setTimeout(resolve,520));});
+    syncStatisticsRuntimePolish();
+    assert.ok(document.body.querySelector('.sx-archive-tooltip-portal'),'metric tooltip should be mirrored outside the clipping ledger');
 
     await change(format,'TWO_V_TWO');
     assert.ok(document.querySelector('.sx-format-records'));
