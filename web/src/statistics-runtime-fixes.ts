@@ -100,16 +100,19 @@ function syncTooltipPortals(){
 function syncAggregateRecordPresentation(){
   if(typeof document==='undefined')return;
   const leagueCaption=document.querySelector<HTMLElement>('.sx-league-records .sx-records-heading small');
-  if(leagueCaption)leagueCaption.textContent='Absolute records · all formats · comparison independent';
+  const caption='Absolute records · all formats · comparison independent';
+  if(leagueCaption&&leagueCaption.textContent!==caption)leagueCaption.textContent=caption;
   document.querySelectorAll<HTMLButtonElement>('button.sx-record-plaque').forEach(plaque=>{
     const label=plaque.querySelector('strong')?.textContent?.trim()??'';
     const ledgerLabel=aggregateRecordLabels.get(label);
     if(!ledgerLabel)return;
     plaque.dataset.seasonTotalRecord='true';
     plaque.dataset.ledgerMetric=ledgerLabel;
-    plaque.setAttribute('aria-label',`${label}: ${plaque.querySelector('em')?.textContent?.trim()??''}, ${plaque.querySelector('b')?.textContent?.trim()??''}. Season-total record. Inspect the ledger for contributing evidence.`);
+    const aria=`${label}: ${plaque.querySelector('em')?.textContent?.trim()??''}, ${plaque.querySelector('b')?.textContent?.trim()??''}. Season-total record. Inspect the ledger for contributing evidence.`;
+    if(plaque.getAttribute('aria-label')!==aria)plaque.setAttribute('aria-label',aria);
     const source=plaque.querySelector<HTMLElement>('.sx-record-source');
-    if(source)source.textContent=plaque.closest('.sx-league-records')?'Season total · inspect ledger →':'Format total · inspect ledger →';
+    const sourceLabel=plaque.closest('.sx-league-records')?'Season total · inspect ledger →':'Format total · inspect ledger →';
+    if(source&&source.textContent!==sourceLabel)source.textContent=sourceLabel;
   });
 }
 
