@@ -1,0 +1,32 @@
+/* Statistics Hall IX — frozen tactical-family inscriptions.
+   Family dividers span the ledger, but their names belong to the frozen metric
+   column. Keep the inscription pinned to the scrollport's left edge while the
+   player columns move beneath the horizontal viewport. */
+
+.section.statistics-experience.sx-royal-archive .sx-family-row th{
+  overflow:visible!important;
+  vertical-align:bottom!important;
+  padding:0 0 8px!important;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-family-row span{
+  position:sticky!important;
+  left:14px!important;
+  bottom:auto!important;
+  z-index:9!important;
+  display:inline-block!important;
+  width:max-content;
+  max-width:calc(var(--hall-metric-width) - 28px);
+  margin:0!important;
+  padding:0!important;
+  white-space:nowrap;
+  pointer-events:none;
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive .sx-family-row th{padding-bottom:7px!important}
+  .section.statistics-experience.sx-royal-archive .sx-family-row span{
+    left:11px!important;
+    max-width:calc(var(--hall-metric-width) - 22px);
+  }
+}
