@@ -118,18 +118,19 @@
   width:var(--hall-metric-width)!important;
   min-width:var(--hall-metric-width)!important;
   max-width:var(--hall-metric-width)!important;
-  padding:0 14px 8px!important;
   overflow:hidden!important;
-  vertical-align:bottom!important;
   text-align:left!important;
   color:#c38a45!important;
 }
 .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label > span{
-  position:static!important;
-  inset:auto!important;
+  position:absolute!important;
+  left:14px!important;
+  bottom:8px!important;
+  top:auto!important;
+  right:auto!important;
   display:block!important;
   width:auto!important;
-  max-width:100%!important;
+  max-width:calc(100% - 28px)!important;
   margin:0!important;
   padding:0!important;
   transform:none!important;
@@ -164,7 +165,9 @@
   .section.statistics-experience.sx-royal-archive .sx-family-row,
   .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label,
   .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-band-cell{height:38px!important}
-  .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label{
-    padding:0 11px 7px!important;
+  .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label > span{
+    left:11px!important;
+    bottom:7px!important;
+    max-width:calc(100% - 22px)!important;
   }
 }
