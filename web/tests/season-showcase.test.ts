@@ -51,8 +51,9 @@ test('Season Statistics renders tactical families, records, quiet controls and e
     assert.equal(document.querySelector('.sx-scope-switch button[aria-pressed="true"]')?.textContent,'Per Battle');
     assert.match(document.querySelector('.sx-record-plaque-grid')?.textContent??'',/Fastest Feudal/);
     assert.match(document.querySelector('.sx-season-table')?.textContent??'',/Age Progression/);
-    assert.equal(document.querySelector('.sx-metric-title>.sx-tooltip-anchor'),null,'the whole metric label must not own the tooltip');
-    assert.ok(document.querySelector('.sx-metric-info-trigger'),'harder metrics should expose an explicit information trigger');
+    assert.equal(document.querySelector('.sx-metric-title[tabindex]'),null,'metric labels themselves must not be tooltip triggers');
+    const infoTrigger=document.querySelector('.sx-metric-info-trigger');assert.ok(infoTrigger,'harder metrics should expose an explicit information trigger');
+    assert.ok(infoTrigger.closest('.sx-tooltip-anchor'),'only the explicit information control should own the tooltip interaction');
 
     for(const [group,labels] of Object.entries(displayed)){
       await click(category(group));
