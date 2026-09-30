@@ -1,59 +1,163 @@
-/* Statistics Hall IX — frozen tactical-family inscriptions.
-   The family divider is one colspan cell, so native sticky positioning on that
-   cell is unreliable during horizontal table scrolling. The scroll container
-   publishes its scrollLeft as a CSS variable; the frozen first-column portion
-   and inscription counter-translate by the same amount while the divider can
-   continue across the scrolling player columns. */
+/* Statistics Hall IX — structural family dividers and warm archive ledger.
+   Family rows now use the same real first column as metric rows. No scroll
+   counter-transforms or sticky colspan tricks are needed. */
 
-.section.statistics-experience.sx-royal-archive .sx-family-row th{
-  position:relative!important;
-  left:auto!important;
-  z-index:4!important;
-  overflow:hidden!important;
-  vertical-align:bottom!important;
-  padding:0!important;
+.section.statistics-experience.sx-royal-archive{
+  --ledger-iron:#171411;
+  --ledger-iron-raised:#1b1713;
+  --ledger-metric:#201812;
+  --ledger-metric-raised:#241b14;
+  --ledger-head:#2a211a;
+  --ledger-family:#17110d;
+  --ledger-family-raised:#1c140e;
+  --ledger-rule:rgba(170,122,68,.22);
+  --ledger-rule-strong:rgba(198,145,78,.38);
 }
 
-/* Recreate the first-column part of the divider as a fixed archive shelf.
-   It moves opposite the table scroll, exactly like the sticky Statistic cells. */
-.section.statistics-experience.sx-royal-archive .sx-family-row th::before{
-  content:'';
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  z-index:8;
-  width:var(--hall-metric-width);
-  transform:translateX(var(--sx-ledger-scroll-x,0px));
+/* Warm the ledger away from the former olive cast. */
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-scroll{
+  background:#100d0b;
+  border-color:rgba(152,103,57,.40);
+  border-top-color:rgba(202,146,77,.50);
+  box-shadow:0 13px 28px rgba(0,0,0,.24),inset 0 1px rgba(255,220,158,.025);
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-metric-column{
   background:
-    linear-gradient(90deg,rgba(181,132,66,.075),transparent 33%),
-    linear-gradient(180deg,#15130f 0%,#11100d 100%);
-  border-right:1px solid var(--ledger-rule-strong);
-  box-shadow:5px 0 12px rgba(0,0,0,.16),inset 0 1px rgba(242,207,151,.018),inset 0 -8px 16px rgba(0,0,0,.10);
-  pointer-events:none;
-  will-change:transform;
+    linear-gradient(180deg,rgba(215,157,82,.05),transparent 45%),
+    linear-gradient(180deg,#2a211a,#201711)!important;
+  border-right:1px solid var(--ledger-rule-strong)!important;
+  border-bottom:1px solid rgba(118,78,42,.38)!important;
+  box-shadow:6px 0 14px rgba(0,0,0,.20)!important;
 }
 
-.section.statistics-experience.sx-royal-archive .sx-family-row span{
-  position:absolute!important;
-  left:14px!important;
-  bottom:8px!important;
-  z-index:9!important;
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-focus:not(.sx-emperor-head),
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head{
+  background:
+    linear-gradient(180deg,rgba(214,158,84,.05),transparent 38%),
+    linear-gradient(180deg,#2b231c 0%,#251c16 58%,#1b1511 100%)!important;
+  border-left:1px solid rgba(220,186,141,.045)!important;
+  border-right:1px solid rgba(118,79,43,.32)!important;
+  border-bottom:1px solid rgba(112,75,42,.36)!important;
+  box-shadow:inset 0 2px rgba(186,132,68,.42),inset 0 -1px rgba(0,0,0,.58)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head{
+  box-shadow:inset 0 2px rgba(220,164,82,.70),inset 0 -1px rgba(0,0,0,.58)!important;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>th{
+  background:
+    linear-gradient(90deg,rgba(205,142,70,.035),transparent 19%,transparent 88%,rgba(0,0,0,.10)),
+    var(--ledger-metric)!important;
+  border-right:1px solid var(--ledger-rule-strong)!important;
+  border-bottom:1px solid rgba(132,91,50,.20)!important;
+  box-shadow:5px 0 12px rgba(0,0,0,.16)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd)>th{
+  background:
+    linear-gradient(90deg,rgba(205,142,70,.042),transparent 19%,transparent 88%,rgba(0,0,0,.10)),
+    var(--ledger-metric-raised)!important;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table td,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  background:var(--ledger-iron)!important;
+  border-left:1px solid rgba(218,183,137,.035)!important;
+  border-right:1px solid rgba(122,82,45,.23)!important;
+  border-bottom:1px solid rgba(132,91,50,.20)!important;
+  box-shadow:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-emperor-cell{
+  background:var(--ledger-iron-raised)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-emperor-cell{
+  background-image:linear-gradient(90deg,rgba(203,143,70,.028),transparent 18%)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-leading,
+.section.statistics-experience.sx-royal-archive .sx-leading.sx-emperor-cell,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-leading{
+  background:
+    linear-gradient(90deg,rgba(202,143,69,.085),transparent 58%),
+    #211913!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-leading .sx-value-main{
+  color:#ead3aa!important;
+}
+
+/* Tactical-family rows are two real cells:
+   1) the same frozen first column as every metric label
+   2) a scrolling band spanning only player columns. */
+.section.statistics-experience.sx-royal-archive .sx-family-row{
+  height:42px!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row .sx-family-label{
+  position:sticky!important;
+  left:0!important;
+  z-index:8!important;
+  width:var(--hall-metric-width)!important;
+  min-width:var(--hall-metric-width)!important;
+  max-width:var(--hall-metric-width)!important;
+  height:42px!important;
+  padding:0 14px 8px!important;
+  vertical-align:bottom!important;
+  text-align:left!important;
+  border-top:1px solid rgba(188,132,66,.30)!important;
+  border-right:1px solid var(--ledger-rule-strong)!important;
+  border-bottom:1px solid rgba(104,68,38,.42)!important;
+  background:
+    linear-gradient(90deg,rgba(197,134,64,.09),transparent 55%),
+    linear-gradient(180deg,var(--ledger-family-raised),var(--ledger-family))!important;
+  box-shadow:5px 0 12px rgba(0,0,0,.16),inset 0 1px rgba(243,204,145,.02)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row:first-child .sx-family-label{
+  border-top:0!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row .sx-family-label span{
   display:block!important;
-  width:max-content;
-  max-width:calc(var(--hall-metric-width) - 28px);
   margin:0!important;
   padding:0!important;
-  transform:translateX(var(--sx-ledger-scroll-x,0px));
+  color:#bd8e50!important;
+  font-family:'Cinzel',serif!important;
+  font-size:.58rem!important;
+  font-weight:600!important;
+  line-height:1.05!important;
+  letter-spacing:.14em!important;
+  text-transform:uppercase!important;
   white-space:nowrap;
-  pointer-events:none;
-  will-change:transform;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row .sx-family-band{
+  height:42px!important;
+  padding:0!important;
+  border-top:1px solid rgba(188,132,66,.24)!important;
+  border-bottom:1px solid rgba(104,68,38,.38)!important;
+  border-left:0!important;
+  border-right:0!important;
+  background:
+    linear-gradient(90deg,rgba(188,126,61,.045),transparent 28%),
+    linear-gradient(180deg,#15100c,#100d0a)!important;
+  box-shadow:inset 0 1px rgba(243,204,145,.015),inset 0 -8px 16px rgba(0,0,0,.10)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row:first-child .sx-family-band{
+  border-top:0!important;
+}
+
+/* Metric rows keep centered labels and consistent row height. */
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>th{
+  height:54px!important;
+  padding:0 14px!important;
+  vertical-align:middle!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table td .sx-value-button,
+.section.statistics-experience.sx-royal-archive .sx-value-empty{
+  min-height:54px!important;
 }
 
 @media(max-width:760px){
-  .section.statistics-experience.sx-royal-archive .sx-family-row span{
-    left:11px!important;
-    bottom:7px!important;
-    max-width:calc(var(--hall-metric-width) - 22px);
-  }
+  .section.statistics-experience.sx-royal-archive .sx-family-row{height:38px!important}
+  .section.statistics-experience.sx-royal-archive .sx-family-row .sx-family-label,
+  .section.statistics-experience.sx-royal-archive .sx-family-row .sx-family-band{height:38px!important}
+  .section.statistics-experience.sx-royal-archive .sx-family-row .sx-family-label{padding:0 11px 7px!important}
 }
