@@ -26,6 +26,7 @@ import './statistics-hall-v8.css';
 import './statistics-hall-v9.css';
 import './statistics-hall-v10.css';
 import './statistics-hall-v11.css';
+import './statistics-hall-v12.css';
 import './player-profile-refinement.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
