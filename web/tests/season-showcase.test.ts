@@ -14,6 +14,14 @@ const expected={
   Execution:['APM','First Command','Longest Inactivity','Raid Response','Garrisons During Raids','Economy Actions in Battles','Town Bell','Back to Work'],
 } as const;
 
+const displayed={
+  Opening:['Feudal Age','Castle Age','Imperial Age','Build Order Execution','Villagers at 10 Minutes','First Military Unit','Dark Age TC Idle','Walls Before Feudal','Loom Timing','Houses Before Feudal','Dark Age Action Gap','First Mining Camp','First Lumber Camp','Wall Style','Commands by Minute 5','Scout Coverage by Minute 5'],
+  Economy:['Villagers Trained','Villagers at 20 Minutes','Town Centers','2nd TC Timing','Economy Buildings','Resources Committed','Horse Collar Timing','Farms Placed','Farms Before Castle','Boars Lured','Economy–Military Ratio at 20 Minutes','Economy Techs','Houses Built','Market Sales','Market Purchases','Trade Units Trained','Tribute Sent','Tribute Received'],
+  Military:['Military Units Trained','Military Unit Commitment','Military Buildings by Castle Age','Battles Fought','Battle Time','Great Battles','Raids Initiated','Raids Received','Reinforcements Sent','Cooperative Attacks','Defensive Assists','Castles','First Castle','Military Techs','Blacksmith Technologies by Minute 30','Army Commitment by Minute 10','Army Commitment by Minute 15','Army Commitment by Minute 20'],
+  'Map Presence':['Command Map Coverage','Enemy-Side Presence','Enemy Base Contact','Forward Buildings','Forward Eco','Expansion Zones','Wall Tiles','Towers','Gold Control','Relics Touched','First Relic Touch'],
+  Execution:['APM','First Command','Longest Inactivity','Raid Response','Garrisons During Raids','Economy Actions in Battles','Town Bell','Back to Work'],
+} as const;
+
 const expectedFamilies={
   Opening:['Age Progression','Opening Intent','Foundations & Safety'],
   Economy:['Growth & Town Centres','Commitment & Farming','Technology & Exchange'],
@@ -26,7 +34,7 @@ test('Season catalogue is the approved royal-archive ledger',()=>{
   for(const [category,labels] of Object.entries(expected))assert.deepEqual(seasonMetricsFor(category as keyof typeof expected).map(metric=>metric.label),labels);
 });
 
-test('Season Statistics renders tactical families, records, quiet controls and team eligibility',async()=>{
+test('Season Statistics renders tactical families, records, quiet controls and evidence docket',async()=>{
   const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/#statistics'});
   Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,localStorage:dom.window.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
   dom.window.HTMLElement.prototype.scrollIntoView=()=>{};
@@ -43,12 +51,14 @@ test('Season Statistics renders tactical families, records, quiet controls and t
     assert.equal(document.querySelector('.sx-scope-switch button[aria-pressed="true"]')?.textContent,'Per Battle');
     assert.match(document.querySelector('.sx-record-plaque-grid')?.textContent??'',/Fastest Feudal/);
     assert.match(document.querySelector('.sx-season-table')?.textContent??'',/Age Progression/);
+    assert.equal(document.querySelector('.sx-metric-title>.sx-tooltip-anchor'),null,'the whole metric label must not own the tooltip');
+    assert.ok(document.querySelector('.sx-metric-info-trigger'),'harder metrics should expose an explicit information trigger');
 
-    for(const [group,labels] of Object.entries(expected)){
+    for(const [group,labels] of Object.entries(displayed)){
       await click(category(group));
       const visible=[...document.querySelectorAll('.sx-season-table .sx-metric-title')].map(node=>node.textContent?.replace(/\s+/g,' ').trim()??'');
       assert.equal(visible.length,labels.length,`${group} should render every approved row once`);
-      assert.deepEqual([...visible].sort(),[...labels].sort(),`${group} should contain only the approved rows`);
+      assert.deepEqual([...visible].sort(),[...labels].sort(),`${group} should contain only the approved player-facing rows`);
       const families=[...document.querySelectorAll('.sx-season-table .sx-family-row span')].map(node=>node.textContent?.trim()??'');
       assert.deepEqual(families,[...expectedFamilies[group as keyof typeof expectedFamilies]],`${group} should use the approved tactical families`);
     }
@@ -56,11 +66,16 @@ test('Season Statistics renders tactical families, records, quiet controls and t
     await click(category('Opening'));
     assert.match(row('First Military Unit')?.textContent??'',/(Scout Cavalry|Archer|Spearman|Militia)/);
     assert.match(row('Wall Style')?.textContent??'',/(Open|Partially Walled|Fully Walled)/);
+    assert.match(document.querySelector('.sx-record-plaque-grid')?.textContent??'',/Most Villagers at 10 Minutes/);
 
     await click(category('Economy'));
     const tradeRow=row('Trade Units Trained');await click(tradeRow?.querySelector('td button')??null);
     const evidence=document.querySelector('[aria-label="Statistic evidence"]');assert.ok(evidence);
-    assert.match(evidence.textContent??'',/Team eligibility requires a same-team ally/);
+    assert.equal(evidence.getAttribute('role'),'dialog');
+    assert.equal(evidence.getAttribute('aria-modal'),'true');
+    assert.match(evidence.textContent??'',/Evidence Docket/);
+    assert.match(evidence.textContent??'',/Team Battles with a same-team ally/);
+    assert.match(evidence.textContent??'',/Contributing Battle Sources/);
     await click(document.querySelector('[aria-label="Close evidence"]'));
 
     await click(category('Map Presence'));
@@ -81,7 +96,7 @@ test('All-time mode totals additive rows but keeps point-in-time measurements no
   const rawVillagers=eligible.map(game=>game.players.find(player=>player.playerId==='sample-you')!.values.villagerRequests!).filter(value=>value!=null);
   assert.equal(perBattle.values.villagerRequests.value,rawVillagers.reduce((sum,value)=>sum+value,0)/rawVillagers.length);
   assert.equal(allTime.values.villagerRequests.value,rawVillagers.reduce((sum,value)=>sum+value,0));
-  assert.equal(allTime.values.villagers20.value,perBattle.values.villagers20.value,'point-in-time Villagers @20 should not be summed');
+  assert.equal(allTime.values.villagers20.value,perBattle.values.villagers20.value,'point-in-time Villagers at 20 Minutes should not be summed');
   const rawGreat=eligible.map(game=>game.players.find(player=>player.playerId==='sample-you')!.values.greatBattles??0);
   assert.equal(perBattle.values.greatBattles.value,rawGreat.reduce((sum,value)=>sum+value,0));
 });
