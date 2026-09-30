@@ -28,6 +28,8 @@ import './statistics-hall-v10.css';
 import './statistics-hall-v11.css';
 import './statistics-hall-v12.css';
 import './statistics-hall-v13.css';
+import './statistics-hall-v14.css';
+import './statistics-runtime-fixes';
 import './player-profile-refinement.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
