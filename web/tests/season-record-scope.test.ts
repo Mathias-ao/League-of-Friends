@@ -33,6 +33,10 @@ test('Record Cabinet ignores Comparison and display mode, while Format selects t
     await click([...document.querySelectorAll('.sx-scope-switch button')].find(button=>button.textContent==='All-time')??null);
     assert.equal(document.querySelector('.sx-record-plaque-grid')?.textContent??'',leagueRecords,'Per Battle / All-time must not alter ordinary Battle records');
 
+    // Aggregate Season records are compared against the all-settings All-time ledger.
+    // The record cabinet intentionally ignores Comparison, so reset the ledger here
+    // before asserting that holder/value/tie semantics match the visible totals.
+    await change(comparison,'all');
     await click([...document.querySelectorAll('.sx-tabs button')].find(button=>button.textContent==='Military')??null);
     const playerNames=[...document.querySelectorAll('.sx-season-table thead .sx-player-name')].map(node=>node.textContent?.trim()??'');
     const rowFor=(label:string)=>[...document.querySelectorAll<HTMLTableRowElement>('.sx-season-table tbody tr')].find(row=>row.querySelector('.sx-metric-title')?.textContent?.trim().startsWith(label));
