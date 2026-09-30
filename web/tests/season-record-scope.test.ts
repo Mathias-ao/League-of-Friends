@@ -36,6 +36,7 @@ test('Record Cabinet ignores Comparison and display mode, while Format selects t
     assert.ok(document.querySelector('.sx-format-records'));
     assert.match(document.querySelector('.sx-records-heading')?.textContent??'',/2v2 Records/);
     assert.ok(document.querySelector('.sx-record-benchmark'),'format records should show the absolute League benchmark');
-    assert.equal((document.querySelector('.sx-quiet-filters select:nth-of-type(2)') as HTMLSelectElement|null)?.value??'all','all');
+    const updatedFilters=[...document.querySelectorAll('.sx-quiet-filters select')];
+    assert.equal((updatedFilters[1] as HTMLSelectElement).value,'all','changing Format should reset only the ledger Comparison scope');
   }finally{await act(async()=>root.unmount());dom.window.close();}
 });
