@@ -1,0 +1,151 @@
+/* Statistics Hall VIII — ledger material correction.
+   The record cabinet is intentionally ceremonial; the ledger should read as one
+   disciplined archive surface, not alternating brown/green dashboard bands. */
+
+.section.statistics-experience.sx-royal-archive{
+  --ledger-iron:#171715;
+  --ledger-iron-raised:#1a1916;
+  --ledger-iron-soft:#1d1b17;
+  --ledger-metric:#1b1814;
+  --ledger-metric-raised:#1e1a16;
+  --ledger-head:#24211b;
+  --ledger-rule:rgba(170,132,76,.20);
+  --ledger-rule-strong:rgba(193,149,83,.34);
+}
+
+/* One continuous dark archive surface. Row rhythm comes from light and rules,
+   not from alternating olive and brown blocks. */
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-scroll{
+  background:#11110f;
+  border-color:rgba(157,116,65,.36);
+  border-top-color:rgba(198,151,82,.48);
+  box-shadow:0 13px 28px rgba(0,0,0,.24),inset 0 1px rgba(255,222,163,.025);
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-metric-column{
+  background:
+    linear-gradient(180deg,rgba(206,158,86,.045),transparent 45%),
+    linear-gradient(180deg,#242019,#1b1814)!important;
+  border-right:1px solid var(--ledger-rule-strong)!important;
+  border-bottom:1px solid rgba(115,86,50,.34)!important;
+  box-shadow:6px 0 14px rgba(0,0,0,.18)!important;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-focus:not(.sx-emperor-head),
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head{
+  background:
+    linear-gradient(180deg,rgba(205,158,86,.045),transparent 38%),
+    linear-gradient(180deg,#26231d 0%,#201e19 58%,#1a1916 100%)!important;
+  border-left:1px solid rgba(205,184,151,.045)!important;
+  border-right:1px solid rgba(109,82,48,.30)!important;
+  border-bottom:1px solid rgba(102,78,48,.34)!important;
+  box-shadow:inset 0 2px rgba(181,141,77,.38),inset 0 -1px rgba(0,0,0,.58)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head{
+  box-shadow:inset 0 2px rgba(213,169,91,.66),inset 0 -1px rgba(0,0,0,.58)!important;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>th{
+  background:
+    linear-gradient(90deg,rgba(193,145,75,.025),transparent 18%,transparent 87%,rgba(0,0,0,.09)),
+    var(--ledger-metric)!important;
+  border-right:1px solid var(--ledger-rule-strong)!important;
+  border-bottom:1px solid rgba(122,95,60,.18)!important;
+  box-shadow:5px 0 12px rgba(0,0,0,.16)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd)>th{
+  background:
+    linear-gradient(90deg,rgba(193,145,75,.032),transparent 18%,transparent 87%,rgba(0,0,0,.09)),
+    var(--ledger-metric-raised)!important;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table td,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  background:var(--ledger-iron)!important;
+  border-left:1px solid rgba(205,184,151,.035)!important;
+  border-right:1px solid rgba(112,86,52,.21)!important;
+  border-bottom:1px solid rgba(122,95,60,.18)!important;
+  box-shadow:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-emperor-cell{
+  background:var(--ledger-iron-raised)!important;
+}
+
+/* Remove the old green/olive impression from focused or Emperor data columns.
+   Their status stays in the header and fine brass detailing, not whole-cell tint. */
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-emperor-cell{
+  background-image:linear-gradient(90deg,rgba(197,149,76,.022),transparent 18%)!important;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-leading,
+.section.statistics-experience.sx-royal-archive .sx-leading.sx-emperor-cell,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-leading{
+  background:
+    linear-gradient(90deg,rgba(190,145,75,.075),transparent 58%),
+    #1d1b17!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-leading .sx-value-main{
+  color:#e8d5ae!important;
+}
+
+/* Tactical-family dividers are shelf inscriptions. Absolute placement avoids the
+   table-cell baseline/cascade quirks that previously pulled them to the top. */
+.section.statistics-experience.sx-royal-archive .sx-family-row{
+  height:42px!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row th{
+  position:relative!important;
+  left:auto!important;
+  z-index:4!important;
+  height:42px!important;
+  min-height:42px!important;
+  padding:0!important;
+  vertical-align:middle!important;
+  border-top:1px solid rgba(183,137,73,.26)!important;
+  border-bottom:1px solid rgba(98,75,47,.38)!important;
+  border-right:0!important;
+  background:
+    linear-gradient(90deg,rgba(181,132,66,.075),transparent 33%),
+    linear-gradient(180deg,#15130f 0%,#11100d 100%)!important;
+  box-shadow:inset 0 1px rgba(242,207,151,.018),inset 0 -8px 16px rgba(0,0,0,.10)!important;
+  text-align:left!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row:first-child th{
+  border-top:0!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row span{
+  position:absolute!important;
+  left:14px!important;
+  bottom:8px!important;
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  color:#b18a53!important;
+  font-family:'Cinzel',serif!important;
+  font-size:.58rem!important;
+  font-weight:600!important;
+  line-height:1.05!important;
+  letter-spacing:.14em!important;
+  text-transform:uppercase!important;
+  white-space:nowrap;
+}
+
+/* Keep metric labels visually centered against the calmer ledger rows. */
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>th{
+  height:54px!important;
+  padding:0 14px!important;
+  vertical-align:middle!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table td .sx-value-button,
+.section.statistics-experience.sx-royal-archive .sx-value-empty{
+  min-height:54px!important;
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive .sx-family-row,
+  .section.statistics-experience.sx-royal-archive .sx-family-row th{height:38px!important;min-height:38px!important}
+  .section.statistics-experience.sx-royal-archive .sx-family-row span{left:11px!important;bottom:7px!important}
+}
