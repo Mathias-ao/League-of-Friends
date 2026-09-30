@@ -1,21 +1,14 @@
 import {SeasonStatisticsExperience,seasonMetric,seasonMetricEligible,type SeasonRecord} from './domain/seasonStatistics';
 
 /**
- * Final Statistics runtime corrections that are deliberately kept outside the
- * replay/domain measurement layer:
+ * Statistics runtime corrections kept outside the replay measurement layer:
  * - "Most Battles" and "Most Castles" are Season-total record classes, not
  *   single-Battle peaks.
  * - archive tooltips are mirrored to a viewport layer so the horizontal ledger
  *   scroller can never clip them.
- *
- * The underlying measurements remain untouched and source/evidence semantics are
- * preserved: aggregate record plaques direct players to the ledger rather than
- * pretending one Battle is the source of a Season total.
  */
-
 const seasonTotalRecordMetricIds=new Set(['battlesFought','castles']);
 const recordPatchMarker=Symbol.for('aof.statistics.season-total-records.v1');
-type PatchedPrototype=SeasonStatisticsExperience['__proto__']&Record<symbol,boolean>;
 
 function representativeSource(engine:SeasonStatisticsExperience,playerId:string,metricId:string,model:string){
   const metric=seasonMetric(metricId);
@@ -45,18 +38,7 @@ function seasonTotalRecords(engine:SeasonStatisticsExperience,metricId:string):S
   return candidates.filter(row=>row.values[metricId].value===extreme).flatMap(row=>{
     const source=representativeSource(engine,row.playerId,metricId,model);
     if(!source)return [];
-    return [{
-      metricId,
-      value:extreme,
-      playerId:row.playerId,
-      name:row.name,
-      matchId:source.game.matchId,
-      gameId:source.game.gameId,
-      civilization:source.player.civilization,
-      orderAtMs:source.game.orderAtMs,
-      contextKey:'__season_total__',
-      model,
-    } satisfies SeasonRecord];
+    return [{metricId,value:extreme,playerId:row.playerId,name:row.name,matchId:source.game.matchId,gameId:source.game.gameId,civilization:source.player.civilization,orderAtMs:source.game.orderAtMs,contextKey:'__season_total__',model} satisfies SeasonRecord];
   });
 }
 
@@ -71,10 +53,7 @@ if(!prototype[recordPatchMarker]){
   prototype[recordPatchMarker]=true;
 }
 
-const aggregateRecordLabels=new Map([
-  ['Most Battles','Battles Fought'],
-  ['Most Castles','Castles'],
-]);
+const aggregateRecordLabels=new Map([['Most Battles','Battles Fought'],['Most Castles','Castles']]);
 const tooltipPortals=new Map<HTMLElement,HTMLElement>();
 let observer:MutationObserver|null=null;
 let listenersStarted=false;
@@ -87,8 +66,7 @@ function positionPortal(source:HTMLElement,portal:HTMLElement){
   const width=Math.min(300,Math.max(220,window.innerWidth-20));
   portal.style.width=`${width}px`;
   const measuredHeight=portal.getBoundingClientRect().height||70;
-  const preferredLeft=rect.left-8;
-  const left=Math.max(10,Math.min(preferredLeft,window.innerWidth-width-10));
+  const left=Math.max(10,Math.min(rect.left-8,window.innerWidth-width-10));
   const below=rect.bottom+8;
   const top=below+measuredHeight<=window.innerHeight-10?below:Math.max(10,rect.top-measuredHeight-8);
   portal.style.left=`${Math.round(left)}px`;
@@ -150,24 +128,11 @@ function handleAggregateRecordClick(event:Event){
   window.setTimeout(()=>row.classList.remove('sx-record-target-row'),1200);
 }
 
-export function syncStatisticsRuntimePolish(){
-  syncTooltipPortals();
-  syncAggregateRecordPresentation();
-}
-
+export function syncStatisticsRuntimePolish(){syncTooltipPortals();syncAggregateRecordPresentation();}
 export function startStatisticsRuntimeFixes(){
   if(typeof document==='undefined'||typeof window==='undefined')return;
-  if(!observer){
-    observer=new MutationObserver(()=>syncStatisticsRuntimePolish());
-    observer.observe(document.documentElement,{childList:true,subtree:true});
-  }
-  if(!listenersStarted){
-    document.addEventListener('click',handleAggregateRecordClick,true);
-    window.addEventListener('resize',syncTooltipPortals,{passive:true});
-    window.addEventListener('scroll',syncTooltipPortals,{passive:true,capture:true});
-    listenersStarted=true;
-  }
+  if(!observer){observer=new MutationObserver(()=>syncStatisticsRuntimePolish());observer.observe(document.documentElement,{childList:true,subtree:true});}
+  if(!listenersStarted){document.addEventListener('click',handleAggregateRecordClick,true);window.addEventListener('resize',syncTooltipPortals,{passive:true});window.addEventListener('scroll',syncTooltipPortals,{passive:true,capture:true});listenersStarted=true;}
   syncStatisticsRuntimePolish();
 }
-
 if(typeof document!=='undefined')startStatisticsRuntimeFixes();
