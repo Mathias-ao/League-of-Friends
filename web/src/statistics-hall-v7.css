@@ -1,0 +1,373 @@
+/* Statistics Hall VII — Ledger polish and monumental record cabinet.
+   This pass keeps the data surface restrained while making records feel like
+   permanent league inscriptions rather than another dashboard strip. */
+
+/* Ledger material: warmer charcoal, less green cast, quieter row rhythm. */
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-metric-column,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody th:not(.sx-family-row th){
+  background:
+    linear-gradient(90deg,rgba(196,145,76,.028),transparent 15%,transparent 86%,rgba(0,0,0,.11)),
+    linear-gradient(180deg,#211d19,#191713);
+  border-right-color:rgba(181,133,72,.42);
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table td,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  background:linear-gradient(180deg,#201d19,#1a1815);
+  border-left-color:rgba(205,184,151,.045);
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-emperor-cell{
+  background:linear-gradient(180deg,#24201c,#1d1a17);
+}
+.section.statistics-experience.sx-royal-archive .sx-leading,
+.section.statistics-experience.sx-royal-archive .sx-leading.sx-emperor-cell{
+  background:linear-gradient(90deg,rgba(178,130,63,.065),transparent 56%),linear-gradient(180deg,#252019,#1d1915)!important;
+}
+
+/* Metric labels sit deliberately in the middle of their row. */
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>th{
+  height:51px;
+  padding:0 14px!important;
+  vertical-align:middle;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody th .sx-metric-title{
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  gap:6px;
+  vertical-align:middle;
+}
+.section.statistics-experience.sx-royal-archive .sx-metric-title>span:first-child{display:inline-block}
+
+/* Tactical families read as engraved shelf labels at the foot of each divider. */
+.section.statistics-experience.sx-royal-archive .sx-family-row th{
+  height:36px!important;
+  padding:0 14px 7px!important;
+  vertical-align:bottom!important;
+  background:
+    linear-gradient(90deg,rgba(177,126,60,.085),transparent 35%),
+    linear-gradient(180deg,#18140f,#11100d)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row span{
+  display:block;
+  line-height:1;
+}
+
+/* Only the explicit circled information control owns a tooltip. */
+.section.statistics-experience.sx-royal-archive .sx-metric-tooltip{display:inline-flex;align-items:center}
+.section.statistics-experience.sx-royal-archive .sx-metric-info-trigger{
+  display:inline-grid;
+  place-items:center;
+  width:17px;
+  height:17px;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  color:#8d7859;
+  background:transparent;
+  cursor:help;
+  outline:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-metric-info-trigger:hover,
+.section.statistics-experience.sx-royal-archive .sx-metric-info-trigger:focus-visible{
+  color:#d7b778;
+  background:rgba(191,145,76,.08);
+  box-shadow:0 0 0 1px rgba(184,140,76,.32);
+}
+.section.statistics-experience.sx-royal-archive .sx-metric-info{display:block;pointer-events:none}
+.section.statistics-experience.sx-royal-archive .sx-metric-tooltip .sx-archive-tooltip{
+  left:-4px;
+  top:calc(100% + 7px);
+}
+
+/* Record Cabinet — the ledger is the archive; this is the monument. */
+.section.statistics-experience.sx-royal-archive .sx-archive-records{
+  position:relative;
+  overflow:hidden;
+  margin:18px 0 17px;
+  border:1px solid rgba(180,131,60,.46);
+  border-top:2px solid rgba(221,174,88,.68);
+  border-bottom-color:rgba(116,78,37,.62);
+  background-image:
+    linear-gradient(180deg,rgba(7,7,6,.68),rgba(11,9,8,.88)),
+    radial-gradient(ellipse at 50% -20%,rgba(211,160,76,.15),transparent 55%),
+    url('/textures/blackpaper-texture.jpg');
+  background-size:auto,auto,cover;
+  background-position:center;
+  box-shadow:
+    0 15px 34px rgba(0,0,0,.28),
+    inset 0 1px rgba(255,222,155,.07),
+    inset 0 -18px 38px rgba(0,0,0,.30);
+}
+.section.statistics-experience.sx-royal-archive .sx-archive-records::before,
+.section.statistics-experience.sx-royal-archive .sx-archive-records::after{
+  content:'';
+  position:absolute;
+  left:16px;
+  right:16px;
+  height:1px;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(211,160,78,.45) 15%,rgba(225,181,95,.62) 50%,rgba(211,160,78,.45) 85%,transparent);
+}
+.section.statistics-experience.sx-royal-archive .sx-archive-records::before{top:8px}
+.section.statistics-experience.sx-royal-archive .sx-archive-records::after{bottom:8px;opacity:.55}
+
+.section.statistics-experience.sx-royal-archive .sx-records-heading{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  padding:17px 14px 13px;
+  border-bottom:1px solid rgba(172,124,59,.29);
+  background:linear-gradient(180deg,rgba(210,157,72,.055),rgba(0,0,0,.04));
+}
+.section.statistics-experience.sx-royal-archive .sx-records-heading>span{
+  font-family:'Cinzel',serif;
+  font-size:.78rem;
+  font-weight:600;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-records-heading small{
+  color:#82796b;
+  font-size:.56rem;
+  letter-spacing:.035em;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-record-plaque-grid{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  min-width:0;
+  padding:0 8px 9px;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  min-height:158px;
+  padding:19px 18px 17px;
+  text-align:center;
+  border:0;
+  border-right:1px solid rgba(168,120,56,.24);
+  border-radius:0;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(210,157,70,.07),transparent 58%),
+    linear-gradient(180deg,rgba(35,29,23,.72),rgba(17,15,13,.55));
+  box-shadow:inset 0 1px rgba(255,225,169,.035),inset 0 -1px rgba(0,0,0,.52);
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque::before{
+  content:'';
+  position:absolute;
+  left:20%;
+  right:20%;
+  top:11px;
+  bottom:auto;
+  width:auto;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(205,153,72,.62),transparent);
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque::after{
+  content:'◆';
+  position:absolute;
+  top:7px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:0 5px;
+  color:#a77c3e;
+  background:#15120f;
+  font-size:.42rem;
+  line-height:1;
+}
+.section.statistics-experience.sx-royal-archive button.sx-record-plaque{cursor:pointer}
+.section.statistics-experience.sx-royal-archive button.sx-record-plaque:hover,
+.section.statistics-experience.sx-royal-archive button.sx-record-plaque:focus-visible{
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(229,177,88,.13),transparent 62%),
+    linear-gradient(180deg,rgba(46,36,27,.86),rgba(20,17,14,.68));
+  box-shadow:inset 0 1px rgba(255,227,169,.08),inset 0 -1px rgba(0,0,0,.58),0 0 0 1px rgba(187,138,65,.30);
+  outline:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>span{
+  margin-top:5px;
+  color:#8e7a5c;
+  font-size:.49rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>strong{
+  margin-top:4px;
+  color:#d2c2aa;
+  font-family:'Cinzel',serif;
+  font-size:.73rem;
+  font-weight:500;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>em{
+  margin-top:13px;
+  color:#e7c77f;
+  font-family:'Cinzel',serif;
+  font-size:.96rem;
+  font-style:normal;
+  font-weight:600;
+  letter-spacing:.035em;
+  line-height:1.16;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>b{
+  margin-top:5px;
+  color:#f2d17e;
+  font-family:'Inter',sans-serif;
+  font-size:1.44rem;
+  font-weight:600;
+  line-height:1.05;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.01em;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>small{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  margin-top:auto;
+  padding-top:11px;
+  color:#766e64;
+  font-size:.54rem;
+  line-height:1.35;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-pending>em{
+  color:#8d8375;
+  font-size:.80rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-pending>b{color:#686158;font-size:1.05rem}
+.section.statistics-experience.sx-royal-archive .sx-record-pending>small{display:block;max-width:210px}
+
+/* The supplied gold texture is used as inscription material, not page decoration. */
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .section.statistics-experience.sx-royal-archive .sx-records-heading>span,
+  .section.statistics-experience.sx-royal-archive button.sx-record-plaque>em,
+  .section.statistics-experience.sx-royal-archive button.sx-record-plaque>b{
+    color:transparent;
+    background-image:url('/textures/gold-texture.jpg');
+    background-size:230% auto;
+    background-position:center;
+    -webkit-background-clip:text;
+    background-clip:text;
+    filter:drop-shadow(0 1px 0 rgba(48,29,7,.58));
+  }
+  .section.statistics-experience.sx-royal-archive button.sx-record-plaque>b{background-size:165% auto}
+}
+
+/* Evidence opens where the player's attention already is instead of below the ledger. */
+.section.statistics-experience.sx-royal-archive .sx-evidence-backdrop{
+  position:fixed;
+  z-index:420;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:28px;
+  background:rgba(5,4,3,.74);
+  backdrop-filter:blur(2px);
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-docket{
+  width:min(760px,calc(100vw - 42px));
+  max-height:min(82vh,760px);
+  overflow:auto;
+  color:#342a20;
+  border:1px solid #806b4c;
+  border-top:4px double #8f7348;
+  background:
+    linear-gradient(112deg,transparent 0 22%,rgba(84,61,32,.045) 22.2%,transparent 22.8% 73%,rgba(255,255,255,.10) 73.2%,transparent 73.8%),
+    linear-gradient(180deg,#dfd3b9,#c9b995);
+  box-shadow:0 28px 70px rgba(0,0,0,.55),inset 0 0 42px rgba(91,64,30,.08);
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  padding:20px 22px 16px;
+  border-bottom:1px solid rgba(83,62,37,.27);
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-header>div>span{
+  color:#806437;
+  font-family:'Cinzel',serif;
+  font-size:.55rem;
+  font-weight:600;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-header h2{
+  margin:3px 0 0;
+  color:#2d241b;
+  font-family:'Cinzel',serif;
+  font-size:1.25rem;
+  font-weight:600;
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-header p{margin:2px 0 0;color:#665845;font-size:.76rem}
+.section.statistics-experience.sx-royal-archive .sx-evidence-header>button{
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  flex:none;
+  padding:0;
+  color:#5c4932;
+  border:1px solid rgba(85,62,34,.25);
+  background:rgba(255,250,234,.13);
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-header>button:hover,
+.section.statistics-experience.sx-royal-archive .sx-evidence-header>button:focus-visible{color:#261d15;border-color:#6c512c;outline:none}
+
+.section.statistics-experience.sx-royal-archive .sx-evidence-facts{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0;
+  padding:0 22px;
+  border-bottom:1px solid rgba(83,62,37,.23);
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-facts>div{padding:12px 14px 12px 0;border-bottom:1px solid rgba(85,63,38,.14)}
+.section.statistics-experience.sx-royal-archive .sx-evidence-facts>div:nth-last-child(-n+2){border-bottom:0}
+.section.statistics-experience.sx-royal-archive .sx-evidence-facts span{display:block;color:#816b4b;font-size:.50rem;font-weight:700;letter-spacing:.10em;text-transform:uppercase}
+.section.statistics-experience.sx-royal-archive .sx-evidence-facts strong{display:block;margin-top:3px;color:#3c3024;font-size:.68rem;font-weight:500;line-height:1.4}
+.section.statistics-experience.sx-royal-archive .sx-evidence-source-heading{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:13px 22px 8px}
+.section.statistics-experience.sx-royal-archive .sx-evidence-source-heading>span{color:#5f4a30;font-family:'Cinzel',serif;font-size:.61rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.section.statistics-experience.sx-royal-archive .sx-evidence-source-heading small{color:#7b6c58;font-size:.55rem}
+.section.statistics-experience.sx-royal-archive .sx-evidence-docket .sx-source-list{padding:0 22px 20px}
+.section.statistics-experience.sx-royal-archive .sx-evidence-docket .sx-source-list>button{
+  color:#34291f;
+  border-top:1px solid rgba(79,59,36,.18);
+  border-bottom:0;
+  background:transparent;
+}
+.section.statistics-experience.sx-royal-archive .sx-evidence-docket .sx-source-list>button:hover,
+.section.statistics-experience.sx-royal-archive .sx-evidence-docket .sx-source-list>button:focus-visible{background:rgba(84,61,33,.07);outline:none}
+.section.statistics-experience.sx-royal-archive .sx-evidence-docket .sx-source-list small{color:#71624e}
+.section.statistics-experience.sx-royal-archive .sx-evidence-docket .sx-source-list strong{color:#6f5129}
+
+@media(max-width:1100px){
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive .sx-family-row th{padding:0 11px 7px!important}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid{grid-template-columns:1fr;padding:0 6px 7px}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque{min-height:138px;border-right:0;border-top:1px solid rgba(153,115,68,.16)}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque:first-child{border-top:0}
+  .section.statistics-experience.sx-royal-archive .sx-evidence-backdrop{padding:12px}
+  .section.statistics-experience.sx-royal-archive .sx-evidence-docket{width:calc(100vw - 24px);max-height:90vh}
+  .section.statistics-experience.sx-royal-archive .sx-evidence-facts{grid-template-columns:1fr;padding:0 16px}
+  .section.statistics-experience.sx-royal-archive .sx-evidence-facts>div{padding-right:0}
+  .section.statistics-experience.sx-royal-archive .sx-evidence-header{padding:16px}
+  .section.statistics-experience.sx-royal-archive .sx-evidence-source-heading{align-items:flex-start;flex-direction:column;padding:12px 16px 7px}
+  .section.statistics-experience.sx-royal-archive .sx-evidence-docket .sx-source-list{padding:0 16px 16px}
+}
