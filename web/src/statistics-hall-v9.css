@@ -15,6 +15,23 @@
   --ledger-rule-strong:rgba(205,134,66,.40);
 }
 
+/* Fill the ledger viewport when the current roster fits. Cell min-widths still
+   make the table grow beyond the viewport — and therefore scroll — as players
+   are added. This avoids an anonymous-looking strip after the last player. */
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table{
+  width:100%!important;
+  min-width:100%!important;
+  max-width:none!important;
+  table-layout:auto!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table thead,
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table tbody,
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table tr{
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+}
+
 /* Warm the ledger decisively away from olive/green. */
 .section.statistics-experience.sx-royal-archive .sx-hall-v2-scroll{
   background:#120b08;
@@ -146,10 +163,12 @@
   text-overflow:clip!important;
   pointer-events:none;
 }
+/* Family player cells deliberately inherit the exact player-column sizing from
+   the ordinary table TD rule. Keeping one sizing authority prevents drift as
+   the roster grows or the viewport changes. */
 .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-band-cell{
-  width:clamp(178px,13vw,230px)!important;
-  min-width:clamp(178px,13vw,230px)!important;
-  max-width:230px!important;
+  border-left:0!important;
+  border-right:0!important;
 }
 
 /* Metric rows keep centered labels and consistent row height. */
