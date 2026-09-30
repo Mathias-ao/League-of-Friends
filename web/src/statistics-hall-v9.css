@@ -147,7 +147,9 @@
   pointer-events:none;
 }
 .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-band-cell{
-  min-width:164px;
+  width:clamp(178px,13vw,230px)!important;
+  min-width:clamp(178px,13vw,230px)!important;
+  max-width:230px!important;
 }
 
 /* Metric rows keep centered labels and consistent row height. */
