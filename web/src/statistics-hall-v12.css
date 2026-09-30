@@ -1,0 +1,106 @@
+/* Statistics Hall XII — Season Records engraving and final column correction.
+   The absolute record cabinet should read like a permanent inscription, while
+   the comparison ledger remains a continuous table with no phantom Emperor bay. */
+
+/* The permanent all-format cabinet is presented to players as Season Records. */
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading>span{
+  font-size:0!important;
+  letter-spacing:0!important;
+  color:transparent!important;
+  background:none!important;
+  -webkit-text-fill-color:initial!important;
+  filter:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading>span::before{
+  content:'Season Records';
+  display:inline-block;
+  font-family:'Cinzel',serif;
+  font-size:.82rem;
+  font-weight:600;
+  line-height:1.2;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:#d8b66f;
+  text-shadow:0 -1px 0 rgba(45,26,7,.82),0 1px 0 rgba(255,236,187,.055);
+}
+
+/* Engraved rather than raised: holder and value use the supplied gold material,
+   but with a dark upper cut and only a very faint lower-edge reflection. */
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>em,
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b,
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>em,
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>b{
+  font-family:'Cinzel',serif;
+  color:#c99b48!important;
+  background-image:
+    linear-gradient(180deg,rgba(104,61,13,.52) 0%,rgba(198,143,53,.46) 18%,rgba(247,211,126,.78) 52%,rgba(168,106,25,.78) 100%),
+    url('/textures/gold-texture.jpg')!important;
+  background-size:100% 100%,190% auto!important;
+  background-position:center!important;
+  background-blend-mode:multiply,normal!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;
+  text-shadow:
+    0 -1px 0 rgba(37,20,5,.94),
+    0 1px 0 rgba(255,235,174,.075)!important;
+  filter:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>em{
+  margin-top:12px;
+  font-size:1.01rem;
+  font-weight:600;
+  letter-spacing:.035em;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b{
+  margin-top:5px;
+  font-size:1.50rem;
+  font-weight:600;
+  letter-spacing:.015em;
+}
+
+/* Keep the inscription inside the plaque instead of making the entire tile glow. */
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-plaque{
+  background:
+    linear-gradient(180deg,rgba(205,151,70,.025),transparent 34%),
+    linear-gradient(180deg,rgba(31,25,20,.82),rgba(13,12,10,.70))!important;
+  box-shadow:inset 0 1px rgba(255,229,174,.035),inset 0 -1px rgba(0,0,0,.68)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque:hover,
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque:focus-visible{
+  background:
+    linear-gradient(180deg,rgba(213,158,72,.052),transparent 40%),
+    linear-gradient(180deg,rgba(36,28,21,.88),rgba(15,13,11,.75))!important;
+  box-shadow:inset 0 1px rgba(255,229,174,.06),inset 0 -1px rgba(0,0,0,.70),0 0 0 1px rgba(181,126,53,.18)!important;
+}
+
+/* The original Hall II layout froze the Emperor beside the metric spine. In the
+   present roster order the Emperor is rendered last, so sticky positioning leaves
+   the original table slot behind as a grey empty bay. Explicitly restore normal
+   table positioning for both the header and data cells. */
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:auto!important;
+  width:clamp(178px,13vw,230px)!important;
+  min-width:clamp(178px,13vw,230px)!important;
+  max-width:230px!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head{
+  z-index:5!important;
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head,
+  .section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+    width:170px!important;
+    min-width:170px!important;
+    max-width:170px!important;
+  }
+}
