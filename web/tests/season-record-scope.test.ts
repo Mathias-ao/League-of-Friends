@@ -43,7 +43,7 @@ test('Record Cabinet ignores Comparison and display mode, while Format selects t
     const recordFor=(label:string)=>[...document.querySelectorAll<HTMLButtonElement>('button.sx-record-plaque')].find(card=>card.querySelector('strong')?.textContent?.trim()===label);
     for(const [recordLabel,rowLabel] of [['Most Battles','Battles Fought'],['Most Castles','Castles']] as const){
       const row=rowFor(rowLabel);assert.ok(row);
-      const totals=[...row.querySelectorAll('.sx-value-main')].map(node=>Number(node.textContent)).map((value,index)=>({value,name:playerNames[index]})).filter(item=>Number.isFinite(item.value));
+      const totals=[...row.querySelectorAll('td')].map((cell,index)=>({value:Number(cell.querySelector('.sx-value-main')?.textContent),name:playerNames[index]})).filter(item=>Number.isFinite(item.value));
       const maximum=Math.max(...totals.map(item=>item.value));
       const expectedHolders=totals.filter(item=>item.value===maximum).map(item=>item.name);
       const card=recordFor(recordLabel);assert.ok(card);
