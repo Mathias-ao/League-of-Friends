@@ -227,7 +227,7 @@ function HallTable({rows,metrics,category,engine,allowLeaders,mode,viewerId,stan
 }
 
 function FragmentFamily({label,columns,metrics,mode,allColumns,leaders,select}:{label:string;columns:number;metrics:SeasonMetricDefinition[];mode:SeasonDisplayMode;allColumns:SeasonColumn[];leaders:Record<string,string[]>;select:(playerId:string,metric:SeasonMetricDefinition)=>void}){
-  return <><tr className="sx-family-row"><th colSpan={columns+1} scope="rowgroup"><span>{label}</span></th></tr>{metrics.map(metric=><tr key={metric.id}><th scope="row"><MetricLabel metric={metric} mode={mode}/></th>{allColumns.map(column=><MetricCell key={column.playerId} column={column} metric={metric} leader={leaders[metric.id]?.includes(column.playerId)??false} select={select}/>)}</tr>)}</>;
+  return <><tr className="sx-family-row"><th scope="rowgroup" className="sx-family-label"><span>{label}</span></th><td className="sx-family-band" colSpan={columns} aria-hidden="true"/></tr>{metrics.map(metric=><tr key={metric.id}><th scope="row"><MetricLabel metric={metric} mode={mode}/></th>{allColumns.map(column=><MetricCell key={column.playerId} column={column} metric={metric} leader={leaders[metric.id]?.includes(column.playerId)??false} select={select}/>)}</tr>)}</>;
 }
 
 function CuratedRecords({engine,category,openMatch}:{engine:SeasonStatisticsExperience;category:Category;openMatch:(id:string)=>void}){
