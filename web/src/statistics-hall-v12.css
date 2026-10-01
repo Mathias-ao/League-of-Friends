@@ -47,18 +47,19 @@
 .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b,
 .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>b{
   margin-top:5px;
-  font-family:'Inter',sans-serif;
+  font-family:'Cinzel',serif;
   font-size:1.50rem;
   font-weight:600;
   letter-spacing:.01em;
-  color:#ddb45f!important;
-  background:none!important;
-  background-image:none!important;
-  -webkit-background-clip:border-box!important;
-  background-clip:border-box!important;
-  -webkit-text-fill-color:#ddb45f!important;
-  text-shadow:none!important;
-  filter:none!important;
+  background-image:url('/textures/gold-texture.jpg') !important;
+  background-size:cover !important;
+  background-position:center !important;
+  color:transparent !important;
+  -webkit-text-fill-color:transparent !important;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+  text-shadow:none !important;
+  filter:none !important;
 }
 
 /* Keep the distinction in the cabinet material rather than making the text glow. */
