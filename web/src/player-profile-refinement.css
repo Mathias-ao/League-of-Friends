@@ -80,6 +80,9 @@
 .reputation-info{display:grid;place-items:center;width:26px;height:26px;border:1px solid rgba(255,255,255,.13);border-radius:50%;color:#b8aa8b;cursor:help;background:rgba(0,0,0,.12)}
 .reputation-crests{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin-top:.62rem!important;align-items:start}
 .reputation-crest{--frame-a:#554a39;--frame-b:#8a7756;--frame-c:#302a22;display:grid!important;justify-items:center;gap:.28rem;padding:.25rem .16rem .36rem;text-align:center;border:0!important;background:transparent!important;cursor:default!important}
+.reputation-gallantry{order:1}
+.reputation-treachery{order:2}
+.reputation-chivalry{order:3}
 .crest-frame{position:relative!important;width:102px!important;height:120px!important;display:grid!important;place-items:center;filter:drop-shadow(0 8px 12px rgba(0,0,0,.45))!important;cursor:help}
 .crest-frame:before{content:''!important;position:absolute!important;inset:0!important;clip-path:polygon(50% 0,86% 11%,96% 51%,78% 82%,50% 100%,22% 82%,4% 51%,14% 11%)!important;background:linear-gradient(145deg,var(--frame-a),var(--frame-b) 28%,var(--frame-c) 55%,var(--frame-b) 78%,var(--frame-a))!important;box-shadow:inset 0 0 18px rgba(0,0,0,.62)!important}
 .crest-frame:after{content:''!important;position:absolute!important;inset:7px!important;clip-path:polygon(50% 0,86% 11%,96% 51%,78% 82%,50% 100%,22% 82%,4% 51%,14% 11%)!important;background:radial-gradient(circle at 48% 25%,rgba(255,255,255,.08),transparent 30%),linear-gradient(180deg,#1b1915,#242018 55%,#0f0e0c)!important;box-shadow:inset 0 0 22px rgba(0,0,0,.82)!important}
@@ -99,13 +102,13 @@
 .reputation-chivalry .crest-frame:after{background:radial-gradient(circle at 50% 24%,rgba(121,157,190,.12),transparent 30%),linear-gradient(180deg,#151a1d,#17242e 55%,#0c1115)!important}
 .reputation-chivalry .emblem-ring{stroke:#98b4c9;stroke-width:3}
 .reputation-chivalry .emblem-ring.inner{stroke-width:1.7;opacity:.55}
-.reputation-treachery{color:#c9c1b5}
-.reputation-treachery .crest-frame:after{background:radial-gradient(circle at 50% 23%,rgba(155,36,38,.16),transparent 32%),linear-gradient(180deg,#191516,#241516 58%,#100c0d)!important}
-.reputation-treachery .treachery-emblem .cap{fill:#4b4540;stroke:#b8afa2;stroke-width:2}
-.reputation-treachery .treachery-emblem .skull{fill:#c9c1b5}
-.reputation-treachery .treachery-emblem .bones{stroke:#b4aaa0;stroke-width:7}
-.reputation-treachery .skull-eye{fill:#171314}
-.reputation-treachery .skull-cut{fill:none;stroke:#171314;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+/* Cruelty uses authored level artwork. The legacy internal id remains treachery until data migration is needed. */
+.reputation-treachery{color:#d6ccc0}
+.reputation-treachery.rank-0{opacity:1}
+.reputation-treachery .crest-frame{width:118px!important;height:138px!important;filter:drop-shadow(0 9px 14px rgba(0,0,0,.5))!important}
+.reputation-treachery .crest-frame:before,.reputation-treachery .crest-frame:after{display:none!important}
+.reputation-treachery .crest-rank-ornaments{display:none!important}
+.cruelty-artwork{position:relative;z-index:4;display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.2))}
 .crest-rank-ornaments{position:absolute;inset:0;z-index:6;pointer-events:none}
 .crest-rank-ornaments i{display:none;position:absolute}
 .reputation-crest.rank-1 .crest-rank-ornaments i:nth-child(1),.reputation-crest.rank-2 .crest-rank-ornaments i:nth-child(-n+2),.reputation-crest.rank-3 .crest-rank-ornaments i:nth-child(-n+3),.reputation-crest.rank-4 .crest-rank-ornaments i{display:block}
@@ -115,9 +118,6 @@
 /* Hospitaller progression: disciplined shoulder-board bars frame the seal. */
 .reputation-chivalry .crest-rank-ornaments i{width:4px;height:19px;border-radius:1px;background:linear-gradient(#f2f4f4,#7f96a8);box-shadow:0 0 0 1px rgba(0,0,0,.55)}
 .reputation-chivalry .crest-rank-ornaments i:nth-child(1){left:14px;top:29px}.reputation-chivalry .crest-rank-ornaments i:nth-child(2){right:14px;top:29px}.reputation-chivalry .crest-rank-ornaments i:nth-child(3){left:20px;bottom:25px;transform:rotate(-38deg)}.reputation-chivalry .crest-rank-ornaments i:nth-child(4){right:20px;bottom:25px;transform:rotate(38deg)}
-/* Treachery progression: fictional officer oak leaves, deliberately avoiding real extremist insignia. */
-.reputation-treachery .crest-rank-ornaments i{width:16px;height:7px;border-radius:90% 10% 90% 10%;background:linear-gradient(145deg,#c1b8a8,#6f665b);box-shadow:0 0 0 1px rgba(0,0,0,.45)}
-.reputation-treachery .crest-rank-ornaments i:nth-child(1){left:9px;top:31px;transform:rotate(55deg)}.reputation-treachery .crest-rank-ornaments i:nth-child(2){right:9px;top:31px;transform:rotate(-55deg)}.reputation-treachery .crest-rank-ornaments i:nth-child(3){left:17px;bottom:24px;transform:rotate(20deg)}.reputation-treachery .crest-rank-ornaments i:nth-child(4){right:17px;bottom:24px;transform:rotate(-20deg)}
 .crest-label{position:relative;display:inline-block;color:#ece3cf;font:600 .7rem Cinzel,serif;letter-spacing:.025em;cursor:help}
 .crest-points{font-size:.58rem;color:#8f887d;letter-spacing:.04em}
 
@@ -139,6 +139,7 @@
   .profile-deeds-title{position:sticky;left:0;z-index:3;background:#1b1813}
   .reputation-crests{gap:.25rem}
   .crest-frame{width:92px!important;height:110px!important}
+  .reputation-treachery .crest-frame{width:108px!important;height:126px!important}
 }
 
 @media(max-width:760px){
@@ -158,6 +159,7 @@
   .profile-title-slot>strong{font-size:.76rem}
   .reputation-crests{grid-template-columns:repeat(3,minmax(82px,1fr));overflow-x:auto}
   .crest-frame{width:84px!important;height:102px!important}
+  .reputation-treachery .crest-frame{width:96px!important;height:112px!important}
   .reputation-emblem{width:58px;height:58px}
   .profile-shared-history{grid-template-columns:1fr;gap:.38rem}
   .shared-history-numbers{width:100%}
