@@ -66,7 +66,7 @@ export interface PlayerPersonalitySliderPresentation {
 export const REPUTATION_ESSENCES=[
   {id:'gallantry',label:'Gallantry',tone:'gold',meaning:'Renown & Daring Feats'},
   {id:'chivalry',label:'Chivalry',tone:'blue',meaning:'Fealty & Kinship'},
-  {id:'treachery',label:'Treachery',tone:'red',meaning:'Cruelty & Deceit'}
+  {id:'treachery',label:'Cruelty',tone:'red',meaning:'Cruelty & Deceit'}
 ] as const;
 export type ReputationEssenceId=typeof REPUTATION_ESSENCES[number]['id'];
 
@@ -97,7 +97,7 @@ export const RELATIONSHIP_TRACKS=[
     stages:['Friction','Contest','Rivalry','Nemesis'],revealStage:3
   },
   {
-    id:'hostility',label:'Hostility',reputation:'Treachery',
+    id:'hostility',label:'Hostility',reputation:'Cruelty',
     stages:['Grudge','Bad Blood','Enmity','Blood Feud'],revealStage:3,
     secretLegendaryStage:'Internecine Strife'
   },
