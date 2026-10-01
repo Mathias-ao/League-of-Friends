@@ -1,0 +1,587 @@
+/* Statistics Hall VI — Royal Archive.
+   Serious historical record-keeping rather than a fantasy dashboard: restrained
+   brass, dark archival timber/iron, stronger typographic hierarchy, and very
+   little decorative noise inside the data itself. */
+
+.section.statistics-experience.sx-royal-archive{
+  --archive-ink:#0f100e;
+  --archive-panel:#171713;
+  --archive-panel-2:#1c1d18;
+  --archive-panel-3:#22221c;
+  --archive-line:rgba(180,139,78,.28);
+  --archive-line-strong:rgba(207,163,91,.52);
+  --archive-brass:#c29a58;
+  --archive-brass-soft:#a98651;
+  --archive-paper:#e8ddca;
+  --archive-muted:#938b7f;
+  --archive-dim:#6e6960;
+  --hall-metric-width:250px;
+  padding-top:34px;
+}
+
+.section.statistics-experience.sx-royal-archive .sx-panel{
+  display:flex;
+  flex-direction:column;
+  width:fit-content;
+  max-width:calc(100% - 34px);
+  margin:0 auto;
+  padding:0;
+  background:transparent;
+}
+
+/* Chapter rail: one formal entablature, not five standalone cards. */
+.section.statistics-experience.sx-royal-archive .sx-archive-tabs{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  width:100%;
+  min-width:0;
+  margin:0;
+  border:1px solid rgba(151,108,62,.40);
+  border-top-color:rgba(214,163,93,.58);
+  border-bottom-color:rgba(117,83,48,.62);
+  background:
+    linear-gradient(180deg,rgba(238,198,139,.025),transparent 18%),
+    linear-gradient(178deg,#302019 0%,#251a15 55%,#1d1511 100%);
+  box-shadow:inset 0 1px rgba(255,223,174,.05),0 7px 18px rgba(0,0,0,.16);
+}
+.section.statistics-experience.sx-royal-archive .sx-archive-tabs button{
+  min-width:0;
+  min-height:58px;
+  padding:0 14px;
+  color:#cbbca7;
+  border:0;
+  border-right:1px solid rgba(171,119,66,.24);
+  background:transparent;
+  font-family:'Cinzel',serif;
+  font-size:.78rem;
+  font-weight:500;
+  letter-spacing:.075em;
+  text-transform:uppercase;
+  box-shadow:inset 1px 0 rgba(255,217,159,.025);
+}
+.section.statistics-experience.sx-royal-archive .sx-archive-tabs button:last-child{border-right:0}
+.section.statistics-experience.sx-royal-archive .sx-archive-tabs button[aria-pressed=true]{
+  color:#f0ddc2;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(220,151,68,.10),transparent 70%),
+    linear-gradient(178deg,#442b1f 0%,#302018 58%,#251914 100%);
+  box-shadow:inset 0 2px var(--archive-brass),inset 0 0 18px rgba(197,126,48,.035);
+}
+
+/* Quiet controls: scope is legible, filters recede. */
+.section.statistics-experience.sx-royal-archive .sx-archive-toolbar{
+  display:flex;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  min-height:43px;
+  margin:0;
+  padding:5px 8px;
+  gap:9px;
+  border:1px solid rgba(139,100,61,.28);
+  border-top:0;
+  background:linear-gradient(180deg,rgba(27,22,18,.91),rgba(17,15,13,.94));
+  box-shadow:inset 0 -1px rgba(0,0,0,.4);
+}
+.section.statistics-experience.sx-royal-archive .sx-scope-switch{
+  display:inline-grid;
+  grid-template-columns:1fr 1fr;
+  flex:none;
+  padding:2px;
+  border:1px solid rgba(173,128,72,.30);
+  background:#12110f;
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.45);
+}
+.section.statistics-experience.sx-royal-archive .sx-scope-switch>.sx-tooltip-anchor{display:contents}
+.section.statistics-experience.sx-royal-archive .sx-scope-switch button{
+  min-height:27px;
+  padding:3px 10px;
+  border:0;
+  background:transparent;
+  color:#827c72;
+  font-family:'Inter',sans-serif;
+  font-size:.66rem;
+  font-weight:600;
+  letter-spacing:.035em;
+}
+.section.statistics-experience.sx-royal-archive .sx-scope-switch button[aria-pressed=true]{
+  color:#ecd3a7;
+  background:linear-gradient(180deg,#4a3424,#34251b);
+  box-shadow:inset 0 0 0 1px rgba(196,147,79,.24),0 1px 3px rgba(0,0,0,.28);
+}
+.section.statistics-experience.sx-royal-archive .sx-quiet-filters{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  gap:8px;
+}
+.section.statistics-experience.sx-royal-archive .sx-quiet-filters label{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:0;
+}
+.section.statistics-experience.sx-royal-archive .sx-quiet-filters label>span{
+  color:#777168;
+  font-size:.58rem;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-quiet-filters select{
+  min-height:28px;
+  max-width:250px;
+  padding:3px 25px 3px 7px;
+  border:1px solid rgba(145,112,72,.24);
+  border-radius:0;
+  color:#aaa195;
+  background:#171411;
+  font-size:.66rem;
+  box-shadow:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-toolbar-rule{height:13px;border-left-color:rgba(151,119,78,.18)}
+.section.statistics-experience.sx-royal-archive .sx-toolbar-meta{
+  margin-left:auto;
+  color:#756f66;
+  font-size:.60rem;
+  white-space:nowrap;
+}
+.section.statistics-experience.sx-royal-archive .sx-refresh{
+  width:27px;
+  height:27px;
+  flex:none;
+  border-color:rgba(145,112,72,.18);
+  color:#81796d;
+  background:transparent;
+}
+.section.statistics-experience.sx-royal-archive .sx-refresh:hover{color:#d2b47e;border-color:rgba(188,142,78,.38)}
+
+/* Record Cabinet: archival plaques, deliberately not dashboard cards. */
+.section.statistics-experience.sx-royal-archive .sx-archive-records{
+  width:100%;
+  min-width:0;
+  margin:15px 0 13px;
+  border-top:1px solid rgba(190,145,78,.32);
+  border-bottom:1px solid rgba(104,82,54,.32);
+  background:
+    linear-gradient(90deg,rgba(195,144,72,.025),transparent 22%,transparent 78%,rgba(195,144,72,.018)),
+    rgba(11,11,9,.44);
+  box-shadow:inset 0 1px rgba(255,222,163,.018),inset 0 -10px 28px rgba(0,0,0,.16);
+}
+.section.statistics-experience.sx-royal-archive .sx-records-heading{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  padding:8px 11px 5px;
+  border-bottom:1px solid rgba(147,110,65,.17);
+}
+.section.statistics-experience.sx-royal-archive .sx-records-heading>span{
+  color:#9d845e;
+  font-family:'Cinzel',serif;
+  font-size:.61rem;
+  font-weight:600;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-records-heading small{color:#69645d;font-size:.58rem}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  min-width:0;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-tooltip{display:block;min-width:0}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque{
+  position:relative;
+  display:grid;
+  align-content:start;
+  width:100%;
+  min-height:112px;
+  padding:13px 14px 12px 16px;
+  text-align:left;
+  border:0;
+  border-right:1px solid rgba(153,115,68,.20);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>*:last-child .sx-record-plaque,
+.section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>.sx-record-plaque:last-child{border-right:0}
+.section.statistics-experience.sx-royal-archive button.sx-record-plaque{cursor:pointer}
+.section.statistics-experience.sx-royal-archive button.sx-record-plaque:hover{
+  background:linear-gradient(180deg,rgba(196,144,72,.055),rgba(196,144,72,.012));
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque::before{
+  content:'';
+  position:absolute;
+  left:7px;
+  top:15px;
+  bottom:14px;
+  width:1px;
+  background:linear-gradient(180deg,transparent,var(--archive-brass-soft) 20%,rgba(137,99,54,.45) 80%,transparent);
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>span{
+  color:#8b7657;
+  font-size:.52rem;
+  font-weight:700;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>strong{
+  margin-top:3px;
+  color:#c9bba5;
+  font-family:'Cinzel',serif;
+  font-size:.72rem;
+  font-weight:500;
+  letter-spacing:.025em;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>b{
+  margin-top:7px;
+  color:#efd5a2;
+  font-family:'Inter',sans-serif;
+  font-size:1.16rem;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>em{
+  margin-top:1px;
+  color:#aaa095;
+  font-family:'Inter',sans-serif;
+  font-size:.65rem;
+  font-style:normal;
+  font-weight:500;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-plaque>small{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  margin-top:4px;
+  color:#666159;
+  font-size:.55rem;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-pending>b{color:#777066;font-size:.82rem;font-weight:500}
+.section.statistics-experience.sx-royal-archive .sx-record-pending>small{display:block;line-height:1.35}
+
+/* The ledger itself: dark archive table with named tactical families. */
+.section.statistics-experience.sx-royal-archive .sx-ledger{display:block;width:100%;min-width:0;margin:0;padding:0;background:transparent;border:0;box-shadow:none}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-scroll{
+  width:max-content;
+  max-width:100%;
+  min-width:0;
+  margin:0;
+  overflow-x:auto;
+  border:1px solid rgba(142,105,62,.34);
+  border-top-color:rgba(196,149,80,.46);
+  scrollbar-color:#6f5938 #151410;
+  scrollbar-width:thin;
+  box-shadow:0 12px 26px rgba(0,0,0,.20),inset 0 1px rgba(255,219,157,.025);
+}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table,
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table thead,
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table tbody,
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table tr{
+  width:max-content;
+  min-width:max-content;
+  max-width:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-metric-column,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody th:not(.sx-family-row th){
+  position:sticky;
+  left:0;
+  z-index:7;
+  width:var(--hall-metric-width);
+  min-width:var(--hall-metric-width);
+  max-width:var(--hall-metric-width);
+  color:#d2c4af;
+  border-right:1px solid rgba(175,132,75,.38);
+  background:
+    linear-gradient(90deg,rgba(204,160,91,.025),transparent 14%,transparent 86%,rgba(0,0,0,.10)),
+    linear-gradient(180deg,#1c1d18,#171813);
+  box-shadow:6px 0 12px rgba(0,0,0,.18);
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-metric-column>span{
+  color:#978566;
+  font-family:'Cinzel',serif;
+  font-size:.60rem;
+  font-weight:600;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  text-shadow:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody th:not(.sx-family-row th){padding:0 14px}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody th .sx-metric-title{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  color:#cfc4b3;
+  font-family:'Inter',sans-serif;
+  font-size:.76rem;
+  font-weight:500;
+  line-height:1.25;
+  text-shadow:none;
+  outline:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-metric-info{color:#806f54;flex:none}
+
+.section.statistics-experience.sx-royal-archive .sx-family-row th{
+  position:static!important;
+  left:auto!important;
+  z-index:4!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:30px;
+  padding:0 13px!important;
+  color:#a78a5d!important;
+  border-top:1px solid rgba(179,134,72,.27)!important;
+  border-bottom:1px solid rgba(93,73,48,.34)!important;
+  border-right:0!important;
+  background:
+    linear-gradient(90deg,rgba(182,132,65,.075),transparent 33%),
+    linear-gradient(180deg,#171510,#12110e)!important;
+  box-shadow:inset 0 1px rgba(241,207,151,.018)!important;
+  text-align:left;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row:first-child th{border-top:0!important}
+.section.statistics-experience.sx-royal-archive .sx-family-row span{
+  font-family:'Cinzel',serif;
+  font-size:.58rem;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+/* Player standards: ceremonial enough to feel official, still data-first. */
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head{
+  position:relative;
+  left:auto;
+  z-index:5;
+  min-width:clamp(178px,13vw,230px);
+  width:clamp(178px,13vw,230px);
+  max-width:230px;
+  padding:0;
+  border-left:1px solid rgba(202,186,157,.08);
+  border-right:1px solid rgba(0,0,0,.34);
+  border-top:0;
+  background:
+    linear-gradient(90deg,rgba(219,202,168,.025),transparent 10%,transparent 90%,rgba(219,202,168,.018)),
+    linear-gradient(180deg,#282922 0%,#1f211b 58%,#181914 100%);
+  box-shadow:inset 0 2px rgba(181,141,77,.35),inset 0 -1px rgba(0,0,0,.62);
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head{
+  border-left:1px solid rgba(194,151,82,.30);
+  background:
+    linear-gradient(90deg,rgba(194,146,74,.055),transparent 14%,transparent 86%,rgba(194,146,74,.035)),
+    linear-gradient(180deg,#2b2820,#211f19 60%,#191814);
+  box-shadow:inset 0 2px rgba(207,164,88,.65),inset 0 -1px rgba(0,0,0,.62);
+}
+.section.statistics-experience.sx-royal-archive .sx-player-standard{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:93px;
+  padding:17px 14px 13px;
+}
+.section.statistics-experience.sx-royal-archive .sx-player-marker{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-height:14px;
+  color:#8f8068;
+  font-family:'Inter',sans-serif;
+  font-size:.52rem;
+  font-weight:700;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+.section.statistics-experience.sx-royal-archive .sx-emperor-head .sx-player-marker{color:#c6a362}
+.section.statistics-experience.sx-royal-archive .sx-player-cap{
+  width:34px;
+  height:1px;
+  margin:5px 0 6px;
+  background:linear-gradient(90deg,var(--archive-brass-soft),rgba(169,134,81,.18));
+}
+.section.statistics-experience.sx-royal-archive .sx-player-name{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  padding:0;
+  overflow:hidden;
+  color:#e5d8c4;
+  background:none;
+  border:0;
+  font-family:'Cinzel',serif;
+  font-size:.91rem;
+  font-weight:500;
+  letter-spacing:.025em;
+  text-align:left;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.section.statistics-experience.sx-royal-archive .sx-player-name:hover{color:#f3ddb3}
+.section.statistics-experience.sx-royal-archive .sx-player-standard>small{margin-top:3px;color:#777168;font-size:.57rem}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-focus:not(.sx-emperor-head){
+  background:
+    linear-gradient(90deg,rgba(197,158,91,.08),transparent 13%,transparent 87%,rgba(197,158,91,.045)),
+    linear-gradient(180deg,#2d2d24,#23231d 60%,#1a1b16);
+}
+
+.section.statistics-experience.sx-royal-archive .sx-season-table td,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  position:relative;
+  left:auto;
+  z-index:auto;
+  min-width:clamp(178px,13vw,230px);
+  width:clamp(178px,13vw,230px);
+  max-width:230px;
+  border-left:1px solid rgba(204,190,162,.055);
+  border-right:1px solid rgba(0,0,0,.24);
+  background:linear-gradient(180deg,#1b1d18,#181a16);
+  box-shadow:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row):nth-child(odd) td.sx-emperor-cell{background:linear-gradient(180deg,#1e201a,#1a1c17)}
+.section.statistics-experience.sx-royal-archive .sx-season-table td .sx-value-button,
+.section.statistics-experience.sx-royal-archive .sx-value-empty{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  width:100%;
+  min-height:51px;
+  padding:8px 13px;
+}
+.section.statistics-experience.sx-royal-archive .sx-value-button{border:0;background:transparent;text-align:left}
+.section.statistics-experience.sx-royal-archive .sx-value-line{display:flex;align-items:center;gap:7px}
+.section.statistics-experience.sx-royal-archive .sx-value-main,
+.section.statistics-experience.sx-royal-archive .sx-emperor-cell .sx-value-main{
+  color:#e0d7c8;
+  font-family:'Inter',sans-serif;
+  font-size:.88rem;
+  font-weight:500;
+  font-variant-numeric:tabular-nums;
+  text-shadow:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-value-button:hover .sx-value-main{color:#f2dfbd}
+.section.statistics-experience.sx-royal-archive .sx-value-button small{margin-top:2px;color:#68645d;font-size:.53rem}
+.section.statistics-experience.sx-royal-archive .sx-value-empty>strong{color:#5d5a53;font-size:.90rem;font-weight:400}
+.section.statistics-experience.sx-royal-archive .sx-leading,
+.section.statistics-experience.sx-royal-archive .sx-leading.sx-emperor-cell{background:linear-gradient(90deg,rgba(178,136,71,.055),transparent 55%),linear-gradient(180deg,#202019,#1b1b16)!important}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-leading .sx-value-main{color:#e5d3ae;font-size:.88rem;text-shadow:none}
+.section.statistics-experience.sx-royal-archive .sx-lead-seal{color:#ae8950;font-size:.58rem;line-height:1}
+
+/* Method stays available without becoming visual furniture. */
+.section.statistics-experience.sx-royal-archive .sx-method-eligibility{
+  width:100%;
+  margin:13px 0 0;
+  padding:0;
+  border:0;
+  border-top:1px solid rgba(157,120,73,.20);
+  background:transparent;
+}
+.section.statistics-experience.sx-royal-archive .sx-method-eligibility summary{
+  display:flex;
+  align-items:center;
+  width:max-content;
+  gap:6px;
+  padding:10px 2px 6px;
+  color:#817a70;
+  cursor:pointer;
+  list-style:none;
+  font-family:'Inter',sans-serif;
+  font-size:.63rem;
+  font-weight:600;
+  letter-spacing:.045em;
+}
+.section.statistics-experience.sx-royal-archive .sx-method-eligibility summary::-webkit-details-marker{display:none}
+.section.statistics-experience.sx-royal-archive .sx-method-eligibility[open] summary svg{transform:rotate(180deg)}
+.section.statistics-experience.sx-royal-archive .sx-method-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  padding:4px 0 12px;
+  border-bottom:1px solid rgba(139,105,65,.16);
+}
+.section.statistics-experience.sx-royal-archive .sx-method-grid>div{padding:7px 14px 7px 0;margin-right:14px;border-right:1px solid rgba(142,108,67,.14)}
+.section.statistics-experience.sx-royal-archive .sx-method-grid>div:nth-child(4){border-right:0}
+.section.statistics-experience.sx-royal-archive .sx-method-grid strong{color:#9b896d;font-family:'Cinzel',serif;font-size:.57rem;letter-spacing:.07em;text-transform:uppercase}
+.section.statistics-experience.sx-royal-archive .sx-method-grid p{margin:4px 0 0;color:#716c64;font-size:.59rem;line-height:1.5}
+.section.statistics-experience.sx-royal-archive .sx-method-grid .sx-method-preview{grid-column:1/-1;margin-top:8px;color:#777168}
+
+/* Evidence docket appears after the ledger. */
+.section.statistics-experience.sx-royal-archive .sx-season-evidence{
+  width:100%;
+  min-width:0;
+  margin:14px 0 0;
+  color:#d5c9b6;
+  border:1px solid rgba(158,120,70,.35);
+  border-top:2px solid rgba(191,146,78,.52);
+  background:linear-gradient(180deg,#201c17,#171512);
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+}
+.section.statistics-experience.sx-royal-archive .sx-season-evidence h3,
+.section.statistics-experience.sx-royal-archive .sx-season-evidence p,
+.section.statistics-experience.sx-royal-archive .sx-season-evidence button{color:#d8cbb7}
+.section.statistics-experience.sx-royal-archive .sx-season-evidence .sx-source-list>button{border-bottom-color:rgba(157,119,71,.18)}
+.section.statistics-experience.sx-royal-archive .sx-season-evidence .sx-source-list small{color:#777067}
+.section.statistics-experience.sx-royal-archive .sx-season-evidence .sx-source-list strong{color:#d7b67a}
+
+/* Delayed archive tooltips. */
+.section.statistics-experience.sx-royal-archive .sx-tooltip-anchor{position:relative;display:inline-flex;min-width:0}
+.section.statistics-experience.sx-royal-archive .sx-archive-tooltip{
+  position:absolute;
+  z-index:120;
+  left:0;
+  top:calc(100% + 8px);
+  width:280px;
+  max-width:min(320px,70vw);
+  padding:8px 10px;
+  color:#d8cbb8;
+  border:1px solid rgba(180,137,76,.44);
+  background:#171410;
+  box-shadow:0 8px 22px rgba(0,0,0,.42),inset 0 1px rgba(255,218,155,.035);
+  font-family:'Inter',sans-serif;
+  font-size:.61rem;
+  font-weight:400;
+  line-height:1.45;
+  letter-spacing:0;
+  text-transform:none;
+  pointer-events:none;
+  white-space:normal;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-tooltip .sx-archive-tooltip{left:10px;top:calc(100% + 4px)}
+
+@media(max-width:1100px){
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>*:nth-child(2n) .sx-record-plaque,
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>.sx-record-plaque:nth-child(2n){border-right:0}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>*:nth-child(n+3),
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>.sx-record-plaque:nth-child(n+3){border-top:1px solid rgba(153,115,68,.16)}
+  .section.statistics-experience.sx-royal-archive .sx-method-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .section.statistics-experience.sx-royal-archive .sx-method-grid>div:nth-child(2){border-right:0}
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive{--hall-metric-width:190px;padding-top:24px}
+  .section.statistics-experience.sx-royal-archive .sx-panel{max-width:calc(100% - 20px)}
+  .section.statistics-experience.sx-royal-archive .sx-archive-tabs button{min-height:48px;padding:0 6px;font-size:.61rem;letter-spacing:.04em}
+  .section.statistics-experience.sx-royal-archive .sx-archive-toolbar{flex-wrap:wrap;padding:6px 7px}
+  .section.statistics-experience.sx-royal-archive .sx-scope-switch{order:1}
+  .section.statistics-experience.sx-royal-archive .sx-quiet-filters{order:3;width:100%;overflow:auto;padding-top:2px}
+  .section.statistics-experience.sx-royal-archive .sx-toolbar-meta{order:2}
+  .section.statistics-experience.sx-royal-archive .sx-refresh{order:2}
+  .section.statistics-experience.sx-royal-archive .sx-quiet-filters label>span{display:none}
+  .section.statistics-experience.sx-royal-archive .sx-quiet-filters select{max-width:180px}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid{grid-template-columns:1fr}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>* .sx-record-plaque,
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>.sx-record-plaque{min-height:92px;border-right:0;border-top:1px solid rgba(153,115,68,.16)}
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>*:first-child .sx-record-plaque,
+  .section.statistics-experience.sx-royal-archive .sx-record-plaque-grid>.sx-record-plaque:first-child{border-top:0}
+  .section.statistics-experience.sx-royal-archive .sx-method-grid{grid-template-columns:1fr}
+  .section.statistics-experience.sx-royal-archive .sx-method-grid>div{border-right:0;border-bottom:1px solid rgba(142,108,67,.11);margin-right:0}
+  .section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-head,
+  .section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head,
+  .section.statistics-experience.sx-royal-archive .sx-season-table td,
+  .section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{min-width:170px;width:170px}
+}

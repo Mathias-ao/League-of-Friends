@@ -1,0 +1,130 @@
+/* Statistics Hall X — final ledger polish and record-class hierarchy.
+   Absolute League records remain ceremonial; format records are deliberately
+   quieter while the ledger itself stays data-first. */
+
+/* Slightly softer table rules and warmer parchment values. */
+.section.statistics-experience.sx-royal-archive .sx-season-table td,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  border-left-color:rgba(224,172,119,.025)!important;
+  border-right-color:rgba(131,71,33,.18)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head{
+  border-right-color:rgba(128,70,32,.27)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-value-main,
+.section.statistics-experience.sx-royal-archive .sx-emperor-cell .sx-value-main{
+  color:#e7ddce!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-leading .sx-value-main{
+  color:#ebc894!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-value-button{
+  transition:background-color .14s ease,color .14s ease,box-shadow .14s ease;
+}
+.section.statistics-experience.sx-royal-archive .sx-value-button:hover,
+.section.statistics-experience.sx-royal-archive .sx-value-button:focus-visible{
+  background:rgba(201,132,62,.052)!important;
+  box-shadow:inset 0 0 0 1px rgba(190,126,60,.10);
+  outline:none;
+}
+.section.statistics-experience.sx-royal-archive .sx-player-marker{
+  color:#a08c70!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-emperor-head .sx-player-marker{
+  color:#c6a362!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label > span{
+  bottom:7px!important;
+}
+
+/* Record class hierarchy. All-formats League records keep the full monument.
+   Format records share the architecture but lose the heavy gold treatment. */
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading>span{
+  letter-spacing:.19em;
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records{
+  margin:15px 0 15px;
+  border-top-width:1px;
+  border-color:rgba(159,112,55,.38);
+  background-image:
+    linear-gradient(180deg,rgba(10,9,8,.72),rgba(13,11,9,.86)),
+    url('/textures/blackpaper-texture.jpg');
+  box-shadow:0 11px 26px rgba(0,0,0,.22),inset 0 1px rgba(255,222,155,.035),inset 0 -12px 26px rgba(0,0,0,.24);
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records::before,
+.section.statistics-experience.sx-royal-archive .sx-format-records::after{
+  opacity:.42;
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-records-heading{
+  padding:12px 14px 10px;
+  background:linear-gradient(180deg,rgba(183,129,60,.035),rgba(0,0,0,.03));
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-records-heading>span{
+  color:#b99a69;
+  font-size:.68rem;
+  letter-spacing:.15em;
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-records-heading small{
+  color:#736b61;
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-record-plaque{
+  min-height:136px;
+  padding:17px 16px 14px;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(188,134,62,.045),transparent 58%),
+    linear-gradient(180deg,rgba(31,26,21,.66),rgba(17,15,13,.52));
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-record-plaque::after{
+  color:#896536;
+  opacity:.72;
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-record-plaque>em{
+  margin-top:10px;
+  color:#c9b58f;
+  font-size:.84rem;
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-record-plaque>b{
+  color:#d9c29a;
+  font-size:1.22rem;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-source{
+  margin-top:auto!important;
+  padding-top:9px!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-benchmark{
+  display:block!important;
+  margin-top:5px!important;
+  padding-top:5px!important;
+  color:#867a68!important;
+  border-top:1px solid rgba(150,106,52,.16);
+  font-size:.52rem!important;
+  line-height:1.35;
+  text-align:center;
+}
+.section.statistics-experience.sx-royal-archive .sx-record-benchmark-crown{
+  color:#bd985e!important;
+  font-family:'Cinzel',serif;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .section.statistics-experience.sx-royal-archive .sx-format-records .sx-records-heading>span,
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque>em,
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque>b{
+    color:inherit;
+    background-image:none;
+    -webkit-background-clip:border-box;
+    background-clip:border-box;
+    filter:none;
+  }
+  .section.statistics-experience.sx-royal-archive .sx-format-records .sx-records-heading>span{color:#b99a69}
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque>em{color:#c9b58f}
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque>b{color:#d9c29a}
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label > span{bottom:6px!important}
+  .section.statistics-experience.sx-royal-archive .sx-format-records .sx-record-plaque{min-height:118px}
+}

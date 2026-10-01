@@ -1,0 +1,158 @@
+/* Statistics Hall XI — absolute record prestige and crowned format records.
+   League records must remain readable even if the supplied gold texture fails
+   to paint; format records that equal the absolute League record inherit the
+   same ceremonial material without making the whole format cabinet grand. */
+
+/* Absolute League Record Cabinet: the permanent crown of the archive. */
+.section.statistics-experience.sx-royal-archive .sx-league-records{
+  border:1px solid rgba(187,133,59,.58);
+  border-top:2px solid rgba(232,184,91,.88);
+  border-bottom-color:rgba(111,72,31,.74);
+  background-image:
+    radial-gradient(ellipse at 50% -18%,rgba(233,180,83,.13),transparent 48%),
+    linear-gradient(180deg,rgba(7,7,6,.60),rgba(10,8,7,.91)),
+    url('/textures/blackpaper-texture.jpg');
+  background-size:auto,auto,cover;
+  box-shadow:
+    0 17px 38px rgba(0,0,0,.34),
+    inset 0 1px rgba(255,228,167,.09),
+    inset 0 0 0 1px rgba(205,151,70,.08),
+    inset 0 -22px 44px rgba(0,0,0,.32);
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records::before{
+  opacity:.95;
+  background:linear-gradient(90deg,transparent,rgba(204,147,65,.52) 13%,rgba(244,198,103,.86) 50%,rgba(204,147,65,.52) 87%,transparent);
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records::after{opacity:.72}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading{
+  padding:19px 14px 15px;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(231,177,79,.10),transparent 68%),
+    linear-gradient(180deg,rgba(205,151,68,.055),rgba(0,0,0,.035));
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading>span{
+  color:#e0bb70;
+  font-size:.82rem;
+  font-weight:600;
+  letter-spacing:.20em;
+  text-shadow:0 1px 0 rgba(33,20,6,.78),0 0 13px rgba(215,158,68,.10);
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading small{
+  color:#928572;
+  letter-spacing:.045em;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-plaque{
+  min-height:170px;
+  padding:21px 19px 18px;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(223,165,72,.095),transparent 59%),
+    linear-gradient(180deg,rgba(39,31,24,.78),rgba(15,13,11,.62));
+  border-right-color:rgba(186,132,58,.29);
+  box-shadow:inset 0 1px rgba(255,231,177,.048),inset 0 -1px rgba(0,0,0,.62);
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-plaque::before{
+  left:16%;
+  right:16%;
+  background:linear-gradient(90deg,transparent,rgba(213,158,71,.73) 36%,rgba(241,193,94,.88) 50%,rgba(213,158,71,.73) 64%,transparent);
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-plaque::after{
+  color:#c89647;
+  opacity:1;
+  text-shadow:0 0 9px rgba(210,152,62,.25);
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-plaque>strong{
+  color:#ddceb7;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>em{
+  margin-top:14px;
+  color:#e9c776;
+  font-size:1.02rem;
+  letter-spacing:.045em;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b{
+  margin-top:6px;
+  color:#f0ce79;
+  font-size:1.52rem;
+  text-shadow:0 1px 0 rgba(43,27,8,.72);
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-source{
+  color:#817769!important;
+}
+
+/* A format record that is also the absolute League record becomes a crowned
+   plaque. The cabinet stays subordinate, but this individual achievement gets
+   the same gold material and frame language as the League cabinet. */
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown){
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(229,174,79,.13),transparent 60%),
+    linear-gradient(180deg,rgba(43,33,24,.83),rgba(18,15,12,.70));
+  box-shadow:
+    inset 0 1px rgba(255,230,169,.075),
+    inset 0 0 0 1px rgba(205,151,70,.16),
+    inset 0 -1px rgba(0,0,0,.62),
+    0 0 18px rgba(191,132,50,.055);
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)::before{
+  left:18%;
+  right:18%;
+  background:linear-gradient(90deg,transparent,rgba(216,160,72,.69),rgba(242,194,95,.86),rgba(216,160,72,.69),transparent);
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)::after{
+  color:#c99545;
+  opacity:1;
+  text-shadow:0 0 8px rgba(211,153,64,.22);
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>strong{
+  color:#d8c8ad;
+}
+.section.statistics-experience.sx-royal-archive .sx-format-records .sx-record-benchmark-crown{
+  color:#dfb765!important;
+  border-top-color:rgba(196,140,61,.35)!important;
+  font-weight:600;
+  letter-spacing:.08em!important;
+  text-shadow:0 1px 0 rgba(43,27,8,.64);
+}
+
+/* Gold inscription fallback: background-color is deliberately retained under
+   background-clip so the text remains visible even before/without the texture. */
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading>span,
+  .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>em,
+  .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b,
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>em,
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>b{
+    color:transparent!important;
+    background-color:#d8a84c!important;
+    background-image:
+      linear-gradient(104deg,rgba(255,231,145,.48),rgba(164,96,18,.12) 34%,rgba(255,218,116,.44) 59%,rgba(133,76,15,.14)),
+      url('/textures/gold-texture.jpg')!important;
+    background-size:170% 100%,220% auto!important;
+    background-position:center,center!important;
+    background-blend-mode:screen,normal!important;
+    -webkit-background-clip:text!important;
+    background-clip:text!important;
+    -webkit-text-fill-color:transparent!important;
+    filter:drop-shadow(0 1px 0 rgba(43,27,8,.62));
+  }
+  .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b,
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>b{
+    background-size:145% 100%,170% auto!important;
+  }
+}
+
+/* Family divider cells must use the same sizing authority as player columns.
+   This closes the narrow uncovered strip that can appear at the far right. */
+.section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-band-cell{
+  width:clamp(178px,13vw,230px)!important;
+  min-width:clamp(178px,13vw,230px)!important;
+  max-width:230px!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-band-cell:last-child{
+  background:linear-gradient(180deg,var(--ledger-family-raised),var(--ledger-family))!important;
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-plaque{min-height:145px}
+  .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>em{font-size:.90rem}
+  .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b{font-size:1.34rem}
+}

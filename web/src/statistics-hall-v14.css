@@ -1,0 +1,49 @@
+/* Statistics Hall XIV — unclipped archive notes and best-Battle subvalues. */
+
+/* Runtime-mirrored tooltip lives at document level, outside the horizontally
+   scrolling ledger. This is intentionally unscoped from .statistics-experience. */
+.sx-archive-tooltip-portal{
+  position:fixed!important;
+  z-index:9999!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  max-width:calc(100vw - 20px)!important;
+  max-height:calc(100vh - 20px)!important;
+  overflow:auto!important;
+  overflow-wrap:anywhere!important;
+  padding:9px 11px!important;
+  color:#d8cbb8!important;
+  border:1px solid rgba(178,132,72,.56)!important;
+  border-top-color:rgba(218,169,91,.72)!important;
+  border-radius:0!important;
+  background:linear-gradient(180deg,#241913,#17110e)!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.48),inset 0 1px rgba(255,224,170,.045)!important;
+  font-family:'Inter',sans-serif!important;
+  font-size:.67rem!important;
+  font-weight:400!important;
+  line-height:1.42!important;
+  letter-spacing:0!important;
+  text-align:left!important;
+  text-transform:none!important;
+  white-space:normal!important;
+  pointer-events:none!important;
+}
+
+/* Primary cell result remains the aggregate/real Season result. The line below
+   is only the player's best qualified single-Battle performance in the current
+   Format + Comparison scope. It deliberately reads as secondary evidence. */
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-value-best{
+  display:block!important;
+  margin-top:3px!important;
+  color:#82786a!important;
+  font-family:'Inter',sans-serif!important;
+  font-size:.54rem!important;
+  font-weight:400!important;
+  line-height:1.15!important;
+  letter-spacing:.01em!important;
+  font-variant-numeric:tabular-nums!important;
+  white-space:nowrap!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-leading .sx-value-best{
+  color:#9a8868!important;
+}

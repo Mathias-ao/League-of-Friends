@@ -1,0 +1,132 @@
+/* Statistics Hall XII — Season Records typography and legacy Emperor-layout cleanup.
+   The archive keeps the absolute records ceremonial, but the record holder/value
+   are plain gold text. The comparison ledger also neutralizes the old flex-era
+   Emperor rules that were still reserving an empty bay before the final column. */
+
+/* The permanent all-format cabinet is presented to players as Season Records. */
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading>span{
+  font-size:0!important;
+  letter-spacing:0!important;
+  color:transparent!important;
+  background:none!important;
+  -webkit-text-fill-color:initial!important;
+  filter:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-records-heading>span::before{
+  content:'Season Records';
+  display:inline-block;
+  font-family:'Cinzel',serif;
+  font-size:.82rem;
+  font-weight:600;
+  line-height:1.2;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:#d8b66f;
+  text-shadow:0 1px 0 rgba(39,24,8,.72);
+}
+
+/* Record holder and result: clean gold typography, not embossed or texture-filled.
+   Crowned format records use the same text material while their plaque treatment
+   continues to signal that they are also the absolute Season record. */
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>em,
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>em{
+  margin-top:12px;
+  font-family:'Cinzel',serif;
+  font-size:1.01rem;
+  font-weight:600;
+  letter-spacing:.035em;
+  color:#d5aa58!important;
+  background:none!important;
+  background-image:none!important;
+  -webkit-background-clip:border-box!important;
+  background-clip:border-box!important;
+  -webkit-text-fill-color:#d5aa58!important;
+  text-shadow:none!important;
+  filter:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b,
+.section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>b{
+  margin-top:5px;
+  font-family:'Cinzel',serif;
+  font-size:1.50rem;
+  font-weight:600;
+  letter-spacing:.01em;
+  background-image:url('/textures/gold-texture.jpg') !important;
+  background-size:cover !important;
+  background-position:center !important;
+  color:transparent !important;
+  -webkit-text-fill-color:transparent !important;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+  text-shadow:none !important;
+  filter:none !important;
+}
+
+/* Keep the distinction in the cabinet material rather than making the text glow. */
+.section.statistics-experience.sx-royal-archive .sx-league-records .sx-record-plaque{
+  background:
+    linear-gradient(180deg,rgba(205,151,70,.025),transparent 34%),
+    linear-gradient(180deg,rgba(31,25,20,.82),rgba(13,12,10,.70))!important;
+  box-shadow:inset 0 1px rgba(255,229,174,.035),inset 0 -1px rgba(0,0,0,.68)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque:hover,
+.section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque:focus-visible{
+  background:
+    linear-gradient(180deg,rgba(213,158,72,.052),transparent 40%),
+    linear-gradient(180deg,rgba(36,28,21,.88),rgba(15,13,11,.75))!important;
+  box-shadow:inset 0 1px rgba(255,229,174,.06),inset 0 -1px rgba(0,0,0,.70),0 0 0 1px rgba(181,126,53,.18)!important;
+}
+
+/* Thorough Emperor-column cleanup.
+   Hall III changed the table rows to flex rows and made the Emperor a right-sticky
+   item with order:999 and margin-left:auto. Later passes removed the sticky offset
+   but did not reset the flex ordering/margin, so the auto margin continued to
+   reserve a full anonymous bay before the Emperor. Reset every layout property
+   inherited from that older design while preserving the current visual styling. */
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:auto!important;
+  order:0!important;
+  flex:0 0 clamp(178px,13vw,230px)!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  width:clamp(178px,13vw,230px)!important;
+  min-width:clamp(178px,13vw,230px)!important;
+  max-width:230px!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head{
+  z-index:5!important;
+}
+
+/* Rows are still intentionally flex-backed by the historical hall stylesheet.
+   Make the final-column contract explicit so no auto spacer can be introduced by
+   inherited alignment rules or future player-header refinements. */
+.section.statistics-experience.sx-royal-archive .sx-season-table thead tr,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row){
+  justify-content:flex-start!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head:last-child,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell:last-child{
+  margin-inline-start:0!important;
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head,
+  .section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+    flex-basis:170px!important;
+    width:170px!important;
+    min-width:170px!important;
+    max-width:170px!important;
+  }
+  .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>em,
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>em{font-size:.90rem}
+  .section.statistics-experience.sx-royal-archive .sx-league-records button.sx-record-plaque>b,
+  .section.statistics-experience.sx-royal-archive .sx-format-records button.sx-record-plaque:has(.sx-record-benchmark-crown)>b{font-size:1.34rem}
+}

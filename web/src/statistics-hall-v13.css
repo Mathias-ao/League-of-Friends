@@ -1,0 +1,184 @@
+/* Statistics Hall XIII — native table foundation.
+   Earlier Hall passes converted the semantic table into block/flex rows so the
+   Emperor could be frozen independently. That layout survived later visual
+   redesigns and left anonymous free flex space beside the final player column.
+   This pass restores one authoritative layout model: a real HTML table, one
+   sticky Statistic spine, and identical geometry for every player column. */
+
+.section.statistics-experience.sx-royal-archive{
+  --hall-metric-width:250px;
+  --hall-player-min:178px;
+}
+
+/* The scroller owns overflow. The table itself owns all column geometry. */
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-scroll{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  background:#120b08!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table{
+  display:table!important;
+  width:100%!important;
+  min-width:100%!important;
+  max-width:none!important;
+  table-layout:auto!important;
+  border-collapse:separate!important;
+  border-spacing:0!important;
+  background:#120b08!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table thead{
+  display:table-header-group!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table tbody{
+  display:table-row-group!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table tr,
+.section.statistics-experience.sx-royal-archive .sx-season-table thead tr,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr{
+  display:table-row!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  align-items:initial!important;
+  justify-content:initial!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table th,
+.section.statistics-experience.sx-royal-archive .sx-hall-v2-table td{
+  display:table-cell!important;
+  box-sizing:border-box!important;
+  flex:none!important;
+  order:initial!important;
+  margin:0!important;
+}
+
+/* One sticky index spine. No other column participates in layout differently. */
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-metric-column,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>th{
+  position:sticky!important;
+  left:0!important;
+  right:auto!important;
+  z-index:8!important;
+  width:var(--hall-metric-width)!important;
+  min-width:var(--hall-metric-width)!important;
+  max-width:var(--hall-metric-width)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-metric-column{
+  display:table-cell!important;
+  height:118px!important;
+  min-height:0!important;
+  padding:0 14px 14px!important;
+  vertical-align:bottom!important;
+}
+
+/* Every player bay — ranked, viewer, or Emperor — follows exactly the same
+   sizing contract. The browser distributes spare width between real columns;
+   once their minimums no longer fit, the table simply scrolls horizontally. */
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-player-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>td,
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:auto!important;
+  order:initial!important;
+  flex:none!important;
+  margin:0!important;
+  margin-inline:0!important;
+  width:1%!important;
+  min-width:var(--hall-player-min)!important;
+  max-width:none!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-player-head{
+  height:118px!important;
+  min-height:0!important;
+  padding:0!important;
+  vertical-align:middle!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head{
+  z-index:5!important;
+}
+
+/* Preserve the Emperor as a visual rank distinction only. Geometry is shared. */
+.section.statistics-experience.sx-royal-archive .sx-season-table th.sx-emperor-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  border-left:1px solid rgba(225,189,117,.42)!important;
+  border-right-color:rgba(131,71,33,.18)!important;
+}
+
+/* Tactical families are continuous shelf dividers. They still use one cell per
+   semantic table column in the current markup, but native table sizing makes the
+   pieces meet exactly and removes all fake/flex filler space. */
+.section.statistics-experience.sx-royal-archive .sx-family-row{
+  display:table-row!important;
+  height:42px!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label{
+  position:sticky!important;
+  left:0!important;
+  right:auto!important;
+  z-index:9!important;
+  width:var(--hall-metric-width)!important;
+  min-width:var(--hall-metric-width)!important;
+  max-width:var(--hall-metric-width)!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-band-cell{
+  position:static!important;
+  width:1%!important;
+  min-width:var(--hall-player-min)!important;
+  max-width:none!important;
+  flex:none!important;
+  order:initial!important;
+  margin:0!important;
+}
+
+/* Metric rows form one continuous ledger grid. No anonymous trailing bay can be
+   painted because there is no flex remainder outside the table columns. */
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>th,
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>td{
+  height:54px!important;
+  vertical-align:middle!important;
+}
+.section.statistics-experience.sx-royal-archive .sx-season-table tbody tr:not(.sx-family-row)>td:last-child,
+.section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-player-head:last-child{
+  border-right:0!important;
+}
+
+/* Defensive neutralisation of the Hall III flex-era contract. These properties
+   deliberately live at the final stylesheet layer so future cosmetic passes do
+   not accidentally resurrect frozen-column spacers. */
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-player-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table .sx-emperor-head,
+.section.statistics-experience.sx-royal-archive .sx-season-table td,
+.section.statistics-experience.sx-royal-archive .sx-season-table td.sx-emperor-cell{
+  align-self:auto!important;
+  justify-self:auto!important;
+}
+
+@media(max-width:760px){
+  .section.statistics-experience.sx-royal-archive{
+    --hall-metric-width:190px;
+    --hall-player-min:170px;
+  }
+  .section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-metric-column,
+  .section.statistics-experience.sx-royal-archive .sx-season-table thead th.sx-player-head{
+    height:104px!important;
+  }
+  .section.statistics-experience.sx-royal-archive .sx-family-row,
+  .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-label,
+  .section.statistics-experience.sx-royal-archive .sx-family-row > .sx-family-band-cell{
+    height:38px!important;
+  }
+}
