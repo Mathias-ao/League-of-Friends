@@ -4,16 +4,19 @@ import React,{act} from 'react';
 import {JSDOM} from 'jsdom';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 import {SeasonStatisticsView} from '../src/ui/StatisticsDashboard';
+import {SeasonStatisticsExperience,seasonMetric} from '../src/domain/seasonStatistics';
 import {syncStatisticsRuntimePolish} from '../src/statistics-runtime-fixes';
 
-test('Record Cabinet ignores Comparison and display mode, while Format selects the record class',async()=>{
+test('Record Cabinet keeps single-Battle records while ledger shows best Battle beneath aggregate results',async()=>{
   const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/#statistics'});
-  Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,localStorage:dom.window.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
+  Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,localStorage:dom.window.localStorage,MutationObserver:dom.window.MutationObserver,IS_REACT_ACT_ENVIRONMENT:true});
   dom.window.HTMLElement.prototype.scrollIntoView=()=>{};
   const {createRoot}=await import('react-dom/client');
   const root=createRoot(document.getElementById('app')!);
   const repo=new PreviewLeagueRepository();
   await repo.signIn();await repo.requestMembership('Tester','','K7M4Q9');const snapshot=await repo.load();
+  const dataset=await repo.statisticsExperience({seasonId:snapshot.season?.seasonId??'unavailable'});
+  const recordEngine=new SeasonStatisticsExperience(dataset.games.filter(game=>game.affectsSeason));
   const change=async(element:Element,value:string)=>{await act(async()=>{const select=element as HTMLSelectElement;select.value=value;select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));await Promise.resolve();});};
   const click=async(element:Element|null)=>{assert.ok(element);await act(async()=>{(element as HTMLElement).click();await Promise.resolve();});};
   try{
@@ -31,28 +34,29 @@ test('Record Cabinet ignores Comparison and display mode, while Format selects t
     assert.equal(document.querySelector('.sx-record-plaque-grid')?.textContent??'',leagueRecords,'Comparison must not narrow League records');
 
     await click([...document.querySelectorAll('.sx-scope-switch button')].find(button=>button.textContent==='All-time')??null);
-    assert.equal(document.querySelector('.sx-record-plaque-grid')?.textContent??'',leagueRecords,'Per Battle / All-time must not alter ordinary Battle records');
+    assert.equal(document.querySelector('.sx-record-plaque-grid')?.textContent??'',leagueRecords,'Per Battle / All-time must not alter single-Battle records');
 
-    // Aggregate Season records are compared against the all-settings All-time ledger.
-    // The record cabinet intentionally ignores Comparison, so reset the ledger here
-    // before asserting that holder/value/tie semantics match the visible totals.
     await change(comparison,'all');
     await click([...document.querySelectorAll('.sx-tabs button')].find(button=>button.textContent==='Military')??null);
-    const playerNames=[...document.querySelectorAll('.sx-season-table thead .sx-player-name')].map(node=>node.textContent?.trim()??'');
-    const rowFor=(label:string)=>[...document.querySelectorAll<HTMLTableRowElement>('.sx-season-table tbody tr')].find(row=>row.querySelector('.sx-metric-title')?.textContent?.trim().startsWith(label));
+    syncStatisticsRuntimePolish();
     const recordFor=(label:string)=>[...document.querySelectorAll<HTMLButtonElement>('button.sx-record-plaque')].find(card=>card.querySelector('strong')?.textContent?.trim()===label);
-    for(const [recordLabel,rowLabel] of [['Most Battles','Battles Fought'],['Most Castles','Castles']] as const){
-      const row=rowFor(rowLabel);assert.ok(row);
-      const totals=[...row.querySelectorAll('td')].map((cell,index)=>({value:Number(cell.querySelector('.sx-value-main')?.textContent),name:playerNames[index]})).filter(item=>Number.isFinite(item.value));
-      const maximum=Math.max(...totals.map(item=>item.value));
-      const expectedHolders=totals.filter(item=>item.value===maximum).map(item=>item.name);
+    for(const [recordLabel,metricId] of [['Most Battles','battlesFought'],['Most Castles','castles']] as const){
+      const metric=seasonMetric(metricId),candidates=recordEngine.records().filter(record=>record.metricId===metricId);
+      assert.ok(candidates.length,`${recordLabel} should have qualified single-Battle candidates`);
+      const extreme=(metric.record==='min'?Math.min:Math.max)(...candidates.map(record=>record.value));
+      const holders=[...new Map(candidates.filter(record=>record.value===extreme).map(record=>[record.playerId,record.name] as const)).values()];
       const card=recordFor(recordLabel);assert.ok(card);
-      assert.equal(Number(card.querySelector('b')?.textContent),maximum,`${recordLabel} must match the All-time ledger maximum`);
+      assert.equal(Number(card.querySelector('b')?.textContent),extreme,`${recordLabel} must remain a single-Battle record, not a Season total`);
       const holderText=card.querySelector('em')?.textContent??'';
-      assert.ok(expectedHolders.some(name=>holderText.startsWith(name)),`${recordLabel} must belong to an actual Season-total leader`);
-      if(expectedHolders.length===1)assert.doesNotMatch(holderText,/tied/i,`${recordLabel} must not report a false tie`);
-      else assert.match(holderText,new RegExp(`${expectedHolders.length} tied`,'i'));
+      assert.ok(holders.some(name=>holderText.startsWith(name)),`${recordLabel} must belong to a single-Battle record holder`);
+      if(holders.length===1)assert.doesNotMatch(holderText,/tied/i,`${recordLabel} must not report a false tie`);
+      else assert.match(holderText,new RegExp(`${holders.length} tied`,'i'));
+      assert.match(card.querySelector('.sx-record-source')?.textContent??'',/Source Battle/i,'single-Battle records retain their source Battle');
     }
+
+    const bestNotes=[...document.querySelectorAll<HTMLElement>('.sx-season-table .sx-value-best')];
+    assert.ok(bestNotes.length>0,'qualified numeric table results should expose their best Battle underneath');
+    assert.ok(bestNotes.every(note=>/^\(best .+\)$/.test(note.textContent??'')),'best-Battle values should be secondary parenthetical text');
 
     await click([...document.querySelectorAll('.sx-tabs button')].find(button=>button.textContent==='Opening')??null);
     const info=document.querySelector<HTMLElement>('.sx-metric-info-trigger');assert.ok(info);
