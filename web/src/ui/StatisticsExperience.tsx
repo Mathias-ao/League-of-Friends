@@ -38,10 +38,20 @@ function reputationRankStage(intensity:number|null,preview:boolean){
   return 1;
 }
 
+function crueltyArtworkLevel(intensity:number|null,preview:boolean){
+  // Visual preview only. Final Cruelty point thresholds remain intentionally unconfigured.
+  if(!preview||intensity==null||intensity<=0)return 0;
+  if(intensity>=80)return 5;
+  if(intensity>=60)return 4;
+  if(intensity>=40)return 3;
+  if(intensity>=20)return 2;
+  return 1;
+}
+
 function ReputationEmblem({id}:{id:ReputationEssenceId}){
   if(id==='gallantry')return <svg className="reputation-emblem gallantry-emblem" viewBox="0 0 100 100" aria-hidden="true"><path className="emblem-line" d="M31 20c7-7 12-10 19-10s12 3 19 10M36 23c2 8 7 12 14 12s12-4 14-12"/><path className="emblem-fill" d="M37 36c-8 4-11 11-8 18 2 4 6 6 10 6-6 5-5 13 1 17 4 3 8 2 11-1 3 3 8 4 12 1 6-4 7-12 1-17 5 0 9-2 11-6 3-7 0-14-8-18-6-3-24-3-30 0Z"/><path className="emblem-line" d="M44 59c-1 8-2 14-5 21M56 59c1 8 2 14 5 21M45 46c3 2 7 2 10 0"/><circle cx="44" cy="48" r="1.5"/><circle cx="56" cy="48" r="1.5"/></svg>;
   if(id==='chivalry')return <svg className="reputation-emblem chivalry-emblem" viewBox="0 0 100 100" aria-hidden="true"><circle className="emblem-ring" cx="50" cy="50" r="37"/><path className="emblem-fill" d="M45 14h10l-2 22 15-16 8 8-18 14 24-2v12l-24-2 18 14-8 8-15-16 2 24H45l2-24-15 16-8-8 18-14-24 2V40l24 2-18-14 8-8 15 16-2-22Z"/><circle className="emblem-ring inner" cx="50" cy="50" r="27"/></svg>;
-  return <svg className="reputation-emblem treachery-emblem" viewBox="0 0 100 100" aria-hidden="true"><path className="emblem-line bones" d="M24 72 73 35M27 34l47 39"/><path className="emblem-fill cap" d="M29 31c5-12 15-18 28-18 10 0 18 3 25 10l-5 8H29Z"/><path className="emblem-line" d="M33 30c11 5 27 5 41 0M45 22h24"/><path className="emblem-fill skull" d="M32 39c0-10 8-17 19-17 12 0 21 7 21 18 0 8-4 13-10 16v12l-8 6-8-6-7 4-7-6V55c-1-4 0-10 0-16Z"/><circle className="skull-eye" cx="44" cy="44" r="5"/><circle className="skull-eye" cx="61" cy="44" r="5"/><path className="skull-cut" d="m52 50-4 8h8l-4-8ZM43 64h18"/></svg>;
+  return null;
 }
 
 type SharedHistorySummary={playerName:string;allied:number|null;opposed:number|null};
@@ -55,9 +65,10 @@ function ReputationPanel({identity,preview,sharedHistory}:{identity:PlayerIdenti
     const value=identity.reputation.essences.find(item=>item.id===definition.id);
     const intensity=value?.intensity??null;
     const stage=reputationRankStage(intensity,preview);
+    const crueltyLevel=definition.id==='treachery'?crueltyArtworkLevel(intensity,preview):null;
     const points=value?.careerPoints==null?'Points pending':`${value.careerPoints} career points${value.seasonPoints==null?'':` · +${value.seasonPoints} this season`}`;
-    const stageText=stage===0?'Unformed insignia':`Illustrative insignia stage ${stage}`;
-    return <article className={`reputation-crest reputation-${definition.id} rank-${stage}`} key={definition.id}><div className="crest-frame tooltip-target tooltip-below" tabIndex={0} data-tooltip={`${stageText}. ${points}.`} aria-label={`${definition.label}: ${points}`}><span className="crest-rank-ornaments" aria-hidden="true"><i/><i/><i/><i/></span><ReputationEmblem id={definition.id}/></div><strong className="crest-label tooltip-target tooltip-above" tabIndex={0} data-tooltip={definition.meaning}>{definition.label}</strong><span className="crest-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
+    const stageText=definition.id==='treachery'?`Cruelty level ${crueltyLevel}`:(stage===0?'Unformed insignia':`Illustrative insignia stage ${stage}`);
+    return <article className={`reputation-crest reputation-${definition.id} rank-${stage}${crueltyLevel==null?'':` cruelty-level-${crueltyLevel}`}`} key={definition.id}><div className="crest-frame tooltip-target tooltip-below" tabIndex={0} data-tooltip={`${stageText}. ${points}.`} aria-label={`${definition.label}: ${stageText}. ${points}`}>{definition.id==='treachery'?<img className="cruelty-artwork" src={`/Player-portraits/Cruelty-${crueltyLevel}.png`} alt={`Cruelty level ${crueltyLevel} insignia`}/>:<><span className="crest-rank-ornaments" aria-hidden="true"><i/><i/><i/><i/></span><ReputationEmblem id={definition.id}/></>}</div><strong className="crest-label tooltip-target tooltip-above" tabIndex={0} data-tooltip={definition.meaning}>{definition.label}</strong><span className="crest-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
   })}</div><SharedHistory summary={sharedHistory}/></section>;
 }
 
