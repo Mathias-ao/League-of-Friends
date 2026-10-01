@@ -29,17 +29,17 @@ The player-facing contract accepts 0–100 positions. Normalization/rule weights
 
 ## Reputation
 
-Three independent Essence Elements appear beside personality:
+Three independent Essence Elements appear beside personality, ordered **Gallantry · Cruelty · Chivalry** in the player profile:
 
 - **Gallantry** — Sunlight Gold — Renown & Daring Feats.
+- **Cruelty** — Crimson Red — Cruelty & Deceit. This is the player-facing rename of the earlier Treachery concept.
 - **Chivalry** — Sapphire Blue — Fealty & Kinship.
-- **Treachery** — Crimson Red — Cruelty & Deceit.
 
-Initial reputation: **Freeholder**.
+Reputation is represented by evolving authored insignia rather than fill meters. **Cruelty** currently has six artwork states in `web/public/Player-portraits/`: `Cruelty-0.png` through `Cruelty-5.png`. The filename number is the visual level. **Level 0** is the initial state for a player with no Cruelty / effectively no established Battle history. Final point thresholds for levels 1–5 remain intentionally unconfigured; preview-only level mapping must not be treated as an approved scoring rule.
 
-Tooltip: *An unwritten history. The court has not yet seen enough to judge what kind of reputation this player will forge.*
+Initial player title: **Novitiate** while identity is still being forged. Later titles remain a separate identity/title system from the three reputation essences.
 
-Later archetypes: Champion, Vigilante, Justiciar, Tyrant, Diplomat, Custodian and Monarch. Reputation is player-level and must not become a pair relationship score.
+Later archetypes currently represented in preview data include Champion, Vigilante, Justiciar, Tyrant, Diplomat, Custodian and Monarch. Reputation is player-level and must not become a pair relationship score.
 
 ## Hidden paired relationships
 
@@ -51,7 +51,7 @@ Relationships remain undisclosed until the reveal threshold and reciprocity requ
 | Hostility | Grudge | Bad Blood | **Enmity** | Blood Feud | **Internecine Strife** |
 | Friendship | Familiarity | Respect | **Alliance** | Blood Brothers | — |
 
-Stage III requires meaningful contribution from both players. Reputation may later provide only a small matching multiplier: Gallantry → Rivalry, Treachery → Hostility, Chivalry → Friendship. It must never create relationship progress without pair-directed evidence.
+Stage III requires meaningful contribution from both players. Reputation may later provide only a small matching multiplier: Gallantry → Rivalry, Cruelty → Hostility, Chivalry → Friendship. It must never create relationship progress without pair-directed evidence.
 
 **Internecine Strife** is not shown as an empty future tier. It is revealed only if achieved and should require exceptional reciprocal hostile history, not points alone.
 
