@@ -106,7 +106,7 @@ function syncBestBattlePresentation(){
     table.querySelectorAll<HTMLTableRowElement>('tbody tr:not(.sx-family-row)').forEach(row=>{
       const label=row.querySelector<HTMLElement>('.sx-metric-title > span:first-child')?.textContent?.trim()??'';
       const metric=metricByDisplayLabel.get(label);
-      const cells=[...row.children].filter((child):child is HTMLTableCellElement=>child instanceof HTMLTableCellElement&&child.tagName==='TD');
+      const cells=[...row.children].filter(child=>child.tagName==='TD') as HTMLTableCellElement[];
       cells.forEach((cell,index)=>{
         const button=cell.querySelector<HTMLButtonElement>('.sx-value-button');
         const existing=cell.querySelector<HTMLElement>('.sx-value-best');
