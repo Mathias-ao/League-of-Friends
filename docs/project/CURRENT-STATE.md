@@ -6,7 +6,11 @@ On `feat/pair-social-evidence-v1`, `AOF_PAIR_SOCIAL_EVIDENCE_V1` now projects ne
 
 See [the implemented contract](../architecture/pair-social-evidence-v1.md). Relationship scoring, effective dynamic diplomacy, absence/non-cooperation interpretation and production integration remain inactive. The older sections below describe their reviewed historical baseline; the branch contract records this slice.
 
-Last reviewed: 28 September 2026
+## Contextual Social Deeds design update — 2 October 2026
+
+[Contextual Social Deeds V1](../architecture/contextual-social-deeds-v1.md) records the contextual qualification matrix and implementation slices. Reputation is **Gallantry / Cruelty / Chivalry**; Relationships are **Rivalry / Hostility / Bond**. Treachery is a qualified turning-point event classification. CORE-IDENTITY.md now documents its explicit directed Hostility escalation exception; no scoring is activated. Pressure-response joins, coalition entry circumstances, activity annotations and pre-Battle standings remain planned adapters. Score trajectories, king-loss responsibility, tribute semantics and effective diplomacy remain separately gated. Historical mentions of Treachery as a Reputation track below are superseded by this update and CORE-IDENTITY.md.
+
+Last reviewed historical baseline: 28 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 

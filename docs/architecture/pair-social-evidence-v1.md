@@ -101,3 +101,7 @@ Tests cover micro-event inflation, duplicate copies, input ordering, corrected s
 Remote GitHub Actions runs the full replay-tools suite and repository CI. Test outcomes belong to the pull request; this document does not certify an unexecuted check.
 
 Next: review the emitted ledger against representative real retained evidence, then design a successor Pair Encounter adapter with family coverage and ordered deeds. Numeric relationship rules remain unconfigured.
+
+## Contextual interpretation handoff
+
+[Contextual Social Deeds V1](contextual-social-deeds-v1.md) records the approved qualification matrix and staged successor work: before/during/after context, action versus contribution direction, pressure/response sequences, coalition entry circumstances, league stakes, activity annotations and gated Treachery king-elimination escalation. It is a design contract, not an implemented extension of this projection. Completed statistics and current unavailable-family gates remain unchanged.

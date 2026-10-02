@@ -117,7 +117,9 @@ Player Relationships are persistent, evidence-based histories between two league
 
 Tracks are independent and may coexist. A pair may therefore be rivals and bonded allies, or retain a historical Bond while Hostility rises.
 
-Relationship progression is directional beneath the pair-level presentation. Early stages may be one-sided, but **relationship level three and above requires reciprocity**. A unilateral grudge cannot become a Feud, and a unilateral competitive fixation cannot become a deep mutual Rivalry, until both players have supplied qualifying directed evidence.
+Relationship progression is directional beneath the pair-level presentation. Ordinary progression to **relationship level three and above requires reciprocity**. A unilateral grudge cannot become a mutual Feud, and a unilateral competitive fixation cannot become a deep mutual Rivalry, until both players have supplied qualifying directed evidence.
+
+**Explicit Treachery exception:** a qualified unilateral alliance rupture followed by an independently attributed elimination of the former ally's king raises the victim → responsible former ally Hostility to level three, or one level higher if already at level three or above, capped at the configured maximum. This exceptional directed severity does not prove reciprocity or unlock mutual Feud presentation. Treachery is a turning-point event classification, not a Reputation track. Its evidence gates and exact repeat/correction semantics are defined in [Contextual Social Deeds V1](../architecture/contextual-social-deeds-v1.md); scoring remains inactive until those prerequisites and rule configuration are satisfied.
 
 Relationship cooling is primarily **event-driven, not calendar-driven**:
 
