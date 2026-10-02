@@ -27,6 +27,8 @@ export interface ProcessRivalriesInput {
 
 interface MatchForRelationships {
   status?: string;
+  eventId?: string | null;
+  seasonId?: string | null;
   format?: MatchFormat;
   participants?: MatchParticipant[];
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
@@ -108,6 +110,8 @@ export async function processRivalries(
       assertRelationshipMatch(snapshot, match);
       return {
         matchId: snapshot.id,
+        eventId: match.eventId ?? null,
+        seasonId: match.seasonId ?? null,
         orderAtMs: stableOrderAt(snapshot, match),
         format: match.format,
         participants: match.participants,
@@ -116,9 +120,10 @@ export async function processRivalries(
           revision: canonicalRevision(match.canonicalResult),
         } as CanonicalGameResult,
         affectsLifetimeStats: match.context?.affectsLifetimeStats === true,
-        // Replay-derived directional signals are added here once the current Match Statistics
-        // projection is durably available to the Functions backend. Until then Pair History is
-        // deliberately limited to neutral encounter/team/result evidence.
+        // V2 never treats missing Battle Statistics as proof of non-interaction.
+        // This remains UNAVAILABLE until replay-derived social signals are durably
+        // supplied by the Match/Battle Statistics pipeline.
+        interactionCoverage: "UNAVAILABLE" as const,
         signals: [],
       };
     });
@@ -147,11 +152,16 @@ export async function processRivalries(
     const relationship = evaluateRelationship(history, null);
     writer.set(db.collection(collections.relationships).doc(history.pairId), {
       schemaVersion: PAIR_HISTORY_VERSION,
+      pairId: history.pairId,
+      playerOneId: history.playerOneId,
+      playerTwoId: history.playerTwoId,
       pairHistory: history,
       relationship,
+      chronicle: history.chronicle,
       relationshipEngineVersion: RELATIONSHIP_ENGINE_VERSION,
       relationshipRuleVersion: null,
       relationshipRulesConfigured: false,
+      interactionCoverage: "UNAVAILABLE",
       updatedAt: rebuiltAt,
     });
   }
@@ -228,7 +238,9 @@ export async function processRivalries(
         relationshipRuleVersion: null,
         resultRevision: triggerRevision,
         pairHistories: histories.length,
+        chronicleEntries: histories.reduce((sum, history) => sum + history.chronicle.length, 0),
         relationshipRulesConfigured: false,
+        interactionCoverage: "UNAVAILABLE",
         processingSource: actor.source,
       },
     });
@@ -244,7 +256,9 @@ export async function processRivalries(
     relationshipEngineVersion: RELATIONSHIP_ENGINE_VERSION,
     relationshipRuleVersion: null,
     relationshipRulesConfigured: false,
+    interactionCoverage: "UNAVAILABLE",
     pairHistories: histories.length,
+    chronicleEntries: histories.reduce((sum, history) => sum + history.chronicle.length, 0),
     alreadyProcessed: finalization.alreadyProcessed,
     remainingSteps: finalization.pendingSteps,
   };
