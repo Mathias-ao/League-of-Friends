@@ -216,10 +216,10 @@ def audit_recording(entry, seal_mode):
         canonical = Path(temporary) / "canonical"
         build_payload(replay, canonical_dir=canonical, seal_mode=seal_mode)
         analysis = build_analysis_dataset(canonical, validate=False)
+        before = deepcopy(analysis)
         projection = project_statistics_from_analysis(analysis)
         require(len(projection["participants"]) == entry.get("expectedPlayers", len(projection["participants"])),
                 "Unexpected fixture player count")
-        before = deepcopy(analysis)
         with patch("statistics_projector.project_pair_episode_context", return_value={}):
             baseline = project_statistics_from_analysis(analysis)
         active = deepcopy(projection)
