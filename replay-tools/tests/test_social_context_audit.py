@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from pair_episode_context import project_pair_episode_context
-from social_context_audit import validate_context
+from social_context_audit import validate_context, validate_ledger
 from test_pair_episode_context import arguments, response, returns
 
 
@@ -25,6 +25,26 @@ class SocialContextAuditTests(unittest.TestCase):
         before = copy.deepcopy(result)
         validate_context(result, actions)
         self.assertEqual(result, before)
+
+    def test_neutral_ledger_provenance_is_accepted(self):
+        result, actions = projection()
+        validate_ledger(result, actions)
+
+    def test_local_overlap_cannot_be_promoted_to_targeted_attack(self):
+        result, actions = projection()
+        ledger = result["pairSocialEvidence"]
+        ledger["incidents"][0]["facets"].append({
+            "kind": "LOCAL_COMMAND_OVERLAP", "targetedActionEstablished": True})
+        with self.assertRaisesRegex(ValueError, "Overlap became a targeted attack"):
+            validate_ledger(result, actions)
+
+    def test_pressure_contributor_direction_cannot_be_reversed(self):
+        result, actions = projection()
+        ledger = result["pairSocialEvidence"]
+        pressure = next(row for row in ledger["incidents"] if row["family"] == "DIRECTED_PRESSURE")
+        pressure["facets"][0]["fromPlayerId"] = 2
+        with self.assertRaisesRegex(ValueError, "Ledger contributor reversed"):
+            validate_ledger(result, actions)
 
     def test_activated_interpretation_fails_audit(self):
         result, actions = projection()

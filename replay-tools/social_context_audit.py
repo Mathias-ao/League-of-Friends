@@ -30,6 +30,39 @@ def canonical_moment(event):
     return event["timestampMs"], event["operationOrdinal"]
 
 
+def validate_ledger(projection, actions):
+    ledger = projection["pairSocialEvidence"]
+    lookup = {row["eventId"]: row for row in actions}
+    require(ledger["opportunities"] == [], "Cooperation opportunity invented")
+    require(ledger["policy"]["commandsAreNotOutcomes"] is True, "Command/outcome boundary removed")
+    require(ledger["policy"]["relationshipScoringEnabled"] is False, "Relationship scoring activated")
+    for incident in ledger["incidents"]:
+        require(all(ref in lookup for ref in incident["sourceEventIds"]), "Missing ledger provenance")
+        for facet in incident["facets"]:
+            kind = facet["kind"]
+            if kind in {"ECONOMY_PRESSURE", "TARGETED_COMMAND", "DEFENSIVE_PARTICIPATION",
+                        "REINFORCEMENT_COMMANDS"}:
+                require(facet["outcomes"] == "UNAVAILABLE", "Ledger outcome invented")
+                require(all(lookup[ref]["actorPlayerId"] == facet["fromPlayerId"]
+                            for ref in facet["sourceEventIds"]), "Ledger contributor reversed")
+            elif kind == "LOCAL_COMMAND_OVERLAP":
+                require(facet["targetedActionEstablished"] is False, "Overlap became a targeted attack")
+            elif kind == "SHARED_OPPONENT_PARTICIPATION":
+                require(facet["coordinationIntent"] == "UNAVAILABLE", "Coordination intent invented")
+                require(facet["targetPlayerId"] == incident["context"]["targetPlayerId"],
+                        "Common target changed")
+                contributors = facet["contributions"]
+                require(sorted(row["contributorPlayerId"] for row in contributors)
+                        == incident["pairPlayerIds"], "Allied contributors flattened")
+                require(facet["targetPlayerId"] not in incident["pairPlayerIds"], "Ally became target")
+                require(all(lookup[ref]["actorPlayerId"] == row["contributorPlayerId"]
+                            for row in contributors for ref in row["sourceEventIds"]),
+                        "Shared attack contributor reversed")
+    for row in ledger["relicTargetingObservations"]:
+        require(lookup[row["sourceEventId"]]["actorPlayerId"] == row["actorPlayerId"],
+                "Relic command actor reversed")
+
+
 def validate_context(projection, actions):
     ledger = projection["pairSocialEvidence"]
     context = ledger["episodeContext"]
@@ -80,7 +113,24 @@ def validate_context(projection, actions):
                     < min(canonical_moment(lookup[ref]) for ref in after), "Return not ordered")
 
 
+def ledger_sample(row):
+    sample = deepcopy(row)
+    sample = {key: sample[key] for key in
+              ("incidentId", "pairPlayerIds", "startedAt", "relationContext", "facets", "context")}
+    for facet in sample["facets"]:
+        if "sourceEventIds" in facet:
+            facet["sourceEventCount"] = len(facet["sourceEventIds"])
+            facet["sourceEventIds"] = facet["sourceEventIds"][:6]
+        if "targetEvidence" in facet:
+            facet["targetEvidence"] = facet["targetEvidence"][:3]
+        for contribution in facet.get("contributions", []):
+            contribution["sourceEventCount"] = len(contribution["sourceEventIds"])
+            contribution["sourceEventIds"] = contribution["sourceEventIds"][:6]
+    return sample
+
+
 def summarize(projection, analysis, *, sample_limit=2):
+    validate_ledger(projection, analysis["actionEvents"])
     validate_context(projection, analysis["actionEvents"])
     ledger = projection["pairSocialEvidence"]
     context = ledger["episodeContext"]
@@ -114,6 +164,11 @@ def summarize(projection, analysis, *, sample_limit=2):
                         math.hypot(point["x"] - center["x"], point["y"] - center["y"]), 3)
                 sample["pressureStartedAt"] = incidents[row["pressureIncidentId"]]["startedAt"]
             samples[family].append(sample)
+    ledger_samples = {}
+    for family in sorted({row["family"] for row in ledger["incidents"]}):
+        values = sorted((row for row in ledger["incidents"] if row["family"] == family),
+                        key=lambda row: (row["startedAt"]["atMs"], row["incidentId"]))
+        ledger_samples[family] = [ledger_sample(row) for row in values[:1]]
     pressure_directions = Counter()
     for row in ledger["incidents"]:
         for facet in row["facets"]:
@@ -136,7 +191,8 @@ def summarize(projection, analysis, *, sample_limit=2):
                                                     context["annotations"] if row["family"] == "PRESSURE_RESPONSE").items())),
         "coverageCounts": dict(sorted(Counter(row["family"] + ":" + row["status"]
                                              for row in context["coverage"]).items())),
-        "samples": samples,
+        "samples": samples, "ledgerSamples": ledger_samples,
+        "relicTargetingObservationCount": len(ledger["relicTargetingObservations"]),
         "reviewBoundary": "source-backed command episodes; no confirmed damage, motives or engine outcomes",
     }
 
