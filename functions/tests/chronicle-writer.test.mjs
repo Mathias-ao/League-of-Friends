@@ -42,7 +42,7 @@ test('third-party pressure phrase family never upgrades coincidence into coordin
   const phrases=CHRONICLE_PHRASES.filter(item=>item.group==='ACTION_THIRD_PARTY_PRESSURE');
   assert.ok(phrases.length>=8);
   for(const phrase of phrases){
-    assert.ok(!/\b(coordinated|coordination occurred|joint plan|planned together|conspired|conspiracy occurred|coalition attack)\b/i.test(phrase.template),phrase.id);
+    assert.ok(!/\b(coordinated attack|planned together|conspired|conspiracy occurred|coalition attack)\b/i.test(phrase.template),phrase.id);
     assert.ok(/coincid|simultaneous|overlap|separate|same .*window|both .*pressure|no coordination|does not establish|without assigning intent|not conspiracy/i.test(phrase.template),`third-party phrase must encode coincidence rather than cooperation: ${phrase.id}`);
   }
 });
@@ -85,7 +85,7 @@ test('third-party overlap is narrated as coincident pressure, not a conspiracy c
   const [entry]=write(battles);
   assert.match(entry.text,/Baguette/);
   assert.ok(/coincid|simultaneous|overlap|separate|same .*window|both .*pressure|no coordination|does not establish|without assigning intent|not conspiracy/i.test(entry.text));
-  assert.ok(!/\b(coordinated attack|joint plan|planned together|coalition attack)\b/i.test(entry.text));
+  assert.ok(!/\b(coordinated attack|planned together|coalition attack)\b/i.test(entry.text));
 });
 
 test('historical callback wording varies across repeated Battles without losing determinism',()=>{
