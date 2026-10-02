@@ -1,5 +1,9 @@
 # Age of Friends — Current State
 
+## Real recording social evidence review — 2 October 2026
+
+The remote corpus audit passed 14 retained recordings with 13 distinct decoded Game GUIDs. It exposed and corrected DE team-lock normalization: explicit edition-specific values now win over conflicting legacy lobby flags, under `AOF_CANONICAL_NORMALIZER_V1_2`. New extractions restore directed ally-support and target-specific shared-offense qualification; existing canonical bundles remain historical revisions. Statistics detectors and schema are unchanged, while alliance-dependent outputs require rebuilding from corrected extraction. See [the real recording review](../architecture/real-social-context-audit-v1.md) for results, examples and the unresolved FFA/static-alignment coverage gap. No scoring is activated.
+
 ## Pair Episode Context implementation — 2 October 2026
 
 The branch now emits `AOF_PAIR_EPISODE_CONTEXT_V1` at `pairSocialEvidence.episodeContext`: unique recorded pressure-response associations, defensive participation connected through exact pressure/clash provenance, and independent ordered return-pressure sequences. It preserves statistics, schema digest, neutral deed identities and counts. See [the implemented context contract](../architecture/pair-episode-context-v1.md). Scoring, activity/standings interpretation, effective diplomacy and outcomes remain inactive.
@@ -13,7 +17,7 @@ See [the implemented contract](../architecture/pair-social-evidence-v1.md). Rela
 
 ## Contextual Social Deeds design update — 2 October 2026
 
-[Contextual Social Deeds V1](../architecture/contextual-social-deeds-v1.md) records the contextual qualification matrix and implementation slices. Reputation is **Gallantry / Cruelty / Chivalry**; Relationships are **Rivalry / Hostility / Bond**. Treachery is a qualified turning-point event classification. CORE-IDENTITY.md now documents its explicit directed Hostility escalation exception; no scoring is activated. Pressure-response joins, coalition entry circumstances, activity annotations and pre-Battle standings remain planned adapters. Score trajectories, king-loss responsibility, tribute semantics and effective diplomacy remain separately gated. Historical mentions of Treachery as a Reputation track below are superseded by this update and CORE-IDENTITY.md.
+[Contextual Social Deeds V1](../architecture/contextual-social-deeds-v1.md) records the contextual qualification matrix and implementation slices. Reputation is **Gallantry / Cruelty / Chivalry**; Relationships are **Rivalry / Hostility / Bond**. Treachery is a qualified turning-point event classification. CORE-IDENTITY.md now documents its explicit directed Hostility escalation exception; no scoring is activated. Pressure-response joins are implemented as the neutral context view above. Coalition entry circumstances, activity annotations and pre-Battle standings remain planned adapters. Score trajectories, king-loss responsibility, tribute semantics and effective diplomacy remain separately gated. Historical mentions of Treachery as a Reputation track below are superseded by this update and CORE-IDENTITY.md.
 
 Last reviewed historical baseline: 28 September 2026
 

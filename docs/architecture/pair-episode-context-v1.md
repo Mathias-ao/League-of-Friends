@@ -51,3 +51,7 @@ Reputation, Relationship stages, Treachery escalation, score/standings/APM inter
 Tests cover response actor/attacker provenance, recorded window/latency, same-millisecond ordinal ordering, ambiguous multi-attacker responses, exact defensive-clash attribution, missing parent sources, reinforcement exclusion, family-specific coverage, independent returns, overlap/intervening episodes, unknown alignment, unresolved independence, input immutability, duplicate/reordered copies, corrected revisions and conflicting event identities.
 
 The projector integration test removes only `episodeContext` and compares the entire remaining envelope with context disabled. Existing controlled statistics goldens remain unchanged. This proves additive output for that fixture; representative real replay validation remains required and test results must be read from the exact commit's CI.
+
+## Retained real recordings
+
+[The real-recording review](real-social-context-audit-v1.md) records a 14-recording corpus audit, including pressure/response, ordered return pressure, fixed-allied support and exact-target shared participation. It documents the edition-specific team-lock normalization correction and the remaining FFA/static-alignment gap. Recorded context is validated without scoring; lack of context rows is not absence evidence. Selected-unit class gaps, source raid onset versus command envelope, non-causal response associations and repeated perspectives remain explicit interpretation limits.
