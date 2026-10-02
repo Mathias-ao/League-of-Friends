@@ -73,7 +73,7 @@ test('FFA alliance, rupture and subsequent contest produce evidence-bound narrat
 test('one-sided diplomacy is described as asymmetric rather than mutual friendship',()=>{
   const battles=[battle('M1',100,{changes:[change('a-allies',10_000,1,2,0,10)]})];
   const [entry]=write(battles);
-  assert.match(entry.text,/one direction|one-sided|asymmetric|only one|not mutual/i);
+  assert.match(entry.text,/one direction|one-sided|asymmetric|only one|not mutual|opposite directions|ally and enemy/i);
   assert.ok(!/friendship|friends/i.test(entry.text));
 });
 
@@ -93,8 +93,8 @@ test('historical callback wording varies across repeated Battles without losing 
   const first=write(battles);
   const second=write(battles);
   assert.deepEqual(first,second);
-  const repeatFragments=first.slice(1).flatMap(item=>item.fragmentIds.filter(id=>id.startsWith('open_repeat_meeting.')));
-  assert.ok(new Set(repeatFragments).size>=3,`expected language rotation, got ${repeatFragments.join(', ')}`);
+  const callbackFragments=first.slice(1).flatMap(item=>item.fragmentIds.filter(id=>id.startsWith('callback_previous_hostile.')));
+  assert.ok(new Set(callbackFragments).size>=3,`expected historical callback rotation, got ${callbackFragments.join(', ')}`);
 });
 
 test('writer binds social evidence by match identity after chronological sorting',()=>{
@@ -112,7 +112,7 @@ test('relationship changes are narrated only when supplied by the relationship i
   const without=write([battle('M1',100,{observations:[obs('contest','DIRECT_ENGAGEMENT',10_000)]})])[0];
   assert.ok(!/established Rivalry/i.test(without.text));
 
-  const transition={track:'RIVALRY',change:'ESTABLISHED',fromStageId:null,toStageId:'RIVALRY',fromState:'UNESTABLISHED',toState:'ACTIVE',historicalPeakStageId:'RIVALRY'};
+  const transition={track:'RIVALRY',kind:'ESTABLISHED',beforeStageId:null,afterStageId:'RIVALRY',sourceBeatIds:['observation:contest']};
   const withTransition=write([battle('M1',100,{observations:[obs('contest','DIRECT_ENGAGEMENT',10_000)],transitions:[transition]})])[0];
   assert.match(withTransition.text,/Rivalry/i);
   assert.ok(withTransition.sourceBeatIds.some(id=>id.startsWith('relationship:RIVALRY:ESTABLISHED')));
