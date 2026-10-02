@@ -30,7 +30,7 @@ export interface DiplomacyEvidenceAdapterResult {
   diagnostics: {
     canonicalInitialEdges: number;
     canonicalUnknownInitialStances: number;
-    diplomacyChangeEvents: number;
+    diplomacyCommandEvents: number;
   };
 }
 
@@ -75,10 +75,9 @@ export function initialEdgesFromCanonical(
 }
 
 /**
- * Diplomacy changes remain replay events. Chronology requires actor, target,
- * timestamp and operation ordinal; an event missing any of these cannot safely
- * participate in the social-evidence path and fails loudly rather than being
- * assigned an invented order.
+ * Canonical replay events currently qualify the actor/target/raw-mode command,
+ * not the successful effective state change. Every imported runtime event is
+ * therefore COMMAND_ONLY until a separately qualified adapter can prove more.
  */
 export function diplomacyChangesFromCanonicalEvents(
   events: CanonicalDiplomacyEventLike[],
@@ -102,10 +101,9 @@ export function diplomacyChangesFromCanonicalEvents(
       fromPlayerId,
       toPlayerId,
       rawMode: integer(payload.diplomacy_mode),
-      // Retain command_id for provenance/diagnostics only. V1 does not infer
-      // additional semantics from it.
       rawCommandId: integer(payload.command_id),
       sourceVersion,
+      effectQualification: "COMMAND_ONLY",
     });
   }
   return changes;
@@ -136,7 +134,7 @@ export function buildDiplomacyTimelineFromCanonicalEvidence(input: {
     diagnostics: {
       canonicalInitialEdges: initial.edges.length,
       canonicalUnknownInitialStances: initial.unknownStances,
-      diplomacyChangeEvents: changes.length,
+      diplomacyCommandEvents: changes.length,
     },
   };
 }
