@@ -1,11 +1,7 @@
 export const DIPLOMACY_TIMELINE_VERSION = "AOF_DIPLOMACY_TIMELINE_V1";
 export const DIPLOMACY_ACTION_MODE_MAP_VERSION = "AOF_DIPLOMACY_ACTION_MODE_MAP_V1";
 
-/**
- * Replay actions can share the same game-clock millisecond. `operationOrdinal`
- * is therefore part of chronology and must never be discarded when diplomacy
- * is used to classify another replay event.
- */
+/** Replay chronology is (game-clock millisecond, operation ordinal). */
 export interface ReplayMoment {
   atMs: number;
   operationOrdinal: number;
@@ -23,11 +19,7 @@ export type PairDiplomacyState =
   | "CONFLICTED"
   | "UNKNOWN";
 
-/**
- * InitialDiplomacyEdge is deliberately an effective-state input. Raw header
- * vectors do not belong here until an extraction adapter has qualified and
- * normalized their semantics.
- */
+/** Effective initial state only; raw header vectors do not belong here. */
 export interface InitialDiplomacyEdge {
   fromPlayerId: number;
   toPlayerId: number;
@@ -36,8 +28,8 @@ export interface InitialDiplomacyEdge {
 }
 
 /**
- * A decoded diplomacy action is not automatically proof that the effective
- * game state changed. `effectQualification` keeps those two claims separate.
+ * A decoded diplomacy action is not automatically proof that game state changed.
+ * `effectQualification` makes that distinction explicit at the type boundary.
  */
 export interface RawDiplomacyChange {
   eventId: string;
@@ -123,10 +115,8 @@ function sameMoment(left: ReplayMoment, right: ReplayMoment): boolean {
 }
 
 /**
- * This maps the payload of the observed diplomacy ACTION command only. It does
- * not by itself claim that the game accepted the command or changed state.
- * Runtime diplomacy action modes are a separate integer domain from header
- * diplomacy values: ally=0, neutral=1, enemy=3.
+ * Maps the observed diplomacy ACTION payload only. This does not itself claim
+ * the game accepted the command or changed effective state.
  */
 export function normalizeDiplomacyActionMode(rawMode: number | null): DiplomacyStance {
   if (rawMode === 0) return "ALLY";
@@ -258,7 +248,10 @@ function normalizeChanges(
     let effectiveStateChanged = false;
     if (change.effectQualification === "COMMAND_ONLY") {
       commandOnlyChanges += 1;
-    } else if (commandedStance !== "UNKNOWN") {
+    } else {
+      if (commandedStance === "UNKNOWN") {
+        throw new Error(`Diplomacy change ${change.eventId} cannot be EFFECTIVE_STATE_QUALIFIED with an unknown command mode.`);
+      }
       effectiveStanceAfter = commandedStance;
       effectiveStateChanged = effectiveStanceAfter !== previousEffectiveStance;
       if (effectiveStateChanged) qualifiedEffectiveChanges += 1;
