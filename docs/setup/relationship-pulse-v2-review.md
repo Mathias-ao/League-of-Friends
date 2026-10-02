@@ -31,31 +31,35 @@ Before manual review, PR #60 should have these three GitHub checks green on the 
 - Player website
 - Three-Battle Statistics Validation
 
-The web suite now includes an interaction test that opens the Chronicle in Preview mode, switches player pairs, and verifies Dormant relationship presentation and Chronicle entries.
+The web suite includes an interaction test that opens the Chronicle in Preview mode, switches player pairs, and verifies Dormant relationship presentation and Chronicle entries.
 
 ## 2. Fast visual review — Preview mode
 
 Preview mode is the quickest way to judge the UI. It uses explicitly illustrative in-memory relationship histories and never writes real league data.
 
-From the repository root:
+**Important:** Emperor's Favor `K7M4Q9` belongs only to `PreviewLeagueRepository`. If the page says that Favor is invalid or already invoked, the website is running against Firebase rather than Preview.
+
+The branch therefore supports an explicit review-mode override. From the repository root:
 
 ```powershell
 git checkout feat/relationship-pulse-v2
 npm.cmd ci --prefix web
+$env:VITE_AOF_REPOSITORY_MODE = 'preview'
 npm.cmd run dev --prefix web
 ```
 
-Do not supply Firebase `VITE_FIREBASE_*` variables for this pass. The client will use `PreviewLeagueRepository` and show the **DESIGN PREVIEW** banner.
+`VITE_AOF_REPOSITORY_MODE=preview` wins even if your shell or a local `.env` still contains Firebase `VITE_FIREBASE_*` variables. Confirm that the website shows the **DESIGN PREVIEW** banner before entering the Favor.
 
 ### Enter the preview league
 
-1. Press **Sign in**.
-2. Join with any Steam name.
-3. Use Emperor's Favor `K7M4Q9`.
-4. Enter Season I if the season gate is shown.
-5. Open **Players**.
-6. Open **D’Karius**.
-7. Press **Chronicle** in the profile sub-navigation.
+1. Confirm **DESIGN PREVIEW** is visible.
+2. Press **Sign in**.
+3. Join with any Steam name.
+4. Use Emperor's Favor `K7M4Q9`.
+5. Enter Season I if the season gate is shown.
+6. Open **Players**.
+7. Open **D’Karius**.
+8. Press **Chronicle** in the profile sub-navigation.
 
 ### Chronicle cases to inspect
 
@@ -98,6 +102,8 @@ Preview histories are illustrative only. They exist so the complete presentation
 This path uses the real `FirebaseLeagueRepository`, Cloud Functions callables, Firestore queries and `PLAYER_PROFILE_V2` response shape.
 
 It deliberately seeds one **emulator-only review fixture** for the Chronicle. That fixture validates the live data/query/UI path; it does not claim that synthetic entries came from replay analysis.
+
+Do not use Preview Favor `K7M4Q9` in this mode. Emulator sign-in uses the bootstrapped local Emperor account directly.
 
 ### Install and build
 
@@ -151,6 +157,7 @@ This fixture validates the live Firebase/profile/UI path only...
 Terminal C:
 
 ```powershell
+$env:VITE_AOF_REPOSITORY_MODE = 'firebase'
 $env:VITE_FIREBASE_API_KEY = 'fake-api-key'
 $env:VITE_FIREBASE_AUTH_DOMAIN = 'demo-league-of-friends.firebaseapp.com'
 $env:VITE_FIREBASE_PROJECT_ID = $project
@@ -161,13 +168,14 @@ npm.cmd run dev --prefix web
 
 Then:
 
-1. Sign in. Emulator mode uses the local Emperor credentials automatically.
-2. Enter the active Season if required by the league gate.
-3. Open the Emperor's player profile.
-4. Open **Chronicle**.
-5. Select/open **Review Rival**.
-6. Confirm the Chronicle loads through the real `getPlayerProfile` callable.
-7. Confirm Rivalry, Hostility and Bond labels plus dated entries render with no client error.
+1. Press **Sign in**. Emulator mode signs in using the local Emperor credentials automatically.
+2. You should **not** be asked for an Emperor's Favor. If you are, stop and verify the emulator/bootstrap steps rather than entering `K7M4Q9`.
+3. Enter the active Season if required by the league gate.
+4. Open the Emperor's player profile.
+5. Open **Chronicle**.
+6. Select/open **Review Rival**.
+7. Confirm the Chronicle loads through the real `getPlayerProfile` callable.
+8. Confirm Rivalry, Hostility and Bond labels plus dated entries render with no client error.
 
 The Firestore Emulator UI at `http://127.0.0.1:4000` may be used to inspect the seeded `relationships/{pairId}` document.
 
