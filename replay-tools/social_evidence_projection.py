@@ -34,15 +34,23 @@ def _integer(value: Any) -> int | None:
     return value if isinstance(value, int) and not isinstance(value, bool) else None
 
 
+def _stable_value(value: Any) -> str:
+    if isinstance(value, list):
+        return "[" + ",".join(_stable_value(item) for item in value) + "]"
+    if isinstance(value, dict):
+        return "{" + ",".join(f"{key}:{_stable_value(value[key])}" for key in sorted(value)) + "}"
+    return repr(value)
+
+
 def _event_key(row: dict[str, Any], id_keys: tuple[str, ...]) -> str:
-    for key in id_keys:
-        value = row.get(key)
-        if isinstance(value, str) and value:
-            return value
+    if id_keys:
+        values = [row.get(key) for key in id_keys]
+        if all(value is not None and value != "" for value in values):
+            return "ids:" + "|".join(_stable_value(value) for value in values)
     ids = row.get("sourceEventIds")
     if isinstance(ids, list) and ids:
         return "events:" + ",".join(str(item) for item in ids)
-    return repr(sorted(row.items()))
+    return _stable_value(row)
 
 
 def _dedupe(rows: list[dict[str, Any]], *id_keys: str) -> list[dict[str, Any]]:
@@ -172,7 +180,9 @@ def _participant_social_rows(statistics: dict[str, Any]) -> dict[str, list[dict[
         "battles": _dedupe(battles, "battleId"),
         "reinforcements": _dedupe(reinforcements, "reinforcementId"),
         "defensiveAssists": _dedupe(defensive_assists, "battleId", "helperPlayerId", "defendedPlayerId"),
-        "cooperativeAttacks": _dedupe(cooperative_attacks, "battleId"),
+        # A Battle can contain more than one allied side/target grouping. Preserve
+        # the whole semantic row rather than treating battleId as unique here.
+        "cooperativeAttacks": _dedupe(cooperative_attacks),
         "forwardBuildings": _dedupe(forward_buildings, "sourceEventId"),
         "enemyBaseContacts": _dedupe(enemy_base_contacts, "sourceEventId"),
     }
