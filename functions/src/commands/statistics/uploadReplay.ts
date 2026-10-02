@@ -6,6 +6,15 @@ import { requireLeaguePlayer } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { collections } from "../../domain/collections.js";
 import type { GamePlayer } from "../../domain/types.js";
+import {
+  CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+  CHRONICLE_SOCIAL_SOURCE_VERSION,
+  buildBattleSocialEvidenceFromChronicleSource,
+} from "../../engines/chronicleSocialSourceAdapter.js";
+import {
+  LEAGUE_SOCIAL_EVIDENCE_VERSION,
+  mapPairSocialEvidenceToLeague,
+} from "../../engines/leagueSocialEvidence.js";
 import {projectStatistics} from "../../engines/statisticsExperience.js";
 import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
 
@@ -51,6 +60,10 @@ interface WorkerResult {
   statistics: Record<string, unknown> & {
     statisticsProjectionVersion?: string;
     statisticsSchemaVersion?: string;
+    source?: { replaySha256?: string };
+  };
+  socialEvidenceSource: Record<string, unknown> & {
+    schemaVersion?: string;
     source?: { replaySha256?: string };
   };
   canonicalBundleBase64: string;
@@ -262,6 +275,12 @@ export const uploadReplay = onCall<UploadReplayInput>(
     if (worker.statistics?.source?.replaySha256 !== localSourceHash) {
       throw new HttpsError("internal", "Statistics provenance does not match the uploaded recording.");
     }
+    if (
+      worker.socialEvidenceSource?.schemaVersion !== CHRONICLE_SOCIAL_SOURCE_VERSION ||
+      worker.socialEvidenceSource?.source?.replaySha256 !== localSourceHash
+    ) {
+      throw new HttpsError("internal", "Chronicle social evidence provenance did not match the uploaded recording.");
+    }
 
     const bundleBytes = Buffer.from(worker.canonicalBundleBase64, "base64");
     if (bundleBytes.length !== worker.canonicalBundleBytes || sha256(bundleBytes) !== worker.canonicalBundleSha256) {
@@ -269,14 +288,31 @@ export const uploadReplay = onCall<UploadReplayInput>(
     }
 
     const playerMapping = await resolvePlayerMapping(game, worker.sourcePlayers);
+    const battleSocialEvidence = buildBattleSocialEvidenceFromChronicleSource({
+      matchId,
+      source: worker.socialEvidenceSource,
+    });
+    const leagueBindings = playerMapping.map((mapping) => ({
+      replayPlayerId: mapping.replaySlot,
+      leaguePlayerId: mapping.playerId,
+      sourceVersion: CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+    }));
+    const leaguePairEvidence = battleSocialEvidence.pairEvidence.map((evidence) =>
+      mapPairSocialEvidenceToLeague({ evidence, bindings: leagueBindings }),
+    );
+
     const statisticsBytes = Buffer.from(JSON.stringify(worker.statistics));
     const statisticsSha256 = sha256(statisticsBytes);
+    const socialEvidenceBytes = Buffer.from(JSON.stringify(worker.socialEvidenceSource));
+    const socialEvidenceSha256 = sha256(socialEvidenceBytes);
     const prefix = "replay-evidence/" + matchId + "/" + gameId + "/" + localSourceHash;
     const canonicalPath = prefix + "/canonical-bundle.zip";
     const statisticsPath = prefix + "/statistics.json";
+    const socialEvidencePath = prefix + "/chronicle-social-source.json";
 
     await verifiedSave(canonicalPath, bundleBytes, worker.canonicalBundleSha256, "application/zip");
     await verifiedSave(statisticsPath, statisticsBytes, statisticsSha256, "application/json");
+    await verifiedSave(socialEvidencePath, socialEvidenceBytes, socialEvidenceSha256, "application/json");
 
     const transactionResult = await db.runTransaction(async (transaction) => {
       const [freshGameSnapshot, freshSourceSnapshot] = await Promise.all([
@@ -326,6 +362,18 @@ export const uploadReplay = onCall<UploadReplayInput>(
           schemaVersion: worker.statistics.statisticsSchemaVersion ?? null,
           projectionVersion: worker.statistics.statisticsProjectionVersion ?? null,
         },
+        chronicleSocialEvidence: {
+          state: "SHADOW_READY",
+          sourceSchemaVersion: CHRONICLE_SOCIAL_SOURCE_VERSION,
+          sourceAdapterVersion: CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+          leagueSchemaVersion: LEAGUE_SOCIAL_EVIDENCE_VERSION,
+          sourcePath: socialEvidencePath,
+          sourceSha256: socialEvidenceSha256,
+          pairCount: leaguePairEvidence.length,
+          diagnostics: battleSocialEvidence.diagnostics,
+          publicChronicleActivated: false,
+          relationshipScoringActivated: false,
+        },
         warnings: worker.warnings ?? [],
         resultQualification: "UNRESOLVED",
         uploadedBy: actor.playerId,
@@ -333,11 +381,29 @@ export const uploadReplay = onCall<UploadReplayInput>(
         replayStatisticsRevision: revision,
       });
 
+      for (const evidence of leaguePairEvidence) {
+        const pairId = `${evidence.playerOneId}__${evidence.playerTwoId}`;
+        const pairRef = sourceRef.collection("pairSocialEvidence").doc(pairId);
+        transaction.create(pairRef, {
+          ...evidence,
+          pairId,
+          replaySourceHash: localSourceHash,
+          matchId,
+          gameId,
+          replayStatisticsRevision: revision,
+          sourceSchemaVersion: CHRONICLE_SOCIAL_SOURCE_VERSION,
+          sourceAdapterVersion: CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+          createdAt: now,
+        });
+      }
+
       transaction.update(gameRef, {
         activeReplayStatisticsId: localSourceHash,
         replayStatisticsState: "READY",
         replayStatisticsRevision: revision,
         replayStatisticsUpdatedAt: now,
+        chronicleSocialEvidenceState: "SHADOW_READY",
+        chronicleSocialEvidenceSourceId: localSourceHash,
         replay: {
           ...(freshGame.replay ?? {}),
           status: "PARSED",
@@ -360,6 +426,12 @@ export const uploadReplay = onCall<UploadReplayInput>(
       replayStatisticsRevision: transactionResult.revision,
       playerMapping,
       resultQualification: "UNRESOLVED",
+      chronicleSocialEvidence: {
+        state: "SHADOW_READY",
+        pairCount: leaguePairEvidence.length,
+        publicChronicleActivated: false,
+        relationshipScoringActivated: false,
+      },
     };
   },
 );
