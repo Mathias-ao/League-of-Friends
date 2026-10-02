@@ -12,8 +12,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from analysis_dataset import build_analysis_dataset
 from parse_replay import build_payload
-from statistics_projector import project_statistics
+from social_evidence_projection import project_social_evidence_source
+from statistics_projector import project_statistics_from_analysis
 
 
 MAX_REPLAY_BYTES = 32 * 1024 * 1024
@@ -59,12 +61,22 @@ def process_replay(file_name: str, replay_base64: str) -> dict[str, Any]:
         if not adapter["payload"]["body"]["bodyParseComplete"]:
             raise ValueError("Replay body extraction is incomplete.")
 
-        # build_payload seals and validates the CanonicalReplay bundle once.
-        # Do not repeat the full bundle validation before projection.
-        statistics = project_statistics(bundle_dir, validate=False)
+        # Build the compact canonical analysis cache once, then derive both the
+        # player statistics and neutral Chronicle-facing social source from it.
+        # This avoids reopening/redecoding the replay and keeps one statistical
+        # truth path for the player UI and Chronicle.
+        analysis = build_analysis_dataset(bundle_dir, validate=False)
+        statistics = project_statistics_from_analysis(analysis)
+        social_evidence_source = project_social_evidence_source(analysis, statistics)
+
         statistics_path = bundle_dir / "statistics.json"
         statistics_path.write_text(
             json.dumps(statistics, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n",
+            encoding="utf-8",
+        )
+        social_path = bundle_dir / "chronicle-social-source.json"
+        social_path.write_text(
+            json.dumps(social_evidence_source, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n",
             encoding="utf-8",
         )
 
@@ -83,6 +95,7 @@ def process_replay(file_name: str, replay_base64: str) -> dict[str, Any]:
             "replayMeta": adapter["payload"]["replay"],
             "warnings": adapter.get("warnings", []),
             "statistics": statistics,
+            "socialEvidenceSource": social_evidence_source,
             "canonicalBundleBase64": base64.b64encode(bundle_bytes).decode("ascii"),
             "canonicalBundleSha256": sha256_bytes(bundle_bytes),
             "canonicalBundleBytes": len(bundle_bytes),
