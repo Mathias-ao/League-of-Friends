@@ -2,7 +2,7 @@ import copy
 import json
 import unittest
 
-from engagement_statistics import project_engagement_statistics, ENGAGEMENT_MODEL_VERSION
+from engagement_statistics import project_engagement_statistics, ENGAGEMENT_MODEL_VERSION, _cooperative_attacks
 from pair_social_evidence import project_pair_social_evidence
 from raid_detector import detect_raids
 from skirmish_detector import detect_skirmishes, PAIR_EVIDENCE_VERSION
@@ -163,7 +163,10 @@ class PairSocialEvidenceTests(unittest.TestCase):
         args["engagement_statistics"] = {}
         args["raid_statistics"] = {}
         result = project_pair_social_evidence(**args)
-        self.assertTrue(all(row["status"] == "UNAVAILABLE" for row in result["coverage"]))
+        self.assertTrue(all(row["status"] == "UNAVAILABLE" for row in result["coverage"]
+                            if row["family"] in {"DIRECTED_PRESSURE", "LOCAL_CONTEST", "COOPERATION_OPPORTUNITY"}))
+        self.assertTrue(all(row["status"] == "NOT_APPLICABLE" for row in result["coverage"]
+                            if row["family"] == "ALLIED_SUPPORT"))
         self.assertEqual(result["opportunities"], [])
         self.assertFalse(result["policy"]["absenceMeaningEnabled"])
 
@@ -212,6 +215,76 @@ class PairSocialEvidenceTests(unittest.TestCase):
         args["source"] = {**SOURCE, "replaySha256": "d" * 64}
         other_game = project_pair_social_evidence(**args)
         self.assertNotEqual(before["deeds"][0]["deedId"], other_game["deeds"][0]["deedId"])
+
+    def test_target_specific_hyperedges_never_manufacture_a_c_cooperation(self):
+        game = manifest(teams=(1, 1, 1, 2, 2), lock_teams=True)
+        participants = {row["playerId"]: row for row in game["participants"]}
+        actions = [
+            action("ax", 1, 1000, "DE_ATTACK_MOVE", 50, 50),
+            action("bx", 2, 1001, "DE_ATTACK_MOVE", 50, 50),
+            action("by", 2, 1002, "DE_ATTACK_MOVE", 50, 50),
+            action("cy", 3, 1003, "DE_ATTACK_MOVE", 50, 50),
+        ]
+        battle = {
+            "battleId": "battle-1", "sourceSkirmishId": "skirmish-1",
+            "baseOwnerPlayerId": None, "sidePlayerIds": [[1, 2, 3], [4, 5]],
+            "opponentInteractionPairs": [{"playerIds": pair} for pair in ([1, 4], [2, 4], [2, 5], [3, 5])],
+            "firstContributionAtMsByPlayer": {str(p): 1000 + p for p in participants},
+            "endedAtMs": 2000,
+            "directedInteractionEdges": [
+                {"fromPlayerId": actor, "toPlayerId": target, "sourceEventIds": [ref]}
+                for actor, target, ref in ((1, 4, "ax"), (2, 4, "bx"), (2, 5, "by"), (3, 5, "cy"))
+            ],
+        }
+        groups = _cooperative_attacks([battle], participants)
+        result = project_pair_social_evidence(
+            manifest=game, source=SOURCE, raid_statistics={}, map_presence_statistics={},
+            action_events=actions,
+            engagement_statistics={"1": {
+                "engagementModelVersion": ENGAGEMENT_MODEL_VERSION,
+                "engagementEvidence": {"cooperativeAttacks": groups},
+            }},
+        )
+        shared = [row for row in result["incidents"] if row["family"] == "SHARED_OFFENSIVE_PARTICIPATION"]
+        self.assertEqual([(row["pairPlayerIds"], row["context"]["targetPlayerId"]) for row in
+                          sorted(shared, key=lambda row: row["context"]["targetPlayerId"])],
+                         [([1, 2], 4), ([2, 3], 5)])
+        self.assertFalse(any(row["pairPlayerIds"] == [1, 3] for row in shared))
+
+    def test_command_only_diplomacy_does_not_change_a_deed(self):
+        args = inputs(raid_actions(), lock=False)
+        expected = project_pair_social_evidence(**args)
+        args["action_events"] += [{
+            "eventId": "diplomacy", "actorPlayerId": 1, "targetPlayerId": 2,
+            "timestampMs": 9000, "operationOrdinal": 1,
+            "sourceActionName": "DIPLOMACY", "payload": {"mode": 0},
+        }]
+        self.assertEqual(expected, project_pair_social_evidence(**args))
+
+    def test_relic_targeting_is_not_a_pair_theft_or_implicit_contest(self):
+        args = inputs([])
+        events = [
+            action("relic-a", 1, 1000, "ORDER", 50, 50, target=900),
+            action("relic-b", 2, 2000, "ORDER", 50, 50, target=900),
+        ]
+        args["action_events"] = events
+        args["map_presence_statistics"] = {
+            str(actor): {"relicControl": {
+                "modelVersion": "AOF_RELIC_TARGETING_V1",
+                "interactionEvidence": [{"actorPlayerId": actor, "sourceEventId": event["eventId"],
+                                         "relicInstanceId": 900, "claim": "RELIC_TARGETING_COMMAND"}],
+            }} for actor, event in zip((1, 2), events)
+        }
+        result = project_pair_social_evidence(**args)
+        self.assertEqual(len(result["relicTargetingObservations"]), 2)
+        self.assertEqual(result["deeds"], [])
+        self.assertNotIn("RELIC_THEFT", json.dumps(result))
+
+    def test_missing_revision_provenance_is_rejected(self):
+        args = inputs([])
+        args["source"] = {"replaySha256": "a" * 64}
+        with self.assertRaisesRegex(ValueError, "canonical source revision"):
+            project_pair_social_evidence(**args)
 
     def test_no_names_scores_motives_or_outcomes_in_projection(self):
         result = ledger(raid_actions())

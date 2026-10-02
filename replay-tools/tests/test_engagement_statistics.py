@@ -274,7 +274,7 @@ class EngagementStatisticsV3Tests(unittest.TestCase):
         groups = _cooperative_attacks([battle], participants)
         self.assertEqual(
             [(row["attackerPlayerIds"], row["targetPlayerIds"]) for row in groups],
-            [([1, 2], [4]), ([2, 3], [5])],
+            [([1, 2], [4]), ([2, 3], [5]), ([4, 5], [2])],
         )
         self.assertNotIn([1, 3], [row["attackerPlayerIds"] for row in groups])
 
