@@ -115,5 +115,6 @@ test('relationship changes are narrated only when supplied by the relationship i
   const transition={track:'RIVALRY',kind:'ESTABLISHED',beforeStageId:null,afterStageId:'RIVALRY',sourceBeatIds:['observation:contest']};
   const withTransition=write([battle('M1',100,{observations:[obs('contest','DIRECT_ENGAGEMENT',10_000)],transitions:[transition]})])[0];
   assert.match(withTransition.text,/Rivalry/i);
-  assert.ok(withTransition.sourceBeatIds.some(id=>id.startsWith('relationship:RIVALRY:ESTABLISHED')));
+  assert.ok(withTransition.sourceBeatIds.includes('observation:contest'));
+  assert.ok(withTransition.sourceEvidenceEventIds.includes('ev-contest'));
 });
