@@ -49,7 +49,10 @@ export interface GameRecord {gameId:string;gameNumber:number;status:string;playe
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
 export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
-export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];}
+export interface RelationshipTrackSummary {status:string;state:string;stageId:string|null;historicalPeakStageId:string|null;}
+export interface RelationshipChronicleEntry {entryId:string;matchId:string|null;eventId:string|null;seasonId:string|null;playedAt:string|null;kind:string;title:string;text:string;relation:string|null;tracksTouched:string[];}
+export interface PlayerRelationshipSummary {pairId:string;otherPlayer:PlayerRecord;relationshipEngineVersion:string|null;relationshipRulesConfigured:boolean;tracks:{rivalry:RelationshipTrackSummary;hostility:RelationshipTrackSummary;bond:RelationshipTrackSummary};chronicle:RelationshipChronicleEntry[];}
+export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];relationships?:PlayerRelationshipSummary[];}
 export interface EmperorsFavorPrintable {  code:string;  emperor:string;  serialNumber:number;  total:number;  printLabel:string;}
 export interface EmperorsFavorBatch {  batchId:string;  batchName:string;  count:number;  favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
@@ -133,11 +136,11 @@ export class LeagueService {
 }
 export class RelationshipPolicy {
   static readonly tracks=[
-    {name:'Rivalry',axis:'Gallantry',description:'Repeated, closely contested competition.',stages:['Friction','Competing','Rivalry','Nemesis']},
-    {name:'Enemy',axis:'Treachery',description:'Focused hostility and broken alliances.',stages:['Grudge','Bad Blood','Enemy','Vendetta','Blood Feud','Internecine Strife']},
-    {name:'Friend',axis:'Chivalry',description:'Cooperation, reinforcement and mutual support.',stages:['Friendly','Respect','Honored','Trusted Friend','Blood Brothers']}
+    {name:'Rivalry',description:'Repeated, reciprocal contest between two players.',stages:['Friction','Contest','Rivalry','Nemesis']},
+    {name:'Hostility',description:'Directed antagonism that becomes a feud only when it is returned.',stages:['Tension','Grudge','Feud','Blood Feud']},
+    {name:'Bond',description:'Cooperation, reinforcement and meaningful support between players.',stages:['Fellowship','Comrades','Trusted Allies','Oathbound']}
   ];
-  static canUnlock(e:{model:string;qualified:boolean;rivalryStage:number;enemyStage:number}|null){return e?.model==='AOF_RELATIONSHIPS_V1'&&e.qualified&&(e.rivalryStage>=3||e.enemyStage>=3);}
+  static canUnlock(e:{model:string;qualified:boolean;rivalryStage:number;hostilityStage:number}|null){return e?.model==='AOF_RELATIONSHIP_ENGINE_V2'&&e.qualified&&(e.rivalryStage>=3||e.hostilityStage>=3);}
 }
 export function formatName(format:string|null|undefined){
   const labels:Record<string,string>={ONE_V_ONE:'1v1',TWO_V_TWO:'2v2',THREE_V_THREE:'3v3',FOUR_V_FOUR:'4v4',ASYMMETRIC_TEAM:'Asymmetric teams',FFA:'Free-for-all',BIG_TEAM:'Team battle'};
