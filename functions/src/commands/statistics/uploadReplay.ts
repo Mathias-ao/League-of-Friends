@@ -8,15 +8,16 @@ import { collections } from "../../domain/collections.js";
 import type { GamePlayer } from "../../domain/types.js";
 import {
   CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+  CHRONICLE_SOCIAL_SOURCE_PRODUCTION_ADAPTER_VERSION,
   CHRONICLE_SOCIAL_SOURCE_VERSION,
-  buildBattleSocialEvidenceFromChronicleSource,
-} from "../../engines/chronicleSocialSourceAdapter.js";
+  buildProductionBattleSocialEvidence,
+} from "../../engines/chronicleSocialSourceProductionAdapter.js";
 import {
   LEAGUE_SOCIAL_EVIDENCE_VERSION,
   mapPairSocialEvidenceToLeague,
 } from "../../engines/leagueSocialEvidence.js";
-import {projectStatistics} from "../../engines/statisticsExperience.js";
-import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
+import { projectStatistics } from "../../engines/statisticsExperience.js";
+import { statisticsMetadata } from "../../services/statisticsExperienceProjection.js";
 
 const MAX_REPLAY_BYTES = 32 * 1024 * 1024;
 
@@ -117,7 +118,7 @@ function workerUrl(): string {
 }
 
 async function callWorker(fileName: string, replayBase64: string): Promise<WorkerResult> {
-  const headers: Record<string, string> = {"content-type": "application/json"};
+  const headers: Record<string, string> = { "content-type": "application/json" };
   if (process.env.REPLAY_WORKER_AUTH_TOKEN) {
     headers.authorization = "Bearer " + process.env.REPLAY_WORKER_AUTH_TOKEN;
   }
@@ -134,7 +135,7 @@ async function callWorker(fileName: string, replayBase64: string): Promise<Worke
     throw new HttpsError("internal", "Replay worker returned an invalid response.");
   }
   if (!response.ok) {
-    const message = (payload as {message?: unknown})?.message;
+    const message = (payload as { message?: unknown })?.message;
     throw new HttpsError(
       response.status >= 500 ? "internal" : "invalid-argument",
       typeof message === "string" ? message : "Replay worker rejected the recording.",
@@ -288,14 +289,14 @@ export const uploadReplay = onCall<UploadReplayInput>(
     }
 
     const playerMapping = await resolvePlayerMapping(game, worker.sourcePlayers);
-    const battleSocialEvidence = buildBattleSocialEvidenceFromChronicleSource({
+    const battleSocialEvidence = buildProductionBattleSocialEvidence({
       matchId,
       source: worker.socialEvidenceSource,
     });
     const leagueBindings = playerMapping.map((mapping) => ({
       replayPlayerId: mapping.replaySlot,
       leaguePlayerId: mapping.playerId,
-      sourceVersion: CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+      sourceVersion: CHRONICLE_SOCIAL_SOURCE_PRODUCTION_ADAPTER_VERSION,
     }));
     const leaguePairEvidence = battleSocialEvidence.pairEvidence.map((evidence) =>
       mapPairSocialEvidenceToLeague({ evidence, bindings: leagueBindings }),
@@ -335,7 +336,16 @@ export const uploadReplay = onCall<UploadReplayInput>(
       const revision = Number(freshGame.replayStatisticsRevision ?? 0) + 1;
       const now = Timestamp.now();
       transaction.create(sourceRef, {
-        experience: projectStatistics(worker.statistics, statisticsMetadata(matchId, gameId, matchSnapshot.data(), {...freshGame,replayStatisticsRevision:revision}, {sourceHash:localSourceHash,playerMapping})),
+        experience: projectStatistics(
+          worker.statistics,
+          statisticsMetadata(
+            matchId,
+            gameId,
+            matchSnapshot.data(),
+            { ...freshGame, replayStatisticsRevision: revision },
+            { sourceHash: localSourceHash, playerMapping },
+          ),
+        ),
         state: "READY",
         matchId,
         gameId,
@@ -366,6 +376,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
           state: "SHADOW_READY",
           sourceSchemaVersion: CHRONICLE_SOCIAL_SOURCE_VERSION,
           sourceAdapterVersion: CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+          productionAdapterVersion: CHRONICLE_SOCIAL_SOURCE_PRODUCTION_ADAPTER_VERSION,
           leagueSchemaVersion: LEAGUE_SOCIAL_EVIDENCE_VERSION,
           sourcePath: socialEvidencePath,
           sourceSha256: socialEvidenceSha256,
@@ -393,6 +404,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
           replayStatisticsRevision: revision,
           sourceSchemaVersion: CHRONICLE_SOCIAL_SOURCE_VERSION,
           sourceAdapterVersion: CHRONICLE_SOCIAL_SOURCE_ADAPTER_VERSION,
+          productionAdapterVersion: CHRONICLE_SOCIAL_SOURCE_PRODUCTION_ADAPTER_VERSION,
           createdAt: now,
         });
       }
