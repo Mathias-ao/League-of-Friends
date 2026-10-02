@@ -113,79 +113,73 @@ const COOPERATION_TYPES = new Set<PairSocialBeatType>([
   "DEFENSIVE_ASSIST",
   "COOPERATIVE_ATTACK",
 ]);
-
 const PRESSURE_TYPES = new Set<PairSocialBeatType>([
   "DIRECT_CONTEST",
   "RAID_PRESSURE",
   "FORWARD_ENCROACHMENT",
   "ENEMY_BASE_CONTACT",
 ]);
-
 const SUBSTANTIVE_TYPES = new Set<PairSocialBeatType>([
-  ...COOPERATION_TYPES,
-  ...PRESSURE_TYPES,
   "MUTUAL_ALLIANCE_FORMED",
   "MUTUAL_ALLIANCE_ENDED",
   "ONE_SIDED_ALLIANCE_BEGAN",
   "CONFLICTED_DIPLOMACY_BEGAN",
+  "DIRECT_CONTEST",
+  "RAID_PRESSURE",
+  "FORWARD_ENCROACHMENT",
+  "ENEMY_BASE_CONTACT",
+  "MATERIAL_SUPPORT",
+  "ALLY_REINFORCEMENT",
+  "DEFENSIVE_ASSIST",
+  "COOPERATIVE_ATTACK",
   "COINCIDENT_THIRD_PARTY_PRESSURE",
   "NO_QUALIFYING_OPPOSITION_CONTACT",
   "NO_QUALIFYING_ALLIED_COOPERATION",
 ]);
 
-function unique<T>(values: T[]): T[] {
-  return [...new Set(values)];
-}
-
-function sortedPair(a: number, b: number): [number, number] {
-  return a < b ? [a, b] : [b, a];
+function unique<T>(items: T[]): T[] {
+  return [...new Set(items)];
 }
 
 function pairStatesForBattle(input: ChronicleBattleInput): PairDiplomacyState[] {
-  const [one, two] = sortedPair(input.socialEvidence.playerOneId, input.socialEvidence.playerTwoId);
-  return input.diplomacyTimeline.pairSegments
-    .filter((segment) => segment.playerOneId === one && segment.playerTwoId === two && segment.endMs > segment.startMs)
+  const one = input.socialEvidence.playerOneId;
+  const two = input.socialEvidence.playerTwoId;
+  const states = input.diplomacyTimeline.pairSegments
+    .filter((segment) => segment.playerOneId === one && segment.playerTwoId === two)
     .map((segment) => segment.state);
+  return unique(states);
 }
 
-export function summarizeBattleAlignment(states: PairDiplomacyState[]): ChronicleAlignmentSummary {
-  const known = new Set(states.filter((state) => state !== "UNKNOWN"));
-  if (!known.size) return "UNKNOWN";
-  const hasAlliance = [...known].some((state) => state === "MUTUAL_ALLIANCE" || state === "ONE_SIDED_ALLIANCE");
-  const hasHostility = [...known].some((state) => state === "MUTUAL_HOSTILITY" || state === "ONE_SIDED_HOSTILITY" || state === "CONFLICTED");
-  const hasNeutral = known.has("MUTUAL_NEUTRALITY");
-  const families = Number(hasAlliance) + Number(hasHostility) + Number(hasNeutral);
-  if (families > 1 || known.has("CONFLICTED")) return "MIXED";
-  if (hasAlliance) return "ALLIANCE";
-  if (hasHostility) return "HOSTILITY";
-  if (hasNeutral) return "NEUTRALITY";
-  return "UNKNOWN";
+function summarizeBattleAlignment(states: PairDiplomacyState[]): ChronicleAlignmentSummary {
+  const known = unique(states.filter((state) => state !== "UNKNOWN"));
+  if (states.includes("UNKNOWN") && known.length === 0) return "UNKNOWN";
+  if (known.length !== 1 || states.includes("UNKNOWN")) return "MIXED";
+  const [state] = known;
+  if (state === "MUTUAL_ALLIANCE") return "ALLIANCE";
+  if (state === "MUTUAL_HOSTILITY" || state === "ONE_SIDED_HOSTILITY" || state === "CONFLICTED") return "HOSTILITY";
+  if (state === "MUTUAL_NEUTRALITY") return "NEUTRALITY";
+  return "MIXED";
 }
 
 function conceptsForBeats(beats: PairSocialBeat[]): ChronicleConcept[] {
-  const concepts: ChronicleConcept[] = [];
-  for (const beat of beats) {
-    const mapped: Partial<Record<PairSocialBeatType, ChronicleConcept>> = {
-      MUTUAL_ALLIANCE_FORMED: "MUTUAL_ALLIANCE_FORMED",
-      MUTUAL_ALLIANCE_ENDED: "MUTUAL_ALLIANCE_ENDED",
-      ONE_SIDED_ALLIANCE_BEGAN: "ONE_SIDED_ALLIANCE",
-      CONFLICTED_DIPLOMACY_BEGAN: "CONFLICTED_DIPLOMACY",
-      DIRECT_CONTEST: "DIRECT_CONTEST",
-      RAID_PRESSURE: "RAID_PRESSURE",
-      FORWARD_ENCROACHMENT: "FORWARD_ENCROACHMENT",
-      ENEMY_BASE_CONTACT: "ENEMY_BASE_CONTACT",
-      MATERIAL_SUPPORT: "MATERIAL_SUPPORT",
-      ALLY_REINFORCEMENT: "ALLY_REINFORCEMENT",
-      DEFENSIVE_ASSIST: "DEFENSIVE_ASSIST",
-      COOPERATIVE_ATTACK: "COOPERATIVE_ATTACK",
-      COINCIDENT_THIRD_PARTY_PRESSURE: "COINCIDENT_THIRD_PARTY_PRESSURE",
-      NO_QUALIFYING_OPPOSITION_CONTACT: "NO_QUALIFYING_OPPOSITION_CONTACT",
-      NO_QUALIFYING_ALLIED_COOPERATION: "NO_QUALIFYING_ALLIED_COOPERATION",
-    };
-    const concept = mapped[beat.type];
-    if (concept) concepts.push(concept);
-  }
-  return unique(concepts);
+  const result: ChronicleConcept[] = [];
+  const has = (type: PairSocialBeatType) => beats.some((beat) => beat.type === type);
+  if (has("MUTUAL_ALLIANCE_FORMED")) result.push("MUTUAL_ALLIANCE_FORMED");
+  if (has("MUTUAL_ALLIANCE_ENDED")) result.push("MUTUAL_ALLIANCE_ENDED");
+  if (has("ONE_SIDED_ALLIANCE_BEGAN")) result.push("ONE_SIDED_ALLIANCE");
+  if (has("CONFLICTED_DIPLOMACY_BEGAN")) result.push("CONFLICTED_DIPLOMACY");
+  if (has("DIRECT_CONTEST")) result.push("DIRECT_CONTEST");
+  if (has("RAID_PRESSURE")) result.push("RAID_PRESSURE");
+  if (has("FORWARD_ENCROACHMENT")) result.push("FORWARD_ENCROACHMENT");
+  if (has("ENEMY_BASE_CONTACT")) result.push("ENEMY_BASE_CONTACT");
+  if (has("MATERIAL_SUPPORT")) result.push("MATERIAL_SUPPORT");
+  if (has("ALLY_REINFORCEMENT")) result.push("ALLY_REINFORCEMENT");
+  if (has("DEFENSIVE_ASSIST")) result.push("DEFENSIVE_ASSIST");
+  if (has("COOPERATIVE_ATTACK")) result.push("COOPERATIVE_ATTACK");
+  if (has("COINCIDENT_THIRD_PARTY_PRESSURE")) result.push("COINCIDENT_THIRD_PARTY_PRESSURE");
+  if (has("NO_QUALIFYING_OPPOSITION_CONTACT")) result.push("NO_QUALIFYING_OPPOSITION_CONTACT");
+  if (has("NO_QUALIFYING_ALLIED_COOPERATION")) result.push("NO_QUALIFYING_ALLIED_COOPERATION");
+  return result;
 }
 
 function conceptsForRelationshipTransitions(transitions: ChronicleRelationshipTransition[]): ChronicleConcept[] {
@@ -291,7 +285,14 @@ export function buildChronicleEvents(inputs: ChronicleBattleInput[]): ChronicleE
     const uniqueConcepts = unique(concepts);
     const encounterNumber = index + 1;
     const significance = significanceFor(encounterNumber, uniqueConcepts, transitions);
-    const sourceBeatIds = beats.map((beat) => beat.beatId);
+    // Transition interpretations are not neutral social beats themselves, but
+    // every relationship sentence must still retain the beat IDs that justified
+    // the externally supplied transition. Fold those IDs into published
+    // provenance without manufacturing a synthetic relationship beat.
+    const sourceBeatIds = unique([
+      ...beats.map((beat) => beat.beatId),
+      ...transitions.flatMap((transition) => transition.sourceBeatIds),
+    ]);
     const sourceEvidenceEventIds = unique(beats.flatMap((beat) => beat.evidenceEventIds)).sort((a, b) => a.localeCompare(b));
     const formed = beats.filter((beat) => beat.type === "MUTUAL_ALLIANCE_FORMED").length;
     const ended = beats.filter((beat) => beat.type === "MUTUAL_ALLIANCE_ENDED").length;
