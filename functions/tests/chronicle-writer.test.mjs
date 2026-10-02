@@ -19,8 +19,10 @@ function battle(id,playedAtMs,{initial=[edge(1,2,'ENEMY'),edge(2,1,'ENEMY')],cha
   return {matchId:id,playedAtMs,socialEvidence,diplomacyTimeline,relationshipTransitions:transitions};
 }
 function write(battles){
-  const events=buildChronicleEvents(battles);
-  return writeChronicleHistory(events.map((event,index)=>({event,socialEvidence:battles[index].socialEvidence})),{1:'D’Karius',2:'Ragnar',3:'Baguette'});
+  const ordered=[...battles].sort((a,b)=>a.playedAtMs-b.playedAtMs||a.matchId.localeCompare(b.matchId));
+  const evidenceByMatch=new Map(ordered.map(item=>[item.matchId,item.socialEvidence]));
+  const events=buildChronicleEvents(ordered);
+  return writeChronicleHistory(events.map(event=>({event,socialEvidence:evidenceByMatch.get(event.matchId)})),{1:'D’Karius',2:'Ragnar',3:'Baguette'});
 }
 
 test('Chronicle writer and phrase library are explicit versioned production assets',()=>{
@@ -33,6 +35,15 @@ test('phrase library excludes unqualified motive and outcome words',()=>{
   const corpus=CHRONICLE_PHRASES.map(item=>item.template.toLowerCase()).join('\n');
   for(const word of CHRONICLE_PROHIBITED_UNQUALIFIED_WORDS){
     assert.ok(!new RegExp(`\\b${word}\\b`,'i').test(corpus),`prohibited unqualified word present: ${word}`);
+  }
+});
+
+test('third-party pressure phrase family never upgrades coincidence into coordination or planning',()=>{
+  const phrases=CHRONICLE_PHRASES.filter(item=>item.group==='ACTION_THIRD_PARTY_PRESSURE');
+  assert.ok(phrases.length>=8);
+  for(const phrase of phrases){
+    assert.ok(!/\b(coordinated|coordination occurred|joint plan|planned together|conspired|conspiracy occurred|coalition attack)\b/i.test(phrase.template),phrase.id);
+    assert.ok(/coincid|simultaneous|overlap|separate|same .*window|both .*pressure|no coordination|does not establish|without assigning intent|not conspiracy/i.test(phrase.template),`third-party phrase must encode coincidence rather than cooperation: ${phrase.id}`);
   }
 });
 
@@ -67,13 +78,14 @@ test('one-sided diplomacy is described as asymmetric rather than mutual friendsh
   assert.match(entry.text,/one|asymmetric|allied|alliance|tribute|material/i);
 });
 
-test('third-party overlap is explicitly prevented from becoming a conspiracy claim',()=>{
+test('third-party overlap is narrated as coincident pressure, not a conspiracy claim',()=>{
   const battles=[battle('M1',100,{thirdPartyPressure:[{
     episodeId:'same-target-window',startMs:20_000,endMs:25_000,playerOneId:1,playerTwoId:2,targetPlayerId:3,sourceVersion:STATS,evidenceEventIds:['x','y'],confidence:'HIGH',
   }]})];
   const [entry]=write(battles);
   assert.match(entry.text,/Baguette/);
-  assert.ok(/no coordination|does not establish|coincid|without assigning intent|not conspiracy/i.test(entry.text));
+  assert.ok(/coincid|simultaneous|overlap|separate|same .*window|both .*pressure|no coordination|does not establish|without assigning intent|not conspiracy/i.test(entry.text));
+  assert.ok(!/\b(coordinated attack|joint plan|planned together|coalition attack)\b/i.test(entry.text));
 });
 
 test('historical callback wording varies across repeated Battles without losing determinism',()=>{
@@ -87,6 +99,15 @@ test('historical callback wording varies across repeated Battles without losing 
   assert.equal(entries.length,4);
   assert.equal(new Set(entries.map(item=>item.text)).size,4);
   assert.equal(new Set(entries.flatMap(item=>item.fragmentIds)).size,entries.flatMap(item=>item.fragmentIds).length);
+});
+
+test('writer binds social evidence by match identity after chronological sorting',()=>{
+  const later=battle('M2',200,{observations:[obs('later','DIRECT_ENGAGEMENT',20_000)]});
+  const earlier=battle('M1',100,{observations:[obs('earlier','RAID_PRESSURE',20_000)]});
+  const entries=write([later,earlier]);
+  assert.deepEqual(entries.map(item=>item.matchId),['M1','M2']);
+  assert.deepEqual(entries[0].sourceEvidenceEventIds,['ev-earlier']);
+  assert.deepEqual(entries[1].sourceEvidenceEventIds,['ev-later']);
 });
 
 test('relationship changes are narrated only when supplied by the relationship interpretation layer',()=>{
