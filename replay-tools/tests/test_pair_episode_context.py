@@ -159,7 +159,8 @@ class PairEpisodeContextTests(unittest.TestCase):
         self.assertTrue(result["diagnostics"])
 
     def test_reinforcement_alone_is_not_defensive_assistance(self):
-        args = arguments([action("help", 3, 10000, "PATROL", 20, 20)], teams=(1, 2, 1))
+        args = arguments([action("help", 3, 10000, "PATROL", 20, 20,
+                                 selected=[3001, 3002, 3003])], teams=(1, 2, 1))
         self.assertTrue(args["pair_evidence"]["deeds"])
         self.assertFalse(family(project_pair_episode_context(**args), "DEFENSIVE_SUPPORT_WITH_PRESSURE"))
 
