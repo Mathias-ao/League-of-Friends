@@ -1,6 +1,6 @@
 import {useRef,useState} from 'react';
-import {ArrowRight,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
-import {formatName,type PlayerProfile} from '../domain/league';
+import {ArrowRight,BookOpen,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
+import {formatName,type PlayerProfile,type PlayerRelationshipSummary} from '../domain/league';
 import {
   FREEHOLDER_TOOLTIP,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES,PLAYER_PERSONALITY_SLIDERS,REPUTATION_ESSENCES,
   type PlayerIdentityPresentation,type ReputationEssenceId
@@ -61,14 +61,14 @@ function SharedHistory({summary}:{summary:SharedHistorySummary}){
 }
 
 function ReputationPanel({identity,preview,sharedHistory}:{identity:PlayerIdentityPresentation;preview:boolean;sharedHistory:SharedHistorySummary}){
-  return <section className="identity-panel reputation-panel"><div className="identity-heading"><span className="eyebrow">REPUTATION</span><span className="reputation-info tooltip-target tooltip-below" tabIndex={0} data-tooltip="Three independent reputations earned through league deeds." aria-label="About reputation"><Info size={15}/></span></div><div className="reputation-crests">{REPUTATION_ESSENCES.map(definition=>{
+  return <section className="identity-panel reputation-panel"><div className="identity-heading"><span className="eyebrow">REPUTATION</span><span className="reputation-info tooltip-target tooltip-below" tabIndex={0} data-tooltip="Gallantry, Cruelty and Chivalry are independent reputations earned through league deeds." aria-label="About reputation"><Info size={15}/></span></div><div className="reputation-crests">{REPUTATION_ESSENCES.map(definition=>{
     const value=identity.reputation.essences.find(item=>item.id===definition.id);
     const intensity=value?.intensity??null;
     const stage=reputationRankStage(intensity,preview);
-    const crueltyLevel=definition.id==='treachery'?crueltyArtworkLevel(intensity,preview):null;
+    const crueltyLevel=definition.id==='cruelty'?crueltyArtworkLevel(intensity,preview):null;
     const points=value?.careerPoints==null?'Points pending':`${value.careerPoints} career points${value.seasonPoints==null?'':` · +${value.seasonPoints} this season`}`;
-    const stageText=definition.id==='treachery'?`Cruelty level ${crueltyLevel}`:(stage===0?'Unformed insignia':`Illustrative insignia stage ${stage}`);
-    return <article className={`reputation-crest reputation-${definition.id} rank-${stage}${crueltyLevel==null?'':` cruelty-level-${crueltyLevel}`}`} key={definition.id}><div className="crest-frame tooltip-target tooltip-below" tabIndex={0} data-tooltip={`${stageText}. ${points}.`} aria-label={`${definition.label}: ${stageText}. ${points}`}>{definition.id==='treachery'?<img className="cruelty-artwork" src={`/Player-portraits/Cruelty-${crueltyLevel}.png`} alt={`Cruelty level ${crueltyLevel} insignia`}/>:<><span className="crest-rank-ornaments" aria-hidden="true"><i/><i/><i/><i/></span><ReputationEmblem id={definition.id}/></>}</div><strong className="crest-label tooltip-target tooltip-above" tabIndex={0} data-tooltip={definition.meaning}>{definition.label}</strong><span className="crest-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
+    const stageText=definition.id==='cruelty'?`Cruelty level ${crueltyLevel}`:(stage===0?'Unformed insignia':`Illustrative insignia stage ${stage}`);
+    return <article className={`reputation-crest reputation-${definition.id} rank-${stage}${crueltyLevel==null?'':` cruelty-level-${crueltyLevel}`}`} key={definition.id}><div className="crest-frame tooltip-target tooltip-below" tabIndex={0} data-tooltip={`${stageText}. ${points}.`} aria-label={`${definition.label}: ${stageText}. ${points}`}>{definition.id==='cruelty'?<img className="cruelty-artwork" src={`/Player-portraits/Cruelty-${crueltyLevel}.png`} alt={`Cruelty level ${crueltyLevel} insignia`}/>:<><span className="crest-rank-ornaments" aria-hidden="true"><i/><i/><i/><i/></span><ReputationEmblem id={definition.id}/></>}</div><strong className="crest-label tooltip-target tooltip-above" tabIndex={0} data-tooltip={definition.meaning}>{definition.label}</strong><span className="crest-points">{value?.careerPoints==null?'—':value.careerPoints+' pts'}</span></article>;
   })}</div><SharedHistory summary={sharedHistory}/></section>;
 }
 
@@ -101,8 +101,40 @@ function compactDate(value:string|null|undefined){
   return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));
 }
 
+function relationshipTrackLabel(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},label:string){
+  if(track.status!=='READY')return `${label} · Unwritten`;
+  if(!track.stageId&&track.historicalPeakStageId)return `${label} · Dormant (once ${track.historicalPeakStageId})`;
+  if(!track.stageId)return `${label} · Unestablished`;
+  return `${label} · ${track.state==='DORMANT'?'Dormant ':''}${track.stageId}`;
+}
+
+function RelationshipChronicle({data,snapshot}:{data:PlayerProfile;snapshot:ViewProps['snapshot']}){
+  const relationships=data.relationships??[];
+  const viewerId=snapshot.viewer?.playerId;
+  const preferred=relationships.find(item=>item.otherPlayer.playerId===viewerId)??relationships[0]??null;
+  const [selectedPairId,setSelectedPairId]=useState<string|null>(preferred?.pairId??null);
+  const selected=relationships.find(item=>item.pairId===selectedPairId)??preferred;
+  return <section className="relationship-chronicle-view" aria-label="Relationship Chronicle">
+    <div className="chronicle-toolbar"><div><span className="eyebrow">RELATIONSHIP CHRONICLE</span><h3>What history remembers</h3></div>{relationships.length>1&&<label>Player<select value={selected?.pairId??''} onChange={event=>setSelectedPairId(event.target.value)}>{relationships.map(item=><option value={item.pairId} key={item.pairId}>{item.otherPlayer.steamName}</option>)}</select></label>}</div>
+    <article className="chronicle-parchment">
+      <div className="chronicle-seal"><BookOpen size={24}/></div>
+      {selected?<>
+        <header className="chronicle-title"><span className="eyebrow">A RECORDED HISTORY</span><h2>{data.player.steamName} &amp; {selected.otherPlayer.steamName}</h2><p>Only Battles and deeds supported by the league record are entered here.</p></header>
+        <div className="chronicle-track-row">
+          <span>{relationshipTrackLabel(selected.tracks.rivalry,'Rivalry')}</span>
+          <span>{relationshipTrackLabel(selected.tracks.hostility,'Hostility')}</span>
+          <span>{relationshipTrackLabel(selected.tracks.bond,'Bond')}</span>
+        </div>
+        <ol className="chronicle-entries">{selected.chronicle.length?selected.chronicle.map(entry=><li key={entry.entryId}><time>{compactDate(entry.playedAt)}</time><div><span className="eyebrow">{entry.relation==='ALLIED'?'UNDER ONE BANNER':entry.relation==='OPPOSED'?'ACROSS THE BATTLEFIELD':'RECORDED ENCOUNTER'}</span><h4>{entry.title}</h4><p>{entry.text}</p>{entry.matchId&&<small>{entry.matchId}</small>}</div></li>):<li className="chronicle-empty"><div><h4>The page remains unwritten.</h4><p>No qualified shared events have yet been entered for this pair.</p></div></li>}</ol>
+        {!selected.relationshipRulesConfigured&&<footer>Relationship stages remain sealed until the V2 rule set is configured. The Chronicle itself is factual history and remains available.</footer>}
+      </>:<div className="chronicle-empty-state"><BookOpen size={34}/><h3>No shared history has been entered.</h3><p>When this player shares a qualified Battle with another league member, their Chronicle begins.</p></div>}
+    </article>
+  </section>;
+}
+
 function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
   const {data,snapshot,preview,openMatch}=props;
+  const [profileTab,setProfileTab]=useState<'profile'|'chronicle'>('profile');
   const battleRail=useRef<HTMLDivElement>(null);
   const identity=playerIdentity(data,preview);
   const seasonStats=data.activeSeason?.competition??null;
@@ -125,38 +157,42 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
       <div className="profile-hero-record" aria-label="Current season record"><div className="profile-record-primary"><div><strong>{seasonStats?.matchesWon??'—'}</strong><span>Won</span></div><div><strong>{seasonStats?.matchesLost??'—'}</strong><span>Lost</span></div><div><strong>{winRate}</strong><span>Win rate</span></div></div></div>
     </section>
 
-    <ProfileDeedsBar data={data} preview={preview}/>
+    <nav className="profile-subnav" aria-label="Player profile sections"><button type="button" className={profileTab==='profile'?'active':''} onClick={()=>setProfileTab('profile')}>Profile</button><button type="button" className={profileTab==='chronicle'?'active':''} onClick={()=>setProfileTab('chronicle')}><BookOpen size={15}/>Chronicle</button></nav>
 
-    <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory}/>
+    {profileTab==='chronicle'?<RelationshipChronicle data={data} snapshot={snapshot}/>:<>
+      <ProfileDeedsBar data={data} preview={preview}/>
 
-    <section className="profile-battle-record">
-      <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span></div></div>
-      <div className="battle-carousel-shell">
-        <button type="button" className="battle-carousel-arrow previous" aria-label="Scroll earlier Battles" onClick={()=>scrollBattles(-1)}><ChevronLeft size={22}/></button>
-        <div className="battle-carousel" ref={battleRail}>
-          {battles.length?battles.map(match=>{
-            const event=snapshot.events.find(candidate=>candidate.eventId===match.eventId);
-            const subject=match.participants.find(player=>player.playerId===data.player.playerId);
-            const others=match.participants.filter(player=>player.playerId!==data.player.playerId);
-            const opponents=subject?.team!=null?others.filter(player=>player.team==null||player.team!==subject.team):others;
-            const resultKnown=match.status==='COMPLETED'&&Array.isArray(match.result?.winningPlayerIds)&&match.result!.winningPlayerIds!.length>0;
-            const won=resultKnown&&match.result!.winningPlayerIds!.includes(data.player.playerId);
-            const lost=resultKnown&&!won;
-            const result=won?'WON':lost?'LOST':match.status.replaceAll('_',' ');
-            const opponentsLabel=opponents.length?'vs '+opponents.slice(0,2).map(player=>player.steamName).join(' · ')+(opponents.length>2?` +${opponents.length-2}`:''):formatName(match.format);
-            return <button type="button" className={'profile-battle-card '+(won?'won':lost?'lost':'pending')} key={match.matchId} onClick={()=>openMatch(match.matchId)}>
-              <div className="profile-battle-card-mark"><Sigil kind={match.format==='ONE_V_ONE'?'duel':match.format==='FFA'?'ffa':'team'} size={22}/><span>{event?.title??'League Battle'}</span></div>
-              <span className="profile-battle-result">{result}</span>
-              <strong>{opponentsLabel}</strong>
-              <small>{formatName(match.format)}</small>
-              <span className="profile-battle-date">{compactDate(match.completedAt??event?.startsAt)}</span>
-            </button>;
-          }):<div className="profile-battle-empty"><strong>No Battles yet.</strong></div>}
-          {battles.length>3&&<span className="battle-carousel-peek" aria-hidden="true"/>}
+      <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory}/>
+
+      <section className="profile-battle-record">
+        <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span></div></div>
+        <div className="battle-carousel-shell">
+          <button type="button" className="battle-carousel-arrow previous" aria-label="Scroll earlier Battles" onClick={()=>scrollBattles(-1)}><ChevronLeft size={22}/></button>
+          <div className="battle-carousel" ref={battleRail}>
+            {battles.length?battles.map(match=>{
+              const event=snapshot.events.find(candidate=>candidate.eventId===match.eventId);
+              const subject=match.participants.find(player=>player.playerId===data.player.playerId);
+              const others=match.participants.filter(player=>player.playerId!==data.player.playerId);
+              const opponents=subject?.team!=null?others.filter(player=>player.team==null||player.team!==subject.team):others;
+              const resultKnown=match.status==='COMPLETED'&&Array.isArray(match.result?.winningPlayerIds)&&match.result!.winningPlayerIds!.length>0;
+              const won=resultKnown&&match.result!.winningPlayerIds!.includes(data.player.playerId);
+              const lost=resultKnown&&!won;
+              const result=won?'WON':lost?'LOST':match.status.replaceAll('_',' ');
+              const opponentsLabel=opponents.length?'vs '+opponents.slice(0,2).map(player=>player.steamName).join(' · ')+(opponents.length>2?` +${opponents.length-2}`:''):formatName(match.format);
+              return <button type="button" className={'profile-battle-card '+(won?'won':lost?'lost':'pending')} key={match.matchId} onClick={()=>openMatch(match.matchId)}>
+                <div className="profile-battle-card-mark"><Sigil kind={match.format==='ONE_V_ONE'?'duel':match.format==='FFA'?'ffa':'team'} size={22}/><span>{event?.title??'League Battle'}</span></div>
+                <span className="profile-battle-result">{result}</span>
+                <strong>{opponentsLabel}</strong>
+                <small>{formatName(match.format)}</small>
+                <span className="profile-battle-date">{compactDate(match.completedAt??event?.startsAt)}</span>
+              </button>;
+            }):<div className="profile-battle-empty"><strong>No Battles yet.</strong></div>}
+            {battles.length>3&&<span className="battle-carousel-peek" aria-hidden="true"/>}
+          </div>
+          <button type="button" className="battle-carousel-arrow next" aria-label="Scroll later Battles" onClick={()=>scrollBattles(1)}><ChevronRight size={22}/></button>
         </div>
-        <button type="button" className="battle-carousel-arrow next" aria-label="Scroll later Battles" onClick={()=>scrollBattles(1)}><ChevronRight size={22}/></button>
-      </div>
-    </section>
+      </section>
+    </>}
   </section>;
 }
 
