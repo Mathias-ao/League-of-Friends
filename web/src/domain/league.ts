@@ -27,7 +27,9 @@ export class LeagueEvent {
     if(remaining>=24*3600000)return count(days,'DAY')+' · '+count(hours%24,'HOUR');
     return count(hours,'HOUR')+' · '+count(minutes%60,'MINUTE');
   }
-  canRsvp(now=Date.now()){return ['PUBLISHED','ACTIVE'].includes(this.record.status)&&(!this.record.signupDeadlineAt||Date.parse(this.record.signupDeadlineAt)>=now);}
+  canRsvp(now=Date.now()){
+    return ['PUBLISHED','ACTIVE'].includes(this.record.status)&&(!this.record.signupDeadlineAt||Date.parse(this.record.signupDeadlineAt)>=now);
+  }
   canCheckIn(now=Date.now()){
     const e=this.record;
     return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>=now);
@@ -49,9 +51,12 @@ export interface GameRecord {gameId:string;gameNumber:number;status:string;playe
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
 export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
-export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];}
-export interface EmperorsFavorPrintable {  code:string;  emperor:string;  serialNumber:number;  total:number;  printLabel:string;}
-export interface EmperorsFavorBatch {  batchId:string;  batchName:string;  count:number;  favors:EmperorsFavorPrintable[];}
+export interface RelationshipTrackSummary {status:string;state:string;stageId:string|null;historicalPeakStageId:string|null;}
+export interface RelationshipChronicleEntry {entryId:string;matchId:string|null;eventId:string|null;seasonId:string|null;playedAt:string|null;kind:string;title:string;text:string;relation:string|null;tracksTouched:string[];}
+export interface PlayerRelationshipSummary {pairId:string;otherPlayer:PlayerRecord;relationshipEngineVersion:string|null;relationshipRulesConfigured:boolean;tracks:{rivalry:RelationshipTrackSummary;hostility:RelationshipTrackSummary;bond:RelationshipTrackSummary};chronicle:RelationshipChronicleEntry[];}
+export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];relationships?:PlayerRelationshipSummary[];}
+export interface EmperorsFavorPrintable {code:string;emperor:string;serialNumber:number;total:number;printLabel:string;}
+export interface EmperorsFavorBatch {batchId:string;batchName:string;count:number;favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
 export const emptySnapshot=():LeagueSnapshot=>({membership:'SIGNED_OUT',viewer:null,season:null,emperor:null,enteredSeason:false,hasLeagueHistory:false,standings:[],players:[],events:[],matches:[]});
 export const OPEN_BATTLE_STATUSES=['READY','ACTIVE','AWAITING_CONFIRMATION'] as const;
@@ -61,63 +66,26 @@ export function isBattleOpen(status:string|null|undefined){
 export function currentLeagueEvent(snapshot:Pick<LeagueSnapshot,'viewer'|'events'|'matches'>,now=Date.now()){
   const viewerId=snapshot.viewer?.playerId;
   const currentBattle=viewerId?snapshot.matches.find(match=>
-    !!match.eventId
-    && isBattleOpen(match.status)
-    && match.participants.some(player=>player.playerId===viewerId)
-    && snapshot.events.some(event=>event.eventId===match.eventId&&event.status!=='COMPLETED')
+    !!match.eventId&&isBattleOpen(match.status)&&match.participants.some(player=>player.playerId===viewerId)&&snapshot.events.some(event=>event.eventId===match.eventId&&event.status!=='COMPLETED')
   ):null;
   if(currentBattle?.eventId){
     const event=snapshot.events.find(candidate=>candidate.eventId===currentBattle.eventId);
     if(event)return event;
   }
-  return snapshot.events.find(event=>event.status==='ACTIVE')
-    ??snapshot.events.find(event=>event.status==='PUBLISHED'&&(!event.startsAt||Date.parse(event.startsAt)>=now));
+  return snapshot.events.find(event=>event.status==='ACTIVE')??snapshot.events.find(event=>event.status==='PUBLISHED'&&(!event.startsAt||Date.parse(event.startsAt)>=now));
 }
-export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){
-  return snapshot.membership==='ACTIVE'&&(snapshot.enteredSeason||snapshot.hasLeagueHistory);
-}
+export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){return snapshot.membership==='ACTIVE'&&(snapshot.enteredSeason||snapshot.hasLeagueHistory);}
 export interface LeagueRepository {
   readonly mode:'preview'|'live';
-
-  load():Promise<LeagueSnapshot>;
-  signIn():Promise<void>;
-  signOut():Promise<void>;
-
-  requestMembership(
-    steamName:string,
-    discordName:string,
-    favor:string
-  ):Promise<void>;
-
-  generateEmperorsFavors(
-    batchName:string,
-    count:number
-  ):Promise<EmperorsFavorBatch>;
-
+  load():Promise<LeagueSnapshot>;signIn():Promise<void>;signOut():Promise<void>;
+  requestMembership(steamName:string,discordName:string,favor:string):Promise<void>;
+  generateEmperorsFavors(batchName:string,count:number):Promise<EmperorsFavorBatch>;
   enterSeason(seasonId:string):Promise<void>;
-
-  rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;
-  checkIn(eventId:string):Promise<void>;
-  formEventMatches(eventId:string):Promise<void>;
-  ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;
-  pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;
-  resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;
-  watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
-  uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;
-  replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;
-  statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
-
-  event(id:string):Promise<EventDetail>;
-  match(id:string):Promise<MatchDetail>;
-  player(id:string):Promise<PlayerProfile>;
-
-  dispute(
-    matchId:string,
-    gameId:string,
-    category:string,
-    reason:string
-  ):Promise<void>;
-
+  rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;checkIn(eventId:string):Promise<void>;formEventMatches(eventId:string):Promise<void>;
+  ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
+  uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
+  event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;
+  dispute(matchId:string,gameId:string,category:string,reason:string):Promise<void>;
   onAuthChange(callback:()=>void):()=>void;
 }
 export class LeagueService {
@@ -133,11 +101,11 @@ export class LeagueService {
 }
 export class RelationshipPolicy {
   static readonly tracks=[
-    {name:'Rivalry',axis:'Gallantry',description:'Repeated, closely contested competition.',stages:['Friction','Competing','Rivalry','Nemesis']},
-    {name:'Enemy',axis:'Treachery',description:'Focused hostility and broken alliances.',stages:['Grudge','Bad Blood','Enemy','Vendetta','Blood Feud','Internecine Strife']},
-    {name:'Friend',axis:'Chivalry',description:'Cooperation, reinforcement and mutual support.',stages:['Friendly','Respect','Honored','Trusted Friend','Blood Brothers']}
+    {name:'Rivalry',axis:'RECIPROCAL CONTEST',description:'Repeated, reciprocal contest between two players.',stages:['Friction','Contest','Rivalry','Nemesis']},
+    {name:'Hostility',axis:'ANTAGONISM',description:'Directed antagonism that becomes a feud only when it is returned.',stages:['Tension','Grudge','Feud','Blood Feud']},
+    {name:'Bond',axis:'COOPERATION',description:'Cooperation, reinforcement and meaningful support between players.',stages:['Fellowship','Comrades','Trusted Allies','Oathbound']}
   ];
-  static canUnlock(e:{model:string;qualified:boolean;rivalryStage:number;enemyStage:number}|null){return e?.model==='AOF_RELATIONSHIPS_V1'&&e.qualified&&(e.rivalryStage>=3||e.enemyStage>=3);}
+  static canUnlock(e:{model:string;qualified:boolean;rivalryStage:number;hostilityStage:number}|null){return e?.model==='AOF_RELATIONSHIP_ENGINE_V2'&&e.qualified&&(e.rivalryStage>=3||e.hostilityStage>=3);}
 }
 export function formatName(format:string|null|undefined){
   const labels:Record<string,string>={ONE_V_ONE:'1v1',TWO_V_TWO:'2v2',THREE_V_THREE:'3v3',FOUR_V_FOUR:'4v4',ASYMMETRIC_TEAM:'Asymmetric teams',FFA:'Free-for-all',BIG_TEAM:'Team battle'};

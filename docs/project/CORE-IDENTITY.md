@@ -1,13 +1,11 @@
 # Age of Friends — Core Identity & Philosophy
 
-Status date: 18 September 2026  
-Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development
+Status date: 2 October 2026  
+Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development.
 
 ## 1. How to use this file
 
 This is the first file to read for any fresh Age of Friends task. It is a continuity map, not a replacement for current code or specialist documents. Read [`CURRENT-STATE.md`](CURRENT-STATE.md) next for the implemented state, known gaps and task routing.
-
-Authority order when sources disagree:
 
 Authority depends on the question:
 
@@ -27,7 +25,7 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 - Technical repository/project name: **League of Friends**.
 - Repository: `Mathias-ao/League-of-Friends`.
 - Product: a private, persistent Age of Empires II: Definitive Edition league for friends.
-- Core loop: real matches become lasting standings, statistics, achievements, player identity, rivalries, War Room activity, and shared league history.
+- Core loop: real matches become lasting standings, statistics, achievements, player identity, relationships, War Room activity, and shared league history.
 - Tone: serious, hardcore, historical, martial, and understated humour.
 - Avoid: generic fantasy, constant jokes, overt history-class parody, and esports clichés.
 - Humor rule: humor is sparse and underplayed so it lands against an otherwise serious historical-war presentation.
@@ -37,18 +35,18 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 
 - Admins steer exceptions; automation runs the normal machinery.
 - Prefer configurable rules and versioned models over hard-coded special cases.
-- League Points, War Room Points, relationship scores, and Gold are separate accounting systems.
+- League Points, War Room Points, relationship state, Reputation and Gold are separate accounting/interpretation systems.
 - A Match is one competitive encounter and may contain one or more Games.
 - One `.aoe2record` represents one Game.
 - The original replay file is a temporary upload, not a permanent system artifact.
 - Canonical evidence is retained permanently. Derived results and interpretations must be reproducible from that evidence.
 - Event configuration must be snapshotted so historical results remain reproducible.
-- Raw replay facts, deterministic reconstructions, inferred analysis, and league scoring must remain separate.
+- Raw replay facts, deterministic reconstructions, inferred analysis, and league interpretation must remain separate.
 - The client may read Firestore directly but must not directly mutate authoritative competition state.
 - Privileged changes run through authenticated Cloud Functions.
 - Processing must be idempotent; corrections and disputes must be auditable.
 - Do not ask players to manually enter post-match statistics. Their required post-match action is replay upload.
-- A result normally becomes final directly, with a small dispute option. A resolved correction invalidates the prior canonical result so only one result contributes to statistics.
+- A result normally becomes final directly, with a small dispute option. A resolved correction invalidates the prior canonical result so only one result contributes to statistics and social interpretation.
 
 ## 4. Current competition identity
 
@@ -78,9 +76,11 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 ## 5. Social and identity systems
 
 ### Player Personality
-Player Personality describes a player's recurring strategic and behavioural tendencies across battles. It describes how they tend to play, not their character, ability, intentions, or value.
 
-Personality is expressed through six evidence-based sliders:
+Player Personality describes a player's recurring strategic and behavioural tendencies across Battles. It describes how they tend to play, not their character, ability, intentions, or value.
+
+Personality is expressed through evidence-based sliders:
+
 - Boomer ↔ Aggressor
 - Cautious ↔ Bold
 - Guerrilla ↔ Frontline Fighter
@@ -89,45 +89,57 @@ Personality is expressed through six evidence-based sliders:
 
 Neither end of a slider is inherently better. Sliders are descriptive tendencies, not performance scores.
 
-Personality is longitudinal and context-sensitive. It requires sufficient eligible battles and should account for format, map, civilization constraints, team role, and other material context. Insufficient evidence produces Developing, not a neutral midpoint.
+Personality is longitudinal and context-sensitive. It requires sufficient eligible Battles and should account for format, map, civilization constraints, team role, and other material context. Insufficient evidence produces Developing, not a neutral midpoint.
 
-Recent evidence may show current tendencies while longer-term evidence provides stability. Individual battles should not materially redefine an established profile.
+Recent evidence may show current tendencies while longer-term evidence provides stability. Individual Battles should not materially redefine an established profile.
 
 Slider definitions, evidence requirements, normalization, weighting, and update rules must remain explicit, versioned, and reproducible.
 
 ### Player Reputation
-three independent, persistent tracks earned from tracked player actions under an explicit, versioned rule set. They represent how a player conducts themselves in battle, not their skill, results, or relationships with specific players.
+
+Player Reputation consists of three independent, persistent tracks earned from tracked player actions under an explicit, versioned rule set. They describe how a player repeatedly conducts themselves in league Battles, not their skill, results, morality, motives, or relationships with specific players.
 
 - **Gallantry** — bold, aggressive, or daring conduct against opponents.
-- **Cruelty** (formerly Treachery) — bRuthless, destructive, or deliberately punishing conduct against opponents.
+- **Cruelty** — ruthless, destructive, or punishing conduct against opponents, described only where the replay evidence supports the underlying actions.
 - **Chivalry** — meaningful protection, assistance, or sacrifice in support of allies.
 
-The tracks are non-exclusive: the same player may develop strongly in more than one. Exact qualifying actions, point values, thresholds, decay and presentation remain to be defined.
+The tracks are non-exclusive: the same player may develop strongly in more than one. Reputation never numerically feeds a pair Relationship and a pair Relationship never numerically feeds Reputation. Both systems may interpret the same underlying Battle evidence independently.
 
-### Player relationships
-Player Relationships are persistent evidence-based paired relationsships between all the players in the league. evidence-based histories between two players. They describe competitive history, not real-world feelings, motives, or character.
+Exact qualifying actions, point values, caps, thresholds, decay, and presentation remain governed by explicit versioned rules. No hidden conversion to League Points, rating, or War Room Points is permitted.
 
-- **Rivalry** — sustained competitive significance between players whose encounters repeatedly create meaningful stakes.
-- **Hostility** — sustained adversarial history shaped by consequential opposition, pressure, reversals, or unresolved conflict.
-- **Bond** — sustained cooperative history built through meaningful shared battles, support, and success as allies.
+### Player Relationships
 
-Tracks are independent and may coexist.
+Player Relationships are persistent, evidence-based histories between two league players. They describe what has developed through their Battles together and against one another, not real-world feelings, motives, morality, or character.
 
-Progression requires meaningful evidence across encounters, not participation alone. Mutual states should require reciprocal contribution; one-sided history may be recorded without declaring a mutual relationship.
+- **Rivalry** — sustained competitive significance created by repeated direct contest.
+- **Hostility** — sustained adversarial history shaped by directed antagonism, pressure, reversals, or unresolved conflict.
+- **Bond** — sustained cooperative history built through meaningful shared Battles, reinforcement, assistance, and coordinated action.
 
-Relationships may emerge, escalate, cool, resolve, or begin a new chapter. Turning points such as rematches, reversals, alliances, or decisive outcomes may change the active state without erasing prior history.
+Tracks are independent and may coexist. A pair may therefore be rivals and bonded allies, or retain a historical Bond while Hostility rises.
 
-Exact evidence, stages, thresholds, cooling rules, and visibility remain defined by future explicit, versioned rules.
+Relationship progression is directional beneath the pair-level presentation. Early stages may be one-sided, but **relationship level three and above requires reciprocity**. A unilateral grudge cannot become a Feud, and a unilateral competitive fixation cannot become a deep mutual Rivalry, until both players have supplied qualifying directed evidence.
 
-Relationship effects must remain competitively neutral. They may influence presentation, matchmaking preference, War Room activity, challenges, and historical recognition, but never competitive advantage.
+Relationship cooling is primarily **event-driven, not calendar-driven**:
+
+- When established opponents are matched against one another and qualified interaction coverage shows that they do not meaningfully engage each other, Rivalry and Hostility may become Dormant.
+- Merely being assigned to the same team does not cool Hostility.
+- When allied players meaningfully cooperate through reinforcement, defensive assistance, cooperative attacks, or other qualified support, Bond may grow and Hostility may cool.
+- When allied players have sufficient interaction coverage but fail to cooperate, existing Hostility may worsen rather than improve merely because they shared a team.
+- Antagonistic action against an established Bond damages that Bond more severely than the same antagonism would affect an unestablished relationship. Exact magnitude remains a configurable relationship-rule decision.
+- Inactivity without a shared Battle/Event does not by itself erase relationship history. An inactive presentation may be Dormant while historical peaks and the Chronicle remain intact.
+
+Every pair has a **Relationship Chronicle**: a chronological, evidence-backed account of recorded turning points. The player profile exposes the Chronicle as a parchment-style archive. Chronicle prose must be deterministic from stored facts and must never invent motive, success, intent, or unobserved drama.
+
+Relationship effects remain competitively neutral. They may influence presentation, War Room activity, challenges, matchmaking preference where separately approved, and historical recognition, but never grant competitive advantage.
 
 Player Relationships are separate from Player Reputation: Reputation belongs to one player; Rivalry, Hostility and Bond belong to a player pair.
 
 ### Player portraits
 
-Player Portraits represent a player's persistent league identity, derived from sustained evidence across battles and seasons.
+Player Portraits represent a player's persistent league identity, derived from sustained evidence across Battles and seasons.
 
-Portrait progression should reflect stable tendencies, not isolated games, event formats, civilization restrictions, or temporary roles.
+Portrait progression should reflect stable tendencies, not isolated Games, event formats, civilization restrictions, or temporary roles.
+
 - New players begin in a neutral newcomer state.
 - Portrait identities unlock only after sufficient evidence and minimum sample requirements.
 - Recent evidence may influence current expression; long-term evidence provides stability.
@@ -140,7 +152,7 @@ Players may choose among identities they have legitimately unlocked; evidence de
 
 Cosmetic elements, titles, equipment, and other distinctions are earned separately through achievements and notable accomplishments.
 
-Exact identity definitions, eligibility thresholds, confidence rules, weighting, and update behavior remain governed by future explicit, versioned rules.
+Exact identity definitions, eligibility thresholds, confidence rules, weighting, and update behavior remain governed by explicit, versioned rules.
 
 ## 6. Technical architecture
 
@@ -150,17 +162,16 @@ Uploaded recordings are converted into trustworthy, versioned evidence and then 
 
 The system keeps observed facts separate from reconstructions and interpretations. All processing must be traceable, repeatable and resistant to duplicate or corrected data.
 
-
 ## 7. Replay-analysis truth model
 
-`CanonicalReplay 1.1` is the current durable source of replay evidence; the original 1.0 contract is archived as an explicit predecessor. TownBell’s 320-metric structure remains a useful capability benchmark and reporting layer, not the Age of Friends data model.
+`CanonicalReplay 1.1` is the current durable source of replay evidence; the original 1.0 contract is archived as an explicit predecessor. TownBell’s metric structure remains a useful capability benchmark and reporting layer, not the Age of Friends data model.
 
 Replay information is kept in four distinct layers:
 
 1. **Observed evidence:** information directly present in the recording.
 2. **Reconstructed evidence:** results produced by declared, deterministic rules.
 3. **Inferred analysis:** estimates based on documented models, thresholds and confidence.
-4. **League interpretation:** statistics, ratings, Gallantry, Treachery, Chivalry and other versioned Age of Friends rules.
+4. **League interpretation:** statistics, ratings, Reputation, Relationships, awards and other versioned Age of Friends rules.
 
 A recording contains an initial state followed by player commands; it is not a complete record of game state at every moment. The system must therefore describe evidence honestly. A queued unit is not necessarily trained, a placement command is not a completed building, and inferred combat does not prove kills or damage.
 
@@ -170,11 +181,10 @@ Diplomacy and player interaction are time-sensitive and directional. Evidence is
 
 Every statistic and interpretation must remain traceable to its evidence and model version. AI may explain or narrate established findings, but it must never invent match facts.
 
-
 ## 8. Document authority
 
 GitHub is the source of truth for Age of Friends implementation and maintained project documentation.
 
 CORE-IDENTITY.md defines the lasting product vision and locked principles. CURRENT-STATE.md records implementation status and active priorities. Specialist architecture, replay, brand, season and event documents govern their respective areas without overriding the core identity.
 
-The detailed artifact list belongs in docs/replay-foundation/README.md.
+The detailed artifact list belongs in `docs/replay-foundation/README.md`.

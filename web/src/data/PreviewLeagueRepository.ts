@@ -1,6 +1,7 @@
 import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult} from '../domain/league';
 import {lombardia} from './content';
 import {illustrativeGame} from './statisticsFixtures';
+import {previewRelationshipData} from './relationshipPreview';
 import {EXPERIENCE_VERSION,type StatisticsScope,type StatisticsDataset} from '../domain/statistics';
 /** Explicitly illustrative and memory-only. Never mutates real league data. */
 export class PreviewLeagueRepository implements LeagueRepository {
@@ -70,7 +71,8 @@ export class PreviewLeagueRepository implements LeagueRepository {
   }
   async player(id:string):Promise<PlayerProfile>{
     const p=this.state.players.find(p=>p.playerId===id);if(!p)throw new Error('Player not found.');
-    return {player:p,lifetime:{competition:null},activeSeason:{leaguePoints:p.leaguePoints??0,competition:{matchesPlayed:(p.wins??0)+(p.losses??0),matchesWon:p.wins??0,matchesLost:p.losses??0}},achievements:[],opponents:[],teammates:[]};
+    const social=previewRelationshipData(id,this.state.players,this.state.matches);
+    return {player:p,lifetime:{competition:null},activeSeason:{leaguePoints:p.leaguePoints??0,competition:{matchesPlayed:(p.wins??0)+(p.losses??0),matchesWon:p.wins??0,matchesLost:p.losses??0}},achievements:[],opponents:social.opponents,teammates:social.teammates,relationships:social.relationships};
   }
   async dispute(id:string,gameId:string,category:string,reason:string){
     const m=this.state.matches.find(m=>m.matchId===id);

@@ -66,11 +66,13 @@ test('countdown respects 72-hour and 24-hour boundaries without a fabricated dat
   assert.equal(event(18.5).countdown(now),'18 HOURS · 30 MINUTES');
   assert.equal(new LeagueEvent({eventId:'e',title:'E',status:'PUBLISHED',startsAt:null}).countdown(now),'DATE TO BE ANNOUNCED');
 });
-test('legacy or unqualified relationship scores never open the War Room',()=>{
+test('only qualified Relationship V2 rivalry or hostility at level three opens the War Room',()=>{
   assert.equal(RelationshipPolicy.canUnlock(null),false);
-  assert.equal(RelationshipPolicy.canUnlock({model:'legacy',qualified:true,rivalryStage:8,enemyStage:8}),false);
-  assert.equal(RelationshipPolicy.canUnlock({model:'AOF_RELATIONSHIPS_V1',qualified:false,rivalryStage:3,enemyStage:0}),false);
-  assert.equal(RelationshipPolicy.canUnlock({model:'AOF_RELATIONSHIPS_V1',qualified:true,rivalryStage:2,enemyStage:3}),true);
+  assert.equal(RelationshipPolicy.canUnlock({model:'legacy',qualified:true,rivalryStage:8,hostilityStage:8}),false);
+  assert.equal(RelationshipPolicy.canUnlock({model:'AOF_RELATIONSHIP_ENGINE_V2',qualified:false,rivalryStage:3,hostilityStage:3}),false);
+  assert.equal(RelationshipPolicy.canUnlock({model:'AOF_RELATIONSHIP_ENGINE_V2',qualified:true,rivalryStage:2,hostilityStage:2}),false);
+  assert.equal(RelationshipPolicy.canUnlock({model:'AOF_RELATIONSHIP_ENGINE_V2',qualified:true,rivalryStage:3,hostilityStage:0}),true);
+  assert.equal(RelationshipPolicy.canUnlock({model:'AOF_RELATIONSHIP_ENGINE_V2',qualified:true,rivalryStage:0,hostilityStage:3}),true);
 });
 test('a dispute is limited to a participant and sets correction-review state',async()=>{
   const repo=new PreviewLeagueRepository();

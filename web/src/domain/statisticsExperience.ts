@@ -66,7 +66,7 @@ export interface PlayerPersonalitySliderPresentation {
 export const REPUTATION_ESSENCES=[
   {id:'gallantry',label:'Gallantry',tone:'gold',meaning:'Renown & Daring Feats'},
   {id:'chivalry',label:'Chivalry',tone:'blue',meaning:'Fealty & Kinship'},
-  {id:'treachery',label:'Cruelty',tone:'red',meaning:'Cruelty & Deceit'}
+  {id:'cruelty',label:'Cruelty',tone:'red',meaning:'Cruelty & Deceit'}
 ] as const;
 export type ReputationEssenceId=typeof REPUTATION_ESSENCES[number]['id'];
 
@@ -93,17 +93,16 @@ export const FREEHOLDER_TOOLTIP='An unwritten history. The court has not yet see
 
 export const RELATIONSHIP_TRACKS=[
   {
-    id:'rivalry',label:'Rivalry',reputation:'Gallantry',
+    id:'rivalry',label:'Rivalry',
     stages:['Friction','Contest','Rivalry','Nemesis'],revealStage:3
   },
   {
-    id:'hostility',label:'Hostility',reputation:'Cruelty',
-    stages:['Grudge','Bad Blood','Enmity','Blood Feud'],revealStage:3,
-    secretLegendaryStage:'Internecine Strife'
+    id:'hostility',label:'Hostility',
+    stages:['Tension','Grudge','Feud','Blood Feud'],revealStage:3
   },
   {
-    id:'friendship',label:'Friendship',reputation:'Chivalry',
-    stages:['Familiarity','Respect','Alliance','Blood Brothers'],revealStage:3
+    id:'bond',label:'Bond',
+    stages:['Fellowship','Comrades','Trusted Allies','Oathbound'],revealStage:3
   }
 ] as const;
 

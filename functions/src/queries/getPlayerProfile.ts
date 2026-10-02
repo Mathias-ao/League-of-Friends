@@ -55,6 +55,40 @@ interface RelationshipDocument {
   lastPlayedAt?: Timestamp | null;
 }
 
+interface ChronicleEntryDocument {
+  entryId?: string;
+  matchId?: string;
+  eventId?: string | null;
+  seasonId?: string | null;
+  playedAtMs?: number;
+  kind?: string;
+  title?: string;
+  text?: string;
+  relation?: string;
+  tracksTouched?: string[];
+}
+
+interface RelationshipTrackDocument {
+  status?: string;
+  state?: string;
+  stageId?: string | null;
+  historicalPeakStageId?: string | null;
+}
+
+interface PairRelationshipDocument {
+  pairId?: string;
+  playerOneId?: string;
+  playerTwoId?: string;
+  relationshipEngineVersion?: string;
+  relationshipRulesConfigured?: boolean;
+  relationship?: {
+    rivalry?: RelationshipTrackDocument;
+    hostility?: RelationshipTrackDocument;
+    bond?: RelationshipTrackDocument;
+  } | null;
+  chronicle?: ChronicleEntryDocument[];
+}
+
 interface AchievementDocument {
   achievementId?: string;
   name?: string;
@@ -111,6 +145,15 @@ function replayStats(data: ReplayStatsDocument | null) {
   };
 }
 
+function publicRelationshipTrack(track: RelationshipTrackDocument | undefined) {
+  return {
+    status: track?.status ?? "UNCONFIGURED",
+    state: track?.state ?? "UNESTABLISHED",
+    stageId: track?.stageId ?? null,
+    historicalPeakStageId: track?.historicalPeakStageId ?? null,
+  };
+}
+
 export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
   const playerId = request.data.playerId?.trim() || actor.playerId;
@@ -126,6 +169,8 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
     opponentsSnapshot,
     teammatesSnapshot,
     lifetimeRecordsSnapshot,
+    relationshipAsOneSnapshot,
+    relationshipAsTwoSnapshot,
   ] = await Promise.all([
     playerRef.get(),
     db.collection(collections.players).get(),
@@ -136,6 +181,8 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
     playerRef.collection("opponentStats").get(),
     playerRef.collection("teammateStats").get(),
     db.collection(collections.leagueRecords).get(),
+    db.collection(collections.relationships).where("playerOneId", "==", playerId).get(),
+    db.collection(collections.relationships).where("playerTwoId", "==", playerId).get(),
   ]);
 
   if (!playerSnapshot.exists) throw new HttpsError("not-found", "Player not found.");
@@ -191,6 +238,40 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
     })
     .sort((left, right) => right.matchesTogether - left.matchesTogether || left.player.steamName.localeCompare(right.player.steamName));
 
+  const pairRelationships = [...relationshipAsOneSnapshot.docs, ...relationshipAsTwoSnapshot.docs]
+    .map((document) => {
+      const data = document.data() as PairRelationshipDocument;
+      const otherPlayerId = data.playerOneId === playerId ? data.playerTwoId : data.playerOneId;
+      if (!otherPlayerId) return null;
+      return {
+        pairId: data.pairId ?? document.id,
+        otherPlayer: publicPlayer(otherPlayerId, players.get(otherPlayerId)),
+        relationshipEngineVersion: data.relationshipEngineVersion ?? null,
+        relationshipRulesConfigured: data.relationshipRulesConfigured === true,
+        tracks: {
+          rivalry: publicRelationshipTrack(data.relationship?.rivalry),
+          hostility: publicRelationshipTrack(data.relationship?.hostility),
+          bond: publicRelationshipTrack(data.relationship?.bond),
+        },
+        chronicle: (data.chronicle ?? [])
+          .map((entry) => ({
+            entryId: entry.entryId ?? `${entry.matchId ?? "unknown"}:${entry.kind ?? "ENTRY"}`,
+            matchId: entry.matchId ?? null,
+            eventId: entry.eventId ?? null,
+            seasonId: entry.seasonId ?? null,
+            playedAt: Number.isFinite(entry.playedAtMs) ? new Date(Number(entry.playedAtMs)).toISOString() : null,
+            kind: entry.kind ?? "ENTRY",
+            title: entry.title ?? "Recorded encounter",
+            text: entry.text ?? "A shared Battle was entered into the chronicle.",
+            relation: entry.relation ?? null,
+            tracksTouched: entry.tracksTouched ?? [],
+          }))
+          .sort((left, right) => (right.playedAt ?? "").localeCompare(left.playedAt ?? "")),
+      };
+    })
+    .filter((relationship): relationship is NonNullable<typeof relationship> => relationship != null)
+    .sort((left, right) => left.otherPlayer.steamName.localeCompare(right.otherPlayer.steamName));
+
   const activeAchievements = achievementsSnapshot.docs
     .map((document) => ({ awardId: document.id, ...document.data() as AchievementDocument }))
     .filter((achievement) => achievement.status === "ACTIVE")
@@ -210,7 +291,7 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
     .filter((record) => (record.holders ?? []).some((holder) => holder.playerId === playerId));
 
   return {
-    schemaVersion: "PLAYER_PROFILE_V1",
+    schemaVersion: "PLAYER_PROFILE_V2",
     generatedAt: new Date().toISOString(),
     player: {
       ...publicPlayer(playerId, player),
@@ -238,5 +319,6 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
     ...(playerId === actor.playerId ? {achievementCollection: activeAchievements} : {}),
     opponents: relationships(opponentsSnapshot),
     teammates: relationships(teammatesSnapshot),
+    relationships: pairRelationships,
   };
 });
