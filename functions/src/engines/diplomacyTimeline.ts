@@ -13,6 +13,7 @@ export interface ReplayMoment {
 
 export type DiplomacyStance = "ALLY" | "NEUTRAL" | "ENEMY" | "UNKNOWN";
 export type DiplomacyCoverage = "QUALIFIED" | "UNAVAILABLE";
+export type DiplomacyChangeEffectQualification = "COMMAND_ONLY" | "EFFECTIVE_STATE_QUALIFIED";
 export type PairDiplomacyState =
   | "MUTUAL_ALLIANCE"
   | "MUTUAL_HOSTILITY"
@@ -22,6 +23,11 @@ export type PairDiplomacyState =
   | "CONFLICTED"
   | "UNKNOWN";
 
+/**
+ * InitialDiplomacyEdge is deliberately an effective-state input. Raw header
+ * vectors do not belong here until an extraction adapter has qualified and
+ * normalized their semantics.
+ */
 export interface InitialDiplomacyEdge {
   fromPlayerId: number;
   toPlayerId: number;
@@ -29,6 +35,10 @@ export interface InitialDiplomacyEdge {
   sourceVersion: string;
 }
 
+/**
+ * A decoded diplomacy action is not automatically proof that the effective
+ * game state changed. `effectQualification` keeps those two claims separate.
+ */
 export interface RawDiplomacyChange {
   eventId: string;
   atMs: number;
@@ -38,12 +48,14 @@ export interface RawDiplomacyChange {
   rawMode: number | null;
   rawCommandId: number | null;
   sourceVersion: string;
+  effectQualification: DiplomacyChangeEffectQualification;
 }
 
 export interface NormalizedDiplomacyChange extends RawDiplomacyChange {
-  stance: DiplomacyStance;
-  previousStance: DiplomacyStance;
-  changed: boolean;
+  commandedStance: DiplomacyStance;
+  previousEffectiveStance: DiplomacyStance;
+  effectiveStanceAfter: DiplomacyStance;
+  effectiveStateChanged: boolean;
   mappingVersion: typeof DIPLOMACY_ACTION_MODE_MAP_VERSION;
 }
 
@@ -70,8 +82,10 @@ export interface DiplomacyTimeline {
   diagnostics: {
     missingInitialEdges: number;
     unknownInitialEdges: number;
-    unknownModeChanges: number;
-    noOpChanges: number;
+    unknownModeCommands: number;
+    commandOnlyChanges: number;
+    qualifiedEffectiveChanges: number;
+    qualifiedNoOpChanges: number;
   };
 }
 
@@ -109,9 +123,10 @@ function sameMoment(left: ReplayMoment, right: ReplayMoment): boolean {
 }
 
 /**
+ * This maps the payload of the observed diplomacy ACTION command only. It does
+ * not by itself claim that the game accepted the command or changed state.
  * Runtime diplomacy action modes are a separate integer domain from header
- * diplomacy values. The mapping is pinned to AoE2's diplomacy action stance
- * enum: ally=0, neutral=1, enemy=3. Unsupported values remain UNKNOWN.
+ * diplomacy values: ally=0, neutral=1, enemy=3.
  */
 export function normalizeDiplomacyActionMode(rawMode: number | null): DiplomacyStance {
   if (rawMode === 0) return "ALLY";
@@ -191,6 +206,9 @@ function validateAndSortChanges(
       `Diplomacy change ${change.eventId}`,
     );
     if (!change.sourceVersion) throw new Error(`Diplomacy change ${change.eventId} sourceVersion is required.`);
+    if (change.effectQualification !== "COMMAND_ONLY" && change.effectQualification !== "EFFECTIVE_STATE_QUALIFIED") {
+      throw new Error(`Diplomacy change ${change.eventId} has an unsupported effectQualification.`);
+    }
 
     const momentKey = `${directedKey(change.fromPlayerId, change.toPlayerId)}@${change.atMs}:${change.operationOrdinal}`;
     if (directedMoments.has(momentKey)) {
@@ -209,7 +227,13 @@ function normalizeChanges(
   players: number[],
   initialByDirection: Map<string, InitialDiplomacyEdge>,
   changes: RawDiplomacyChange[],
-): { changes: NormalizedDiplomacyChange[]; unknownModeChanges: number; noOpChanges: number } {
+): {
+  changes: NormalizedDiplomacyChange[];
+  unknownModeCommands: number;
+  commandOnlyChanges: number;
+  qualifiedEffectiveChanges: number;
+  qualifiedNoOpChanges: number;
+} {
   const current = new Map<string, DiplomacyStance>();
   for (const from of players) {
     for (const to of players) {
@@ -219,25 +243,46 @@ function normalizeChanges(
   }
 
   const normalized: NormalizedDiplomacyChange[] = [];
-  let unknownModeChanges = 0;
-  let noOpChanges = 0;
+  let unknownModeCommands = 0;
+  let commandOnlyChanges = 0;
+  let qualifiedEffectiveChanges = 0;
+  let qualifiedNoOpChanges = 0;
+
   for (const change of changes) {
     const key = directedKey(change.fromPlayerId, change.toPlayerId);
-    const previousStance = current.get(key) ?? "UNKNOWN";
-    const stance = normalizeDiplomacyActionMode(change.rawMode);
-    if (stance === "UNKNOWN") unknownModeChanges += 1;
-    const changed = stance !== previousStance;
-    if (!changed) noOpChanges += 1;
+    const previousEffectiveStance = current.get(key) ?? "UNKNOWN";
+    const commandedStance = normalizeDiplomacyActionMode(change.rawMode);
+    if (commandedStance === "UNKNOWN") unknownModeCommands += 1;
+
+    let effectiveStanceAfter = previousEffectiveStance;
+    let effectiveStateChanged = false;
+    if (change.effectQualification === "COMMAND_ONLY") {
+      commandOnlyChanges += 1;
+    } else if (commandedStance !== "UNKNOWN") {
+      effectiveStanceAfter = commandedStance;
+      effectiveStateChanged = effectiveStanceAfter !== previousEffectiveStance;
+      if (effectiveStateChanged) qualifiedEffectiveChanges += 1;
+      else qualifiedNoOpChanges += 1;
+      current.set(key, effectiveStanceAfter);
+    }
+
     normalized.push({
       ...change,
-      stance,
-      previousStance,
-      changed,
+      commandedStance,
+      previousEffectiveStance,
+      effectiveStanceAfter,
+      effectiveStateChanged,
       mappingVersion: DIPLOMACY_ACTION_MODE_MAP_VERSION,
     });
-    if (changed) current.set(key, stance);
   }
-  return { changes: normalized, unknownModeChanges, noOpChanges };
+
+  return {
+    changes: normalized,
+    unknownModeCommands,
+    commandOnlyChanges,
+    qualifiedEffectiveChanges,
+    qualifiedNoOpChanges,
+  };
 }
 
 function initialStance(
@@ -257,10 +302,14 @@ function stanceFromEvidence(
 ): DiplomacyStance {
   let stance = initialStance(initialByDirection, fromPlayerId, toPlayerId);
   for (const change of changes) {
-    if (change.fromPlayerId !== fromPlayerId || change.toPlayerId !== toPlayerId || !change.changed) continue;
+    if (
+      change.fromPlayerId !== fromPlayerId ||
+      change.toPlayerId !== toPlayerId ||
+      !change.effectiveStateChanged
+    ) continue;
     const changeMoment = { atMs: change.atMs, operationOrdinal: change.operationOrdinal };
     if (compareReplayMoments(changeMoment, moment) > 0) break;
-    stance = change.stance;
+    stance = change.effectiveStanceAfter;
   }
   return stance;
 }
@@ -281,7 +330,7 @@ function buildPairSegments(
       const two = players[right];
       const boundaries: ReplayMoment[] = [start, end];
       for (const change of changes) {
-        if (!change.changed) continue;
+        if (!change.effectiveStateChanged) continue;
         const belongsToPair =
           (change.fromPlayerId === one && change.toPlayerId === two) ||
           (change.fromPlayerId === two && change.toPlayerId === one);
@@ -368,8 +417,10 @@ export function buildDiplomacyTimeline(input: {
     diagnostics: {
       missingInitialEdges,
       unknownInitialEdges,
-      unknownModeChanges: normalized.unknownModeChanges,
-      noOpChanges: normalized.noOpChanges,
+      unknownModeCommands: normalized.unknownModeCommands,
+      commandOnlyChanges: normalized.commandOnlyChanges,
+      qualifiedEffectiveChanges: normalized.qualifiedEffectiveChanges,
+      qualifiedNoOpChanges: normalized.qualifiedNoOpChanges,
     },
   };
 }
