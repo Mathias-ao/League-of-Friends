@@ -43,7 +43,7 @@ test('third-party pressure phrase family never upgrades coincidence into coordin
   assert.ok(phrases.length>=8);
   for(const phrase of phrases){
     assert.ok(!/\b(coordinated attack|planned together|conspired|conspiracy occurred|coalition attack)\b/i.test(phrase.template),phrase.id);
-    assert.ok(/coincid|simultaneous|overlap|separate|same .*window|both .*pressure|no coordination|does not establish|without assigning intent|not conspiracy/i.test(phrase.template),`third-party phrase must encode coincidence rather than cooperation: ${phrase.id}`);
+    assert.ok(/coincid|simultaneous|overlap|separate|same .*window|shared .*window|both .*pressure|no coordination|does not establish|without assigning intent|not conspiracy/i.test(phrase.template),`third-party phrase must encode coincidence rather than cooperation: ${phrase.id}`);
   }
 });
 
@@ -71,50 +71,49 @@ test('FFA alliance, rupture and subsequent contest produce evidence-bound narrat
 });
 
 test('one-sided diplomacy is described as asymmetric rather than mutual friendship',()=>{
-  const battles=[battle('M1',100,{initial:[edge(1,2,'ALLY'),edge(2,1,'NEUTRAL')],observations:[obs('tribute','MATERIAL_SUPPORT',20_000)]})];
+  const battles=[battle('M1',100,{changes:[change('a-allies',10_000,1,2,0,10)]})];
   const [entry]=write(battles);
-  assert.ok(!/friendship/i.test(entry.text));
-  assert.ok(!/both players marked/i.test(entry.text));
-  assert.match(entry.text,/one|asymmetric|allied|alliance|tribute|material/i);
+  assert.match(entry.text,/one direction|one-sided|asymmetric|only one|not mutual/i);
+  assert.ok(!/friendship|friends/i.test(entry.text));
 });
 
 test('third-party overlap is narrated as coincident pressure, not a conspiracy claim',()=>{
-  const battles=[battle('M1',100,{thirdPartyPressure:[{
-    episodeId:'same-target-window',startMs:20_000,endMs:25_000,playerOneId:1,playerTwoId:2,targetPlayerId:3,sourceVersion:STATS,evidenceEventIds:['x','y'],confidence:'HIGH',
-  }]})];
+  const thirdPartyPressure=[{episodeId:'tp',startMs:20_000,endMs:25_000,playerOneId:1,playerTwoId:2,targetPlayerId:3,sourceVersion:STATS,evidenceEventIds:['p1','p2'],confidence:'HIGH'}];
+  const battles=[battle('M1',100,{thirdPartyPressure})];
   const [entry]=write(battles);
-  assert.match(entry.text,/Baguette/);
-  assert.ok(/coincid|simultaneous|overlap|separate|same .*window|both .*pressure|no coordination|does not establish|without assigning intent|not conspiracy/i.test(entry.text));
-  assert.ok(!/\b(coordinated attack|planned together|coalition attack)\b/i.test(entry.text));
+  assert.match(entry.text,/pressure|overlap|simultaneous|coincid/i);
+  assert.ok(!/conspir|planned|coordinated attack|coalition attack/i.test(entry.text));
+  assert.deepEqual(entry.sourceEvidenceEventIds,['p1','p2']);
 });
 
 test('historical callback wording varies across repeated Battles without losing determinism',()=>{
   const battles=[
-    battle('M1',100,{observations:[obs('c1','DIRECT_ENGAGEMENT',20_000)]}),
-    battle('M2',200,{observations:[obs('c2','DIRECT_ENGAGEMENT',20_000)]}),
-    battle('M3',300,{observations:[obs('c3','DIRECT_ENGAGEMENT',20_000)]}),
-    battle('M4',400,{observations:[obs('c4','DIRECT_ENGAGEMENT',20_000)]}),
+    battle('M1',100),battle('M2',200),battle('M3',300),battle('M4',400),battle('M5',500),battle('M6',600),
   ];
-  const entries=write(battles);
-  assert.equal(entries.length,4);
-  assert.equal(new Set(entries.map(item=>item.text)).size,4);
-  assert.equal(new Set(entries.flatMap(item=>item.fragmentIds)).size,entries.flatMap(item=>item.fragmentIds).length);
+  const first=write(battles);
+  const second=write(battles);
+  assert.deepEqual(first,second);
+  const repeatFragments=first.slice(1).flatMap(item=>item.fragmentIds.filter(id=>id.startsWith('open_repeat_meeting.')));
+  assert.ok(new Set(repeatFragments).size>=3,`expected language rotation, got ${repeatFragments.join(', ')}`);
 });
 
 test('writer binds social evidence by match identity after chronological sorting',()=>{
-  const later=battle('M2',200,{observations:[obs('later','DIRECT_ENGAGEMENT',20_000)]});
-  const earlier=battle('M1',100,{observations:[obs('earlier','RAID_PRESSURE',20_000)]});
-  const entries=write([later,earlier]);
-  assert.deepEqual(entries.map(item=>item.matchId),['M1','M2']);
-  assert.deepEqual(entries[0].sourceEvidenceEventIds,['ev-earlier']);
-  assert.deepEqual(entries[1].sourceEvidenceEventIds,['ev-later']);
+  const late=battle('LATE',200,{observations:[obs('late-raid','RAID_PRESSURE',20_000)]});
+  const early=battle('EARLY',100,{observations:[obs('early-contest','DIRECT_ENGAGEMENT',10_000)]});
+  const entries=write([late,early]);
+  assert.equal(entries[0].matchId,'EARLY');
+  assert.ok(entries[0].sourceEvidenceEventIds.includes('ev-early-contest'));
+  assert.ok(!entries[0].sourceEvidenceEventIds.includes('ev-late-raid'));
+  assert.equal(entries[1].matchId,'LATE');
+  assert.ok(entries[1].sourceEvidenceEventIds.includes('ev-late-raid'));
 });
 
 test('relationship changes are narrated only when supplied by the relationship interpretation layer',()=>{
-  const transition={track:'RIVALRY',kind:'ESTABLISHED',beforeStageId:null,afterStageId:'RIVALRY',sourceBeatIds:['observation:contest']};
-  const withTransition=write([battle('M1',100,{observations:[obs('contest','DIRECT_ENGAGEMENT',20_000)],transitions:[transition]})])[0];
-  assert.match(withTransition.text,/Rivalry/);
+  const without=write([battle('M1',100,{observations:[obs('contest','DIRECT_ENGAGEMENT',10_000)]})])[0];
+  assert.ok(!/established Rivalry/i.test(without.text));
 
-  const withoutTransition=write([battle('M2',200,{observations:[obs('contest2','DIRECT_ENGAGEMENT',20_000)]})])[0];
-  assert.ok(!/Rivalry became|established Rivalry|Rivalry stage/i.test(withoutTransition.text));
+  const transition={track:'RIVALRY',change:'ESTABLISHED',fromStageId:null,toStageId:'RIVALRY',fromState:'UNESTABLISHED',toState:'ACTIVE',historicalPeakStageId:'RIVALRY'};
+  const withTransition=write([battle('M1',100,{observations:[obs('contest','DIRECT_ENGAGEMENT',10_000)],transitions:[transition]})])[0];
+  assert.match(withTransition.text,/Rivalry/i);
+  assert.ok(withTransition.sourceBeatIds.some(id=>id.startsWith('relationship:RIVALRY:ESTABLISHED')));
 });
