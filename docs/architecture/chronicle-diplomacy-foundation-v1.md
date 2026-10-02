@@ -1,16 +1,18 @@
 # Age of Friends — Chronicle Diplomacy Foundation V1
 
-Status: isolated semantic foundation. This document does not activate Chronicle Story Engine prose, relationship scoring, upload persistence, or player-facing behavior.
+Status: isolated semantic foundation. This document does not activate Chronicle Story Engine prose, Relationship scoring, replay-upload persistence, or player-facing behavior.
 
 ## Purpose
 
 AoF needs a trustworthy temporal diplomacy model before FFA and unlocked-diplomacy Battles can contribute to Relationship or Chronicle interpretation.
 
-The central rule is:
+The central rules are:
 
-> Diplomacy is a directed state at a replay moment, not a Battle-wide team label.
+> Diplomacy is directed and temporal, not a Battle-wide team label.
 
-A replay moment is ordered by both game-clock milliseconds and canonical `operationOrdinal`. Two actions can share the same millisecond and still occur in a meaningful order.
+> A recorded diplomacy command is not automatically proof that the effective diplomacy state changed.
+
+Both rules are required for AoF's evidence boundary.
 
 ## Scope of this slice
 
@@ -32,15 +34,33 @@ This slice deliberately does **not** implement:
 
 Those layers must consume this foundation only after its semantics are validated.
 
+## Current production-evidence state
+
+The CanonicalReplay schema contains an `initialDiplomacy` field, but the current exporter does not populate it. `replay-tools/parse_replay.py` retains per-player header diplomacy as `initialDiplomacyRaw` and currently writes:
+
+```text
+initialDiplomacy: []
+```
+
+The extraction coverage also deliberately treats runtime diplomacy as directed command evidence rather than qualified effective state. The existing controlled-fixture plan in `replay-tools/tests/CONTROLLED-FIXTURES.md` explicitly requires an unlocked-team experiment in which one player changes stance unilaterally, the other later responds, and the first reverses. It requires command order/raw modes to be checked separately from effective diplomacy/UI behavior.
+
+Therefore this foundation must remain inactive for effective FFA relationship interpretation until that evidence gap is closed.
+
 ## Source boundary
 
-The adapter consumes canonical normalized initial diplomacy plus canonical diplomacy-change replay events.
+### Initial state
 
-Canonical initial stances are accepted as `ally`, `neutral`, `enemy`, or unknown. Missing or unrecognized directed initial edges remain `UNKNOWN`.
+`InitialDiplomacyEdge` represents a **qualified effective initial state**. Raw header vectors do not enter the timeline directly.
 
-V1 does not fall back to an independently interpreted raw header matrix. If canonical initial diplomacy is absent, this layer reports unavailable coverage rather than silently switching evidence domains.
+The canonical adapter consumes only normalized canonical `initialDiplomacy` edges. If canonical initial diplomacy is absent or partial, the corresponding directed stance remains `UNKNOWN`.
 
-Runtime diplomacy changes preserve:
+V1 does not silently fall back to `initialDiplomacyRaw`.
+
+The pinned `mgz-fast` parser does retain a per-player integer diplomacy vector. Upstream parser structure identifies this as the player's `my_diplomacy` vector and distinguishes it from a separate `their_diplomacy` byte vector. This is useful reverse-engineering evidence, but AoF does not promote those raw values into canonical effective state without fixture qualification.
+
+### Runtime commands
+
+Canonical `command.diplomacy_change` events retain:
 
 - actor;
 - target;
@@ -50,20 +70,29 @@ Runtime diplomacy changes preserve:
 - raw command id;
 - canonical source version.
 
-The runtime stance mapping is separately versioned. AoE2 diplomacy action modes are interpreted as:
+The action payload mapping is separately versioned:
 
-- `0` → Ally
-- `1` → Neutral
-- `3` → Enemy
-- every other value → Unknown
+- raw mode `0` → commanded Ally;
+- raw mode `1` → commanded Neutral;
+- raw mode `3` → commanded Enemy;
+- every other value → commanded Unknown.
 
-Unknown runtime values invalidate the affected directed stance from that replay moment until later qualified evidence changes it again.
+This maps the **command payload**, not its successful effect.
+
+Every runtime diplomacy event carries one of two effect qualifications:
+
+- `COMMAND_ONLY` — the command was observed, but no effective state transition may be inferred;
+- `EFFECTIVE_STATE_QUALIFIED` — an independently qualified adapter is allowed to apply the commanded stance to effective state.
+
+The current canonical adapter always emits `COMMAND_ONLY`.
+
+A command with an unknown raw mode can never be promoted to `EFFECTIVE_STATE_QUALIFIED`; the timeline fails closed instead of inventing the result.
 
 ## Directed pair states
 
 For players A and B, AoF preserves A→B and B→A independently.
 
-The pair classification is:
+Once both effective directed stances are qualified, the pair classification is:
 
 - `MUTUAL_ALLIANCE`: Ally / Ally
 - `MUTUAL_HOSTILITY`: Enemy / Enemy
@@ -82,7 +111,7 @@ One-sided and conflicted states must never be narrated later as mutual alliance 
 For example:
 
 ```text
-42:00.000 ordinal 500  A changes B to Ally
+42:00.000 ordinal 500  A issues a qualified effective change to Ally toward B
 42:00.000 ordinal 501  A issues another social/combat-relevant action
 ```
 
@@ -92,7 +121,7 @@ An event at the same timestamp with ordinal 499 does not.
 
 Every future social-evidence adapter must therefore query diplomacy with the event's full replay moment `{ atMs, operationOrdinal }`.
 
-If a diplomacy event lacks actor, target, timestamp, or operation ordinal, the adapter fails rather than inventing chronology.
+If a diplomacy event lacks actor, target, timestamp, or operation ordinal, the canonical adapter fails rather than inventing chronology.
 
 If two diplomacy changes for the same directed edge occupy the same replay moment, V1 treats that chronology as ambiguous and fails closed.
 
@@ -100,7 +129,9 @@ If two diplomacy changes for the same directed edge occupy the same replay momen
 
 The timeline retains pair segments bounded by full replay moments. A segment may have `elapsedMs === 0` while still spanning distinct operation ordinals at the same game-clock timestamp.
 
-Such a segment is not discarded: another replay action can occur between those two ordinals and must observe the correct stance.
+Such a segment is not discarded: another replay action can occur between those two ordinals and must observe the correct effective stance.
+
+`COMMAND_ONLY` events do not create effective-state segment boundaries.
 
 Segments are an evidence view, not a Battle-wide label.
 
@@ -133,38 +164,56 @@ A presentation layer may eventually derive a compact label for UI convenience, b
 
 ## Coverage
 
-Coverage is pair-state-local:
+Effective pair coverage is:
 
-- `QUALIFIED` only when both directed stances are known for that segment;
+- `QUALIFIED` only when both directed effective stances are known for that segment;
 - `UNAVAILABLE` if either direction is unknown.
 
+A decoded command does not improve effective-state coverage by itself.
+
 Missing evidence is never Neutral, Enemy, Ally, or absence of interaction.
+
+## Existing FFA corpus evidence
+
+The committed `townbell-ffa-save68` fixture is structurally valuable:
+
+- 8 players;
+- 86 recorded diplomacy commands;
+- many directed stance-command sequences;
+- exact operation ordinals retained.
+
+But its corpus classification is `real_game_regression_not_controlled`. It can validate decoding shape, ordering, actor/target domains and stability; it cannot by itself prove effective stance semantics.
+
+The controlled fixture described in `replay-tools/tests/CONTROLLED-FIXTURES.md` remains the qualification gate for promoting command evidence to effective-state evidence.
 
 ## Relationship and Chronicle consequences
 
 This foundation intentionally makes no Relationship or Chronicle decision.
 
-Later layers may use exact diplomacy-at-event-time to decide whether a separately qualified interaction occurred while players were allied, hostile, neutral, conflicted, or unknown.
+Later layers may use exact effective diplomacy-at-event-time only where qualified. Until then, separately qualified combat, tribute or spatial evidence can still be retained as facts without assigning unsupported ally/enemy meaning.
 
-This separation is required so that:
+This separation prevents:
 
-- coincident third-party pressure is not automatically cooperation;
-- an attack after an alliance change is not classified using the Battle's opening stance;
-- one-sided alliance is not called friendship;
-- one-sided hostility is not called mutual war;
-- unknown coverage never creates social meaning.
+- coincident third-party pressure from automatically becoming cooperation;
+- an attack after a diplomacy command from being classified under an unproven stance;
+- one-sided alliance from being called friendship;
+- one-sided hostility from being called mutual war;
+- command intent from being presented as successful state change;
+- unknown coverage from creating social meaning.
 
 ## Validation gate before the next layer
 
-Before Pair Social Evidence is implemented, this foundation should satisfy all of the following:
+Before `AOF_PAIR_SOCIAL_EVIDENCE_V1` uses dynamic diplomacy as effective relationship context, all of the following should hold:
 
 1. TypeScript build passes on current `main`.
-2. Existing Functions tests remain green.
+2. Existing Functions and Player Website tests remain green.
 3. Dedicated tests cover mutual, asymmetric, conflicted, neutral, and unknown states.
 4. Dedicated tests prove same-millisecond ordinal ordering.
-5. Missing initial diplomacy remains unavailable.
-6. Unsupported runtime modes remain unknown.
-7. No upload, persistence, Relationship, Chronicle Writer, or UI integration is introduced merely to make this layer appear live.
-8. Real replay/corpus validation is performed before dynamic FFA relationship effects are activated.
+5. Dedicated tests prove `COMMAND_ONLY` cannot mutate effective state.
+6. Missing canonical initial diplomacy remains unavailable.
+7. Unsupported runtime modes remain command observations and cannot be promoted to qualified effects.
+8. The current real FFA regression remains structurally stable.
+9. A controlled unlocked-diplomacy fixture qualifies initial-state normalization and effective runtime transitions for the supported build/save/data tuple.
+10. No upload, persistence, Relationship, Chronicle Writer, or UI integration is introduced merely to make this layer appear live.
 
-Only after this gate should AoF add `AOF_PAIR_SOCIAL_EVIDENCE_V1` on top of the diplomacy timeline.
+Only after this gate should AoF let dynamic diplomacy drive Pair Social Evidence or Chronicle relationship meaning.
