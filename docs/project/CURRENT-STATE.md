@@ -1,5 +1,10 @@
 # Age of Friends — Current State
 
+## Pair Episode Context implementation — 2 October 2026
+
+The branch now emits `AOF_PAIR_EPISODE_CONTEXT_V1` at `pairSocialEvidence.episodeContext`: unique recorded pressure-response associations, defensive participation connected through exact pressure/clash provenance, and independent ordered return-pressure sequences. It preserves statistics, schema digest, neutral deed identities and counts. See [the implemented context contract](../architecture/pair-episode-context-v1.md). Scoring, activity/standings interpretation, effective diplomacy and outcomes remain inactive.
+
+
 ## Pair Social Evidence branch update — 2 October 2026
 
 On `feat/pair-social-evidence-v1`, `AOF_PAIR_SOCIAL_EVIDENCE_V1` now projects neutral Game-level incidents and deeds from retained statistics, with directed family coverage, command provenance and deterministic identities. Engagement V4 preserves target-specific offensive groups and helper direction; Skirmish Pair Evidence V2 distinguishes local overlap from reciprocal targeted commands without changing encounter boundaries. Active Map Presence V8 records relic targeting without asserting possession or theft.

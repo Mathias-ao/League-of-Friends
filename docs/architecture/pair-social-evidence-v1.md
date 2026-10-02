@@ -105,3 +105,7 @@ Next: review the emitted ledger against representative real retained evidence, t
 ## Contextual interpretation handoff
 
 [Contextual Social Deeds V1](contextual-social-deeds-v1.md) records the approved qualification matrix and staged successor work: before/during/after context, action versus contribution direction, pressure/response sequences, coalition entry circumstances, league stakes, activity annotations and gated Treachery king-elimination escalation. It is a design contract, not an implemented extension of this projection. Completed statistics and current unavailable-family gates remain unchanged.
+
+## Additive episode context
+
+The statistics projector now attaches separately versioned [Pair Episode Context V1](pair-episode-context-v1.md) under `episodeContext`. It annotates existing pressure/response and defensive-clash evidence and links independent return-pressure episodes; neutral incidents, deed identities and counts are preserved. No scoring, motive, outcome, absence or effective diplomacy interpretation is activated.

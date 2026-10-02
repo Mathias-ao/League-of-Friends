@@ -20,6 +20,7 @@ from canonical_io import ROOT, json_bytes, read_json, sha256
 from forward_eco import project_forward_eco
 from map_presence_v8 import project_map_presence
 from pair_social_evidence import project_pair_social_evidence
+from pair_episode_context import project_pair_episode_context
 from military_statistics_v5 import project_military_statistics
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
@@ -269,6 +270,13 @@ def project_statistics_from_analysis(
         "coverage": analysis["coverage"],
         "warnings": warnings,
     }
+    # Context is an additive, independently versioned view. Existing statistics,
+    # the schema digest and neutral deed identities remain unchanged.
+    result["pairSocialEvidence"]["episodeContext"] = project_pair_episode_context(
+        pair_evidence=result["pairSocialEvidence"], raid_statistics=raid_statistics,
+        engagement_statistics=engagement_statistics,
+        execution_statistics=execution_statistics, action_events=spatial_action_events,
+    )
     schema = read_json(STATISTICS_SCHEMA)
     errors = sorted(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(result),
                     key=lambda error: list(error.absolute_path))

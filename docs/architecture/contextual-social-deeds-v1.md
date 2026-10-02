@@ -140,3 +140,7 @@ Chronicle entries retain factual sources, eligible claims and unavailable claims
 Required cases include: even contest becoming one-sided; pre-existing disadvantage before entry; later coalition entrant; A/B→X and B/C→Y; response without returned targeting; independent return raid; reverse support in another form; unrelated APM spike; declining activity at recording end; same-millisecond rupture ordering; command-only diplomacy; unknown killer; ordinary king elimination; one-sided Treachery below/at/above level 3; maximum cap; duplicate event copies; corrected attribution; multiple Games; unavailable versus no interaction.
 
 Inspect representative real ledger chapters and retain qualification failures as diagnostics. Verify the existing statistics are byte-for-byte unchanged for the same evidence/schema snapshot by additive context work, excluding only the separately emitted social artifact. Run meaningful unit checks for the new interpreter when implemented, plus existing applicable CI. This documentation change itself does not certify new implementation or new test results.
+
+## First implementation slice
+
+[Pair Episode Context V1](pair-episode-context-v1.md) now implements additive pressure-response annotation, defensive participation linked to exact pressure/clash provenance, and independently ordered return-pressure sequences. It emits no new deeds or points. Later slices and all outcome, activity, standings and scoring gates above remain pending.

@@ -202,6 +202,17 @@ class StatisticsProjectionTests(unittest.TestCase):
         self.assertTrue(all(not row["absenceQualified"] for row in evidence["coverage"]))
         self.assertTrue(all(p["mapPresence"]["modelVersion"] == "AOF_MAP_PRESENCE_V8" for p in result["participants"]))
 
+    def test_episode_context_is_additive_and_preserves_entire_statistics_envelope(self):
+        result = project_statistics(self.bundle)
+        context = result["pairSocialEvidence"].pop("episodeContext")
+        self.assertEqual(context["modelVersion"], "AOF_PAIR_EPISODE_CONTEXT_V1")
+        self.assertFalse(context["policy"]["newDeedsCreated"])
+        self.assertFalse(context["policy"]["relationshipScoringEnabled"])
+        with patch("statistics_projector.project_pair_episode_context", return_value={}):
+            baseline = project_statistics(self.bundle)
+        baseline["pairSocialEvidence"].pop("episodeContext")
+        self.assertEqual(result, baseline)
+
     def test_raw_ids_survive_reference_catalog_labels(self):
         result = project_statistics(self.bundle)
         villager = result["commandEvidence"]["queueRequestsByPlayerAndUnit"]["1"][0]
