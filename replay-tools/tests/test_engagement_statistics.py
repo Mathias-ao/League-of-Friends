@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from engagement_statistics import ENGAGEMENT_MODEL_VERSION, project_engagement_statistics
+from engagement_statistics import ENGAGEMENT_MODEL_VERSION, project_engagement_statistics, _cooperative_attacks
 from skirmish_detector import detect_skirmishes
 from unit_classification import UNIT_CLASS_FAMILY_VERSION
 
@@ -261,6 +261,30 @@ class EngagementStatisticsV3Tests(unittest.TestCase):
         event = result["1"]["engagementEvidence"]["cooperativeAttacks"][0]
         self.assertEqual(event["attackerPlayerIds"], [1, 2])
         self.assertEqual(event["targetPlayerIds"], [3])
+
+    def test_shared_targets_do_not_flatten_unrelated_allies(self):
+        participants = {row["playerId"]: row for row in manifest(teams=(1, 1, 1, 2, 2))["participants"]}
+        battle = {
+            "battleId": "battle-1", "sourceSkirmishId": "skirmish-1",
+            "baseOwnerPlayerId": None, "sidePlayerIds": [[1, 2, 3], [4, 5]],
+            "opponentInteractionPairs": [{"playerIds": pair} for pair in ([1, 4], [2, 4], [2, 5], [3, 5])],
+            "firstContributionAtMsByPlayer": {str(p): 1000 + p for p in participants},
+            "endedAtMs": 2000, "directedInteractionEdges": [],
+        }
+        groups = _cooperative_attacks([battle], participants)
+        self.assertEqual(
+            [(row["attackerPlayerIds"], row["targetPlayerIds"]) for row in groups],
+            [([1, 2], [4]), ([2, 3], [5])],
+        )
+        self.assertNotIn([1, 3], [row["attackerPlayerIds"] for row in groups])
+
+    def test_unlocked_team_lobby_does_not_qualify_allied_support(self):
+        result = project(
+            game_manifest=manifest(teams=(1, 1, 2), lock_teams=False),
+            actions=[action("p1", 1, 10000, "PATROL", 80, 80, selected=[1, 2, 3])],
+        )
+        self.assertEqual(result["1"]["allyInteractionApplicability"]["status"], "pending_relation_semantics")
+        self.assertIsNone(result["1"]["allyReinforcementsSent"])
 
     def test_great_battle_is_impossible_in_one_v_one_even_with_huge_selection(self):
         actions = []

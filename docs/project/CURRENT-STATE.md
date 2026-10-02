@@ -1,5 +1,11 @@
 # Age of Friends — Current State
 
+## Pair Social Evidence branch update — 2 October 2026
+
+On `feat/pair-social-evidence-v1`, `AOF_PAIR_SOCIAL_EVIDENCE_V1` now projects neutral Game-level incidents and deeds from retained statistics, with directed family coverage, command provenance and deterministic identities. Engagement V4 preserves target-specific offensive groups and helper direction; Skirmish Pair Evidence V2 distinguishes local overlap from reciprocal targeted commands without changing encounter boundaries. Active Map Presence V8 records relic targeting without asserting possession or theft.
+
+See [the implemented contract](../architecture/pair-social-evidence-v1.md). Relationship scoring, effective dynamic diplomacy, absence/non-cooperation interpretation and production integration remain inactive. The older sections below describe their reviewed historical baseline; the branch contract records this slice.
+
 Last reviewed: 28 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.

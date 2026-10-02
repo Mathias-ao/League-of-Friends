@@ -18,7 +18,8 @@ from execution_statistics_v2 import project_execution_statistics
 from skirmish_detector import detect_skirmishes
 from canonical_io import ROOT, json_bytes, read_json, sha256
 from forward_eco import project_forward_eco
-from map_presence_v7 import project_map_presence
+from map_presence_v8 import project_map_presence
+from pair_social_evidence import project_pair_social_evidence
 from military_statistics_v5 import project_military_statistics
 from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
@@ -217,7 +218,7 @@ def project_statistics_from_analysis(
         {"code": "RECORDER_CAMERA_ONLY", "message": "Camera points represent the recording perspective and are not a comparable all-player statistic."},
         {"code": "RAIDS_ARE_INFERRED", "message": "Raid counts are inferred hostile-command episodes around local TC/Mill/Lumber/Mining economic zones or direct known economic-unit targets; they do not imply damage or kills."},
         {"code": "ENGAGEMENTS_ARE_INFERRED", "message": "Skirmish, Battle, Great Battle, reinforcement, defensive-assistance and cooperative-attack outputs are command-derived interaction inferences. Pairwise opponent edges are relationship evidence, not proof of damage, kills, exact army size, continuous positions or coordination intent."},
-        {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and placement geometry; command/scout coverage is not fog-of-war exploration, relic holding is touch-inferred, and gold control is not resource gathering or remaining-gold state."},
+        {"code": "MAP_PRESENCE_IS_INFERRED", "message": "Map Presence values are spatial proxies over commands, initial objects and placement geometry; command/scout coverage is not fog-of-war exploration, relic commands do not prove holding or theft, and gold control is not resource gathering or remaining-gold state."},
         {"code": "RESOURCE_COMMITMENT_IS_ESTIMATED", "message": "Resource commitment uses pinned base catalog costs for decoded requests/placements; it does not simulate civilization discounts, cancellations/refunds, resource availability, market exchange or tribute."},
         {"code": "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED", "message": "Economy separates command observations from reconstructions. Villagers/trade units trained are queue-derived proxies; TC idle/gap metrics infer workload from decoded producer streams; animal counts are targeted-interaction proxies, not kill/gather outcomes."},
         {"code": "MILITARY_PRODUCTION_IS_QUEUE_DERIVED", "message": "Military V5 counts positive decoded military queue amounts and placement/research commands, using promoted DE producer-building type where needed. It does not assert completed units/buildings, surviving army, kills, deaths or damage."},
@@ -241,6 +242,12 @@ def project_statistics_from_analysis(
                   "decodeCoveragePercent": body["decodeCoveragePercent"],
                   "decodeCoverageMeaning": body["decodeCoverageMeaning"]},
         "participants": participants,
+        "pairSocialEvidence": project_pair_social_evidence(
+            manifest=manifest, source=source, raid_statistics=raid_statistics,
+            engagement_statistics=engagement_statistics,
+            map_presence_statistics=map_presence_statistics,
+            action_events=spatial_action_events,
+        ),
         "commandEvidence": {
             "queueRequestsByPlayerAndUnit": _inventory(queue_counts, catalog, "unit"),
             "positiveEncodedQueueAmountsByPlayerAndRawUnit": fundamentals["positiveQueueAmountsByPlayerAndRawUnit"],
