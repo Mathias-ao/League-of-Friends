@@ -10,7 +10,7 @@ const projectId = readArg("--project");
 const matchId = readArg("--match");
 const firestorePort = readArg("--firestore-port") ?? "8085";
 if (!projectId || !matchId) {
-  console.error("Usage: node scripts/smoke-test-rivalries.mjs --project <project-id> --match <match-id>");
+  console.error("Usage: node scripts/smoke-test-rivalries.mjs --project <project-id> --match <completed-match-id>");
   process.exit(1);
 }
 
@@ -67,6 +67,14 @@ function stringField(document, field) {
   return document.fields?.[field]?.stringValue ?? null;
 }
 
+function booleanField(document, field) {
+  return document.fields?.[field]?.booleanValue ?? null;
+}
+
+function nestedStringField(document, mapField, field) {
+  return document.fields?.[mapField]?.mapValue?.fields?.[field]?.stringValue ?? null;
+}
+
 function stringArray(document, field) {
   return (document.fields?.[field]?.arrayValue?.values ?? []).map((value) => value.stringValue);
 }
@@ -74,28 +82,49 @@ function stringArray(document, field) {
 try {
   const token = await signIn();
   const match = await readDocument(`matches/${matchId}`, token);
-  const seasonId = stringField(match, "seasonId");
   const revision = numberValue(match.fields?.canonicalResult?.mapValue?.fields?.revision, 1);
-  if (!seasonId) throw new Error("Match has no seasonId.");
 
-  console.log(`Rebuilding Rivalry V1 from canonical history (trigger ${matchId} R${revision})...`);
+  console.log(`Rebuilding Pair History V2 from canonical history (trigger ${matchId} R${revision})...`);
   const result = await callCallable("adminProcessRivalries", token, {
     requestId: randomUUID(),
     matchId,
   });
   console.log("Processed:", JSON.stringify(result));
 
-  if (result.engineVersion !== "RIVALRY_ENGINE_V1") {
-    throw new Error(`Unexpected rivalry engine: ${result.engineVersion}`);
+  if (result.pairHistoryVersion !== "AOF_PAIR_HISTORY_V2") {
+    throw new Error(`Unexpected Pair History version: ${result.pairHistoryVersion}`);
   }
-  if (result.lifetimeRivalries < 1 || result.seasonalRivalries < 1) {
-    throw new Error("Expected at least one rivalry pair from the completed Match.");
+  if (result.relationshipEngineVersion !== "AOF_RELATIONSHIP_ENGINE_V2") {
+    throw new Error(`Unexpected relationship engine: ${result.relationshipEngineVersion}`);
+  }
+  if (result.relationshipRulesConfigured !== false) {
+    throw new Error("Production relationship rules must remain unconfigured on this branch.");
+  }
+  if (result.interactionCoverage !== "UNAVAILABLE") {
+    throw new Error(`Expected interaction coverage UNAVAILABLE until Battle Statistics are wired; got ${result.interactionCoverage}.`);
+  }
+  if (Number(result.pairHistories ?? 0) < 1) {
+    throw new Error("Expected at least one Pair History from the completed Match.");
+  }
+  if (Number(result.chronicleEntries ?? 0) < 1) {
+    throw new Error("Expected the completed Match to create at least one factual Chronicle entry.");
   }
 
-  const season = await readDocument(`seasons/${seasonId}`, token);
-  const warRoomStatus = season.fields?.warRoom?.mapValue?.fields?.status?.stringValue ?? null;
-  if (result.qualifiedSeasonal === 0 && warRoomStatus !== "CLOSED") {
-    throw new Error(`War Room should remain CLOSED with no qualifying seasonal rivalry; got ${warRoomStatus}.`);
+  const rebuiltMatch = await readDocument(`matches/${matchId}`, token);
+  if (stringField(rebuiltMatch, "pairHistoryVersion") !== "AOF_PAIR_HISTORY_V2") {
+    throw new Error("Match did not retain the Pair History V2 processing version.");
+  }
+  if (stringField(rebuiltMatch, "relationshipEngineVersion") !== "AOF_RELATIONSHIP_ENGINE_V2") {
+    throw new Error("Match did not retain the Relationship Engine V2 processing version.");
+  }
+  if (booleanField(rebuiltMatch, "relationshipRulesConfigured") !== false) {
+    throw new Error("Match incorrectly reports configured relationship rules.");
+  }
+
+  const leagueState = await readDocument("leagueState/singleton", token);
+  const warRoomStatus = nestedStringField(leagueState, "warRoom", "status");
+  if (warRoomStatus !== "CLOSED") {
+    throw new Error(`War Room must remain CLOSED while relationship rules are unconfigured; got ${warRoomStatus}.`);
   }
 
   const job = await readDocument(`processingJobs/MATCH_RESULT_${matchId}_R${revision}`, token);
@@ -104,13 +133,16 @@ try {
     throw new Error("Processing job did not mark RIVALRIES complete.");
   }
 
-  console.log("Verified rivalry pipeline:");
-  console.log(`  lifetime rivalry pairs: ${result.lifetimeRivalries}`);
-  console.log(`  seasonal rivalry pairs: ${result.seasonalRivalries}`);
-  console.log(`  qualified seasonal rivalries: ${result.qualifiedSeasonal}`);
+  console.log("Verified Relationship Pulse V2 processing boundary:");
+  console.log(`  Pair History: ${result.pairHistoryVersion}`);
+  console.log(`  Relationship engine: ${result.relationshipEngineVersion}`);
+  console.log(`  pair histories: ${result.pairHistories}`);
+  console.log(`  Chronicle entries: ${result.chronicleEntries}`);
+  console.log(`  interaction coverage: ${result.interactionCoverage}`);
+  console.log(`  rules configured: ${result.relationshipRulesConfigured}`);
   console.log(`  War Room: ${warRoomStatus}`);
   console.log(`  completed steps: ${completedSteps.join(", ")}`);
-  console.log("Rivalry pipeline smoke test passed.");
+  console.log("Relationship Pulse V2 smoke test passed.");
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
