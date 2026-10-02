@@ -1,0 +1,42 @@
+name: Real Social Context Audit
+
+on:
+  push:
+    branches: ["feat/pair-social-evidence-v1"]
+    paths:
+      - "replay-tools/pair_episode_context.py"
+      - "replay-tools/pair_social_evidence.py"
+      - "replay-tools/social_context_audit.py"
+      - "replay-tools/statistics_projector.py"
+      - "replay-tools/tests/test_social_context_audit.py"
+      - "replay-lab/fixtures/social-context-audit.json"
+      - ".github/workflows/social-context-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: replay-tools/requirements.txt
+      - run: python -m pip install -r replay-tools/requirements.txt
+      - name: Inspect retained real-recording context
+        run: >-
+          python replay-tools/social_context_audit.py
+          --manifest replay-lab/fixtures/social-context-audit.json
+          --seal-mode fast
+          --out .replay-lab/ci-social-context-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-social-context-audit
+          path: .replay-lab/ci-social-context-audit.json
+          if-no-files-found: warn

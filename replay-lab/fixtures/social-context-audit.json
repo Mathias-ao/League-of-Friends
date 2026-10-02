@@ -1,0 +1,71 @@
+{
+  "modelVersion": "AOF_REAL_SOCIAL_CONTEXT_AUDIT_V1",
+  "scope": "recording_regression_not_controlled_engine_semantics",
+  "recordings": [
+    {
+      "id": "duel",
+      "path": "replay-fixtures/1v1.aoe2record",
+      "expectedPlayers": 2
+    },
+    {
+      "id": "paired-duel-pov-1",
+      "path": "replay-fixtures/1v1_1.aoe2record",
+      "expectedPlayers": 2,
+      "logicalGameGroup": "paired-duel"
+    },
+    {
+      "id": "paired-duel-pov-2",
+      "path": "replay-fixtures/1v1_2.aoe2record",
+      "expectedPlayers": 2,
+      "logicalGameGroup": "paired-duel"
+    },
+    {
+      "id": "2v2",
+      "path": "replay-fixtures/2v2.aoe2record",
+      "expectedPlayers": 4
+    },
+    {
+      "id": "3v3",
+      "path": "replay-fixtures/3v3.aoe2record",
+      "expectedPlayers": 6
+    },
+    {
+      "id": "4v4",
+      "path": "replay-fixtures/4v4.aoe2record",
+      "expectedPlayers": 8
+    },
+    {
+      "id": "multiple-team",
+      "path": "replay-fixtures/Multiple-team.aoe2record"
+    },
+    {
+      "id": "ffa",
+      "path": "replay-fixtures/FFA.aoe2record"
+    },
+    {
+      "id": "townbell-ffa",
+      "path": "replay-fixtures/townbell-ffa-save68.aoe2record",
+      "expectedPlayers": 8
+    },
+    {
+      "id": "aof-test-1",
+      "path": "replay-fixtures/aof-test-game-1.aoe2record"
+    },
+    {
+      "id": "aof-test-2",
+      "path": "replay-fixtures/aof-test-game-2.aoe2record"
+    },
+    {
+      "id": "aof-test-3",
+      "path": "replay-fixtures/aof-test-game-3.aoe2record"
+    },
+    {
+      "id": "nomad",
+      "path": "replay-fixtures/nomad.aoe2record"
+    },
+    {
+      "id": "water",
+      "path": "replay-fixtures/water.aoe2record"
+    }
+  ]
+}
