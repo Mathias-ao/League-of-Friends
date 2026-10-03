@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from pair_episode_context import project_pair_episode_context
-from social_context_audit import validate_context, validate_ledger
+from social_context_audit import validate_context, validate_ledger, metric_changes
 from test_pair_episode_context import arguments, response, returns
 
 
@@ -20,6 +20,19 @@ def projection():
 
 
 class SocialContextAuditTests(unittest.TestCase):
+    def test_metric_comparison_preserves_unknown_zero_and_player_direction(self):
+        before = {"participants": [{"playerId": 2, "military": {"engagements": {"defensiveAssistsGiven": None}}},
+                                   {"playerId": 1, "military": {"engagements": {"defensiveAssistsGiven": 0}}}]}
+        after = copy.deepcopy(before)
+        after["participants"][0]["military"]["engagements"]["defensiveAssistsGiven"] = 3
+        unchanged = copy.deepcopy(before)
+        self.assertEqual(metric_changes(before, after), [{"playerId": 2, "metric": "defensiveAssistsGiven",
+                                                         "before": None, "after": 3}])
+        self.assertEqual(before, unchanged)
+        self.assertEqual(metric_changes(before, before), [])
+        with self.assertRaisesRegex(ValueError, "Comparison roster changed"):
+            metric_changes(before, {"participants": []})
+
     def test_source_backed_response_is_accepted_without_mutating_projection(self):
         result, actions = projection()
         before = copy.deepcopy(result)

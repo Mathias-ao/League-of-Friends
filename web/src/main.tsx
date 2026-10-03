@@ -14,6 +14,7 @@ import './stone-content.css';
 import './emperors-favor.css';
 import './statistics-experience.css';
 import './statistics-dashboard.css';
+import './ui/BattleRecord.css';
 import './statistics-hall.css';
 import './statistics-hall-v2.css';
 import './statistics-hall-v3.css';

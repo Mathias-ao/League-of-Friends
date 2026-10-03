@@ -221,6 +221,62 @@ def context_inputs(projection, analysis):
     }
 
 
+
+REVIEW_METRICS = {
+    "raidsInitiated": ("military", "engagements", "raidsInitiated"),
+    "raidsReceived": ("military", "engagements", "raidsAgainstYou"),
+    "skirmishes": ("military", "engagements", "skirmishes"),
+    "defensiveAssistsGiven": ("military", "engagements", "defensiveAssistsGiven"),
+    "defensiveAssistsReceived": ("military", "engagements", "defensiveAssistsReceived"),
+    "cooperativeAttacks": ("military", "engagements", "cooperativeAttacks"),
+    "rawApm": ("execution", "apm"),
+    "raidResponseSeconds": ("execution", "raidResponse", "medianSeconds"),
+    "resourceCommitment": ("economy", "resourceCommitment", "resourcesCommitted", "total"),
+}
+
+
+def metric_changes(before, after):
+    """Compare review metrics by canonical player identity, without mutating inputs."""
+    def values(projection):
+        result = {}
+        for player in projection["participants"]:
+            metrics = {}
+            for name, path in REVIEW_METRICS.items():
+                value = player
+                for key in path:
+                    value = value.get(key) if isinstance(value, dict) else None
+                metrics[name] = value
+            result[player["playerId"]] = metrics
+        return result
+    left, right = values(before), values(after)
+    require(set(left) == set(right), "Comparison roster changed")
+    return [{"playerId": player, "metric": metric, "before": left[player][metric],
+             "after": right[player][metric]}
+            for player in sorted(left) for metric in sorted(REVIEW_METRICS)
+            if left[player][metric] != right[player][metric]]
+
+
+def team_lock_rebuild_comparison(analysis, projection):
+    """Isolate the known legacy lobby/DE conflict; not a deployed historical baseline."""
+    header = analysis.get("recordingHeader") or {}
+    de = (header.get("de") or {}).get("lock_teams")
+    lobby = (header.get("lobby") or {}).get("lock_teams")
+    baseline = deepcopy(analysis)
+    qualifies = type(de) is bool and type(lobby) is bool and de != lobby
+    if qualifies:
+        baseline["manifest"]["match"]["settings"]["lockTeams"] = lobby
+        legacy = project_statistics_from_analysis(baseline)
+        changes = metric_changes(legacy, projection)
+    else:
+        changes = []
+    return {"comparisonKind": "isolated_legacy_lobby_lock_counterfactual",
+            "notDeployedHistoricalStatistics": True,
+            "requiresFreshCanonicalExtractionForSourceCorrection": qualifies,
+            "legacyLobbyLockTeams": lobby, "decodedDeLockTeams": de,
+            "metricScope": sorted(REVIEW_METRICS), "changes": changes,
+            "activeStatisticsReplaced": False}
+
+
 def audit_recording(entry, seal_mode):
     replay = (ROOT / entry["path"]).resolve()
     require(replay.is_relative_to(ROOT / "replay-fixtures"), "Fixture path escapes corpus")
@@ -256,6 +312,8 @@ def audit_recording(entry, seal_mode):
             stats["raidResponse"]["evidence"] = list(reversed(stats["raidResponse"]["evidence"] * 2))
         require(project_pair_episode_context(**duplicated) == expected, "Duplicate/reordered context differs")
         result = summarize(projection, analysis)
+        result["teamLockRebuildComparison"] = team_lock_rebuild_comparison(analysis, projection)
+        require(analysis == before, "Rebuild comparison mutated evidence")
         result.update({"id": entry["id"], "replayPath": entry["path"],
                        "logicalGameGroup": entry.get("logicalGameGroup"),
                        "canonicalSealMode": seal_mode,
