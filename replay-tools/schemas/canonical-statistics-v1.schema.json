@@ -18,11 +18,12 @@
     "recorderCamera",
     "townBellEligibility",
     "coverage",
-    "warnings"
+    "warnings",
+    "matchFacts"
   ],
   "properties": {
     "statisticsSchemaVersion": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "statisticsSchemaSha256": {
       "type": "string",
@@ -199,6 +200,69 @@
               "const": false
             },
             "effectiveDiplomacyEnabled": {
+              "const": false
+            }
+          }
+        }
+      }
+    },
+    "matchFacts": {
+      "type": "object",
+      "required": [
+        "modelVersion",
+        "identityNamespace",
+        "source",
+        "game",
+        "map",
+        "rules",
+        "players",
+        "diplomacy",
+        "result",
+        "coverage",
+        "policy"
+      ],
+      "properties": {
+        "modelVersion": {
+          "const": "AOF_RECORDING_MATCH_FACTS_V1"
+        },
+        "identityNamespace": {
+          "const": "CANONICAL_REPLAY_PLAYER_ID"
+        },
+        "result": {
+          "type": "object",
+          "required": [
+            "qualification",
+            "winnerPlayerIds",
+            "loserPlayerIds"
+          ],
+          "properties": {
+            "qualification": {
+              "const": "UNRESOLVED"
+            },
+            "winnerPlayerIds": {
+              "type": "null"
+            },
+            "loserPlayerIds": {
+              "type": "null"
+            }
+          }
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "automaticResultSubmissionEnabled": {
+              "const": false
+            },
+            "rewardsEnabled": {
+              "const": false
+            },
+            "relationshipScoringEnabled": {
+              "const": false
+            },
+            "reputationScoringEnabled": {
+              "const": false
+            },
+            "rawFactsVisibleByDefault": {
               "const": false
             }
           }

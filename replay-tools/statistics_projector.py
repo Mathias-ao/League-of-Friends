@@ -26,10 +26,11 @@ from opening_statistics import project_opening_statistics
 from raid_detector import detect_raids
 from resource_commitment import project_resource_commitment
 from statistics_registry import build_registry
+from match_facts import project_match_facts
 
 PROJECTION_VERSION = "AOF_CANONICAL_STATISTICS_V1"
 FORMULA_VERSION = "AOF_OBSERVED_COMMAND_FORMULAS_V1"
-STATISTICS_SCHEMA_VERSION = "1.0.0"
+STATISTICS_SCHEMA_VERSION = "1.1.0"
 STATISTICS_SCHEMA = ROOT / "schemas" / "canonical-statistics-v1.schema.json"
 ENTITY_CATALOG = ROOT / "entity-catalog" / "aoe2techtree-b9d494df6921.json"
 
@@ -249,6 +250,7 @@ def project_statistics_from_analysis(
             map_presence_statistics=map_presence_statistics,
             action_events=spatial_action_events,
         ),
+        "matchFacts": project_match_facts(analysis),
         "commandEvidence": {
             "queueRequestsByPlayerAndUnit": _inventory(queue_counts, catalog, "unit"),
             "positiveEncodedQueueAmountsByPlayerAndRawUnit": fundamentals["positiveQueueAmountsByPlayerAndRawUnit"],

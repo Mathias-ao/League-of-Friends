@@ -134,6 +134,11 @@ def summarize(projection, analysis, *, sample_limit=2):
     validate_context(projection, analysis["actionEvents"])
     ledger = projection["pairSocialEvidence"]
     context = ledger["episodeContext"]
+    facts = projection["matchFacts"]
+    require(facts["source"]["replaySha256"] == projection["source"]["replaySha256"],
+            "Match facts source differs")
+    require(facts["result"]["winnerPlayerIds"] is None and facts["result"]["loserPlayerIds"] is None,
+            "Replay-only result was promoted")
     lookup = {row["eventId"]: row for row in analysis["actionEvents"]}
     incidents = {row["incidentId"]: row for row in ledger["incidents"]}
     rows = context["annotations"] + context["sequences"]
@@ -176,6 +181,14 @@ def summarize(projection, analysis, *, sample_limit=2):
                 pressure_directions[f'{facet["fromPlayerId"]}->{facet["toPlayerId"]}'] += 1
     return {
         "source": projection["source"],
+        "recordingMatchFacts": {"modelVersion": facts["modelVersion"],
+                               "game": facts["game"], "map": facts["map"],
+                               "ruleValues": {key: row["value"] for key, row in facts["rules"].items()},
+                               "lobbyGroups": facts["lobbyGroups"],
+                               "resultQualification": facts["result"]["qualification"],
+                               "postgameEventCount": len(facts["result"]["postgameEvidence"]),
+                               "resignationEventCount": len(facts["result"]["resignationEvidence"]),
+                               "headerSource": facts["headerSource"]},
         "playerCount": len(projection["participants"]),
         "participants": [{"playerId": row["playerId"], "lobbyTeamId": row.get("lobbyTeamId")}
                          for row in analysis["manifest"]["participants"]],

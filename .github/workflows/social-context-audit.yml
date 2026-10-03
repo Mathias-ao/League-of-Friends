@@ -4,6 +4,8 @@ on:
   push:
     branches: ["feat/pair-social-evidence-v1"]
     paths:
+      - "replay-tools/match_facts.py"
+      - "replay-tools/analysis_dataset.py"
       - "replay-tools/parse_replay.py"
       - "replay-tools/pair_episode_context.py"
       - "replay-tools/pair_social_evidence.py"

@@ -41,7 +41,7 @@
       "economyBuildingsTotal": 0,
       "modelVersion": "AOF_ECONOMY_STATISTICS_V5",
       "playerId": 1,
-      "tcIdleDarkAgeMs": 100.0,
+      "tcIdleDarkAgeMs": 100,
       "thirdTcAtMs": null,
       "townCenters": 1,
       "villagersBy20Minutes": null,
@@ -192,16 +192,16 @@
   },
   "mapPresence": [
     {
-      "commandCoveragePercent": 100.0,
+      "commandCoveragePercent": 100,
       "enemyBaseContactAtMs": 100,
       "enemyBaseContactPlayerId": 2,
-      "enemySidePresencePercent": 0.0,
+      "enemySidePresencePercent": 0,
       "firstRelicTouchAtMs": null,
       "forwardBuildings": 0,
       "goldControlSharePercent": null,
       "modelVersion": "AOF_MAP_PRESENCE_V8",
       "playerId": 1,
-      "scoutCoverage5mPercent": 0.0,
+      "scoutCoverage5mPercent": 0,
       "scoutOrders5m": 0,
       "deepestForwardProgressPercent": null,
       "buildingPlacementSpanTiles": 1.25,
@@ -214,7 +214,7 @@
       "expansionZones": 0
     },
     {
-      "commandCoveragePercent": 0.0,
+      "commandCoveragePercent": 0,
       "enemyBaseContactAtMs": null,
       "enemyBaseContactPlayerId": null,
       "enemySidePresencePercent": null,
@@ -223,10 +223,10 @@
       "goldControlSharePercent": null,
       "modelVersion": "AOF_MAP_PRESENCE_V8",
       "playerId": 2,
-      "scoutCoverage5mPercent": 0.0,
+      "scoutCoverage5mPercent": 0,
       "scoutOrders5m": 0,
       "deepestForwardProgressPercent": null,
-      "buildingPlacementSpanTiles": 0.0,
+      "buildingPlacementSpanTiles": 0,
       "wallTilesTotal": 0,
       "towers": 0,
       "forwardTowers": 0,
@@ -348,7 +348,7 @@
     "entityCatalogVersion": "AOF_ENTITY_CATALOG_V1_1",
     "formulaVersion": "AOF_OBSERVED_COMMAND_FORMULAS_V1",
     "statisticsProjectionVersion": "AOF_CANONICAL_STATISTICS_V1",
-    "statisticsSchemaVersion": "1.0.0"
+    "statisticsSchemaVersion": "1.1.0"
   },
   "warningCodes": [
     "PARTIAL_DECODE",
