@@ -1,6 +1,8 @@
 # Age of Friends — Chronicle Diplomacy Foundation V1
 
-Status: isolated semantic foundation. This document does not activate Chronicle Story Engine prose, Relationship scoring, replay-upload persistence, or player-facing behavior.
+Status: historical V1 semantics, superseded by [Diplomacy Certainty V2](diplomacy-certainty-v2.md). V2 invalidates stale knowledge after unverified orders; the command mode map remains V1.
+
+Original status: isolated semantic foundation. This document does not activate Chronicle Story Engine prose, Relationship scoring, replay-upload persistence, or player-facing behavior.
 
 ## Purpose
 

@@ -25,7 +25,7 @@ const commandOnlyChange=(eventId,atMs,operationOrdinal,fromPlayerId,toPlayerId,r
 });
 const moment=(atMs,operationOrdinal)=>({atMs,operationOrdinal});
 
-test('diplomacy V1 constants identify independent versioned contracts',()=>{
+test('diplomacy V2 constants identify certainty semantics independently from the command map',()=>{
   assert.equal(DIPLOMACY_TIMELINE_VERSION,'AOF_DIPLOMACY_TIMELINE_V2');
   assert.equal(DIPLOMACY_ACTION_MODE_MAP_VERSION,'AOF_DIPLOMACY_ACTION_MODE_MAP_V1');
   assert.equal(DIPLOMACY_EVIDENCE_ADAPTER_VERSION,'AOF_DIPLOMACY_EVIDENCE_ADAPTER_V2');
@@ -235,5 +235,5 @@ test('fractional/unsafe chronology, duplicate roster and invalid initial enum fa
   assert.throws(()=>buildDiplomacyTimeline({...input,playerIds:[1,1,2]}),/Duplicate/);
   assert.throws(()=>buildDiplomacyTimeline({...input,initialEdges:[initial(1,2,'MAYBE')]}),/Invalid initial/);
   assert.throws(()=>buildDiplomacyTimeline({...input,changes:[commandOnlyChange('bad',1.5,1,1,2,0)]}),/atMs/);
-  assert.throws(()=>buildDiplomacyTimeline({...input,changes:[commandOnlyChange('bad',1,Number.MAX_SAFE_INTEGER+1,1,2,0)]}),/ordinal/);
+  assert.throws(()=>buildDiplomacyTimeline({...input,changes:[commandOnlyChange('bad',1,Number.MAX_SAFE_INTEGER+1,1,2,0)]}),/operationOrdinal/);
 });
