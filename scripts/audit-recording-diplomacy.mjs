@@ -28,10 +28,19 @@ for(const row of audit.recordings){
   const refs=new Set(Object.values(input.diplomacy.commandTimelines).flat().map(event=>event.sourceEventId));
   assert.equal(review.commandCount,refs.size);
   assert.ok(review.timeline.changes.every(change=>refs.has(change.eventId)));
+  const declared=review.declaredHistory;
+  assert.equal(declared.counters.orders,refs.size);
+  assert.ok(declared.turningPoints.every(beat=>!beat.treacheryEstablished&&!beat.newSocialDeed&&beat.sourceEventIds.every(ref=>refs.has(ref))));
+  assert.ok(declared.pairIntervals.every(interval=>!interval.engineStateEstablished));
+  if(row.id==='ffa'){
+    assert.equal(declared.counters.directedEdgesObserved,56);assert.equal(declared.counters.recordedStanceReversals,87);
+    assert.equal(declared.counters.allyOrders,85);assert.equal(declared.counters.enemyOrders,58);
+  }
   const result={id:row.id,replayPath:row.replayPath,logicalGameGroup:row.logicalGameGroup,
     sourceCommit:audit.sourceCommit,source:row.source,commandCount:review.commandCount,
     normalizedInitialEdgeCount:review.normalizedInitialEdgeCount,rawInitialVectorCount:review.rawInitialVectorCount,
     knownPairSegmentCount:review.knownPairSegmentCount,unknownPairSegmentCount:review.unknownPairSegmentCount,
+    declaredCounters:review.declaredHistory.counters,
     commandedModes:[...new Set(review.timeline.changes.map(c=>c.rawMode))].sort(),
     checks:{immutable:true,rebuildIdentical:true,noEffectivePromotion:true,allCommandReferencesRetained:true},
     diplomacyReview:review};

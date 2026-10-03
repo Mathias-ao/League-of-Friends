@@ -103,3 +103,14 @@ test('audited FFA previews retain actual command histories and unavailable effec
     assert.ok(audit.diplomacyReview.timeline.changes.every(row=>!row.effectiveStateChanged));
   }
 });
+
+test('declared history presents reciprocal orders and withdrawal without claiming betrayal or effective alliance',()=>{
+ const diplomacyReview={status:'REVIEW_AVAILABLE',timeline:{changes:[]},declaredHistory:{modelVersion:'AOF_DECLARED_DIPLOMACY_HISTORY_V1',
+   counters:{directedEdgesObserved:2,recordedStanceReversals:1,repeatedRequests:4,reciprocalAllyDeclarationEstablishments:1},
+   turningPoints:[{beatId:'beat',moment:{atMs:1000},fromPlayerId:1,toPlayerId:2,previousDeclaration:'ALLY',declarationAfter:'ENEMY',
+     allyDeclarationWithdrawn:true,previousReciprocalAllyDeclarations:true,sourceEventId:'order'}]}};
+ const html=render({statistics:{},diplomacyReview});
+ assert.ok(html.includes('Recorded diplomacy history'));assert.ok(html.includes('withdrew an earlier Ally declaration'));
+ assert.ok(html.includes('turning points are not additional social deeds'));assert.ok(html.includes('not Treachery'));
+ assert.ok(html.includes('do not prove an effective alliance'));
+});

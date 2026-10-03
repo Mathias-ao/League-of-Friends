@@ -4,6 +4,7 @@ on:
   push:
     branches: ["feat/pair-social-evidence-v1"]
     paths:
+      - "functions/src/engines/declaredDiplomacyHistory.ts"
       - "functions/src/engines/diplomacyTimeline.ts"
       - "functions/src/engines/diplomacyEvidenceAdapter.ts"
       - "functions/src/engines/recordingDiplomacyReview.ts"

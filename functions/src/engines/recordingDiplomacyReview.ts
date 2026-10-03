@@ -1,6 +1,7 @@
+import {buildDeclaredDiplomacyHistory} from './declaredDiplomacyHistory.js';
 import {buildDiplomacyTimelineFromCanonicalEvidence} from './diplomacyEvidenceAdapter.js';
 
-export const RECORDING_DIPLOMACY_REVIEW_VERSION='AOF_RECORDING_DIPLOMACY_REVIEW_V1';
+export const RECORDING_DIPLOMACY_REVIEW_VERSION='AOF_RECORDING_DIPLOMACY_REVIEW_V2';
 type Row=Record<string,any>;
 const record=(value:unknown):Row|null=>value!==null&&typeof value==='object'&&!Array.isArray(value)?value as Row:null;
 const stable=(v:any):any=>Array.isArray(v)?v.map(stable):record(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;
@@ -40,6 +41,7 @@ export function projectRecordingDiplomacyReview(value:unknown):Row {
     const raw=record(diplomacy.initialRawByPlayer)??{};
     const unavailable=result.timeline.pairSegments.filter(s=>s.coverage==='UNAVAILABLE').length;
     return {...base,status:'REVIEW_AVAILABLE',source:{...source},observedDurationMeaning:'recording_interval_not_full_game',
+      declaredHistory:buildDeclaredDiplomacyHistory(result.timeline,source as any),
       timeline:result.timeline,commandCount:result.diagnostics.diplomacyCommandEvents,
       normalizedInitialEdgeCount:result.diagnostics.canonicalInitialEdges,
       rawInitialVectorCount:Object.keys(raw).length,unknownPairSegmentCount:unavailable,
