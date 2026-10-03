@@ -13,6 +13,7 @@ engine combat resolution.
 from __future__ import annotations
 
 from collections import defaultdict
+import json
 import math
 from typing import Any, Iterable
 
@@ -64,30 +65,30 @@ def _initial_owners(initial_objects: Iterable[dict[str, Any]]) -> dict[int, int]
 def _controller_ledger(
     initial_objects: Iterable[dict[str, Any]],
     action_events: Iterable[dict[str, Any]],
-) -> dict[int, list[tuple[int, int, int, str]]]:
+) -> dict[int, list[tuple[int, int, int, str, str | None]]]:
     """Observed controller-at-time evidence used only for relationship edges.
 
     This ledger is intentionally NOT used to seed or merge Skirmishes, preserving
     exact AOF_FIGHT_DETECTION_V1 episode behavior.
     """
-    ledger: dict[int, list[tuple[int, int, int, str]]] = defaultdict(list)
+    ledger: dict[int, list[tuple[int, int, int, str, str | None]]] = defaultdict(list)
     for event in initial_objects:
         payload = event.get("payload") or {}
         instance = payload.get("instanceId")
         owner = payload.get("ownerPlayerId")
         if isinstance(instance, int) and isinstance(owner, int):
-            ledger[instance].append((0, -1, owner, "initial_object_owner"))
+            ledger[instance].append((0, -1, owner, "initial_object_owner", event.get("eventId")))
 
     for event in action_events:
         actor = event.get("actorPlayerId")
         at_ms = event.get("timestampMs")
         ordinal = event.get("operationOrdinal")
-        if not isinstance(actor, int) or not isinstance(at_ms, int):
+        if not isinstance(actor, int) or not isinstance(at_ms, int) or not isinstance(ordinal, int):
             continue
-        order = int(ordinal) if isinstance(ordinal, int) else 0
+        order = int(ordinal)
         for instance in event.get("objectInstanceIds") or []:
             if isinstance(instance, int):
-                ledger[instance].append((at_ms, order, actor, "selected_by_actor"))
+                ledger[instance].append((at_ms, order, actor, "selected_by_actor", event.get("eventId")))
 
     for rows in ledger.values():
         rows.sort(key=lambda row: (row[0], row[1]))
@@ -95,21 +96,33 @@ def _controller_ledger(
 
 
 def _controller_at(
-    ledger: dict[int, list[tuple[int, int, int, str]]],
+    ledger: dict[int, list[tuple[int, int, int, str, str | None]]],
     instance_id: Any,
     *,
     at_ms: int,
     operation_ordinal: int,
-) -> tuple[int, str] | None:
+) -> tuple[int, str, dict[str, Any]] | None:
     if not isinstance(instance_id, int):
         return None
-    best: tuple[int, int, int, str] | None = None
+    best: tuple[int, int, int, str, str | None] | None = None
     for row in ledger.get(instance_id, []):
         if (row[0], row[1]) <= (at_ms, operation_ordinal):
             best = row
         else:
             break
-    return (best[2], best[3]) if best is not None else None
+    if best is None:
+        return None
+    # Conflicting controllers at an identical moment are ambiguous, not a tie
+    # resolved by input ordering.
+    tied = [row for row in ledger.get(instance_id, []) if row[:2] == best[:2]]
+    if len({row[2] for row in tied}) != 1:
+        return None
+    best = min(tied, key=lambda row: (row[3], row[4] or ""))
+    return best[2], best[3], {
+        "sourceEventId": best[4], "controllerPlayerId": best[2],
+        "moment": {"atMs": best[0], "operationOrdinal": best[1]},
+        "basis": best[3],
+    }
 
 
 def _is_enemy(
@@ -228,12 +241,15 @@ def _side_groups(
     return groups
 
 
+PAIR_EVIDENCE_VERSION = "AOF_SKIRMISH_PAIR_EVIDENCE_V2"
+
+
 def _pairwise_edges(
     *,
     episode: dict[str, Any],
     action_events: list[dict[str, Any]],
     participants: dict[int, dict[str, Any]],
-    controller_ledger: dict[int, list[tuple[int, int, int, str]]],
+    controller_ledger: dict[int, list[tuple[int, int, int, str, str | None]]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Attach relationship evidence without changing the Skirmish itself."""
     center = episode["center"]
@@ -274,6 +290,10 @@ def _pairwise_edges(
         source_event_id: str | None,
         action: str | None,
         confidence: str,
+        operation_ordinal: int,
+        counterpart_source_event_id: str | None = None,
+        target_instance_id: int | None = None,
+        controller_evidence: dict[str, Any] | None = None,
     ) -> None:
         if not _is_enemy(source, target, participants):
             return
@@ -287,9 +307,19 @@ def _pairwise_edges(
             "sourceEventIds": set(),
             "commandTypes": set(),
             "confidence": confidence,
+            "observations": [],
         })
         edge["firstAtMs"] = min(edge["firstAtMs"], at_ms)
         edge["lastAtMs"] = max(edge["lastAtMs"], at_ms)
+        edge["observations"].append({
+            "sourceEventId": source_event_id,
+            "counterpartSourceEventId": counterpart_source_event_id,
+            "moment": {"atMs": at_ms, "operationOrdinal": operation_ordinal},
+            "method": method,
+            "commandType": action,
+            "targetInstanceId": target_instance_id,
+            "controllerEvidence": controller_evidence,
+        })
         edge["evidenceMethods"].add(method)
         if source_event_id:
             edge["sourceEventIds"].add(source_event_id)
@@ -311,7 +341,7 @@ def _pairwise_edges(
         )
         if resolved is None:
             continue
-        target_player, basis = resolved
+        target_player, basis, controller_evidence = resolved
         if _is_enemy(row["actorPlayerId"], target_player, participants):
             add_edge(
                 row["actorPlayerId"],
@@ -321,6 +351,9 @@ def _pairwise_edges(
                 source_event_id=row.get("sourceEventId"),
                 action=row.get("action"),
                 confidence="high",
+                operation_ordinal=row["operationOrdinal"],
+                target_instance_id=row.get("targetInstanceId"),
+                controller_evidence=controller_evidence,
             )
 
     # Positional pair attribution is tighter than Skirmish formation and never
@@ -345,6 +378,8 @@ def _pairwise_edges(
                 source_event_id=left.get("sourceEventId"),
                 action=left.get("action"),
                 confidence="medium",
+                operation_ordinal=left["operationOrdinal"],
+                counterpart_source_event_id=right.get("sourceEventId"),
             )
             add_edge(
                 right_player,
@@ -354,6 +389,8 @@ def _pairwise_edges(
                 source_event_id=right.get("sourceEventId"),
                 action=right.get("action"),
                 confidence="medium",
+                operation_ordinal=right["operationOrdinal"],
+                counterpart_source_event_id=left.get("sourceEventId"),
             )
 
     directed_rows: list[dict[str, Any]] = []
@@ -364,6 +401,13 @@ def _pairwise_edges(
             "evidenceMethods": sorted(edge["evidenceMethods"]),
             "sourceEventIds": sorted(edge["sourceEventIds"]),
             "commandTypes": sorted(edge["commandTypes"]),
+            "pairEvidenceVersion": PAIR_EVIDENCE_VERSION,
+            "observations": sorted(
+                {json.dumps(row, sort_keys=True): row for row in edge["observations"]}.values(),
+                key=lambda row: (row["moment"]["atMs"], row["moment"]["operationOrdinal"],
+                                 row.get("sourceEventId") or "", row["method"],
+                                 row.get("counterpartSourceEventId") or ""),
+            ),
         })
 
     pair_map: dict[tuple[int, int], dict[str, Any]] = {}
@@ -374,19 +418,26 @@ def _pairwise_edges(
             "firstAtMs": edge["firstAtMs"],
             "lastAtMs": edge["lastAtMs"],
             "directions": set(),
+            "targetedDirections": set(),
             "evidenceMethods": set(),
         })
         row["firstAtMs"] = min(row["firstAtMs"], edge["firstAtMs"])
         row["lastAtMs"] = max(row["lastAtMs"], edge["lastAtMs"])
         row["directions"].add(f'{edge["fromPlayerId"]}->{edge["toPlayerId"]}')
         row["evidenceMethods"].update(edge["evidenceMethods"])
+        if any(method.startswith("targeted_controlled_object:") for method in edge["evidenceMethods"]):
+            row["targetedDirections"].add(f'{edge["fromPlayerId"]}->{edge["toPlayerId"]}')
 
     pairs = [
         {
             **pair_map[key],
             "directions": sorted(pair_map[key]["directions"]),
             "evidenceMethods": sorted(pair_map[key]["evidenceMethods"]),
-            "mutualHostileEvidence": len(pair_map[key]["directions"]) >= 2,
+            "targetedDirections": sorted(pair_map[key]["targetedDirections"]),
+            "reciprocalTargetedCommands": len(pair_map[key]["targetedDirections"]) >= 2,
+            "localParticipationBothDirections": len(pair_map[key]["directions"]) >= 2,
+            "mutualHostileEvidence": len(pair_map[key]["targetedDirections"]) >= 2,
+            "pairEvidenceVersion": PAIR_EVIDENCE_VERSION,
         }
         for key in sorted(pair_map)
     ]

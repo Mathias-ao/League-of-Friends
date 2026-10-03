@@ -191,6 +191,28 @@ class StatisticsProjectionTests(unittest.TestCase):
         diff = semantic_diff(golden, statistics_snapshot(result))
         self.assertEqual(diff, [], json.dumps(diff[:5], indent=2))
 
+    def test_social_projection_is_replay_free_and_explicitly_unscored(self):
+        result = project_statistics(self.bundle)
+        evidence = result["pairSocialEvidence"]
+        self.assertEqual(evidence["modelVersion"], "AOF_PAIR_SOCIAL_EVIDENCE_V1")
+        self.assertEqual(evidence["identityNamespace"], "CANONICAL_REPLAY_PLAYER_ID")
+        self.assertEqual(evidence["source"]["replaySha256"], result["source"]["replaySha256"])
+        self.assertFalse(evidence["policy"]["relationshipScoringEnabled"])
+        self.assertFalse(evidence["policy"]["absenceMeaningEnabled"])
+        self.assertTrue(all(not row["absenceQualified"] for row in evidence["coverage"]))
+        self.assertTrue(all(p["mapPresence"]["modelVersion"] == "AOF_MAP_PRESENCE_V8" for p in result["participants"]))
+
+    def test_episode_context_is_additive_and_preserves_entire_statistics_envelope(self):
+        result = project_statistics(self.bundle)
+        context = result["pairSocialEvidence"].pop("episodeContext")
+        self.assertEqual(context["modelVersion"], "AOF_PAIR_EPISODE_CONTEXT_V1")
+        self.assertFalse(context["policy"]["newDeedsCreated"])
+        self.assertFalse(context["policy"]["relationshipScoringEnabled"])
+        with patch("statistics_projector.project_pair_episode_context", return_value={}):
+            baseline = project_statistics(self.bundle)
+        baseline["pairSocialEvidence"].pop("episodeContext")
+        self.assertEqual(result, baseline)
+
     def test_raw_ids_survive_reference_catalog_labels(self):
         result = project_statistics(self.bundle)
         villager = result["commandEvidence"]["queueRequestsByPlayerAndUnit"]["1"][0]

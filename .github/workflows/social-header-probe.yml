@@ -1,0 +1,41 @@
+name: Social Header Settings Probe
+
+on:
+  push:
+    branches: ["feat/pair-social-evidence-v1"]
+    paths: [".github/workflows/social-header-probe.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  headers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r replay-tools/requirements.txt
+      - name: Compare retained header fields without changing extraction
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, str(Path("replay-tools").resolve()))
+          from mgz.fast.header import parse
+          from parse_replay import build_settings
+          manifest = json.loads(Path("replay-lab/fixtures/social-context-audit.json").read_text())
+          for entry in manifest["recordings"]:
+              with Path(entry["path"]).open("rb") as handle:
+                  header = parse(handle)
+              lobby, de = header.get("lobby") or {}, header.get("de") or {}
+              print("HEADER_PROBE " + json.dumps({
+                  "id": entry["id"], "saveVersion": header.get("save_version"),
+                  "lobbyLockTeams": lobby.get("lock_teams"), "deLockTeams": de.get("lock_teams"),
+                  "canonicalLockTeams": build_settings(header, [])["lockTeams"]
+              }), flush=True)
+          PY

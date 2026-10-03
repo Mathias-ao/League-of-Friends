@@ -8,6 +8,7 @@ import { collections } from "../../domain/collections.js";
 import type { GamePlayer } from "../../domain/types.js";
 import {projectStatistics} from "../../engines/statisticsExperience.js";
 import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
+import {validateRecordingMatchFacts, currentOfficialGameOutcome} from "../../engines/recordingMatchFacts.js";
 
 const MAX_REPLAY_BYTES = 32 * 1024 * 1024;
 
@@ -51,7 +52,8 @@ interface WorkerResult {
   statistics: Record<string, unknown> & {
     statisticsProjectionVersion?: string;
     statisticsSchemaVersion?: string;
-    source?: { replaySha256?: string };
+    source?: { replaySha256?: string; canonicalManifestSha256?: string; extractionRunId?: string };
+    matchFacts?: unknown;
   };
   canonicalBundleBase64: string;
   canonicalBundleSha256: string;
@@ -268,6 +270,16 @@ export const uploadReplay = onCall<UploadReplayInput>(
       throw new HttpsError("internal", "Canonical evidence bundle failed integrity verification.");
     }
 
+    let recordingMatchFacts: Record<string, unknown>;
+    try {
+      recordingMatchFacts = validateRecordingMatchFacts(worker.statistics.matchFacts, {
+        replaySha256: localSourceHash,
+        canonicalManifestSha256: worker.statistics.source?.canonicalManifestSha256,
+        extractionRunId: worker.extractionRunId,
+      }, worker.sourcePlayers.map(player => player.replaySlot));
+    } catch (error) {
+      throw new HttpsError("internal", error instanceof Error ? error.message : "Recording match facts failed validation.");
+    }
     const playerMapping = await resolvePlayerMapping(game, worker.sourcePlayers);
     const statisticsBytes = Buffer.from(JSON.stringify(worker.statistics));
     const statisticsSha256 = sha256(statisticsBytes);
@@ -307,6 +319,11 @@ export const uploadReplay = onCall<UploadReplayInput>(
         sourceFileName: fileName,
         sourceBytes: bytes.length,
         replayMeta: worker.replayMeta ?? {},
+        matchFacts: recordingMatchFacts,
+        officialOutcomeAtIngestion: {
+          ...currentOfficialGameOutcome(freshGame, matchSnapshot.data()),
+          historicalSnapshotOnly: true,
+        },
         playerMapping,
         parser: {
           name: worker.parserName,

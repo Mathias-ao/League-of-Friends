@@ -1,4 +1,4 @@
-"""Player-facing Military Engagement statistics V3.
+"""Player-facing Military Engagement statistics V4.
 
 Hierarchy:
 - Skirmish: broad local hostile episode from AOF_SKIRMISH_DETECTION_V1.
@@ -24,7 +24,7 @@ from unit_classification import (
     summarize_selected_instances,
 )
 
-ENGAGEMENT_MODEL_VERSION = "AOF_ENGAGEMENT_STATISTICS_V3"
+ENGAGEMENT_MODEL_VERSION = "AOF_ENGAGEMENT_STATISTICS_V4"
 
 BASE_ZONE_RADIUS_TILES = 22.0
 BASE_AMBIGUITY_MARGIN_TILES = 3.0
@@ -151,6 +151,14 @@ def _ally_interaction_applicability(manifest: dict[str, Any]) -> dict[str, Any]:
         return {
             "status": "not_applicable",
             "reason": "one_v_one_has_no_third_party_ally_interaction",
+        }
+
+    # Even a lobby with teams can permit unilateral stance changes.
+    settings = (manifest.get("match") or {}).get("settings") or {}
+    if settings.get("lockTeams") is False:
+        return {
+            "status": "pending_relation_semantics",
+            "reason": "unlocked_diplomacy_requires_qualified_effective_stance_intervals",
         }
 
     for index, left in enumerate(participants):
@@ -383,6 +391,14 @@ def _battle_from_skirmish(
             pair_field="playerIds",
         ),
         "baseOwnerPlayerId": base_owner,
+        "baseSeed": dict(base_match[1]) if base_match is not None else None,
+        "contributionSourceEventIdsByPlayer": {
+            str(player_id): sorted({
+                str(event["eventId"]) for event in nearby
+                if event.get("actorPlayerId") == player_id and event.get("eventId")
+            })
+            for player_id in sorted(battle_contributors)
+        },
         "greatBattle": great_battle,
         "distinctSelectedObjectCount": len(selected_ids),
         "knownNonMilitarySelectedObjectCount": len(known_non_military_ids),
@@ -449,6 +465,13 @@ def _defensive_assistance(
                 "enemyPlayerIds": sorted(enemies),
                 "firstContributionAtMs": battle["firstContributionAtMsByPlayer"][str(helper_id)],
                 "baseOwnerPlayerId": defended_id,
+                "baseSeed": battle.get("baseSeed"),
+                "sourceSkirmishId": battle.get("sourceSkirmishId"),
+                "startedAtMs": battle["firstContributionAtMsByPlayer"][str(helper_id)],
+                "endedAtMs": battle["endedAtMs"],
+                "sourceEventIds": (battle.get("contributionSourceEventIdsByPlayer") or {}).get(str(helper_id), []),
+                "parentSourceEventIds": battle.get("sourceEventIds") or [],
+                "unitClassEvidence": (battle.get("unitClassEvidenceByPlayer") or {}).get(str(helper_id)),
                 "modelVersion": ENGAGEMENT_MODEL_VERSION,
             })
     return results
@@ -488,28 +511,35 @@ def _cooperative_attacks(
             )
             if not targets:
                 continue
-            attackers = sorted({
-                attacker
-                for target in targets
-                for attacker in target_to_attackers[target]
-            })
-            results.append({
-                "battleId": battle["battleId"],
-                "attackerPlayerIds": attackers,
-                "targetPlayerIds": targets,
-                "startedAtMs": min(
-                    battle["firstContributionAtMsByPlayer"][str(player_id)]
-                    for player_id in attackers
-                    if str(player_id) in battle["firstContributionAtMsByPlayer"]
-                ),
-                "locationContext": "enemy_base" if base_owner in targets else "neutral_or_contested",
-                "baseOwnerPlayerId": base_owner,
-                "modelVersion": ENGAGEMENT_MODEL_VERSION,
-                "scope": (
-                    "two or more allied contributors have pairwise interaction evidence "
-                    "against the same opposing player; no coordination-intent claim"
-                ),
-            })
+            # Emit one target-specific group. Flattening the union creates
+            # fictitious A/C cooperation when A/B face X and B/C face Y.
+            for target in targets:
+                attackers = sorted(target_to_attackers[target])
+                edges = [
+                    edge for edge in (battle.get("directedInteractionEdges") or [])
+                    if ((edge.get("fromPlayerId") in attackers and edge.get("toPlayerId") == target)
+                        or (edge.get("toPlayerId") in attackers and edge.get("fromPlayerId") == target))
+                ]
+                results.append({
+                    "battleId": battle["battleId"],
+                    "sourceSkirmishId": battle.get("sourceSkirmishId"),
+                    "attackerPlayerIds": attackers,
+                    "targetPlayerId": target,
+                    "targetPlayerIds": [target],
+                    "startedAtMs": min(
+                        battle["firstContributionAtMsByPlayer"][str(player_id)]
+                        for player_id in attackers
+                    ),
+                    "endedAtMs": battle["endedAtMs"],
+                    "locationContext": "enemy_base" if base_owner == target else "neutral_or_contested",
+                    "baseOwnerPlayerId": base_owner,
+                    "directedInteractionEdges": edges,
+                    "sourceEventIds": sorted({
+                        event_id for edge in edges for event_id in edge.get("sourceEventIds", [])
+                    }),
+                    "modelVersion": ENGAGEMENT_MODEL_VERSION,
+                    "scope": "allied command contributors share this specific opponent; no coordination-intent claim",
+                })
     return results
 
 

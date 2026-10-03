@@ -112,7 +112,9 @@ class SkirmishDetectorTests(unittest.TestCase):
         self.assertEqual(episode["participantPlayerIds"], [1, 2])
         self.assertEqual(episode["contributingPlayerIds"], [1, 2])
         self.assertEqual(episode["opponentInteractionPairs"][0]["playerIds"], [1, 2])
-        self.assertTrue(episode["opponentInteractionPairs"][0]["mutualHostileEvidence"])
+        self.assertFalse(episode["opponentInteractionPairs"][0]["mutualHostileEvidence"])
+        self.assertTrue(episode["opponentInteractionPairs"][0]["localParticipationBothDirections"])
+        self.assertFalse(episode["opponentInteractionPairs"][0]["reciprocalTargetedCommands"])
 
     def test_later_created_target_control_can_enrich_pair_without_creating_skirmish(self):
         no_seed = detect_skirmishes(
@@ -179,6 +181,47 @@ class SkirmishDetectorTests(unittest.TestCase):
         pairs = {tuple(row["playerIds"]) for row in episode["opponentInteractionPairs"]}
         self.assertIn((1, 2), pairs)
         self.assertNotIn((2, 3), pairs)
+
+    def test_reciprocal_targeting_has_separate_controller_provenance(self):
+        result = detect_skirmishes(
+            manifest=manifest(), initial_objects=initial_objects(),
+            action_events=[
+                action("a", 1, 10_000, "ORDER", 50, 50, target=201),
+                action("b", 2, 11_000, "ORDER", 50, 50, target=101),
+            ],
+        )
+        pair = result["episodes"][0]["opponentInteractionPairs"][0]
+        self.assertTrue(pair["reciprocalTargetedCommands"])
+        self.assertTrue(pair["mutualHostileEvidence"])
+        edge = result["episodes"][0]["directedInteractionEdges"][0]
+        targeted = [row for row in edge["observations"] if row["method"].startswith("targeted_controlled_object:")]
+        self.assertEqual(targeted[0]["controllerEvidence"]["sourceEventId"], "p2-vill")
+        self.assertEqual(targeted[0]["targetInstanceId"], 201)
+
+    def test_same_millisecond_controller_selection_cannot_leak_backwards(self):
+        actions = [
+            action("seed", 1, 9_000, "DE_ATTACK_MOVE", 50, 50),
+            {**action("target", 1, 10_000, "ORDER", 50, 50, target=9001), "operationOrdinal": 20},
+            {**action("later-control", 2, 10_000, "MOVE", 51, 50, selected=[9001]), "operationOrdinal": 21},
+        ]
+        result = detect_skirmishes(manifest=manifest(), initial_objects=initial_objects(), action_events=actions)
+        edge = next(row for row in result["episodes"][0]["directedInteractionEdges"] if row["fromPlayerId"] == 1)
+        self.assertFalse(any(row["method"].startswith("targeted_controlled_object:") for row in edge["observations"]))
+        actions[-1]["operationOrdinal"] = 19
+        result = detect_skirmishes(manifest=manifest(), initial_objects=initial_objects(), action_events=actions)
+        edge = next(row for row in result["episodes"][0]["directedInteractionEdges"] if row["fromPlayerId"] == 1)
+        self.assertTrue(any(row["method"].startswith("targeted_controlled_object:") for row in edge["observations"]))
+
+    def test_conflicting_controller_at_same_moment_fails_closed(self):
+        actions = [
+            action("seed", 1, 9_000, "DE_ATTACK_MOVE", 50, 50),
+            {**action("control-1", 1, 9_500, "MOVE", 50, 50, selected=[9001]), "operationOrdinal": 10},
+            {**action("control-2", 2, 9_500, "MOVE", 51, 50, selected=[9001]), "operationOrdinal": 10},
+            action("target", 1, 10_000, "ORDER", 50, 50, target=9001),
+        ]
+        result = detect_skirmishes(manifest=manifest(), initial_objects=initial_objects(), action_events=actions)
+        edge = next(row for row in result["episodes"][0]["directedInteractionEdges"] if row["fromPlayerId"] == 1)
+        self.assertFalse(any(row["method"].startswith("targeted_controlled_object:") for row in edge["observations"]))
 
     def test_teammate_commands_alone_do_not_form_skirmish(self):
         result = detect_skirmishes(

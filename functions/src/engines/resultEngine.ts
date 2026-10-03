@@ -92,3 +92,9 @@ export function assertIndependentConfirmation(
     );
   }
 }
+
+/** Complement of accepted winners in the official roster; never replay resignations. */
+export function losingPlayerIds(outcome: GameOutcome, participants: MatchParticipant[]): string[] {
+  const winners = new Set(winningPlayerIds(outcome, participants));
+  return participants.filter(participant => !winners.has(participant.playerId)).map(participant => participant.playerId);
+}

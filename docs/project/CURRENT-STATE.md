@@ -1,6 +1,37 @@
 # Age of Friends — Current State
 
-Last reviewed: 28 September 2026
+## Temporal diplomacy certainty — 3 October 2026
+
+Diplomacy Timeline/Adapter V2 invalidates stale effective certainty after an unverified directed order, without promoting the requested stance. Later qualified state establishment is separate from proven state change. A pure recording review now reads retained match facts separately from existing statistics, exposes the gap in the Battle record, and is exercised by the real-corpus audit. Normalized initial diplomacy is still absent; raw header mapping and runtime effects require controlled tuple-specific witnesses. See [V2 semantics](../architecture/diplomacy-certainty-v2.md) and [the capture protocol](../replay-foundation/diplomacy-qualification-protocol-v1.md). Detectors, metric values, neutral deed identities, result authority and scoring remain unchanged.
+
+## Battle record review — 3 October 2026
+
+The Battle website now offers an expandable match-context and directed social-evidence review, reading the active hash-checked artifact on demand and current official league outcome separately. It preserves episode/deed distinctions, targets, helper direction, family coverage and diplomacy orders without scoring. Preview includes clearly separate, abbreviated real 4v4/duel/FFA audit examples. The real-corpus audit also compares review metrics under the known legacy lobby/DE team-lock conflict; this is a labelled counterfactual, not deployed historical statistics. See [the review and rebuild boundary](../architecture/battle-record-review-v1.md). No live data promotion or deployment is included.
+
+## Recording match facts — 3 October 2026
+
+Statistics schema 1.1.0 now stores `AOF_RECORDING_MATCH_FACTS_V1` at `matchFacts`: map/rules, recording and source versions, raw team membership, existing diplomacy commands, postgame evidence and resignations. Replay outcomes stay unresolved; accepted league result revisions now explicitly retain winning and losing player IDs. Upload persistence validates recording provenance, and reads resolve current official results separately from historical ingestion snapshots. Analysis V4 retains checked header evidence; existing statistics detectors and social deeds are unchanged. See [the match-facts contract](../architecture/recording-match-facts-v1.md). The review panel is described above; scoring activation, deployment and historical backfill remain excluded.
+
+## Real recording social evidence review — 2 October 2026
+
+The remote corpus audit passed 14 retained recordings with 13 distinct decoded Game GUIDs. It exposed and corrected DE team-lock normalization: explicit edition-specific values now win over conflicting legacy lobby flags, under `AOF_CANONICAL_NORMALIZER_V1_2`. New extractions restore directed ally-support and target-specific shared-offense qualification; existing canonical bundles remain historical revisions. Statistics detectors and schema are unchanged, while alliance-dependent outputs require rebuilding from corrected extraction. See [the real recording review](../architecture/real-social-context-audit-v1.md) for results, examples and the unresolved FFA/static-alignment coverage gap. No scoring is activated.
+
+## Pair Episode Context implementation — 2 October 2026
+
+The branch now emits `AOF_PAIR_EPISODE_CONTEXT_V1` at `pairSocialEvidence.episodeContext`: unique recorded pressure-response associations, defensive participation connected through exact pressure/clash provenance, and independent ordered return-pressure sequences. It preserves statistics, schema digest, neutral deed identities and counts. See [the implemented context contract](../architecture/pair-episode-context-v1.md). Scoring, activity/standings interpretation, effective diplomacy and outcomes remain inactive.
+
+
+## Pair Social Evidence branch update — 2 October 2026
+
+On `feat/pair-social-evidence-v1`, `AOF_PAIR_SOCIAL_EVIDENCE_V1` now projects neutral Game-level incidents and deeds from retained statistics, with directed family coverage, command provenance and deterministic identities. Engagement V4 preserves target-specific offensive groups and helper direction; Skirmish Pair Evidence V2 distinguishes local overlap from reciprocal targeted commands without changing encounter boundaries. Active Map Presence V8 records relic targeting without asserting possession or theft.
+
+See [the implemented contract](../architecture/pair-social-evidence-v1.md). Relationship scoring, effective dynamic diplomacy, absence/non-cooperation interpretation and production integration remain inactive. The older sections below describe their reviewed historical baseline; the branch contract records this slice.
+
+## Contextual Social Deeds design update — 2 October 2026
+
+[Contextual Social Deeds V1](../architecture/contextual-social-deeds-v1.md) records the contextual qualification matrix and implementation slices. Reputation is **Gallantry / Cruelty / Chivalry**; Relationships are **Rivalry / Hostility / Bond**. Treachery is a qualified turning-point event classification. CORE-IDENTITY.md now documents its explicit directed Hostility escalation exception; no scoring is activated. Pressure-response joins are implemented as the neutral context view above. Coalition entry circumstances, activity annotations and pre-Battle standings remain planned adapters. Score trajectories, king-loss responsibility, tribute semantics and effective diplomacy remain separately gated. Historical mentions of Treachery as a Reputation track below are superseded by this update and CORE-IDENTITY.md.
+
+Last reviewed historical baseline: 28 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 

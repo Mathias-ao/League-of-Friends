@@ -1,4 +1,4 @@
-export const DIPLOMACY_TIMELINE_VERSION = "AOF_DIPLOMACY_TIMELINE_V1";
+export const DIPLOMACY_TIMELINE_VERSION = "AOF_DIPLOMACY_TIMELINE_V2";
 export const DIPLOMACY_ACTION_MODE_MAP_VERSION = "AOF_DIPLOMACY_ACTION_MODE_MAP_V1";
 
 /** Replay chronology is (game-clock millisecond, operation ordinal). */
@@ -48,6 +48,9 @@ export interface NormalizedDiplomacyChange extends RawDiplomacyChange {
   previousEffectiveStance: DiplomacyStance;
   effectiveStanceAfter: DiplomacyStance;
   effectiveStateChanged: boolean;
+  effectiveStateInvalidated: boolean;
+  effectiveStateEstablished: boolean;
+  knowledgeStateChanged: boolean;
   mappingVersion: typeof DIPLOMACY_ACTION_MODE_MAP_VERSION;
 }
 
@@ -78,6 +81,8 @@ export interface DiplomacyTimeline {
     commandOnlyChanges: number;
     qualifiedEffectiveChanges: number;
     qualifiedNoOpChanges: number;
+    effectiveStateInvalidations: number;
+    qualifiedStateEstablishments: number;
   };
 }
 
@@ -89,19 +94,19 @@ function directedKey(fromPlayerId: number, toPlayerId: number): string {
 }
 
 function assertPlayerId(value: number, label: string): void {
-  if (!Number.isInteger(value) || value <= 0) throw new Error(`${label} must be a positive integer player id.`);
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${label} must be a positive integer player id.`);
 }
 
 function assertDuration(value: number): number {
-  if (!Number.isFinite(value) || value < 0) throw new Error("Diplomacy timeline durationMs must be a non-negative finite number.");
-  return Math.trunc(value);
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error("Diplomacy timeline durationMs must be a non-negative safe integer.");
+  return value;
 }
 
 function assertEventMoment(moment: ReplayMoment, durationMs: number, label: string): void {
-  if (!Number.isFinite(moment.atMs) || moment.atMs < 0 || moment.atMs > durationMs) {
+  if (!Number.isSafeInteger(moment.atMs) || moment.atMs < 0 || moment.atMs > durationMs) {
     throw new Error(`${label} atMs must be between 0 and Battle duration ${durationMs}.`);
   }
-  if (!Number.isInteger(moment.operationOrdinal) || moment.operationOrdinal < 0) {
+  if (!Number.isSafeInteger(moment.operationOrdinal) || moment.operationOrdinal < 0) {
     throw new Error(`${label} operationOrdinal must be a non-negative integer.`);
   }
 }
@@ -147,7 +152,8 @@ function coverageFor(first: DiplomacyStance, second: DiplomacyStance): Diplomacy
 }
 
 function sortedPlayerIds(playerIds: number[]): number[] {
-  const result = [...new Set(playerIds)];
+  if (new Set(playerIds).size !== playerIds.length) throw new Error('Duplicate diplomacy roster player id.');
+  const result = [...playerIds];
   for (const playerId of result) assertPlayerId(playerId, "playerId");
   if (result.length < 2) throw new Error("Diplomacy timeline requires at least two players.");
   return result.sort((a, b) => a - b);
@@ -166,6 +172,7 @@ function validateInitialEdges(
       throw new Error("Initial diplomacy references a player outside the Battle roster.");
     }
     if (!edge.sourceVersion) throw new Error("Initial diplomacy sourceVersion is required.");
+    if (!["ALLY","NEUTRAL","ENEMY","UNKNOWN"].includes(edge.stance)) throw new Error("Invalid initial diplomacy stance.");
     const key = directedKey(edge.fromPlayerId, edge.toPlayerId);
     if (result.has(key)) throw new Error(`Duplicate initial diplomacy edge ${key}.`);
     result.set(key, { ...edge });
@@ -196,6 +203,7 @@ function validateAndSortChanges(
       `Diplomacy change ${change.eventId}`,
     );
     if (!change.sourceVersion) throw new Error(`Diplomacy change ${change.eventId} sourceVersion is required.`);
+    for (const raw of [change.rawMode,change.rawCommandId]) if (raw !== null && !Number.isSafeInteger(raw)) throw new Error("Invalid raw diplomacy mode or command id.");
     if (change.effectQualification !== "COMMAND_ONLY" && change.effectQualification !== "EFFECTIVE_STATE_QUALIFIED") {
       throw new Error(`Diplomacy change ${change.eventId} has an unsupported effectQualification.`);
     }
@@ -223,6 +231,8 @@ function normalizeChanges(
   commandOnlyChanges: number;
   qualifiedEffectiveChanges: number;
   qualifiedNoOpChanges: number;
+  effectiveStateInvalidations: number;
+  qualifiedStateEstablishments: number;
 } {
   const current = new Map<string, DiplomacyStance>();
   for (const from of players) {
@@ -237,6 +247,8 @@ function normalizeChanges(
   let commandOnlyChanges = 0;
   let qualifiedEffectiveChanges = 0;
   let qualifiedNoOpChanges = 0;
+  let effectiveStateInvalidations = 0;
+  let qualifiedStateEstablishments = 0;
 
   for (const change of changes) {
     const key = directedKey(change.fromPlayerId, change.toPlayerId);
@@ -246,15 +258,25 @@ function normalizeChanges(
 
     let effectiveStanceAfter = previousEffectiveStance;
     let effectiveStateChanged = false;
+    let effectiveStateInvalidated = false;
+    let effectiveStateEstablished = false;
     if (change.effectQualification === "COMMAND_ONLY") {
       commandOnlyChanges += 1;
+      // The old stance is historical knowledge, not proof it still holds after
+      // an unverified order. Unknown modes and apparent repeats also fail closed.
+      effectiveStanceAfter = 'UNKNOWN';
+      effectiveStateInvalidated = previousEffectiveStance !== 'UNKNOWN';
+      if (effectiveStateInvalidated) effectiveStateInvalidations += 1;
+      current.set(key, effectiveStanceAfter);
     } else {
       if (commandedStance === "UNKNOWN") {
         throw new Error(`Diplomacy change ${change.eventId} cannot be EFFECTIVE_STATE_QUALIFIED with an unknown command mode.`);
       }
       effectiveStanceAfter = commandedStance;
-      effectiveStateChanged = effectiveStanceAfter !== previousEffectiveStance;
-      if (effectiveStateChanged) qualifiedEffectiveChanges += 1;
+      effectiveStateEstablished = previousEffectiveStance === 'UNKNOWN';
+      effectiveStateChanged = !effectiveStateEstablished && effectiveStanceAfter !== previousEffectiveStance;
+      if (effectiveStateEstablished) qualifiedStateEstablishments += 1;
+      else if (effectiveStateChanged) qualifiedEffectiveChanges += 1;
       else qualifiedNoOpChanges += 1;
       current.set(key, effectiveStanceAfter);
     }
@@ -265,6 +287,9 @@ function normalizeChanges(
       previousEffectiveStance,
       effectiveStanceAfter,
       effectiveStateChanged,
+      effectiveStateInvalidated,
+      effectiveStateEstablished,
+      knowledgeStateChanged: effectiveStanceAfter !== previousEffectiveStance,
       mappingVersion: DIPLOMACY_ACTION_MODE_MAP_VERSION,
     });
   }
@@ -275,6 +300,8 @@ function normalizeChanges(
     commandOnlyChanges,
     qualifiedEffectiveChanges,
     qualifiedNoOpChanges,
+    effectiveStateInvalidations,
+    qualifiedStateEstablishments,
   };
 }
 
@@ -298,7 +325,7 @@ function stanceFromEvidence(
     if (
       change.fromPlayerId !== fromPlayerId ||
       change.toPlayerId !== toPlayerId ||
-      !change.effectiveStateChanged
+      !change.knowledgeStateChanged
     ) continue;
     const changeMoment = { atMs: change.atMs, operationOrdinal: change.operationOrdinal };
     if (compareReplayMoments(changeMoment, moment) > 0) break;
@@ -323,7 +350,7 @@ function buildPairSegments(
       const two = players[right];
       const boundaries: ReplayMoment[] = [start, end];
       for (const change of changes) {
-        if (!change.effectiveStateChanged) continue;
+        if (!change.knowledgeStateChanged) continue;
         const belongsToPair =
           (change.fromPlayerId === one && change.toPlayerId === two) ||
           (change.fromPlayerId === two && change.toPlayerId === one);
@@ -414,6 +441,8 @@ export function buildDiplomacyTimeline(input: {
       commandOnlyChanges: normalized.commandOnlyChanges,
       qualifiedEffectiveChanges: normalized.qualifiedEffectiveChanges,
       qualifiedNoOpChanges: normalized.qualifiedNoOpChanges,
+      effectiveStateInvalidations: normalized.effectiveStateInvalidations,
+      qualifiedStateEstablishments: normalized.qualifiedStateEstablishments,
     },
   };
 }

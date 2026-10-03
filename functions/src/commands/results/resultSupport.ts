@@ -9,7 +9,7 @@ import type {
   MatchParticipant,
   SeriesRule,
 } from "../../domain/types.js";
-import { ResultValidationError, winningPlayerIds } from "../../engines/resultEngine.js";
+import { ResultValidationError, winningPlayerIds, losingPlayerIds } from "../../engines/resultEngine.js";
 
 export interface MatchForResult {
   seasonId?: string | null;
@@ -161,6 +161,7 @@ export function applyCanonicalGameResult(
     ...input.outcome,
     revision,
     winningPlayerIds: winningPlayerIds(input.outcome, input.match.participants),
+    losingPlayerIds: losingPlayerIds(input.outcome, input.match.participants),
     source: input.source,
     submissionId: input.submissionId,
     submittedBy: input.submittedBy,

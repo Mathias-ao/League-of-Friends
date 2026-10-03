@@ -5,7 +5,7 @@ import {
   buildDiplomacyTimeline,
 } from "./diplomacyTimeline.js";
 
-export const DIPLOMACY_EVIDENCE_ADAPTER_VERSION = "AOF_DIPLOMACY_EVIDENCE_ADAPTER_V1";
+export const DIPLOMACY_EVIDENCE_ADAPTER_VERSION = "AOF_DIPLOMACY_EVIDENCE_ADAPTER_V2";
 
 export interface CanonicalInitialDiplomacyEdgeLike {
   fromPlayerId: number;
@@ -39,7 +39,7 @@ function integer(value: unknown): number | null {
 }
 
 function normalizeCanonicalStance(value: string): DiplomacyStance {
-  const normalized = value.trim().toLowerCase();
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
   if (normalized === "ally") return "ALLY";
   if (normalized === "neutral") return "NEUTRAL";
   if (normalized === "enemy") return "ENEMY";
