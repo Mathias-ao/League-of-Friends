@@ -40,10 +40,11 @@ class RecordingMatchFactsTests(unittest.TestCase):
         self.assertEqual(facts["headerSource"]["sha256"], self.analysis["recordingHeaderSource"]["sha256"])
 
     def test_zero_and_false_header_values_are_not_missing(self):
-        header = {"de": {"rated": False, "starting_age_id": 0, "lock_teams": False},
+        header = {"de": {"rated": False, "starting_age_id": 0, "lock_teams": False, "mod": "BalancePack"},
                   "map": {"dimension": 120, "restore_time": 0, "all_visible": False}}
         compact = compact_header(header)
         self.assertIs(compact["de"]["rated"], False)
+        self.assertEqual(compact["de"]["mod"], "BalancePack")
         self.assertEqual(compact["de"]["starting_age_id"], 0)
         self.assertEqual(compact["map"]["restore_time"], 0)
 

@@ -11,7 +11,7 @@ HEADER_KEYS = {
            "difficulty_id", "population_limit", "speed", "rated", "victory_type_id",
            "starting_resources_id", "starting_age_id", "ending_age_id", "treaty_length",
            "team_together", "lock_teams", "multiplayer", "all_technologies", "game_type_id",
-           "map_name", "data_mod", "data_mod_id", "dataset", "dataset_version",
+           "map_name", "mod", "visibility_id", "animals_enabled", "data_mod", "data_mod_id", "dataset", "dataset_version",
            "lock_speed", "cheats", "record_game", "shared_exploration", "team_positions",
            "predators_enabled", "turbo_enabled", "hidden_civs", "random_positions", "dlc_ids"),
     "lobby": ("map_size", "population", "game_type_id", "reveal_map_id", "seed", "lock_teams"),
