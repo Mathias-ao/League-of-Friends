@@ -31,3 +31,9 @@ The exporter still writes normalized initial diplomacy as an empty list. Raw hea
 See [the qualification protocol](../replay-foundation/diplomacy-qualification-protocol-v1.md). Until supported build/save/data/mod tuples have reviewed initial-state and effective-transition witnesses, no runtime command is promoted and dynamic relationship scoring stays inactive. A delayed UI observation cannot retroactively prove the exact command-time effect. Record the uncertainty window; do not fill it with an assumed alliance.
 
 No Rivalry/Hostility/Bond points, Gallantry/Cruelty/Chivalry points, Treachery, absence, cooperation intent or engine combat outcomes are inferred by this change.
+
+## Completed corpus audit
+
+[The temporal review audit](https://github.com/Mathias-ao/League-of-Friends/actions/runs/37111769000) passed all 14 recordings at source commit `60bf829b1cd6488527d69eaf2cebf699f9265785`. The FFA and TownBell FFA recordings retain 143 and 86 directed orders respectively (observed raw command modes 0 and 3). All 14 have raw initial vectors, but zero normalized initial edges and zero qualified effective pair intervals. All command references, input immutability and duplicated/reordered rebuild comparisons passed; no effective transition was promoted. Existing statistics and neutral ledger preservation checks also passed.
+
+Preview now includes both complete directed FFA command reviews alongside explicitly abbreviated episode samples. These are regression evidence, not engine-state qualification or independent league Battles. The paired duel still contributes one Game, not two histories.

@@ -92,3 +92,14 @@ test('alliance review exposes command uncertainty without presenting requested a
   assert.ok(html.includes('previous certainty ends here'));assert.ok(html.includes('Unknown does not mean neutral'));
   assert.ok(!html.includes('effective stance ALLY'));
 });
+
+test('audited FFA previews retain actual command histories and unavailable effective state',()=>{
+  for(const [id,count] of [['ffa',143],['townbell-ffa',86]] as const){
+    const audit=recordingReviewExamples.find(x=>x.id===id)!;
+    const html=render({audit});assert.ok(html.includes(count+' recorded diplomacy orders'));
+    assert.ok(html.includes('0 qualified pair intervals'));
+    assert.ok(html.includes('effective stance UNKNOWN'));assert.ok(!html.includes('effective stance ALLY'));
+    assert.equal(audit.diplomacyReview.timeline.changes.length,count);
+    assert.ok(audit.diplomacyReview.timeline.changes.every(row=>!row.effectiveStateChanged));
+  }
+});
