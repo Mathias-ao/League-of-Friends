@@ -61,7 +61,7 @@ export function reviewRelationshipEvidence(input:{incidents?:any;annotations?:an
      sourceIds:refs,recordIds});
    }
    if(incident.family==='SHARED_OFFENSIVE_PARTICIPATION'&&f.kind==='SHARED_OPPONENT_PARTICIPATION'){
-    const contributors=records(f.contributions).filter(c=>p.includes(c.contributorPlayerId)&&ids(c.sourceEventIds).length);
+    const contributors:Row[]=records(f.contributions).filter((c:Row):boolean=>p.includes(c.contributorPlayerId)&&ids(c.sourceEventIds).length>0);
     if(!p.every(id=>contributors.some(c=>c.contributorPlayerId===id))||!player(f.targetPlayerId)||p.includes(f.targetPlayerId))continue;
     const alliance=incident.relationContext==='FIXED_ALLIES';
     add({id:incident.incidentId+':Bond:shared:'+f.targetPlayerId,pair:p,track:'Bond',atMs:at,title:'Shared offensive participation',
