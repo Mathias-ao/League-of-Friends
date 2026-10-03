@@ -19,6 +19,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
   const officialName=(id:string)=>players.find(p=>p.playerId===id)?.steamName??id;
   const incidents:Row[]=example?Object.entries(object(audit.ledgerSamples)).flatMap(([family,values])=>list(values).map(row=>({...row,family}))):list(ledger.incidents);
   const counts:Row=example?object(audit.incidentCounts):incidents.reduce<Row>((result:Row,row)=>({...result,[row.family]:(result[row.family]??0)+1}),{});
+  const diplomacyOrders=example?[]:Object.values(object(object(facts.diplomacy).commandTimelines)).flatMap(list).sort((a,b)=>(a.atMs??0)-(b.atMs??0)||(a.operationOrdinal??0)-(b.operationOrdinal??0)||String(a.sourceEventId).localeCompare(String(b.sourceEventId)));
   const deedCount=example?audit.deedCount:list(ledger.deeds).length;
   const annotations=example?Object.values(object(audit.samples)).flatMap(list):[...list(object(ledger.episodeContext).annotations),...list(object(ledger.episodeContext).sequences)];
   const neutralCoverage=example?[]:list(ledger.coverage);
@@ -41,6 +42,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
       <p>These are lobby assignments. They do not establish alliances throughout a diplomacy Game.</p>
       {!example&&<p>Diplomacy commands: {shown(Object.keys(object(object(facts.diplomacy).commandTimelines)).length)} directed timelines retained. Effective changes of allegiance remain unqualified.</p>}
     </details></>:<p>Recording context is unavailable in this statistics revision. Existing measurements remain available above.</p>}
+    {!example&&hasFacts&&<details><summary>Diplomacy orders ({diplomacyOrders.length})</summary><p>Recorded orders are directional. An order alone does not prove that an alliance changed.</p>{diplomacyOrders.length?<ol>{diplomacyOrders.map((row,i)=><li key={row.sourceEventId??i}>{formatTime(row.atMs??0)} · {name(row.replaySlot)} → {name(row.targetReplaySlot)} · requested mode ID {shown(row.diplomacyMode)}<small className="br-source"> · {shown(row.sourceEventId)}</small></li>)}</ol>:<p>No diplomacy orders retained here. This does not qualify changes of allegiance or an absence of cooperation.</p>}</details>}
     <h4>Official result</h4>
     {official.qualification==='OFFICIAL'&&Array.isArray(official.winnerPlayerIds)&&Array.isArray(official.loserPlayerIds)?<><p>Winners: {official.winnerPlayerIds.map(officialName).join(', ')}</p><p>Non-winning players: {official.loserPlayerIds.map(officialName).join(', ')}</p><small>Current league result · revision {official.resultRevision}</small></>:<p>Unresolved here. Resignations and post-game rankings alone do not establish a winner.</p>}
     <h4>Deeds between players</h4>

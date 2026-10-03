@@ -62,3 +62,14 @@ test('record loads on expansion, retries failures and ignores a superseded Game 
     await act(async()=>pending[2].resolve(response('Current map')));assert.ok(document.body.textContent!.includes('Current map'));
   }finally{await act(async()=>root.unmount());dom.window.close();}
 });
+
+test('diplomacy orders retain direction, tied chronology, raw zero and unqualified state',()=>{
+  const facts={modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',diplomacy:{commandTimelines:{'2->1':[
+    {replaySlot:2,targetReplaySlot:1,atMs:1000,operationOrdinal:2,diplomacyMode:3,sourceEventId:'later-order'},
+    {replaySlot:2,targetReplaySlot:1,atMs:1000,operationOrdinal:1,diplomacyMode:0,sourceEventId:'first-order'}
+  ]}}};
+  const html=render({statistics:{matchFacts:facts}});
+  assert.ok(html.includes('Recording player 2 → Recording player 1'));
+  assert.ok(html.includes('requested mode ID 0'));assert.ok(html.indexOf('first-order')<html.indexOf('later-order'));
+  assert.ok(html.includes('An order alone does not prove that an alliance changed'));
+});

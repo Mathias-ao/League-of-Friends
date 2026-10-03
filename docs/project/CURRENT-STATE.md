@@ -1,8 +1,12 @@
 # Age of Friends — Current State
 
+## Battle record review — 3 October 2026
+
+The Battle website now offers an expandable match-context and directed social-evidence review, reading the active hash-checked artifact on demand and current official league outcome separately. It preserves episode/deed distinctions, targets, helper direction, family coverage and diplomacy orders without scoring. Preview includes clearly separate, abbreviated real 4v4/duel/FFA audit examples. The real-corpus audit also compares review metrics under the known legacy lobby/DE team-lock conflict; this is a labelled counterfactual, not deployed historical statistics. See [the review and rebuild boundary](../architecture/battle-record-review-v1.md). No live data promotion or deployment is included.
+
 ## Recording match facts — 3 October 2026
 
-Statistics schema 1.1.0 now stores `AOF_RECORDING_MATCH_FACTS_V1` at `matchFacts`: map/rules, recording and source versions, raw team membership, existing diplomacy commands, postgame evidence and resignations. Replay outcomes stay unresolved; accepted league result revisions now explicitly retain winning and losing player IDs. Upload persistence validates recording provenance, and reads resolve current official results separately from historical ingestion snapshots. Analysis V4 retains checked header evidence; existing statistics detectors and social deeds are unchanged. See [the match-facts contract](../architecture/recording-match-facts-v1.md). No UI panels, scoring activation, deployment or historical backfill is included.
+Statistics schema 1.1.0 now stores `AOF_RECORDING_MATCH_FACTS_V1` at `matchFacts`: map/rules, recording and source versions, raw team membership, existing diplomacy commands, postgame evidence and resignations. Replay outcomes stay unresolved; accepted league result revisions now explicitly retain winning and losing player IDs. Upload persistence validates recording provenance, and reads resolve current official results separately from historical ingestion snapshots. Analysis V4 retains checked header evidence; existing statistics detectors and social deeds are unchanged. See [the match-facts contract](../architecture/recording-match-facts-v1.md). The review panel is described above; scoring activation, deployment and historical backfill remain excluded.
 
 ## Real recording social evidence review — 2 October 2026
 
