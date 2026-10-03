@@ -82,3 +82,13 @@ test('rebuild review labels its counterfactual baseline and preserves unavailabl
   assert.ok(html.includes('Active statistics were not replaced'));
   assert.ok(html.includes('defensiveAssistsReceived'));
 });
+
+test('alliance review exposes command uncertainty without presenting requested allies as effective allies',()=>{
+  const diplomacyReview={status:'REVIEW_AVAILABLE',commandCount:1,normalizedInitialEdgeCount:2,rawInitialVectorCount:2,
+    knownPairSegmentCount:1,unknownPairSegmentCount:1,timeline:{changes:[{eventId:'dip',atMs:1000,fromPlayerId:1,
+      toPlayerId:2,commandedStance:'ALLY',effectiveStanceAfter:'UNKNOWN',effectiveStateInvalidated:true}]}};
+  const html=render({statistics:{},diplomacyReview});
+  assert.ok(html.includes('requested ALLY'));assert.ok(html.includes('effective stance UNKNOWN'));
+  assert.ok(html.includes('previous certainty ends here'));assert.ok(html.includes('Unknown does not mean neutral'));
+  assert.ok(!html.includes('effective stance ALLY'));
+});

@@ -4,6 +4,10 @@ on:
   push:
     branches: ["feat/pair-social-evidence-v1"]
     paths:
+      - "functions/src/engines/diplomacyTimeline.ts"
+      - "functions/src/engines/diplomacyEvidenceAdapter.ts"
+      - "functions/src/engines/recordingDiplomacyReview.ts"
+      - "scripts/audit-recording-diplomacy.mjs"
       - "replay-tools/match_facts.py"
       - "replay-tools/analysis_dataset.py"
       - "replay-tools/parse_replay.py"
@@ -37,9 +41,21 @@ jobs:
           --manifest replay-lab/fixtures/social-context-audit.json
           --seal-mode fast
           --out .replay-lab/ci-social-context-audit.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix functions --no-audit --no-fund
+      - run: npm run build --prefix functions
+      - name: Audit directed diplomacy chronology and uncertainty
+        run: >-
+          node scripts/audit-recording-diplomacy.mjs
+          .replay-lab/ci-social-context-audit.json
+          .replay-lab/ci-recording-diplomacy-review.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: real-social-context-audit
-          path: .replay-lab/ci-social-context-audit.json
+          path: |
+            .replay-lab/ci-social-context-audit.json
+            .replay-lab/ci-recording-diplomacy-review.json
           if-no-files-found: warn

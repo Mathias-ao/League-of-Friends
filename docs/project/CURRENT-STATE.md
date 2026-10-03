@@ -1,5 +1,9 @@
 # Age of Friends — Current State
 
+## Temporal diplomacy certainty — 3 October 2026
+
+Diplomacy Timeline/Adapter V2 invalidates stale effective certainty after an unverified directed order, without promoting the requested stance. Later qualified state establishment is separate from proven state change. A pure recording review now reads retained match facts separately from existing statistics, exposes the gap in the Battle record, and is exercised by the real-corpus audit. Normalized initial diplomacy is still absent; raw header mapping and runtime effects require controlled tuple-specific witnesses. See [V2 semantics](../architecture/diplomacy-certainty-v2.md) and [the capture protocol](../replay-foundation/diplomacy-qualification-protocol-v1.md). Detectors, metric values, neutral deed identities, result authority and scoring remain unchanged.
+
 ## Battle record review — 3 October 2026
 
 The Battle website now offers an expandable match-context and directed social-evidence review, reading the active hash-checked artifact on demand and current official league outcome separately. It preserves episode/deed distinctions, targets, helper direction, family coverage and diplomacy orders without scoring. Preview includes clearly separate, abbreviated real 4v4/duel/FFA audit examples. The real-corpus audit also compares review metrics under the known legacy lobby/DE team-lock conflict; this is a labelled counterfactual, not deployed historical statistics. See [the review and rebuild boundary](../architecture/battle-record-review-v1.md). No live data promotion or deployment is included.

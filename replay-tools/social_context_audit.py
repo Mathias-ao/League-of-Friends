@@ -189,6 +189,8 @@ def summarize(projection, analysis, *, sample_limit=2):
                                "postgameEventCount": len(facts["result"]["postgameEvidence"]),
                                "resignationEventCount": len(facts["result"]["resignationEvidence"]),
                                "headerSource": facts["headerSource"]},
+        "diplomacyReviewInput": {key: deepcopy(facts[key]) for key in
+                               ("modelVersion", "identityNamespace", "source", "players", "game", "diplomacy")},
         "playerCount": len(projection["participants"]),
         "participants": [{"playerId": row["playerId"], "lobbyTeamId": row.get("lobbyTeamId")}
                          for row in analysis["manifest"]["participants"]],

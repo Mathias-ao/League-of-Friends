@@ -1,3 +1,4 @@
+import {projectRecordingDiplomacyReview} from '../engines/recordingDiplomacyReview.js';
 import { createHash } from "node:crypto";
 import { getStorage } from "firebase-admin/storage";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -71,6 +72,7 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
     playerMapping: source.playerMapping ?? [],
     resultQualification: source.resultQualification ?? "UNRESOLVED",
     statistics,
+    diplomacyReview: projectRecordingDiplomacyReview((statistics as any)?.matchFacts),
     officialOutcome: currentOfficialGameOutcome(gameSnapshot.data(), matchSnapshot.data()),
   };
 });
