@@ -91,7 +91,7 @@ export function buildDeclaredDiplomacyHistory(timeline:DiplomacyTimeline,source:
   for(let i=0;i<timeline.playerIds.length;i++)for(let j=i+1;j<timeline.playerIds.length;j++)closePair(timeline.playerIds[i],timeline.playerIds[j],end);
   counters.directedEdgesObserved=seen.size;
   return {modelVersion:DECLARED_DIPLOMACY_HISTORY_VERSION,source:{...source},identityNamespace:'CANONICAL_REPLAY_PLAYER_ID',
-    claimLayer:'OBSERVED_COMMAND_HISTORY',durationMeaning:'observed_recording_interval_not_proven_full_game',
+    claimLayer:'RECONSTRUCTED_COMMAND_HISTORY',durationMeaning:'observed_recording_interval_not_proven_full_game',
     counters,directedEpisodes:directedEpisodes.sort((a,b)=>a.fromPlayerId-b.fromPlayerId||a.toPlayerId-b.toPlayerId||a.start.atMs-b.start.atMs||a.start.operationOrdinal-b.start.operationOrdinal),
     pairIntervals:pairIntervals.sort((a,b)=>a.pairPlayerIds[0]-b.pairPlayerIds[0]||a.pairPlayerIds[1]-b.pairPlayerIds[1]||a.start.atMs-b.start.atMs||a.start.operationOrdinal-b.start.operationOrdinal),
     turningPoints,policy:{engineStateEstablished:false,relationshipScoringEnabled:false,reputationScoringEnabled:false,

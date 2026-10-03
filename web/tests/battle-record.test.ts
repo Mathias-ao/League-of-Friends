@@ -114,3 +114,10 @@ test('declared history presents reciprocal orders and withdrawal without claimin
  assert.ok(html.includes('turning points are not additional social deeds'));assert.ok(html.includes('not Treachery'));
  assert.ok(html.includes('do not prove an effective alliance'));
 });
+
+test('unsupported diplomacy mode is a coverage gap rather than a chosen Unknown stance',()=>{
+ const html=render({statistics:{},diplomacyReview:{declaredHistory:{modelVersion:'AOF_DECLARED_DIPLOMACY_HISTORY_V1',
+   counters:{},turningPoints:[{moment:{atMs:1000},fromPlayerId:1,toPlayerId:2,previousDeclaration:'ALLY',declarationAfter:'UNKNOWN'}]}}});
+ assert.ok(html.includes('Unrecognized diplomacy mode; declaration becomes unavailable'));
+ assert.ok(!html.includes('Changed declaration from ALLY to UNKNOWN'));
+});
