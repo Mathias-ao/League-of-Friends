@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import type {LeagueRepository,ReplayPlayerMapping,PlayerRecord} from '../domain/league';
 import {formatTime} from '../domain/statistics';
 import {recordingReviewExamples} from '../data/recordingReviewExamples';
+import {RelationshipQualificationReview} from './RelationshipQualificationReview';
 
 type Row=Record<string,any>;
 const object=(v:any):Row=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
@@ -33,6 +34,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
   const hasLedger=example||ledger.modelVersion==='AOF_PAIR_SOCIAL_EVIDENCE_V1';
   return <div className="br-record">
     {example&&<p className="sx-notice"><strong>Real recording example: {audit.id}.</strong> Separate from the illustrative Battle above. Names are recording player numbers; no league outcome is assigned. Episode samples are abbreviated.</p>}
+    <RelationshipQualificationReview key={example?audit.id:source.replaySha256??'live'} incidents={hasLedger?incidents:[]} annotations={hasLedger?annotations:[]} declaredHistory={declared} name={name} sampled={example} available={hasLedger} sourceRevision={source.canonicalManifestSha256??source.replaySha256}/>
     <h3>The Battle record</h3>
     {hasFacts?<><dl className="br-facts">
       <div><dt>Recorded map</dt><dd>{shown(map.mapName??map.rmsFileName)}{map.mapId!=null&&<small>Map ID {shown(map.mapId)}</small>}</dd></div>
