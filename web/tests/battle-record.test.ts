@@ -73,3 +73,12 @@ test('diplomacy orders retain direction, tied chronology, raw zero and unqualifi
   assert.ok(html.includes('requested mode ID 0'));assert.ok(html.indexOf('first-order')<html.indexOf('later-order'));
   assert.ok(html.includes('An order alone does not prove that an alliance changed'));
 });
+
+test('rebuild review labels its counterfactual baseline and preserves unavailable versus zero',()=>{
+  const html=render({audit:recordingReviewExamples.find(x=>x.id==='4v4')});
+  assert.ok(html.includes('Team-lock rebuild comparison'));
+  assert.ok(html.includes('not a comparison with deployed league statistics'));
+  assert.ok(html.includes('<td>Unavailable</td>'));assert.ok(html.includes('<td>0</td>'));
+  assert.ok(html.includes('Active statistics were not replaced'));
+  assert.ok(html.includes('defensiveAssistsReceived'));
+});

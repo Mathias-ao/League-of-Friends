@@ -16,3 +16,9 @@ Preview mode offers three abbreviated real-corpus audit examples: 4v4, one paire
 4. No active database pointers, official results, awards, leaderboard values, or relationship states are changed by this review. Deployment/backfill must respect the existing authenticated revision/promotion machinery; the older player-aggregate rebuild command does not regenerate missing canonical match facts.
 
 The audit comparison retains unknown versus zero, preserves input evidence, identifies canonical recording players, and reports its metric scope. Real-corpus regressions and website render/interaction checks cover the review path. Engine outcomes, changing alliance state, relic possession, king responsibility and intentional absence remain unqualified.
+
+## Completed corpus comparison
+
+[The expanded audit](https://github.com/Mathias-ao/League-of-Friends/actions/runs/37110075757) passed all 14 recordings at source commit `952b68d3b4858bf10fb9000a78aac92e7ba4e29d`. Eleven recordings had conflicting legacy false / DE true team-lock flags; five team recordings had differences in the nine reviewed metrics. All differences were unavailable → qualified allied-assistance/cooperative-attack counts (including zero). The other six checked metrics were unchanged. This is not a full historical-model/deployed-artifact comparison.
+
+The preview record now includes the real per-player comparison alongside its audit examples, retaining unknown versus zero and the explicit baseline/scope. No live statistics were promoted.

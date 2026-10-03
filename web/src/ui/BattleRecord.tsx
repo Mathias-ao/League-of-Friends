@@ -15,6 +15,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
   const rules=example?object(context.ruleValues):Object.fromEntries(Object.entries(object(facts.rules)).map(([k,v])=>[k,object(v).value]));
   const source=example?object(audit.source):object(raw.source);
   const name=(id:any)=>{const p=list(facts.players).find(p=>p.playerId===id);const slot=p?.replaySlot??id;const m=mapping.find(m=>m.replaySlot===slot);return m?players.find(p=>p.playerId===m.playerId)?.steamName??m.sourceName:`Recording player ${id}`;};
+  const rebuild=object(audit?.teamLockRebuildComparison);
   const official=object(officialOutcome);
   const officialName=(id:string)=>players.find(p=>p.playerId===id)?.steamName??id;
   const incidents:Row[]=example?Object.entries(object(audit.ledgerSamples)).flatMap(([family,values])=>list(values).map(row=>({...row,family}))):list(ledger.incidents);
@@ -65,6 +66,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
       {!coverage.length&&<p>Family coverage unavailable.</p>}
       <p>Relic targeting is command evidence; possession or taking is unconfirmed. APM describes activity, not motive or distress.</p>
     </details></>:<p>Social evidence is unavailable in this statistics revision.</p>}
+    {example&&rebuild.notDeployedHistoricalStatistics===true&&<details><summary>Team-lock rebuild comparison</summary><p>This isolates the old lobby team-lock value against the decoded DE value for this recording. It is not a comparison with deployed league statistics.</p><p>Lobby flag: {shown(rebuild.legacyLobbyLockTeams)} · DE flag: {shown(rebuild.decodedDeLockTeams)}</p>{list(rebuild.changes).length?<div className="sx-table-scroll"><table className="sx-table"><caption>Checked changes by recording player</caption><thead><tr><th>Player</th><th>Measurement</th><th>Legacy lobby flag</th><th>Decoded DE flag</th></tr></thead><tbody>{list(rebuild.changes).map((row,i)=><tr key={i}><th scope="row">{name(row.playerId)}</th><td>{({cooperativeAttacks:'Cooperative attacks',defensiveAssistsGiven:'Defensive assists given',defensiveAssistsReceived:'Defensive assists received'} as Row)[row.metric]??row.metric}</td><td>{shown(row.before)}</td><td>{shown(row.after)}</td></tr>)}</tbody></table></div>:<p>No differences in the checked metrics.</p>}<p>Checked scope: {Array.isArray(rebuild.metricScope)?rebuild.metricScope.join(', '):'Unavailable'}. Active statistics were not replaced.</p></details>}
     <details><summary>Recording provenance</summary><dl className="br-facts"><div><dt>Recording fingerprint</dt><dd className="br-source">{shown(source.replaySha256)}</dd></div><div><dt>Game identity</dt><dd className="br-source">{shown(game.guid)}</dd></div><div><dt>Evidence model</dt><dd className="br-source">{shown(context.modelVersion)}</dd></div></dl>{example&&<p>Retained real-corpus audit at commit {audit.sourceCommit}. Structural seal; not full engine outcome verification. Samples are not a complete ledger.</p>}</details>
   </div>;
   function describe(f:Row){
