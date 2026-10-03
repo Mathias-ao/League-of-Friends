@@ -17,9 +17,11 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
   const name=(id:any)=>{const p=list(facts.players).find(p=>p.playerId===id);const slot=p?.replaySlot??id;const m=mapping.find(m=>m.replaySlot===slot);return m?players.find(p=>p.playerId===m.playerId)?.steamName??m.sourceName:`Recording player ${id}`;};
   const official=object(officialOutcome);
   const officialName=(id:string)=>players.find(p=>p.playerId===id)?.steamName??id;
-  const incidents=example?Object.entries(object(audit.ledgerSamples)).flatMap(([family,values])=>list(values).map(row=>({...row,family}))):list(ledger.incidents);
-  const counts=example?object(audit.incidentCounts):incidents.reduce((result:Row,row)=>({...result,[row.family]:(result[row.family]??0)+1}),{});
+  const incidents:Row[]=example?Object.entries(object(audit.ledgerSamples)).flatMap(([family,values])=>list(values).map(row=>({...row,family}))):list(ledger.incidents);
+  const counts:Row=example?object(audit.incidentCounts):incidents.reduce<Row>((result:Row,row)=>({...result,[row.family]:(result[row.family]??0)+1}),{});
+  const deedCount=example?audit.deedCount:list(ledger.deeds).length;
   const annotations=example?Object.values(object(audit.samples)).flatMap(list):[...list(object(ledger.episodeContext).annotations),...list(object(ledger.episodeContext).sequences)];
+  const neutralCoverage=example?[]:list(ledger.coverage);
   const coverage=example?Object.entries(object(audit.coverageCounts)).map(([key,count])=>({family:key.split(':')[0],status:key.split(':')[1],count})):list(object(ledger.episodeContext).coverage);
   const map=object(context.map),game=object(context.game);
   const hasFacts=context.modelVersion==='AOF_RECORDING_MATCH_FACTS_V1';
@@ -42,6 +44,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
     <h4>Official result</h4>
     {official.qualification==='OFFICIAL'&&Array.isArray(official.winnerPlayerIds)&&Array.isArray(official.loserPlayerIds)?<><p>Winners: {official.winnerPlayerIds.map(officialName).join(', ')}</p><p>Non-winning players: {official.loserPlayerIds.map(officialName).join(', ')}</p><small>Current league result · revision {official.resultRevision}</small></>:<p>Unresolved here. Resignations and post-game rankings alone do not establish a winner.</p>}
     <h4>Deeds between players</h4>
+    {hasLedger&&<p><strong>{deedCount} recorded deeds</strong>. Family totals below count evidence episodes; linked pressure and contest episodes may belong to one deed. Do not add these totals together.</p>}
     <p>Episodes group commands into encounters. Pressure, proximity and support keep their own meaning. These records do not yet award Rivalry, Hostility, Bond or Reputation.</p>
     {hasLedger?<><dl className="br-facts">{Object.entries(labels).map(([family,label])=><div key={family}><dt>{label}</dt><dd>{counts[family]??'No episodes recorded'}</dd></div>)}</dl>
     <p>Missing episodes do not establish peacefulness or deliberate absence of help.</p>
@@ -53,6 +56,8 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
     </li>)}</ol>:<p>No episodes recorded. Coverage must qualify any conclusion about absence.</p>}
     </details>
     <details><summary>Episode context and coverage</summary>
+      {neutralCoverage.map((row,i)=><p key={'neutral-'+i}>{labels[row.family]??shown(row.family)} · {name(row.fromPlayerId)} → {name(row.toPlayerId)} · {shown(row.status)}<small> · {String(row.reason??'Qualification unavailable').replaceAll('_',' ')} · Positive episodes only; absence unqualified.</small></p>)}
+      {!neutralCoverage.length&&<p>Directed family coverage is unavailable in this abbreviated record.</p>}
       {annotations.map((row,i)=><p key={row.contextId??i}>{row.family==='PRESSURE_RESPONSE'?`${name(row.responseActorPlayerId)}: ${row.responseCommandType} command associated with pressure; recorded latency ${shown(row.sourceLatencyMs)} ms. This is not proven reaction time.`:row.family==='RETURN_PRESSURE'?`Later independent pressure: ${name(row.returnDirection?.fromPlayerId)} → ${name(row.returnDirection?.toPlayerId)}. This does not prove retaliation.`:row.family==='DEFENSIVE_SUPPORT_WITH_PRESSURE'?`Support associated with pressure: ${name(row.supportDirection?.fromPlayerId)} → ${name(row.supportDirection?.toPlayerId)}. Rescue and outcome are unconfirmed.`:row.family}</p>)}
       {coverage.map((row,i)=><p key={i}>{shown(row.family)} · {shown(row.status)}{row.count!=null&&<> · {row.count} coverage records</>}</p>)}
       {!coverage.length&&<p>Family coverage unavailable.</p>}

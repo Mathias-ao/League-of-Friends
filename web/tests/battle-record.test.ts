@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import React from 'react';
+import React,{act} from 'react';
+import {JSDOM} from 'jsdom';
 import {renderToStaticMarkup} from 'react-dom/server';
-import {BattleRecordContent} from '../src/ui/BattleRecord';
+import {BattleRecord,BattleRecordContent} from '../src/ui/BattleRecord';
 import {recordingReviewExamples} from '../src/data/recordingReviewExamples';
 
 const render=(props:any)=>renderToStaticMarkup(React.createElement(BattleRecordContent,props));
@@ -41,4 +42,23 @@ test('live names use recording slots rather than treating canonical IDs as leagu
   const facts={modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',players:[{playerId:2,replaySlot:5}],map:{},game:{},rules:{population:{value:0},lockTeams:{value:false}},lobbyGroups:[{lobbyTeamIdRaw:1,memberPlayerIds:[2]}]};
   const html=render({statistics:{matchFacts:facts},mapping:[{replaySlot:5,playerId:'league-a',sourceName:'Recorder name'}],players:[{playerId:'league-a',steamName:'League name'}]});
   assert.ok(html.includes('Recorded group 1: League name'));assert.ok(html.includes('<dd>0</dd>'));assert.ok(html.includes('<dd>No</dd>'));
+});
+
+test('record loads on expansion, retries failures and ignores a superseded Game response',async()=>{
+  const dom=new JSDOM('<div id="record"></div>',{url:'http://localhost/'});
+  Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+  const {createRoot}=await import('react-dom/client');const root=createRoot(document.getElementById('record')!);
+  const pending:{gameId:string;resolve:(v:any)=>void;reject:(v:any)=>void}[]=[];
+  const repository={replayStatistics:(_match:string,gameId:string)=>new Promise((resolve,reject)=>pending.push({gameId,resolve,reject}))} as any;
+  const props={repository,matchId:'m',gameId:'g1',players:[],preview:false,revision:'1'};
+  const response=(name:string)=>({statistics:{matchFacts:{modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',map:{mapName:name}}}});
+  try{
+    await act(async()=>root.render(React.createElement(BattleRecord,props)));assert.equal(pending.length,0);
+    await act(async()=>{const details=document.querySelector('details')!;details.open=true;details.dispatchEvent(new dom.window.Event('toggle'));});assert.equal(pending.length,1);
+    await act(async()=>root.render(React.createElement(BattleRecord,{...props,gameId:'g2'})));assert.equal(pending.length,2);
+    await act(async()=>pending[0].resolve(response('Old map')));assert.ok(!document.body.textContent!.includes('Old map'));
+    await act(async()=>pending[1].reject(new Error('Read failed')));assert.ok(document.querySelector('[role="alert"]'));
+    await act(async()=>(document.querySelector('button') as HTMLElement).click());assert.equal(pending.length,3);
+    await act(async()=>pending[2].resolve(response('Current map')));assert.ok(document.body.textContent!.includes('Current map'));
+  }finally{await act(async()=>root.unmount());dom.window.close();}
 });
