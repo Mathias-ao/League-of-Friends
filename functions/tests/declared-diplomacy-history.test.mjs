@@ -48,9 +48,8 @@ test('source revision scopes identities while reordered inputs rebuild identical
   assert.notEqual(other.turningPoints[0].beatId,expected.turningPoints[0].beatId);
 });
 test('retained FFA orders qualify declaration chronology and exact reversals without scoring',async()=>{
-  const file=await readFile(new URL('../../web/src/data/recordingReviewExamples.ts',import.meta.url),'utf8');
-  const rows=JSON.parse(file.slice(file.indexOf('= ')+2).trim().replace(/;$/,''));
-  const ffa=rows.find(row=>row.id==='ffa');
+  const file=await readFile(new URL('../../web/src/data/recordingReviewExamples/ffa.ts',import.meta.url),'utf8');
+  const ffa=JSON.parse(file.slice(file.indexOf('= ')+2).trim().replace(/;$/,''));
   const old=ffa.diplomacyReview.timeline;
   const input={modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',identityNamespace:'CANONICAL_REPLAY_PLAYER_ID',
     source:ffa.source,players:old.playerIds.map(playerId=>({playerId})),game:{observedDurationMs:old.durationMs},

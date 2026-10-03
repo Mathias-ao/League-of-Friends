@@ -32,3 +32,9 @@ The ordinary fixture is not rejected merely because it lacks a controlled video.
 The expandable Battle record exposes the history separately from effective alliance review. Live queries derive it from retained match facts; preview examples retain audited snapshots. No statistics detector, measurement, neutral deed, artifact or active revision pointer is rewritten. No raw initial-header mapping or engine-state promotion is introduced.
 
 The real-corpus audit applies the adapter to all 14 recordings and validates source references, repeated/reordered rebuilds and scoring boundaries, with exact FFA counts. Software tests additionally cover repeats, uncertainty gaps, asymmetry, revision IDs and same-millisecond ordering. Synthetic tests qualify model behavior only; they do not broaden the game-engine claims of the real fixture.
+
+## Completed corpus validation — 4 October 2026
+
+[Remote audit at source revision 810828e8](https://github.com/Mathias-ao/League-of-Friends/actions/runs/37156855689) passed all 14 retained recordings. FFA contains 48 entries into reciprocal Ally declarations and 58 directed Ally withdrawals; TownBell FFA contains 86 orders, 56 directed edges, 30 reversals, 29 reciprocal Ally declaration entries and 28 withdrawals. These counters describe declarations and may include recurring pairs; they are not counts of distinct alliances, betrayals or social deeds. The other 12 recordings contain no retained diplomacy orders, which does not establish absence of alliance or interaction.
+
+Source references, input immutability and duplicate/reordered deterministic rebuilds passed. All recordings still have no qualified effective pair intervals. The four retained website examples now include the audited V2 review and independently versioned declaration history. Backend checks passed 67 tests; website checks passed 33 tests before refreshing these snapshots, with the refresh separately checked by CI.

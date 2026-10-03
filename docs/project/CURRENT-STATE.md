@@ -1,8 +1,8 @@
 # Age of Friends — Current State
 
-## Recorded diplomacy history — 3 October 2026
+## Recorded diplomacy history — 4 October 2026
 
-Recording review V2 now attaches an independently versioned declared diplomacy history. It preserves directions, reciprocal declarations, requested-stance reversals, unknown intervals and source references; repeated orders support one declaration episode. The existing FFA fixture supplies the 143-order/56-edge/87-reversal regression. No effective alliance, Treachery, additional deed or scoring is inferred. Existing measurements and artifacts remain intact. See [the declared-history contract](../architecture/recorded-diplomacy-history-v1.md). Additional capture is requested only for unqualified engine/outcome claims, not already recorded orders.
+Recording review V2 now attaches an independently versioned declared diplomacy history. It preserves directions, reciprocal declarations, requested-stance reversals, unknown intervals and source references; repeated orders support one declaration episode. The existing FFA fixture supplies the 143-order/56-edge/87-reversal regression. The completed 14-recording remote audit passed source-reference, input-immutability and deterministic-rebuild checks; retained website examples expose the audited declaration histories. No effective alliance, Treachery, additional deed or scoring is inferred. Existing measurements and artifacts remain intact. See [the declared-history contract](../architecture/recorded-diplomacy-history-v1.md). Additional capture is requested only for unqualified engine/outcome claims, not already recorded orders.
 
 ## Temporal diplomacy certainty — 3 October 2026
 

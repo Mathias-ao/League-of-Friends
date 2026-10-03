@@ -100,6 +100,12 @@ test('audited FFA previews retain actual command histories and unavailable effec
     assert.ok(html.includes('0 qualified pair intervals'));
     assert.ok(html.includes('effective stance UNKNOWN'));assert.ok(!html.includes('effective stance ALLY'));
     assert.equal(audit.diplomacyReview.timeline.changes.length,count);
+    const declared=audit.diplomacyReview.declaredHistory;
+    assert.equal(declared.counters.orders,count);
+    assert.equal(declared.counters.directedEdgesObserved,56);
+    assert.equal(declared.counters.recordedStanceReversals,id==='ffa'?87:30);
+    assert.ok(declared.turningPoints.every(row=>row.newSocialDeed===false&&row.treacheryEstablished===false));
+    assert.ok(html.includes('Recorded diplomacy history'));
     assert.ok(audit.diplomacyReview.timeline.changes.every(row=>!row.effectiveStateChanged));
   }
 });
