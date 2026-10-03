@@ -1,5 +1,9 @@
 # Age of Friends — Current State
 
+## Recording match facts — 3 October 2026
+
+Statistics schema 1.1.0 now stores `AOF_RECORDING_MATCH_FACTS_V1` at `matchFacts`: map/rules, recording and source versions, raw team membership, existing diplomacy commands, postgame evidence and resignations. Replay outcomes stay unresolved; accepted league result revisions now explicitly retain winning and losing player IDs. Upload persistence validates recording provenance, and reads resolve current official results separately from historical ingestion snapshots. Analysis V4 retains checked header evidence; existing statistics detectors and social deeds are unchanged. See [the match-facts contract](../architecture/recording-match-facts-v1.md). No UI panels, scoring activation, deployment or historical backfill is included.
+
 ## Real recording social evidence review — 2 October 2026
 
 The remote corpus audit passed 14 retained recordings with 13 distinct decoded Game GUIDs. It exposed and corrected DE team-lock normalization: explicit edition-specific values now win over conflicting legacy lobby flags, under `AOF_CANONICAL_NORMALIZER_V1_2`. New extractions restore directed ally-support and target-specific shared-offense qualification; existing canonical bundles remain historical revisions. Statistics detectors and schema are unchanged, while alliance-dependent outputs require rebuilding from corrected extraction. See [the real recording review](../architecture/real-social-context-audit-v1.md) for results, examples and the unresolved FFA/static-alignment coverage gap. No scoring is activated.
