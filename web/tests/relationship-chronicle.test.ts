@@ -36,7 +36,7 @@ test('preview profile exposes an illustrative selectable Relationship Chronicle'
     const ragnarBookmark=bookmarks.find(button=>button.textContent?.includes('Ragnar'));
     assert.ok(ragnarBookmark);
     await act(async()=>ragnarBookmark!.click());
-    assert.equal(ragnarBookmark!.getAttribute('aria-selected'),'true');
+    assert.equal(ragnarBookmark!.getAttribute('aria-pressed'),'true');
     assert.match(document.querySelector('.chronicle-title')?.textContent??'',/D’Karius.*Ragnar/);
     assert.match(document.querySelector('.chronicle-track-row')?.textContent??'',/Dormant Rivalry/);
     assert.match(document.querySelector('.chronicle-entries')?.textContent??'',/The quarrel went quiet/);
