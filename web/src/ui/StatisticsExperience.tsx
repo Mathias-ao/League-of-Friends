@@ -117,8 +117,8 @@ function relationshipBookmarkTone(relationship:PlayerRelationshipSummary){
 }
 
 function relationshipBookmarkMonogram(name:string){
-  const letters=name.replace(/[^A-Za-z0-9]/g,'');
-  return (letters.slice(0,2)||'?').toUpperCase();
+  const letters=[...name].filter(character=>/[\\p{L}\\p{N}]/u.test(character));
+  return (letters.slice(0,2).join('')||'?').toUpperCase();
 }
 
 function RelationshipChronicle({data,snapshot}:{data:PlayerProfile;snapshot:ViewProps['snapshot']}){
@@ -130,10 +130,10 @@ function RelationshipChronicle({data,snapshot}:{data:PlayerProfile;snapshot:View
   return <section className="relationship-chronicle-view" aria-label="Relationship Chronicle">
     <div className="chronicle-toolbar"><div><span className="eyebrow">RELATIONSHIP CHRONICLE</span><h3>The private ledger</h3></div>{relationships.length>0&&<span className="chronicle-book-count">{relationships.length} {relationships.length===1?'relationship':'relationships'} marked</span>}</div>
     <div className="chronicle-book">
-      {relationships.length>0&&<nav className="chronicle-bookmarks" role="tablist" aria-label="Recorded relationships">{relationships.map(item=>{
+      {relationships.length>0&&<nav className="chronicle-bookmarks" aria-label="Recorded relationships">{relationships.map(item=>{
         const active=item.pairId===selected?.pairId;
         const tone=relationshipBookmarkTone(item);
-        return <button type="button" role="tab" aria-selected={active} className={`chronicle-bookmark tone-${tone}${active?' active':''}`} onClick={()=>setSelectedPairId(item.pairId)} title={`Open the Chronicle with ${item.otherPlayer.steamName}`} key={item.pairId}>
+        return <button type="button" aria-pressed={active} className={`chronicle-bookmark tone-${tone}${active?' active':''}`} onClick={()=>setSelectedPairId(item.pairId)} title={`Open the Chronicle with ${item.otherPlayer.steamName}`} key={item.pairId}>
           <span className="bookmark-monogram" aria-hidden="true">{relationshipBookmarkMonogram(item.otherPlayer.steamName)}</span>
           <span className="bookmark-player-name">{item.otherPlayer.steamName}</span>
         </button>;
