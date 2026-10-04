@@ -25,6 +25,7 @@
 .chronicle-bookmark{--bookmark-a:#674329;--bookmark-b:#3e281a;position:relative;flex:0 0 clamp(54px,6.2vw,72px);height:82px;padding:.48rem .28rem 1rem;border:0;clip-path:polygon(0 0,100% 0,100% 86%,50% 100%,0 86%);color:#ead8b7;background:linear-gradient(90deg,rgba(255,255,255,.07),transparent 20% 76%,rgba(0,0,0,.15)),linear-gradient(180deg,var(--bookmark-a),var(--bookmark-b));filter:drop-shadow(0 3px 2px rgba(28,16,9,.28));cursor:pointer;transition:height .16s ease,transform .16s ease,filter .16s ease;isolation:isolate}
 .chronicle-bookmark:before{content:"";position:absolute;inset:4px 4px 8px;border:1px dashed rgba(220,185,112,.58);clip-path:polygon(0 0,100% 0,100% 84%,50% 100%,0 84%);pointer-events:none}
 .chronicle-bookmark:hover{transform:translateY(3px);filter:drop-shadow(0 4px 3px rgba(28,16,9,.34)) brightness(1.06)}
+.chronicle-bookmark:focus-visible{outline:2px solid #d8bd86;outline-offset:3px;filter:drop-shadow(0 4px 4px rgba(28,16,9,.42)) brightness(1.08)}
 .chronicle-bookmark.active{height:98px;transform:translateY(8px);filter:drop-shadow(0 5px 4px rgba(28,16,9,.4)) brightness(1.08)}
 .chronicle-bookmark.tone-rivalry{--bookmark-a:#52606a;--bookmark-b:#303b42}
 .chronicle-bookmark.tone-hostility{--bookmark-a:#812f2c;--bookmark-b:#501d1c}
