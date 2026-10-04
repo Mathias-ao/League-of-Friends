@@ -108,6 +108,19 @@ function relationshipTrackLabel(track:{status:string;state:string;stageId:string
   return `${label} · ${track.state==='DORMANT'?'Dormant ':''}${track.stageId}`;
 }
 
+function relationshipBookmarkTone(relationship:PlayerRelationshipSummary){
+  const represented=(['rivalry','hostility','bond'] as const).filter(track=>{
+    const state=relationship.tracks[track];
+    return !!state.stageId||!!state.historicalPeakStageId;
+  });
+  return represented.length===1?represented[0]:represented.length>1?'mixed':'unwritten';
+}
+
+function relationshipBookmarkMonogram(name:string){
+  const letters=name.replace(/[^A-Za-z0-9]/g,'');
+  return (letters.slice(0,2)||'?').toUpperCase();
+}
+
 function RelationshipChronicle({data,snapshot}:{data:PlayerProfile;snapshot:ViewProps['snapshot']}){
   const relationships=data.relationships??[];
   const viewerId=snapshot.viewer?.playerId;
@@ -115,20 +128,30 @@ function RelationshipChronicle({data,snapshot}:{data:PlayerProfile;snapshot:View
   const [selectedPairId,setSelectedPairId]=useState<string|null>(preferred?.pairId??null);
   const selected=relationships.find(item=>item.pairId===selectedPairId)??preferred;
   return <section className="relationship-chronicle-view" aria-label="Relationship Chronicle">
-    <div className="chronicle-toolbar"><div><span className="eyebrow">RELATIONSHIP CHRONICLE</span><h3>What history remembers</h3></div>{relationships.length>1&&<label>Player<select value={selected?.pairId??''} onChange={event=>setSelectedPairId(event.target.value)}>{relationships.map(item=><option value={item.pairId} key={item.pairId}>{item.otherPlayer.steamName}</option>)}</select></label>}</div>
-    <article className="chronicle-parchment">
-      <div className="chronicle-seal"><BookOpen size={24}/></div>
-      {selected?<>
-        <header className="chronicle-title"><span className="eyebrow">A RECORDED HISTORY</span><h2>{data.player.steamName} &amp; {selected.otherPlayer.steamName}</h2><p>Only Battles and deeds supported by the league record are entered here.</p></header>
-        <div className="chronicle-track-row">
-          <span>{relationshipTrackLabel(selected.tracks.rivalry,'Rivalry')}</span>
-          <span>{relationshipTrackLabel(selected.tracks.hostility,'Hostility')}</span>
-          <span>{relationshipTrackLabel(selected.tracks.bond,'Bond')}</span>
-        </div>
-        <ol className="chronicle-entries">{selected.chronicle.length?selected.chronicle.map(entry=><li key={entry.entryId}><time>{compactDate(entry.playedAt)}</time><div><span className="eyebrow">{entry.relation==='ALLIED'?'UNDER ONE BANNER':entry.relation==='OPPOSED'?'ACROSS THE BATTLEFIELD':'RECORDED ENCOUNTER'}</span><h4>{entry.title}</h4><p>{entry.text}</p>{entry.matchId&&<small>{entry.matchId}</small>}</div></li>):<li className="chronicle-empty"><div><h4>The page remains unwritten.</h4><p>No qualified shared events have yet been entered for this pair.</p></div></li>}</ol>
-        {!selected.relationshipRulesConfigured&&<footer>Relationship stages remain sealed until the V2 rule set is configured. The Chronicle itself is factual history and remains available.</footer>}
-      </>:<div className="chronicle-empty-state"><BookOpen size={34}/><h3>No shared history has been entered.</h3><p>When this player shares a qualified Battle with another league member, their Chronicle begins.</p></div>}
-    </article>
+    <div className="chronicle-toolbar"><div><span className="eyebrow">RELATIONSHIP CHRONICLE</span><h3>The private ledger</h3></div>{relationships.length>0&&<span className="chronicle-book-count">{relationships.length} {relationships.length===1?'relationship':'relationships'} marked</span>}</div>
+    <div className="chronicle-book">
+      {relationships.length>0&&<nav className="chronicle-bookmarks" role="tablist" aria-label="Recorded relationships">{relationships.map(item=>{
+        const active=item.pairId===selected?.pairId;
+        const tone=relationshipBookmarkTone(item);
+        return <button type="button" role="tab" aria-selected={active} className={`chronicle-bookmark tone-${tone}${active?' active':''}`} onClick={()=>setSelectedPairId(item.pairId)} title={`Open the Chronicle with ${item.otherPlayer.steamName}`} key={item.pairId}>
+          <span className="bookmark-monogram" aria-hidden="true">{relationshipBookmarkMonogram(item.otherPlayer.steamName)}</span>
+          <span className="bookmark-player-name">{item.otherPlayer.steamName}</span>
+        </button>;
+      })}</nav>}
+      <article className="chronicle-parchment">
+        <div className="chronicle-seal"><BookOpen size={24}/></div>
+        {selected?<>
+          <header className="chronicle-title"><span className="eyebrow">A RECORDED HISTORY</span><h2>{data.player.steamName} <span>&amp;</span> {selected.otherPlayer.steamName}</h2><p>Only Battles and deeds supported by the league record are entered here.</p></header>
+          <div className="chronicle-track-row" aria-label="Relationship record">
+            <span>{relationshipTrackLabel(selected.tracks.rivalry,'Rivalry')}</span>
+            <span>{relationshipTrackLabel(selected.tracks.hostility,'Hostility')}</span>
+            <span>{relationshipTrackLabel(selected.tracks.bond,'Bond')}</span>
+          </div>
+          <ol className="chronicle-entries">{selected.chronicle.length?selected.chronicle.map(entry=><li key={entry.entryId}><time>{compactDate(entry.playedAt)}</time><div><span className="eyebrow">{entry.relation==='ALLIED'?'UNDER ONE BANNER':entry.relation==='OPPOSED'?'ACROSS THE BATTLEFIELD':'RECORDED ENCOUNTER'}</span><h4>{entry.title}</h4><p>{entry.text}</p>{entry.matchId&&<small>{entry.matchId}</small>}</div></li>):<li className="chronicle-empty"><div><h4>The page remains unwritten.</h4><p>No qualified shared events have yet been entered for this pair.</p></div></li>}</ol>
+          {!selected.relationshipRulesConfigured&&<footer>Relationship stages remain sealed until the V2 rule set is configured. The Chronicle itself is factual history and remains available.</footer>}
+        </>:<div className="chronicle-empty-state"><BookOpen size={34}/><h3>No shared history has been entered.</h3><p>When this player shares a qualified Battle with another league member, their Chronicle begins.</p></div>}
+      </article>
+    </div>
   </section>;
 }
 
