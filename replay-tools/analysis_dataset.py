@@ -19,7 +19,7 @@ from canonical_projector import CompactProjector
 from canonical_run import fundamentals
 
 ANALYSIS_SCHEMA_VERSION = "1.0.0"
-ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V4"
+ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V5"
 
 _RAW_PAYLOAD_KEYS = {
     "_rawOperationBase64",
@@ -97,7 +97,7 @@ def _compact_camera(event: dict[str, Any]) -> dict[str, Any]:
 def validate_analysis_dataset(dataset: dict[str, Any]) -> None:
     if dataset.get("schemaVersion") != ANALYSIS_SCHEMA_VERSION:
         raise ValueError(f"Unsupported analysis dataset schema: {dataset.get('schemaVersion')}")
-    if dataset.get("datasetVersion") not in {ANALYSIS_DATASET_VERSION, "AOF_REPLAY_ANALYSIS_V3"}:
+    if dataset.get("datasetVersion") not in {ANALYSIS_DATASET_VERSION, "AOF_REPLAY_ANALYSIS_V4", "AOF_REPLAY_ANALYSIS_V3"}:
         raise ValueError(f"Unsupported analysis dataset version: {dataset.get('datasetVersion')}")
     source = dataset.get("source") or {}
     replay_hash = source.get("replaySha256")
@@ -176,6 +176,7 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
     )
     manifest_context = {
         "schemaVersion": manifest.get("schemaVersion"),
+        "source": {"gameBuild": (manifest.get("source") or {}).get("gameBuild")},
         "participants": manifest.get("participants") or [],
         "teams": manifest.get("teams") or [],
         "initialDiplomacy": manifest.get("initialDiplomacy") or [],

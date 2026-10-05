@@ -7,6 +7,7 @@ on:
       - "scripts/ingest-replay-file.mjs"
       - "scripts/lib/canonical-artifacts.mjs"
       - "scripts/test-canonical-artifacts.mjs"
+      - "scripts/*entity-catalog*.mjs"
       - "scripts/test-replay-corpus.mjs"
       - "scripts/test-match-analysis-corpus.mjs"
       - "scripts/summarize-replay-output.mjs"
@@ -19,6 +20,7 @@ on:
       - "scripts/ingest-replay-file.mjs"
       - "scripts/lib/canonical-artifacts.mjs"
       - "scripts/test-canonical-artifacts.mjs"
+      - "scripts/*entity-catalog*.mjs"
       - "scripts/test-replay-corpus.mjs"
       - "scripts/test-match-analysis-corpus.mjs"
       - "scripts/summarize-replay-output.mjs"
@@ -58,3 +60,4 @@ jobs:
           node --check scripts/test-replay-corpus.mjs
           node --check scripts/test-match-analysis-corpus.mjs
           node --test scripts/test-canonical-artifacts.mjs
+          node --test scripts/test-entity-catalog-v2.mjs

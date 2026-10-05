@@ -131,7 +131,7 @@ def _military_class(
         return "archers"
     if "cavalry" in roles or producer == "stables":
         return "cavalry"
-    if producer == "siegeWorkshops" or "TREBU" in internal.upper() or "SIEGE" in internal.upper():
+    if "siege" in roles or producer == "siegeWorkshops" or "TREBU" in internal.upper() or "SIEGE" in internal.upper():
         return "siege"
     if producer == "docks":
         # Unknown dock units are not automatically warships: Fishing/Trade/Transport

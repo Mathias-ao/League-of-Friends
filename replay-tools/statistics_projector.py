@@ -33,6 +33,14 @@ FORMULA_VERSION = "AOF_OBSERVED_COMMAND_FORMULAS_V1"
 STATISTICS_SCHEMA_VERSION = "1.1.0"
 STATISTICS_SCHEMA = ROOT / "schemas" / "canonical-statistics-v1.schema.json"
 ENTITY_CATALOG = ROOT / "entity-catalog" / "aoe2techtree-b9d494df6921.json"
+ENTITY_CATALOG_185872 = ROOT / "entity-catalog" / "aoe2de-185872-v2.json"
+
+
+def select_entity_catalog(manifest: dict) -> Path:
+    """Use the updated reference only for its declared build, never extrapolate."""
+    if (manifest.get("source") or {}).get("gameBuild") == 185872:
+        return ENTITY_CATALOG_185872
+    return ENTITY_CATALOG
 
 
 def _entity(catalog: dict, kind: str, raw_id: Any) -> dict:
@@ -54,13 +62,13 @@ def _inventory(counts: dict[str, Counter], catalog: dict, kind: str) -> dict[str
 
 
 def project_statistics_from_analysis(
-    analysis: dict[str, Any], *, catalog_path: Path = ENTITY_CATALOG,
+    analysis: dict[str, Any], *, catalog_path: Path | None = None,
 ) -> dict:
     """Project statistics from compact analysis data without reopening CanonicalReplay."""
     validate_analysis_dataset(analysis)
     manifest = analysis["manifest"]
     registry = build_registry()
-    catalog = read_json(catalog_path)
+    catalog = read_json(catalog_path or select_entity_catalog(manifest))
     slots = {p["playerId"] for p in manifest["participants"]}
 
     action_counts: dict[str, Counter] = defaultdict(Counter)
@@ -288,7 +296,7 @@ def project_statistics_from_analysis(
     return result
 
 
-def project_statistics(directory: Path, *, validate: bool = True, catalog_path: Path = ENTITY_CATALOG) -> dict:
+def project_statistics(directory: Path, *, validate: bool = True, catalog_path: Path | None = None) -> dict:
     """Compatibility entrypoint: canonical bundle -> compact cache -> statistics."""
     analysis = build_analysis_dataset(directory, validate=validate)
     return project_statistics_from_analysis(analysis, catalog_path=catalog_path)
@@ -301,7 +309,7 @@ def main() -> None:
     parser.add_argument("bundle", type=Path, nargs="?")
     parser.add_argument("--analysis", type=Path, help="Compact AOF_REPLAY_ANALYSIS_V1 JSON input.")
     parser.add_argument("--out", type=Path)
-    parser.add_argument("--catalog", type=Path, default=ENTITY_CATALOG)
+    parser.add_argument("--catalog", type=Path, help="Override automatic build-specific catalog selection.")
     args = parser.parse_args()
     if bool(args.bundle) == bool(args.analysis):
         parser.error("Provide exactly one canonical bundle or --analysis dataset")

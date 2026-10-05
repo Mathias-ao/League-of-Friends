@@ -2,7 +2,11 @@
 
 The entity catalogue converts raw replay IDs into reference labels and classifications without replacing the raw identity stored in CanonicalReplay.
 
-The current primary reference snapshot is `aoe2techtree-b9d494df6921.json`. Raw replay IDs remain authoritative; reference labels are not automatically qualified for the replay's patch or data mod.
+Build **185872** uses `aoe2de-185872-v2.json` (`AOF_ENTITY_CATALOG_V1_2`). Other and unknown builds retain the historical `aoe2techtree-b9d494df6921.json` snapshot. An explicit `statistics_projector.py --catalog PATH` overrides automatic selection. Raw replay IDs remain authoritative; reference labels and base costs are not automatically qualified for custom scenario rules or data mods.
+
+The new snapshot contains 255 units, 308 technologies and 86 building IDs. It adds ten new units, imports 107 unit-upgrade technologies previously omitted by the builder, fixes locale lookup offsets, enriches unit roles with DE-only AIRef evidence, and labels gate placement variants without inventing their costs. Source commits, hashes and supplementary field provenance are retained in the snapshot.
+
+See [build-185872 validation and migration](../../docs/replay-foundation/entity-catalog-185872.md) for measured statistics changes and reproducible generation.
 
 ## AIRef supplementary-source rule
 
