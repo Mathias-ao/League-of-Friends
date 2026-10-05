@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from mgz.fast import meta
-from mgz.fast.header import parse as parse_header
+from header_compat import parse as parse_header
 from canonical_io import EventWriter, SCHEMA_VERSION, json_bytes
 from canonical_stream import frames, command_layout, ExactReader
 from canonical_projector import CompactProjector
@@ -816,6 +816,11 @@ def _build_payload(
         timing_sink["sourcePreflightHeaderMs"] = round((time.perf_counter() - source_started) * 1000, 3)
 
     players = extract_players(header, warnings)
+    if header.get("aofHeaderCompatibility"):
+        message = "DE 68.9 header compatibility: custom-scenario lobby extension remains unavailable; raw header retained."
+        warnings.append(message)
+        structured_warnings.append(structured_warning("HEADER_LOBBY_EXTENSION_UNQUALIFIED", message,
+            affected_fields=["match.settings.seed", "match.settings.revealMapId", "match.settings.gameTypeId", "match.settings.mapSize"]))
     decode_started = time.perf_counter()
     fact_writer: JsonlGzipWriter | None = None
     terrain_store: dict[str, Any] | None = None

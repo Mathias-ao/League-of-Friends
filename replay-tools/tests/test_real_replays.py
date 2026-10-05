@@ -52,6 +52,9 @@ class RealReplayTests(unittest.TestCase):
     def test_upstream_duel(self):
         self.check_fixture(FIXTURES[1])
 
+    def test_new_ffa_diplomacy(self):
+        self.check_fixture(next(f for f in FIXTURES if f['id'] == 'user-ffa-diplo-save68.9'))
+
     def test_two_recorder_duel(self):
         if not PAIRS:
             self.skipTest('No paired replay fixture declared')
