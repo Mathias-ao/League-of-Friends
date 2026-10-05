@@ -89,3 +89,21 @@ python -m unittest discover -s replay-tools/tests -p test_real_replays.py -v
 Use Replay Lab's **Full conformance audit** for exhaustive artifact/schema and
 source-byte reconstruction checks. This does not substitute for engine/UI
 observations when qualifying diplomacy effects.
+
+## Repair acceptance (5 October 2026)
+
+- Normal suite: 248 tests, 244 passed and four opt-in full-replay skips.
+- Existing corpus: all 14 previous decoded headers and body offsets are
+  identical to the pre-repair decoder path.
+- New FFA: full schema/artifact/source-byte conformance passed; all 4408509
+  source bytes and 171025 operations retained; all eight participants project
+  the five statistics categories; 83 directed diplomacy commands retained.
+- Node canonical-consumer checks: both passed.
+- Opt-in historical full-replay tests exposed **pre-existing stale goldens**:
+  TownBell FFA and upstream duel differ only in normalizer metadata (V1_1
+  expected versus the branch's existing V1_2); paired-duel statistics differ
+  only in the six inference/estimate warning codes already emitted by the
+  current statistics engine. These are not caused by the header adapter. The
+  old goldens were deliberately not rewritten as part of this repair.
+- Remote CI results must be checked on the exact branch commit; local results
+  do not claim that queued remote checks passed.
