@@ -104,11 +104,11 @@ function compactDate(value:string|null|undefined){
 function relationshipTrackStanding(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},label:string){
   if(track.status!=='READY')return null;
   if(track.stageId){
-    if(track.state==='DORMANT')return track.stageId===label?\`${label} is dormant\`:\`${label} is dormant at ${track.stageId}\`;
-    return track.stageId===label?\`${label} is established\`:\`${label} stands at ${track.stageId}\`;
+    if(track.state==='DORMANT')return track.stageId===label?`${label} is dormant`:`${label} is dormant at ${track.stageId}`;
+    return track.stageId===label?`${label} is established`:`${label} stands at ${track.stageId}`;
   }
-  if(track.historicalPeakStageId)return \`${label} is dormant; its recorded peak was ${track.historicalPeakStageId}\`;
-  return \`${label} remains unestablished\`;
+  if(track.historicalPeakStageId)return `${label} is dormant; its recorded peak was ${track.historicalPeakStageId}`;
+  return `${label} remains unestablished`;
 }
 
 function relationshipStandingSentence(relationship:PlayerRelationshipSummary){
@@ -122,7 +122,7 @@ function relationshipStandingSentence(relationship:PlayerRelationshipSummary){
 }
 
 function relationshipBookmarkMonogram(name:string){
-  const letters=[...name].filter(character=>/[\\p{L}\\p{N}]/u.test(character));
+  const letters=[...name].filter(character=>/[\p{L}\p{N}]/u.test(character));
   return (letters.slice(0,2).join('')||'?').toUpperCase();
 }
 
@@ -140,7 +140,7 @@ function chronicleEventLabel(entry:PlayerRelationshipSummary['chronicle'][number
   const event=entry.eventId?snapshot.events.find(candidate=>candidate.eventId===entry.eventId):null;
   if(event?.title)return event.title;
   const match=entry.matchId?snapshot.matches.find(candidate=>candidate.matchId===entry.matchId):null;
-  return match?.format?\`${formatName(match.format)} Battle\`:'League Battle';
+  return match?.format?`${formatName(match.format)} Battle`:'League Battle';
 }
 
 function orderedChronicleEntries(relationship:PlayerRelationshipSummary){
@@ -175,7 +175,7 @@ function RelationshipChronicleDialog({data,snapshot,onClose}:{data:PlayerProfile
 
   useEffect(()=>{
     if(!selected||typeof window==='undefined')return;
-    const key=\`aof:chronicle-seen:${data.player.playerId}:${selected.pairId}\`;
+    const key=`aof:chronicle-seen:${data.player.playerId}:${selected.pairId}`;
     const currentIds=selected.chronicle.map(entry=>entry.entryId);
     try{
       const stored=window.localStorage.getItem(key);
@@ -198,7 +198,7 @@ function RelationshipChronicleDialog({data,snapshot,onClose}:{data:PlayerProfile
     <div className="chronicle-scroll-stage">
       {relationships.length>0&&<nav className="chronicle-bookmarks" aria-label="Recorded relationships">{relationships.map((item,index)=>{
         const active=item.pairId===selected?.pairId;
-        return <button type="button" aria-pressed={active} className={\`chronicle-bookmark bookmark-cloth-${index%8}${active?' active':''}\`} onClick={()=>setSelectedPairId(item.pairId)} title={\`Open the Chronicle with ${item.otherPlayer.steamName}\`} key={item.pairId}>
+        return <button type="button" aria-pressed={active} className={`chronicle-bookmark bookmark-cloth-${index%8}${active?' active':''}`} onClick={()=>setSelectedPairId(item.pairId)} title={`Open the Chronicle with ${item.otherPlayer.steamName}`} key={item.pairId}>
           <span className="bookmark-monogram" aria-hidden="true">{relationshipBookmarkMonogram(item.otherPlayer.steamName)}</span>
           <span className="bookmark-player-name">{item.otherPlayer.steamName}</span>
         </button>;
@@ -208,7 +208,7 @@ function RelationshipChronicleDialog({data,snapshot,onClose}:{data:PlayerProfile
         {selected?<>
           <header className="chronicle-title"><span className="eyebrow">RELATIONSHIP CHRONICLE</span><h2 id="chronicle-dialog-title">{data.player.steamName} <span>&amp;</span> {selected.otherPlayer.steamName}</h2><p>A record of shared Battles and the deeds the league can support.</p></header>
           <aside className="chronicle-standing" aria-label="Present relationship standing"><span className="eyebrow">PRESENT STANDING</span><p>{relationshipStandingSentence(selected)}</p></aside>
-          <ol className="chronicle-entries">{entries.length?entries.map((entry,index)=><li className={\`chronicle-entry ${index%2===0?'entry-left':'entry-right'}${freshEntryIds.has(entry.entryId)?' is-new':''}\`} key={entry.entryId}><article className="chronicle-entry-card"><span className="eyebrow">{chronicleRubric(entry)}</span><h4>{entry.title}</h4><p>{entry.text}</p><footer className="chronicle-entry-signature"><span>{chronicleEventLabel(entry,snapshot)}</span><time>{compactDate(entry.playedAt)}</time></footer></article></li>):<li className="chronicle-empty"><article className="chronicle-entry-card"><h4>The page remains unwritten.</h4><p>No qualified shared events have yet been entered for this pair.</p></article></li>}</ol>
+          <ol className="chronicle-entries">{entries.length?entries.map((entry,index)=><li className={`chronicle-entry ${index%2===0?'entry-left':'entry-right'}${freshEntryIds.has(entry.entryId)?' is-new':''}`} key={entry.entryId}><article className="chronicle-entry-card"><span className="eyebrow">{chronicleRubric(entry)}</span><h4>{entry.title}</h4><p>{entry.text}</p><footer className="chronicle-entry-signature"><span>{chronicleEventLabel(entry,snapshot)}</span><time>{compactDate(entry.playedAt)}</time></footer></article></li>):<li className="chronicle-empty"><article className="chronicle-entry-card"><h4>The page remains unwritten.</h4><p>No qualified shared events have yet been entered for this pair.</p></article></li>}</ol>
         </>:<div className="chronicle-empty-state"><BookOpen size={34}/><h3 id="chronicle-dialog-title">No shared history has been entered.</h3><p>When this player shares a qualified Battle with another league member, their Chronicle begins.</p></div>}
       </article>
     </div>
@@ -260,7 +260,7 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
             const won=resultKnown&&match.result!.winningPlayerIds!.includes(data.player.playerId);
             const lost=resultKnown&&!won;
             const result=won?'WON':lost?'LOST':match.status.replaceAll('_',' ');
-            const opponentsLabel=opponents.length?'vs '+opponents.slice(0,2).map(player=>player.steamName).join(' · ')+(opponents.length>2?\` +${opponents.length-2}\`:''):formatName(match.format);
+            const opponentsLabel=opponents.length?'vs '+opponents.slice(0,2).map(player=>player.steamName).join(' · ')+(opponents.length>2?` +${opponents.length-2}`:''):formatName(match.format);
             return <button type="button" className={'profile-battle-card '+(won?'won':lost?'lost':'pending')} key={match.matchId} onClick={()=>openMatch(match.matchId)}>
               <div className="profile-battle-card-mark"><Sigil kind={match.format==='ONE_V_ONE'?'duel':match.format==='FFA'?'ffa':'team'} size={22}/><span>{event?.title??'League Battle'}</span></div>
               <span className="profile-battle-result">{result}</span>
