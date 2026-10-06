@@ -338,6 +338,7 @@ def _building_placements(
 def _army_commitment_checkpoints(
     production: list[dict[str, Any]],
     catalog: dict[str, Any],
+    observed_until_ms: int | None = None,
 ) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, boundary_ms in ARMY_COMMITMENT_CHECKPOINTS.items():
@@ -366,12 +367,14 @@ def _army_commitment_checkpoints(
             elif amount < 0:
                 cancelled += cost * abs(amount)
         net = gross - cancelled
+        reached = observed_until_ms is None or observed_until_ms >= boundary_ms
         result[key] = {
             "layer": "reconstructed",
             "boundaryMs": boundary_ms,
-            "grossPositiveQueueResources": int(gross) if gross.is_integer() else round(gross, 3),
-            "cancelledQueueResources": int(cancelled) if cancelled.is_integer() else round(cancelled, 3),
-            "netQueueResources": int(net) if net.is_integer() else round(net, 3),
+            "grossPositiveQueueResources": (int(gross) if gross.is_integer() else round(gross, 3)) if reached else None,
+            "cancelledQueueResources": (int(cancelled) if cancelled.is_integer() else round(cancelled, 3)) if reached else None,
+            "netQueueResources": (int(net) if net.is_integer() else round(net, 3)) if reached else None,
+            "coverageStatus": "recording_ends_before_checkpoint" if not reached else "partial_amount_or_price" if unpriced or unknown_amount_commands else "observed_interval",
             "unpricedUnitAmount": unpriced,
             "unknownAmountCommands": unknown_amount_commands,
             "basis": (
@@ -610,7 +613,7 @@ def project_military_statistics(
                 "class": next(
                     (
                         event["class"] for event in military_events
-                        if event.get("unitId") == raw_id and event.get("signedAmount", 0) > 0
+                        if event.get("unitId") == raw_id
                     ),
                     None,
                 ),
@@ -621,7 +624,8 @@ def project_military_statistics(
                 }),
             }
             for raw_id, amount in sorted(
-                positive_by_unit.items(), key=lambda row: (-row[1], row[0])
+                ((raw_id, positive_by_unit.get(raw_id, 0)) for raw_id in set(positive_by_unit) | set(negative_by_unit)),
+                key=lambda row: (-row[1], row[0])
             )
         ]
 
@@ -684,7 +688,7 @@ def project_military_statistics(
             },
             "militarySpend": broad_spend,
             "armyCommitmentCheckpoints": _army_commitment_checkpoints(
-                production, catalog,
+                production, catalog, body.get("durationMs"),
             ),
             "trashUnits": trash_units,
             "trashArmyShare": trash_share,

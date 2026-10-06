@@ -1,10 +1,11 @@
 """Broad command-derived Skirmish detection for Military Engagements.
 
-IMPORTANT COMPATIBILITY CONTRACT:
+V1 DEFAULT COMPATIBILITY CONTRACT:
 Skirmish V1 is a player-facing rename/relocation of the former
 AOF_FIGHT_DETECTION_V1 episode detector. The episode-forming logic, thresholds,
 participant inclusion, timestamps and therefore count are intentionally kept
-identical. Extra multiplayer relationship evidence is attached only after an
+identical. The opt-in V2 path additionally seeds orders against objects with
+recorded controller evidence at command time. Extra pair evidence is attached after an
 episode has already been formed and must not change Skirmish detection.
 
 The model does not claim damage, deaths, unit survival, actual pathing, or
@@ -66,10 +67,10 @@ def _controller_ledger(
     initial_objects: Iterable[dict[str, Any]],
     action_events: Iterable[dict[str, Any]],
 ) -> dict[int, list[tuple[int, int, int, str, str | None]]]:
-    """Observed controller-at-time evidence used only for relationship edges.
+    """Observed controller-at-time evidence for relation edges and opt-in V2 seeds.
 
-    This ledger is intentionally NOT used to seed or merge Skirmishes, preserving
-    exact AOF_FIGHT_DETECTION_V1 episode behavior.
+    V1 uses this ledger only for relationship edges. Explicit V2 seeding also
+    uses controller-at-command evidence; the default V1 episode path is unchanged.
     """
     ledger: dict[int, list[tuple[int, int, int, str, str | None]]] = defaultdict(list)
     for event in initial_objects:
@@ -140,10 +141,12 @@ def _strong_observations(
     manifest: dict[str, Any],
     initial_objects: Iterable[dict[str, Any]],
     action_events: Iterable[dict[str, Any]],
+    controller_seeds: bool = False,
 ) -> list[dict[str, Any]]:
-    """Exact former Fight V1 seed logic, renamed only."""
+    """Legacy seeds by default; V2 can resolve recorded target controllers."""
     participants = _participants(manifest)
     owners = _initial_owners(initial_objects)
+    ledger = _controller_ledger(initial_objects, action_events) if controller_seeds else {}
     rows: list[dict[str, Any]] = []
     for event in action_events:
         actor = event.get("actorPlayerId")
@@ -159,6 +162,10 @@ def _strong_observations(
         elif action == "ORDER":
             target = event.get("targetInstanceId")
             target_owner = owners.get(target) if isinstance(target, int) else None
+            if controller_seeds:
+                resolved = _controller_at(ledger, target, at_ms=at_ms,
+                    operation_ordinal=event.get('operationOrdinal') if type(event.get('operationOrdinal')) is int else 0)
+                target_owner = resolved[0] if resolved else None
             if isinstance(target_owner, int) and _is_enemy(int(actor), target_owner, participants):
                 victim = target_owner
                 strength = "strong_targeted"
@@ -449,6 +456,7 @@ def detect_skirmishes(
     manifest: dict[str, Any],
     initial_objects: Iterable[dict[str, Any]],
     action_events: Iterable[dict[str, Any]],
+    controller_seeds: bool = False,
 ) -> dict[str, Any]:
     participants = _participants(manifest)
     initial_objects = list(initial_objects)
@@ -457,6 +465,7 @@ def detect_skirmishes(
         manifest=manifest,
         initial_objects=initial_objects,
         action_events=action_events,
+        controller_seeds=controller_seeds,
     )
     controller_ledger = _controller_ledger(initial_objects, action_events)
     episodes: list[dict[str, Any]] = []
@@ -529,8 +538,8 @@ def detect_skirmishes(
                 for row in seeds + support
                 if row.get("sourceEventId")
             }),
-            "modelVersion": SKIRMISH_MODEL_VERSION,
-            "compatibilityBasis": SKIRMISH_COMPATIBILITY_BASIS,
+            "modelVersion": "AOF_SKIRMISH_DETECTION_V2" if controller_seeds else SKIRMISH_MODEL_VERSION,
+            "compatibilityBasis": "V1_GEOMETRY_WITH_OBSERVED_TARGET_CONTROLLER_SEEDS" if controller_seeds else SKIRMISH_COMPATIBILITY_BASIS,
         })
 
     episodes.sort(key=lambda row: (row["startedAtMs"], row["center"]["x"], row["center"]["y"]))
@@ -552,8 +561,8 @@ def detect_skirmishes(
         ]
 
     return {
-        "modelVersion": SKIRMISH_MODEL_VERSION,
-        "compatibilityBasis": SKIRMISH_COMPATIBILITY_BASIS,
+        "modelVersion": "AOF_SKIRMISH_DETECTION_V2" if controller_seeds else SKIRMISH_MODEL_VERSION,
+        "compatibilityBasis": "V1_GEOMETRY_WITH_OBSERVED_TARGET_CONTROLLER_SEEDS" if controller_seeds else SKIRMISH_COMPATIBILITY_BASIS,
         "episodes": episodes,
         "byPlayer": by_player,
         "thresholds": {
@@ -566,8 +575,10 @@ def detect_skirmishes(
             "pairLinkDistanceTiles": PAIR_LINK_DISTANCE_TILES,
         },
         "scope": (
-            "player-facing rename of AOF_FIGHT_DETECTION_V1 with identical episode formation; "
-            "targeted initial-object orders, attack-move and attack-ground seed episodes while "
+            ("V2 seeds targeted orders with controller evidence observed at command time; "
+             if controller_seeds else
+             "V1 is a rename of legacy Fight V1; targeted initial-object orders seed episodes; ") +
+            "attack-move and attack-ground also seed episodes while "
             "nearby movement/order/patrol can support them. Multiplayer pair evidence is attached "
             "after detection and cannot change the Skirmish count. No damage, kill, live-army or "
             "continuous-position claim"

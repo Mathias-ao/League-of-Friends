@@ -27,6 +27,7 @@ from raid_detector import detect_raids
 from resource_commitment import project_resource_commitment
 from statistics_registry import build_registry
 from match_facts import project_match_facts
+from lobby_team_context import statistics_team_context, TEAM_CONTEXT_VERSION
 
 PROJECTION_VERSION = "AOF_CANONICAL_STATISTICS_V1"
 FORMULA_VERSION = "AOF_OBSERVED_COMMAND_FORMULAS_V1"
@@ -66,7 +67,9 @@ def project_statistics_from_analysis(
 ) -> dict:
     """Project statistics from compact analysis data without reopening CanonicalReplay."""
     validate_analysis_dataset(analysis)
-    manifest = analysis["manifest"]
+    # Detectors consume interpreted lobby groups. MatchFacts still consumes the
+    # untouched analysis manifest, retaining the exact raw DE values.
+    manifest = statistics_team_context(analysis["manifest"])
     registry = build_registry()
     catalog = read_json(catalog_path or select_entity_catalog(manifest))
     slots = {p["playerId"] for p in manifest["participants"]}
@@ -133,6 +136,7 @@ def project_statistics_from_analysis(
         manifest=manifest,
         initial_objects=initial_objects,
         action_events=spatial_action_events,
+        controller_seeds=True,
     )
     engagement_statistics = project_engagement_statistics(
         manifest=manifest,
@@ -250,7 +254,9 @@ def project_statistics_from_analysis(
         },
         "scope": {"clock": body["durationBasis"], "observedUntilMs": body["durationMs"],
                   "decodeCoveragePercent": body["decodeCoveragePercent"],
-                  "decodeCoverageMeaning": body["decodeCoverageMeaning"]},
+                  "decodeCoverageMeaning": body["decodeCoverageMeaning"],
+                  "teamContextVersion": TEAM_CONTEXT_VERSION,
+                  "engagementRelationBasis": "lobby_groups_only_not_effective_diplomacy"},
         "participants": participants,
         "pairSocialEvidence": project_pair_social_evidence(
             manifest=manifest, source=source, raid_statistics=raid_statistics,

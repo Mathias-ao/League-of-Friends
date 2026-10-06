@@ -841,8 +841,10 @@ def project_engagement_statistics(
                 "cooperativeAttacks": cooperative_for_player,
             },
             "engagementScope": (
-                "Skirmish is a rename/relocation of the legacy Fight V1 episode detector and keeps "
-                "its count/timing unchanged. Battle promotes a Skirmish when actual command "
+                ("Skirmish V2 extends legacy episode geometry with recorded target-controller evidence. "
+                 if skirmish_statistics.get('modelVersion') == 'AOF_SKIRMISH_DETECTION_V2' else
+                 "Skirmish V1 preserves legacy Fight V1 count/timing. ") +
+                "Battle promotes a Skirmish when actual command "
                 "contributors exist on opposing sides, while direct AoE2 class evidence can reject "
                 "a clearly civilian/building-only responder without penalizing unresolved later-"
                 "spawned types. Pairwise interaction edges track which opponents actually overlapped "
