@@ -1,3 +1,4 @@
+import {socialIncidentHtml} from './social-review.js';
 import { militaryReviewData } from './military-review.js';
 
 const state = {
@@ -915,7 +916,7 @@ async function renderTab() {
   } else if (state.tab === "economy") {
     html = `<h3>Economy review matrix</h3>${economyControlMatrix(run)}`;
   } else if (state.tab === "military") {
-    html = `<h3>Military review matrix</h3>${militaryControlMatrix(run)}`;
+    html = `<h3>Military review matrix</h3>${militaryControlMatrix(run)}${socialIncidentHtml(run.socialIncidents)}`;
   } else if (state.tab === "map-presence") {
     html = `<h3>Map Presence review matrix</h3>${mapPresenceControlMatrix(run)}`;
   } else if (state.tab === "execution") {

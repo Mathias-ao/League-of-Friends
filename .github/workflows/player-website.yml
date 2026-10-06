@@ -1,7 +1,7 @@
 name: Player website
 on:
   push:
-    branches: [feat/player-facing-website, feature/statistics-experience-v1]
+    branches: [feat/player-facing-website, feature/statistics-experience-v1, feat/pair-social-evidence-v1]
     paths: ['web/**', 'functions/**', 'scripts/test-player-site-boundaries.mjs', '.github/workflows/player-website.yml', 'branding/**', 'events/**', 'seasons/**']
   pull_request:
     paths: ['web/**', 'functions/**', 'scripts/test-player-site-boundaries.mjs', '.github/workflows/player-website.yml', 'branding/**', 'events/**', 'seasons/**']

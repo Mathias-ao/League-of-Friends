@@ -1,3 +1,4 @@
+import {projectSocialIncidents} from '../engines/socialIncidentCore.js';
 import {projectRecordingDiplomacyReview} from '../engines/recordingDiplomacyReview.js';
 import { createHash } from "node:crypto";
 import { getStorage } from "firebase-admin/storage";
@@ -64,6 +65,10 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
     throw new HttpsError("data-loss", "Stored Battle Statistics are not valid JSON.");
   }
 
+  const officialOutcome = currentOfficialGameOutcome(gameSnapshot.data(), matchSnapshot.data());
+  const socialIncidents = projectSocialIncidents({ statistics, playerMapping: source.playerMapping ?? [], officialOutcome,
+    context: { gameId, battleId: matchId } });
+
   return {
     success: true,
     matchId,
@@ -73,6 +78,7 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
     resultQualification: source.resultQualification ?? "UNRESOLVED",
     statistics,
     diplomacyReview: projectRecordingDiplomacyReview((statistics as any)?.matchFacts),
-    officialOutcome: currentOfficialGameOutcome(gameSnapshot.data(), matchSnapshot.data()),
+    officialOutcome,
+    socialIncidents,
   };
 });

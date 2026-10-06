@@ -1,3 +1,4 @@
+import {SocialIncidentReview} from './SocialIncidentReview';
 import {useEffect,useState} from 'react';
 import type {LeagueRepository,ReplayPlayerMapping,PlayerRecord} from '../domain/league';
 import {formatTime} from '../domain/statistics';
@@ -9,7 +10,7 @@ const object=(v:any):Row=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
 const list=(v:any):Row[]=>Array.isArray(v)?v.filter(x=>x&&typeof x==='object'):[];
 const labels:Record<string,string>={DIRECTED_PRESSURE:'Directed pressure',LOCAL_CONTEST:'Local contest',ALLIED_SUPPORT:'Allied support',SHARED_OFFENSIVE_PARTICIPATION:'Shared offensive participation'};
 const shown=(v:any)=>v===null||v===undefined?'Unavailable':typeof v==='boolean'?v?'Yes':'No':typeof v==='number'?String(Math.round(v*1000)/1000):typeof v==='string'?v:'Retained';
-export function BattleRecordContent({statistics,mapping=[],players=[],officialOutcome,diplomacyReview,audit}:{statistics?:any;mapping?:ReplayPlayerMapping[];players?:PlayerRecord[];officialOutcome?:any;diplomacyReview?:any;audit?:Row}){
+export function BattleRecordContent({statistics,mapping=[],players=[],officialOutcome,diplomacyReview,socialIncidents,audit}:{statistics?:any;mapping?:ReplayPlayerMapping[];players?:PlayerRecord[];officialOutcome?:any;diplomacyReview?:any;socialIncidents?:any;audit?:Row}){
   const raw=object(statistics),facts=object(raw.matchFacts),ledger=object(raw.pairSocialEvidence);
   const example=!!audit;
   const context=example?object(audit.recordingMatchFacts):facts;
@@ -35,6 +36,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
   return <div className="br-record">
     {example&&<p className="sx-notice"><strong>Real recording example: {audit.id}.</strong> Separate from the illustrative Battle above. Names are recording player numbers; no league outcome is assigned. Episode samples are abbreviated.</p>}
     <RelationshipQualificationReview key={example?audit.id:source.replaySha256??'live'} incidents={hasLedger?incidents:[]} annotations={hasLedger?annotations:[]} declaredHistory={declared} name={name} sampled={example} available={hasLedger} sourceRevision={source.canonicalManifestSha256??source.replaySha256}/>
+    {!example&&<SocialIncidentReview review={socialIncidents} statistics={statistics} mapping={mapping} officialOutcome={officialOutcome} name={name}/>}
     <h3>The Battle record</h3>
     {hasFacts?<><dl className="br-facts">
       <div><dt>Recorded map</dt><dd>{shown(map.mapName??map.rmsFileName)}{map.mapId!=null&&<small>Map ID {shown(map.mapId)}</small>}</dd></div>
@@ -90,5 +92,5 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
 export function BattleRecord({repository,matchId,gameId,players,preview,revision}:{repository:LeagueRepository;matchId:string;gameId:string;players:PlayerRecord[];preview:boolean;revision:string}){
   const [opened,setOpened]=useState(false),[result,setResult]=useState<any>(null),[error,setError]=useState(''),[retry,setRetry]=useState(0),[exampleId,setExampleId]=useState('4v4');
   useEffect(()=>{let current=true;setResult(null);setError('');if(opened&&!preview)repository.replayStatistics(matchId,gameId).then(r=>{if(current)setResult(r);}).catch(e=>{if(current)setError(e instanceof Error?e.message:'The record could not be read.');});return()=>{current=false;};},[repository,matchId,gameId,revision,opened,preview,retry]);
-  return <details className="sx-details br-review" onToggle={e=>setOpened(e.currentTarget.open)}><summary>{preview?'Review real recording evidence':'Battle record and social evidence'}</summary>{opened&&(preview?<><label>Recording example <select value={exampleId} onChange={e=>setExampleId(e.target.value)}>{recordingReviewExamples.map(row=><option key={row.id} value={row.id}>{row.id}</option>)}</select></label><BattleRecordContent audit={recordingReviewExamples.find(row=>row.id===exampleId)}/></>:error?<div role="alert"><p>{error}</p><button onClick={()=>setRetry(n=>n+1)}>Retry reading record</button></div>:result?<BattleRecordContent statistics={result.statistics} mapping={result.playerMapping} officialOutcome={result.officialOutcome} diplomacyReview={result.diplomacyReview} players={players}/>:<p role="status">Reading the retained Battle record…</p>)}</details>;
+  return <details className="sx-details br-review" onToggle={e=>setOpened(e.currentTarget.open)}><summary>{preview?'Review real recording evidence':'Battle record and social evidence'}</summary>{opened&&(preview?<><label>Recording example <select value={exampleId} onChange={e=>setExampleId(e.target.value)}>{recordingReviewExamples.map(row=><option key={row.id} value={row.id}>{row.id}</option>)}</select></label><BattleRecordContent audit={recordingReviewExamples.find(row=>row.id===exampleId)}/></>:error?<div role="alert"><p>{error}</p><button onClick={()=>setRetry(n=>n+1)}>Retry reading record</button></div>:result?<BattleRecordContent statistics={result.statistics} mapping={result.playerMapping} officialOutcome={result.officialOutcome} diplomacyReview={result.diplomacyReview} socialIncidents={result.socialIncidents} players={players}/>:<p role="status">Reading the retained Battle record…</p>)}</details>;
 }

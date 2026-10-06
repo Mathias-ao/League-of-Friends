@@ -1,5 +1,36 @@
 # Age of Friends — Current State
 
+## Social incident interpreter — 6 October 2026
+
+[Social Incident Interpreter V1](../architecture/social-incident-implementation-v1.md)
+now implements the revision-4 shadow pilot: declaration incidents, response/contested
+context, candidate targeted commands, per-family decisions, fixed-team/accepted-duel
+participation, bounded group accounting, correction-safe historical rebuild and
+qualified-input exceptional Treachery. Replay Lab Military and Battle record expose
+the review; an authenticated read-only history callable and player Chronicle view
+show mapped shadow history. Production scoring remains off; the default offensive/
+tribute/king qualifier registry is empty, so no generic order becomes a scored attack.
+Advanced cooling, official persistence and unqualified evidence families remain
+explicitly pending. Real FFA sanity retains Halvar's initiation and later responses
+without invented awards. No statistics, schemas, extraction or old goldens change.
+
+## Social incident policy proposal — 6 October 2026
+
+Mathias confirmed the decoded `FFA_diplo` diplomacy chronology through 1:05:00
+against his paper notes (74 directed commands, displayed in 26 grouped rows).
+This confirms reviewed command chronology, not engine effects or attack outcomes.
+[Social Incident Policy V1, revision 4](../architecture/social-incident-policy-v1-proposal.md)
+incorporates the [external revision 3 assessment](../architecture/social-incident-rev3-assessment.md):
+typed decisions, exposure versus opportunity, independently gated deed families,
+limited attempt versus sustained/consequence tiers, scoped negatives, substantive
+cooperation, track-specific reciprocity and grouped Battle budgets. It rejects
+provocation inferred from declarations, tribute purchase inferred from chronology,
+selection-count materiality, automatic rating-win Gallantry and counterpart damping.
+Current per-deed Reputation clamping needs aggregate successor accounting; historical
+rating context needs a revision-aware adapter. Numbers and activation remain proposals.
+No scoring, production activation or statistical formulas change with this design.
+
+
 ## Relationship qualification review — 4 October 2026
 
 The Battle record now exposes a pair/track review before raw match context. It shows supported command evidence, possible contribution direction, unconfigured policies and missing prerequisites for Rivalry, Hostility and Bond, with source references. Real duel, 4v4 and FFA examples make reciprocal-targeting limits, helper direction, common targets and declaration-only Treachery blockers inspectable. No points, stages, new deeds or persisted relationship decisions are emitted. See [the review contract](../architecture/relationship-qualification-review-v1.md).

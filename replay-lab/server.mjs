@@ -1,3 +1,4 @@
+import {projectSocialIncidents} from '../functions/src/engines/socialIncidentCore.js';
 import http from "node:http";
 import { spawn } from "node:child_process";
 import { createReadStream } from "node:fs";
@@ -156,6 +157,7 @@ async function loadRun(id) {
     canonical,
     canonicalRun: extraction,
     statistics,
+    socialIncidents: projectSocialIncidents({ statistics }),
     comparison,
     townBellControl,
     diagnostics: {
@@ -468,8 +470,9 @@ const contentTypes = {
 
 async function serveStatic(urlPath, res) {
   const requested = urlPath === "/" ? "index.html" : urlPath.replace(/^\/+/, "");
-  const file = path.resolve(PUBLIC, requested);
-  if (!file.startsWith(PUBLIC + path.sep) && file !== path.join(PUBLIC, "index.html")) return false;
+  const shared = requested === "social-incident-core.js";
+  const file = shared ? path.resolve(ROOT, "functions/src/engines/socialIncidentCore.js") : path.resolve(PUBLIC, requested);
+  if (!shared && !file.startsWith(PUBLIC + path.sep) && file !== path.join(PUBLIC, "index.html")) return false;
   try {
     const body = await fs.readFile(file);
     res.writeHead(200, {

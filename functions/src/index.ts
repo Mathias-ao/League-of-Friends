@@ -47,6 +47,7 @@ export { getEventDetail } from "./queries/getEventDetail.js";
 export { getPlayerProfile } from "./queries/getPlayerProfile.js";
 export { getWarRoom } from "./queries/getWarRoom.js";
 export { getMatchDetail } from "./queries/getMatchDetail.js";
+export { getSocialHistory } from "./queries/getSocialHistory.js";
 export { getReplayStatistics } from "./queries/getReplayStatistics.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
