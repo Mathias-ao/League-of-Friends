@@ -131,6 +131,30 @@ test('earlier relationship history colours a deed but future history cannot repa
   assert.doesNotMatch(support.paragraphs[0],/older quarrel|grievance/i);
 });
 
+test('Chronicle reserves quarrel language for reciprocal prior hostility',()=>{
+  const chapters=[
+    chapter('hard-1/g1','hard-1',1,[beat('h1','OFFENSIVE_ATTEMPT_AFTER_WITHDRAWAL',1000,1,2,{association:'DELAYED',targetFunction:'ECONOMIC_UNIT'})]),
+    chapter('hard-2/g1','hard-2',2,[beat('h2','OFFENSIVE_ATTEMPT_AFTER_WITHDRAWAL',2000,1,2,{association:'DELAYED',targetFunction:'ECONOMIC_UNIT'})]),
+    chapter('battle-3/g1','battle-3',3,[beat('support','SUPPORT_PARTICIPATION',3000,1,2,{supportKind:'DEFENSIVE_PARTICIPATION'})],'LOCKED_TEAMMATES'),
+  ];
+  const oneSided=projectPlayerChronicle({ownerPlayerId:'a',chapters,history:history([
+    contribution('hard-1','hard-1/g1','HOSTILITY','a','b','DECLARED_BREACH_OFFENSIVE_ATTEMPT'),
+    contribution('hard-2','hard-2/g1','HOSTILITY','a','b','DECLARED_BREACH_OFFENSIVE_ATTEMPT'),
+    contribution('battle-3','battle-3/g1','BOND','a','b','PROTECTIVE_PARTICIPATION'),
+  ]),names:{a:'D’Karius',b:'Ragnar'}});
+  const oneSidedText=oneSided.pages[0].entries.find(entry=>entry.battleId==='battle-3').paragraphs[0];
+  assert.match(oneSidedText,/older hard turn/);
+  assert.doesNotMatch(oneSidedText,/older quarrel/);
+
+  const reciprocal=projectPlayerChronicle({ownerPlayerId:'a',chapters,history:history([
+    contribution('hard-1','hard-1/g1','HOSTILITY','a','b','DECLARED_BREACH_OFFENSIVE_ATTEMPT'),
+    contribution('hard-2','hard-2/g1','HOSTILITY','b','a','DECLARED_BREACH_OFFENSIVE_ATTEMPT'),
+    contribution('battle-3','battle-3/g1','BOND','a','b','PROTECTIVE_PARTICIPATION'),
+  ]),names:{a:'D’Karius',b:'Ragnar'}});
+  const reciprocalText=reciprocal.pages[0].entries.find(entry=>entry.battleId==='battle-3').paragraphs[0];
+  assert.match(reciprocalText,/older quarrel/);
+});
+
 test('prior reputation evidence can reinforce or contradict a directed deed without becoming motive',()=>{
   const chapters=[
     chapter('rep-1/g1','rep-1',1,[], 'LOCKED_TEAMMATES',[1,3]),
