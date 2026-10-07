@@ -345,6 +345,8 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
     return owner?[owner,...others]:others;
   },[snapshot.players,snapshot.viewer,sourceProfile.player,ownerProfile,chronicleRead,ownerId]);
 
+  const bookmarkTones=useMemo(()=>uniqueBookmarkTones(players,ownerId),[players,ownerId]);
+
   useEffect(()=>{
     const dialog=dialogRef.current;
     if(!dialog)return;
@@ -414,7 +416,9 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
     <div className="chronicle-scroll-stage">
       <nav className="chronicle-bookmarks" aria-label="Chronicle pages">{players.map(player=>{
         const self=player.playerId===ownerId,active=player.playerId===selectedPlayer?.playerId;
-        return <button type="button" aria-pressed={active} className={`chronicle-bookmark ${self?'bookmark-self':`bookmark-cloth-${clothIndex(player.playerId)}`}${active?' active':''}`} onClick={()=>setSelectedPlayerId(player.playerId)} title={self?'Open your personal Chronicle leaf':`Open your Chronicle with ${player.steamName}`} key={player.playerId}>
+        const tone=bookmarkTones.get(player.playerId);
+        const style=!self&&tone?({'--bookmark-a':tone.a,'--bookmark-b':tone.b} as CSSProperties):undefined;
+        return <button type="button" aria-pressed={active} style={style} className={`chronicle-bookmark ${self?'bookmark-self':'bookmark-player'}${active?' active':''}`} onClick={()=>setSelectedPlayerId(player.playerId)} title={self?'Open your personal Chronicle leaf':`Open your Chronicle with ${player.steamName}`} key={player.playerId}>
           <span className="bookmark-monogram" aria-hidden="true">{monogram(player.steamName)}</span>
           <span className="bookmark-player-name">{self?'My record':player.steamName}</span>
         </button>;
