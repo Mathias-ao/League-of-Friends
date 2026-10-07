@@ -1,15 +1,11 @@
 import type {CSSProperties} from 'react';
-import fullSeal from '../assets/brand/seal/aof-seal-full.png';
-import simpleSeal from '../assets/brand/seal/aof-seal-simple.png';
-import markSeal from '../assets/brand/seal/aof-seal-mark.svg';
-
 export type AofSealVariant='full'|'simple'|'mark';
 export type AofSealTone='ceremonial'|'quiet'|'faint';
 
 const sources:Record<AofSealVariant,string>={
-  full:fullSeal,
-  simple:simpleSeal,
-  mark:markSeal
+  full:new URL('../assets/brand/seal/aof-seal-full.png',import.meta.url).href,
+  simple:new URL('../assets/brand/seal/aof-seal-simple.png',import.meta.url).href,
+  mark:new URL('../assets/brand/seal/aof-seal-mark.svg',import.meta.url).href
 };
 
 export function AofSeal({
