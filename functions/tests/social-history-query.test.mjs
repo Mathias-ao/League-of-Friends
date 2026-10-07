@@ -50,6 +50,7 @@ test('player Chronicle callable is viewer-owned and exposes prose plus neutral c
  assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0],'exposure'),false);
  assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0].entries[0],'relationshipMarks'),false);
  assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0].entries[0],'sourceEventIds'),false);
+ assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0].entries[0],'narrativeContext'),false);
  assert.equal(Object.prototype.hasOwnProperty.call(r.coverage,'stageMeaning'),false);
  assert.equal(r.coverage.readableAcceptedGames,1);
 });
