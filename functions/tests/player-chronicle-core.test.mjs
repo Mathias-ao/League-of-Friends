@@ -31,7 +31,7 @@ test('Chronicle groups Games into one Battle story and never promotes declaratio
       beat('d2','RECIPROCAL_ALLY_DECLARATIONS',2000,2,1),
     ]),
     chapter('battle-1/g2','battle-1',2,[
-      beat('s1','SUPPORT_PARTICIPATION',3000,1,2,{scope:'INFERRED_SUPPORT_COMMAND_PARTICIPATION'})
+      beat('s1','SUPPORT_PARTICIPATION',3000,1,2,{scope:'INFERRED_SUPPORT_COMMAND_PARTICIPATION',supportKind:'REINFORCEMENT_COMMANDS'})
     ]),
     chapter('battle-2/g1','battle-2',3,[]),
   ];
@@ -46,7 +46,8 @@ test('Chronicle groups Games into one Battle story and never promotes declaratio
   assert.equal(entry.battleId,'battle-1');
   assert.match(entry.paragraphs[0],/marked Ragnar as ally at 0:01/);
   assert.match(entry.paragraphs[0],/both players had ally declarations recorded/);
-  assert.match(entry.paragraphs[0],/support-command participation/);
+  assert.match(entry.paragraphs[0],/Reinforcement commands from D’Karius toward Ragnar/);
+  assert.match(entry.paragraphs[0],/not their arrival or outcome/);
   assert.doesNotMatch(entry.paragraphs[0],/became allies|formed an alliance/i);
   assert.deepEqual(entry.sourceBeatIds,['d1','d2','s1']);
   assert.equal(entry.relationshipMarks[0].track,'BOND');
@@ -79,6 +80,8 @@ test('Chronicle writes qualified post-withdrawal offense only from the qualified
   const result=projectPlayerChronicle({ownerPlayerId:'a',chapters,history:history(),names:{a:'D’Karius',b:'Ragnar'}});
   const text=result.pages[0].entries[0].paragraphs[0];
   assert.match(text,/withdrew an ally declaration/);
+  assert.equal(result.pages[0].entries[0].title,'An offensive attempt followed the withdrawal');
+  assert.equal(result.pages[0].entries[0].rubric,'WITHDRAWAL & OFFENSE');
   assert.match(text,/qualified offensive attempt/);
   assert.match(text,/economic unit/);
   assert.doesNotMatch(text,/knowledge interrupted|betrayed|slaughtered|destroyed/i);
