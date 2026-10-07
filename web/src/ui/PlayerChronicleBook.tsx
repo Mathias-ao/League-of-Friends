@@ -48,26 +48,48 @@ function uniqueBookmarkTones(players:PlayerRecord[],ownerId:string){
   return result;
 }
 
-function trackSentence(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},label:string){
-  if(track.status!=='READY')return null;
-  if(track.stageId){
-    if(track.state==='DORMANT')return track.stageId===label?`${label} is dormant`:`${label} is dormant at ${track.stageId}`;
-    return track.stageId===label?`${label} is established`:`${label} stands at ${track.stageId}`;
-  }
-  if(track.historicalPeakStageId)return `${label} is dormant; its recorded peak was ${track.historicalPeakStageId}`;
-  return `${label} remains unestablished`;
+type RelationshipDepth={rank:number;dormant:boolean};
+type RelationshipTrackKey='rivalry'|'hostility'|'bond';
+
+const CHRONICLE_STAGE_DEPTHS:Record<RelationshipTrackKey,Record<string,number>>={
+  rivalry:{friction:1,contest:2,rivalry:3,nemesis:4},
+  hostility:{tension:1,grudge:2,feud:3,'blood feud':4,'internecine strife':5},
+  bond:{fellowship:1,comrades:2,'trusted allies':3,oathbound:4},
+};
+
+function relationshipDepth(track:{state:string;stageId:string|null;historicalPeakStageId:string|null},key:RelationshipTrackKey):RelationshipDepth{
+  const stage=(track.stageId??track.historicalPeakStageId??'').trim().toLowerCase();
+  const rank=CHRONICLE_STAGE_DEPTHS[key][stage]??0;
+  return {rank,dormant:rank>0&&(track.state==='DORMANT'||(!track.stageId&&!!track.historicalPeakStageId))};
 }
 
-function officialStanding(relationship:PlayerRelationshipSummary|null){
-  if(!relationship)return 'No official Rivalry, Hostility or Bond standing has yet been established for this pair.';
-  if(!relationship.relationshipRulesConfigured)return 'The official relationship stages remain sealed. Recorded evidence may still appear below where the replay supports it.';
-  const clauses=[
-    trackSentence(relationship.tracks.rivalry,'Rivalry'),
-    trackSentence(relationship.tracks.hostility,'Hostility'),
-    trackSentence(relationship.tracks.bond,'Bond'),
-  ].filter((value):value is string=>!!value);
-  return clauses.length?clauses.join('. ')+'.':'No official relationship standing has yet been established.';
+function pickLine(lines:readonly string[],seed:string){
+  return lines[hashValue(seed)%lines.length]!;
 }
+
+function depthBucket(value:number){return value<=1?0:value===2?1:value===3?2:3;}
+
+const RIVALRY_LINES=[
+  ['Something between them has begun to sharpen.','The first edge of competition has begun to show.'],
+  ['Neither has gone long without measuring the other.','The measure between them is becoming a habit.'],
+  ['Each meeting now carries the weight of the last.','The contest now arrives with history behind it.'],
+  ['Too much has passed between them for any meeting to feel ordinary.','Neither enters another meeting without history already waiting on the page.'],
+] as const;
+
+const HOSTILITY_LINES=[
+  ['There is already an edge between them.','A little strain has already found its way onto the page.'],
+  ['The quarrel has found enough history to endure.','What lies between them is no longer a passing irritation.'],
+  ['What began as strain has become difficult to leave behind.','Each new meeting inherits something from the quarrel before it.'],
+  ['The old quarrel now follows them from battle to battle.','The quarrel has become one of the book’s enduring wounds.'],
+  ['The quarrel has passed beyond any ordinary measure.','Whatever this once was, the ordinary scale no longer contains it.'],
+] as const;
+
+const BOND_LINES=[
+  ['They have begun to stand well together.','The first signs of dependable company are already on the page.'],
+  ['Standing together is no longer unusual.','Shared cause has begun to become familiar ground.'],
+  ['Again and again, they have answered the same call.','Their history now carries the weight of repeated support.'],
+  ['What binds their histories has become difficult to separate.','Few pages between them can be read without seeing what binds them.'],
+] as const;
 
 type ChronicleFlavor='neutral'|'rivalry'|'hostility'|'bond'|'mixed';
 type ChronicleMarker='origin'|'contest'|'support'|'common'|'diplomacy'|'fracture'|'crown'|'record';
