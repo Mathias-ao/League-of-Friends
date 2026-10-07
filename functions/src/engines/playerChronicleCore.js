@@ -4,6 +4,7 @@ import {buildPriorNarrativeContext,writeBattleNarrative} from './playerChronicle
  * This is a read-only writer. It never awards points or upgrades shadow stages to official state.
  */
 export const PLAYER_CHRONICLE_VERSION = 'AOF_PLAYER_CHRONICLE_V2';
+const PLAYER_CHRONICLE_ENTRY_ID_VERSION = 'AOF_PLAYER_CHRONICLE_V1'; // Stable historical identity across prose-only writer upgrades.
 
 const rows=v=>Array.isArray(v)?v:[];
 const rec=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:null;
@@ -105,7 +106,7 @@ function composeEntry(group,first,ownerName,counterpartName,history,ownerPlayerI
   const marks=contributionMarks(history,group.battleId,ownerPlayerId,counterpartPlayerId);
   const narrative=writeBattleNarrative({group:{...group,beats:ordered},first,ownerName,counterpartName,context,names});
   return {
-    entryId:PLAYER_CHRONICLE_VERSION+':'+ownerPlayerId+':'+counterpartPlayerId+':'+group.battleId+':'+(sourceBeatIds.join(',')||'exposure'),
+    entryId:PLAYER_CHRONICLE_ENTRY_ID_VERSION+':'+ownerPlayerId+':'+counterpartPlayerId+':'+group.battleId+':'+(sourceBeatIds.join(',')||'exposure'),
     battleId:group.battleId,
     eventId:group.eventId,
     seasonId:group.seasonId,
