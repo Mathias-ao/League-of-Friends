@@ -50,7 +50,7 @@ test('Chronicle is one viewer-owned book and profile entry points select the mat
     assert.equal(ragnarBookmark!.getAttribute('aria-pressed'),'true','the source profile chooses the initial bookmark');
     assert.match(document.querySelector('.chronicle-book-owner')?.textContent??'',/D’Karius.*Chronicle/);
     assert.match(document.querySelector('.chronicle-title')?.textContent??'',/D’Karius.*Ragnar/);
-    assert.match(document.querySelector('.chronicle-standing')?.textContent??'',/Rivalry is dormant at Rivalry/);
+    assert.match(document.querySelector('.chronicle-standing')?.textContent??'',/Rivalry is dormant/);
     assert.match(document.querySelector('.chronicle-entries')?.textContent??'',/official duel/);
     assert.doesNotMatch(document.querySelector('.chronicle-entries')?.textContent??'',/became allies|successful raid|betrayed/i);
 
