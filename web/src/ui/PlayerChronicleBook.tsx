@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import {BookOpen,Medal,ScrollText,Trophy,X} from 'lucide-react';
 import type {
   LeagueRepository,LeagueSnapshot,PlayerChronicleBookEntry,PlayerChronicleBookPage,
@@ -24,10 +24,28 @@ function monogram(name:string){
   return (letters.slice(0,2).join('')||'?').toUpperCase();
 }
 
-function clothIndex(playerId:string){
-  let value=2166136261;
-  for(const character of playerId)value=Math.imul(value^character.codePointAt(0)!,16777619);
-  return Math.abs(value)%8;
+function hashValue(value:string){
+  let result=2166136261;
+  for(const character of value)result=Math.imul(result^character.codePointAt(0)!,16777619);
+  return result>>>0;
+}
+
+function uniqueBookmarkTones(players:PlayerRecord[],ownerId:string){
+  const result=new Map<string,{a:string;b:string}>(),used:number[]=[];
+  const others=players.filter(player=>player.playerId!==ownerId).sort((a,b)=>a.playerId.localeCompare(b.playerId));
+  const minDistance=Math.max(12,Math.min(34,280/Math.max(1,others.length)));
+  const distance=(a:number,b:number)=>Math.min(Math.abs(a-b),360-Math.abs(a-b));
+  for(const player of others){
+    let hue=hashValue(player.playerId)%360,attempt=0;
+    while(used.some(existing=>distance(existing,hue)<minDistance)&&attempt<32){hue=(hue+137.508)%360;attempt++;}
+    used.push(hue);
+    const saturation=24+(hashValue(player.playerId+':s')%8),lightness=33+(hashValue(player.playerId+':l')%5);
+    result.set(player.playerId,{
+      a:'hsl('+hue.toFixed(1)+' '+saturation+'% '+lightness+'%)',
+      b:'hsl('+hue.toFixed(1)+' '+Math.min(38,saturation+4)+'% '+Math.max(18,lightness-14)+'%)',
+    });
+  }
+  return result;
 }
 
 function trackSentence(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},label:string){
