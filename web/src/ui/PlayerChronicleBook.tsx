@@ -129,8 +129,10 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
   const [chronicleRead,setChronicleRead]=useState<PlayerChronicleResponse|null>(null);
   const [selectedPlayerId,setSelectedPlayerId]=useState(initialPagePlayerId||ownerId);
   const [freshEntryIds,setFreshEntryIds]=useState<Set<string>>(()=>new Set());
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState('');
+  const [profileLoading,setProfileLoading]=useState(sourceProfile.player.playerId!==ownerId);
+  const [chronicleLoading,setChronicleLoading]=useState(true);
+  const [profileError,setProfileError]=useState('');
+  const [chronicleError,setChronicleError]=useState('');
 
   const players=useMemo(()=>{
     const byId=new Map(snapshot.players.map(player=>[player.playerId,player]));
@@ -156,24 +158,30 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
   },[]);
 
   useEffect(()=>{
-    if(!ownerId){setError('The Chronicle needs a signed-in player.');setLoading(false);return;}
-    let active=true;
-    setLoading(true);setError('');
-    const profilePromise=ownerProfile?Promise.resolve(ownerProfile):repository.player(ownerId);
-    if(!repository.playerChronicle){
-      setError('The Chronicle read surface is unavailable.');
-      setLoading(false);
-      return;
+    setSelectedPlayerId(initialPagePlayerId||ownerId);
+  },[initialPagePlayerId,ownerId]);
+
+  useEffect(()=>{
+    if(!ownerId){setProfileError('The Chronicle needs a signed-in player.');setProfileLoading(false);return;}
+    if(sourceProfile.player.playerId===ownerId){
+      setOwnerProfile(sourceProfile);setProfileError('');setProfileLoading(false);return;
     }
-    const chroniclePromise=repository.playerChronicle();
-    Promise.all([profilePromise,chroniclePromise]).then(([profile,history])=>{
-      if(!active)return;
-      setOwnerProfile(profile);
-      setChronicleRead(history);
-    }).catch(reason=>{
-      if(!active)return;
-      setError(reason instanceof Error?reason.message:'The Chronicle could not be opened.');
-    }).finally(()=>{if(active)setLoading(false);});
+    let active=true;
+    setProfileLoading(true);setProfileError('');
+    repository.player(ownerId).then(profile=>{if(active)setOwnerProfile(profile);}).catch(reason=>{
+      if(active)setProfileError(reason instanceof Error?reason.message:'The personal Chronicle leaf could not be read.');
+    }).finally(()=>{if(active)setProfileLoading(false);});
+    return ()=>{active=false;};
+  },[repository,ownerId,sourceProfile]);
+
+  useEffect(()=>{
+    if(!ownerId){setChronicleError('The Chronicle needs a signed-in player.');setChronicleLoading(false);return;}
+    if(!repository.playerChronicle){setChronicleError('The Chronicle read surface is unavailable.');setChronicleLoading(false);return;}
+    let active=true;
+    setChronicleLoading(true);setChronicleError('');
+    repository.playerChronicle().then(history=>{if(active)setChronicleRead(history);}).catch(reason=>{
+      if(active)setChronicleError(reason instanceof Error?reason.message:'The relationship Chronicle could not be read.');
+    }).finally(()=>{if(active)setChronicleLoading(false);});
     return ()=>{active=false;};
   },[repository,ownerId]);
 
@@ -184,6 +192,8 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
     ? ownerProfile.relationships?.find(relationship=>relationship.otherPlayer.playerId===selectedPlayer.playerId)??null
     : null;
   const entrySignature=page?.entries.map(entry=>entry.entryId).join('|')??'';
+  const pageLoading=isSelf?profileLoading:profileLoading||chronicleLoading;
+  const pageError=isSelf?profileError:profileError||chronicleError;
 
   useEffect(()=>{
     if(!page||typeof window==='undefined'){setFreshEntryIds(new Set());return;}
@@ -216,8 +226,8 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
       <article className="chronicle-parchment">
         <div className="chronicle-seal" aria-hidden="true"><BookOpen size={24}/></div>
         <span className="chronicle-book-owner" id="player-chronicle-title">{ownerProfile?.player.steamName??snapshot.viewer?.steamName??'Player'}'s Chronicle</span>
-        {loading?<div className="chronicle-loading" role="status"><BookOpen size={30}/><p>Opening the record…</p></div>
-          :error?<div className="chronicle-loading" role="alert"><p>{error}</p></div>
+        {pageLoading?<div className="chronicle-loading" role="status"><BookOpen size={30}/><p>Opening the record…</p></div>
+          :pageError?<div className="chronicle-loading" role="alert"><p>{pageError}</p></div>
           :ownerProfile&&selectedPlayer?(isSelf
             ?<SelfPage profile={ownerProfile}/>
             :<RelationshipPage owner={ownerProfile.player} counterpart={selectedPlayer} page={page} official={official} snapshot={snapshot} partial={chronicleRead?.status==='PARTIAL'} freshEntryIds={freshEntryIds}/>)
