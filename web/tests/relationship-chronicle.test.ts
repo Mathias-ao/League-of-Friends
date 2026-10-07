@@ -58,7 +58,7 @@ test('Chronicle is one viewer-owned book and profile entry points select the mat
     assert.equal(document.querySelector('.chronicle-standing'),null,'mechanical Present Standing is not rendered');
     const epigraph=document.querySelector('.chronicle-epigraph')?.textContent??'';
     assert.ok(epigraph.length>10);
-    assert.doesNotMatch(epigraph,/Rivalry|Hostility|Bond|Tension|Grudge|Feud|Fellowship|Comrades|Trusted Allies|Oathbound|Internecine Strife/);
+    assert.doesNotMatch(epigraph,/\b(rivalry|hostility|bond|tension|grudge|feud|fellowship|comrades|trusted allies|oathbound|internecine strife)\b/i);
     assert.ok(document.querySelector('.chronicle-manuscript'),'relationship history uses one manuscript reading column');
     assert.ok(document.querySelector('.chronicle-manuscript-spine'),'the reading column carries an adorned spine');
     const relationshipPage=document.querySelector('.chronicle-relationship-page');
@@ -112,7 +112,7 @@ test('Chronicle epigraphs cover every relationship depth and combination without
     const line=relationshipEpigraph(relationshipForStages(r,h,b,'pair:'+String(r)+':'+String(h)+':'+String(b)));
     assert.ok(line.length>=20&&line.length<=170,`epigraph length should stay manuscript-like for ${r}/${h}/${b}`);
     assert.doesNotMatch(line,/Their record shows|The record shows|Present Standing/);
-    assert.doesNotMatch(line,/Rivalry|Hostility|Bond|Tension|Grudge|Blood Feud|Internecine Strife|Fellowship|Comrades|Trusted Allies|Oathbound/);
+    assert.doesNotMatch(line,/\b(rivalry|hostility|bond|tension|grudge|feud|fellowship|comrades|trusted allies|oathbound|internecine strife)\b/i);
   }
 
   const legendary=relationshipEpigraph(relationshipForStages(null,'Internecine Strife',null,'legendary'));
