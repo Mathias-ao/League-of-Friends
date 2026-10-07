@@ -40,12 +40,11 @@ test('dynamic diplomacy is narrated as directed declarations, never invented all
   assert.equal(result.pages.length,1);
   assert.equal(result.pages[0].entries.length,1);
   const prose=result.pages[0].entries[0].paragraphs.join(' ');
-  assert.match(prose,/open-diplomacy Battle/);
-  assert.match(prose,/Aldric marked Beren as ally at 0:10/);
-  assert.match(prose,/both players had ally declarations recorded/);
-  assert.match(prose,/Aldric withdrew an ally declaration toward Beren at 0:30/);
-  assert.match(prose,/qualified offensive attempt/);
-  assert.doesNotMatch(prose,/became allies|betray(ed|al)|refused|saved|rescued|conspired|successful raid/i);
+  assert.match(prose,/first shared page began with loyalties still free to change/i);
+  assert.match(prose,/Aldric withdrew the ally declaration toward Beren/);
+  assert.match(prose,/Soon after.*offensive attempt toward Beren's economy/);
+  assert.match(prose,/No success is claimed/);
+  assert.doesNotMatch(prose,/\b\d{1,2}:\d{2}\b|\bqualified\b|became allies|betray(ed|al)|refused|saved|rescued|conspired|successful raid/i);
 });
 
 test('one pair and Battle becomes one coherent entry across Games and later co-presence alone stays unwritten',()=>{
@@ -60,8 +59,9 @@ test('one pair and Battle becomes one coherent entry across Games and later co-p
   assert.equal(result.pages[0].entries.length,1,'two Games from one Battle must not create duplicate Chronicle entries');
   const entry=result.pages[0].entries[0];
   assert.equal(entry.battleId,'battle-1');
-  assert.match(entry.paragraphs[0],/recorded history/);
-  assert.match(entry.paragraphs[0],/support-command participation/);
+  assert.match(entry.paragraphs[0],/first shared page/i);
+  assert.match(entry.paragraphs[0],/directed support toward Beren/);
+  assert.doesNotMatch(entry.paragraphs[0],/support-command participation|\bqualified\b|\b\d{1,2}:\d{2}\b/i);
 });
 
 test('material aid remains an order in the prose and retains exact qualified resource amounts',()=>{
@@ -75,7 +75,7 @@ test('material aid remains an order in the prose and retains exact qualified res
   const result=projectPlayerChronicle({ownerPlayerId:'a',chapters,history,names:{a:'Aldric',b:'Beren'}});
   const entry=result.pages[0].entries[0];
   assert.match(entry.paragraphs[0],/300 food, 200 gold/);
-  assert.match(entry.paragraphs[0],/instruction, not proof of delivery/);
+  assert.match(entry.paragraphs[0],/delivery itself is not claimed/);
   assert.equal(entry.relationshipMarks[0].track,'BOND');
   assert.equal(entry.reputationMarks[0].track,'CHIVALRY');
 });
