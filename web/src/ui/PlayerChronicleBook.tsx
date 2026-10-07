@@ -57,7 +57,8 @@ const CHRONICLE_STAGE_DEPTHS:Record<RelationshipTrackKey,Record<string,number>>=
   bond:{fellowship:1,comrades:2,'trusted allies':3,oathbound:4},
 };
 
-function relationshipDepth(track:{state:string;stageId:string|null;historicalPeakStageId:string|null},key:RelationshipTrackKey):RelationshipDepth{
+function relationshipDepth(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},key:RelationshipTrackKey):RelationshipDepth{
+  if(track.status!=='READY')return {rank:0,dormant:false};
   const stage=(track.stageId??track.historicalPeakStageId??'').trim().toLowerCase();
   const rank=CHRONICLE_STAGE_DEPTHS[key][stage]??0;
   return {rank,dormant:rank>0&&(track.state==='DORMANT'||(!track.stageId&&!!track.historicalPeakStageId))};
