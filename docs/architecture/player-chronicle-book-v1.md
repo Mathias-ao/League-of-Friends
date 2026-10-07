@@ -101,6 +101,21 @@ Where several official tracks are present, the ornament uses a neutral mixed tre
 
 The words and evidence-backed milestone titles are therefore the most dramatic part of the page. Ornament supports atmosphere; it does not tell the player how to interpret another player.
 
+### Header epigraph
+
+The relationship leaf does not print Rivalry / Hostility / Bond stages or a Present Standing dashboard. Instead it resolves one short deterministic epigraph from the official public relationship state.
+
+The resolver preserves the current four ordinary Rivalry levels, four ordinary Bond levels, four ordinary Hostility levels, and the secret legendary Hostility escalation **Internecine Strife** when that stage is actually achieved. Internecine Strife is never shown as an empty future tier and its system label is not printed in the epigraph.
+
+Combination wording is authored by shape rather than concatenating track labels: balanced pairs, one-track-led pairs, balanced three-track histories, one-track-led three-track histories, dormant echoes and the legendary Hostility case each have dedicated language. Dormant tracks describe old history as quiet rather than deleted.
+
+The epigraph must lead with sensation, stay short enough to read as manuscript copy, avoid mechanical phrases such as “their record shows”, and never state motive or emotion as fact. A deterministic hash of pair identity plus relationship signature may choose among approved variants so wording is stable until the relationship state changes.
+
+### Bookmark identity
+
+Bookmark colour identifies the person, not the relationship. The self leaf retains its dedicated dark archive ribbon. Other players receive deterministic muted cloth tones that are collision-resolved across the currently open book so every visible relationship bookmark is distinct. Relationship state never changes a bookmark colour.
+
+
 ## Ink reveal
 
 The browser remembers Chronicle entry IDs already seen for each owner/pair. Existing history on first opening is old ink. Later unseen entry IDs alone receive the restrained ink-writing reveal. Reduced-motion settings suppress both the ink reveal and scroll animation.
