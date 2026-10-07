@@ -2,7 +2,7 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 import {BookOpen,Medal,ScrollText,Trophy,X} from 'lucide-react';
 import type {
   LeagueRepository,LeagueSnapshot,PlayerChronicleEntry,PlayerChronicleRelationshipPage,
-  PlayerProfile,PlayerRecord,PlayerRelationshipSummary,SocialHistoryResponse
+  PlayerProfile,PlayerRecord,PlayerRelationshipSummary,PlayerChronicleResponse
 } from '../domain/league';
 import {formatName} from '../domain/league';
 
@@ -126,7 +126,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
   const dialogRef=useRef<HTMLDialogElement>(null);
   const ownerId=snapshot.viewer?.playerId??'';
   const [ownerProfile,setOwnerProfile]=useState<PlayerProfile|null>(sourceProfile.player.playerId===ownerId?sourceProfile:null);
-  const [social,setSocial]=useState<SocialHistoryResponse|null>(null);
+  const [chronicleRead,setChronicleRead]=useState<PlayerChronicleResponse|null>(null);
   const [selectedPlayerId,setSelectedPlayerId]=useState(initialPagePlayerId||ownerId);
   const [freshEntryIds,setFreshEntryIds]=useState<Set<string>>(()=>new Set());
   const [loading,setLoading]=useState(true);
@@ -138,14 +138,14 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
     if(ownerProfile)byId.set(ownerProfile.player.playerId,ownerProfile.player);
     if(!byId.has(sourceProfile.player.playerId))byId.set(sourceProfile.player.playerId,sourceProfile.player);
     for(const relationship of ownerProfile?.relationships??[])if(!byId.has(relationship.otherPlayer.playerId))byId.set(relationship.otherPlayer.playerId,relationship.otherPlayer);
-    for(const page of social?.chronicle.pages??[]){
+    for(const page of chronicleRead?.chronicle.pages??[]){
       if(byId.has(page.counterpartPlayerId))continue;
-      byId.set(page.counterpartPlayerId,{playerId:page.counterpartPlayerId,steamName:social?.names[page.counterpartPlayerId]??page.counterpartPlayerId});
+      byId.set(page.counterpartPlayerId,{playerId:page.counterpartPlayerId,steamName:chronicleRead?.names[page.counterpartPlayerId]??page.counterpartPlayerId});
     }
     const owner=ownerId?byId.get(ownerId):null;
     const others=[...byId.values()].filter(player=>player.playerId!==ownerId).sort((left,right)=>left.steamName.localeCompare(right.steamName));
     return owner?[owner,...others]:others;
-  },[snapshot.players,snapshot.viewer,sourceProfile.player,ownerProfile,social,ownerId]);
+  },[snapshot.players,snapshot.viewer,sourceProfile.player,ownerProfile,chronicleRead,ownerId]);
 
   useEffect(()=>{
     const dialog=dialogRef.current;
@@ -160,11 +160,16 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
     let active=true;
     setLoading(true);setError('');
     const profilePromise=ownerProfile?Promise.resolve(ownerProfile):repository.player(ownerId);
-    const socialPromise=repository.socialHistory?repository.socialHistory():Promise.resolve(null);
-    Promise.all([profilePromise,socialPromise]).then(([profile,history])=>{
+    if(!repository.playerChronicle){
+      setError('The Chronicle read surface is unavailable.');
+      setLoading(false);
+      return;
+    }
+    const chroniclePromise=repository.playerChronicle();
+    Promise.all([profilePromise,chroniclePromise]).then(([profile,history])=>{
       if(!active)return;
       setOwnerProfile(profile);
-      setSocial(history);
+      setChronicleRead(history);
     }).catch(reason=>{
       if(!active)return;
       setError(reason instanceof Error?reason.message:'The Chronicle could not be opened.');
@@ -174,7 +179,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
 
   const selectedPlayer=players.find(player=>player.playerId===selectedPlayerId)??players[0]??null;
   const isSelf=selectedPlayer?.playerId===ownerId;
-  const page=!isSelf&&selectedPlayer?social?.chronicle.pages.find(candidate=>candidate.counterpartPlayerId===selectedPlayer.playerId)??null:null;
+  const page=!isSelf&&selectedPlayer?chronicleRead?.chronicle.pages.find(candidate=>candidate.counterpartPlayerId===selectedPlayer.playerId)??null:null;
   const official=!isSelf&&selectedPlayer&&ownerProfile
     ? ownerProfile.relationships?.find(relationship=>relationship.otherPlayer.playerId===selectedPlayer.playerId)??null
     : null;
@@ -215,7 +220,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
           :error?<div className="chronicle-loading" role="alert"><p>{error}</p></div>
           :ownerProfile&&selectedPlayer?(isSelf
             ?<SelfPage profile={ownerProfile}/>
-            :<RelationshipPage owner={ownerProfile.player} counterpart={selectedPlayer} page={page} official={official} snapshot={snapshot} partial={social?.status==='PARTIAL'} freshEntryIds={freshEntryIds}/>)
+            :<RelationshipPage owner={ownerProfile.player} counterpart={selectedPlayer} page={page} official={official} snapshot={snapshot} partial={chronicleRead?.status==='PARTIAL'} freshEntryIds={freshEntryIds}/>)
           :<div className="chronicle-loading"><p>The Chronicle has no page to show.</p></div>}
       </article>
     </div>
