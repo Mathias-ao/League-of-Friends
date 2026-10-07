@@ -125,3 +125,92 @@ The browser remembers Chronicle entry IDs already seen for each owner/pair. Exis
 This contract does not activate PR #64 shadow scores as production state, let Chronicle prose award points, interpret manual Event Chronicle text as social evidence, infer motive/emotion/damage/kills/success beyond qualified evidence, or make the Chronicle into another player's public book.
 
 The automatic Player Chronicle is the signed-in player's evidence-backed personal record.
+
+
+## Chronicle narrative V2 — drama from history, not telemetry
+
+The player-facing Chronicle is allowed to be more dramatic than an evidence/debug surface, but it is not allowed to become less true.
+
+`AOF_PLAYER_CHRONICLE_V2` therefore separates three time scopes:
+
+1. **Current official relationship state** — used only for the short header epigraph.
+2. **History that existed before a Battle** — used to frame that Battle's entry.
+3. **Evidence from the Battle itself** — the only source for what the entry says actually happened.
+
+Current Relationship or Reputation state must never be projected backwards onto an older Battle.
+
+### One Battle, one remembered entry
+
+Several Games and many raw social beats may belong to one Battle. The Chronicle groups them into one pair × Battle entry and writes a short scene rather than a telemetry transcript.
+
+A normal entry should read as approximately two to four short sentences:
+- the memorable episode;
+- an earned repetition callback when one exists;
+- at most one relationship/reputation context line when prior history materially changes how the event reads.
+
+Replay-relative timestamps are provenance, not prose. The Battle/Event and calendar date remain in the entry signature.
+
+### Repetition means independent history
+
+Words such as “again”, “another”, “familiar”, “recurring”, or “no longer a one-off” require a prior independently qualified **Battle** containing the same semantic family.
+
+Multiple commands, beats, POVs, or Games inside one Battle do not manufacture repetition.
+
+Direction is retained for directed families. Repeated support from A → B is not inferred from support by B → A.
+
+### Historical pair context
+
+An entry may refer to an older contest, quarrel, cooperation, or contradiction only from qualified relationship contributions belonging to earlier Battles.
+
+Examples of permitted framing:
+- a supportive deed after prior Hostility evidence: “It landed on a page that already carried an older quarrel.”
+- hostile evidence after prior Bond evidence: “It darkened a page that already contained cooperation between them.”
+- another duel after prior Rivalry evidence: “The contest was no longer new between them.”
+
+These are historical comparisons, not motive claims and not public stage labels.
+
+Future Battles cannot alter this context.
+
+### Reputation as light, never cause
+
+The actor's reputation may colour a directed deed only from **prior** qualified reputation contributions across earlier Battles in the league.
+
+A single prior deed is not enough to characterize a name. Narrative reputation framing requires at least two earlier distinct Battles on the relevant reputation axis.
+
+The writer may then note alignment or contradiction:
+- supportive deed after repeated Chivalry evidence: it sits beside earlier acts of aid attached to that name;
+- supportive deed after repeated Cruelty evidence: it sits strangely beside harder deeds already attached to that name;
+- hostile deed after repeated Cruelty evidence: harder deeds had appeared beside that name before;
+- hostile deed after repeated Chivalry evidence: it cuts against more helpful deeds already attached to that name.
+
+This context can never make the current episode qualify, prove intent, or explain *why* the player acted.
+
+Symmetric events such as an official duel or shared-opponent participation do not assign reputation framing to whichever participant happens to occupy an internal actor field.
+
+### Literary uncertainty instead of audit jargon
+
+Player prose should preserve uncertainty in Chronicle language instead of exposing implementation language.
+
+Examples:
+- reinforcement commands: “The orders are certain; what reached the field is not.”
+- material aid: “The command is in the ledger; delivery itself is not claimed.”
+- shared opponent: “Whether by design or circumstance, the page does not say.”
+- offensive attempt: “No success is claimed; the attempt itself is enough to mark the turn.”
+
+The player-facing prose should avoid terms such as qualification, coverage, source-event IDs, rule versions, scoring, or replay timestamps.
+
+### Exceptional events
+
+Exceptional king-loss wording is available only after the underlying dedicated qualifier has passed every required gate. Because that evidence includes effective alliance, rupture, hostile participation, king loss, responsibility, association, and mode, the Chronicle may use stronger language such as:
+
+> “The alliance had broken. What followed left A recorded as responsible for the loss of B's king.”
+
+It still does not invent motive, emotion, dialogue, or unqualified causality.
+
+### Auditability
+
+The internal Chronicle projection retains a `narrativeContext` summary containing the prior family, relationship-evidence, and reputation-evidence counts that permitted contextual wording.
+
+The authenticated player-facing Chronicle callable does not expose those internal counts. Players receive the finished history; review/debug surfaces retain the reason the writer was allowed to phrase it that way.
+
+The writer remains deterministic and has no runtime LLM/API dependency.
