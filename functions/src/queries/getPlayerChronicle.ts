@@ -42,6 +42,11 @@ export const getPlayerChronicle=onCall({...callableOptions,timeoutSeconds:120},a
     status:result.status,
     chronicle,
     names,
-    coverage:result.coverage,
+    coverage:{
+      completedBattles:result.coverage.completedBattles,
+      readableAcceptedGames:result.coverage.readableAcceptedGames,
+      excludedGames:result.coverage.excludedGames,
+      opportunityCompleteness:result.coverage.opportunityCompleteness,
+    },
   };
 });
