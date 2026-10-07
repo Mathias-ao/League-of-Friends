@@ -171,6 +171,8 @@ These are historical comparisons, not motive claims and not public stage labels.
 
 Future Battles cannot alter this context.
 
+Hostility wording also preserves direction. Prior Hostility evidence from only one actor may justify language such as an “older hard turn” or a “pattern already written in one direction”; it does **not** justify calling the history a mutual quarrel. “Quarrel” language requires prior reciprocity-eligible Hostility contributions from both players.
+
 ### Reputation as light, never cause
 
 The actor's reputation may colour a directed deed only from **prior** qualified reputation contributions across earlier Battles in the league.
