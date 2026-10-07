@@ -14,6 +14,6 @@ export const rebuildStatisticsOnMatchChange=onDocumentWritten({document:'matches
 // Also rebuild after lazy hydration of a pre-V1 source. This never writes sources,
 // so duplicate delivery is safe and does not form a trigger loop.
 export const rebuildStatisticsOnSourceChange=onDocumentWritten({document:'matches/{matchId}/games/{gameId}/replaySources/{sourceId}',region:'europe-west1',retry:true},async event=>{
-  const signature=(s:any)=>JSON.stringify([s?.state,s?.experience]);
+  const signature=(s:any)=>JSON.stringify([s?.state,s?.experience,s?.playerMapping,s?.sourceHash,s?.statistics]);
   if(signature(event.data?.before.data())!==signature(event.data?.after.data()))await rebuildStatisticsReadModels();
 });

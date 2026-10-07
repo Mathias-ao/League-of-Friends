@@ -7,19 +7,19 @@ import {SeasonStatisticsExperience,seasonMetricsFor} from '../src/domain/seasonS
 import {SeasonStatisticsView} from '../src/ui/StatisticsDashboard';
 
 const expected={
-  Opening:['Feudal Age','Castle Age','Imperial Age','Build Order Execution','Villagers @10','First Military Unit','Dark Age TC Idle','Walls Before Feudal','Loom Timing','Houses Before Feudal','Dark Age Action Gap','First Mining Camp','First Lumber Camp','Wall Style','Commands @5','Scout Coverage @5'],
-  Economy:['Villagers Trained','Villagers @20','Town Centers','2nd TC Timing','Economy Buildings','Resources Committed','Horse Collar Timing','Farms Placed','Farms Before Castle','Boars Lured','Eco : Military @20','Economy Techs','Houses Built','Market Sales','Market Purchases','Trade Units Trained','Tribute Sent','Tribute Received'],
-  Military:['Military Units Trained','Military Unit Commitment','Military Buildings @ Castle','Battles Fought','Battle Time','Great Battles','Raids Initiated','Raids Received','Reinforcements Sent','Cooperative Attacks','Defensive Assists','Castles','First Castle','Military Techs','Blacksmith Techs @30','Army Commitment @10','Army Commitment @15','Army Commitment @20'],
-  'Map Presence':['Command Map Coverage','Enemy-Side Presence','Enemy Base Contact','Forward Buildings','Forward Eco','Expansion Zones','Wall Tiles','Towers','Gold Control','Relics Touched','First Relic Touch'],
-  Execution:['APM','First Command','Longest Inactivity','Raid Response','Garrisons During Raids','Economy Actions in Battles','Town Bell','Back to Work'],
+  Opening:['Feudal Age','Castle Age','Imperial Age','Build Order Execution','Villager Queue Estimate @10','First Military Unit Queued','Dark Age TC Idle','Walls Before Feudal','Loom Timing','Houses Before Feudal','Dark Age Action Gap','First Mining Camp','First Lumber Camp','Wall Style','Commands @5','Scout Command Coverage @5'],
+  Economy:['Villagers Queued','Villager Queue Estimate @20','Town Centers','2nd TC Timing','Economy Buildings','Resources Committed','Horse Collar Timing','Farms Placed','Farms Before Castle','Boar Interactions ≈','Eco : Military @20','Economy Tech Requests','House Placements','Market Sales','Market Purchases','Trade Units Queued','Tribute Sent','Tribute Received'],
+  Military:['Military Units Queued','Military Unit Commitment','Military Buildings @ Castle','Detected Battles','Detected Battle Time','Detected Great Battles','Detected Raids Initiated','Detected Raids Received','Reinforcements Sent','Cooperative Attacks','Defensive Assists','Castle Placements','First Castle Placement','Military Tech Requests','Supported Blacksmith Requests @30','Net Queue Commitment @10','Net Queue Commitment @15','Net Queue Commitment @20'],
+  'Map Presence':['Command Map Coverage','Opponent-Side Command Presence','Opponent-Base Command Contact','Forward Buildings','Forward Eco','Expansion Zones','Wall Tiles','Towers','Gold Influence ≈','Known Relics Targeted','First Relic Target Command'],
+  Execution:['Raw APM','First Command','Longest Inactivity','Raid Response','Garrisons During Raids','Economy Actions in Battles','Town Bell','Back to Work'],
 } as const;
 
 const displayed={
-  Opening:['Feudal Age','Castle Age','Imperial Age','Build Order Execution','Villagers at 10 Minutes','First Military Unit','Dark Age TC Idle','Walls Before Feudal','Loom Timing','Houses Before Feudal','Dark Age Action Gap','First Mining Camp','First Lumber Camp','Wall Style','Commands by Minute 5','Scout Coverage by Minute 5'],
-  Economy:['Villagers Trained','Villagers at 20 Minutes','Town Centers','2nd TC Timing','Economy Buildings','Resources Committed','Horse Collar Timing','Farms Placed','Farms Before Castle','Boars Lured','Economy–Military Ratio at 20 Minutes','Economy Techs','Houses Built','Market Sales','Market Purchases','Trade Units Trained','Tribute Sent','Tribute Received'],
-  Military:['Military Units Trained','Military Unit Commitment','Military Buildings by Castle Age','Battles Fought','Battle Time','Great Battles','Raids Initiated','Raids Received','Reinforcements Sent','Cooperative Attacks','Defensive Assists','Castles','First Castle','Military Techs','Blacksmith Technologies by Minute 30','Army Commitment by Minute 10','Army Commitment by Minute 15','Army Commitment by Minute 20'],
-  'Map Presence':['Command Map Coverage','Enemy-Side Presence','Enemy Base Contact','Forward Buildings','Forward Eco','Expansion Zones','Wall Tiles','Towers','Gold Control','Relics Touched','First Relic Touch'],
-  Execution:['APM','First Command','Longest Inactivity','Raid Response','Garrisons During Raids','Economy Actions in Battles','Town Bell','Back to Work'],
+  Opening:['Feudal Age','Castle Age','Imperial Age','Build Order Execution','Villager Queue Estimate at 10 Minutes','First Military Unit Queued','Dark Age TC Idle','Walls Before Feudal','Loom Timing','Houses Before Feudal','Dark Age Action Gap','First Mining Camp','First Lumber Camp','Wall Style','Commands by Minute 5','Scout Command Coverage by Minute 5'],
+  Economy:['Villagers Queued','Villager Queue Estimate at 20 Minutes','Town Centers','2nd TC Timing','Economy Buildings','Resources Committed','Horse Collar Timing','Farms Placed','Farms Before Castle','Boar Interactions ≈','Economy–Military Ratio at 20 Minutes','Economy Tech Requests','House Placements','Market Sales','Market Purchases','Trade Units Queued','Tribute Sent','Tribute Received'],
+  Military:['Military Units Queued','Military Unit Commitment','Military Placements before Castle Click','Detected Battles','Detected Battle Time','Detected Great Battles','Detected Raids Initiated','Detected Raids Received','Reinforcements Sent','Cooperative Attacks','Defensive Assists','Castle Placements','First Castle Placement','Military Tech Requests','Supported Blacksmith Requests by Minute 30','Net Queue Commitment by Minute 10','Net Queue Commitment by Minute 15','Net Queue Commitment by Minute 20'],
+  'Map Presence':['Command Map Coverage','Opponent-Side Command Presence','Opponent-Base Command Contact','Forward Buildings','Forward Eco','Expansion Zones','Wall Tiles','Towers','Gold Influence ≈','Known Relics Targeted','First Relic Target Command'],
+  Execution:['Raw APM','First Command','Longest Inactivity','Raid Response','Garrisons During Raids','Economy Actions in Battles','Town Bell','Back to Work'],
 } as const;
 
 const expectedFamilies={
@@ -65,12 +65,12 @@ test('Season Statistics renders tactical families, records, quiet controls and e
     }
 
     await click(category('Opening'));
-    assert.match(row('First Military Unit')?.textContent??'',/(Scout Cavalry|Archer|Spearman|Militia)/);
+    assert.match(row('First Military Unit Queued')?.textContent??'',/(Scout Cavalry|Archer|Spearman|Militia)/);
     assert.match(row('Wall Style')?.textContent??'',/(Open|Partially Walled|Fully Walled)/);
-    assert.match(document.querySelector('.sx-record-plaque-grid')?.textContent??'',/Most Villagers at 10 Minutes/);
+    assert.match(document.querySelector('.sx-record-plaque-grid')?.textContent??'',/Largest Villager Queue Estimate at 10 Minutes/);
 
     await click(category('Economy'));
-    const tradeRow=row('Trade Units Trained');await click(tradeRow?.querySelector('td button')??null);
+    const tradeRow=row('Trade Units Queued');await click(tradeRow?.querySelector('td button')??null);
     const evidence=document.querySelector('[aria-label="Statistic evidence"]');assert.ok(evidence);
     assert.equal(evidence.getAttribute('role'),'dialog');
     assert.equal(evidence.getAttribute('aria-modal'),'true');
