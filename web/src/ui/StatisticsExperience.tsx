@@ -1,7 +1,7 @@
-import {SocialHistoryReview} from './SocialHistoryReview';
+import {PlayerChronicleBook} from './PlayerChronicleBook';
 import {useRef,useState} from 'react';
 import {ArrowRight,BookOpen,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
-import {formatName,type PlayerProfile,type PlayerRelationshipSummary} from '../domain/league';
+import {formatName,type PlayerProfile} from '../domain/league';
 import {
   FREEHOLDER_TOOLTIP,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES,PLAYER_PERSONALITY_SLIDERS,REPUTATION_ESSENCES,
   type PlayerIdentityPresentation,type ReputationEssenceId
@@ -102,40 +102,9 @@ function compactDate(value:string|null|undefined){
   return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));
 }
 
-function relationshipTrackLabel(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},label:string){
-  if(track.status!=='READY')return `${label} · Unwritten`;
-  if(!track.stageId&&track.historicalPeakStageId)return `${label} · Dormant (once ${track.historicalPeakStageId})`;
-  if(!track.stageId)return `${label} · Unestablished`;
-  return `${label} · ${track.state==='DORMANT'?'Dormant ':''}${track.stageId}`;
-}
-
-function RelationshipChronicle({data,snapshot}:{data:PlayerProfile;snapshot:ViewProps['snapshot']}){
-  const relationships=data.relationships??[];
-  const viewerId=snapshot.viewer?.playerId;
-  const preferred=relationships.find(item=>item.otherPlayer.playerId===viewerId)??relationships[0]??null;
-  const [selectedPairId,setSelectedPairId]=useState<string|null>(preferred?.pairId??null);
-  const selected=relationships.find(item=>item.pairId===selectedPairId)??preferred;
-  return <section className="relationship-chronicle-view" aria-label="Relationship Chronicle">
-    <div className="chronicle-toolbar"><div><span className="eyebrow">RELATIONSHIP CHRONICLE</span><h3>What history remembers</h3></div>{relationships.length>1&&<label>Player<select value={selected?.pairId??''} onChange={event=>setSelectedPairId(event.target.value)}>{relationships.map(item=><option value={item.pairId} key={item.pairId}>{item.otherPlayer.steamName}</option>)}</select></label>}</div>
-    <article className="chronicle-parchment">
-      <div className="chronicle-seal"><BookOpen size={24}/></div>
-      {selected?<>
-        <header className="chronicle-title"><span className="eyebrow">A RECORDED HISTORY</span><h2>{data.player.steamName} &amp; {selected.otherPlayer.steamName}</h2><p>Only Battles and deeds supported by the league record are entered here.</p></header>
-        <div className="chronicle-track-row">
-          <span>{relationshipTrackLabel(selected.tracks.rivalry,'Rivalry')}</span>
-          <span>{relationshipTrackLabel(selected.tracks.hostility,'Hostility')}</span>
-          <span>{relationshipTrackLabel(selected.tracks.bond,'Bond')}</span>
-        </div>
-        <ol className="chronicle-entries">{selected.chronicle.length?selected.chronicle.map(entry=><li key={entry.entryId}><time>{compactDate(entry.playedAt)}</time><div><span className="eyebrow">{entry.relation==='ALLIED'?'UNDER ONE BANNER':entry.relation==='OPPOSED'?'ACROSS THE BATTLEFIELD':'RECORDED ENCOUNTER'}</span><h4>{entry.title}</h4><p>{entry.text}</p>{entry.matchId&&<small>{entry.matchId}</small>}</div></li>):<li className="chronicle-empty"><div><h4>The page remains unwritten.</h4><p>No qualified shared events have yet been entered for this pair.</p></div></li>}</ol>
-        {!selected.relationshipRulesConfigured&&<footer>Relationship stages remain sealed until the V2 rule set is configured. The Chronicle itself is factual history and remains available.</footer>}
-      </>:<div className="chronicle-empty-state"><BookOpen size={34}/><h3>No shared history has been entered.</h3><p>When this player shares a qualified Battle with another league member, their Chronicle begins.</p></div>}
-    </article>
-  </section>;
-}
-
 function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
   const {data,snapshot,preview,openMatch}=props;
-  const [profileTab,setProfileTab]=useState<'profile'|'chronicle'>('profile');
+  const [chronicleOpen,setChronicleOpen]=useState(false);
   const battleRail=useRef<HTMLDivElement>(null);
   const identity=playerIdentity(data,preview);
   const seasonStats=data.activeSeason?.competition??null;
@@ -158,10 +127,9 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
       <div className="profile-hero-record" aria-label="Current season record"><div className="profile-record-primary"><div><strong>{seasonStats?.matchesWon??'—'}</strong><span>Won</span></div><div><strong>{seasonStats?.matchesLost??'—'}</strong><span>Lost</span></div><div><strong>{winRate}</strong><span>Win rate</span></div></div></div>
     </section>
 
-    <nav className="profile-subnav" aria-label="Player profile sections"><button type="button" className={profileTab==='profile'?'active':''} onClick={()=>setProfileTab('profile')}>Profile</button><button type="button" className={profileTab==='chronicle'?'active':''} onClick={()=>setProfileTab('chronicle')}><BookOpen size={15}/>Chronicle</button></nav>
+    <div className="profile-chronicle-action"><button type="button" className="profile-chronicle-trigger" onClick={()=>setChronicleOpen(true)}><BookOpen size={16}/>Chronicle</button></div>
 
-    {profileTab==='chronicle'?<><RelationshipChronicle data={data} snapshot={snapshot}/><SocialHistoryReview key={data.player.playerId} repository={props.repository} playerId={data.player.playerId}/></>:<>
-      <ProfileDeedsBar data={data} preview={preview}/>
+    <ProfileDeedsBar data={data} preview={preview}/>
 
       <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory}/>
 
@@ -193,7 +161,7 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
           <button type="button" className="battle-carousel-arrow next" aria-label="Scroll later Battles" onClick={()=>scrollBattles(1)}><ChevronRight size={22}/></button>
         </div>
       </section>
-    </>}
+    {chronicleOpen&&<PlayerChronicleBook repository={props.repository} snapshot={snapshot} sourceProfile={data} initialPagePlayerId={data.player.playerId} onClose={()=>setChronicleOpen(false)}/>}
   </section>;
 }
 
