@@ -4,6 +4,8 @@ import React,{act} from 'react';
 import {JSDOM} from 'jsdom';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 import {ProfileDialogWithIdentity} from '../src/ui/StatisticsExperience';
+import {relationshipEpigraph} from '../src/ui/PlayerChronicleBook';
+import type {PlayerRelationshipSummary,RelationshipTrackSummary} from '../src/domain/league';
 
 const flush=()=>new Promise<void>(resolve=>setTimeout(resolve,0));
 
@@ -45,12 +47,18 @@ test('Chronicle is one viewer-owned book and profile entry points select the mat
 
     const relationshipBookmarks=[...document.querySelectorAll('.chronicle-bookmark')] as HTMLButtonElement[];
     assert.equal(relationshipBookmarks.length,snapshot.players.length,'opening from another profile must not create a one-bookmark Chronicle');
+    const playerBookmarkColours=relationshipBookmarks.filter(button=>!button.classList.contains('bookmark-self')).map(button=>button.style.getPropertyValue('--bookmark-a'));
+    assert.ok(playerBookmarkColours.every(Boolean),'every relationship bookmark receives an explicit cloth colour');
+    assert.equal(new Set(playerBookmarkColours).size,playerBookmarkColours.length,'bookmark colours are unique within the current book');
     const ragnarBookmark=relationshipBookmarks.find(button=>button.title.includes('Ragnar'));
     assert.ok(ragnarBookmark);
     assert.equal(ragnarBookmark!.getAttribute('aria-pressed'),'true','the source profile chooses the initial bookmark');
     assert.match(document.querySelector('.chronicle-book-owner')?.textContent??'',/D’Karius.*Chronicle/);
     assert.match(document.querySelector('.chronicle-title')?.textContent??'',/D’Karius.*Ragnar/);
-    assert.match(document.querySelector('.chronicle-standing')?.textContent??'',/Rivalry is dormant/);
+    assert.equal(document.querySelector('.chronicle-standing'),null,'mechanical Present Standing is not rendered');
+    const epigraph=document.querySelector('.chronicle-epigraph')?.textContent??'';
+    assert.ok(epigraph.length>10);
+    assert.doesNotMatch(epigraph,/Rivalry|Hostility|Bond|Tension|Grudge|Feud|Fellowship|Comrades|Trusted Allies|Oathbound|Internecine Strife/);
     assert.ok(document.querySelector('.chronicle-manuscript'),'relationship history uses one manuscript reading column');
     assert.ok(document.querySelector('.chronicle-manuscript-spine'),'the reading column carries an adorned spine');
     const relationshipPage=document.querySelector('.chronicle-relationship-page');
@@ -61,6 +69,7 @@ test('Chronicle is one viewer-owned book and profile entry points select the mat
     assert.ok(entries.every(entry=>!entry.classList.contains('entry-left')&&!entry.classList.contains('entry-right')),'entries no longer zig-zag across the parchment');
     assert.equal(document.querySelectorAll('.chronicle-spine-marker').length,entries.length,'every written entry receives one deterministic manuscript marker');
     assert.ok(document.querySelector('.chronicle-spine-marker.marker-origin, .chronicle-spine-marker.marker-contest'));
+    assert.equal(document.querySelector('.chronicle-entry .eyebrow'),null,'entry classification rubrics stay internal rather than printing above the story');
     assert.match(document.querySelector('.chronicle-entries')?.textContent??'',/official duel/);
     assert.doesNotMatch(document.querySelector('.chronicle-entries')?.textContent??'',/became allies|successful raid|betrayed/i);
 
@@ -73,4 +82,45 @@ test('Chronicle is one viewer-owned book and profile entry points select the mat
     await act(async()=>root.unmount());
     dom.window.close();
   }
+});
+
+
+function relationshipTrack(stageId:string|null,state='ESTABLISHED'):RelationshipTrackSummary{
+  return {status:'READY',state,stageId,historicalPeakStageId:null};
+}
+
+function relationshipForStages(rivalry:string|null,hostility:string|null,bond:string|null,pairId:string):PlayerRelationshipSummary{
+  return {
+    pairId,
+    otherPlayer:{playerId:'other',steamName:'Other'},
+    relationshipEngineVersion:'AOF_RELATIONSHIP_ENGINE_V2',
+    relationshipRulesConfigured:true,
+    tracks:{
+      rivalry:relationshipTrack(rivalry),
+      hostility:relationshipTrack(hostility),
+      bond:relationshipTrack(bond),
+    },
+    chronicle:[],
+  };
+}
+
+test('Chronicle epigraphs cover every relationship depth and combination without exposing mechanics',()=>{
+  const rivalry=[null,'Friction','Contest','Rivalry','Nemesis'];
+  const hostility=[null,'Tension','Grudge','Feud','Blood Feud','Internecine Strife'];
+  const bond=[null,'Fellowship','Comrades','Trusted Allies','Oathbound'];
+  for(const r of rivalry)for(const h of hostility)for(const b of bond){
+    const line=relationshipEpigraph(relationshipForStages(r,h,b,'pair:'+String(r)+':'+String(h)+':'+String(b)));
+    assert.ok(line.length>=20&&line.length<=170,`epigraph length should stay manuscript-like for ${r}/${h}/${b}`);
+    assert.doesNotMatch(line,/Their record shows|The record shows|Present Standing/);
+    assert.doesNotMatch(line,/Rivalry|Hostility|Bond|Tension|Grudge|Blood Feud|Internecine Strife|Fellowship|Comrades|Trusted Allies|Oathbound/);
+  }
+
+  const legendary=relationshipEpigraph(relationshipForStages(null,'Internecine Strife',null,'legendary'));
+  assert.match(legendary,/ordinary|scale/i,'Internecine Strife receives a distinct legendary escalation voice without naming the stage');
+
+  const dormant=relationshipForStages(null,null,'Fellowship','dormant');
+  dormant.tracks.hostility={status:'READY',state:'DORMANT',stageId:null,historicalPeakStageId:'Blood Feud'};
+  const dormantLine=relationshipEpigraph(dormant);
+  assert.match(dormantLine,/older|quarrel|strain|ink/i);
+  assert.doesNotMatch(dormantLine,/Blood Feud|Hostility|Bond/);
 });
