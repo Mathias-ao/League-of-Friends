@@ -33,6 +33,9 @@ test('history callable authenticates, verifies sources, and returns mapped bound
  const before=[...records.entries()].map(([k,v])=>[k,JSON.stringify(v)]);
  const r=await getSocialHistory.run(request);assert.equal(r.status,'AVAILABLE');assert.equal(r.history.pairs[0].tracks.RIVALRY.currentStage,1);
  assert.equal(r.history.policy.productionScoringEnabled,false);assert.equal(r.coverage.readableAcceptedGames,1);
+ assert.equal(r.chronicle.modelVersion,'AOF_PLAYER_CHRONICLE_V1');assert.equal(r.chronicle.ownerPlayerId,'a');
+ assert.equal(r.chronicle.pages[0].counterpartPlayerId,'b');assert.equal(r.chronicle.pages[0].entries.length,1);
+ assert.match(r.chronicle.pages[0].entries[0].paragraphs[0],/official duel/);assert.equal(r.chronicle.policy.relationshipAndReputationStagesAreShadow,true);
  assert.deepEqual([...records.entries()].map(([k,v])=>[k,JSON.stringify(v)]),before);
 });
 test('artifact mismatch fails closed; a correction during download aborts coherent read',async()=>{
