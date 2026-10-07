@@ -129,7 +129,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async playerChronicle():Promise<PlayerChronicleResponse>{
     const result=await this.socialHistory();
     return {
-      success:true,status:result.status,names:result.names,coverage:result.coverage,
+      success:true,status:result.status,names:result.names,coverage:{completedBattles:result.coverage.completedBattles,readableAcceptedGames:result.coverage.readableAcceptedGames,excludedGames:result.coverage.excludedGames,opportunityCompleteness:result.coverage.opportunityCompleteness},
       chronicle:{
         modelVersion:result.chronicle.modelVersion,ownerPlayerId:result.chronicle.ownerPlayerId,status:result.chronicle.status,
         pages:result.chronicle.pages.map(page=>({
