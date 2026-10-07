@@ -39,10 +39,10 @@ test('history callable authenticates, verifies sources, and returns mapped bound
  assert.match(r.chronicle.pages[0].entries[0].paragraphs[0],/official duel/);assert.equal(r.chronicle.policy.relationshipAndReputationStagesAreShadow,true);
  assert.deepEqual([...records.entries()].map(([k,v])=>[k,JSON.stringify(v)]),before);
 });
-test('player Chronicle callable exposes only the viewer projection and coverage, not the shadow ledger',async()=>{
+test('player Chronicle callable is viewer-owned and exposes prose plus neutral coverage, not shadow internals',async()=>{
  reset();
- const r=await getPlayerChronicle.run(request);
- assert.equal(r.success,true);assert.equal(r.chronicle.ownerPlayerId,'a');
+ const r=await getPlayerChronicle.run({...request,data:{playerId:'b'}});
+ assert.equal(r.success,true);assert.equal(r.chronicle.ownerPlayerId,'a','client input cannot request another player book');
  assert.equal(r.chronicle.pages[0].counterpartPlayerId,'b');
  assert.equal(Object.prototype.hasOwnProperty.call(r,'history'),false);
  assert.equal(Object.prototype.hasOwnProperty.call(r,'excluded'),false);
@@ -50,6 +50,7 @@ test('player Chronicle callable exposes only the viewer projection and coverage,
  assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0],'exposure'),false);
  assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0].entries[0],'relationshipMarks'),false);
  assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0].entries[0],'sourceEventIds'),false);
+ assert.equal(Object.prototype.hasOwnProperty.call(r.coverage,'stageMeaning'),false);
  assert.equal(r.coverage.readableAcceptedGames,1);
 });
 test('artifact mismatch fails closed; a correction during download aborts coherent read',async()=>{
