@@ -44,7 +44,9 @@
 .chronicle-bookmark:hover{transform:translateY(3px);filter:drop-shadow(0 4px 3px rgba(27,15,9,.36)) brightness(1.07)}
 .chronicle-bookmark:focus-visible{outline:2px solid #dfc287;outline-offset:3px;filter:drop-shadow(0 4px 4px rgba(27,15,9,.42)) brightness(1.08)}
 .chronicle-bookmark.active{height:98px;transform:translateY(8px);filter:drop-shadow(0 5px 4px rgba(27,15,9,.42)) brightness(1.09)}
-.chronicle-bookmark.bookmark-self{--bookmark-a:#4a3927;--bookmark-b:#211a14;color:#f3dca6}.chronicle-bookmark.bookmark-self .bookmark-monogram{border-color:rgba(242,204,119,.72);color:#f0cf80}\n.chronicle-bookmark.bookmark-cloth-0{--bookmark-a:#7c302d;--bookmark-b:#4b1d1b}
+.chronicle-bookmark.bookmark-self{--bookmark-a:#4a3927;--bookmark-b:#211a14;color:#f3dca6}
+.chronicle-bookmark.bookmark-self .bookmark-monogram{border-color:rgba(242,204,119,.72);color:#f0cf80}
+.bookmark-monogram{border-color:rgba(242,204,119,.72);color:#f0cf80}\n.chronicle-bookmark.bookmark-cloth-0{--bookmark-a:#7c302d;--bookmark-b:#4b1d1b}
 .chronicle-bookmark.bookmark-cloth-1{--bookmark-a:#49604b;--bookmark-b:#2d4030}
 .chronicle-bookmark.bookmark-cloth-2{--bookmark-a:#40566d;--bookmark-b:#26384a}
 .chronicle-bookmark.bookmark-cloth-3{--bookmark-a:#86642f;--bookmark-b:#563e1d}
