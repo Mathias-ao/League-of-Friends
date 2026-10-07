@@ -1,7 +1,9 @@
+import {buildPriorNarrativeContext,writeBattleNarrative} from './playerChronicleNarrative.js';
+
 /** Deterministic player Chronicle projection from the source-qualified social shadow read model.
  * This is a read-only writer. It never awards points or upgrades shadow stages to official state.
  */
-export const PLAYER_CHRONICLE_VERSION = 'AOF_PLAYER_CHRONICLE_V1';
+export const PLAYER_CHRONICLE_VERSION = 'AOF_PLAYER_CHRONICLE_V2';
 
 const rows=v=>Array.isArray(v)?v:[];
 const rec=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:null;
@@ -172,51 +174,28 @@ function contributionMarks(history,battleId,ownerPlayerId,counterpartPlayerId){
   return {relationship,reputation};
 }
 
-function composeEntry(group,first,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId){
+function composeEntry(group,first,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId,context,names){
   const ordered=[...group.beats].sort(beatCompare);
-  const visible=ordered.filter(beat=>beat.kind!=='DECLARATION_KNOWLEDGE_INTERRUPTED');
-  const intro=firstMeetingSentence(group.firstExposure?.context??'UNKNOWN',ownerName,counterpartName);
-  const sentences=[];
-  if(first)sentences.push(intro);
-
-  const diplomacy=visible.filter(beat=>['DECLARATION_ESTABLISHED','RECIPROCAL_ALLY_DECLARATIONS','ALLY_DECLARATION_WITHDRAWN'].includes(beat.kind));
-  const substantive=visible.filter(beat=>!['DECLARATION_ESTABLISHED','RECIPROCAL_ALLY_DECLARATIONS','ALLY_DECLARATION_WITHDRAWN'].includes(beat.kind));
-
-  const chosenDiplomacy=diplomacy.length<=4?diplomacy:[diplomacy[0],diplomacy[1],diplomacy.at(-2),diplomacy.at(-1)];
-  for(const beat of chosenDiplomacy){
-    const sentence=beatSentence(beat);if(sentence&&!sentences.includes(sentence))sentences.push(sentence);
-  }
-  if(diplomacy.length>chosenDiplomacy.length)
-    sentences.push(`${diplomacy.length-chosenDiplomacy.length} further declared-stance changes were retained in the same Battle record.`);
-
-  const chosenSubstantive=substantive.slice(0,5);
-  for(const beat of chosenSubstantive){
-    const sentence=beatSentence(beat);if(sentence&&!sentences.includes(sentence))sentences.push(sentence);
-  }
-  if(substantive.length>chosenSubstantive.length)
-    sentences.push(`${substantive.length-chosenSubstantive.length} further qualified social beats remain attached to this Battle's evidence record.`);
-
-  if(!sentences.length)sentences.push(first?intro:`${ownerName} and ${counterpartName} were both present in another accepted recorded Battle; no stronger pair claim is made from co-presence alone.`);
-
-  const identity=storyIdentity(visible,first);
   const sourceBeatIds=unique(ordered.map(beat=>beat.id));
   const sourceEventIds=unique(ordered.flatMap(beat=>rows(beat.sourceEventIds)));
   const marks=contributionMarks(history,group.battleId,ownerPlayerId,counterpartPlayerId);
+  const narrative=writeBattleNarrative({group:{...group,beats:ordered},first,ownerName,counterpartName,context,names});
   return {
-    entryId:`${PLAYER_CHRONICLE_VERSION}:${ownerPlayerId}:${counterpartPlayerId}:${group.battleId}:${sourceBeatIds.join(',')||'exposure'}`,
+    entryId:PLAYER_CHRONICLE_VERSION+':'+ownerPlayerId+':'+counterpartPlayerId+':'+group.battleId+':'+(sourceBeatIds.join(',')||'exposure'),
     battleId:group.battleId,
     eventId:group.eventId,
     seasonId:group.seasonId,
     playedAtMs:group.playedAtMs,
-    rubric:identity.rubric,
-    title:identity.title,
-    paragraphs:[sentences.join(' ')],
+    rubric:narrative.rubric,
+    title:narrative.title,
+    paragraphs:narrative.paragraphs,
     sourceBeatIds,
     sourceEventIds,
     evidenceKinds:unique(ordered.map(beat=>beat.kind)),
     relationshipMarks:marks.relationship,
     reputationMarks:marks.reputation,
     exposureContext:group.firstExposure?.context??null,
+    narrativeContext:narrative.narrativeContext,
   };
 }
 
@@ -239,7 +218,10 @@ export function projectPlayerChronicle({ownerPlayerId,chapters=[],history=null,n
     return pageGroups.get(counterpartPlayerId);
   };
 
-  for(const chapter of rows(chapters).filter(ch=>ch?.accepted===true&&ch?.review?.status==='REVIEW_AVAILABLE').sort((a,b)=>a.order-b.order||String(a.gameIdentity).localeCompare(String(b.gameIdentity)))){
+  const activeChapters=rows(chapters).filter(ch=>ch?.accepted===true&&ch?.review?.status==='REVIEW_AVAILABLE')
+    .sort((a,b)=>a.order-b.order||String(a.gameIdentity).localeCompare(String(b.gameIdentity)));
+  const orderByGame=new Map(activeChapters.map(chapter=>[chapter.gameIdentity,chapter.order]));
+  for(const chapter of activeChapters){
     const participants=pairParticipants(chapter.review);
     for(const raw of rows(chapter.review.exposure)){
       const exposure=exposureForLeaguePair(raw,chapter,participants,ownerPlayerId);if(!exposure)continue;
@@ -267,8 +249,14 @@ export function projectPlayerChronicle({ownerPlayerId,chapters=[],history=null,n
     const page=ensurePage(counterpartPlayerId);
     const groups=[...page.groups.values()].sort((a,b)=>a.order-b.order||String(a.battleId).localeCompare(String(b.battleId)));
     const ownerName=names[ownerPlayerId]??ownerPlayerId,counterpartName=names[counterpartPlayerId]??counterpartPlayerId;
-    const entries=groups.map((group,index)=>composeEntry(group,index===0,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId))
-      .filter((entry,index)=>index===0||entry.sourceBeatIds.length>0||entry.relationshipMarks.length>0||entry.reputationMarks.length>0);
+    const entries=[],priorGroups=[];
+    for(let index=0;index<groups.length;index++){
+      const group=groups[index];
+      const context=buildPriorNarrativeContext({group,priorGroups,history,ownerPlayerId,counterpartPlayerId,orderByGame});
+      const entry=composeEntry(group,index===0,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId,context,names);
+      if(index===0||entry.sourceBeatIds.length>0||entry.relationshipMarks.length>0||entry.reputationMarks.length>0)entries.push(entry);
+      priorGroups.push(group);
+    }
     pages.push({
       pairId:pairKey(ownerPlayerId,counterpartPlayerId),
       counterpartPlayerId,
