@@ -84,12 +84,12 @@ export interface PlayerChronicleProjection {
   reputation:{sourceModelVersion:string;shadow:true;tracks:Record<string,unknown>}|null;reason?:string;
   policy?:{relationshipAndReputationStagesAreShadow?:boolean;proseUsesQualifiedSocialEvidence?:boolean;coPresenceCreatesOnlyFirstRecord?:boolean};
 }
-export interface SocialHistoryResponse {
+export interface PlayerChronicleResponse {
   success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleProjection;names:Record<string,string>;
   excluded:Array<{gameIdentity:string;reason:string}>;
   coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;stageMeaning:string;opportunityCompleteness:boolean};
-  history?:unknown;
 }
+export interface SocialHistoryResponse extends PlayerChronicleResponse {history?:unknown;}
 export interface EmperorsFavorPrintable {code:string;emperor:string;serialNumber:number;total:number;printLabel:string;}
 export interface EmperorsFavorBatch {batchId:string;batchName:string;count:number;favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
@@ -119,6 +119,7 @@ export interface LeagueRepository {
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;checkIn(eventId:string):Promise<void>;formEventMatches(eventId:string):Promise<void>;
   ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
   uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
+  playerChronicle?():Promise<PlayerChronicleResponse>;
   socialHistory?():Promise<SocialHistoryResponse>;
   event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;
   dispute(matchId:string,gameId:string,category:string,reason:string):Promise<void>;
