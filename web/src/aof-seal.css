@@ -1,0 +1,30 @@
+.aof-seal{
+  --aof-seal-size:96px;
+  display:inline-grid;
+  place-items:center;
+  width:var(--aof-seal-size);
+  height:var(--aof-seal-size);
+  flex:0 0 auto;
+  pointer-events:none;
+  user-select:none;
+}
+.aof-seal img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.aof-seal--ceremonial{opacity:.82}
+.aof-seal--quiet{opacity:.42}
+.aof-seal--faint{opacity:.18}
+.aof-seal--breathing{animation:aof-seal-breathe 3.2s ease-in-out infinite}
+@keyframes aof-seal-breathe{
+  0%,100%{opacity:.24;transform:scale(.985)}
+  50%{opacity:.52;transform:scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .aof-seal--breathing{animation:none}
+}
+@media(forced-colors:active){
+  .aof-seal{opacity:1}
+}
