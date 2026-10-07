@@ -213,4 +213,6 @@ The internal Chronicle projection retains a `narrativeContext` summary containin
 
 The authenticated player-facing Chronicle callable does not expose those internal counts. Players receive the finished history; review/debug surfaces retain the reason the writer was allowed to phrase it that way.
 
+The Chronicle prose model version and the stable entry identity are deliberately separate. A prose-only writer upgrade must not change historical entry IDs, otherwise old entries would be mistaken for new ink by the client. Existing Battle-derived entry identities therefore remain stable across the V1 → V2 narrative upgrade.
+
 The writer remains deterministic and has no runtime LLM/API dependency.
