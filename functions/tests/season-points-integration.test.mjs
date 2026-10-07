@@ -1,3 +1,4 @@
+import {getMatchDetail} from "../lib/queries/getMatchDetail.js";
 import {processPowerRatings} from "../lib/commands/processing/processPowerRatings.js";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -55,6 +56,8 @@ test("joint-to-solo correction reconciles victory, bounty, wins and Gold",async(
   await assert.rejects(process(),/completed/);
   const before=await getLeagueBootstrap.run(request({},"p1"));assert.ok(before.leaderboard.every(row=>row.leaguePoints===0));
   await adminResolveCanonicalResultDispute.run(request({requestId:"correct-result-1",matchId:"plan1-M1",gameId:"G1",disputeId:"dispute-result-1",resolution:"CORRECT",reason:"Correct winner",winnerPlayerId:"p1"}));
+  const pending=await getMatchDetail.run(request({matchId:"plan1-M1"},"p1"));
+  assert.equal(pending.match.scoringState,"PENDING");assert.deepEqual(pending.match.scoringBreakdown,[]);
   await process();assert.equal(standing(db,"p1"),12);assert.equal(standing(db,"p2"),4);
   assert.equal(db.get("seasons/s1/standings/p2").mainEventWins,0);assert.equal(db.get("players/p2").goldBalance,1);
   assert.equal((await process()).alreadyProcessed,true);

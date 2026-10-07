@@ -25,6 +25,7 @@ interface MatchDocument {
   seasonId?: string | null;
   scoringSnapshot?:{rules?:Record<string,unknown>};
   scoringState?:string;
+  scoringResultRevision?:number;
   scoringBreakdown?:unknown[];
   eventId?: string | null;
   challengeId?: string | null;
@@ -219,8 +220,9 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       context: match.context ?? {},
       scoringAct:match.scoringSnapshot?.rules?.act??null,
       scoringRules:match.scoringSnapshot?.rules??null,
-      scoringState:match.status==="DISPUTED" ? "DISPUTED":match.scoringState??null,
-      scoringBreakdown:match.status==="COMPLETED" ? match.scoringBreakdown??[]:[],
+      scoringState:match.status==="DISPUTED" ? "DISPUTED":
+        match.scoringSnapshot?.rules?.modelVersion==="AOF_SEASON_POINTS_V1" && match.scoringResultRevision!==match.canonicalResult?.revision ? "PENDING":match.scoringState??null,
+      scoringBreakdown:match.status==="COMPLETED" && match.scoringResultRevision===match.canonicalResult?.revision ? match.scoringBreakdown??[]:[],
       completedAt: iso(match.completedAt ?? match.firstCompletedAt),
       participants: participants.map((participant) => ({
         ...publicPlayer(participant.playerId, players.get(participant.playerId)),
