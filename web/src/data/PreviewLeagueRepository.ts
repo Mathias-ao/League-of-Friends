@@ -79,7 +79,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
         {
           entryId:'preview-chronicle-ragnar-duel',battleId:'sample-duel',eventId:null,seasonId:'S001',playedAtMs:Date.parse('2026-09-06T18:00:00Z'),
           rubric:'OFFICIAL DUEL',title:'First contest',
-          paragraphs:['The recorded history of D’Karius and Ragnar begins in a Battle where the teams were locked and they stood opposed. D’Karius and Ragnar completed an official duel; the accepted result qualified as reciprocal contest evidence.'],
+          paragraphs:['Their first shared page placed D’Karius and Ragnar on opposite sides of the field. They met in an official duel and carried it through to an accepted result.'],
           sourceBeatIds:['preview-duel-contest'],sourceEventIds:['preview-official-result'],evidenceKinds:['ACCEPTED_DUEL_CONTEST'],
           relationshipMarks:[{track:'RIVALRY',actorPlayerId:'sample-you',family:'ACCEPTED_DUEL_CONTEST',units:1,exception:null},{track:'RIVALRY',actorPlayerId:'sample-ragnar',family:'ACCEPTED_DUEL_CONTEST',units:1,exception:null}],
           reputationMarks:[],exposureContext:'OPPOSED'
@@ -89,13 +89,13 @@ export class PreviewLeagueRepository implements LeagueRepository {
         {
           entryId:'preview-chronicle-baguette-first',battleId:'preview-battle-1',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-10T18:00:00Z'),
           rubric:'FIRST RECORD',title:'First recorded meeting',
-          paragraphs:['The recorded history of D’Karius and Lord Baguette begins in a Battle where the teams were locked and they stood on the same side.'],
+          paragraphs:['Their first shared page found D’Karius and Lord Baguette beneath the same banner.'],
           sourceBeatIds:[],sourceEventIds:[],evidenceKinds:[],relationshipMarks:[],reputationMarks:[],exposureContext:'LOCKED_TEAMMATES'
         },
         {
           entryId:'preview-chronicle-baguette-support',battleId:'preview-battle-3',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-12T18:00:00Z'),
           rubric:'SUPPORT RECORDED',title:'A hand in the defence',
-          paragraphs:['D’Karius was recorded participating in a defensive episode involving Lord Baguette at 23:41. The record does not claim a rescue or determine the outcome.'],
+          paragraphs:['When the fighting gathered around Lord Baguette, D’Karius joined the defensive episode beside him. Whether it changed the outcome is not written here.'],
           sourceBeatIds:['preview-support-beat'],sourceEventIds:['preview-support-command'],evidenceKinds:['SUPPORT_PARTICIPATION'],
           relationshipMarks:[{track:'BOND',actorPlayerId:'sample-you',family:'PROTECTIVE_PARTICIPATION',units:1,exception:null}],
           reputationMarks:[],exposureContext:'LOCKED_TEAMMATES'
@@ -103,7 +103,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
         {
           entryId:'preview-chronicle-baguette-common-target',battleId:'preview-battle-8',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-17T18:00:00Z'),
           rubric:'COMMON TARGET',title:'A common foe',
-          paragraphs:['D’Karius and Lord Baguette were both recorded contributing against Ragnar in the same qualified engagement episode at 41:08. The record establishes shared participation, not intent or conspiracy.'],
+          paragraphs:['In the same engagement, D’Karius and Lord Baguette both took part against Ragnar. Whether by design or circumstance, the page does not say. It joined a cooperative pattern already taking shape between them.'],
           sourceBeatIds:['preview-shared-beat'],sourceEventIds:['preview-shared-a','preview-shared-b'],evidenceKinds:['SHARED_PARTICIPATION'],
           relationshipMarks:[{track:'BOND',actorPlayerId:'sample-you',family:'SHARED_PARTICIPATION',units:1,exception:null},{track:'BOND',actorPlayerId:'sample-baguette',family:'SHARED_PARTICIPATION',units:1,exception:null}],
           reputationMarks:[],exposureContext:'LOCKED_TEAMMATES'
@@ -113,14 +113,14 @@ export class PreviewLeagueRepository implements LeagueRepository {
         {
           entryId:'preview-chronicle-steve-first',battleId:'preview-battle-1',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-10T18:00:00Z'),
           rubric:'FIRST RECORD',title:'First recorded meeting',
-          paragraphs:['The recorded history of D’Karius and Steve begins in a Battle where the teams were locked and they stood opposed. No stronger pair claim is made from co-presence alone.'],
+          paragraphs:['Their first shared page placed D’Karius and Steve on opposite sides of the field. Nothing more was written between them that day.'],
           sourceBeatIds:[],sourceEventIds:[],evidenceKinds:[],relationshipMarks:[],reputationMarks:[],exposureContext:'OPPOSED'
         }
       ]);
     }
     return {
       success:true,status:'AVAILABLE',
-      chronicle:{modelVersion:'AOF_PLAYER_CHRONICLE_V1',ownerPlayerId:owner,status:'AVAILABLE',pages,
+      chronicle:{modelVersion:'AOF_PLAYER_CHRONICLE_V2',ownerPlayerId:owner,status:'AVAILABLE',pages,
         reputation:{sourceModelVersion:'AOF_SOCIAL_HISTORY_V1',shadow:true,tracks:{}},
         policy:{relationshipAndReputationStagesAreShadow:true,proseUsesQualifiedSocialEvidence:true,coPresenceCreatesOnlyFirstRecord:true}},
       names,excluded:[],coverage:{completedBattles:this.state.matches.filter(match=>match.status==='COMPLETED').length,readableAcceptedGames:pages.reduce((sum,p)=>sum+p.entries.length,0),excludedGames:0,stageMeaning:'illustrative_shadow_preview',opportunityCompleteness:false}
