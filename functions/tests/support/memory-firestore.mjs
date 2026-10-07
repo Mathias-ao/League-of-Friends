@@ -27,5 +27,11 @@ export function memoryFirestore(initial=[]) {
       update:(reference,data)=>{assert.equal(staged.has(reference.path),true,"update requires an existing document");wrote=true;staged.set(reference.path,{...staged.get(reference.path),...data});}};
     const result=await callback(tx);records.clear();for(const entry of staged)records.set(...entry);return result;
   }});
+  Object.defineProperty(db,"bulkWriter",{configurable:true,value:()=>({
+    delete:reference=>records.delete(reference.path),
+    set:(reference,data)=>records.set(reference.path,data),
+    update:(reference,data)=>records.set(reference.path,{...records.get(reference.path),...data}),
+    close:async()=>{},
+  })});
   return records;
 }

@@ -1,3 +1,4 @@
+import {processPowerRatings} from "../lib/commands/processing/processPowerRatings.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {memoryFirestore} from "./support/memory-firestore.mjs";
@@ -36,7 +37,7 @@ test("approved coalition pins Emperor and slots; accepted result scores once",as
   assert.equal(result.leaguePointDelta,30);assert.equal(standing(db,"p1"),9);assert.equal(standing(db,"p2"),9);assert.equal(standing(db,"p5"),4);
   assert.equal(db.get("matches/plan1-M1").scoringSnapshot.rules.emperorPlayerId,"p5");
   assert.equal(db.get("events/e1/scoringSlots/MAIN_p1").matchId,"plan1-M1");
-  assert.ok(!db.get("processingJobs/MATCH_RESULT_plan1-M1_R1").pendingSteps.includes("POWER_RATING"));
+  assert.ok(db.get("processingJobs/MATCH_RESULT_plan1-M1_R1").pendingSteps.includes("POWER_RATING"));
   assert.equal((await process()).alreadyProcessed,true);assert.equal(standing(db,"p1"),9);
   assert.equal(db.get("seasons/s1/standings/p1").mainEventWins,1);assert.equal(db.get("players/p1").goldBalance,3);
 });
@@ -114,4 +115,26 @@ test("source triggers reconcile qualified placements and invalidate them safely"
   db.set("matches/plan1-M1/games/G1/replaySources/source-a",{...saved,qualifiedFFAPlacements:null});
   await reconcileSeasonPointsOnPlacementSource.run({id:"placement-event",params:{matchId:"plan1-M1",gameId:"G1",sourceId:"source-a"},data:{before:{data:()=>saved},after:{data:()=>({...saved,qualifiedFFAPlacements:null})}}});
   assert.equal(standing(db,"p2"),4);
+});
+
+test("shared wins are unrated; solo diplomatic wins retain the existing rating calculation",async()=>{
+  const db=fixture();await accept();
+  const shared=await processPowerRatings({matchId:"plan1-M1",requestId:"system-rating"},system);
+  assert.equal(shared.ratedMatches,0);
+  assert.equal(db.get("matches/plan1-M1").powerRatingParticipation,"UNRATED_COALITION");
+  assert.equal(db.get("players/p1").powerRatingGames,undefined);
+  await disputeCanonicalGameResult.run(request({requestId:"dispute-rating-1",matchId:"plan1-M1",gameId:"G1",category:"WRONG_RESULT",reason:"Solo win"},"p2"));
+  await adminResolveCanonicalResultDispute.run(request({requestId:"correct-rating-1",matchId:"plan1-M1",gameId:"G1",disputeId:"dispute-rating-1",resolution:"CORRECT",reason:"Solo win",winnerPlayerId:"p1"}));
+  const solo=await processPowerRatings({matchId:"plan1-M1",requestId:"system-rating"},system);
+  assert.equal(solo.ratedMatches,1);assert.equal(db.get("players/p1").powerRatingGames,1);
+});
+test("correcting a rated solo win to a coalition removes obsolete rating history",async()=>{
+  const db=fixture();await accept(["p1"]);
+  await processPowerRatings({matchId:"plan1-M1",requestId:"system-rating"},system);
+  assert.equal(db.get("players/p1").powerRatingGames,1);
+  await disputeCanonicalGameResult.run(request({requestId:"dispute-rating-1",matchId:"plan1-M1",gameId:"G1",category:"WRONG_RESULT",reason:"Shared win"},"p2"));
+  await adminResolveCanonicalResultDispute.run(request({requestId:"correct-rating-1",matchId:"plan1-M1",gameId:"G1",disputeId:"dispute-rating-1",resolution:"CORRECT",reason:"Shared win",winnerPlayerIds:["p1","p2"]}));
+  await processPowerRatings({matchId:"plan1-M1",requestId:"system-rating"},system);
+  assert.equal(db.get("players/p1").powerRatingGames,0);assert.equal(db.get("players/p1").currentPowerRating,null);
+  assert.equal(db.has("players/p1/ratingHistory/plan1-M1"),false);
 });

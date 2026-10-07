@@ -2,7 +2,7 @@
 
 ## Season leaderboard policy — 2026-10-07
 
-[Season leaderboard points V1](../design/season-leaderboard-points-v1.md) implements the agreed 4/+6 main and 1/+2 warm-up rules, shared diplomatic FFA victory pool, Emperor bounty, capped designated scoring slots, correction reconciliation and season tie rules. Nondiplomatic FFA placement scoring has a source-bound consumer and visible pending state; the replay placement qualifier remains a launch prerequisite. Historical profiles are preserved. Diplomatic FFA is unrated pending a coalition rating policy. This is feature-branch work, not deployment or automatic outcome qualification.
+[Season leaderboard points V1](../design/season-leaderboard-points-v1.md) implements the agreed 4/+6 main and 1/+2 warm-up rules, shared diplomatic FFA victory pool, Emperor bounty, capped designated scoring slots, correction reconciliation and season tie rules. Nondiplomatic FFA placement scoring has a source-bound consumer and visible pending state; the replay placement qualifier remains a launch prerequisite. Historical profiles are preserved. Shared FFA victories are unrated pending a coalition rating policy; solo FFA rating calculations remain unchanged. This is feature-branch work, not deployment or automatic outcome qualification.
 
 ## Social incident interpreter — 6 October 2026
 

@@ -178,7 +178,7 @@ export async function processPowerRatings(
     .filter(({ data }) => (
       data.context?.affectsPowerRating === true &&
       !data.activeResultDisputeId &&
-      data.canonicalResult
+      data.canonicalResult && data.canonicalResult.type!=="COALITION_WIN"
     ));
 
   const ratingMatches: PowerRatingMatchInput[] = await Promise.all(
@@ -198,7 +198,11 @@ export async function processPowerRatings(
     }),
   );
 
-  if (!ratingMatches.some((match) => match.matchId === matchId)) {
+  // Shared victories have no approved skill-rating model, but corrections must
+  // still rebuild the eligible history to remove a formerly rated solo result.
+  const unratedCoalition=triggerMatch.format==="FFA" && triggerMatch.context?.affectsPowerRating===true &&
+    triggerMatch.canonicalResult.type==="COALITION_WIN";
+  if (!ratingMatches.some((match) => match.matchId === matchId) && !unratedCoalition) {
     throw new HttpsError("failed-precondition", "The triggering Match is not eligible to affect Power Rating.");
   }
 
@@ -212,7 +216,10 @@ export async function processPowerRatings(
     );
   }
 
-  const playerIds = [...new Set(ratingMatches.flatMap((match) => match.participants.map((participant) => participant.playerId)))];
+  const playerIds=[...new Set([
+    ...ratingMatches.flatMap(match=>match.participants.map(participant=>participant.playerId)),
+    ...(unratedCoalition ? triggerMatch.participants?.map(participant=>participant.playerId)??[] : []),
+  ])];
   const playerRefs = playerIds.map((playerId) => db.collection(collections.players).doc(playerId));
   const playerSnapshots = await Promise.all(playerRefs.map((ref) => ref.get()));
   const missingPlayer = playerSnapshots.find((snapshot) => !snapshot.exists);
@@ -265,6 +272,20 @@ export async function processPowerRatings(
       powerRatingUpdatedAt: rebuildAt,
       updatedAt: rebuildAt,
     });
+  }
+
+  // A solo-to-coalition correction may remove a player's last rated Match.
+  for(let index=0;index<playerIds.length;index++) {
+    const playerId=playerIds[index];
+    if(!rebuilt.projections.some(projection=>projection.playerId===playerId) &&
+      (existingHistory[index].docs.length>0 || Number(playerSnapshots[index].data()?.powerRatingGames??0)>0)) {
+      writer.update(playerRefs[index],{
+        currentPowerRating:null,powerRatingGames:0,provisionalRating:true,
+        powerRatingAlgorithmVersion:POWER_RATING_ENGINE_VERSION,
+        powerRatingProfileId:profile.profileId,powerRatingProfileVersion:profile.profileVersion,
+        powerRatingUpdatedAt:rebuildAt,updatedAt:rebuildAt,
+      });
+    }
   }
 
   for (const ratingMatch of ratingMatches) {
@@ -334,6 +355,7 @@ export async function processPowerRatings(
     transaction.update(triggerMatchRef, {
       processingState: jobCompleted ? "COMPLETE" : "PENDING",
       powerRatingProcessedRevision: triggerRevision,
+      powerRatingParticipation:unratedCoalition ? "UNRATED_COALITION":"RATED",
       powerRatingAlgorithmVersion: POWER_RATING_ENGINE_VERSION,
       powerRatingProfileId: profile.profileId,
       powerRatingProfileVersion: profile.profileVersion,

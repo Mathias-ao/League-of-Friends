@@ -171,7 +171,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
           affectsGold: true,
           affectsSeasonStats: true,
           affectsLifetimeStats: true,
-          affectsPowerRating:!(proposedMatch.format==="FFA"&&gameConfig.diplomacyEnabled===true),
+          affectsPowerRating:true,
         },
         format: proposedMatch.format,
         teamSizes: proposedMatch.teamSizes ?? null,

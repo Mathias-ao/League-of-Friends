@@ -37,7 +37,7 @@ submitGameResult and correction resolution accept winnerPlayerIds for FFA. One I
 
 A member of a winning coalition cannot confirm another winning member's claim. A nonwinner can independently confirm it; disputed official outcomes retain the existing administrator resolution route. Placement order is not a result-submission field.
 
-Existing competition statistics and official-outcome read models consume all accepted winners. Diplomatic FFA is unrated under this profile, including solo victories: the existing rating model supports one FFA winner and has no approved coalition rating policy. Its result job omits POWER_RATING. Team and nondiplomatic solo FFA rating calculations are unchanged.
+Existing competition statistics and official-outcome read models consume all accepted winners. Shared FFA victories are unrated: the existing rating model supports one FFA winner and has no approved coalition rating policy. Solo diplomatic FFA keeps the existing rating calculation. The rating processor rebuilds eligible history for corrections in either direction; changing a rated solo result into a coalition removes its obsolete rating history and resets players who have no other rated Matches. Team and solo FFA rating formulas are unchanged.
 
 ## Verified nondiplomatic FFA placements
 
@@ -64,3 +64,26 @@ Points remain full precision in storage. Presentation rounds to two decimals for
 Backend contract and callable integration tests cover solo/shared wins, Emperor eligibility, podium thresholds, source/result/roster mismatches, verified ties, pending placement states, snapshot compatibility, warm-up caps, correction reconciliation, source reversals/restoration, duplicate processing, official coalition compatibility and tied rankings. Web tests cover fractional point presentation.
 
 No deployment or migration of live standings is part of publishing this feature branch.
+
+## Operator payloads
+
+Create an Event with the existing adminCreateEvent payload. V1 scoring is pinned automatically. Set gameConfig.diplomacyEnabled explicitly for FFA, and supply placementPolicy as ELIMINATION_ORDER or OBJECTIVE_RANK for nondiplomatic FFA. The latter requires a separately qualified objective ranking method.
+
+After publishing the Event, create warm-ups through adminCreateEventWarmups:
+
+~~~json
+{
+  "requestId": "unique-warmup-request-id",
+  "eventId": "EVENT_ID",
+  "pairs": [["PLAYER_A", "PLAYER_B"], ["PLAYER_C", "PLAYER_D"]],
+  "gameConfig": {
+    "maps": {"pool": ["Arabia"], "selectionMode": "ADMIN"},
+    "civilizations": {"mode": "UNRESTRICTED", "allowed": [], "banned": [], "customRuleCode": null},
+    "victory": {"conquest": true, "wonder": false, "relic": false, "customRuleCode": null},
+    "diplomacyEnabled": false,
+    "additionalSettings": {}
+  }
+}
+~~~
+
+Joint official FFA result submissions use the existing submitGameResult callable with matchId, gameId and winnerPlayerIds. The existing independent confirmation/dispute workflow applies. There is no placement-entry form or arbitrary award endpoint.
