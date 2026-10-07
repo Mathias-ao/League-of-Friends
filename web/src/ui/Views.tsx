@@ -4,6 +4,7 @@ import {LeagueEvent,LeagueService,RelationshipPolicy,currentLeagueEvent,formatNa
 import {plannedEvents,lombardia} from '../data/content';
 import {civilizationById,civilizationName} from '../data/civilizations';
 import {Avatar,DateLabel,Empty,Roster,Sigil} from './Primitives';
+import {AofSeal} from './AofSeal';
 import type {ViewProps} from './App';
 
 export function SeasonView(props:ViewProps&{onRules:()=>void}){
@@ -44,7 +45,7 @@ export function BattlesView({snapshot,openMatch}:ViewProps){
   const [query,setQuery]=useState(''),[filter,setFilter]=useState('all');
   const matches=snapshot.matches.filter(m=>(filter==='all'||(filter==='mine'?m.participants.some(p=>p.playerId===snapshot.viewer?.playerId):filter==='completed'?m.status==='COMPLETED':['READY','ACTIVE','AWAITING_CONFIRMATION'].includes(m.status)))&&(m.matchId+' '+m.format+' '+m.participants.map(p=>p.steamName).join(' ')).toLowerCase().includes(query.toLowerCase())).sort((a,b)=>(a.completedAt??'9999').localeCompare(b.completedAt??'9999'));
   return <section className="section"><div className="section-heading"><div><span className="eyebrow">THE BATTLE ARCHIVE</span><h1>Every encounter leaves a mark</h1></div></div><div className="filter-bar"><label className="search"><Search size={18}/><input aria-label="Search battles" placeholder="Search player or battle…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Filter battles" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All battles</option><option value="mine">My battles</option><option value="upcoming">Upcoming & underway</option><option value="completed">Completed</option></select></div><div className="panel">
-    {!matches.length?<Empty title={query||filter!=='all'?'No matching battles':'The battlefield is quiet'} icon="duel">{query||filter!=='all'?'Try another player or change the filter.':'Your approved warm-up and main-event matches will appear here after check-in and match-plan approval.'}</Empty>:matches.map(m=><button className="battle-row" key={m.matchId} onClick={()=>openMatch(m.matchId)}><Sigil kind={m.format==='ONE_V_ONE'?'duel':'team'}/><span><span className="eyebrow">{formatName(m.format)} · {m.status.replaceAll('_',' ')}</span><strong>{m.participants.map(p=>p.steamName).join(' · ')}</strong><small>{m.matchId}{m.completedAt&&<> · <DateLabel value={m.completedAt}/></>}</small></span><ArrowRight size={18}/></button>)}
+    {!matches.length?(query||filter!=='all'?<Empty title="No matching battles" icon="duel">Try another player or change the filter.</Empty>:<div className="empty aof-record-empty"><AofSeal variant="simple" tone="faint" size={118}/><h3>The battlefield is quiet</h3><p>Your approved warm-up and main-event matches will appear here after check-in and match-plan approval.</p></div>):matches.map(m=><button className="battle-row" key={m.matchId} onClick={()=>openMatch(m.matchId)}><Sigil kind={m.format==='ONE_V_ONE'?'duel':'team'}/><span><span className="eyebrow">{formatName(m.format)} · {m.status.replaceAll('_',' ')}</span><strong>{m.participants.map(p=>p.steamName).join(' · ')}</strong><small>{m.matchId}{m.completedAt&&<> · <DateLabel value={m.completedAt}/></>}</small></span><ArrowRight size={18}/></button>)}
   </div></section>;
 }
 export function PlayersView({snapshot,openPlayer}:ViewProps){
@@ -228,12 +229,12 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
     finally{setProcessing(false);}
   };
   return <section className={'replay-conclusion '+(ready?'ready':'')}>
-    <div className="replay-conclusion-heading"><Upload size={24}/><div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
+    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
     {!ready&&data.viewer.isParticipant&&<div className="replay-upload-form">
       <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
       {file&&<div className="replay-file-selected"><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB</span></div>}
       <button className="primary" disabled={!file||processing} onClick={()=>void analyze()}>{processing?'Analyzing battle…':'Analyze battle'}</button>
-      {processing&&<p className="muted">Reading recording · building canonical evidence · calculating statistics…</p>}
+      {processing&&<div className="replay-processing" role="status"><AofSeal variant="simple" tone="quiet" size={58} animate/><p>Reading recording · building canonical evidence · calculating statistics…</p></div>}
     </div>}
     {ready&&<button className="primary" onClick={()=>document.getElementById('battle-statistics')?.scrollIntoView({behavior:'smooth'})}>View Battle statistics<ArrowRight size={16}/></button>}
     {error&&<div className="alert" role="alert">{error}</div>}
