@@ -5,6 +5,7 @@ process.env.GCLOUD_PROJECT='social-query-test';
 const {db}=await import('../lib/config/firebase.js');
 const {getStorage}=await import('firebase-admin/storage');
 const {getSocialHistory}=await import('../lib/queries/getSocialHistory.js');
+const {getPlayerChronicle}=await import('../lib/queries/getPlayerChronicle.js');
 const records=new Map();let bytes,downloadHook;
 const reference=(path,collection=false)=>({path,id:path.split('/').at(-1),doc:id=>reference(path+'/'+id),collection:id=>reference(path+'/'+id,true),
  where:()=>reference(path,true),limit:()=>reference(path,true),get:async()=>collection?query(path):snapshot(path)});
@@ -37,6 +38,14 @@ test('history callable authenticates, verifies sources, and returns mapped bound
  assert.equal(r.chronicle.pages[0].counterpartPlayerId,'b');assert.equal(r.chronicle.pages[0].entries.length,1);
  assert.match(r.chronicle.pages[0].entries[0].paragraphs[0],/official duel/);assert.equal(r.chronicle.policy.relationshipAndReputationStagesAreShadow,true);
  assert.deepEqual([...records.entries()].map(([k,v])=>[k,JSON.stringify(v)]),before);
+});
+test('player Chronicle callable exposes only the viewer projection and coverage, not the shadow ledger',async()=>{
+ reset();
+ const r=await getPlayerChronicle.run(request);
+ assert.equal(r.success,true);assert.equal(r.chronicle.ownerPlayerId,'a');
+ assert.equal(r.chronicle.pages[0].counterpartPlayerId,'b');
+ assert.equal(Object.prototype.hasOwnProperty.call(r,'history'),false);
+ assert.equal(r.coverage.readableAcceptedGames,1);
 });
 test('artifact mismatch fails closed; a correction during download aborts coherent read',async()=>{
  reset();bytes=Buffer.from('{}');await assert.rejects(getSocialHistory.run(request),e=>e.code==='data-loss');
