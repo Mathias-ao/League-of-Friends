@@ -51,6 +51,62 @@ function officialStanding(relationship:PlayerRelationshipSummary|null){
   return clauses.length?clauses.join('. ')+'.':'No official relationship standing has yet been established.';
 }
 
+type ChronicleFlavor='neutral'|'rivalry'|'hostility'|'bond'|'mixed';
+type ChronicleMarker='origin'|'contest'|'support'|'common'|'diplomacy'|'fracture'|'crown'|'record';
+
+function relationshipFlavor(relationship:PlayerRelationshipSummary|null):ChronicleFlavor{
+  if(!relationship?.relationshipRulesConfigured)return 'neutral';
+  const present:(Exclude<ChronicleFlavor,'neutral'|'mixed'>)[]=[];
+  if(relationship.tracks.rivalry.stageId||relationship.tracks.rivalry.historicalPeakStageId)present.push('rivalry');
+  if(relationship.tracks.hostility.stageId||relationship.tracks.hostility.historicalPeakStageId)present.push('hostility');
+  if(relationship.tracks.bond.stageId||relationship.tracks.bond.historicalPeakStageId)present.push('bond');
+  return present.length===1?present[0]:present.length>1?'mixed':'neutral';
+}
+
+function markerForEntry(entry:PlayerChronicleBookEntry):ChronicleMarker{
+  const rubric=entry.rubric.toUpperCase();
+  if(rubric.includes('FIRST'))return 'origin';
+  if(rubric.includes('DUEL')||rubric.includes('CONTEST'))return 'contest';
+  if(rubric.includes('SUPPORT')||rubric.includes('AID'))return 'support';
+  if(rubric.includes('COMMON'))return 'common';
+  if(rubric.includes('DIPLOMACY')||rubric.includes('DECLARATION'))return 'diplomacy';
+  if(rubric.includes('WITHDRAWAL')||rubric.includes('OFFENSE')||rubric.includes('FRACTURE'))return 'fracture';
+  if(rubric.includes('KING'))return 'crown';
+  return 'record';
+}
+
+function ManuscriptSpine(){
+  return <div className="chronicle-manuscript-spine" aria-hidden="true">
+    <span className="chronicle-spine-cap cap-top"/>
+    <svg className="chronicle-spine-pattern" width="58" height="100%" focusable="false">
+      <defs>
+        <pattern id="chronicle-spine-weave" width="58" height="76" patternUnits="userSpaceOnUse">
+          <path className="spine-ink-line" d="M29 -8 C11 6 13 23 29 34 C45 45 47 62 29 84"/>
+          <path className="spine-accent-line" d="M29 -8 C47 6 45 23 29 34 C13 45 11 62 29 84"/>
+          <path className="spine-fine-line" d="M29 4 C22 11 22 19 29 26 C36 19 36 11 29 4 Z M29 42 C22 49 22 57 29 64 C36 57 36 49 29 42 Z"/>
+          <circle className="spine-knot" cx="29" cy="34" r="3.2"/>
+          <path className="spine-leaf" d="M20 16 C12 13 8 17 9 23 C14 22 19 20 23 17 M38 54 C46 51 50 55 49 61 C44 60 39 58 35 55"/>
+        </pattern>
+      </defs>
+      <rect width="58" height="100%" fill="url(#chronicle-spine-weave)"/>
+    </svg>
+    <span className="chronicle-spine-cap cap-bottom"/>
+  </div>;
+}
+
+function ChronicleSpineMarker({kind}:{kind:ChronicleMarker}){
+  return <span className={`chronicle-spine-marker marker-${kind}`} aria-hidden="true">
+    {kind==='contest'?<svg viewBox="0 0 32 32"><path d="M8 6l17 18M24 6L7 24M6 5l4 1-3 3zM26 5l-4 1 3 3zM5 26l5-1-4-4zM27 26l-5-1 4-4z"/></svg>
+      :kind==='support'?<svg viewBox="0 0 32 32"><path d="M8 16c4-7 12-7 16 0-4 7-12 7-16 0zM12 16c2 3 6 3 8 0-2-3-6-3-8 0z"/></svg>
+      :kind==='common'?<svg viewBox="0 0 32 32"><path d="M7 22l9-15 9 15H7zm5-2l4-7 4 7h-8z"/></svg>
+      :kind==='diplomacy'?<svg viewBox="0 0 32 32"><path d="M10 26V6m1 2h13l-4 5 4 5H11"/></svg>
+      :kind==='fracture'?<svg viewBox="0 0 32 32"><path d="M9 6l6 8-4 4 12 8M23 6l-6 8 4 4-12 8"/></svg>
+      :kind==='crown'?<svg viewBox="0 0 32 32"><path d="M7 11l6 5 3-9 3 9 6-5-2 13H9L7 11zm3 16h12"/></svg>
+      :kind==='origin'?<svg viewBox="0 0 32 32"><path d="M16 5l3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8z"/></svg>
+      :<svg viewBox="0 0 32 32"><path d="M16 7l6 9-6 9-6-9 6-9z"/></svg>}
+  </span>;
+}
+
 function battleLabel(entry:PlayerChronicleBookEntry,snapshot:LeagueSnapshot){
   const event=entry.eventId?snapshot.events.find(candidate=>candidate.eventId===entry.eventId):null;
   if(event?.title)return event.title;
@@ -100,7 +156,8 @@ function RelationshipPage({owner,counterpart,page,official,snapshot,partial,fres
   snapshot:LeagueSnapshot;partial:boolean;freshEntryIds:Set<string>;
 }){
   const entries=page?.entries??[];
-  return <section className="chronicle-relationship-page" aria-label={`Chronicle with ${counterpart.steamName}`}>
+  const flavor=relationshipFlavor(official);
+  return <section className={`chronicle-relationship-page flavor-${flavor}`} aria-label={`Chronicle with ${counterpart.steamName}`}>
     <header className="chronicle-title">
       <span className="eyebrow">RELATIONSHIP CHRONICLE</span>
       <h2>{owner.steamName} <span>&amp;</span> {counterpart.steamName}</h2>
@@ -110,14 +167,18 @@ function RelationshipPage({owner,counterpart,page,official,snapshot,partial,fres
       <span className="eyebrow">PRESENT STANDING</span>
       <p>{officialStanding(official)}</p>
     </aside>
-    {entries.length?<ol className="chronicle-entries">{entries.map((entry,index)=><li className={`chronicle-entry ${index%2===0?'entry-left':'entry-right'}${freshEntryIds.has(entry.entryId)?' is-new':''}`} key={entry.entryId}>
-      <article className="chronicle-entry-card">
-        <span className="eyebrow">{entry.rubric}</span>
-        <h4>{entry.title}</h4>
-        {entry.paragraphs.map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph}</p>)}
-        <footer className="chronicle-entry-signature"><span>{battleLabel(entry,snapshot)}</span><time>{compactDate(entry.playedAtMs)}</time></footer>
-      </article>
-    </li>)}</ol>:<div className="chronicle-empty-leaf"><BookOpen size={28}/><h3>This leaf remains unwritten.</h3><p>No qualified social event has yet earned an entry between {owner.steamName} and {counterpart.steamName}. The bookmark remains because every league relationship has a place in the book.</p></div>}
+    {entries.length?<div className="chronicle-manuscript">
+      <ManuscriptSpine/>
+      <ol className="chronicle-entries">{entries.map((entry,index)=><li className={`chronicle-entry${freshEntryIds.has(entry.entryId)?' is-new':''}`} key={entry.entryId}>
+        <ChronicleSpineMarker kind={markerForEntry(entry)}/>
+        <article className="chronicle-entry-card">
+          <span className="eyebrow">{entry.rubric}</span>
+          <h4>{entry.title}</h4>
+          {entry.paragraphs.map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph}</p>)}
+          <footer className="chronicle-entry-signature"><span>{battleLabel(entry,snapshot)}</span><time>{compactDate(entry.playedAtMs)}</time></footer>
+        </article>
+      </li>)}</ol>
+    </div>:<div className="chronicle-empty-leaf"><BookOpen size={28}/><h3>This leaf remains unwritten.</h3><p>No qualified social event has yet earned an entry between {owner.steamName} and {counterpart.steamName}. The bookmark remains because every league relationship has a place in the book.</p></div>}
     {partial&&<footer className="chronicle-coverage-note">Some accepted Battles could not be read into the current evidence ledger. This Chronicle does not interpret those gaps as silence or non-interaction.</footer>}
   </section>;
 }
