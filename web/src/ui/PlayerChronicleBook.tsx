@@ -33,8 +33,8 @@ function clothIndex(playerId:string){
 function trackSentence(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},label:string){
   if(track.status!=='READY')return null;
   if(track.stageId){
-    if(track.state==='DORMANT')return `${label} is dormant at ${track.stageId}`;
-    return `${label} stands at ${track.stageId}`;
+    if(track.state==='DORMANT')return track.stageId===label?`${label} is dormant`:`${label} is dormant at ${track.stageId}`;
+    return track.stageId===label?`${label} is established`:`${label} stands at ${track.stageId}`;
   }
   if(track.historicalPeakStageId)return `${label} is dormant; its recorded peak was ${track.historicalPeakStageId}`;
   return `${label} remains unestablished`;
