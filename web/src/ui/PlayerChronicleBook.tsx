@@ -148,6 +148,49 @@ function hostilityBondEpigraph(h:number,b:number,seed:string){
   return pickLine(lines[depthBucket(Math.max(h,b))],seed);
 }
 
+export function relationshipEpigraph(relationship:PlayerRelationshipSummary|null){
+  if(!relationship?.relationshipRulesConfigured)return 'Little has yet been settled between them.';
+  const r=relationshipDepth(relationship.tracks.rivalry,'rivalry');
+  const h=relationshipDepth(relationship.tracks.hostility,'hostility');
+  const b=relationshipDepth(relationship.tracks.bond,'bond');
+  const seed=relationship.pairId+'|r'+r.rank+(r.dormant?'d':'a')+'|h'+h.rank+(h.dormant?'d':'a')+'|b'+b.rank+(b.dormant?'d':'a');
+
+  const dormant=dormantEpigraph(r,h,b,seed);
+  if(dormant)return dormant;
+
+  const activeR=r.rank>0&&!r.dormant,activeH=h.rank>0&&!h.dormant,activeB=b.rank>0&&!b.dormant;
+  const count=Number(activeR)+Number(activeH)+Number(activeB);
+  if(count===0)return pickLine(['Little has yet been settled between them.','The page between them is still mostly unwritten.','Too little has passed between them for the ink to choose a shape.'],seed);
+
+  if(activeH&&h.rank>=5&&activeR&&activeB){
+    return pickLine(['Whatever has bound or tested them now stands beneath a quarrel beyond the ordinary scale.','Bond, contest and grievance remain—but the quarrel has passed beyond the book’s ordinary measure.'],seed);
+  }
+
+  if(count===1){
+    if(activeR)return pickLine(RIVALRY_LINES[Math.min(3,r.rank-1)],seed);
+    if(activeH)return pickLine(HOSTILITY_LINES[Math.min(4,h.rank-1)],seed);
+    return pickLine(BOND_LINES[Math.min(3,b.rank-1)],seed);
+  }
+
+  if(count===2){
+    if(activeR&&activeB)return rivalryBondEpigraph(r.rank,b.rank,seed);
+    if(activeR&&activeH)return rivalryHostilityEpigraph(r.rank,h.rank,seed);
+    return hostilityBondEpigraph(h.rank,b.rank,seed);
+  }
+
+  const highest=Math.max(r.rank,h.rank,b.rank);
+  if(r.rank>=Math.max(h.rank,b.rank)+2)return pickLine(['Whatever else binds or divides them, the contest still sets the rhythm.','The contest remains the strongest current running through everything else between them.'],seed);
+  if(h.rank>=Math.max(r.rank,b.rank)+2)return pickLine(['Cooperation and contest remain, but the quarrel now casts the longest shadow.','What binds and tests them remains visible, though grievance carries the greater weight.'],seed);
+  if(b.rank>=Math.max(r.rank,h.rank)+2)return pickLine(['Contest and strain remain, yet what binds them still carries the greater weight.','Whatever tests or strains them, what binds them remains the strongest part of the story.'],seed);
+  const lines=[
+    ['Nothing between them has stayed entirely simple.','Already, more than one kind of history is taking shape between them.'],
+    ['They have stood together, crossed wills, and carried both forward.','Shared cause and sharp contest have both found room on the same page.'],
+    ['Shared cause, contest and old strain have all earned a place on the page.','What binds, tests and strains them now belongs to one continuous history.'],
+    ['No single word now fits what has grown between them.','Too many different histories now meet whenever they do.'],
+  ] as const;
+  return pickLine(lines[depthBucket(highest)],seed);
+}
+
 type ChronicleFlavor='neutral'|'rivalry'|'hostility'|'bond'|'mixed';
 type ChronicleMarker='origin'|'contest'|'support'|'common'|'diplomacy'|'fracture'|'crown'|'record';
 
