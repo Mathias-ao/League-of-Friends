@@ -135,6 +135,8 @@ export type GameOutcome =
 export type CanonicalGameResult = GameOutcome & {
   revision: number;
   winningPlayerIds: string[];
+  /** Non-winning official roster members; absent on historical results. */
+  losingPlayerIds?: string[];
   source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED" | "ADMIN_CORRECTED";
   submissionId: string | null;
   submittedBy: string | null;

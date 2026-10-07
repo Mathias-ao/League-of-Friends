@@ -4,10 +4,14 @@ on:
   push:
     paths:
       - "replay-lab/**"
+      - "functions/src/engines/socialIncidentCore.*"
+      - "functions/tests/fixtures/social-ffa-diplo.json"
       - ".github/workflows/replay-lab-ci.yml"
   pull_request:
     paths:
       - "replay-lab/**"
+      - "functions/src/engines/socialIncidentCore.*"
+      - "functions/tests/fixtures/social-ffa-diplo.json"
       - ".github/workflows/replay-lab-ci.yml"
 
 jobs:

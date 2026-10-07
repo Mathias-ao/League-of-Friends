@@ -8,16 +8,18 @@ source event identity.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 from pathlib import Path
 from typing import Any
 
-from canonical_io import iter_store, json_bytes, read_json, validate_bundle
+from canonical_io import checked_path, iter_store, json_bytes, load_json, read_json, validate_bundle
+from match_facts import compact_header
 from canonical_projector import CompactProjector
 from canonical_run import fundamentals
 
 ANALYSIS_SCHEMA_VERSION = "1.0.0"
-ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V3"
+ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V5"
 
 _RAW_PAYLOAD_KEYS = {
     "_rawOperationBase64",
@@ -95,7 +97,7 @@ def _compact_camera(event: dict[str, Any]) -> dict[str, Any]:
 def validate_analysis_dataset(dataset: dict[str, Any]) -> None:
     if dataset.get("schemaVersion") != ANALYSIS_SCHEMA_VERSION:
         raise ValueError(f"Unsupported analysis dataset schema: {dataset.get('schemaVersion')}")
-    if dataset.get("datasetVersion") != ANALYSIS_DATASET_VERSION:
+    if dataset.get("datasetVersion") not in {ANALYSIS_DATASET_VERSION, "AOF_REPLAY_ANALYSIS_V4", "AOF_REPLAY_ANALYSIS_V3"}:
         raise ValueError(f"Unsupported analysis dataset version: {dataset.get('datasetVersion')}")
     source = dataset.get("source") or {}
     replay_hash = source.get("replaySha256")
@@ -136,11 +138,24 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
     projector = CompactProjector(slots)
     action_events: list[dict[str, Any]] = []
     camera_events: list[dict[str, Any]] = []
+    postgame_events: list[dict[str, Any]] = []
+    header_ref = (run.get("headerEvidence") or {}).get("decodedHeader")
+    recording_header = {}
+    if header_ref:
+        header_path = checked_path(directory, header_ref)
+        with gzip.open(header_path, "rb") as handle:
+            recording_header = compact_header(load_json(handle.read()))
 
     for event in iter_store(directory, manifest["factStore"]):
         projector.consume(event)
         if event.get("sourceOperation") == "ACTION" and event.get("actorPlayerId") in slots:
             action_events.append(_compact_action(event))
+        elif event.get("sourceOperation") == "POSTGAME":
+            postgame_events.append({"sourceEventId": event["eventId"],
+                                    "timestampMs": event["timestampMs"],
+                                    "operationOrdinal": event["operationOrdinal"],
+                                    "decoded": _compact_payload(event.get("payload")).get("decoded"),
+                                    "decodeStatus": (event.get("decode") or {}).get("status")})
         elif event.get("sourceOperation") == "VIEWLOCK":
             camera_events.append(_compact_camera(event))
 
@@ -161,6 +176,7 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
     )
     manifest_context = {
         "schemaVersion": manifest.get("schemaVersion"),
+        "source": {"gameBuild": (manifest.get("source") or {}).get("gameBuild")},
         "participants": manifest.get("participants") or [],
         "teams": manifest.get("teams") or [],
         "initialDiplomacy": manifest.get("initialDiplomacy") or [],
@@ -192,6 +208,10 @@ def build_analysis_dataset(directory: Path, *, validate: bool = True) -> dict[st
             "canonicalRunState": run["state"],
         },
         "manifest": manifest_context,
+        "canonicalVersions": manifest.get("versions") or {},
+        "recordingHeader": recording_header,
+        "recordingHeaderSource": header_ref,
+        "postgameEvents": postgame_events,
         "body": body,
         "fundamentals": fundamentals(body),
         "initialObjects": initial_objects,

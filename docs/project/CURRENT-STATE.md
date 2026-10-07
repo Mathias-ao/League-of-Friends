@@ -1,6 +1,77 @@
 # Age of Friends — Current State
 
-Last reviewed: 28 September 2026
+## Social incident interpreter — 6 October 2026
+
+[Social Incident Interpreter V1](../architecture/social-incident-implementation-v1.md)
+now implements the revision-4 shadow pilot: declaration incidents, response/contested
+context, candidate targeted commands, per-family decisions, fixed-team/accepted-duel
+participation, bounded group accounting, correction-safe historical rebuild and
+qualified-input exceptional Treachery. Replay Lab Military and Battle record expose
+the review; an authenticated read-only history callable and player Chronicle view
+show mapped shadow history. Production scoring remains off; the default offensive/
+tribute/king qualifier registry is empty, so no generic order becomes a scored attack.
+Advanced cooling, official persistence and unqualified evidence families remain
+explicitly pending. Real FFA sanity retains Halvar's initiation and later responses
+without invented awards. No statistics, schemas, extraction or old goldens change.
+
+## Social incident policy proposal — 6 October 2026
+
+Mathias confirmed the decoded `FFA_diplo` diplomacy chronology through 1:05:00
+against his paper notes (74 directed commands, displayed in 26 grouped rows).
+This confirms reviewed command chronology, not engine effects or attack outcomes.
+[Social Incident Policy V1, revision 4](../architecture/social-incident-policy-v1-proposal.md)
+incorporates the [external revision 3 assessment](../architecture/social-incident-rev3-assessment.md):
+typed decisions, exposure versus opportunity, independently gated deed families,
+limited attempt versus sustained/consequence tiers, scoped negatives, substantive
+cooperation, track-specific reciprocity and grouped Battle budgets. It rejects
+provocation inferred from declarations, tribute purchase inferred from chronology,
+selection-count materiality, automatic rating-win Gallantry and counterpart damping.
+Current per-deed Reputation clamping needs aggregate successor accounting; historical
+rating context needs a revision-aware adapter. Numbers and activation remain proposals.
+No scoring, production activation or statistical formulas change with this design.
+
+
+## Relationship qualification review — 4 October 2026
+
+The Battle record now exposes a pair/track review before raw match context. It shows supported command evidence, possible contribution direction, unconfigured policies and missing prerequisites for Rivalry, Hostility and Bond, with source references. Real duel, 4v4 and FFA examples make reciprocal-targeting limits, helper direction, common targets and declaration-only Treachery blockers inspectable. No points, stages, new deeds or persisted relationship decisions are emitted. See [the review contract](../architecture/relationship-qualification-review-v1.md).
+
+
+## Recorded diplomacy history — 4 October 2026
+
+Recording review V2 now attaches an independently versioned declared diplomacy history. It preserves directions, reciprocal declarations, requested-stance reversals, unknown intervals and source references; repeated orders support one declaration episode. The existing FFA fixture supplies the 143-order/56-edge/87-reversal regression. The completed 14-recording remote audit passed source-reference, input-immutability and deterministic-rebuild checks; retained website examples expose the audited declaration histories. No effective alliance, Treachery, additional deed or scoring is inferred. Existing measurements and artifacts remain intact. See [the declared-history contract](../architecture/recorded-diplomacy-history-v1.md). Additional capture is requested only for unqualified engine/outcome claims, not already recorded orders.
+
+## Temporal diplomacy certainty — 3 October 2026
+
+Diplomacy Timeline/Adapter V2 invalidates stale effective certainty after an unverified directed order, without promoting the requested stance. Later qualified state establishment is separate from proven state change. A pure recording review now reads retained match facts separately from existing statistics, exposes the gap in the Battle record, and is exercised by the real-corpus audit. Normalized initial diplomacy is still absent; raw header mapping and runtime effects require controlled tuple-specific witnesses. See [V2 semantics](../architecture/diplomacy-certainty-v2.md) and [the capture protocol](../replay-foundation/diplomacy-qualification-protocol-v1.md). Detectors, metric values, neutral deed identities, result authority and scoring remain unchanged.
+
+## Battle record review — 3 October 2026
+
+The Battle website now offers an expandable match-context and directed social-evidence review, reading the active hash-checked artifact on demand and current official league outcome separately. It preserves episode/deed distinctions, targets, helper direction, family coverage and diplomacy orders without scoring. Preview includes clearly separate, abbreviated real 4v4/duel/FFA audit examples. The real-corpus audit also compares review metrics under the known legacy lobby/DE team-lock conflict; this is a labelled counterfactual, not deployed historical statistics. See [the review and rebuild boundary](../architecture/battle-record-review-v1.md). No live data promotion or deployment is included.
+
+## Recording match facts — 3 October 2026
+
+Statistics schema 1.1.0 now stores `AOF_RECORDING_MATCH_FACTS_V1` at `matchFacts`: map/rules, recording and source versions, raw team membership, existing diplomacy commands, postgame evidence and resignations. Replay outcomes stay unresolved; accepted league result revisions now explicitly retain winning and losing player IDs. Upload persistence validates recording provenance, and reads resolve current official results separately from historical ingestion snapshots. Analysis V4 retains checked header evidence; existing statistics detectors and social deeds are unchanged. See [the match-facts contract](../architecture/recording-match-facts-v1.md). The review panel is described above; scoring activation, deployment and historical backfill remain excluded.
+
+## Real recording social evidence review — 2 October 2026
+
+The remote corpus audit passed 14 retained recordings with 13 distinct decoded Game GUIDs. It exposed and corrected DE team-lock normalization: explicit edition-specific values now win over conflicting legacy lobby flags, under `AOF_CANONICAL_NORMALIZER_V1_2`. New extractions restore directed ally-support and target-specific shared-offense qualification; existing canonical bundles remain historical revisions. Statistics detectors and schema are unchanged, while alliance-dependent outputs require rebuilding from corrected extraction. See [the real recording review](../architecture/real-social-context-audit-v1.md) for results, examples and the unresolved FFA/static-alignment coverage gap. No scoring is activated.
+
+## Pair Episode Context implementation — 2 October 2026
+
+The branch now emits `AOF_PAIR_EPISODE_CONTEXT_V1` at `pairSocialEvidence.episodeContext`: unique recorded pressure-response associations, defensive participation connected through exact pressure/clash provenance, and independent ordered return-pressure sequences. It preserves statistics, schema digest, neutral deed identities and counts. See [the implemented context contract](../architecture/pair-episode-context-v1.md). Scoring, activity/standings interpretation, effective diplomacy and outcomes remain inactive.
+
+
+## Pair Social Evidence branch update — 2 October 2026
+
+On `feat/pair-social-evidence-v1`, `AOF_PAIR_SOCIAL_EVIDENCE_V1` now projects neutral Game-level incidents and deeds from retained statistics, with directed family coverage, command provenance and deterministic identities. Engagement V4 preserves target-specific offensive groups and helper direction; Skirmish Pair Evidence V2 distinguishes local overlap from reciprocal targeted commands without changing encounter boundaries. Active Map Presence V8 records relic targeting without asserting possession or theft.
+
+See [the implemented contract](../architecture/pair-social-evidence-v1.md). Relationship scoring, effective dynamic diplomacy, absence/non-cooperation interpretation and production integration remain inactive. The older sections below describe their reviewed historical baseline; the branch contract records this slice.
+
+## Contextual Social Deeds design update — 2 October 2026
+
+[Contextual Social Deeds V1](../architecture/contextual-social-deeds-v1.md) records the contextual qualification matrix and implementation slices. Reputation is **Gallantry / Cruelty / Chivalry**; Relationships are **Rivalry / Hostility / Bond**. Treachery is a qualified turning-point event classification. CORE-IDENTITY.md now documents its explicit directed Hostility escalation exception; no scoring is activated. Pressure-response joins are implemented as the neutral context view above. Coalition entry circumstances, activity annotations and pre-Battle standings remain planned adapters. Score trajectories, king-loss responsibility, tribute semantics and effective diplomacy remain separately gated. Historical mentions of Treachery as a Reputation track below are superseded by this update and CORE-IDENTITY.md.
+
+Last reviewed historical baseline: 28 September 2026
 
 Purpose: Record the current product and engineering state. Read [`CORE-IDENTITY.md`](CORE-IDENTITY.md) first for the lasting product vision and [`CURRENT-STATS.md`](CURRENT-STATS.md) for the concise player-facing statistics baseline.
 
@@ -29,7 +100,7 @@ The **Player profile structure is now considered settled for AoF v1; remaining w
 | Event Statistics | Up to four deterministic V1 highlights with source links implemented on the feature branch; richer curation/news integration remains later |
 | Season Statistics | Five-category tables, stars, record book, comparison charts and personal-best notices implemented on the feature branch |
 | Lifetime Stats | Aggregation foundation implemented; intentionally hidden from Season I UI |
-| Player currencies | Gallantry/Treachery/Chivalry boundary defined; earning rules intentionally unconfigured |
+| Player currencies | Gallantry/Cruelty/Chivalry boundary defined; earning rules intentionally unconfigured |
 | Pair relationships | Pair History foundation implemented; current engine uses superseded Enemy/Friend semantics and needs migration to Rivalry/Hostility/Bond |
 | Individual Player Stats + Playstyle Sliders | Configurable engine implemented; profile presentation structure anchored; slider rules/normalization intentionally unconfigured |
 
@@ -48,7 +119,7 @@ The intended flow is:
 - Lifetime Statistics continue underneath but remain hidden in Season I.
 - Pair History aggregates neutral player-to-player history and directional interaction evidence.
 - Playstyle Sliders only produce scores from an explicit versioned rule set supplied by the product owner.
-- Gallantry / Treachery / Chivalry are future player-level point currencies with separate earning rules.
+- Gallantry / Cruelty / Chivalry are future player-level point currencies with separate earning rules.
 - Rivalry / Hostility / Bond are future pair relationship tracks derived separately from the player currencies.
 - Higher layers should consume versioned Match Statistics and neutral league context; they should not independently reinterpret raw replay files.
 
@@ -141,7 +212,7 @@ The AoF v1 portrait direction is approved at the product level even though its e
 
 The existing `RIVALRIES` processing step now rebuilds and persists neutral Pair History in the `relationships` collection. Today that persisted history uses encounter/team/result evidence because the current Functions backend does not yet receive the replay-derived directional Match Statistics required for raids/forward pressure. Those signals are explicit future inputs rather than guessed data.
 
-With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRIEND` tracks remain `UNCONFIGURED`. Product direction now separates player currencies (Gallantry / Treachery / Chivalry) from pair tracks (Rivalry / Hostility / Bond), so a migrated or successor engine is required before final exposure. The legacy automatic rivalry threshold no longer drives this processing step, and it no longer opens the War Room. The older `RIVALRY_ENGINE_V1` code is retained only for compatibility.
+With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRIEND` tracks remain `UNCONFIGURED`. Product direction now separates player currencies (Gallantry / Cruelty / Chivalry) from pair tracks (Rivalry / Hostility / Bond), so a migrated or successor engine is required before final exposure. The legacy automatic rivalry threshold no longer drives this processing step, and it no longer opens the War Room. The older `RIVALRY_ENGINE_V1` code is retained only for compatibility.
 
 ## Current limitations
 
@@ -158,7 +229,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 - Civilization drafting is series-aware, but approved Match Plans still create only `G1` with a best-of-1 SeriesRule. BO3 Game creation and series result finalization remain a separate competition-orchestration gap.
 - Lifetime Statistics persistence and Playstyle presentation are not yet wired end to end.
 - Pair History currently persists match/team/result history but not replay-derived directional interaction signals.
-- Playstyle normalization and slider definitions/weights remain undecided. Gallantry/Treachery/Chivalry earning rules and Rivalry/Hostility/Bond derivation/stages are also intentionally undecided.
+- Playstyle normalization and slider definitions/weights remain undecided. Gallantry/Cruelty/Chivalry earning rules and Rivalry/Hostility/Bond derivation/stages are also intentionally undecided.
 - The **v1 portrait visual direction is approved**, but the exact military-family progression map, thresholds, confidence rules and persistence/reversion behavior are not yet configured. Do not infer those values from the example Knight → Cavalier → Paladin path.
 
 ## Systems pending broader statistics work
@@ -167,7 +238,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 |---|---|---|
 | Leaderboards and ladder | Foundations exist; final player-facing boards are incomplete. | Lifetime/rating definitions and presentation. |
 | Matchmaking | Match planning exists; statistics-informed matchmaking is incomplete. | Rating and persistent player statistics. |
-| Relationships | Neutral Pair History processing implemented; current engine semantics predate the latest product split. | Define Gallantry/Treachery/Chivalry earning rules separately from Rivalry/Hostility/Bond derivation/stages and migrate the engine. |
+| Relationships | Neutral Pair History processing implemented; current engine semantics predate the latest product split. | Define Gallantry/Cruelty/Chivalry earning rules separately from Rivalry/Hostility/Bond derivation/stages and migrate the engine. |
 | War Room | Challenge/query foundations exist; legacy automatic opening is no longer part of relationship processing. | Explicit future product decision after relationship rules are approved. |
 | Achievements | Processing scaffolding exists; final catalogue and triggers are not frozen. | Stable match/lifetime statistics and product rules. |
 | Awards and trophies | Direction exists; earning rules remain pending. | Stable match, event, season and lifetime statistics. |
@@ -191,7 +262,7 @@ With no explicit relationship rule set, the current older `RIVALRY / ENEMY / FRI
 5. Build the Battle/Event/Player/Season presentation around the shared five-category vocabulary, including up to 3 curated Battle feats, 4–6 Event distinctions and the complete Season record book.
 6. Polish the now-anchored Player profile and integrate the AoF v1 **Villager → dominant military-family unit portrait** progression using existing AoE2DE unit portrait/icon frames; do not invent the mapping thresholds before they are approved.
 7. Define the normalized metric inputs and rule set for Player Identity / Playstyle Sliders.
-8. Define Gallantry / Treachery / Chivalry earning rules separately from Rivalry / Hostility / Bond relationship derivation, stages and War Room visibility.
+8. Define Gallantry / Cruelty / Chivalry earning rules separately from Rivalry / Hostility / Bond relationship derivation, stages and War Room visibility.
 9. Only after those rules are approved, expose slider scores and relationship progression to the player website and downstream systems.
 
 ## Task guidance

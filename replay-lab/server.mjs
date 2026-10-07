@@ -1,3 +1,4 @@
+import {projectSocialIncidents} from '../functions/src/engines/socialIncidentCore.js';
 import http from "node:http";
 import { spawn } from "node:child_process";
 import { createReadStream } from "node:fs";
@@ -18,7 +19,7 @@ const PYTHON = process.env.PYTHON || "python";
 const PORT = Number(process.env.AOF_REPLAY_LAB_PORT || 4317);
 const HOST = process.env.AOF_REPLAY_LAB_HOST || "127.0.0.1";
 const MAX_UPLOAD_BYTES = Number(process.env.AOF_REPLAY_LAB_MAX_BYTES || 128 * 1024 * 1024);
-const ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V3";
+const ANALYSIS_DATASET_VERSION = "AOF_REPLAY_ANALYSIS_V5";
 
 const PARSER = path.join(ROOT, "replay-tools", "parse_replay.py");
 const ANALYSIS_DATASET = path.join(ROOT, "replay-tools", "analysis_dataset.py");
@@ -156,6 +157,7 @@ async function loadRun(id) {
     canonical,
     canonicalRun: extraction,
     statistics,
+    socialIncidents: projectSocialIncidents({ statistics }),
     comparison,
     townBellControl,
     diagnostics: {
@@ -468,8 +470,9 @@ const contentTypes = {
 
 async function serveStatic(urlPath, res) {
   const requested = urlPath === "/" ? "index.html" : urlPath.replace(/^\/+/, "");
-  const file = path.resolve(PUBLIC, requested);
-  if (!file.startsWith(PUBLIC + path.sep) && file !== path.join(PUBLIC, "index.html")) return false;
+  const shared = requested === "social-incident-core.js";
+  const file = shared ? path.resolve(ROOT, "functions/src/engines/socialIncidentCore.js") : path.resolve(PUBLIC, requested);
+  if (!shared && !file.startsWith(PUBLIC + path.sep) && file !== path.join(PUBLIC, "index.html")) return false;
   try {
     const body = await fs.readFile(file);
     res.writeHead(200, {

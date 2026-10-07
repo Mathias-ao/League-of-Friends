@@ -1,3 +1,4 @@
+import {SocialHistoryReview} from './SocialHistoryReview';
 import {useRef,useState} from 'react';
 import {ArrowRight,BookOpen,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
 import {formatName,type PlayerProfile,type PlayerRelationshipSummary} from '../domain/league';
@@ -159,7 +160,7 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
 
     <nav className="profile-subnav" aria-label="Player profile sections"><button type="button" className={profileTab==='profile'?'active':''} onClick={()=>setProfileTab('profile')}>Profile</button><button type="button" className={profileTab==='chronicle'?'active':''} onClick={()=>setProfileTab('chronicle')}><BookOpen size={15}/>Chronicle</button></nav>
 
-    {profileTab==='chronicle'?<RelationshipChronicle data={data} snapshot={snapshot}/>:<>
+    {profileTab==='chronicle'?<><RelationshipChronicle data={data} snapshot={snapshot}/><SocialHistoryReview key={data.player.playerId} repository={props.repository} playerId={data.player.playerId}/></>:<>
       <ProfileDeedsBar data={data} preview={preview}/>
 
       <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory}/>

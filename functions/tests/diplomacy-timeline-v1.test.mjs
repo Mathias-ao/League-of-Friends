@@ -25,10 +25,10 @@ const commandOnlyChange=(eventId,atMs,operationOrdinal,fromPlayerId,toPlayerId,r
 });
 const moment=(atMs,operationOrdinal)=>({atMs,operationOrdinal});
 
-test('diplomacy V1 constants identify independent versioned contracts',()=>{
-  assert.equal(DIPLOMACY_TIMELINE_VERSION,'AOF_DIPLOMACY_TIMELINE_V1');
+test('diplomacy V2 constants identify certainty semantics independently from the command map',()=>{
+  assert.equal(DIPLOMACY_TIMELINE_VERSION,'AOF_DIPLOMACY_TIMELINE_V2');
   assert.equal(DIPLOMACY_ACTION_MODE_MAP_VERSION,'AOF_DIPLOMACY_ACTION_MODE_MAP_V1');
-  assert.equal(DIPLOMACY_EVIDENCE_ADAPTER_VERSION,'AOF_DIPLOMACY_EVIDENCE_ADAPTER_V1');
+  assert.equal(DIPLOMACY_EVIDENCE_ADAPTER_VERSION,'AOF_DIPLOMACY_EVIDENCE_ADAPTER_V2');
 });
 
 test('runtime diplomacy modes describe command payloads and unknown stays unknown',()=>{
@@ -94,7 +94,7 @@ test('a qualified mixed FFA history remains an ordered sequence instead of one B
   ]);
 });
 
-test('command-only diplomacy is retained but cannot mutate effective state',()=>{
+test('command-only diplomacy invalidates certainty without claiming a new effective stance',()=>{
   const timeline=buildDiplomacyTimeline({
     playerIds:[1,2],durationMs:5000,
     initialEdges:[initial(1,2,'ENEMY'),initial(2,1,'ENEMY')],
@@ -103,12 +103,14 @@ test('command-only diplomacy is retained but cannot mutate effective state',()=>
   assert.equal(timeline.changes.length,1);
   assert.equal(timeline.changes[0].commandedStance,'ALLY');
   assert.equal(timeline.changes[0].previousEffectiveStance,'ENEMY');
-  assert.equal(timeline.changes[0].effectiveStanceAfter,'ENEMY');
+  assert.equal(timeline.changes[0].effectiveStanceAfter,'UNKNOWN');
+  assert.equal(timeline.changes[0].effectiveStateInvalidated,true);
   assert.equal(timeline.changes[0].effectiveStateChanged,false);
   assert.equal(timeline.diagnostics.commandOnlyChanges,1);
   assert.equal(timeline.diagnostics.qualifiedEffectiveChanges,0);
-  assert.equal(pairDiplomacyAt(timeline,1,2,moment(4000,40)),'MUTUAL_HOSTILITY');
-  assert.equal(timeline.pairSegments.length,1);
+  assert.equal(pairDiplomacyAt(timeline,1,2,moment(4000,40)),'UNKNOWN');
+  assert.equal(timeline.pairSegments.length,2);
+  assert.equal(timeline.pairSegments[1].coverage,'UNAVAILABLE');
 });
 
 test('missing initial direction is unavailable rather than inferred from the opposite player stance',()=>{
@@ -123,7 +125,7 @@ test('missing initial direction is unavailable rather than inferred from the opp
   assert.equal(timeline.pairSegments[0].coverage,'UNAVAILABLE');
 });
 
-test('unknown command modes remain observations without invalidating a known effective state',()=>{
+test('unknown command modes invalidate stale certainty but do not become effective changes',()=>{
   const timeline=buildDiplomacyTimeline({
     playerIds:[1,2],durationMs:5000,
     initialEdges:[initial(1,2,'ENEMY'),initial(2,1,'ENEMY')],
@@ -131,7 +133,7 @@ test('unknown command modes remain observations without invalidating a known eff
   });
   assert.equal(timeline.diagnostics.unknownModeCommands,1);
   assert.equal(timeline.changes[0].commandedStance,'UNKNOWN');
-  assert.equal(pairDiplomacyAt(timeline,1,2,moment(2500,25)),'MUTUAL_HOSTILITY');
+  assert.equal(pairDiplomacyAt(timeline,1,2,moment(2500,25)),'UNKNOWN');
 });
 
 test('unknown command modes cannot be promoted to qualified effective changes',()=>{
@@ -197,7 +199,7 @@ test('canonical adapter preserves diplomacy commands and chronology without prom
   assert.equal(result.timeline.changes[0].commandedStance,'ALLY');
   assert.equal(result.timeline.changes[0].effectiveStateChanged,false);
   assert.equal(pairDiplomacyAt(result.timeline,1,2,moment(1000,76)),'MUTUAL_HOSTILITY');
-  assert.equal(pairDiplomacyAt(result.timeline,1,2,moment(1000,77)),'MUTUAL_HOSTILITY');
+  assert.equal(pairDiplomacyAt(result.timeline,1,2,moment(1000,77)),'UNKNOWN');
 });
 
 test('canonical diplomacy event without chronology-critical fields fails loudly',()=>{
@@ -210,4 +212,28 @@ test('canonical diplomacy event without chronology-critical fields fails loudly'
     }],
     canonicalSchemaVersion:'1.1.0-test',
   }),/lacks actor, target, or operation ordinal/);
+});
+
+test('an unverified order affects only its direction; qualified later evidence can restore certainty',()=>{
+  const timeline=buildDiplomacyTimeline({playerIds:[1,2,3],durationMs:5000,
+    initialEdges:[initial(1,2,'ALLY'),initial(2,1,'ALLY'),initial(1,3,'ENEMY'),initial(3,1,'ENEMY')],
+    changes:[commandOnlyChange('uncertain-repeat',1000,10,1,2,0),effectiveChange('qualified-later',2000,20,1,2,3)]});
+  assert.equal(pairDiplomacyAt(timeline,1,2,moment(1000,9)),'MUTUAL_ALLIANCE');
+  assert.equal(diplomacyAt(timeline,1,2,moment(1000,10)),'UNKNOWN');
+  assert.equal(diplomacyAt(timeline,2,1,moment(1000,10)),'ALLY');
+  assert.equal(pairDiplomacyAt(timeline,1,3,moment(1500,15)),'MUTUAL_HOSTILITY');
+  assert.equal(pairDiplomacyAt(timeline,1,2,moment(2000,20)),'CONFLICTED');
+  assert.equal(timeline.diagnostics.effectiveStateInvalidations,1);
+  assert.equal(timeline.diagnostics.qualifiedEffectiveChanges,0);
+  assert.equal(timeline.diagnostics.qualifiedStateEstablishments,1);
+  assert.equal(timeline.changes[1].effectiveStateChanged,false);
+  assert.equal(timeline.changes[1].effectiveStateEstablished,true);
+});
+test('fractional/unsafe chronology, duplicate roster and invalid initial enum fail closed',()=>{
+  const input={playerIds:[1,2],durationMs:5000,initialEdges:[initial(1,2,'ALLY')]};
+  assert.throws(()=>buildDiplomacyTimeline({...input,durationMs:1.5}),/safe integer/);
+  assert.throws(()=>buildDiplomacyTimeline({...input,playerIds:[1,1,2]}),/Duplicate/);
+  assert.throws(()=>buildDiplomacyTimeline({...input,initialEdges:[initial(1,2,'MAYBE')]}),/Invalid initial/);
+  assert.throws(()=>buildDiplomacyTimeline({...input,changes:[commandOnlyChange('bad',1.5,1,1,2,0)]}),/atMs/);
+  assert.throws(()=>buildDiplomacyTimeline({...input,changes:[commandOnlyChange('bad',1,Number.MAX_SAFE_INTEGER+1,1,2,0)]}),/operationOrdinal/);
 });

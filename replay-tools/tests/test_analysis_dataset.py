@@ -25,7 +25,8 @@ class AnalysisDatasetTests(unittest.TestCase):
     def test_compact_dataset_strips_raw_operation_bytes_and_keeps_provenance(self):
         analysis = build_analysis_dataset(self.bundle, validate=False)
         validate_analysis_dataset(analysis)
-        self.assertEqual(analysis["datasetVersion"], "AOF_REPLAY_ANALYSIS_V3")
+        self.assertEqual(analysis["datasetVersion"], "AOF_REPLAY_ANALYSIS_V5")
+        self.assertEqual(analysis["manifest"]["source"]["gameBuild"], 180059)
         self.assertFalse(analysis["summary"]["rawOperationBytesCopied"])
         self.assertGreater(analysis["summary"]["actionEventCount"], 0)
         for event in analysis["actionEvents"]:

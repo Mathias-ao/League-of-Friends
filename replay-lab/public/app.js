@@ -1,3 +1,6 @@
+import {socialIncidentHtml} from './social-review.js';
+import { militaryReviewData } from './military-review.js';
+
 const state = {
   file: null,
   runs: [],
@@ -214,7 +217,7 @@ function renderShell() {
   const compat = run.canonical?.source?.compatibility?.status ?? "unknown";
   const canonicalState = run.canonicalRun?.state ?? run.metadata?.canonicalState ?? "unknown";
   $("runMeta").textContent =
-    `save ${run.replay?.saveVersion ?? "?"} · build ${run.replay?.build ?? "?"} · ${run.players.length} players · compatibility ${compat} · canonical ${canonicalState}`;
+    `save ${run.replay?.saveVersion ?? "?"} · build ${run.replay?.build ?? "?"} · ${run.players.length} players · catalog ${run.statistics?.entityCatalogVersion ?? "unavailable"} · compatibility ${compat} · canonical ${canonicalState}`;
   $("auditButton").disabled = canonicalState === "verified_local";
   $("townBellButton").textContent = run.townBellControl ? "Replace TownBell report" : "Attach TownBell report";
   $("tabs").innerHTML = tabs.map(([id, label]) =>
@@ -441,11 +444,12 @@ function economyControlMatrix(run) {
 }
 
 function militaryControlMatrix(run) {
+  const showControl = Boolean(run.townBellControl);
   const participants = run.statistics?.participants ?? [];
   const playerOrder = participants.map((player) => ({
     playerId: Number(player.playerId),
     name: player.displayName || `P${player.playerId}`,
-    military: player.military || {},
+    military: militaryReviewData(player.military || {}),
   }));
   if (!playerOrder.length) return '<div class="empty-inline">No player military statistics.</div>';
 
@@ -473,7 +477,7 @@ function militaryControlMatrix(run) {
   const headers = playerOrder.map((player) => {
     const control = controlPlayers.get(player.playerId);
     const controlName = control?.name && control.name !== player.name ? ` · ${esc(control.name)}` : "";
-    return `<th>${esc(player.name)} · AoF</th><th>${esc(player.name)}${controlName} · TownBell</th>`;
+    return `<th>${esc(player.name)} · AoF</th>${showControl ? `<th>${esc(player.name)}${controlName} · TownBell</th>` : ''}`;
   }).join("");
 
   const body = [...rowDefinitions.entries()].map(([path, definition]) => {
@@ -485,8 +489,8 @@ function militaryControlMatrix(run) {
         : null;
       const mappedTitle = mapping ? `TownBell: ${mapping.id}` : "No direct TownBell mapping";
       return `
-        <td class="review-value">${esc(formatAofControlValue(aofRow, mapping))}</td>
-        <td class="control-value ${mapping ? "mapped" : "unmapped"}" title="${esc(mappedTitle)}">${esc(formatTownBellValue(townBellMetric, mapping))}</td>
+        <td class="review-value ${path === 'composition.rawUnitQueueSummary' ? 'queue-summary' : ''}">${esc(formatAofControlValue(aofRow, mapping))}</td>
+        ${showControl ? `<td class="control-value ${mapping ? "mapped" : "unmapped"}" title="${esc(mappedTitle)}">${esc(formatTownBellValue(townBellMetric, mapping))}</td>` : ''}
       `;
     }).join("");
     return `
@@ -499,6 +503,7 @@ function militaryControlMatrix(run) {
 
   return `
     <div class="timeline-note">${controlNote}</div>
+    <div class="timeline-note">Composition, trash counts and checkpoints use queue commands across the recorded interval. Checkpoints show cumulative base-cost commitment, not surviving army value. Zero is an observed count; — is unavailable. Battles and raids are command-based candidates; unlocked diplomacy still needs validation.</div>
     ${mismatchNote}
     <div class="review-table-wrap control-matrix-wrap">
       <table class="review-table control-matrix">
@@ -911,7 +916,7 @@ async function renderTab() {
   } else if (state.tab === "economy") {
     html = `<h3>Economy review matrix</h3>${economyControlMatrix(run)}`;
   } else if (state.tab === "military") {
-    html = `<h3>Military review matrix</h3>${militaryControlMatrix(run)}`;
+    html = `<h3>Military review matrix</h3>${militaryControlMatrix(run)}${socialIncidentHtml(run.socialIncidents)}`;
   } else if (state.tab === "map-presence") {
     html = `<h3>Map Presence review matrix</h3>${mapPresenceControlMatrix(run)}`;
   } else if (state.tab === "execution") {

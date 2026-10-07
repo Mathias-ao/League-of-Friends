@@ -1,3 +1,5 @@
+import {projectSocialIncidents} from '../engines/socialIncidentCore.js';
+import {projectRecordingDiplomacyReview} from '../engines/recordingDiplomacyReview.js';
 import { createHash } from "node:crypto";
 import { getStorage } from "firebase-admin/storage";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -5,6 +7,7 @@ import { requireLeaguePlayer } from "../auth/authorization.js";
 import { db } from "../config/firebase.js";
 import { collections } from "../domain/collections.js";
 import { callableOptions } from "../config/runtime.js";
+import {currentOfficialGameOutcome} from "../engines/recordingMatchFacts.js";
 
 interface Input {
   matchId: string;
@@ -30,7 +33,9 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
   if (!matchId || !gameId) throw new HttpsError("invalid-argument", "matchId and gameId are required.");
 
   const gameRef = db.collection(collections.matches).doc(matchId).collection("games").doc(gameId);
-  const gameSnapshot = await gameRef.get();
+  const [gameSnapshot, matchSnapshot] = await Promise.all([
+    gameRef.get(), db.collection(collections.matches).doc(matchId).get(),
+  ]);
   if (!gameSnapshot.exists) throw new HttpsError("not-found", "Game not found.");
   const statisticsId = gameSnapshot.data()?.activeReplayStatisticsId as string | undefined;
   if (!statisticsId) throw new HttpsError("failed-precondition", "Battle Statistics are not available yet.");
@@ -60,6 +65,10 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
     throw new HttpsError("data-loss", "Stored Battle Statistics are not valid JSON.");
   }
 
+  const officialOutcome = currentOfficialGameOutcome(gameSnapshot.data(), matchSnapshot.data());
+  const socialIncidents = projectSocialIncidents({ statistics, playerMapping: source.playerMapping ?? [], officialOutcome,
+    context: { gameId, battleId: matchId } });
+
   return {
     success: true,
     matchId,
@@ -68,5 +77,8 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
     playerMapping: source.playerMapping ?? [],
     resultQualification: source.resultQualification ?? "UNRESOLVED",
     statistics,
+    diplomacyReview: projectRecordingDiplomacyReview((statistics as any)?.matchFacts),
+    officialOutcome,
+    socialIncidents,
   };
 });

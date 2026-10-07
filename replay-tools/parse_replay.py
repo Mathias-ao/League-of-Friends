@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from mgz.fast import meta
-from mgz.fast.header import parse as parse_header
+from header_compat import parse as parse_header
 from canonical_io import EventWriter, SCHEMA_VERSION, json_bytes
 from canonical_stream import frames, command_layout, ExactReader
 from canonical_projector import CompactProjector
@@ -25,7 +25,7 @@ from canonical_run import stage_run, seal_local, seal_local_fast, compatibility
 
 ADAPTER_SCHEMA_VERSION = "LOF_MGZ_FAST_ADAPTER_V4"
 CANONICAL_SCHEMA_VERSION = SCHEMA_VERSION
-NORMALIZER_VERSION = "AOF_CANONICAL_NORMALIZER_V1_1"
+NORMALIZER_VERSION = "AOF_CANONICAL_NORMALIZER_V1_2"
 EXPORTER_VERSION = "AOF_CANONICAL_EXTRACTOR_V1"
 ENTITY_DATA_VERSION = "RAW_AOE2_IDS_V1"
 PARSER_DISTRIBUTION = "mgz-fast"
@@ -627,7 +627,10 @@ def build_settings(header: dict[str, Any], players: list[dict[str, Any]]) -> dic
         "gameTypeId": integer(lobby.get("game_type_id")),
         "revealMapId": integer(lobby.get("reveal_map_id")),
         "seed": integer(lobby.get("seed")),
-        "lockTeams": bool(lobby.get("lock_teams")) if lobby.get("lock_teams") is not None else bool(de.get("lock_teams")) if de.get("lock_teams") is not None else None,
+        # DE has an edition-specific setting; the retained legacy lobby byte
+        # can disagree (including false in genuinely locked DE games). Explicit
+        # DE false must also win: OR would manufacture locked diplomacy games.
+        "lockTeams": bool(de["lock_teams"]) if de.get("lock_teams") is not None else bool(lobby["lock_teams"]) if lobby.get("lock_teams") is not None else None,
         "speed": finite_number(metadata.get("speed")) or finite_number(de.get("speed")),
         "rated": bool(de.get("rated")) if de.get("rated") is not None else None,
         "victoryTypeId": integer(de.get("victory_type_id")),
@@ -813,6 +816,11 @@ def _build_payload(
         timing_sink["sourcePreflightHeaderMs"] = round((time.perf_counter() - source_started) * 1000, 3)
 
     players = extract_players(header, warnings)
+    if header.get("aofHeaderCompatibility"):
+        message = "DE 68.9 header compatibility: custom-scenario lobby extension remains unavailable; raw header retained."
+        warnings.append(message)
+        structured_warnings.append(structured_warning("HEADER_LOBBY_EXTENSION_UNQUALIFIED", message,
+            affected_fields=["match.settings.seed", "match.settings.revealMapId", "match.settings.gameTypeId", "match.settings.mapSize"]))
     decode_started = time.perf_counter()
     fact_writer: JsonlGzipWriter | None = None
     terrain_store: dict[str, Any] | None = None

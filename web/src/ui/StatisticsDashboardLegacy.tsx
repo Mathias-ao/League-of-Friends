@@ -1,3 +1,4 @@
+import {BattleRecord} from './BattleRecord';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {ArrowRight,ChevronDown,RefreshCw,Star,X} from 'lucide-react';
 import {CATEGORIES,FAMILIES,FAMILY_LABELS,METRICS,StatisticsExperience,formatStatistic,formatTime,type AggregatePlayer,type AggregationMode,type Category,type EvidenceEpisode,type GameStatistics,type Highlight,type MetricDefinition,type StatisticsDataset,type StatisticsScope} from '../domain/statistics';
@@ -181,12 +182,13 @@ function RecordBook({engine,category,openMatch}:{engine:StatisticsExperience;cat
 
 export function BattleStatisticsExperience(props:ViewProps&{data:MatchDetail}){
   const {data,repository,preview,openMatch,openPlayer,snapshot}=props;
-  const revision=JSON.stringify(data.games.map(g=>[g.gameId,g.status,g.replay?.statisticsRevision]));
+  const revision=JSON.stringify(data.games.map(g=>[g.gameId,g.status,g.result?.revision,g.resultDisputeOpen,g.replay?.statisticsRevision]));
   const state=useStatistics(repository,{matchId:data.match.matchId},revision);
   const [gameId,setGameId]=useState(data.games[0]?.gameId??'');
+  const [recordRefresh,setRecordRefresh]=useState(0);
   const selected=state.dataset?.games.find(g=>g.gameId===gameId)??state.dataset?.games[0];
   const highlights=selected?.eligible?new StatisticsExperience([selected]).highlights(3):[];
-  return <section id="battle-statistics" className="statistics-experience sx-dashboard"><div className="sx-page-actions"><button aria-label="Refresh Battle statistics" onClick={state.retry}><RefreshCw size={16}/></button></div><LoadState {...state}/>{state.dataset&&<>{state.dataset.games.length>1&&<label>Game<select value={selected?.gameId} onChange={e=>setGameId(e.target.value)}>{state.dataset.games.map(g=><option key={g.gameId} value={g.gameId}>{g.gameId}</option>)}</select></label>}<HighlightCards items={highlights} openMatch={openMatch}/>{selected?<StatisticsPanel key={selected.matchId+'/'+selected.gameId+'/'+selected.revision} games={[selected]} preview={preview} battle viewerId={snapshot.viewer?.playerId} openMatch={openMatch} openPlayer={openPlayer}/>:<p className="sx-empty">Upload a recording above to populate this Battle’s statistics.</p>}</>}</section>;
+  return <section id="battle-statistics" className="statistics-experience sx-dashboard"><div className="sx-page-actions"><button aria-label="Refresh Battle statistics" onClick={()=>{state.retry();setRecordRefresh(n=>n+1);}}><RefreshCw size={16}/></button></div><LoadState {...state}/>{state.dataset&&<>{state.dataset.games.length>1&&<label>Game<select value={selected?.gameId} onChange={e=>setGameId(e.target.value)}>{state.dataset.games.map(g=><option key={g.gameId} value={g.gameId}>{g.gameId}</option>)}</select></label>}<HighlightCards items={highlights} openMatch={openMatch}/>{selected?<><BattleRecord key={selected.matchId+'/'+selected.gameId} repository={repository} matchId={selected.matchId} gameId={selected.gameId} players={data.games.find(g=>g.gameId===selected.gameId)?.players??[]} preview={preview} revision={revision+'/'+recordRefresh}/><StatisticsPanel key={selected.matchId+'/'+selected.gameId+'/'+selected.revision} games={[selected]} preview={preview} battle viewerId={snapshot.viewer?.playerId} openMatch={openMatch} openPlayer={openPlayer}/></>:<p className="sx-empty">Upload a recording above to populate this Battle’s statistics.</p>}</>}</section>;
 }
 
 export function MatchDialogWithStatistics(props:ViewProps&{data:MatchDetail;onUpdated:()=>void}){return <><MatchDialog {...props}/><hr className="statistics-divider"/><BattleStatisticsExperience {...props}/></>;}
