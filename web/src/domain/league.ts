@@ -75,7 +75,7 @@ export interface PlayerChronicleEntry {
 }
 export interface PlayerChronicleRelationshipPage {
   pairId:string;counterpartPlayerId:string;
-  relationship:{sourceModelVersion:string;shadow:true;tracks:Record<string,{currentStage:number;historicalPeak:number;battleIds:string[];directedActors:string[];exceptionalDirectedLevels?:Record<string,number>}>>};
+  relationship:{sourceModelVersion:string;shadow:true;tracks:Record<string,{currentStage:number;historicalPeak:number;battleIds:string[];directedActors:string[];exceptionalDirectedLevels?:Record<string,number>}>};
   exposure:{gameIds?:string[];battleIds?:string[];contexts?:string[];lastOrder?:number|null}|null;
   entries:PlayerChronicleEntry[];
 }
