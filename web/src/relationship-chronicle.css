@@ -81,10 +81,7 @@
 .chronicle-title h2 span{font-weight:400;font-style:italic;color:#60442a}
 .chronicle-title p{margin:0 auto;max-width:560px;color:#60482e;font:italic .88rem/1.55 var(--chronicle-book-hand);letter-spacing:.004em}
 
-.chronicle-standing{max-width:650px;margin:.72rem auto .85rem;padding:.22rem .2rem .62rem;text-align:right;color:#39281b}
-.chronicle-standing .eyebrow{display:block;margin-bottom:.2rem;color:var(--chronicle-rubric);font-size:.5rem;letter-spacing:.11em}
-.chronicle-standing p{margin:0;font:italic .84rem/1.48 var(--chronicle-book-hand)}
-.chronicle-standing:after{content:"";display:block;width:124px;height:1px;margin:.55rem 0 0 auto;background:linear-gradient(90deg,transparent,rgba(87,55,28,.3))}
+.chronicle-epigraph{margin:.18rem auto 0!important;max-width:590px!important;color:#4c3623!important;font:italic 1rem/1.55 var(--chronicle-book-hand)!important;letter-spacing:.006em!important;text-shadow:0 .18px rgba(32,19,10,.09)}
 
 .chronicle-manuscript{position:relative;max-width:790px;margin:.25rem auto 0;padding-left:86px}
 .chronicle-manuscript-spine{position:absolute;z-index:0;left:12px;top:.2rem;bottom:.5rem;width:58px;color:var(--relationship-accent);opacity:.78;pointer-events:none}
@@ -103,7 +100,6 @@
 .chronicle-entries{position:relative;z-index:1;list-style:none;display:grid;gap:0;margin:0;padding:0;max-width:650px}
 .chronicle-entry{position:relative;min-width:0;padding:.65rem 0 1.8rem}
 .chronicle-entry-card{position:relative;width:100%;padding:.42rem .25rem .2rem;color:var(--chronicle-ink-soft)}
-.chronicle-entry .eyebrow{color:var(--chronicle-rubric);font-size:.52rem;letter-spacing:.115em}
 .chronicle-entry h4{margin:.18rem 0 .34rem;color:var(--chronicle-ink);font:700 1.11rem/1.25 var(--chronicle-book-hand);letter-spacing:.009em;text-shadow:0 .3px rgba(31,19,10,.16)}
 .chronicle-entry p{max-width:39rem;margin:0;color:#302116;font:400 1.01rem/1.68 var(--chronicle-book-hand);letter-spacing:.001em;text-shadow:0 .18px rgba(32,19,10,.08)}
 .chronicle-entry p+p{margin-top:.55rem}
@@ -177,7 +173,7 @@
   .chronicle-book-owner{right:4.3rem;top:2.25rem;font-size:.62rem}
   .chronicle-title{padding:0 2.7rem .9rem 0;text-align:left}
   .chronicle-title h2{font-size:1.55rem}.chronicle-title p{font-size:.84rem}
-  .chronicle-standing{text-align:left;padding-left:0;padding-right:0;margin-bottom:.5rem}.chronicle-standing:after{margin-left:0}
+  .chronicle-epigraph{margin-left:0!important;text-align:left;font-size:.9rem!important}
   .chronicle-manuscript{padding-left:54px;margin-top:0}
   .chronicle-manuscript-spine{left:-1px;width:46px}
   .chronicle-spine-pattern{width:46px}
