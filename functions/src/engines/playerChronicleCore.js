@@ -118,7 +118,11 @@ function beatSentence(beat){
       return `${beat.actorName} withdrew an ally declaration toward ${beat.targetName}${when}${after}.`;
     }
     case 'SUPPORT_PARTICIPATION':
-      return `${beat.actorName} contributed qualifying support-command participation toward ${beat.targetName}${when}.`;
+      if(beat.supportKind==='REINFORCEMENT_COMMANDS')
+        return `Reinforcement commands from ${beat.actorName} toward ${beat.targetName} entered the record${when}. The evidence establishes the commands, not their arrival or outcome.`;
+      if(beat.supportKind==='DEFENSIVE_PARTICIPATION')
+        return `${beat.actorName} was recorded participating in a defensive episode involving ${beat.targetName}${when}. The record does not claim a rescue or determine the outcome.`;
+      return `${beat.actorName} was recorded in qualified support-command participation toward ${beat.targetName}${when}. The record does not claim a completed rescue or outcome.`;
     case 'SHARED_PARTICIPATION':
       return beat.opponentName
         ? `${beat.actorName} and ${beat.targetName} were both recorded contributing against ${beat.opponentName} in the same qualified engagement episode${when}.`
@@ -144,10 +148,10 @@ function beatSentence(beat){
 function storyIdentity(beats,first){
   const kinds=new Set(beats.map(beat=>beat.kind));
   if(kinds.has('QUALIFIED_KING_LOSS_TREACHERY'))return {rubric:'KING-LOSS RULE',title:'A grievance entered the record'};
-  if(kinds.has('OFFENSIVE_ATTEMPT_AFTER_WITHDRAWAL'))return {rubric:'DECLARATION & OFFENSE',title:'Hostility followed the withdrawal'};
+  if(kinds.has('OFFENSIVE_ATTEMPT_AFTER_WITHDRAWAL'))return {rubric:'WITHDRAWAL & OFFENSE',title:'An offensive attempt followed the withdrawal'};
   if(kinds.has('MATERIAL_AID_ORDER'))return {rubric:'MATERIAL AID',title:'Aid entered the ledger'};
-  if(kinds.has('SUPPORT_PARTICIPATION'))return {rubric:'SUPPORT PARTICIPATION',title:'Support was recorded'};
-  if(kinds.has('SHARED_PARTICIPATION'))return {rubric:'COMMON TARGET',title:'Against a common opponent'};
+  if(kinds.has('SUPPORT_PARTICIPATION'))return {rubric:'SUPPORT RECORDED',title:'A hand in the defence'};
+  if(kinds.has('SHARED_PARTICIPATION'))return {rubric:'COMMON TARGET',title:'A common foe'};
   if(kinds.has('ACCEPTED_DUEL_CONTEST'))return {rubric:'OFFICIAL DUEL',title:first?'First contest':'The contest continued'};
   if(kinds.has('RECIPROCAL_ALLY_DECLARATIONS')&&kinds.has('ALLY_DECLARATION_WITHDRAWN'))return {rubric:'DIPLOMACY',title:'The declarations did not hold'};
   if(kinds.has('RECIPROCAL_ALLY_DECLARATIONS'))return {rubric:'DIPLOMACY',title:'Their declarations aligned'};
