@@ -98,15 +98,15 @@ function dormantEpigraph(r:RelationshipDepth,h:RelationshipDepth,b:RelationshipD
     if(h.dormant&&r.dormant)return pickLine(['The old contest and quarrel are quiet now. Neither has been erased.','Both contest and grievance lie still beneath the newer ink.'],seed);
     if(h.dormant)return pickLine(['The quarrel has gone quiet, not clean.','The old strain is sleeping; the page has not forgotten it.'],seed);
     if(r.dormant)return pickLine(['The contest sleeps, but the page has not forgotten it.','The old measure between them has gone quiet, not vanished.'],seed);
-    if(b.dormant)return pickLine(['What once bound them belongs to the older pages now.','An older bond remains in the book, though it no longer leads the page.'],seed);
+    if(b.dormant)return pickLine(['What once bound them belongs to the older pages now.','What once bound them remains in the book, though it no longer leads the page.'],seed);
   }
   if(h.dormant&&activeB&&!activeR)return pickLine(['They stand better together now, though an older quarrel still stains the margin.','What binds them is present; an older strain still lies beneath the ink.'],seed);
   if(h.dormant&&activeR&&!activeB)return pickLine(['The contest remains awake; the older quarrel has gone quiet, not clean.','Competition continues while the old grievance lies quieter beneath it.'],seed);
   if(r.dormant&&activeB&&!activeH)return pickLine(['They stand together now, with an old contest further back on the page.','What binds them is current; the older contest has receded into the margins.'],seed);
   if(r.dormant&&activeH&&!activeB)return pickLine(['The quarrel remains awake while the older contest has fallen quiet.','Grievance still speaks where the older contest has gone still.'],seed);
   if(h.dormant&&activeR&&activeB)return pickLine(['They still stand together and measure one another; an older quarrel lies quiet beneath it.','Company and contest remain, while an older grievance has gone still.'],seed);
-  if(r.dormant&&activeH&&activeB)return pickLine(['They stand together uneasily; the old contest now sits further back on the page.','Bond and strain remain while an older contest has receded.'],seed);
-  if(b.dormant&&(activeR||activeH))return pickLine(['Contest and strain remain where an older bond has receded into the earlier pages.','The sharper parts of the history remain awake; an older bond sits further back.'],seed);
+  if(r.dormant&&activeH&&activeB)return pickLine(['They stand together uneasily; the old contest now sits further back on the page.','What binds them and what strains them remain while an older contest has receded.'],seed);
+  if(b.dormant&&(activeR||activeH))return pickLine(['Contest and strain remain where what once bound them has receded into the earlier pages.','The sharper parts of the history remain awake; what once bound them sits further back.'],seed);
   return null;
 }
 
@@ -138,12 +138,12 @@ function rivalryHostilityEpigraph(r:number,h:number,seed:string){
 function hostilityBondEpigraph(h:number,b:number,seed:string){
   if(h>=5)return b>0?pickLine(['Even what binds them now lies beneath a quarrel that has gone far beyond ordinary grievance.','What binds them survives, but the quarrel has passed beyond the book’s ordinary measure.'],seed):pickLine(HOSTILITY_LINES[4],seed);
   if(h>=b+2)return pickLine(['What binds them survives beneath a quarrel that has grown harder to ignore.','Whatever cooperation remains, the quarrel now carries more of the weight.'],seed);
-  if(b>=h+2)return pickLine(['Their bond holds the stronger place, though an old strain still works against it.','What binds them runs deeper than the quarrel that still marks the page.'],seed);
+  if(b>=h+2)return pickLine(['What binds them holds the stronger place, though an old strain still works against it.','What binds them runs deeper than the quarrel that still marks the page.'],seed);
   const lines=[
     ['They have stood together without ever standing easy.','Company has formed, but comfort has not followed.'],
     ['Cooperation survives where comfort does not.','They can stand together, though the strain between them has begun to last.'],
     ['They still answer the same cause, though the old strain remains.','What binds them persists beside a quarrel that refuses to disappear.'],
-    ['They can stand together and still carry a quarrel worth remembering.','A strong bond and an old quarrel now occupy the same page.'],
+    ['They can stand together and still carry a quarrel worth remembering.','Strong ties and an old quarrel now occupy the same page.'],
   ] as const;
   return pickLine(lines[depthBucket(Math.max(h,b))],seed);
 }
@@ -163,7 +163,7 @@ export function relationshipEpigraph(relationship:PlayerRelationshipSummary|null
   if(count===0)return pickLine(['Little has yet been settled between them.','The page between them is still mostly unwritten.','Too little has passed between them for the ink to choose a shape.'],seed);
 
   if(activeH&&h.rank>=5&&activeR&&activeB){
-    return pickLine(['Whatever has bound or tested them now stands beneath a quarrel beyond the ordinary scale.','Bond, contest and grievance remain—but the quarrel has passed beyond the book’s ordinary measure.'],seed);
+    return pickLine(['Whatever has bound or tested them now stands beneath a quarrel beyond the ordinary scale.','What binds them, what tests them, and the grievance all remain—but the quarrel has passed beyond the book’s ordinary measure.'],seed);
   }
 
   if(count===1){
