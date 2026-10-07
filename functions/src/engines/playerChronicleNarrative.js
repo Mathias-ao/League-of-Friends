@@ -198,7 +198,7 @@ function reputationLight(actorId,family,context,names){
   if(!tracks)return null;
   const chivalry=tracks.CHIVALRY??0,cruelty=tracks.CRUELTY??0,gallantry=tracks.GALLANTRY??0;
   const actor=names?.[actorId]??actorId;
-  const supportive=['SUPPORT','MATERIAL_AID','SHARED_OPPONENT'].includes(family);
+  const supportive=['SUPPORT','MATERIAL_AID'].includes(family);
   const hostile=['BREACH_OFFENSE','KING_LOSS'].includes(family);
 
   if(supportive&&chivalry>=2&&cruelty>=2)
@@ -211,8 +211,6 @@ function reputationLight(actorId,family,context,names){
     return {priority:2,text:'It sat beside earlier acts of aid already attached to '+actor+"'s name."};
   if(hostile&&cruelty>=2)
     return {priority:2,text:'It did not stand alone beside '+actor+"'s name; harder deeds had appeared there before."};
-  if(family==='DUEL'&&gallantry>=2)
-    return {priority:2,text:'It suited a name already associated with daring entries.'};
   return null;
 }
 
