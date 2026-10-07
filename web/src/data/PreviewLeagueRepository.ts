@@ -1,4 +1,4 @@
-import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type SocialHistoryResponse,type PlayerChronicleRelationshipPage} from '../domain/league';
+import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type SocialHistoryResponse,type PlayerChronicleResponse,type PlayerChronicleRelationshipPage} from '../domain/league';
 import {lombardia} from './content';
 import {illustrativeGame} from './statisticsFixtures';
 import {previewRelationshipData} from './relationshipPreview';
@@ -94,15 +94,15 @@ export class PreviewLeagueRepository implements LeagueRepository {
         },
         {
           entryId:'preview-chronicle-baguette-support',battleId:'preview-battle-3',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-12T18:00:00Z'),
-          rubric:'SUPPORT PARTICIPATION',title:'Support was recorded',
-          paragraphs:['D’Karius contributed qualifying support-command participation toward Lord Baguette at 23:41. The record establishes participation in the support episode; it does not claim a rescue or a completed outcome.'],
+          rubric:'SUPPORT RECORDED',title:'A hand in the defence',
+          paragraphs:['D’Karius was recorded participating in a defensive episode involving Lord Baguette at 23:41. The record does not claim a rescue or determine the outcome.'],
           sourceBeatIds:['preview-support-beat'],sourceEventIds:['preview-support-command'],evidenceKinds:['SUPPORT_PARTICIPATION'],
           relationshipMarks:[{track:'BOND',actorPlayerId:'sample-you',family:'PROTECTIVE_PARTICIPATION',units:1,exception:null}],
           reputationMarks:[],exposureContext:'LOCKED_TEAMMATES'
         },
         {
           entryId:'preview-chronicle-baguette-common-target',battleId:'preview-battle-8',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-17T18:00:00Z'),
-          rubric:'COMMON TARGET',title:'Against a common opponent',
+          rubric:'COMMON TARGET',title:'A common foe',
           paragraphs:['D’Karius and Lord Baguette were both recorded contributing against Ragnar in the same qualified engagement episode at 41:08. The record establishes shared participation, not intent or conspiracy.'],
           sourceBeatIds:['preview-shared-beat'],sourceEventIds:['preview-shared-a','preview-shared-b'],evidenceKinds:['SHARED_PARTICIPATION'],
           relationshipMarks:[{track:'BOND',actorPlayerId:'sample-you',family:'SHARED_PARTICIPATION',units:1,exception:null},{track:'BOND',actorPlayerId:'sample-baguette',family:'SHARED_PARTICIPATION',units:1,exception:null}],
@@ -126,6 +126,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
       names,excluded:[],coverage:{completedBattles:this.state.matches.filter(match=>match.status==='COMPLETED').length,readableAcceptedGames:pages.reduce((sum,p)=>sum+p.entries.length,0),excludedGames:0,stageMeaning:'illustrative_shadow_preview',opportunityCompleteness:false}
     };
   }
+  async playerChronicle():Promise<PlayerChronicleResponse>{return this.socialHistory();}
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
