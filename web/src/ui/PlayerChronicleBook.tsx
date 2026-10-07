@@ -91,6 +91,25 @@ const BOND_LINES=[
   ['What binds their histories has become difficult to separate.','Few pages between them can be read without seeing what binds them.'],
 ] as const;
 
+function dormantEpigraph(r:RelationshipDepth,h:RelationshipDepth,b:RelationshipDepth,seed:string){
+  const activeR=r.rank>0&&!r.dormant,activeH=h.rank>0&&!h.dormant,activeB=b.rank>0&&!b.dormant;
+  if(!activeR&&!activeH&&!activeB){
+    if(h.dormant&&h.rank>=5)return pickLine(['The fiercest chapter has gone still, but not out of the book.','The worst of the quarrel is quiet now. The page has not erased it.'],seed);
+    if(h.dormant&&r.dormant)return pickLine(['The old contest and quarrel are quiet now. Neither has been erased.','Both contest and grievance lie still beneath the newer ink.'],seed);
+    if(h.dormant)return pickLine(['The quarrel has gone quiet, not clean.','The old strain is sleeping; the page has not forgotten it.'],seed);
+    if(r.dormant)return pickLine(['The contest sleeps, but the page has not forgotten it.','The old measure between them has gone quiet, not vanished.'],seed);
+    if(b.dormant)return pickLine(['What once bound them belongs to the older pages now.','An older bond remains in the book, though it no longer leads the page.'],seed);
+  }
+  if(h.dormant&&activeB&&!activeR)return pickLine(['They stand better together now, though an older quarrel still stains the margin.','What binds them is present; an older strain still lies beneath the ink.'],seed);
+  if(h.dormant&&activeR&&!activeB)return pickLine(['The contest remains awake; the older quarrel has gone quiet, not clean.','Competition continues while the old grievance lies quieter beneath it.'],seed);
+  if(r.dormant&&activeB&&!activeH)return pickLine(['They stand together now, with an old contest further back on the page.','What binds them is current; the older contest has receded into the margins.'],seed);
+  if(r.dormant&&activeH&&!activeB)return pickLine(['The quarrel remains awake while the older contest has fallen quiet.','Grievance still speaks where the older contest has gone still.'],seed);
+  if(h.dormant&&activeR&&activeB)return pickLine(['They still stand together and measure one another; an older quarrel lies quiet beneath it.','Company and contest remain, while an older grievance has gone still.'],seed);
+  if(r.dormant&&activeH&&activeB)return pickLine(['They stand together uneasily; the old contest now sits further back on the page.','Bond and strain remain while an older contest has receded.'],seed);
+  if(b.dormant&&(activeR||activeH))return pickLine(['Contest and strain remain where an older bond has receded into the earlier pages.','The sharper parts of the history remain awake; an older bond sits further back.'],seed);
+  return null;
+}
+
 type ChronicleFlavor='neutral'|'rivalry'|'hostility'|'bond'|'mixed';
 type ChronicleMarker='origin'|'contest'|'support'|'common'|'diplomacy'|'fracture'|'crown'|'record';
 
