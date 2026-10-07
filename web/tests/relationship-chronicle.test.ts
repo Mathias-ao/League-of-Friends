@@ -51,6 +51,16 @@ test('Chronicle is one viewer-owned book and profile entry points select the mat
     assert.match(document.querySelector('.chronicle-book-owner')?.textContent??'',/D’Karius.*Chronicle/);
     assert.match(document.querySelector('.chronicle-title')?.textContent??'',/D’Karius.*Ragnar/);
     assert.match(document.querySelector('.chronicle-standing')?.textContent??'',/Rivalry is dormant/);
+    assert.ok(document.querySelector('.chronicle-manuscript'),'relationship history uses one manuscript reading column');
+    assert.ok(document.querySelector('.chronicle-manuscript-spine'),'the reading column carries an adorned spine');
+    const relationshipPage=document.querySelector('.chronicle-relationship-page');
+    assert.ok(relationshipPage);
+    assert.match(relationshipPage!.className,/flavor-(neutral|rivalry|hostility|bond|mixed)/);
+    const entries=[...document.querySelectorAll('.chronicle-entry')];
+    assert.ok(entries.length>0);
+    assert.ok(entries.every(entry=>!entry.classList.contains('entry-left')&&!entry.classList.contains('entry-right')),'entries no longer zig-zag across the parchment');
+    assert.equal(document.querySelectorAll('.chronicle-spine-marker').length,entries.length,'every written entry receives one deterministic manuscript marker');
+    assert.ok(document.querySelector('.chronicle-spine-marker.marker-origin, .chronicle-spine-marker.marker-contest'));
     assert.match(document.querySelector('.chronicle-entries')?.textContent??'',/official duel/);
     assert.doesNotMatch(document.querySelector('.chronicle-entries')?.textContent??'',/became allies|successful raid|betrayed/i);
 
