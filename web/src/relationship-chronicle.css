@@ -115,13 +115,12 @@
   radial-gradient(circle at 50% 50%,rgba(104,72,42,.55) 0 2px,transparent 2.5px),
   linear-gradient(90deg,transparent,rgba(92,61,34,.23) 25%,rgba(92,61,34,.23) 75%,transparent) center/100% 1px no-repeat}
 
-.chronicle-spine-marker{position:absolute;z-index:3;left:-70px;top:.63rem;display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(88,59,33,.52);border-radius:50%;background:radial-gradient(circle,#dfc58c 0 46%,#c6a56d 72%,#a17d4c 100%);color:#50351f;box-shadow:0 0 0 3px rgba(222,197,143,.45),0 2px 4px rgba(80,51,28,.12)}
+.chronicle-spine-marker{position:absolute;z-index:3;left:-60px;top:.63rem;display:grid;place-items:center;width:30px;height:30px;border:1px solid rgba(88,59,33,.52);border-radius:50%;background:radial-gradient(circle,#dfc58c 0 46%,#c6a56d 72%,#a17d4c 100%);color:#50351f;box-shadow:0 0 0 3px rgba(222,197,143,.45),0 2px 4px rgba(80,51,28,.12)}
 .chronicle-spine-marker:after{content:"";position:absolute;inset:4px;border:1px solid var(--relationship-accent);border-radius:50%;opacity:.28}
 .chronicle-spine-marker svg{position:relative;z-index:1;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
-.chronicle-spine-marker.marker-origin{width:34px;height:34px;left:-72px;top:.48rem}
+.chronicle-spine-marker.marker-origin{width:34px;height:34px;left:-62px;top:.48rem}
 .chronicle-spine-marker.marker-origin svg{width:20px;height:20px}
-.chronicle-spine-marker.marker-crown{color:#6a2c22}
-.chronicle-spine-marker.marker-fracture{color:#633329}
+.chronicle-spine-marker.marker-crown,.chronicle-spine-marker.marker-fracture{color:#50351f}
 
 /* New history appears as wet ink only after the reader has previously opened this pair's Chronicle. */
 .chronicle-entry.is-new .chronicle-entry-card{animation:chronicle-ink-text 1.7s steps(14,end) .3s both}
