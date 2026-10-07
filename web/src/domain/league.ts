@@ -84,12 +84,26 @@ export interface PlayerChronicleProjection {
   reputation:{sourceModelVersion:string;shadow:true;tracks:Record<string,unknown>}|null;reason?:string;
   policy?:{relationshipAndReputationStagesAreShadow?:boolean;proseUsesQualifiedSocialEvidence?:boolean;coPresenceCreatesOnlyFirstRecord?:boolean};
 }
+export interface PlayerChronicleBookEntry {
+  entryId:string;battleId:string;eventId:string|null;seasonId:string|null;playedAtMs:number|null;
+  rubric:string;title:string;paragraphs:string[];
+}
+export interface PlayerChronicleBookPage {pairId:string;counterpartPlayerId:string;entries:PlayerChronicleBookEntry[];}
+export interface PlayerChronicleBookProjection {
+  modelVersion:'AOF_PLAYER_CHRONICLE_V1'|string;ownerPlayerId:string;status:'AVAILABLE'|'UNAVAILABLE';reason?:string;
+  pages:PlayerChronicleBookPage[];
+  policy?:{proseUsesQualifiedSocialEvidence?:boolean;coPresenceCreatesOnlyFirstRecord?:boolean};
+}
 export interface PlayerChronicleResponse {
+  success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleBookProjection;names:Record<string,string>;
+  coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;stageMeaning:string;opportunityCompleteness:boolean};
+}
+export interface SocialHistoryResponse {
   success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleProjection;names:Record<string,string>;
   excluded:Array<{gameIdentity:string;reason:string}>;
   coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;stageMeaning:string;opportunityCompleteness:boolean};
+  history?:unknown;
 }
-export interface SocialHistoryResponse extends PlayerChronicleResponse {history?:unknown;}
 export interface EmperorsFavorPrintable {code:string;emperor:string;serialNumber:number;total:number;printLabel:string;}
 export interface EmperorsFavorBatch {batchId:string;batchName:string;count:number;favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
