@@ -17,12 +17,6 @@ const beatCompare=(a,b)=>a.chapterOrder-b.chapterOrder||momentCompare(a.moment,b
 const relationshipTracks=new Set(['RIVALRY','HOSTILITY','BOND']);
 const reputationTracks=new Set(['GALLANTRY','CRUELTY','CHIVALRY']);
 
-function clock(ms){
-  if(!integer(ms))return null;
-  const total=Math.floor(ms/1000),seconds=total%60,minutes=Math.floor(total/60)%60,hours=Math.floor(total/3600);
-  return hours>0?`${hours}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`:`${minutes}:${String(seconds).padStart(2,'0')}`;
-}
-
 function pairParticipants(review){
   const byReplay=new Map();
   for(const participant of rows(review?.participants)){
@@ -90,76 +84,6 @@ function relationTrackProjection(pairRow){
     };
   }
   return result;
-}
-
-function firstMeetingSentence(context,ownerName,counterpartName){
-  if(context==='LOCKED_TEAMMATES')return `The recorded history of ${ownerName} and ${counterpartName} begins in a Battle where the teams were locked and they stood on the same side.`;
-  if(context==='OPPOSED')return `The recorded history of ${ownerName} and ${counterpartName} begins in a Battle where the teams were locked and they stood opposed.`;
-  if(context==='OPEN_DIPLOMACY')return `The recorded history of ${ownerName} and ${counterpartName} begins in an open-diplomacy Battle; no lasting stance is inferred from that fact alone.`;
-  return `The records of ${ownerName} and ${counterpartName} first overlap in this Battle.`;
-}
-
-function declarationSentence(beat){
-  const at=clock(beat.moment?.atMs),when=at?` at ${at}`:'';
-  const next=beat.declaration;
-  const previous=beat.previousDeclaration;
-  if(text(previous)&&previous!=='UNKNOWN'&&text(next)&&previous!==next)
-    return `${beat.actorName} changed the declared stance toward ${beat.targetName} from ${previous.toLowerCase()} to ${next.toLowerCase()}${when}.`;
-  if(text(next))return `${beat.actorName} marked ${beat.targetName} as ${next.toLowerCase()}${when}.`;
-  return null;
-}
-
-function beatSentence(beat){
-  const at=clock(beat.moment?.atMs),when=at?` at ${at}`:'';
-  switch(beat.kind){
-    case 'DECLARATION_ESTABLISHED': return declarationSentence(beat);
-    case 'RECIPROCAL_ALLY_DECLARATIONS':
-      return `By ${at??'that point'}, both players had ally declarations recorded toward one another.`;
-    case 'ALLY_DECLARATION_WITHDRAWN': {
-      const after=text(beat.declaration)&&beat.declaration!=='UNKNOWN'?`; the recorded declaration became ${beat.declaration.toLowerCase()}`:'';
-      return `${beat.actorName} withdrew an ally declaration toward ${beat.targetName}${when}${after}.`;
-    }
-    case 'SUPPORT_PARTICIPATION':
-      if(beat.supportKind==='REINFORCEMENT_COMMANDS')
-        return `Reinforcement commands from ${beat.actorName} toward ${beat.targetName} entered the record${when}. The evidence establishes the commands, not their arrival or outcome.`;
-      if(beat.supportKind==='DEFENSIVE_PARTICIPATION')
-        return `${beat.actorName} was recorded participating in a defensive episode involving ${beat.targetName}${when}. The record does not claim a rescue or determine the outcome.`;
-      return `${beat.actorName} was recorded in qualified support-command participation toward ${beat.targetName}${when}. The record does not claim a completed rescue or outcome.`;
-    case 'SHARED_PARTICIPATION':
-      return beat.opponentName
-        ? `${beat.actorName} and ${beat.targetName} were both recorded contributing against ${beat.opponentName} in the same qualified engagement episode${when}.`
-        : `${beat.actorName} and ${beat.targetName} were both recorded contributing against the same opponent in a qualified engagement episode${when}.`;
-    case 'MATERIAL_AID_ORDER': {
-      const resources=rec(beat.resourceAmounts)?Object.entries(beat.resourceAmounts).filter(([,value])=>typeof value==='number'&&value>0)
-        .map(([resource,value])=>`${value} ${resource}`).join(', '):'';
-      return `${beat.actorName} issued a qualified material-aid order toward ${beat.targetName}${resources?` (${resources})`:''}${when}. The record treats this as an instruction, not proof of delivery.`;
-    }
-    case 'OFFENSIVE_ATTEMPT_AFTER_WITHDRAWAL': {
-      const target=beat.targetFunction==='ECONOMIC_UNIT'?`${beat.targetName}'s economic unit`:beat.targetName;
-      const timing=beat.association==='IMMEDIATE'?'soon after':'after';
-      return `${beat.actorName} made a qualified offensive attempt against ${target} ${timing} withdrawing the ally declaration${when}.`;
-    }
-    case 'QUALIFIED_KING_LOSS_TREACHERY':
-      return `${beat.actorName}'s action against ${beat.targetName} met every gate for the exceptional king-loss treachery rule${when}.`;
-    case 'ACCEPTED_DUEL_CONTEST':
-      return `${beat.actorName} and ${beat.targetName} completed an official duel; the accepted result qualified as reciprocal contest evidence.`;
-    default:return null;
-  }
-}
-
-function storyIdentity(beats,first){
-  const kinds=new Set(beats.map(beat=>beat.kind));
-  if(kinds.has('QUALIFIED_KING_LOSS_TREACHERY'))return {rubric:'KING-LOSS RULE',title:'A grievance entered the record'};
-  if(kinds.has('OFFENSIVE_ATTEMPT_AFTER_WITHDRAWAL'))return {rubric:'WITHDRAWAL & OFFENSE',title:'An offensive attempt followed the withdrawal'};
-  if(kinds.has('MATERIAL_AID_ORDER'))return {rubric:'MATERIAL AID',title:'Aid entered the ledger'};
-  if(kinds.has('SUPPORT_PARTICIPATION'))return {rubric:'SUPPORT RECORDED',title:'A hand in the defence'};
-  if(kinds.has('SHARED_PARTICIPATION'))return {rubric:'COMMON TARGET',title:'A common foe'};
-  if(kinds.has('ACCEPTED_DUEL_CONTEST'))return {rubric:'OFFICIAL DUEL',title:first?'First contest':'The contest continued'};
-  if(kinds.has('RECIPROCAL_ALLY_DECLARATIONS')&&kinds.has('ALLY_DECLARATION_WITHDRAWN'))return {rubric:'DIPLOMACY',title:'The declarations did not hold'};
-  if(kinds.has('RECIPROCAL_ALLY_DECLARATIONS'))return {rubric:'DIPLOMACY',title:'Their declarations aligned'};
-  if(kinds.has('ALLY_DECLARATION_WITHDRAWN'))return {rubric:'DIPLOMACY',title:'The ally mark was withdrawn'};
-  if(kinds.has('DECLARATION_ESTABLISHED'))return {rubric:'DIPLOMACY',title:'The stance changed'};
-  return {rubric:first?'FIRST RECORD':'RECORDED BATTLE',title:first?'First recorded meeting':'Another shared Battle'};
 }
 
 function contributionMarks(history,battleId,ownerPlayerId,counterpartPlayerId){
