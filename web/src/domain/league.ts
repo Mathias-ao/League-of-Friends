@@ -153,7 +153,7 @@ export class LeagueService {
 export class RelationshipPolicy {
   static readonly tracks=[
     {name:'Rivalry',axis:'RECIPROCAL CONTEST',description:'Repeated, reciprocal contest between two players.',stages:['Friction','Contest','Rivalry','Nemesis']},
-    {name:'Hostility',axis:'ANTAGONISM',description:'Directed antagonism that becomes a feud only when it is returned.',stages:['Tension','Grudge','Feud','Blood Feud']},
+    {name:'Hostility',axis:'ANTAGONISM',description:'Directed antagonism that becomes a feud only when it is returned.',stages:['Tension','Grudge','Feud','Blood Feud'],secretLegendaryStage:'Internecine Strife'},
     {name:'Bond',axis:'COOPERATION',description:'Cooperation, reinforcement and meaningful support between players.',stages:['Fellowship','Comrades','Trusted Allies','Oathbound']}
   ];
   static canUnlock(e:{model:string;qualified:boolean;rivalryStage:number;hostilityStage:number}|null){return e?.model==='AOF_RELATIONSHIP_ENGINE_V2'&&e.qualified&&(e.rivalryStage>=3||e.hostilityStage>=3);}
