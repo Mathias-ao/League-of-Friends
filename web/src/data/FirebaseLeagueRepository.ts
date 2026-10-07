@@ -2,7 +2,7 @@ import {initializeApp} from 'firebase/app';
 import {getAuth,GoogleAuthProvider,browserLocalPersistence,setPersistence,signInWithEmailAndPassword,signInWithPopup,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
-import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult} from '../domain/league';
+import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type SocialHistoryResponse} from '../domain/league';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -56,7 +56,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     const replayBase64=btoa(binary);
     return (await httpsCallable<unknown,ReplayUploadResult>(this.functions,'uploadReplay',{timeout:300000})({matchId,gameId,fileName:file.name,replayBase64})).data;
   }
-  socialHistory(){return this.call<any>('getSocialHistory');}
+  socialHistory(){return this.call<SocialHistoryResponse>('getSocialHistory');}
   replayStatistics(matchId:string,gameId:string){return this.call<ReplayStatisticsResult>('getReplayStatistics',{matchId,gameId});}
   statisticsExperience(scope:import('../domain/statistics').StatisticsScope){return this.call<import('../domain/statistics').StatisticsDataset>('getStatisticsExperience',scope);}
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void){
