@@ -5,6 +5,7 @@ import { db } from "../config/firebase.js";
 import { callableOptions } from "../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../domain/collections.js";
 import type { Player } from "../domain/types.js";
+import {maskUnavailableSeasonAwards} from "../engines/seasonPoints.js";
 import { iso, playerMap, publicPlayer } from "./querySupport.js";
 
 interface PlayerProfileInput {
@@ -198,11 +199,13 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
   let season = null;
   if (activeSeasonId) {
     const seasonRef = db.collection(collections.seasons).doc(activeSeasonId);
-    const [standingSnapshot, seasonCompetitionSnapshot, seasonReplaySnapshot, seasonRecordsSnapshot] = await Promise.all([
+    const [standingSnapshot, seasonCompetitionSnapshot, seasonReplaySnapshot, seasonRecordsSnapshot, scoringMatchesSnapshot, pointLedgerSnapshot] = await Promise.all([
       seasonRef.collection("standings").doc(playerId).get(),
       seasonRef.collection("statistics").doc(playerId).get(),
       seasonRef.collection("replayStatistics").doc(playerId).get(),
       seasonRef.collection("replayRecords").get(),
+      db.collection(collections.matches).where("seasonId","==",activeSeasonId).get(),
+      db.collection(collections.leaguePointLedger).where("seasonId","==",activeSeasonId).get(),
     ]);
     const seasonRecordsHeld = seasonRecordsSnapshot.docs
       .map((document) => ({ code: document.id, ...document.data() as RecordDocument }))
@@ -210,7 +213,10 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
 
     season = {
       seasonId: activeSeasonId,
-      leaguePoints: Number(standingSnapshot.data()?.leaguePoints ?? 0),
+      leaguePoints:maskUnavailableSeasonAwards(
+        [{playerId,steamName:"",leaguePoints:Number(standingSnapshot.data()?.leaguePoints??0)}],
+        scoringMatchesSnapshot.docs.map(document=>({matchId:document.id,...document.data()})),
+        pointLedgerSnapshot.docs.map(document=>document.data()))[0].leaguePoints,
       competition: competitionStats(
         seasonCompetitionSnapshot.exists ? seasonCompetitionSnapshot.data() as CompetitionStatsDocument : null,
       ),

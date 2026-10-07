@@ -12,6 +12,7 @@ export { adminSetReplayAnalysisConfig } from "./commands/admin/setReplayAnalysis
 export { adminUpsertAchievementDefinition } from "./commands/admin/upsertAchievementDefinition.js";
 export { adminCreateSeason } from "./commands/seasons/createSeason.js";
 export { adminActivateSeason } from "./commands/seasons/activateSeason.js";
+export {adminCreateEventWarmups} from "./commands/events/createEventWarmups.js";
 export { adminCreateEvent } from "./commands/events/createEvent.js";
 export { adminPublishEvent } from "./commands/events/publishEvent.js";
 export { setEventRsvp } from "./commands/events/setRsvp.js";
@@ -67,3 +68,5 @@ export {getStatisticsExperience} from "./queries/getStatisticsExperience.js";
 export {rebuildStatisticsOnGameChange,rebuildStatisticsOnMatchChange,rebuildStatisticsOnSourceChange} from "./triggers/statisticsExperience.js";
 export {getPlayerSiteDirectory} from "./queries/getPlayerSiteDirectory.js";
 export {enterSeason} from "./commands/seasons/enterSeason.js";
+
+export {reconcileSeasonPointsOnGameSource,reconcileSeasonPointsOnPlacementSource} from "./triggers/seasonPoints.js";

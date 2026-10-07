@@ -15,6 +15,7 @@ import {
   CivilizationDraftValidationError,
   validateCivilizationDraftConfiguration,
 } from "../../engines/civilizationDraftEngine.js";
+import {seasonScoringSnapshot,type PlacementPolicy} from "../../engines/seasonPoints.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
@@ -39,7 +40,8 @@ interface CreateEventInput {
   competitionStyle: CompetitionStyle;
   planningConfig: MatchPlanningConfig;
   gameConfig: GameConfiguration;
-  scoringSnapshot: ScoringSnapshot;
+  scoringSnapshot?: ScoringSnapshot;
+  placementPolicy?:PlacementPolicy;
   goldRewardSnapshot: GoldRewardConfig;
   replayParticipantBindings?: ReplayParticipantBindingInput[];
 }
@@ -135,7 +137,7 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
     throw new HttpsError("invalid-argument", "Check-in cannot open after the event starts.");
   }
 
-  if (!input.planningConfig || !input.gameConfig || !input.scoringSnapshot || !input.goldRewardSnapshot) {
+  if (!input.planningConfig || !input.gameConfig || !input.goldRewardSnapshot) {
     throw new HttpsError("invalid-argument", "Event planning, game, scoring, and Gold configurations are required.");
   }
 
@@ -183,6 +185,15 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
       actor.authUid,
     );
 
+    let scoringSnapshot;
+    try {
+      if(input.competitionStyle==="FFA"&&input.gameConfig.diplomacyEnabled===false&&
+         (input.gameConfig.victory.wonder||input.gameConfig.victory.relic||input.gameConfig.victory.customRuleCode)&&
+         input.placementPolicy==null)throw new Error("Objective FFA requires an explicit placement policy before play.");
+      scoringSnapshot=seasonScoringSnapshot({act:"MAIN",diplomacyEnabled:input.gameConfig.diplomacyEnabled,
+        placementPolicy:input.placementPolicy??(input.gameConfig.diplomacyEnabled===false ? "ELIMINATION_ORDER":"NONE"),
+        emperorPlayerId:null});
+    }catch(error){throw new HttpsError("invalid-argument",(error as Error).message);}
     const now = Timestamp.now();
     const event = {
       seasonId: leagueState.activeSeasonId,
@@ -203,7 +214,7 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
       competitionStyle: input.competitionStyle,
       planningConfig: input.planningConfig,
       gameConfig: input.gameConfig,
-      scoringSnapshot: input.scoringSnapshot,
+      scoringSnapshot,
       goldRewardSnapshot: input.goldRewardSnapshot,
       specialMechanics: [],
       replayParticipantBindings,

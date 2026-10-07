@@ -1,7 +1,13 @@
-import type { CanonicalGameResult, MatchParticipant } from "../domain/types.js";
+import type { CanonicalGameResult, MatchParticipant, MatchFormat } from "../domain/types.js";
+
+import {assertScoringRoster,assertSeasonMatchRules,validateSeasonScoringRules} from "./seasonPoints.js";
+import {placementBonus,verifiedFFAPlacements,type PlacementSourceBinding,type VerifiedFFAPlacements} from "./ffaPlacements.js";
 
 export interface RewardEngineMatch {
   participants: MatchParticipant[];
+  format?:MatchFormat;
+  placementEvidence?:VerifiedFFAPlacements|null;
+  placementSourceBinding?:PlacementSourceBinding;
   canonicalResult: CanonicalGameResult;
   context?: {
     affectsLeaguePoints?: boolean;
@@ -22,7 +28,10 @@ export interface PlayerMatchReward {
   leaguePoints: {
     matchCompletion: number;
     matchWin: number;
+    placement:number;
+    emperor:number;
   };
+  placementState:"NOT_APPLICABLE"|"PENDING"|"VERIFIED";
   warRoomPoints: {
     matchCompletion: number;
     matchWin: number;
@@ -60,11 +69,40 @@ export function computeMatchRewards(match: RewardEngineMatch): PlayerMatchReward
   const winners = new Set(match.canonicalResult.winningPlayerIds);
   const rules = match.scoringSnapshot?.rules ?? {};
 
+  let seasonRules;
+  try {seasonRules=validateSeasonScoringRules(rules);}
+  catch(error){throw new RewardConfigurationError((error as Error).message);}
+  if(seasonRules && match.context?.affectsLeaguePoints) {
+    try {
+      assertScoringRoster(match.participants);
+      if(!match.format)throw new Error("Season rewards require the Match format.");
+      assertSeasonMatchRules(seasonRules,match.format);
+    }catch(error){throw new RewardConfigurationError((error as Error).message);}
+    if(!winners.size||winners.size>=match.participants.length||
+       winners.size!==match.canonicalResult.winningPlayerIds.length||
+       [...winners].some(id=>!match.participants.some(p=>p.playerId===id))) {
+      throw new RewardConfigurationError("Official winners do not match the scoring roster.");
+    }
+    if(match.format==="FFA"&&winners.size>1&&seasonRules.diplomacyEnabled!==true) {
+      throw new RewardConfigurationError("Nondiplomatic FFA must have one winner.");
+    }
+  }
+  const active=seasonRules&&match.context?.affectsLeaguePoints ? seasonRules:null;
+  const needsPlacements=!!active&&match.format==="FFA"&&active.diplomacyEnabled===false;
+  const placements=needsPlacements&&match.placementSourceBinding
+    ? verifiedFFAPlacements(match.placementEvidence,{
+        ...match.placementSourceBinding,policy:active!.placementPolicy,
+        rosterIds:match.participants.map(p=>p.playerId),winnerIds:[...winners],
+        resultRevision:match.canonicalResult.revision,
+      }):null;
+  const emperorLost=!!active?.emperorPlayerId&&!winners.has(active.emperorPlayerId)&&
+    match.participants.some(p=>p.playerId===active.emperorPlayerId);
+
   const leagueCompletion = match.context?.affectsLeaguePoints
-    ? finiteNumber(rules.matchCompletionPoints, "scoringSnapshot.rules.matchCompletionPoints")
+    ? active ? active.act==="MAIN" ? 4:1 : finiteNumber(rules.matchCompletionPoints, "scoringSnapshot.rules.matchCompletionPoints")
     : 0;
   const leagueWin = match.context?.affectsLeaguePoints
-    ? finiteNumber(rules.matchWinPoints, "scoringSnapshot.rules.matchWinPoints")
+    ? active ? active.act==="MAIN" ? 6:2 : finiteNumber(rules.matchWinPoints, "scoringSnapshot.rules.matchWinPoints")
     : 0;
 
   const warRoomCompletion = match.context?.affectsWarRoomPoints
@@ -87,8 +125,11 @@ export function computeMatchRewards(match: RewardEngineMatch): PlayerMatchReward
       playerId: participant.playerId,
       leaguePoints: {
         matchCompletion: leagueCompletion,
-        matchWin: isWinner ? leagueWin : 0,
+        matchWin:isWinner ? leagueWin/(active&&match.format==="FFA"&&active.diplomacyEnabled ? winners.size:1):0,
+        placement:placements ? placementBonus(placements,participant.playerId):0,
+        emperor:active?.act==="MAIN"&&emperorLost&&isWinner ? 2:0,
       },
+      placementState:needsPlacements ? placements ? "VERIFIED":"PENDING":"NOT_APPLICABLE",
       warRoomPoints: {
         matchCompletion: warRoomCompletion,
         matchWin: isWinner ? warRoomWin : 0,

@@ -121,6 +121,7 @@ export interface GamePlayer extends MatchParticipant {
 }
 
 export type GameOutcome =
+  | {type:"COALITION_WIN";winnerTeam:null;winnerPlayerId:null;winnerPlayerIds:string[];}
   | {
       type: "TEAM_WIN";
       winnerTeam: number;

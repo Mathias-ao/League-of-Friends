@@ -44,6 +44,7 @@ interface MatchDocument {
   eventId?: string | null;
   matchNumber?: number;
   format?: string;
+  scoringSnapshot?:{rules?:Record<string,unknown>};
   teamSizes?: [number, number] | null;
   participants?: MatchParticipant[];
   status?: string;
@@ -98,6 +99,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
         matchId,
         matchNumber: Number(match.matchNumber ?? 0),
         format: match.format ?? null,
+        scoringAct:match.scoringSnapshot?.rules?.act??null,
         teamSizes: match.teamSizes ?? null,
         status: match.status ?? "UNKNOWN",
         draftRequired: match.gameConfigSnapshot?.civilizations?.mode === "DRAFT",

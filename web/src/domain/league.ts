@@ -1,6 +1,6 @@
 export type Page = 'season' | 'events' | 'battles' | 'players' | 'war-room' | 'statistics';
 export type Membership = 'SIGNED_OUT' | 'UNLINKED' | 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-export interface PlayerRecord { playerId:string; steamName:string; avatarUrl?:string|null; role?:'PLAYER'|'ADMIN'; currentPowerRating?:number|null; provisionalRating?:boolean; leaguePoints?:number; rank?:number; wins?:number|null; losses?:number|null; }
+export interface PlayerRecord { playerId:string; steamName:string; avatarUrl?:string|null; role?:'PLAYER'|'ADMIN'; currentPowerRating?:number|null; provisionalRating?:boolean; leaguePoints?:number;mainEventWins?:number;warmupWins?:number;mainEventsPlayed?:number;warmupsPlayed?:number; rank?:number; wins?:number|null; losses?:number|null; }
 export class Player {
   constructor(readonly record:PlayerRecord) {}
   get id(){return this.record.playerId;}
@@ -35,7 +35,7 @@ export class LeagueEvent {
     return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>=now);
   }
 }
-export interface MatchRecord {matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
+export interface MatchRecord {scoringAct?:string|null;scoringRules?:Record<string,unknown>|null;scoringState?:string|null;scoringBreakdown?:Array<{playerId:string;matchCompletion:number;matchWin:number;placement:number;emperor:number;placementState:string}>;matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
 export interface CivilizationDraftTurnRecord {index:number;playerId:string;team:number|null;slot:number;status:'PENDING'|'COMPLETED';civilization:string|null;}
 export interface CivilizationDraftSelectionRecord {turnIndex:number;playerId:string;team:number|null;civilization:string;}
 export interface CivilizationDraftRecord {
