@@ -168,7 +168,7 @@ export function projectSocialIncidents({statistics, playerMapping=[], officialOu
           const a=f.fromPlayerId,b=f.toPlayerId, r=refs(f.sourceEventIds);
           if (!validPair(a,b)||key(a,b)!==key(...pair)||!r.length||r.some(x=>evidence.get(x)?.actorPlayerId!==a)) continue;
           decide('PROTECTIVE_PARTICIPATION',pair,r,'MATCHED',[],{scope:'INFERRED_SUPPORT_COMMAND_PARTICIPATION'});
-          addBeat('SUPPORT_PARTICIPATION',raw.startedAt,a,b,r,{scope:'INFERRED_SUPPORT_COMMAND_PARTICIPATION'});
+          addBeat('SUPPORT_PARTICIPATION',raw.startedAt,a,b,r,{scope:'INFERRED_SUPPORT_COMMAND_PARTICIPATION',supportKind:f.kind});
           deed('PROTECTIVE_PARTICIPATION','BOND',a,b,raw.startedAt,r,raw.incidentId,'INFERRED_SUPPORT_COMMAND_PARTICIPATION');
           // Chivalry's substantive-assistance qualifier is separate from a support annotation.
           decide('CHIVALROUS_PROTECTION',pair,r,'UNAVAILABLE',['assistance_materiality_unqualified']);

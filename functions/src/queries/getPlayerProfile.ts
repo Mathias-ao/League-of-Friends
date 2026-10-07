@@ -290,6 +290,13 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
     .map((document) => ({ code: document.id, ...document.data() as RecordDocument }))
     .filter((record) => (record.holders ?? []).some((holder) => holder.playerId === playerId));
 
+  const showcasedRecordCodes = playerId === actor.playerId
+    ? (((player as Player & { showcasedRecordCodes?: string[] }).showcasedRecordCodes ?? []).filter(code => typeof code === "string").slice(0, 3))
+    : [];
+  const chronicleSelectedRecords = showcasedRecordCodes
+    .map(code => lifetimeRecordsHeld.find(record => record.code === code))
+    .filter((record): record is NonNullable<typeof record> => record != null);
+
   return {
     schemaVersion: "PLAYER_PROFILE_V2",
     generatedAt: new Date().toISOString(),
@@ -316,7 +323,10 @@ export const getPlayerProfile = onCall<PlayerProfileInput>(callableOptions, asyn
       ((player as Player & {showcasedAwardIds?: string[]}).showcasedAwardIds ?? [])
         .slice(0, 3).includes(achievement.awardId),
     ),
-    ...(playerId === actor.playerId ? {achievementCollection: activeAchievements} : {}),
+    ...(playerId === actor.playerId ? {
+      achievementCollection: activeAchievements,
+      chronicleShowcase: { selectedRecords: chronicleSelectedRecords },
+    } : {}),
     opponents: relationships(opponentsSnapshot),
     teammates: relationships(teammatesSnapshot),
     relationships: pairRelationships,

@@ -1,4 +1,4 @@
-import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult} from '../domain/league';
+import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type SocialHistoryResponse,type PlayerChronicleResponse,type PlayerChronicleRelationshipPage} from '../domain/league';
 import {lombardia} from './content';
 import {illustrativeGame} from './statisticsFixtures';
 import {previewRelationshipData} from './relationshipPreview';
@@ -60,6 +60,89 @@ export class PreviewLeagueRepository implements LeagueRepository {
     if(this.state.membership!=='ACTIVE')throw new Error('Join the league to view statistics.');
     return {version:EXPERIENCE_VERSION,unavailableGames:0,games:this.state.matches.filter(m=>(!scope.matchId||m.matchId===scope.matchId)&&(!scope.eventId||m.eventId===scope.eventId)&&(!scope.seasonId||m.seasonId===scope.seasonId)).map(m=>illustrativeGame(m,m.matchId.startsWith('preview-battle-')?Number(m.matchId.slice('preview-battle-'.length))-1:['sample-duel','sample-team'].indexOf(m.matchId),this.state.players))};
   }
+  async socialHistory():Promise<SocialHistoryResponse>{
+    const owner=this.state.viewer?.playerId;
+    if(!owner)throw new Error('Join the league to open your Chronicle.');
+    const names=Object.fromEntries(this.state.players.map(player=>[player.playerId,player.steamName]));
+    const pages:PlayerChronicleRelationshipPage[]=[];
+    const page=(counterpartPlayerId:string,entries:PlayerChronicleRelationshipPage['entries'],tracks:PlayerChronicleRelationshipPage['relationship']['tracks']={})=>{
+      pages.push({
+        pairId:[owner,counterpartPlayerId].sort().join('|'),
+        counterpartPlayerId,
+        relationship:{sourceModelVersion:'AOF_SOCIAL_HISTORY_V1',shadow:true,tracks},
+        exposure:{gameIds:[],battleIds:[...new Set(entries.map(entry=>entry.battleId))],contexts:[],lastOrder:null},
+        entries
+      });
+    };
+    if(owner==='sample-you'){
+      page('sample-ragnar',[
+        {
+          entryId:'preview-chronicle-ragnar-duel',battleId:'sample-duel',eventId:null,seasonId:'S001',playedAtMs:Date.parse('2026-09-06T18:00:00Z'),
+          rubric:'OFFICIAL DUEL',title:'First contest',
+          paragraphs:['Their first shared page placed D’Karius and Ragnar on opposite sides of the field. They met in an official duel and carried it through to an accepted result.'],
+          sourceBeatIds:['preview-duel-contest'],sourceEventIds:['preview-official-result'],evidenceKinds:['ACCEPTED_DUEL_CONTEST'],
+          relationshipMarks:[{track:'RIVALRY',actorPlayerId:'sample-you',family:'ACCEPTED_DUEL_CONTEST',units:1,exception:null},{track:'RIVALRY',actorPlayerId:'sample-ragnar',family:'ACCEPTED_DUEL_CONTEST',units:1,exception:null}],
+          reputationMarks:[],exposureContext:'OPPOSED'
+        }
+      ],{RIVALRY:{currentStage:1,historicalPeak:1,battleIds:['sample-duel'],directedActors:['sample-you','sample-ragnar']}});
+      page('sample-baguette',[
+        {
+          entryId:'preview-chronicle-baguette-first',battleId:'preview-battle-1',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-10T18:00:00Z'),
+          rubric:'FIRST RECORD',title:'First recorded meeting',
+          paragraphs:['Their first shared page found D’Karius and Lord Baguette beneath the same banner.'],
+          sourceBeatIds:[],sourceEventIds:[],evidenceKinds:[],relationshipMarks:[],reputationMarks:[],exposureContext:'LOCKED_TEAMMATES'
+        },
+        {
+          entryId:'preview-chronicle-baguette-support',battleId:'preview-battle-3',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-12T18:00:00Z'),
+          rubric:'SUPPORT RECORDED',title:'A hand in the defence',
+          paragraphs:['When the fighting gathered around Lord Baguette, D’Karius joined the defensive episode beside him. Whether it changed the outcome is not written here.'],
+          sourceBeatIds:['preview-support-beat'],sourceEventIds:['preview-support-command'],evidenceKinds:['SUPPORT_PARTICIPATION'],
+          relationshipMarks:[{track:'BOND',actorPlayerId:'sample-you',family:'PROTECTIVE_PARTICIPATION',units:1,exception:null}],
+          reputationMarks:[],exposureContext:'LOCKED_TEAMMATES'
+        },
+        {
+          entryId:'preview-chronicle-baguette-common-target',battleId:'preview-battle-8',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-17T18:00:00Z'),
+          rubric:'COMMON TARGET',title:'Against the same foe',
+          paragraphs:['In the same engagement, D’Karius and Lord Baguette both took part against Ragnar. Whether by design or circumstance, the page does not say. It joined a cooperative pattern already taking shape between them.'],
+          sourceBeatIds:['preview-shared-beat'],sourceEventIds:['preview-shared-a','preview-shared-b'],evidenceKinds:['SHARED_PARTICIPATION'],
+          relationshipMarks:[{track:'BOND',actorPlayerId:'sample-you',family:'SHARED_PARTICIPATION',units:1,exception:null},{track:'BOND',actorPlayerId:'sample-baguette',family:'SHARED_PARTICIPATION',units:1,exception:null}],
+          reputationMarks:[],exposureContext:'LOCKED_TEAMMATES'
+        }
+      ],{BOND:{currentStage:2,historicalPeak:2,battleIds:['preview-battle-3','preview-battle-8'],directedActors:['sample-you','sample-baguette']}});
+      page('sample-steve',[
+        {
+          entryId:'preview-chronicle-steve-first',battleId:'preview-battle-1',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-10T18:00:00Z'),
+          rubric:'FIRST RECORD',title:'First recorded meeting',
+          paragraphs:['Their first shared page placed D’Karius and Steve on opposite sides of the field. Nothing more was written between them that day.'],
+          sourceBeatIds:[],sourceEventIds:[],evidenceKinds:[],relationshipMarks:[],reputationMarks:[],exposureContext:'OPPOSED'
+        }
+      ]);
+    }
+    return {
+      success:true,status:'AVAILABLE',
+      chronicle:{modelVersion:'AOF_PLAYER_CHRONICLE_V2',ownerPlayerId:owner,status:'AVAILABLE',pages,
+        reputation:{sourceModelVersion:'AOF_SOCIAL_HISTORY_V1',shadow:true,tracks:{}},
+        policy:{relationshipAndReputationStagesAreShadow:true,proseUsesQualifiedSocialEvidence:true,coPresenceCreatesOnlyFirstRecord:true}},
+      names,excluded:[],coverage:{completedBattles:this.state.matches.filter(match=>match.status==='COMPLETED').length,readableAcceptedGames:pages.reduce((sum,p)=>sum+p.entries.length,0),excludedGames:0,stageMeaning:'illustrative_shadow_preview',opportunityCompleteness:false}
+    };
+  }
+  async playerChronicle():Promise<PlayerChronicleResponse>{
+    const result=await this.socialHistory();
+    return {
+      success:true,status:result.status,names:result.names,coverage:{completedBattles:result.coverage.completedBattles,readableAcceptedGames:result.coverage.readableAcceptedGames,excludedGames:result.coverage.excludedGames,opportunityCompleteness:result.coverage.opportunityCompleteness},
+      chronicle:{
+        modelVersion:result.chronicle.modelVersion,ownerPlayerId:result.chronicle.ownerPlayerId,status:result.chronicle.status,
+        pages:result.chronicle.pages.map(page=>({
+          pairId:page.pairId,counterpartPlayerId:page.counterpartPlayerId,
+          entries:page.entries.map(entry=>({
+            entryId:entry.entryId,battleId:entry.battleId,eventId:entry.eventId,seasonId:entry.seasonId,playedAtMs:entry.playedAtMs,
+            rubric:entry.rubric,title:entry.title,paragraphs:entry.paragraphs
+          }))
+        })),
+        policy:{proseUsesQualifiedSocialEvidence:true,coPresenceCreatesOnlyFirstRecord:true}
+      }
+    };
+  }
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
@@ -72,7 +155,13 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async player(id:string):Promise<PlayerProfile>{
     const p=this.state.players.find(p=>p.playerId===id);if(!p)throw new Error('Player not found.');
     const social=previewRelationshipData(id,this.state.players,this.state.matches);
-    return {player:p,lifetime:{competition:null},activeSeason:{leaguePoints:p.leaguePoints??0,competition:{matchesPlayed:(p.wins??0)+(p.losses??0),matchesWon:p.wins??0,matchesLost:p.losses??0}},achievements:[],opponents:social.opponents,teammates:social.teammates,relationships:social.relationships};
+    const isOwner=id===this.state.viewer?.playerId;
+    const achievements=isOwner?[
+      {awardId:'preview-award-1',achievementId:'FIRST_BLOODLESS_FEUD',name:'First Rivalry',description:'Established a recurring contest across recorded Battles.'},
+      {awardId:'preview-award-2',achievementId:'FIELD_COMPANION',name:'Field Companion',description:'Recorded repeated qualified cooperative participation.'}
+    ]:[];
+    const records=isOwner?[{code:'FASTEST_CASTLE_AGE',direction:'LOW',unit:'seconds',value:1002,holders:[{playerId:id,value:1002,matchId:'preview-battle-4'}]}]:[];
+    return {player:p,lifetime:{competition:null,recordsHeld:records},activeSeason:{leaguePoints:p.leaguePoints??0,competition:{matchesPlayed:(p.wins??0)+(p.losses??0),matchesWon:p.wins??0,matchesLost:p.losses??0},recordsHeld:records},achievements,achievementCollection:isOwner?achievements:undefined,chronicleShowcase:isOwner?{selectedRecords:records}:undefined,opponents:social.opponents,teammates:social.teammates,relationships:social.relationships};
   }
   async dispute(id:string,gameId:string,category:string,reason:string){
     const m=this.state.matches.find(m=>m.matchId===id);

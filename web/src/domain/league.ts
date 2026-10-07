@@ -51,10 +51,59 @@ export interface GameRecord {gameId:string;gameNumber:number;status:string;playe
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
 export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
+export interface AchievementSummary {awardId:string;achievementId?:string|null;name:string;description:string;scope?:string|null;seasonId?:string|null;firstAwardedAt?:string|null;evaluation?:Record<string,unknown>;}
+export interface LeagueRecordSummary {code:string;direction?:string;unit?:string;value?:number|null;holders?:Array<{playerId?:string;value?:number;matchId?:string;gameId?:string}>;}
 export interface RelationshipTrackSummary {status:string;state:string;stageId:string|null;historicalPeakStageId:string|null;}
 export interface RelationshipChronicleEntry {entryId:string;matchId:string|null;eventId:string|null;seasonId:string|null;playedAt:string|null;kind:string;title:string;text:string;relation:string|null;tracksTouched:string[];}
 export interface PlayerRelationshipSummary {pairId:string;otherPlayer:PlayerRecord;relationshipEngineVersion:string|null;relationshipRulesConfigured:boolean;tracks:{rivalry:RelationshipTrackSummary;hostility:RelationshipTrackSummary;bond:RelationshipTrackSummary};chronicle:RelationshipChronicleEntry[];}
-export interface PlayerProfile {player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};lifetime:{competition:Competition|null};activeSeason:{competition:Competition|null;leaguePoints:number}|null;achievements:{awardId:string;name:string;description:string}[];opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];relationships?:PlayerRelationshipSummary[];}
+export interface PlayerProfile {
+  player:PlayerRecord&{membershipStatus?:string;goldBalance?:number};
+  lifetime:{competition:Competition|null;recordsHeld?:LeagueRecordSummary[]};
+  activeSeason:{competition:Competition|null;leaguePoints:number;recordsHeld?:LeagueRecordSummary[]}|null;
+  achievements:AchievementSummary[];
+  achievementCollection?:AchievementSummary[];
+  chronicleShowcase?:{selectedRecords:LeagueRecordSummary[]};
+  opponents:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];
+  teammates:{player:PlayerRecord;matchesTogether:number;wins:number;losses:number}[];
+  relationships?:PlayerRelationshipSummary[];
+}
+export interface ChronicleContributionMark {track:'RIVALRY'|'HOSTILITY'|'BOND'|'GALLANTRY'|'CRUELTY'|'CHIVALRY'|string;actorPlayerId:string;family:string;units:number;exception:string|null;}
+export interface PlayerChronicleEntry {
+  entryId:string;battleId:string;eventId:string|null;seasonId:string|null;playedAtMs:number|null;
+  rubric:string;title:string;paragraphs:string[];sourceBeatIds:string[];sourceEventIds:string[];evidenceKinds:string[];
+  relationshipMarks:ChronicleContributionMark[];reputationMarks:ChronicleContributionMark[];exposureContext:string|null;
+}
+export interface PlayerChronicleRelationshipPage {
+  pairId:string;counterpartPlayerId:string;
+  relationship:{sourceModelVersion:string;shadow:true;tracks:Record<string,{currentStage:number;historicalPeak:number;battleIds:string[];directedActors:string[];exceptionalDirectedLevels?:Record<string,number>}>};
+  exposure:{gameIds?:string[];battleIds?:string[];contexts?:string[];lastOrder?:number|null}|null;
+  entries:PlayerChronicleEntry[];
+}
+export interface PlayerChronicleProjection {
+  modelVersion:'AOF_PLAYER_CHRONICLE_V1'|string;ownerPlayerId:string;status:'AVAILABLE'|'UNAVAILABLE';pages:PlayerChronicleRelationshipPage[];
+  reputation:{sourceModelVersion:string;shadow:true;tracks:Record<string,unknown>}|null;reason?:string;
+  policy?:{relationshipAndReputationStagesAreShadow?:boolean;proseUsesQualifiedSocialEvidence?:boolean;coPresenceCreatesOnlyFirstRecord?:boolean};
+}
+export interface PlayerChronicleBookEntry {
+  entryId:string;battleId:string;eventId:string|null;seasonId:string|null;playedAtMs:number|null;
+  rubric:string;title:string;paragraphs:string[];
+}
+export interface PlayerChronicleBookPage {pairId:string;counterpartPlayerId:string;entries:PlayerChronicleBookEntry[];}
+export interface PlayerChronicleBookProjection {
+  modelVersion:'AOF_PLAYER_CHRONICLE_V1'|string;ownerPlayerId:string;status:'AVAILABLE'|'UNAVAILABLE';reason?:string;
+  pages:PlayerChronicleBookPage[];
+  policy?:{proseUsesQualifiedSocialEvidence?:boolean;coPresenceCreatesOnlyFirstRecord?:boolean};
+}
+export interface PlayerChronicleResponse {
+  success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleBookProjection;names:Record<string,string>;
+  coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;opportunityCompleteness:boolean};
+}
+export interface SocialHistoryResponse {
+  success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleProjection;names:Record<string,string>;
+  excluded:Array<{gameIdentity:string;reason:string}>;
+  coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;stageMeaning:string;opportunityCompleteness:boolean};
+  history?:unknown;
+}
 export interface EmperorsFavorPrintable {code:string;emperor:string;serialNumber:number;total:number;printLabel:string;}
 export interface EmperorsFavorBatch {batchId:string;batchName:string;count:number;favors:EmperorsFavorPrintable[];}
 export interface LeagueSnapshot {membership:Membership;viewer:PlayerRecord|null;season:{seasonId:string;name:string;status:string;currentEmperorPlayerId?:string|null}|null;emperor:PlayerRecord|null;enteredSeason:boolean;hasLeagueHistory:boolean;standings:PlayerRecord[];players:PlayerRecord[];events:EventRecord[];matches:MatchRecord[];}
@@ -84,7 +133,8 @@ export interface LeagueRepository {
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;checkIn(eventId:string):Promise<void>;formEventMatches(eventId:string):Promise<void>;
   ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
   uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
-  socialHistory?():Promise<any>;
+  playerChronicle?():Promise<PlayerChronicleResponse>;
+  socialHistory?():Promise<SocialHistoryResponse>;
   event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;
   dispute(matchId:string,gameId:string,category:string,reason:string):Promise<void>;
   onAuthChange(callback:()=>void):()=>void;
@@ -103,7 +153,7 @@ export class LeagueService {
 export class RelationshipPolicy {
   static readonly tracks=[
     {name:'Rivalry',axis:'RECIPROCAL CONTEST',description:'Repeated, reciprocal contest between two players.',stages:['Friction','Contest','Rivalry','Nemesis']},
-    {name:'Hostility',axis:'ANTAGONISM',description:'Directed antagonism that becomes a feud only when it is returned.',stages:['Tension','Grudge','Feud','Blood Feud']},
+    {name:'Hostility',axis:'ANTAGONISM',description:'Directed antagonism that becomes a feud only when it is returned.',stages:['Tension','Grudge','Feud','Blood Feud'],secretLegendaryStage:'Internecine Strife'},
     {name:'Bond',axis:'COOPERATION',description:'Cooperation, reinforcement and meaningful support between players.',stages:['Fellowship','Comrades','Trusted Allies','Oathbound']}
   ];
   static canUnlock(e:{model:string;qualified:boolean;rivalryStage:number;hostilityStage:number}|null){return e?.model==='AOF_RELATIONSHIP_ENGINE_V2'&&e.qualified&&(e.rivalryStage>=3||e.hostilityStage>=3);}
