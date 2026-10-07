@@ -126,7 +126,23 @@ export class PreviewLeagueRepository implements LeagueRepository {
       names,excluded:[],coverage:{completedBattles:this.state.matches.filter(match=>match.status==='COMPLETED').length,readableAcceptedGames:pages.reduce((sum,p)=>sum+p.entries.length,0),excludedGames:0,stageMeaning:'illustrative_shadow_preview',opportunityCompleteness:false}
     };
   }
-  async playerChronicle():Promise<PlayerChronicleResponse>{return this.socialHistory();}
+  async playerChronicle():Promise<PlayerChronicleResponse>{
+    const result=await this.socialHistory();
+    return {
+      success:true,status:result.status,names:result.names,coverage:result.coverage,
+      chronicle:{
+        modelVersion:result.chronicle.modelVersion,ownerPlayerId:result.chronicle.ownerPlayerId,status:result.chronicle.status,
+        pages:result.chronicle.pages.map(page=>({
+          pairId:page.pairId,counterpartPlayerId:page.counterpartPlayerId,
+          entries:page.entries.map(entry=>({
+            entryId:entry.entryId,battleId:entry.battleId,eventId:entry.eventId,seasonId:entry.seasonId,playedAtMs:entry.playedAtMs,
+            rubric:entry.rubric,title:entry.title,paragraphs:entry.paragraphs
+          }))
+        })),
+        policy:{proseUsesQualifiedSocialEvidence:true,coPresenceCreatesOnlyFirstRecord:true}
+      }
+    };
+  }
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
