@@ -110,6 +110,44 @@ function dormantEpigraph(r:RelationshipDepth,h:RelationshipDepth,b:RelationshipD
   return null;
 }
 
+function rivalryBondEpigraph(r:number,b:number,seed:string){
+  if(r>=b+2)return pickLine(['Whatever goodwill has formed, the contest still sets the terms.','What binds them has grown in the shadow of a contest neither escapes.'],seed);
+  if(b>=r+2)return pickLine(['They stand close; the contest between them remains the lesser part of the story.','What binds them runs deeper than the contest that still tests it.'],seed);
+  const lines=[
+    ['They have begun to stand together—and already measure one another.','Company has begun to form without ending the contest.'],
+    ['Familiar company has done little to dull the contest.','They stand together often enough to matter, and still test one another.'],
+    ['They have shared enough battles to matter, and enough contests to remember.','What binds them has grown alongside a contest neither has put aside.'],
+    ['They have become both dependable company and unavoidable competition.','What binds them and what tests them have both become part of the history.'],
+  ] as const;
+  return pickLine(lines[depthBucket(Math.max(r,b))],seed);
+}
+
+function rivalryHostilityEpigraph(r:number,h:number,seed:string){
+  if(h>=5)return r>0?pickLine(['The contest has been overtaken by a quarrel with no ordinary measure left.','What began as contest now lives beneath a quarrel beyond the usual scale.'],seed):pickLine(HOSTILITY_LINES[4],seed);
+  if(r>=h+2)return pickLine(['The contest still sets the rhythm, though an edge now follows it.','Competition remains the greater force, but the quarrel has learned to keep pace.'],seed);
+  if(h>=r+2)return pickLine(['The quarrel now weighs heavier than the contest that first sharpened it.','Competition remains, but grievance has become the heavier inheritance.'],seed);
+  const lines=[
+    ['The contest has begun to carry an edge.','Competition has already picked up a sharper tone.'],
+    ['What was competition is becoming harder to call courteous.','The contest is no longer entirely clean of grievance.'],
+    ['Every new contest now arrives carrying an older grievance.','Competition and grievance have begun to travel together.'],
+    ['Neither meeting begins entirely where the last one ended.','The contest now carries too much old weight to start afresh.'],
+  ] as const;
+  return pickLine(lines[depthBucket(Math.max(r,h))],seed);
+}
+
+function hostilityBondEpigraph(h:number,b:number,seed:string){
+  if(h>=5)return b>0?pickLine(['Even what binds them now lies beneath a quarrel that has gone far beyond ordinary grievance.','What binds them survives, but the quarrel has passed beyond the book’s ordinary measure.'],seed):pickLine(HOSTILITY_LINES[4],seed);
+  if(h>=b+2)return pickLine(['What binds them survives beneath a quarrel that has grown harder to ignore.','Whatever cooperation remains, the quarrel now carries more of the weight.'],seed);
+  if(b>=h+2)return pickLine(['Their bond holds the stronger place, though an old strain still works against it.','What binds them runs deeper than the quarrel that still marks the page.'],seed);
+  const lines=[
+    ['They have stood together without ever standing easy.','Company has formed, but comfort has not followed.'],
+    ['Cooperation survives where comfort does not.','They can stand together, though the strain between them has begun to last.'],
+    ['They still answer the same cause, though the old strain remains.','What binds them persists beside a quarrel that refuses to disappear.'],
+    ['They can stand together and still carry a quarrel worth remembering.','A strong bond and an old quarrel now occupy the same page.'],
+  ] as const;
+  return pickLine(lines[depthBucket(Math.max(h,b))],seed);
+}
+
 type ChronicleFlavor='neutral'|'rivalry'|'hostility'|'bond'|'mixed';
 type ChronicleMarker='origin'|'contest'|'support'|'common'|'diplomacy'|'fracture'|'crown'|'record';
 
