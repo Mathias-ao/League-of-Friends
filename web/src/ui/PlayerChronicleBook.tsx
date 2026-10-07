@@ -135,11 +135,17 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
   const players=useMemo(()=>{
     const byId=new Map(snapshot.players.map(player=>[player.playerId,player]));
     if(snapshot.viewer)byId.set(snapshot.viewer.playerId,snapshot.viewer);
+    if(ownerProfile)byId.set(ownerProfile.player.playerId,ownerProfile.player);
     if(!byId.has(sourceProfile.player.playerId))byId.set(sourceProfile.player.playerId,sourceProfile.player);
+    for(const relationship of ownerProfile?.relationships??[])if(!byId.has(relationship.otherPlayer.playerId))byId.set(relationship.otherPlayer.playerId,relationship.otherPlayer);
+    for(const page of social?.chronicle.pages??[]){
+      if(byId.has(page.counterpartPlayerId))continue;
+      byId.set(page.counterpartPlayerId,{playerId:page.counterpartPlayerId,steamName:social?.names[page.counterpartPlayerId]??page.counterpartPlayerId});
+    }
     const owner=ownerId?byId.get(ownerId):null;
     const others=[...byId.values()].filter(player=>player.playerId!==ownerId).sort((left,right)=>left.steamName.localeCompare(right.steamName));
     return owner?[owner,...others]:others;
-  },[snapshot.players,snapshot.viewer,sourceProfile.player,ownerId]);
+  },[snapshot.players,snapshot.viewer,sourceProfile.player,ownerProfile,social,ownerId]);
 
   useEffect(()=>{
     const dialog=dialogRef.current;
@@ -198,7 +204,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
       <nav className="chronicle-bookmarks" aria-label="Chronicle pages">{players.map(player=>{
         const self=player.playerId===ownerId,active=player.playerId===selectedPlayer?.playerId;
         return <button type="button" aria-pressed={active} className={`chronicle-bookmark ${self?'bookmark-self':`bookmark-cloth-${clothIndex(player.playerId)}`}${active?' active':''}`} onClick={()=>setSelectedPlayerId(player.playerId)} title={self?'Open your personal Chronicle leaf':`Open your Chronicle with ${player.steamName}`} key={player.playerId}>
-          <span className="bookmark-monogram" aria-hidden="true">{self?'✦':monogram(player.steamName)}</span>
+          <span className="bookmark-monogram" aria-hidden="true">{monogram(player.steamName)}</span>
           <span className="bookmark-player-name">{self?'My record':player.steamName}</span>
         </button>;
       })}</nav>
