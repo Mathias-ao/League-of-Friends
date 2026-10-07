@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {BookOpen,Medal,ScrollText,Trophy,X} from 'lucide-react';
 import type {
-  LeagueRepository,LeagueSnapshot,PlayerChronicleEntry,PlayerChronicleRelationshipPage,
+  LeagueRepository,LeagueSnapshot,PlayerChronicleBookEntry,PlayerChronicleBookPage,
   PlayerProfile,PlayerRecord,PlayerRelationshipSummary,PlayerChronicleResponse
 } from '../domain/league';
 import {formatName} from '../domain/league';
@@ -51,7 +51,7 @@ function officialStanding(relationship:PlayerRelationshipSummary|null){
   return clauses.length?clauses.join('. ')+'.':'No official relationship standing has yet been established.';
 }
 
-function battleLabel(entry:PlayerChronicleEntry,snapshot:LeagueSnapshot){
+function battleLabel(entry:PlayerChronicleBookEntry,snapshot:LeagueSnapshot){
   const event=entry.eventId?snapshot.events.find(candidate=>candidate.eventId===entry.eventId):null;
   if(event?.title)return event.title;
   const match=snapshot.matches.find(candidate=>candidate.matchId===entry.battleId);
@@ -96,7 +96,7 @@ function SelfPage({profile}:{profile:PlayerProfile}){
 }
 
 function RelationshipPage({owner,counterpart,page,official,snapshot,partial,freshEntryIds}:{
-  owner:PlayerRecord;counterpart:PlayerRecord;page:PlayerChronicleRelationshipPage|null;official:PlayerRelationshipSummary|null;
+  owner:PlayerRecord;counterpart:PlayerRecord;page:PlayerChronicleBookPage|null;official:PlayerRelationshipSummary|null;
   snapshot:LeagueSnapshot;partial:boolean;freshEntryIds:Set<string>;
 }){
   const entries=page?.entries??[];
