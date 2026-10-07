@@ -45,6 +45,11 @@ test('player Chronicle callable exposes only the viewer projection and coverage,
  assert.equal(r.success,true);assert.equal(r.chronicle.ownerPlayerId,'a');
  assert.equal(r.chronicle.pages[0].counterpartPlayerId,'b');
  assert.equal(Object.prototype.hasOwnProperty.call(r,'history'),false);
+ assert.equal(Object.prototype.hasOwnProperty.call(r,'excluded'),false);
+ assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0],'relationship'),false);
+ assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0],'exposure'),false);
+ assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0].entries[0],'relationshipMarks'),false);
+ assert.equal(Object.prototype.hasOwnProperty.call(r.chronicle.pages[0].entries[0],'sourceEventIds'),false);
  assert.equal(r.coverage.readableAcceptedGames,1);
 });
 test('artifact mismatch fails closed; a correction during download aborts coherent read',async()=>{
