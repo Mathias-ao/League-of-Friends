@@ -301,18 +301,13 @@ function RelationshipPage({owner,counterpart,page,official,snapshot,partial,fres
     <header className="chronicle-title">
       <span className="eyebrow">RELATIONSHIP CHRONICLE</span>
       <h2>{owner.steamName} <span>&amp;</span> {counterpart.steamName}</h2>
-      <p>The written record follows qualified Battle evidence. Missing evidence is never treated as peace, loyalty, damage or intent.</p>
+      <p className="chronicle-epigraph">{relationshipEpigraph(official)}</p>
     </header>
-    <aside className="chronicle-standing" aria-label="Official relationship standing">
-      <span className="eyebrow">PRESENT STANDING</span>
-      <p>{officialStanding(official)}</p>
-    </aside>
     {entries.length?<div className="chronicle-manuscript">
       <ManuscriptSpine/>
       <ol className="chronicle-entries">{entries.map((entry,index)=><li className={`chronicle-entry${freshEntryIds.has(entry.entryId)?' is-new':''}`} key={entry.entryId}>
         <ChronicleSpineMarker kind={markerForEntry(entry)}/>
         <article className="chronicle-entry-card">
-          <span className="eyebrow">{entry.rubric}</span>
           <h4>{entry.title}</h4>
           {entry.paragraphs.map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph}</p>)}
           <footer className="chronicle-entry-signature"><span>{battleLabel(entry,snapshot)}</span><time>{compactDate(entry.playedAtMs)}</time></footer>
