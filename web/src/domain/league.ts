@@ -96,7 +96,7 @@ export interface PlayerChronicleBookProjection {
 }
 export interface PlayerChronicleResponse {
   success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleBookProjection;names:Record<string,string>;
-  coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;stageMeaning:string;opportunityCompleteness:boolean};
+  coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;opportunityCompleteness:boolean};
 }
 export interface SocialHistoryResponse {
   success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleProjection;names:Record<string,string>;
