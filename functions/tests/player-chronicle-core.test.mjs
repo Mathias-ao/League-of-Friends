@@ -53,6 +53,7 @@ test('Chronicle V2 groups Games into one Battle story and keeps declarations dis
   assert.match(text,/first shared page/i);
   assert.match(text,/reinforcement commands toward Ragnar/i);
   assert.match(text,/orders are certain; what reached the field is not/i);
+  assert.match(text,/both players also had ally declarations recorded toward one another/i,'a meaningful diplomacy episode is retained without replay chronology');
   assertPlayerFacing(text);
   assert.deepEqual(entry.sourceBeatIds,['d1','d2','s1']);
   assert.equal(entry.relationshipMarks[0].track,'BOND');
