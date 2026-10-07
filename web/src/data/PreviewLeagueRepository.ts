@@ -102,7 +102,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
         },
         {
           entryId:'preview-chronicle-baguette-common-target',battleId:'preview-battle-8',eventId:'preview-campaign',seasonId:'S001',playedAtMs:Date.parse('2026-09-17T18:00:00Z'),
-          rubric:'COMMON TARGET',title:'A common foe',
+          rubric:'COMMON TARGET',title:'Against the same foe',
           paragraphs:['In the same engagement, D’Karius and Lord Baguette both took part against Ragnar. Whether by design or circumstance, the page does not say. It joined a cooperative pattern already taking shape between them.'],
           sourceBeatIds:['preview-shared-beat'],sourceEventIds:['preview-shared-a','preview-shared-b'],evidenceKinds:['SHARED_PARTICIPATION'],
           relationshipMarks:[{track:'BOND',actorPlayerId:'sample-you',family:'SHARED_PARTICIPATION',units:1,exception:null},{track:'BOND',actorPlayerId:'sample-baguette',family:'SHARED_PARTICIPATION',units:1,exception:null}],
