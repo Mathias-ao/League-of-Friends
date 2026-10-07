@@ -214,6 +214,18 @@ function reputationLight(actorId,family,context,names){
   return null;
 }
 
+function diplomacyAside(beats){
+  const diplomacy=beats.filter(beat=>['DECLARATION_ESTABLISHED','RECIPROCAL_ALLY_DECLARATIONS','ALLY_DECLARATION_WITHDRAWN'].includes(beat.kind));
+  if(!diplomacy.length)return null;
+  const withdrawal=diplomacy.filter(beat=>beat.kind==='ALLY_DECLARATION_WITHDRAWN').at(-1);
+  if(withdrawal)return 'During the same Battle, '+withdrawal.actorName+' also withdrew the ally declaration toward '+withdrawal.targetName+'.';
+  if(diplomacy.some(beat=>beat.kind==='RECIPROCAL_ALLY_DECLARATIONS'))
+    return 'During the same Battle, both players also had ally declarations recorded toward one another.';
+  const declaration=diplomacy.find(beat=>beat.kind==='DECLARATION_ESTABLISHED'&&text(beat.declaration));
+  if(declaration)return 'During the same Battle, '+declaration.actorName+' also marked '+declaration.targetName+' as '+declaration.declaration.toLowerCase()+'.';
+  return null;
+}
+
 function primaryBeat(beats){
   const priority=[
     'QUALIFIED_KING_LOSS_TREACHERY',
@@ -290,6 +302,8 @@ export function writeBattleNarrative({group,first=false,ownerName,counterpartNam
     const secondary=secondaryBeat(visible,identity.primary);
     const secondSentence=episodeSentence(secondary);
     if(secondSentence)sentences.push(secondSentence);
+    const aside=diplomacyAside(visible);
+    if(aside)sentences.push(aside);
   }else{
     sentences.push(...diplomacySentences(visible));
   }
