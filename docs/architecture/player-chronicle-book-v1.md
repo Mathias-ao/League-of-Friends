@@ -25,7 +25,7 @@ The book combines three separate sources.
 
 ### Personal leaf
 
-The owner's profile supplies the active achievement collection and records explicitly selected for Chronicle display when showcased record codes are configured. The selected-record surface stays reserved when nothing has been selected.
+The owner's profile supplies the active achievement collection and records explicitly selected for Chronicle display. Selection is represented by the owner's optional `showcasedRecordCodes` field and is capped to three Chronicle records on the read model. The selected-record surface stays reserved when nothing has been selected; absence of a selection never causes arbitrary records to be promoted.
 
 ### Official relationship standing
 
@@ -69,9 +69,13 @@ Each entry may retain relationshipMarks and reputationMarks copied from capped A
 
 The same neutral deed can therefore be written once while preserving separate relationship and reputation consequences underneath.
 
-## Coverage
+## Read boundary and coverage
 
-getSocialHistory returns the Chronicle projection with explicit source coverage. If accepted Games cannot be read, the Chronicle may show an incomplete-record notice and must not infer anything from those gaps.
+`getSocialHistory` remains the authenticated review surface and retains the full shadow ledger, evidence lineage and Chronicle projection for auditing. The player UI does **not** consume that object directly.
+
+`getPlayerChronicle` is the player-facing callable. It is owner-bound by authentication, accepts no target player ID, and strips shadow stages, contribution marks, evidence IDs, exclusions and other optimization/audit internals before returning the written pages. A profile is therefore only an entry point into the signed-in player's book; it can never request another player's private Chronicle.
+
+Coverage remains explicit. If accepted Games cannot be read, the sanitized Chronicle read reports partial coverage and the parchment may show an incomplete-record notice. Missing Games are never translated into peacefulness, refusal, neglect or non-interaction.
 
 ## UI contract
 
