@@ -40,6 +40,7 @@ export function buildPriorNarrativeContext({group,priorGroups=[],history,ownerPl
   }
 
   const relationship={RIVALRY:new Set(),HOSTILITY:new Set(),BOND:new Set()};
+  const relationshipActors={RIVALRY:new Set(),HOSTILITY:new Set(),BOND:new Set()};
   const reputation=new Map();
   const ensureReputation=actor=>{
     if(!reputation.has(actor))reputation.set(actor,{GALLANTRY:new Set(),CRUELTY:new Set(),CHIVALRY:new Set()});
@@ -52,8 +53,10 @@ export function buildPriorNarrativeContext({group,priorGroups=[],history,ownerPl
     if(!integer(order)||order>=group.order)continue;
 
     if(relationshipTracks.has(contribution.track)&&
-       pairKey(contribution.actorLeagueId,contribution.counterpartLeagueId)===pair)
+       pairKey(contribution.actorLeagueId,contribution.counterpartLeagueId)===pair){
       relationship[contribution.track].add(contribution.battleId);
+      if(contribution.reciprocityEligible!==false)relationshipActors[contribution.track].add(contribution.actorLeagueId);
+    }
 
     if(reputationTracks.has(contribution.track)&&
        [ownerPlayerId,counterpartPlayerId].includes(contribution.actorLeagueId))
@@ -67,6 +70,7 @@ export function buildPriorNarrativeContext({group,priorGroups=[],history,ownerPl
     familyCounts:Object.fromEntries([...familyBattles].map(([family,battles])=>[family,battles.size])),
     directedFamilyCounts:Object.fromEntries([...directedFamilyBattles].map(([key,battles])=>[key,battles.size])),
     relationship:countObject(relationship),
+    relationshipActors:countObject(relationshipActors),
     reputation:reputationCounts,
   };
 }
@@ -171,21 +175,22 @@ function patternSentence(primary,context){
 function relationshipLight(family,context){
   const rivalry=context?.relationship?.RIVALRY??0;
   const hostility=context?.relationship?.HOSTILITY??0;
+  const hostilityActors=context?.relationshipActors?.HOSTILITY??0;
   const bond=context?.relationship?.BOND??0;
   if(['SUPPORT','MATERIAL_AID','SHARED_OPPONENT'].includes(family)){
     if(hostility>0&&bond>0)return 'It added another contradiction to a page that already held both cooperation and strain.';
-    if(hostility>0)return 'It landed on a page that already carried an older quarrel.';
+    if(hostility>0)return hostilityActors>=2?'It landed on a page that already carried an older quarrel.':'It landed on a page that already carried an older hard turn.';
     if(bond>=2)return 'It joined a cooperative pattern already taking shape between them.';
     if(rivalry>=2)return 'Even a familiar contest had not kept them from sharing ground.';
   }
   if(['BREACH_OFFENSE','KING_LOSS'].includes(family)){
     if(bond>0&&hostility>0)return 'It sharpened a page that already held both cooperation and grievance.';
     if(bond>0)return 'It darkened a page that already contained cooperation between them.';
-    if(hostility>=2)return 'It was another hard turn in a quarrel that already had history.';
+    if(hostility>=2)return hostilityActors>=2?'It was another hard turn in a quarrel that already had history.':'It was another hard turn in a pattern already written in one direction.';
     if(rivalry>0)return 'What had been a contest now had a harder entry beside it.';
   }
   if(family==='DUEL'){
-    if(hostility>0)return 'The contest arrived with an older quarrel already behind it.';
+    if(hostility>0)return hostilityActors>=2?'The contest arrived with an older quarrel already behind it.':'The contest arrived with an older hard turn already behind it.';
     if(bond>0)return 'They had stood together before; that did not keep the contest from returning.';
     if(rivalry>0)return 'The contest was no longer new between them.';
   }
@@ -325,6 +330,7 @@ export function writeBattleNarrative({group,first=false,ownerName,counterpartNam
       priorFamilyCounts:context?.familyCounts??{},
       priorDirectedFamilyCounts:context?.directedFamilyCounts??{},
       priorRelationshipEvidence:context?.relationship??{},
+      priorRelationshipActors:context?.relationshipActors??{},
       priorReputationEvidence:context?.reputation??{},
     },
   };
