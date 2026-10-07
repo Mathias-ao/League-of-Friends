@@ -85,6 +85,22 @@ The open book contains a reserved self bookmark, one deterministic-colour bookma
 
 Bookmark colour is deterministic from player identity and carries no relationship meaning.
 
+## Manuscript composition
+
+Relationship leaves use one continuous manuscript reading column. Entries do not alternate left and right; chronology should be readable by following the page straight downward.
+
+A decorated marginal spine runs beside the written history. It is ornamental rather than a timeline widget: braided ink strokes, small knot/leaf forms, end caps and deterministic entry medallions create the illuminated-manuscript character without turning the page into a dashboard.
+
+Entry medallions are chosen from the already-written evidence category (for example first record, official contest, support, common-target participation, diplomacy, withdrawal/offense or exceptional king-loss rule). They never introduce a stronger claim than the Chronicle entry itself.
+
+### Relationship flavour restraint
+
+The spine may carry a subtle secondary accent derived only from the already-public official Relationship V2 state. The accent is deliberately low-saturation and affects only minor ornament strokes. Relationship flavour must not recolor body prose, headings, parchment, entry prominence or bookmark identity.
+
+Where several official tracks are present, the ornament uses a neutral mixed treatment rather than selecting a dominant emotional interpretation. Where official relationship rules are unavailable or unestablished, the spine remains neutral.
+
+The words and evidence-backed milestone titles are therefore the most dramatic part of the page. Ornament supports atmosphere; it does not tell the player how to interpret another player.
+
 ## Ink reveal
 
 The browser remembers Chronicle entry IDs already seen for each owner/pair. Existing history on first opening is old ink. Later unseen entry IDs alone receive the restrained ink-writing reveal. Reduced-motion settings suppress both the ink reveal and scroll animation.
