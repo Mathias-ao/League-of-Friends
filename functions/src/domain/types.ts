@@ -17,6 +17,7 @@ export interface EntityRef {
 
 export interface Player {
   steamName: string;
+  steamId64?: string | null;
   steamNameNormalized: string;
   discordName: string | null;
   avatarUrl: string | null;
@@ -31,6 +32,8 @@ export interface Player {
 
 export interface AuthLink {
   playerId: string;
+  provider?: "STEAM" | "LEGACY";
+  steamId64?: string | null;
 }
 
 export interface MatchPlanningConfig {
