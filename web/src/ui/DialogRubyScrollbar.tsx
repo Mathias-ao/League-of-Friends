@@ -6,7 +6,7 @@ export function DialogRubyScrollbar({target}:{target:RefObject<HTMLDivElement|nu
   const railRef=useRef<HTMLDivElement>(null);
   const thumbRef=useRef<HTMLDivElement>(null);
   const dragRef=useRef<{pointerY:number;scrollTop:number}|null>(null);
-  const [metrics,setMetrics]=useState({visible:false,scroll:0,max:0,travel:0,thumb:86});
+  const [metrics,setMetrics]=useState({visible:false,scroll:0,max:0,travel:0,thumb:86,top:72});
   useEffect(()=>{
     const el=target.current;
     if(!el)return;
@@ -16,14 +16,17 @@ export function DialogRubyScrollbar({target}:{target:RefObject<HTMLDivElement|nu
       const max=Math.max(0,el.scrollHeight-el.clientHeight);
       const thumb=thumbRef.current?.getBoundingClientRect().height||86;
       const travel=Math.max(0,(railRef.current?.clientHeight||0)-thumb);
+      const top=el.parentElement?.querySelector('.modal-heading')?.getBoundingClientRect().height||72;
       const desktop=window.matchMedia('(min-width:700px) and (hover:hover) and (pointer:fine)').matches;
       const visible=desktop&&max>2&&travel>0;
       el.classList.toggle('ruby-dialog-scroll-active',visible);
-      setMetrics({visible,scroll:el.scrollTop,max,travel,thumb});
+      setMetrics({visible,scroll:el.scrollTop,max,travel,thumb,top});
     };
     const schedule=()=>{if(!frame)frame=requestAnimationFrame(measure);};
     const observer=new ResizeObserver(schedule);
     observer.observe(el);
+    const heading=el.parentElement?.querySelector('.modal-heading');
+    if(heading)observer.observe(heading);
     for(const child of Array.from(el.children))observer.observe(child);
     if(railRef.current)observer.observe(railRef.current);
     if(thumbRef.current)observer.observe(thumbRef.current);
@@ -44,7 +47,7 @@ export function DialogRubyScrollbar({target}:{target:RefObject<HTMLDivElement|nu
     const offset=Math.max(0,Math.min(metrics.travel,clientY-rect.top-metrics.thumb/2));
     target.current?.scrollTo({top:offset/metrics.travel*metrics.max,behavior:'instant'});
   };
-  return <div className="ruby-dialog-scroll" data-visible={metrics.visible} aria-hidden={!metrics.visible}>
+  return <div className="ruby-dialog-scroll" data-visible={metrics.visible} aria-hidden={!metrics.visible} style={{top:metrics.top}}>
     <div className="ruby-dialog-scroll__rail" ref={railRef} onPointerDown={event=>{
       if(event.target===event.currentTarget)scrollToPosition(event.clientY);
     }}>
