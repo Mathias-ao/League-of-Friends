@@ -75,7 +75,7 @@ The roundoff is a factual, versioned Event record, not another scoring engine or
 
 - The Event outcome: approved main results, warm-up outcomes and resolved exceptions.
 - A player points table separating warm-up, main participation/victory, verified placements and Emperor bounty, plus the total earned, published Season total and rank movement. Rank movement respects shared ranks and the Emperor's separate office.
-- Up to four curated, qualified Event distinctions using the implemented statistics selector, with source Battle/Game links; fewer when evidence does not support four. Include both acts and keep their format/context labels.
+- Four or five ranked, qualified Event accomplishments using the [64-row V1 catalogue](../design/event-roundoff-accomplishments-v1.md), with source Battle/Game links; fewer when evidence does not support four. Count all accepted warm-up/main/series Games, using the specified totals, weights, pooled responses and best performances. Higher-ranked eligible accomplishments take priority. Emperor recognition is restricted to the designated 1v1 warm-up; existing competition bounty awards are unchanged.
 - Supported reputation gains and meaningful relationship turning points, showing before/after state and evidence without inventing motives or equating temporary alliances with shared victory.
 - Earned/revised achievements and portrait/identity changes where configured, and the corresponding Chronicle entries.
 

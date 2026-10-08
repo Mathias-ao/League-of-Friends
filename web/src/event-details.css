@@ -106,16 +106,31 @@
 .event-points td:last-child{color:#f0d4a4;font-weight:600}
 .event-points tr.is-yours{background:#b68e4119}
 .event-points tbody tr:last-child>*{border-bottom:0}
- .event-showcase{margin-top:30px}
-.event-showcase-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.event-showcase-grid article{display:flex;flex-direction:column;padding:22px;background:linear-gradient(145deg,rgba(163,122,69,.08),rgba(25,18,15,.3));border:1px solid var(--event-line);border-top:2px solid #937044;border-radius:3px}
-.event-showcase-grid h4{font-size:.95rem;margin:10px 0 16px;line-height:1.5}
-.event-showcase-value{font-family:var(--serif);font-size:1.25rem;color:#dfc398;line-height:1.4}
-.event-showcase-grid p{font-size:.78rem;line-height:1.65}
-.event-showcase-grid .event-showcase-players{color:#d2c4b1;font-weight:600;margin:8px 0 0}
-.event-showcase-sources{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:auto;padding-top:10px}
-.event-showcase-sources button{font-size:.75rem;text-align:left}
-@media(max-width:900px){.event-showcase-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.event-showcase{margin-top:30px}
+.event-showcase .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.event-showcase-grid{display:grid;grid-template-columns:repeat(var(--showcase-count),minmax(0,1fr));list-style:none;margin:0;padding:18px 0;background:linear-gradient(105deg,#211b12c9,#15120ed9 65%,#241d12bd);border-top:1px solid #9a784755;border-bottom:1px solid #9a784755}
+.event-showcase-grid>li{min-width:0;padding:0 16px;border-inline-start:1px solid #b28b493d}
+.event-showcase-grid>li:first-child{border-inline-start:0}
+.event-showcase-grid article{height:100%;display:flex;flex-direction:column}
+.event-accomplishment-summary{display:flex;align-items:flex-start;gap:10px;flex:1}
+.event-accomplishment-summary>div{min-width:0}
+.event-accomplishment-emblem{width:32px;height:32px;flex-shrink:0;filter:drop-shadow(0 2px 2px #0008);margin-top:2px}
+.event-showcase-grid h4{font-family:var(--serif);font-size:.7rem;line-height:1.45;color:#b9ad95;font-weight:400;margin:0 0 5px;overflow-wrap:anywhere}
+.event-showcase-value{display:block;font-family:var(--serif);font-size:.97rem;font-weight:500;color:#ead6af;line-height:1.5;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.event-showcase-grid .event-showcase-players{font-size:.65rem;line-height:1.5;color:#b6a88b;margin:6px 0 2px;overflow-wrap:anywhere}
+.event-showcase-tier{font-size:.52rem;letter-spacing:.08em;text-transform:uppercase;color:#978466}
+.event-showcase-grid [data-tier=EXTRAORDINARY] .event-showcase-tier,.event-showcase-grid [data-tier=SPECIAL] .event-showcase-tier{color:#c7a56d}
+.event-accomplishment-evidence{margin-top:12px;font-size:.64rem;color:#a28e6a}
+.event-accomplishment-evidence summary{cursor:pointer;list-style:none;line-height:1.5;padding:3px 0}
+.event-accomplishment-evidence summary::-webkit-details-marker{display:none}
+.event-accomplishment-evidence summary::after{content:' +';color:#c7a56d}
+.event-accomplishment-evidence[open] summary::after{content:' −'}
+.event-accomplishment-evidence summary:focus-visible{outline:1px solid #c7a56d;outline-offset:3px}
+.event-accomplishment-evidence>div{margin-top:8px;border-top:1px solid #9a784733;padding-top:8px}
+.event-accomplishment-evidence p{font-size:.68rem;line-height:1.6;margin:0 0 8px!important}
+.event-showcase-sources{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.event-showcase-sources button{font-size:.65rem;text-align:left;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:850px){.event-showcase-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 0}.event-showcase-grid>li:nth-child(odd){border-inline-start:0}}
 
 @media(max-width:800px){
  .event-briefing-layout{grid-template-columns:minmax(0,1fr);gap:28px}
@@ -152,6 +167,8 @@
  .event-alliance-board section>div{flex-wrap:wrap;gap:6px}
  .event-alliance-board strong{font-size:.72rem}
  .event-roundoff-outline,.event-showcase-grid{grid-template-columns:1fr;gap:12px}
+ .event-showcase-grid>li{border-inline-start:0;padding:12px 20px}
+ .event-showcase-grid>li+li{border-top:1px solid #b28b4933}
  .event-roundoff-outline>span{padding:17px 10px}
  .event-roundoff>.event-section-heading h3{font-size:1.12rem}
 }
