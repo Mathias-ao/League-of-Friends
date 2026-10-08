@@ -1,6 +1,7 @@
 import {useEffect,useRef,type ReactNode} from 'react';
 import {X,Shield,Swords,Flag,Crown} from 'lucide-react';
 import {Player,type PlayerRecord} from '../domain/league';
+import {DialogRubyScrollbar} from './DialogRubyScrollbar';
 export function Sigil({kind='team',size=28,className=''}:{kind?:string;size?:number;className?:string}){
   const Icon=kind==='duel'?Swords:kind==='ffa'?Crown:kind==='flag'?Flag:Shield;
   return <span className={'sigil '+className}><Icon size={size} strokeWidth={1.3}/></span>;
@@ -21,6 +22,7 @@ export function Modal({title,children,onClose,wide=false,className=''}:{title:st
   return <dialog ref={ref} className={'modal '+(wide?'wide ':'')+className} onCancel={onClose} aria-labelledby="dialog-title" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
     <div className="modal-heading"><h2 id="dialog-title">{title}</h2><button className="icon-button" aria-label="Close dialog" onClick={onClose}><X/></button></div>
     <div className="modal-body">{children}</div>
+    {(className.includes("event-modal")||className.includes("battle-modal"))&&<DialogRubyScrollbar target={ref}/>}
   </dialog>;
 }
 export function DateLabel({value}:{value:string|null|undefined}){
