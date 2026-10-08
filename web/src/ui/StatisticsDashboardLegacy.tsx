@@ -4,7 +4,7 @@ import {ArrowRight,ChevronDown,RefreshCw,Star,X} from 'lucide-react';
 import {CATEGORIES,FAMILIES,FAMILY_LABELS,METRICS,StatisticsExperience,formatStatistic,formatTime,type AggregatePlayer,type AggregationMode,type Category,type EvidenceEpisode,type GameStatistics,type Highlight,type MetricDefinition,type StatisticsDataset,type StatisticsScope} from '../domain/statistics';
 import {formatName,type LeagueRepository,type MatchDetail,type EventDetail} from '../domain/league';
 import type {ViewProps} from './App';
-import {EventDialog,MatchDialog} from './Views';
+import {EventDialog} from './Views';
 
 const definition=(id:string)=>METRICS.find(m=>m.id===id)!;
 const interactions=new Set(['raidsOut','firstRaid','raidsIn','assistsOut','assistsIn','cooperation','skirmishes','skirmishTime','response']);
@@ -33,7 +33,7 @@ function contextLabel(key:string){
   }catch{return key;}
 }
 
-function useStatistics(repository:LeagueRepository,scope:StatisticsScope,revision=''){
+export function useStatistics(repository:LeagueRepository,scope:StatisticsScope,revision=''){
   const [dataset,setDataset]=useState<StatisticsDataset|null>(null),[error,setError]=useState(''),[reload,setReload]=useState(0);
   const key=JSON.stringify(scope);
   useEffect(()=>{
@@ -57,6 +57,7 @@ function EvidenceNotice({preview,pending,unavailable=0}:{preview:boolean;pending
 }
 
 function HighlightCards({items,openMatch}:{items:Highlight[];openMatch:(id:string)=>void}){
+  if(!items.length)return null;
   return <div className="sx-highlights">{items.map(item=><article key={item.id}><span className="eyebrow">{item.category}</span><h3>{item.title}</h3><p>{item.detail}</p><button className="text-button" onClick={()=>openMatch(item.matchId)}>Source Battle <ArrowRight size={14}/></button></article>)}</div>;
 }
 
@@ -64,9 +65,9 @@ function CategoryTabs({category,onChange}:{category:Category;onChange:(c:Categor
   return <nav className="sx-tabs" aria-label="Statistics categories">{CATEGORIES.map(c=><button key={c} aria-pressed={category===c} onClick={()=>onChange(c)}>{c}</button>)}</nav>;
 }
 
-interface PanelProps {games:GameStatistics[];viewerId?:string;openMatch:(id:string)=>void;openPlayer:(id:string)=>void;preview:boolean;unavailableGames?:number;battle?:boolean;standings?:{playerId:string;rank?:number}[];onRefresh?:()=>void;}
+interface PanelProps {games:GameStatistics[];viewerId?:string;openMatch:(id:string)=>void;openPlayer:(id:string)=>void;preview:boolean;unavailableGames?:number;battle?:boolean;standings?:{playerId:string;rank?:number}[];onRefresh?:()=>void;expandedBattle?:boolean;}
 
-export function StatisticsPanel({games,viewerId,openMatch,openPlayer,preview,unavailableGames=0,battle=false,standings=[],onRefresh}:PanelProps){
+export function StatisticsPanel({games,viewerId,openMatch,openPlayer,preview,unavailableGames=0,battle=false,standings=[],onRefresh,expandedBattle=false}:PanelProps){
   const [category,setCategory]=useState<Category>(()=>{if(battle)return 'Opening';try{const c=localStorage.getItem('aof-statistics-category');return CATEGORIES.includes(c as Category)?c as Category:'Military';}catch{return 'Military';}});
   const [format,setFormat]=useState('all'),[context,setContext]=useState('all'),[mode,setMode]=useState<AggregationMode>('total'),[sort,setSort]=useState<string>('name'),[inspect,setInspect]=useState<{playerId:string;metricId:string}|null>(null);
   const filtered=games.filter(g=>(format==='all'||g.format===format)&&(context==='all'||g.contextKey===context));
@@ -77,13 +78,13 @@ export function StatisticsPanel({games,viewerId,openMatch,openPlayer,preview,una
   const changeCategory=(c:Category)=>{setCategory(c);setSort('name');setInspect(null);if(!battle)try{localStorage.setItem('aof-statistics-category',c);}catch{/* Storage is optional. */}};
   const select=(playerId:string,metricId:string)=>setInspect({playerId,metricId});
   return <div className="sx-panel">
-    {!battle&&<CategoryTabs category={category} onChange={changeCategory}/>}    
+    {!battle&&<CategoryTabs category={category} onChange={changeCategory}/>}
     {!battle&&<div className="sx-toolbar" role="group" aria-label="Statistics filters"><label><span>Format</span><select value={format} onChange={e=>{setFormat(e.target.value);setContext('all');setInspect(null);}}><option value="all">All formats</option>{[...new Set(games.map(g=>g.format))].sort().map(f=><option key={f} value={f}>{formatName(f)}</option>)}</select></label><span className="sx-toolbar-rule" aria-hidden="true"/><label><span>Comparison</span><select value={context} onChange={e=>setContext(e.target.value)}><option value="all">All approved settings</option>{[...new Set(games.filter(g=>format==='all'||g.format===format).map(g=>g.contextKey))].map(c=><option key={c} value={c}>{contextLabel(c)}</option>)}</select></label><span className="sx-toolbar-meta">{engine.games.length} eligible Games{games.filter(g=>!g.eligible).length>0&&<> · {games.filter(g=>!g.eligible).length} pending / disputed</>}</span>{onRefresh&&<button className="sx-refresh" aria-label="Refresh season statistics" onClick={onRefresh}><RefreshCw size={15}/></button>}</div>}
-    {battle&&<EvidenceNotice preview={preview} pending={provisional} unavailable={unavailableGames}/>}    
-    {battle&&<FocusedScorecard rows={rows} engine={engine} select={select} viewerId={viewerId}/>}    
-    {inspect&&<EvidenceInspector selection={inspect} games={provisional?filtered:engine.games} close={()=>setInspect(null)} openMatch={openMatch}/>}    
-    {battle?<details className="sx-details"><summary>Full statistics <ChevronDown size={16}/></summary><CategoryTabs category={category} onChange={changeCategory}/>{categoryContent()}</details>:categoryContent()}
-    {battle&&filtered[0]&&<details className="sx-details"><summary>Battle timeline <ChevronDown size={16}/></summary><BattleTimeline game={filtered[0]}/></details>}
+    {battle&&<EvidenceNotice preview={preview} pending={provisional} unavailable={unavailableGames}/>}
+    {battle&&!expandedBattle&&<FocusedScorecard rows={rows} engine={engine} select={select} viewerId={viewerId}/>}
+    {inspect&&<EvidenceInspector selection={inspect} games={provisional?filtered:engine.games} close={()=>setInspect(null)} openMatch={openMatch}/>}
+    {battle&&expandedBattle?<><CategoryTabs category={category} onChange={changeCategory}/>{categoryContent()}</>:battle?<details className="sx-details"><summary>Full statistics <ChevronDown size={16}/></summary><CategoryTabs category={category} onChange={changeCategory}/>{categoryContent()}</details>:categoryContent()}
+    {battle&&!expandedBattle&&filtered[0]&&<details className="sx-details"><summary>Battle timeline <ChevronDown size={16}/></summary><BattleTimeline game={filtered[0]}/></details>}
   </div>;
 
   function categoryContent(){
@@ -97,7 +98,7 @@ export function StatisticsPanel({games,viewerId,openMatch,openPlayer,preview,una
         {category==='Economy'&&<CompositionBars rows={rows} kind="resources"/>}
         {category==='Military'&&<CompositionBars rows={rows} kind="military"/>}
         {battle&&<details className="sx-details"><summary>Supporting measurements and requests</summary>{METRICS.some(m=>m.category===category&&m.detail)&&<MetricTable label="Supporting measurements" rows={rows} metrics={METRICS.filter(m=>m.category===category&&m.detail)} engine={engine} mode={mode} battle allowLeaders={false} select={select} sort={sort} setSort={setSort} openPlayer={openPlayer}/>}<SupportingDetails games={filtered} category={category}/></details>}
-        {!battle&&!provisional&&unavailableGames===0&&<RecordBook engine={engine} category={category} openMatch={openMatch}/>}        
+        {!battle&&!provisional&&unavailableGames===0&&<RecordBook engine={engine} category={category} openMatch={openMatch}/>}
       </>}
     </section>;
   }
@@ -191,7 +192,7 @@ export function BattleStatisticsExperience(props:ViewProps&{data:MatchDetail}){
   return <section id="battle-statistics" className="statistics-experience sx-dashboard"><div className="sx-page-actions"><button aria-label="Refresh Battle statistics" onClick={()=>{state.retry();setRecordRefresh(n=>n+1);}}><RefreshCw size={16}/></button></div><LoadState {...state}/>{state.dataset&&<>{state.dataset.games.length>1&&<label>Game<select value={selected?.gameId} onChange={e=>setGameId(e.target.value)}>{state.dataset.games.map(g=><option key={g.gameId} value={g.gameId}>{g.gameId}</option>)}</select></label>}<HighlightCards items={highlights} openMatch={openMatch}/>{selected?<><BattleRecord key={selected.matchId+'/'+selected.gameId} repository={repository} matchId={selected.matchId} gameId={selected.gameId} players={data.games.find(g=>g.gameId===selected.gameId)?.players??[]} preview={preview} revision={revision+'/'+recordRefresh}/><StatisticsPanel key={selected.matchId+'/'+selected.gameId+'/'+selected.revision} games={[selected]} preview={preview} battle viewerId={snapshot.viewer?.playerId} openMatch={openMatch} openPlayer={openPlayer}/></>:<p className="sx-empty">Upload a recording above to populate this Battle’s statistics.</p>}</>}</section>;
 }
 
-export function MatchDialogWithStatistics(props:ViewProps&{data:MatchDetail;onUpdated:()=>void}){return <><MatchDialog {...props}/><hr className="statistics-divider"/><BattleStatisticsExperience {...props}/></>;}
+
 
 /** Event statistics now belong to the released roundoff, not an eager aggregate fetch. */
 export function EventDialogWithStatistics(props:ViewProps&{data:EventDetail;onUpdated:()=>void}){

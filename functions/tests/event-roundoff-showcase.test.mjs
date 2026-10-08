@@ -165,3 +165,27 @@ test('historical gold records use Game percentages rather than an Event-normaliz
   const prior=history(input,[0]);prior[0].players.forEach(p=>p.values.goldControl=40);input.publishedHistory=prior;
   const card=find(input,'league-record');assert.match(card.value,/50\.0% gold influence/);assert.match(card.detail,/40\.0% gold influence/);assert.doesNotMatch(card.value,/equal share/);
 });
+
+test('Battle accomplishments use one accepted Game while the parent series remains active',async()=>{
+  const {selectBattleShowcase}=await import('../lib/engines/eventRoundoffShowcase.js');
+  const input=fixture(),game=input.games[0],match={...input.matches[0],status:'ACTIVE'};
+  const cards=selectBattleShowcase({match,game});
+  assert.ok(cards.length>0&&cards.length<=4);
+  assert.match(cards.find(card=>card.catalogueId.startsWith('raidsOut:')).value,/22 detected raids/);
+  assert.deepEqual(cards.map(card=>card.rank),cards.map(card=>card.rank).sort((a,b)=>a-b));
+  assert.ok(cards.every(card=>card.sources.every(source=>source.matchId==='M1'&&source.gameId==='G1')));
+  assert.ok(cards.every(card=>!['unbeaten','emperor','league-record','season-record','personal-best'].includes(card.catalogueId.split(':')[0])));
+  assert.ok(cards.every(card=>!card.detail.includes('Warm-up and main Games are considered')));
+  const standalone=selectBattleShowcase({match:{...match,eventId:null},game:{...game,eventId:null}});
+  assert.equal(standalone.length,cards.length);
+});
+test('Battle accomplishments reject disputed, unqualified, mismatched or illustrative production evidence',async()=>{
+  const {selectBattleShowcase}=await import('../lib/engines/eventRoundoffShowcase.js');
+  const input=fixture(),game=input.games[0],match=input.matches[0];
+  for(const status of ['DISPUTED','CANCELLED','VOID'])assert.deepEqual(selectBattleShowcase({match:{...match,status},game}),[]);
+  assert.deepEqual(selectBattleShowcase({match,game:{...game,eligible:false}}),[]);
+  assert.deepEqual(selectBattleShowcase({match,game:{...game,eventId:'OTHER'}}),[]);
+  assert.deepEqual(selectBattleShowcase({match:{...match,participants:match.participants.slice(1)},game}),[]);
+  assert.deepEqual(selectBattleShowcase({match,game:{...game,sourceHash:'preview-recording'}}),[]);
+  assert.ok(selectBattleShowcase({match,game:{...game,sourceHash:'preview-recording'},illustrative:true}).length);
+});
