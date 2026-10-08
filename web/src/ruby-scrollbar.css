@@ -18,18 +18,18 @@
   overflow-y:auto;
   overscroll-behavior:contain;
   /* The visual scrollbar never covers buttons, tables or battle art. */
-  margin-right:64px;
+  margin-right:44px;
 }
 .ruby-dialog-scroll{
   position:absolute;
   top:var(--ruby-dialog-top,72px);
   bottom:8px;
   right:0;
-  width:64px;
-  padding:0 8px;
+  width:44px;
+  padding:0 2px;
   pointer-events:none;
-  background:linear-gradient(90deg,#211710,#302319 52%,#211710);
-  border-left:1px solid rgba(130,99,62,.3);
+  background:linear-gradient(90deg,rgba(43,30,21,.18),rgba(43,30,21,.38));
+  border-left:1px solid rgba(130,99,62,.18);
 }
 .ruby-dialog-scroll[data-visible="false"]{display:none}
 .ruby-dialog-scroll__rail{
