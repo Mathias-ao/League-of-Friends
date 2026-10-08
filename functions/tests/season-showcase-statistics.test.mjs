@@ -56,7 +56,7 @@ function game(id, players) {
 }
 
 test('Season showcase catalogue exposes the requested metrics', () => {
-  assert.equal(EXPERIENCE_VERSION, 'AOF_STATISTICS_EXPERIENCE_V2');
+  assert.equal(EXPERIENCE_VERSION, 'AOF_STATISTICS_EXPERIENCE_V3');
   for (const id of [
     'villagers10', 'darkAgeGap', 'firstMiningCamp', 'firstLumberCamp', 'commands5',
     'housesBuilt', 'tradeUnits', 'tributeSent', 'tributeReceived', 'militaryTechs',

@@ -17,6 +17,7 @@ export interface EntityRef {
 
 export interface Player {
   steamName: string;
+  steamId64?: string | null;
   steamNameNormalized: string;
   discordName: string | null;
   avatarUrl: string | null;
@@ -31,6 +32,8 @@ export interface Player {
 
 export interface AuthLink {
   playerId: string;
+  provider?: "STEAM" | "LEGACY";
+  steamId64?: string | null;
 }
 
 export interface MatchPlanningConfig {
@@ -120,25 +123,8 @@ export interface GamePlayer extends MatchParticipant {
   position: string | null;
 }
 
-export type ScoringAct = "MAIN_EVENT" | "WARMUP";
-export type FfaPlacementRule = "VERIFIED_ELIMINATION" | "VERIFIED_OBJECTIVE";
-export interface SeasonScoringLock {
-  version: "AOF_SEASON_SCORING_V1";
-  act: ScoringAct;
-  emperorPlayerId: string | null;
-  diplomacyEnabled: boolean;
-  placementRule: FfaPlacementRule | null;
-  placementDescription: string | null;
-}
-export interface VerifiedFfaPlacements {
-  qualification: "VERIFIED";
-  rule: FfaPlacementRule;
-  finishingOrder: string[];
-  evidence: string;
-  verifiedBy: string;
-}
-
 export type GameOutcome =
+  | {type:"COALITION_WIN";winnerTeam:null;winnerPlayerId:null;winnerPlayerIds:string[];}
   | {
       type: "TEAM_WIN";
       winnerTeam: number;
@@ -148,17 +134,11 @@ export type GameOutcome =
       type: "PLAYER_WIN";
       winnerTeam: null;
       winnerPlayerId: string;
-    }
-  | {
-      type: "COALITION_WIN";
-      winnerTeam: null;
-      winnerPlayerId: null;
-      coalitionPlayerIds: string[];
     };
 
 export type CanonicalGameResult = GameOutcome & {
-  ffaPlacements?: VerifiedFfaPlacements;
   revision: number;
+  seriesGameRevisions?: Record<string, number>;
   winningPlayerIds: string[];
   /** Non-winning official roster members; absent on historical results. */
   losingPlayerIds?: string[];

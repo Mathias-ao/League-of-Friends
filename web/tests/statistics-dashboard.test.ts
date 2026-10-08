@@ -20,7 +20,7 @@ test('preview measurements are identical in Battle, Event and Season scopes',asy
   assert.ok(new StatisticsExperience(event.games).highlights(4).length<=4);
   const props={games:event.games,preview:true,viewerId:'sample-you',openMatch:()=>{},openPlayer:()=>{}};
   const seasonMarkup=renderToStaticMarkup(React.createElement(StatisticsPanel,props));
-  for(const label of ['Opening','Economy','Military','Map Presence','Execution','Per Game','Military composition','record book'])assert.ok(seasonMarkup.includes(label),label);
+  for(const label of ['Opening','Economy','Military','Map Presence','Execution','Per Game','Military queue composition','record book'])assert.ok(seasonMarkup.includes(label),label);
   const battleMarkup=renderToStaticMarkup(React.createElement(StatisticsPanel,{...props,games:battle.games,battle:true}));
   for(const label of ['Battle scorecard','Full statistics','Battle timeline','Resources committed'])assert.ok(battleMarkup.includes(label),label);
   assert.ok(renderToStaticMarkup(React.createElement(BattleTimeline,{game:battle.games[0]})).includes('Choose an episode'));

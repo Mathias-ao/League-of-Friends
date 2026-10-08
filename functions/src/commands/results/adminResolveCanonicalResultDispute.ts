@@ -9,7 +9,6 @@ import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 import {
   applyCanonicalGameResult,
-  isSingleGameMatch,
   assertResultShape,
   canonicalRevision,
   rethrowResultValidation,
@@ -25,9 +24,9 @@ interface AdminResolveCanonicalResultDisputeInput {
   disputeId: string;
   resolution: "UPHOLD" | "CORRECT";
   reason: string;
-  coalitionPlayerIds?: string[];
   winnerTeam?: number | null;
   winnerPlayerId?: string | null;
+  winnerPlayerIds?: string[];
 }
 
 interface ResultDisputeDocument {
@@ -97,10 +96,10 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
       if (resolution === "CORRECT") {
         try {
           correctedOutcome = normalizeOutcome(match.format, match.participants, {
-            coalitionPlayerIds: request.data.coalitionPlayerIds,
             winnerTeam: request.data.winnerTeam,
             winnerPlayerId: request.data.winnerPlayerId,
-          }, {diplomacyEnabled: match.seasonScoring?.diplomacyEnabled === true});
+            ...(request.data.winnerPlayerIds!=null ? {winnerPlayerIds:request.data.winnerPlayerIds} : {}),
+          }, match.gameConfigSnapshot);
         } catch (error) {
           rethrowResultValidation(error);
         }
@@ -180,7 +179,7 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
         correctionCaseId: disputeId,
         archivedAt: now,
       });
-      if (isSingleGameMatch(match)) transaction.set(matchHistoryRef, {
+      transaction.set(matchHistoryRef, {
         revision: oldRevision,
         canonicalResult: match.canonicalResult,
         replacedByRevision: newRevision,

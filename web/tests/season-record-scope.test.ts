@@ -40,7 +40,7 @@ test('Record Cabinet keeps single-Battle records while ledger shows best Battle 
     await click([...document.querySelectorAll('.sx-tabs button')].find(button=>button.textContent==='Military')??null);
     syncStatisticsRuntimePolish();
     const recordFor=(label:string)=>[...document.querySelectorAll<HTMLButtonElement>('button.sx-record-plaque')].find(card=>card.querySelector('strong')?.textContent?.trim()===label);
-    for(const [recordLabel,metricId] of [['Most Battles','battlesFought'],['Most Castles','castles']] as const){
+    for(const [recordLabel,metricId] of [['Most Detected Battles','battlesFought'],['Most Castle Placements','castles']] as const){
       const metric=seasonMetric(metricId),candidates=recordEngine.records().filter(record=>record.metricId===metricId);
       assert.ok(candidates.length,`${recordLabel} should have qualified single-Battle candidates`);
       const extreme=(metric.record==='min'?Math.min:Math.max)(...candidates.map(record=>record.value));

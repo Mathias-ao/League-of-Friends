@@ -1,6 +1,6 @@
 export type Page = 'season' | 'events' | 'battles' | 'players' | 'war-room' | 'statistics';
 export type Membership = 'SIGNED_OUT' | 'UNLINKED' | 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-export interface PlayerRecord { playerId:string; steamName:string; avatarUrl?:string|null; role?:'PLAYER'|'ADMIN'; currentPowerRating?:number|null; provisionalRating?:boolean; leaguePoints?:number; mainEventWins?:number; warmupWins?:number; mainEventsPlayed?:number; warmupsPlayed?:number; rank?:number; wins?:number|null; losses?:number|null; }
+export interface PlayerRecord { playerId:string; steamName:string; avatarUrl?:string|null; role?:'PLAYER'|'ADMIN'; currentPowerRating?:number|null; provisionalRating?:boolean; leaguePoints?:number;mainEventWins?:number;warmupWins?:number;mainEventsPlayed?:number;warmupsPlayed?:number; rank?:number; wins?:number|null; losses?:number|null; }
 export class Player {
   constructor(readonly record:PlayerRecord) {}
   get id(){return this.record.playerId;}
@@ -10,7 +10,6 @@ export class Player {
 export interface EventRecord {
   eventId:string; title:string; description?:string; seasonId?:string|null; status:string; startsAt:string|null; endsAt?:string|null;
   signupDeadlineAt?:string|null; checkInOpensAt?:string|null; checkInClosesAt?:string|null; maxParticipants?:number|null;
-  placementRule?:string|null; placementDescription?:string|null;
   confirmedCount?:number; waitingListCount?:number; competitionStyle?:string|null;
   viewer?:{rsvp:string;signupState:string;attendanceStatus:string}; roster?:PlayerRecord[]|null;
 }
@@ -36,11 +35,7 @@ export class LeagueEvent {
     return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>=now);
   }
 }
-export interface SeasonScoringSummary {version:string;resultRevision:number;act:string;placementStatus:string;rewards:{playerId:string;matchCompletion:number;matchWin:number;ffaPlacement?:number;emperorBounty?:number}[];}
-export const formatLeaguePoints=(points:number)=>{const rounded=Math.round(points*100)/100;return (Math.abs(rounded-points)>1e-9?"≈":"")+rounded.toLocaleString(undefined,{maximumFractionDigits:2});};
-export const isWarmupMatch=(m:MatchRecord)=>m.seasonScoring?m.seasonScoring.act==='WARMUP':m.format==='ONE_V_ONE';
-export const isMainEventMatch=(m:MatchRecord)=>m.seasonScoring?m.seasonScoring.act==='MAIN_EVENT':m.format!=='ONE_V_ONE';
-export interface MatchRecord {seasonScoring?:{version:string;act:string;diplomacyEnabled:boolean;placementDescription?:string|null};seasonScoringSummary?:SeasonScoringSummary|null;matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
+export interface MatchRecord {scoringAct?:string|null;scoringRules?:Record<string,unknown>|null;scoringState?:string|null;scoringBreakdown?:Array<{playerId:string;matchCompletion:number;matchWin:number;placement:number;emperor:number;placementState:string}>;matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
 export interface CivilizationDraftTurnRecord {index:number;playerId:string;team:number|null;slot:number;status:'PENDING'|'COMPLETED';civilization:string|null;}
 export interface CivilizationDraftSelectionRecord {turnIndex:number;playerId:string;team:number|null;civilization:string;}
 export interface CivilizationDraftRecord {
@@ -153,7 +148,7 @@ export class LeagueService {
     if(!event||!new LeagueEvent(event).canRsvp())throw new Error('Sign-ups are not open for this event.');
     await this.repository.rsvp(id,value);
   }
-  nextTarget(s:LeagueSnapshot){const own=s.standings.find(p=>p.playerId===s.viewer?.playerId);if(!own)return null;const i=s.standings.findIndex(p=>p.playerId===own.playerId);return s.standings.slice(0,i).reverse().find(p=>p.rank!==own.rank)??null;}
+  nextTarget(s:LeagueSnapshot){const i=s.standings.findIndex(p=>p.playerId===s.viewer?.playerId);return i>0?s.standings.slice(0,i).reverse().find(p=>p.rank==null||p.rank!==s.standings[i].rank)??null:null;}
 }
 export class RelationshipPolicy {
   static readonly tracks=[
@@ -168,3 +163,6 @@ export function formatName(format:string|null|undefined){
   return format?labels[format]??format.replaceAll('_',' '):'Format to be announced';
 }
 export function isLombardia(event:EventRecord){return event.eventId==='E001'||/lombardia/i.test(event.title);}
+
+export const isWarmupMatch=(m:MatchRecord)=>m.scoringAct?m.scoringAct==='WARMUP':m.format==='ONE_V_ONE';
+export const isMainEventMatch=(m:MatchRecord)=>m.scoringAct?m.scoringAct==='MAIN':m.format!=='ONE_V_ONE';

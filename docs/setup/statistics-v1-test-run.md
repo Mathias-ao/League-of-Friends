@@ -1,6 +1,6 @@
 # Statistics experience V1 — feature branch test run
 
-Implemented on `feature/statistics-experience-v1`. This is a testable feature branch, not a production deployment.
+Historical test-run guide for the original presentation branch. For current models, readiness and migration, use [`CURRENT-STATS.md`](../project/CURRENT-STATS.md); this guide does not establish production deployment.
 
 ## Run the preview
 

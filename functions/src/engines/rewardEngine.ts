@@ -1,12 +1,13 @@
-import type { CanonicalGameResult, MatchParticipant, MatchFormat, SeasonScoringLock } from "../domain/types.js";
+import type { CanonicalGameResult, MatchParticipant, MatchFormat } from "../domain/types.js";
 
-import {normalizeOutcome, winningPlayerIds} from "./resultEngine.js";
-import { SEASON_SCORING_VERSION, validateFfaPlacements } from "./seasonScoring.js";
+import {assertScoringRoster,assertSeasonMatchRules,validateSeasonScoringRules} from "./seasonPoints.js";
+import {placementBonus,verifiedFFAPlacements,type PlacementSourceBinding,type VerifiedFFAPlacements} from "./ffaPlacements.js";
 
 export interface RewardEngineMatch {
   participants: MatchParticipant[];
-  format?: MatchFormat;
-  seasonScoring?: SeasonScoringLock;
+  format?:MatchFormat;
+  placementEvidence?:VerifiedFFAPlacements|null;
+  placementSourceBinding?:PlacementSourceBinding;
   canonicalResult: CanonicalGameResult;
   context?: {
     affectsLeaguePoints?: boolean;
@@ -27,11 +28,10 @@ export interface PlayerMatchReward {
   leaguePoints: {
     matchCompletion: number;
     matchWin: number;
-    ffaPlacement?: number;
-    emperorBounty?: number;
+    placement:number;
+    emperor:number;
   };
-  seasonCounters?: {mainEventWins: number; warmupWins: number; mainEventsPlayed: number; warmupsPlayed: number};
-  placementStatus?: "PENDING" | "VERIFIED" | "NOT_APPLICABLE";
+  placementState:"NOT_APPLICABLE"|"PENDING"|"VERIFIED";
   warRoomPoints: {
     matchCompletion: number;
     matchWin: number;
@@ -68,41 +68,41 @@ function nonNegativeNumber(value: unknown, field: string, fallback = 0): number 
 export function computeMatchRewards(match: RewardEngineMatch): PlayerMatchReward[] {
   const winners = new Set(match.canonicalResult.winningPlayerIds);
   const rules = match.scoringSnapshot?.rules ?? {};
-  const version = rules.seasonScoringVersion;
-  if (version != null && version !== SEASON_SCORING_VERSION) throw new RewardConfigurationError('Unsupported season scoring version.');
-  const v1 = version === SEASON_SCORING_VERSION && match.context?.affectsLeaguePoints === true;
-  const lock = match.seasonScoring;
-  if (v1 && (!lock || lock.version !== version || !['MAIN_EVENT', 'WARMUP'].includes(lock.act) || !match.format)) {
-    throw new RewardConfigurationError('Season scoring requires locked act, format and rules.');
-  }
-  if (new Set(match.participants.map(p => p.playerId)).size !== match.participants.length ||
-    winners.size === 0 || winners.size !== match.canonicalResult.winningPlayerIds.length ||
-    [...winners].some(id => !match.participants.some(p => p.playerId === id))) {
-    throw new RewardConfigurationError('Accepted winners and roster must be unique Match participants.');
-  }
-  if (v1) {
+
+  let seasonRules;
+  try {seasonRules=validateSeasonScoringRules(rules);}
+  catch(error){throw new RewardConfigurationError((error as Error).message);}
+  if(seasonRules && match.context?.affectsLeaguePoints) {
     try {
-      const outcome = normalizeOutcome(match.format!, match.participants, match.canonicalResult, {diplomacyEnabled: lock!.diplomacyEnabled});
-      const expected = winningPlayerIds(outcome, match.participants);
-      if (expected.length !== winners.size || expected.some(id => !winners.has(id))) throw new Error('Canonical winning roster disagrees with the accepted outcome.');
-      if (match.format === 'FFA' && lock!.act === 'MAIN_EVENT' && !lock!.diplomacyEnabled && !lock!.placementRule) throw new Error('Nondiplomatic FFA lacks its announced placement rule.');
-    } catch (error) { throw new RewardConfigurationError((error as Error).message); }
+      assertScoringRoster(match.participants);
+      if(!match.format)throw new Error("Season rewards require the Match format.");
+      assertSeasonMatchRules(seasonRules,match.format);
+    }catch(error){throw new RewardConfigurationError((error as Error).message);}
+    if(!winners.size||winners.size>=match.participants.length||
+       winners.size!==match.canonicalResult.winningPlayerIds.length||
+       [...winners].some(id=>!match.participants.some(p=>p.playerId===id))) {
+      throw new RewardConfigurationError("Official winners do not match the scoring roster.");
+    }
+    if(match.format==="FFA"&&winners.size>1&&seasonRules.diplomacyEnabled!==true) {
+      throw new RewardConfigurationError("Nondiplomatic FFA must have one winner.");
+    }
   }
-  if (v1 && match.format === 'FFA' && (!lock!.diplomacyEnabled && winners.size !== 1 || winners.size >= match.participants.length)) {
-    throw new RewardConfigurationError('FFA must have nonwinners; nondiplomatic FFA must have one winner.');
-  }
-  if (v1 && winners.size >= match.participants.length) throw new RewardConfigurationError('A competitive Match must have a nonwinning side.');
-  if (v1 && match.participants.length > 8) throw new RewardConfigurationError('Season scoring supports at most eight starters.');
-  if (v1 && match.canonicalResult.ffaPlacements) {
-    try { validateFfaPlacements(match.canonicalResult.ffaPlacements, lock!, match.participants, [...winners]); }
-    catch (error) { throw new RewardConfigurationError((error as Error).message); }
-  }
+  const active=seasonRules&&match.context?.affectsLeaguePoints ? seasonRules:null;
+  const needsPlacements=!!active&&match.format==="FFA"&&active.diplomacyEnabled===false;
+  const placements=needsPlacements&&match.placementSourceBinding
+    ? verifiedFFAPlacements(match.placementEvidence,{
+        ...match.placementSourceBinding,policy:active!.placementPolicy,
+        rosterIds:match.participants.map(p=>p.playerId),winnerIds:[...winners],
+        resultRevision:match.canonicalResult.revision,
+      }):null;
+  const emperorLost=!!active?.emperorPlayerId&&!winners.has(active.emperorPlayerId)&&
+    match.participants.some(p=>p.playerId===active.emperorPlayerId);
 
   const leagueCompletion = match.context?.affectsLeaguePoints
-    ? finiteNumber(rules.matchCompletionPoints, "scoringSnapshot.rules.matchCompletionPoints")
+    ? active ? active.act==="MAIN" ? 4:1 : finiteNumber(rules.matchCompletionPoints, "scoringSnapshot.rules.matchCompletionPoints")
     : 0;
   const leagueWin = match.context?.affectsLeaguePoints
-    ? finiteNumber(rules.matchWinPoints, "scoringSnapshot.rules.matchWinPoints")
+    ? active ? active.act==="MAIN" ? 6:2 : finiteNumber(rules.matchWinPoints, "scoringSnapshot.rules.matchWinPoints")
     : 0;
 
   const warRoomCompletion = match.context?.affectsWarRoomPoints
@@ -121,24 +121,15 @@ export function computeMatchRewards(match: RewardEngineMatch): PlayerMatchReward
 
   return match.participants.map((participant) => {
     const isWinner = winners.has(participant.playerId);
-    const main = lock?.act === 'MAIN_EVENT';
-    const emperor = match.participants.find(p => p.playerId === lock?.emperorPlayerId);
-    const bounty = v1 && main && isWinner && emperor && !winners.has(emperor.playerId) ? 2 : 0;
-    const placementApplicable = v1 && main && match.format === 'FFA' && !lock!.diplomacyEnabled;
-    const placements = match.canonicalResult.ffaPlacements;
-    const position = placements?.finishingOrder.indexOf(participant.playerId);
-    const placement = placementApplicable && !isWinner && placements ?
-      (position === 1 && match.participants.length >= 3 ? 2 : position === 2 && match.participants.length >= 5 ? 1 : 0) : 0;
     return {
-      ...(v1 ? {seasonCounters: {mainEventWins: main && isWinner ? 1 : 0, warmupWins: !main && isWinner ? 1 : 0,
-        mainEventsPlayed: main ? 1 : 0, warmupsPlayed: main ? 0 : 1},
-        placementStatus: placementApplicable ? placements ? 'VERIFIED' as const : 'PENDING' as const : 'NOT_APPLICABLE' as const} : {}),
       playerId: participant.playerId,
       leaguePoints: {
-        matchCompletion: v1 ? main ? 4 : 1 : leagueCompletion,
-        matchWin: isWinner ? v1 ? (main ? 6 : 2) / (match.format === 'FFA' && lock!.diplomacyEnabled ? winners.size : 1) : leagueWin : 0,
-        ...(v1 ? {ffaPlacement: placement, emperorBounty: bounty} : {}),
+        matchCompletion: leagueCompletion,
+        matchWin:isWinner ? leagueWin/(active&&match.format==="FFA"&&active.diplomacyEnabled ? winners.size:1):0,
+        placement:placements ? placementBonus(placements,participant.playerId):0,
+        emperor:active?.act==="MAIN"&&emperorLost&&isWinner ? 2:0,
       },
+      placementState:needsPlacements ? placements ? "VERIFIED":"PENDING":"NOT_APPLICABLE",
       warRoomPoints: {
         matchCompletion: warRoomCompletion,
         matchWin: isWinner ? warRoomWin : 0,

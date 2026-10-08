@@ -3,15 +3,18 @@ import { requireLeaguePlayer } from "./auth/authorization.js";
 import { callableOptions } from "./config/runtime.js";
 
 export { bootstrapEmulatorAdmin } from "./dev/bootstrapEmulatorAdmin.js";
+export { beginSteamSignIn, steamAuthCallback } from "./auth/steamOpenId.js";
 export { seedReplayWarmupOpponent } from "./dev/seedReplayWarmupOpponent.js";
 export { requestLeagueMembership } from "./commands/players/requestMembership.js";
 export { adminGenerateEmperorsFavors } from "./commands/admin/generateEmperorsFavors.js";
 export { adminSetMembershipStatus } from "./commands/players/setMembershipStatus.js";
+export { adminLinkSteamIdentity } from "./commands/players/linkSteamIdentity.js";
 export { adminSetPowerRatingConfig } from "./commands/admin/setPowerRatingConfig.js";
 export { adminSetReplayAnalysisConfig } from "./commands/admin/setReplayAnalysisConfig.js";
 export { adminUpsertAchievementDefinition } from "./commands/admin/upsertAchievementDefinition.js";
 export { adminCreateSeason } from "./commands/seasons/createSeason.js";
 export { adminActivateSeason } from "./commands/seasons/activateSeason.js";
+export {adminCreateEventWarmups} from "./commands/events/createEventWarmups.js";
 export { adminCreateEvent } from "./commands/events/createEvent.js";
 export { adminPublishEvent } from "./commands/events/publishEvent.js";
 export { setEventRsvp } from "./commands/events/setRsvp.js";
@@ -67,7 +70,8 @@ export {getStatisticsExperience} from "./queries/getStatisticsExperience.js";
 export {rebuildStatisticsOnGameChange,rebuildStatisticsOnMatchChange,rebuildStatisticsOnSourceChange} from "./triggers/statisticsExperience.js";
 export {getPlayerSiteDirectory} from "./queries/getPlayerSiteDirectory.js";
 export {enterSeason} from "./commands/seasons/enterSeason.js";
-export {adminScheduleScoringWarmup} from './commands/events/scheduleScoringWarmup.js';
-export {adminVerifyFfaPlacements} from './commands/results/verifyFfaPlacements.js';
-export {adminFinalizeMatchSeries} from './commands/results/finalizeMatchSeries.js';
-export {adminConfirmMatchStarters} from './commands/events/confirmMatchStarters.js';
+
+export {reconcileSeasonPointsOnGameSource,reconcileSeasonPointsOnPlacementSource} from "./triggers/seasonPoints.js";
+
+export {adminConfirmMatchStarters} from "./commands/events/confirmMatchStarters.js";
+export {adminFinalizeMatchSeries} from "./commands/results/finalizeMatchSeries.js";

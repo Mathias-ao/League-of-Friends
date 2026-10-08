@@ -67,7 +67,7 @@ export const submitGameResult = onCall<SubmitGameResultInput>(callableOptions, a
 
     let outcome;
     try {
-      outcome = normalizeOutcome(match.format, match.participants, request.data, {diplomacyEnabled: match.seasonScoring?.diplomacyEnabled === true});
+      outcome = normalizeOutcome(match.format, match.participants, request.data, match.gameConfigSnapshot);
     } catch (error) {
       rethrowResultValidation(error);
     }

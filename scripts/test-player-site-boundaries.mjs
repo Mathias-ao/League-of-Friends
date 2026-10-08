@@ -38,7 +38,8 @@ Object.defineProperty(db,'runTransaction',{value:async callback=>{
   });
   writes.forEach(fn=>fn());return result;
 }});
-const request=(data={},uid='account-a')=>({data,auth:{uid,token:{}},rawRequest:{}});
+const request=(data={},uid='account-a',token={})=>({data,auth:{uid,token},rawRequest:{}});
+const steamRequest=(data,steamId64)=>request(data,`steam:${steamId64}`,{provider:'steam',steamId64});
 
 await assert.rejects(getMyMembership.run({data:{},rawRequest:{}}),e=>e.code==='unauthenticated');
 const own=await getMyMembership.run(request({playerId:'another-player'}));
@@ -55,26 +56,26 @@ const firstFavor=batch.favors[0].code;
 const firstFingerprint=fingerprintEmperorsFavor(firstFavor,process.env.EMPERORS_FAVOR_HMAC_KEY);
 assert.equal(records.get('emperorFavors/'+firstFingerprint).status,'UNUSED');
 
-const joined=await requestLeagueMembership.run(request({steamName:'New Banner',discordName:'new-banner',favor:firstFavor},'account-b'));
+const joined=await requestLeagueMembership.run(steamRequest({steamName:'New Banner',discordName:'new-banner',favor:firstFavor},'76561198000000001'));
 assert.equal(joined.membershipStatus,'ACTIVE');
-const joinedMembership=await getMyMembership.run(request({},'account-b'));
+const joinedMembership=await getMyMembership.run(steamRequest({},'76561198000000001'));
 assert.equal(joinedMembership.status,'ACTIVE');
 assert.equal(joinedMembership.player.playerId,joined.playerId);
 assert.equal(records.get('players/'+joined.playerId).membershipStatus,'ACTIVE');
 assert.equal(records.get('emperorFavors/'+firstFingerprint).status,'REDEEMED');
 await assert.rejects(
-  requestLeagueMembership.run(request({steamName:'Second Claim',favor:firstFavor},'account-c')),
+  requestLeagueMembership.run(steamRequest({steamName:'Second Claim',favor:firstFavor},'76561198000000002')),
   /invalid or has already been invoked/i
 );
 
 for(let attempt=0;attempt<4;attempt++){
   await assert.rejects(
-    requestLeagueMembership.run(request({steamName:'Guess',favor:'AAAAAA'},'account-rate')),
+    requestLeagueMembership.run(steamRequest({steamName:'Guess',favor:'AAAAAA'},'76561198000000003')),
     /invalid or has already been invoked/i
   );
 }
 await assert.rejects(
-  requestLeagueMembership.run(request({steamName:'Guess',favor:'AAAAAA'},'account-rate')),
+  requestLeagueMembership.run(steamRequest({steamName:'Guess',favor:'AAAAAA'},'76561198000000003')),
   /sealed for fifteen minutes/i
 );
 

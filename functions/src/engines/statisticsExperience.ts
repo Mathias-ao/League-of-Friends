@@ -1,5 +1,6 @@
+import {qualifyStatistics} from './statisticsQualification.js';
 /** Pure, shared presentation contract. No Firebase or browser dependencies. */
-export const EXPERIENCE_VERSION = 'AOF_STATISTICS_EXPERIENCE_V2';
+export const EXPERIENCE_VERSION = 'AOF_STATISTICS_EXPERIENCE_V3';
 export const CATEGORIES = ['Opening', 'Economy', 'Military', 'Map Presence', 'Execution'] as const;
 export type Category = typeof CATEGORIES[number];
 export type AggregationMode = 'total' | 'average';
@@ -12,7 +13,7 @@ export interface MetricDefinition {
 const metric = (id: string, label: string, category: Category, path: string, unit: MetricDefinition['unit'] = 'number', aggregation: MetricDefinition['aggregation'] = 'volume', extra: Partial<MetricDefinition> = {}): MetricDefinition => ({id,label,category,path,unit,aggregation,eligibility:'all',...extra});
 export const METRICS: MetricDefinition[] = [
   ...['feudal','castle','imperial'].map(age => metric(age, `${age[0].toUpperCase()+age.slice(1)} timing ≈`, 'Opening', `opening.ageUp.${age}.ageUpAtMs`, 'ms', 'median', {leader:'min',record:'min'})),
-  metric('villagers10','Villagers @10 ≈','Opening','economy.villagersBy10Minutes.count','number','mean',{detail:true}),
+  metric('villagers10','Villager queue estimate @10','Opening','economy.villagersBy10Minutes.count','number','mean',{detail:true}),
   metric('darkAgeGap','Longest Dark Age action gap','Opening','execution.longestActionGapDarkAge.valueMs','ms','mean',{detail:true}),
   metric('firstMiningCamp','First Mining Camp placement','Opening','economy.firstMiningCamp.atMs','ms','median',{detail:true}),
   metric('firstLumberCamp','First Lumber Camp placement','Opening','economy.firstLumberCamp.atMs','ms','median',{detail:true}),
@@ -34,10 +35,10 @@ export const METRICS: MetricDefinition[] = [
   metric('militaryCommitment','Military unit commitment','Military','military.militaryUnitCommitment.resources'),
   metric('militaryTechs','Military technologies requested','Military','military.militaryTechs.count','number','mean',{detail:true}),
   metric('unitRequests','Military unit requests','Military','military.militaryUnitsTrained.count','number','volume',{detail:true}),
-  metric('raidsOut','Raids initiated','Military','military.engagements.raidsInitiated','number','volume',{leader:'max',record:'max'}),
+  metric('raidsOut','Detected raids initiated','Military','military.engagements.raidsInitiated','number','volume',{leader:'max',record:'max'}),
   metric('firstRaid','First detected raid','Military','military.engagements.raidEvidence.initiatedEpisodes','ms','median',{record:'min',detail:true}),
-  metric('raidsIn','Raids received','Military','military.engagements.raidsAgainstYou'),
-  metric('skirmishes','Skirmishes','Military','military.engagements.skirmishes'),
+  metric('raidsIn','Detected raids received','Military','military.engagements.raidsAgainstYou'),
+  metric('skirmishes','Detected skirmishes','Military','military.engagements.skirmishes'),
   metric('skirmishTime','Time in skirmishes','Military','execution.skirmishContext.totalTimeMs','ms'),
   metric('assistsOut','Defensive assists given','Military','military.engagements.defensiveAssistsGiven','number','volume',{leader:'max',record:'max'}),
   metric('assistsIn','Defensive assists received','Military','military.engagements.defensiveAssistsReceived'),
@@ -66,7 +67,7 @@ export interface PlayerMeasurement {
   details:{label:string;value:string;atMs:number|null;category:Category}[];
 }
 export interface GameStatistics {
-  version:string;matchId:string;gameId:string;seasonId:string|null;eventId:string|null;format:string;contextKey:string;
+  bindingKey?:string;version:string;matchId:string;gameId:string;seasonId:string|null;eventId:string|null;format:string;contextKey:string;
   orderAtMs:number;revision:number;sourceHash:string;eligible:boolean;exclusionReason:string|null;
   affectsSeason:boolean;affectsLifetime:boolean;durationMs:number;players:PlayerMeasurement[];
   episodes:EvidenceEpisode[];evidenceTruncated:boolean;warnings:string[];
@@ -76,6 +77,9 @@ export interface StatisticsDataset {version:string;games:GameStatistics[];unavai
 export interface ProjectionMetadata extends Omit<GameStatistics,'version'|'durationMs'|'players'|'episodes'|'evidenceTruncated'|'warnings'> {
   roster:{playerId:string;steamName?:string;team?:number|null;civilization?:string|null}[];
   mapping:{replaySlot:number;playerId:string}[];
+}
+export function statisticsBindingKey(metadata:ProjectionMetadata):string {
+  return JSON.stringify({sourceHash:metadata.sourceHash,mapping:[...metadata.mapping].sort((a,b)=>a.replaySlot-b.replaySlot),roster:metadata.roster.map(p=>({playerId:p.playerId,team:p.team??null,civilization:p.civilization??null})).sort((a,b)=>a.playerId.localeCompare(b.playerId))});
 }
 type Bag = Record<string,any>;
 const object = (value:unknown):Bag => value && typeof value==='object'&&!Array.isArray(value)?value as Bag:{};
@@ -108,7 +112,8 @@ export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):Game
   const add=(kind:EvidenceEpisode['kind'],e:Bag,actorKeys:unknown[],targetKeys:unknown[],label:string)=>{
     const start=number(e.startedAtMs??e.firstContributionAtMs??e.atMs),end=number(e.endedAtMs)??start;
     const actors=ids(actorKeys),targets=ids(targetKeys);
-    if(start===null||!actors.length||actors.length!==new Set(actorKeys).size||targets.length!==new Set(targetKeys).size)return;
+    const observedUntil=number(data.scope?.observedUntilMs);
+    if(start===null||observedUntil===null||start>observedUntil||end===null||end<start||end>observedUntil||!actors.length||actors.length!==new Set(actorKeys).size||targets.length!==new Set(targetKeys).size)return;
     const id=`${kind}:${e.raidId??e.battleId??e.skirmishId??start}:${actors.join(',')}:${targets.join(',')}`;
     episodes.set(id,{id,kind,atMs:start,endMs:Math.max(start,end??start),actors,targets,label});
   };
@@ -142,8 +147,10 @@ export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):Game
     composition.unknown=requested===null?0:Math.max(0,requested-known);
     const engagements=object(p.military?.engagements),evidence=object(engagements.engagementEvidence);
     for(const e of array(engagements.raidEvidence?.initiatedEpisodes))add('raid',e,[e.attackerPlayerId],[e.victimPlayerId],'Detected raid');
-    for(const e of array(evidence.defensiveAssistsGiven))add('assist',e,[e.helperPlayerId],[e.defendedPlayerId],'Defensive assist');
-    for(const e of array(evidence.cooperativeAttacks))add('cooperation',e,e.attackerPlayerIds??[],e.targetPlayerIds??[],'Cooperative attack');
+    if(engagements.allyInteractionApplicability?.status==='applicable'){
+      for(const e of array(evidence.defensiveAssistsGiven))add('assist',e,[e.helperPlayerId],[e.defendedPlayerId],'Detected defensive assist');
+      for(const e of array(evidence.cooperativeAttacks))add('cooperation',e,e.attackerPlayerIds??[],e.targetPlayerIds??[],'Detected cooperative attack');
+    }
     for(const e of array(evidence.skirmishes))add('skirmish',e,e.participantPlayerIds??[],[],'Skirmish');
     for(const e of array(evidence.greatBattles))add('greatBattle',e,e.participantPlayerIds??[],[],'Great Battle');
     for(const age of ['feudal','castle','imperial'])if(values[age]!==null)add('age',{atMs:values[age]},[p.playerId],[],`${age[0].toUpperCase()+age.slice(1)} timing ≈`);
@@ -152,15 +159,17 @@ export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):Game
       for(const r of array(rows))details.push({category,label:text(r.technology?.name)??`Technology ${r.technology?.rawId??'unknown'}`,value:'Research request',atMs:number(r.researchRequestedAtMs??r.latestRequestedAtMs)});
     }
     for(const row of array(compositionSource.unitRows))details.push({category:'Military',label:text(row.unit?.name??row.entity?.name)??`Unit ${row.rawUnitId??row.unitId??'unknown'}`,value:`${row.positiveQueueAmount??row.queueAmount??row.count??'—'} queue requests`,atMs:null});
-    return {playerId,name:roster.steamName??text(p.displayName)??playerId,team:roster.team??null,civilization:roster.civilization??null,
+    const result:PlayerMeasurement={playerId,name:roster.steamName??text(p.displayName)??playerId,team:roster.team??null,civilization:roster.civilization??null,
       opening:text(p.buildOrder?.classification?.label)??text(p.buildOrder?.classification)??text(p.buildOrder?.label),mainUnit:text(compositionSource.dominantUnit?.name),
       values,unavailable,models,composition:requested!==null&&requested>0&&known<=requested?composition:null,
       responseTimes:array(p.execution?.raidResponse?.evidence).map(r=>number(r.responseTimeMs)).filter((n):n is number=>n!==null).map(n=>n/1000),
       byAge:object(p.economy?.resourceCommitment?.byAge),details:details.slice(0,100)};
+    qualifyStatistics(result,p,data.scope,data.commandEvidence);
+    return result;
   });
   const allEpisodes=[...episodes.values()].sort((a,b)=>a.atMs-b.atMs||a.id.localeCompare(b.id));
   const {mapping:_,roster:__,...base}=metadata;
-  return {...base,version:EXPERIENCE_VERSION,durationMs:number(data.scope?.observedUntilMs)??0,players,episodes:allEpisodes.slice(0,600),evidenceTruncated:allEpisodes.length>600,
+  return {...base,bindingKey:statisticsBindingKey(metadata),version:EXPERIENCE_VERSION,durationMs:number(data.scope?.observedUntilMs)??0,players,episodes:allEpisodes.slice(0,600),evidenceTruncated:allEpisodes.length>600,
     warnings:array(data.warnings).map(w=>String(w.message??w.code)).slice(0,30)};
 }
 

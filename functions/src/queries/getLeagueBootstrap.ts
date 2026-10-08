@@ -4,9 +4,8 @@ import { requireLeaguePlayer } from "../auth/authorization.js";
 import { db } from "../config/firebase.js";
 import { callableOptions } from "../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../domain/collections.js";
+import {maskUnavailableSeasonAwards,rankSeasonStandings} from "../engines/seasonPoints.js";
 import { iso, playerMap, publicPlayer } from "./querySupport.js";
-
-import {rankSeasonStandings} from "../engines/seasonScoring.js";
 
 interface LeagueStateDocument {
   activeSeasonId?: string | null;
@@ -54,11 +53,11 @@ interface EventParticipantDocument {
 interface StandingDocument {
   playerId?: string;
   leaguePoints?: number;
-  leaguePointUnits?: number;
-  mainEventWins?: number;
-  warmupWins?: number;
-  mainEventsPlayed?: number;
-  warmupsPlayed?: number;
+  leaguePointUnits?:number;
+  mainEventWins?:number;
+  warmupWins?:number;
+  mainEventsPlayed?:number;
+  warmupsPlayed?:number;
 }
 
 interface RivalryDocument {
@@ -176,12 +175,14 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
   }
 
   const seasonRef = db.collection(collections.seasons).doc(activeSeasonId);
-  const [seasonSnapshot, eventsSnapshot, standingsSnapshot, rivalriesSnapshot, challengesSnapshot] = await Promise.all([
+  const [seasonSnapshot, eventsSnapshot, standingsSnapshot, rivalriesSnapshot, challengesSnapshot, scoringMatchesSnapshot, pointLedgerSnapshot] = await Promise.all([
     seasonRef.get(),
     db.collection(collections.events).where("seasonId", "==", activeSeasonId).get(),
     seasonRef.collection("standings").get(),
     seasonRef.collection("rivalries").get(),
     db.collection(collections.challenges).where("seasonId", "==", activeSeasonId).get(),
+    db.collection(collections.matches).where("seasonId","==",activeSeasonId).get(),
+    db.collection(collections.leaguePointLedger).where("seasonId","==",activeSeasonId).get(),
   ]);
 
   const season = seasonSnapshot.exists ? seasonSnapshot.data() as SeasonDocument : {};
@@ -239,20 +240,22 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
     };
   }
 
-  const orderedStandings = standingsSnapshot.docs
+  const standingRows = standingsSnapshot.docs
     .map((document) => {
       const standing = document.data() as StandingDocument;
       const playerId = standing.playerId ?? document.id;
       return {
         ...publicPlayer(playerId, players.get(playerId)),
         leaguePoints: Number(standing.leaguePoints ?? 0),
-        leaguePointUnits: standing.leaguePointUnits,
-        mainEventWins: Number(standing.mainEventWins ?? 0),
-        warmupWins: Number(standing.warmupWins ?? 0),
-        mainEventsPlayed: Number(standing.mainEventsPlayed ?? 0),
-        warmupsPlayed: Number(standing.warmupsPlayed ?? 0),
+        ...(standing.leaguePointUnits==null?{}:{leaguePointUnits:standing.leaguePointUnits}),
+        mainEventWins:Number(standing.mainEventWins??0),warmupWins:Number(standing.warmupWins??0),
+        mainEventsPlayed:Number(standing.mainEventsPlayed??0),warmupsPlayed:Number(standing.warmupsPlayed??0),
       };
-    });
+    })
+    ;
+  const orderedStandings=maskUnavailableSeasonAwards(standingRows,
+    scoringMatchesSnapshot.docs.map(document=>({matchId:document.id,...document.data()})),
+    pointLedgerSnapshot.docs.map(document=>document.data()));
   const emperor = currentEmperorPlayerId
     ? orderedStandings.find((standing) => standing.playerId === currentEmperorPlayerId)
       ?? (players.has(currentEmperorPlayerId) ? {
@@ -260,7 +263,8 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
         leaguePoints: 0,
       } : null)
     : null;
-  const leaderboard = rankSeasonStandings(orderedStandings.filter(standing => standing.playerId !== currentEmperorPlayerId));
+  const leaderboard=rankSeasonStandings(orderedStandings
+    .filter(standing=>standing.playerId!==currentEmperorPlayerId));
 
   const viewerRivalries = rivalriesSnapshot.docs
     .map((document) => ({ pairId: document.id, ...document.data() as RivalryDocument }))

@@ -1,5 +1,20 @@
 # Age of Friends — Current State
 
+## Statistics launch-readiness — 7 October 2026
+
+[`CURRENT-STATS.md`](CURRENT-STATS.md) is the current statistics authority and supersedes
+older model/version and integration descriptions below. The readiness branch adds shared
+Battle/Season coverage gates, evidence-faithful queue/placement/inference labels,
+source/roster binding, correction-consistent reads, complete Season publication and
+regressions. This hardens presentation without changing locked replay detectors.
+V3 presentation/V2 Season caches require hydration from retained hash-checked statistics.
+Production deployment and the full player-flow/footage acceptance remain launch gates.
+The social interpreter remains a shadow system; official social awards are not active.
+
+## Season leaderboard policy — 2026-10-07
+
+[Season leaderboard points V1](../design/season-leaderboard-points-v1.md) implements the agreed 4/+6 main and 1/+2 warm-up rules, shared diplomatic FFA victory pool, Emperor bounty, capped designated scoring slots, correction reconciliation and season tie rules. Nondiplomatic FFA placement scoring has a source-bound consumer and visible pending state; the replay placement qualifier remains a launch prerequisite. Historical profiles are preserved. Shared FFA victories are unrated pending a coalition rating policy; solo FFA rating calculations remain unchanged. This is feature-branch work, not deployment or automatic outcome qualification.
+
 ## Social incident interpreter — 6 October 2026
 
 [Social Incident Interpreter V1](../architecture/social-incident-implementation-v1.md)
