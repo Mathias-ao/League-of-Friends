@@ -1,5 +1,5 @@
 import {initializeApp} from 'firebase/app';
-import {getAuth,GoogleAuthProvider,browserLocalPersistence,setPersistence,signInWithEmailAndPassword,signInWithPopup,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
+import {getAuth,browserLocalPersistence,setPersistence,signInWithCustomToken,signInWithEmailAndPassword,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
 import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type SocialHistoryResponse,type PlayerChronicleResponse} from '../domain/league';
@@ -36,7 +36,36 @@ export class FirebaseLeagueRepository implements LeagueRepository {
       await signInWithEmailAndPassword(this.auth,'emperor@league.local','league-emulator-admin-only');
       return;
     }
-    await signInWithPopup(this.auth,new GoogleAuthProvider());
+
+    const popup=window.open('about:blank','aof-steam-sign-in','popup=yes,width=720,height=760');
+    if(!popup)throw new Error('Steam sign-in was blocked. Allow pop-ups for Age of Friends and try again.');
+
+    try{
+      popup.document.title='Age of Friends · Steam sign-in';
+      popup.document.body.textContent='Opening Steam…';
+      const start=await this.call<{authUrl:string;callbackOrigin:string}>('beginSteamSignIn');
+      const token=await new Promise<string>((resolve,reject)=>{
+        let settled=false;
+        const finish=(error?:Error,value?:string)=>{
+          if(settled)return;settled=true;
+          clearTimeout(timeout);clearInterval(closedCheck);removeEventListener('message',onMessage);
+          if(error)reject(error);else resolve(value!);
+        };
+        const onMessage=(event:MessageEvent)=>{
+          if(event.source!==popup||event.origin!==start.callbackOrigin)return;
+          const payload=event.data as {type?:string;token?:string;message?:string}|null;
+          if(payload?.type==='aof-steam-auth'&&payload.token)finish(undefined,payload.token);
+          else if(payload?.type==='aof-steam-auth-error')finish(new Error(payload.message||'Steam sign-in failed.'));
+        };
+        addEventListener('message',onMessage);
+        const timeout=setTimeout(()=>finish(new Error('Steam sign-in timed out. Please try again.')),120000);
+        const closedCheck=setInterval(()=>{if(popup.closed)finish(new Error('Steam sign-in was cancelled.'));},400);
+        popup.location.href=start.authUrl;
+      });
+      await signInWithCustomToken(this.auth,token);
+    }finally{
+      if(!popup.closed)popup.close();
+    }
   }
   async signOut(){await signOut(this.auth);}
   async requestMembership(steamName:string,discordName:string,favor:string){await this.call('requestLeagueMembership',{steamName,discordName,favor});}
