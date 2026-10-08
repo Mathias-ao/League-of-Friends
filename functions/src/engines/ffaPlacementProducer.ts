@@ -1,11 +1,11 @@
 import {verifiedFFAPlacements,type PlacementSourceBinding} from './ffaPlacements.js';
-/** Only independently footage-qualified adapters belong here. No current adapter qualifies elimination outcomes. */
+/** Register adapters validated against known results for their supported recording formats and rules. */
 export const QUALIFIED_FFA_ELIMINATION_ADAPTERS:readonly string[]=Object.freeze([]);
 export function produceFFAPlacements(facts:any,binding:PlacementSourceBinding,qualifiedAdapters:readonly string[]=QUALIFIED_FFA_ELIMINATION_ADAPTERS) {
   const pending=(reason:string)=>({state:'PENDING' as const,reason,qualifiedFFAPlacements:null});
   if(binding.policy!=='ELIMINATION_ORDER')return pending('This objective ranking policy requires separate qualification.');
   const witness=facts?.result?.eliminationOutcomeEvidence;
-  if(!witness||!qualifiedAdapters.includes(witness.adapterVersion))return pending('No qualified elimination-outcome adapter is available for this recording. Resignation commands do not prove finishing order.');
+  if(!witness||!qualifiedAdapters.includes(witness.adapterVersion))return pending('This recording has not yet supplied a validated, complete elimination order.');
   if(facts.source?.replaySha256!==binding.replaySha256||witness.sourceHash!==binding.replaySha256||witness.coverage!=='COMPLETE'||witness.diplomacyEnabled!==false||witness.restoredGame!==false||!Number.isFinite(facts.game?.observedDurationMs)||!Array.isArray(witness.eliminations)||binding.winnerIds.length!==1)return pending('Elimination evidence has incomplete or incompatible coverage.');
   const roster=facts.players?.map((p:any)=>p.playerId)??[],mapping=binding.replayPlayerMapping;
   if(!Array.isArray(mapping)||mapping.length!==binding.rosterIds.length||new Set(mapping.map((p:any)=>p.replayPlayerId)).size!==mapping.length||new Set(mapping.map((p:any)=>p.playerId)).size!==mapping.length||mapping.some((p:any)=>!roster.includes(p.replayPlayerId)||!binding.rosterIds.includes(p.playerId)))return pending('Elimination evidence does not bind every approved player uniquely.');

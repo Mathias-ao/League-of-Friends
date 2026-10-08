@@ -21,7 +21,7 @@ The canonical bundle already retains the complete decoded header and raw prefix.
 - `diplomacy`: initial raw vectors, existing normalized initial edges and existing directed command timelines. Runtime effective-state qualification remains inactive.
 - `result`: retained canonical winner claims, postgame evidence and observed resignations, with replay winner/loser fields explicitly null until independently qualified.
 
-The pinned parser's decoded postgame fields include leaderboard information, not an authoritative win/loss flag. Rankings, rating changes, surviving players, or resignations do not automatically become outcomes.
+The pinned parser's decoded postgame fields include leaderboard information, not an authoritative win/loss flag. Leaderboard rank and rating changes are not finishing order. Player-identified, timed resignations are useful outcome evidence: complete fixed nondiplomatic elimination games can use them within a validated adapter. The raw observation projection remains unresolved until that adapter accounts for game rules, automatic defeats, disconnects and recording coverage; it does not apply a blanket ban on deriving outcomes from recordings.
 
 ## Persistence and official outcomes
 
