@@ -22,19 +22,21 @@ export const getPlayerSiteDirectory=onCall(callableOptions,async request=>{
   const players=playerMap(playersDoc),seasonId=stateDoc.data()?.activeSeasonId as string|undefined;
   const publicPlayers=[...players.entries()].filter(([,p])=>p.membershipStatus==='ACTIVE'||p.membershipStatus==='INACTIVE').map(([id,p])=>publicPlayer(id,p));
   const enrollmentDocs=await Promise.all(seasonsDoc.docs.map(season=>season.ref.collection('participants').doc(actor.playerId).get()));
-  const hasLeagueHistory=enrollmentDocs.some(doc=>doc.data()?.status==='ENTERED')||Number(lifetimeCompetitionDoc.data()?.matchesPlayed??0)>0||Number(lifetimeReplayDoc.data()?.gamesAnalyzed??0)>0;
+  let hasLeagueHistory=enrollmentDocs.some(doc=>doc.data()?.status==='ENTERED')||Number(lifetimeCompetitionDoc.data()?.matchesPlayed??0)>0||Number(lifetimeReplayDoc.data()?.gamesAnalyzed??0)>0;
   if(!seasonId)return {players:publicPlayers,events:[],matches:[],enteredSeason:false,hasLeagueHistory};
   const [eventsDoc,matchesDoc,enrollmentDoc]=await Promise.all([
     db.collection(collections.events).where('seasonId','==',seasonId).get(),
     db.collection(collections.matches).where('seasonId','==',seasonId).get(),
     db.collection(collections.seasons).doc(seasonId).collection('participants').doc(actor.playerId).get()
   ]);
-  const visibleEvents=eventsDoc.docs.filter(doc=>['PUBLISHED','ACTIVE','COMPLETED','CANCELLED','POSTPONED'].includes(doc.data().status));
+  const visibleEvents=eventsDoc.docs.filter(doc=>['PUBLISHED','ACTIVE','COMPLETED','CANCELLED','POSTPONED'].includes(doc.data().status)||actor.role==='ADMIN'&&doc.data().status==='DRAFT');
+  const invitations=await Promise.all(visibleEvents.map(event=>event.ref.collection("warmupChallenges").get()));
+  hasLeagueHistory=hasLeagueHistory||actor.role==='ADMIN'||matchesDoc.docs.some(m=>(m.data().participants??[]).some((p:any)=>p.playerId===actor.playerId))||invitations.some(rows=>rows.docs.some(row=>row.data().guestPlayerId===actor.playerId&&row.data().status==='PENDING'));
   const events=await Promise.all(visibleEvents.map(async doc=>{
     const e=doc.data(),participants=await doc.ref.collection('participants').get();
     const checkIn=checkInWindow(e);
     const own=participants.docs.find(p=>p.id===actor.playerId)?.data();
-    return {eventId:doc.id,seasonId,title:String(e.title??doc.id),description:String(e.description??''),status:String(e.status),
+    return {eventId:doc.id,officialMatchIds:e.officialMatchIds??[],seasonId,title:String(e.title??doc.id),description:String(e.description??''),status:String(e.status),
       startsAt:iso(e.startsAt),endsAt:iso(e.endsAt),signupDeadlineAt:iso(e.signupDeadlineAt),checkInOpensAt:iso(checkIn.opensAt),checkInClosesAt:iso(checkIn.closesAt),warmupOpensAt:iso(e.warmupOpensAt??(e.startsAt instanceof Timestamp?Timestamp.fromMillis(e.startsAt.toMillis()-7*86400000):null)),
       maxParticipants:e.maxParticipants??null,competitionStyle:e.competitionStyle??null,
       confirmedCount:participants.docs.filter(p=>p.data().rsvp==='YES'&&p.data().signupState==='CONFIRMED').length,

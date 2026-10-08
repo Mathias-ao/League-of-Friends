@@ -17,6 +17,8 @@ export function memoryFirestore(initial=[]) {
       orderBy:(field,direction)=>ref(path,true,filters,[field,direction],cap),
       limit:value=>ref(path,true,filters,order,value),
       create:async data=>{assert.equal(records.has(path),false);records.set(path,data);},
+      set:async(data,options)=>records.set(path,options?.merge?{...records.get(path),...data}:data),
+      update:async data=>{assert.equal(records.has(path),true);records.set(path,{...records.get(path),...data});},
       get:async()=>isCollection?query(path,filters,order,cap):snapshot(path)};
   }
   Object.defineProperty(db,"collection",{configurable:true,value:path=>ref(path,true)});

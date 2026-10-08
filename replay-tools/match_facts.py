@@ -87,6 +87,8 @@ def project_match_facts(analysis):
         "identityNamespace": "CANONICAL_REPLAY_PLAYER_ID",
         "source": source, "headerSource": deepcopy(header_source),
         "game": {"guid": match.get("guid"), "observedDurationMs": match.get("durationMs"),
+                 "bodyParseComplete": (analysis.get("body") or {}).get("bodyParseComplete"),
+                 "resignationCommandCount": ((analysis.get("body") or {}).get("allActionCounts") or {}).get("RESIGN", 0),
                  "completionStatus": match.get("completionStatus", "unknown"),
                  "durationMeaning": "observed_recording_interval_not_proven_full_game",
                  "recordingVersion": {key: header.get(key) for key in

@@ -16,6 +16,7 @@ export function eventFinalisationBlockers(event:any,matches:any[],games:any[],jo
     const rows=games.filter(g=>g.matchId===id);
     if(!rows.length)blockers.push({kind:'GAMES',matchId:id,message:'This Battle has no Games.'});
     for(const game of rows)if(!['COMPLETED','CANCELLED','VOID','REMAKE','NO_CONTEST'].includes(game.status)||game.activeResultDisputeId)blockers.push({kind:'GAME',matchId:id,message:'A Game remains unresolved or disputed.'});
+    if(rows.some(g=>g.status==='COMPLETED'&&g.recordingResultBinding&&!g.recordingEvidenceReady))blockers.push({kind:'RECORDING',matchId:id,message:'An accepted recording is unavailable or changed. Resolve it through the recording correction controls.'});
     if(match.status==='COMPLETED'&&match.opponentKind!=='AI') {
       if(!match.canonicalResult)blockers.push({kind:'RESULT',matchId:id,message:'The official result is missing.'});
       const job=jobs.find(j=>j.matchId===id&&j.resultRevision===(match.canonicalResult?.revision??1));

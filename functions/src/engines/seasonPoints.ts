@@ -63,7 +63,7 @@ export interface ScoringMatchState {
   matchId:string;status?:string;activeResultDisputeId?:string|null;canonicalResult?:{revision?:number}|null;
   scoringResultRevision?:number;scoringSnapshot?:{rules?:Record<string,unknown>};
 }
-export interface PointLedgerRow {playerId?:string;matchId?:string|null;component?:string;amount?:number;amountUnits?:number;}
+export interface PointLedgerRow {sourceMatchId?:string;playerId?:string;matchId?:string|null;component?:string;amount?:number;amountUnits?:number;}
 /** Keep the audit ledger, but remove disputed/unreconciled awards from public standings. */
 export function maskUnavailableSeasonAwards<T extends SeasonStanding>(rows:T[],matches:ScoringMatchState[],ledger:PointLedgerRow[]):T[] {
   const unavailable=new Map(matches.filter(match=>match.status!=="COMPLETED" || match.activeResultDisputeId ||
@@ -72,9 +72,10 @@ export function maskUnavailableSeasonAwards<T extends SeasonStanding>(rows:T[],m
   return rows.map(row=>{
     let points=0,mainWins=0,warmupWins=0;
     const nets=new Map<string,number>();
-    for(const entry of ledger)if(entry.playerId===row.playerId && entry.matchId && unavailable.has(entry.matchId)) {
+    for(const raw of ledger) {const entry={...raw,matchId:raw.sourceMatchId??raw.matchId};if(entry.playerId===row.playerId && entry.matchId && unavailable.has(entry.matchId)) {
       points+=entry.amountUnits??Number(entry.amount??0)*POINT_UNITS;
       if(entry.component==="MATCH_WIN")nets.set(entry.matchId,(nets.get(entry.matchId)??0)+Number(entry.amount??0));
+    }
     }
     for(const [id,net] of nets)if(net>0) {
       const act=unavailable.get(id)?.scoringSnapshot?.rules?.act;

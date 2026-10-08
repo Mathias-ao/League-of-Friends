@@ -1,3 +1,4 @@
+import {createHash} from "node:crypto";
 import type {
   CompetitionStyle,
   MatchFormat,
@@ -24,12 +25,7 @@ function ratingOf(player: PlannerPlayer): number {
 }
 
 function stableHash(value: string): number {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
+  return createHash("sha256").update(value).digest().readUInt32BE(0);
 }
 
 function sortByRating(players: PlannerPlayer[], seed: string): PlannerPlayer[] {
@@ -364,6 +360,12 @@ export function generateMatchPlan(
     };
   }
 
+  // A random draw ignores Elo. Seeded SHA-256 permutations are repeatable for
+  // retries, while a fresh server seed produces a new draw. Uneven teams still
+  // follow the announced Season standings rule.
+  if (planningConfig.pairingMode !== "ELO_BALANCED") {
+    players = players.map(player => ({...player, powerRating:null}));
+  }
   switch (competitionStyle) {
     case "ONE_V_ONE":
       return planOneVsOne(players, seed);

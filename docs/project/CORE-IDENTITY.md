@@ -63,25 +63,25 @@ Agreed with Mathias on **8 October 2026**. This section is the authoritative pro
 
 #### Event
 
-Each Event consists of one warmup Match per player and a main event comprising one or more FFA or team Games. Players sign up in advance. The existing hierarchy and scoring cap remain: a Match may contain multiple Games, but each player has at most one designated scoring WARMUP Match and one designated scoring MAIN Match per Event.
+Each Event offers one warmup to each signed-up player and a main event comprising one or more FFA or team Games. Players sign up in advance. A Match may contain multiple Games. Each player counts only their best eligible warmup result and at most one designated MAIN Match per Event; helping an unpaired league member does not create a second warmup award.
 
 #### Warmup
 
 Warmup pairings are generated seven days before the scheduled main event. Players arrange their Matches independently and must complete them by the end of the main event's calendar day.
 
-Each player plays one 1v1. If the signup roster is odd, the unpaired player may challenge an active AoF member entered in the Season who did not sign up for the Event. Accepting registers the guest for the warmup only, without signing them up for the main event. Both players receive normal warmup points, and each may play only one scoring warmup per Event.
+Each player normally plays one 1v1. If the signup roster is odd, the unpaired player may challenge any active AoF member, including someone already entered in the Season, signed up for the Event, or assigned another warmup. Accepting registers the guest for the warmup only; it does not enter the Season or sign them up for the main event. A helper may therefore play twice. Each player counts just their best eligible result: one participation point and, if that result is a win, two victory points. Event statistics and Roundoff use that same selection; every Battle retains its evidence.
 
-The Event specifies a challenge acceptance deadline that leaves time to complete the Match. If no guest accepts by that deadline, the unpaired player faces an AI at a fixed, announced difficulty using standard warmup settings.
-
-AI warmups award one participation point and no victory bonus. Their Battle Statistics are retained, but they do not affect competitive ratings, player Relationships, or human-opponent records. Achievements apply only where their rules explicitly permit AI Games. An AI is not an AoF member or a league player identity. A 1v2 warmup with player-chosen handicaps is not the adopted fallback.
+The Event specifies a human challenge acceptance deadline. There is no new AI fallback. If no player accepts, the Emperor can record an agreed human pairing before play closes or resolve the warmup as unplayed with a reason. Historical AI Battles retain their existing review and accounting safeguards; they are not silently converted or scheduled again. This decision supersedes the earlier AI proposal.
 
 #### Main event
 
-Check-in closes → attendance changes are resolved → teams and Matches are approved → civilisations are drafted under Event-specific rules → Battle Orders are issued → play begins.
+Check-in completes → attendance changes are resolved → the Emperor reviews and approves the main draw → civilisations are drafted under Event-specific rules → Battle Orders are issued → play begins. Warmups are drawn seven days beforehand; main pairings are drawn only after check-in. Any unresolved missing check-in requires an Emperor-only force button and recorded reason. Expiry of the check-in window alone does not authorize silent exclusion.
+
+Teams are randomly assigned by default, using a fresh server-generated seed for each draw. The Emperor may explicitly select League Elo balancing. A proposed draw is reviewable before approval, and changed attendance requires a new draw.
 
 For team Games with an odd number of players, uneven teams are generated using current Season standings. Higher-ranked players receive the numerical disadvantage. This rule uses Season leaderboard rank, not power rating. The approved Match/Game plan determines the actual roster, teams, format and drafting rules.
 
-Recordings are uploaded after each Game. Processing updates Battle details and the Event roundoff. Once all Matches are resolved, the Emperor (admin) finalises the Event.
+Recordings are uploaded after each Game; upload is the normal result submission. A separately versioned resolver qualifies recorded outcomes and sends accepted results through the existing processing jobs. Unsupported evidence requires a source-bound Emperor review rather than an invented winner. Processing updates Battle details and the live Event Roundoff. Once all Matches, disputes and current processing are resolved, the Emperor concludes the Event from Roundoff.
 
 #### Results and statistics
 
@@ -106,6 +106,10 @@ Each system updates as its required evidence is validated. Statistics and Achiev
 - Treat later-event details not yet represented in repository configuration as design decisions awaiting formal persistence, not implemented state.
 
 ## 5. Social and identity systems
+
+### Steam and league identity
+
+Steam authentication verifies the account. Membership records a chosen league alias, the verified current Steam name when available, and historical verified Steam names after changes. Display appends the current Steam name to the alias when different. Replay mapping uses verified Steam names and retained history; a user-entered alias alone is not proof of a recording identity. Profile outages leave name verification pending rather than inventing a name. An audited Emperor binding resolves genuinely ambiguous recording names.
 
 ### Player Personality
 

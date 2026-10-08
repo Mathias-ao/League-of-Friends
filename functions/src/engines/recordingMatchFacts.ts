@@ -54,8 +54,9 @@ export function currentOfficialGameOutcome(gameValue: unknown, matchValue: unkno
       ["DISPUTED","CANCELLED","VOID","PROPOSED"].includes(match.status) || game.status!=="COMPLETED") {
     return unknown("official_result_not_currently_eligible");
   }
+  if ((result?.source==="RECORDING_VERIFIED"||game.recordingResultBinding) && game.recordingResultBinding?.sourceHash!==game.activeReplayStatisticsId) return unknown("accepted_recording_is_no_longer_active");
   if (!result || !Number.isInteger(result.revision) || result.revision<1 ||
-      !["PLAYER_CONFIRMED","ADMIN_RESOLVED","ADMIN_CORRECTED"].includes(result.source) ||
+      !["PLAYER_CONFIRMED","ADMIN_RESOLVED","ADMIN_CORRECTED","RECORDING_VERIFIED"].includes(result.source) ||
       !["PLAYER_WIN","TEAM_WIN","COALITION_WIN"].includes(result.type)) return unknown("official_result_missing_or_invalid");
   const roster = Array.isArray(game.players) ? game.players.map((p:unknown)=>record(p)?.playerId) : [];
   const winners = result.winningPlayerIds;
@@ -71,5 +72,5 @@ export function currentOfficialGameOutcome(gameValue: unknown, matchValue: unkno
   return {...base, qualification:"OFFICIAL", source:result.source, outcomeType:result.type,
           winnerPlayerIds:[...winners].sort(), loserPlayerIds:losers,
           loserMeaning:"non_winning_members_of_the_official_Game_roster",
-          replayOutcomeEstablished:false};
+          replayOutcomeEstablished:result.source==="RECORDING_VERIFIED"};
 }

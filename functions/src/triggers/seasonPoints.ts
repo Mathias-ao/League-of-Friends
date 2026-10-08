@@ -1,3 +1,4 @@
+import {reconcileBestWarmups,BEST_WARMUP_POLICY} from "../services/bestWarmup.js";
 import {reconcileAIWarmupParticipation} from '../services/aiWarmupParticipation.js';
 import {onDocumentUpdated,onDocumentWritten} from "firebase-functions/v2/firestore";
 import {db} from "../config/firebase.js";
@@ -7,11 +8,18 @@ import {processMatchRewards} from "../commands/processing/processMatchRewards.js
 import {SYSTEM_RESULT_PROCESSING_ACTOR} from "../services/resultProcessingActor.js";
 async function reconcile(matchId:string,eventId:string) {
   const snapshot=await db.collection(collections.matches).doc(matchId).get(),match=snapshot.data();
+  if(match?.warmupScoringPolicy===BEST_WARMUP_POLICY&&match.eventId)await reconcileBestWarmups(match.eventId);
   if(match?.opponentKind==='AI'){await reconcileAIWarmupParticipation(matchId);return;}
   if(match?.status!=="COMPLETED"||match.activeResultDisputeId||!match.canonicalResult||
     match.scoringSnapshot?.rules?.modelVersion!==SEASON_POINTS_VERSION)return;
   await processMatchRewards({matchId,requestId:"SOURCE_"+eventId},SYSTEM_RESULT_PROCESSING_ACTOR);
 }
+export const reconcileBestWarmupsOnMatch=onDocumentWritten({document:"matches/{matchId}",region:"europe-west1",retry:true},async event=>{
+  const before=event.data?.before.data(),after=event.data?.after.data();
+  const relevant=(m:any)=>JSON.stringify([m?.eventId,m?.status,m?.activeResultDisputeId,m?.canonicalResult?.revision,m?.scoringResultRevision]);
+  if(relevant(before)===relevant(after))return;
+  for(const id of new Set([before?.eventId,after?.eventId].filter(Boolean)))await reconcileBestWarmups(id);
+});
 export const reconcileSeasonPointsOnGameSource=onDocumentUpdated({
   document:"matches/{matchId}/games/{gameId}",region:"europe-west1",retry:true,
 },async event=>{

@@ -91,6 +91,12 @@ def command_layout(raw_operation: bytes, action_name: str) -> dict[str, Any]:
     Offsets below are independently exercised by byte fixtures. These are raw
     values, not assertions of acceptance, completion, or engine state.
     """
+    if (action_name == 'RESIGN' and len(raw_operation) == 17
+            and raw_operation[:9] == bytes.fromhex('01000000050000000b')
+            and raw_operation[10] == 1 and raw_operation[11] in (0, 1)
+            and raw_operation[12] == 0):
+        return {'layout': 'de_legacy_resign_v1', 'playerIdRaw': raw_operation[9],
+                'disconnectedRaw': raw_operation[11]}
     if len(raw_operation) < 16:
         return {"layout": "unverified"}
     action_data = raw_operation[9:-4]
