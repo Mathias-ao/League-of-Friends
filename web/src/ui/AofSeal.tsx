@@ -5,7 +5,7 @@ export type AofSealTone='ceremonial'|'quiet'|'faint';
 const sources:Record<AofSealVariant,string>={
   full:new URL('../assets/brand/seal/aof-seal-full.png',import.meta.url).href,
   simple:new URL('../assets/brand/seal/aof-seal-simple.png',import.meta.url).href,
-  mark:new URL('../assets/brand/seal/aof-seal-mark.svg',import.meta.url).href
+  mark:new URL('../assets/brand/seal/aof-seal-mark.png',import.meta.url).href
 };
 
 export function AofSeal({
