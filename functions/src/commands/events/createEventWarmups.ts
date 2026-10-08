@@ -8,6 +8,7 @@ import type {GameConfiguration} from "../../domain/types.js";
 import {assertScoringRoster,scoringSlotId,seasonScoringSnapshot,validateSeasonScoringRules} from "../../engines/seasonPoints.js";
 import {reserveIdempotencyKey} from "../../services/idempotency.js";
 import {writeAdminAudit} from "../../services/audit.js";
+import {warmupWindow} from "../../services/eventTiming.js";
 interface Input {requestId:string;eventId:string;pairs:Array<[string,string]>;gameConfig:GameConfiguration;}
 /** Designated pre-event pairings do not require main-evening attendance check-in. */
 export const adminCreateEventWarmups=onCall<Input>(callableOptions,async request=>{
@@ -31,6 +32,8 @@ export const adminCreateEventWarmups=onCall<Input>(callableOptions,async request
     if(!event||!["PUBLISHED","ACTIVE"].includes(event.status)||!event.seasonId) {
       throw new HttpsError("failed-precondition","Warm-ups require a published or active season Event.");
     }
+    const window=warmupWindow(event.startsAt,event.warmupOpensAt);
+    if(Date.now()>=window.closesAt.toMillis())throw new HttpsError("failed-precondition","Schedule warm-ups before the main Event starts.");
     let rules;
     try{rules=validateSeasonScoringRules(event.scoringSnapshot?.rules??{});}
     catch(error){throw new HttpsError("failed-precondition",(error as Error).message);}
@@ -58,6 +61,7 @@ export const adminCreateEventWarmups=onCall<Input>(callableOptions,async request
           affectsSeasonStats:true,affectsLifetimeStats:true,affectsPowerRating:true},
         seriesRule:{maxGames:1,gamesRequiredToWin:1},gameConfigSnapshot:gameConfig,
         scoringSnapshot,goldRewardSnapshot:event.goldRewardSnapshot,canonicalResult:null,
+        playOpensAt:window.opensAt,playClosesAt:window.closesAt,
         createdBy:actor.playerId,createdAt:now,updatedAt:now,completedAt:null,
       });
       transaction.create(matchRef.collection("games").doc("G1"),{

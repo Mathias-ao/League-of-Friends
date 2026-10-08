@@ -23,12 +23,14 @@ export class PreviewLeagueRepository implements LeagueRepository {
     events:[{eventId:'E001',seasonId:'S001',title:lombardia.display.title,description:lombardia.story.homepageTeaser,status:'PUBLISHED',startsAt:null,maxParticipants:8,confirmedCount:5,waitingListCount:0,competitionStyle:'BIG_TEAM',viewer:{rsvp:'UNANSWERED',signupState:'NONE',attendanceStatus:'NOT_CHECKED'}}]
   };
   constructor(){
+    const mainDate=Date.now()+60*60000;
+    Object.assign(this.state.events[0],{startsAt:new Date(mainDate).toISOString(),warmupOpensAt:new Date(mainDate-7*86400000).toISOString(),checkInOpensAt:new Date(mainDate-75*60000).toISOString(),checkInClosesAt:new Date(mainDate).toISOString()});
     this.state.players=[...this.state.standings,...(this.state.emperor?[this.state.emperor]:[]),{playerId:'sample-halvar',steamName:'Halvar'},{playerId:'sample-ulrik',steamName:'Ulrik'}];
     this.state.matches=[
       {matchId:'sample-duel',seasonId:'S001',format:'ONE_V_ONE',status:'COMPLETED',completedAt:'2026-09-06T18:00:00Z',participants:[{...this.state.emperor!,team:1},{...this.state.players[0],team:2}],result:{winningPlayerIds:['sample-ragnar'],revision:1}},
       {matchId:'sample-team',seasonId:'S001',format:'TWO_V_TWO',status:'COMPLETED',completedAt:'2026-09-08T18:00:00Z',participants:this.state.players.slice(0,4).map((p,i)=>({...p,team:i<2?1:2})),result:{winningPlayerIds:['sample-ragnar','sample-steve'],revision:1}}
     ];
-    this.state.events.push({eventId:'preview-campaign',seasonId:'S001',title:'Lombardia · illustrative campaign',status:'COMPLETED',startsAt:'2026-09-10T18:00:00Z'});
+    this.state.events.push({eventId:'preview-campaign',seasonId:'S001',title:'Lombardia · illustrative campaign',status:'COMPLETED',startsAt:'2026-09-10T18:00:00Z',confirmedCount:4,maxParticipants:4,competitionStyle:'TWO_V_TWO',viewer:{rsvp:'YES',signupState:'CONFIRMED',attendanceStatus:'CHECKED_IN'}});
     for(let index=0;index<8;index++)this.state.matches.push({matchId:`preview-battle-${index+1}`,seasonId:'S001',eventId:'preview-campaign',format:'TWO_V_TWO',status:'COMPLETED',completedAt:`2026-09-${String(10+index).padStart(2,'0')}T18:00:00Z`,participants:[this.state.players[0],this.state.players[1],this.state.players[2],this.state.emperor!].map((p,i)=>({...p,team:i<2?1:2,slot:i+1})),result:{winningPlayerIds:index%2?['sample-baguette','sample-you']:['sample-ragnar','sample-steve'],revision:1}});
   }
   async load(){return structuredClone(this.state);}
@@ -149,7 +151,11 @@ export class PreviewLeagueRepository implements LeagueRepository {
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
-    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:[...this.state.players.filter(p=>p.playerId!=='sample-you').slice(0,5),...(e.viewer?.rsvp==='YES'?[this.state.viewer??this.state.emperor!]:[])]},matches:this.state.matches.filter(m=>m.eventId===id)});
+    const matches=this.state.matches.filter(m=>m.eventId===id);
+    const confirmed=id==='E001'
+      ?[...this.state.players.filter(p=>p.playerId!=='sample-you').slice(0,5),...(e.viewer?.rsvp==='YES'?[{...(this.state.viewer??this.state.emperor!),attendanceStatus:e.viewer.attendanceStatus}]:[])]
+      :[...new Map(matches.flatMap(m=>m.participants).map(p=>[p.playerId,{...p,attendanceStatus:'CHECKED_IN'}])).values()];
+    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:confirmed.length,waitingListCount:0,rosterVisible:true,confirmed},matches});
   }
   async match(id:string):Promise<MatchDetail>{
     let m=this.state.matches.find(m=>m.matchId===id);

@@ -11,7 +11,7 @@ export class Player {
 export interface EventResultsRelease {state:'COLLECTING'|'PREPARING'|'BLOCKED'|'READY'|'RELEASED';revision?:number;publishedAt?:string|null;}
 export interface EventRoundoff {revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;happenings:Array<{title:string;description:string;matchId:string}>;}
 export interface EventRecord {
-  resultsRelease?:EventResultsRelease;
+  resultsRelease?:EventResultsRelease;artworkUrl?:string|null;warmupOpensAt?:string|null;
   eventId:string; title:string; description?:string; seasonId?:string|null; status:string; startsAt:string|null; endsAt?:string|null;
   signupDeadlineAt?:string|null; checkInOpensAt?:string|null; checkInClosesAt?:string|null; maxParticipants?:number|null;
   confirmedCount?:number; waitingListCount?:number; competitionStyle?:string|null;
@@ -36,10 +36,10 @@ export class LeagueEvent {
   }
   canCheckIn(now=Date.now()){
     const e=this.record;
-    return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>=now);
+    return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>now);
   }
 }
-export interface MatchRecord {scoringAct?:string|null;scoringRules?:Record<string,unknown>|null;scoringState?:string|null;scoringBreakdown?:Array<{playerId:string;matchCompletion:number;matchWin:number;placement:number;emperor:number;placementState:string}>;matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
+export interface MatchRecord {playOpensAt?:string|null;playClosesAt?:string|null;scoringAct?:string|null;scoringRules?:Record<string,unknown>|null;scoringState?:string|null;scoringBreakdown?:Array<{playerId:string;matchCompletion:number;matchWin:number;placement:number;emperor:number;placementState:string}>;matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
 export interface CivilizationDraftTurnRecord {index:number;playerId:string;team:number|null;slot:number;status:'PENDING'|'COMPLETED';civilization:string|null;}
 export interface CivilizationDraftSelectionRecord {turnIndex:number;playerId:string;team:number|null;civilization:string;}
 export interface CivilizationDraftRecord {

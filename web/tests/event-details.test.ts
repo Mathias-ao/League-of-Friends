@@ -62,6 +62,7 @@ test('Event details retain all pairings, personal navigation and an explicit rel
 test('preview phase Battles resolve through the repository and preserve their displayed status',async()=>{
  const repo=new PreviewLeagueRepository();await repo.signIn();await repo.requestMembership('Reviewer','','K7M4Q9');
  const snapshot=await repo.load(),original=await repo.event('E001');
+ for(const event of snapshot.events){const detail=await repo.event(event.eventId);assert.equal(detail.signup.confirmedCount,detail.signup.confirmed?.length,'preview muster counts match the visible roster');}
  for(const state of ['pairings','main','preparing','released'] as const){
   repo.setEventDesignState('E001',state);
   const detail=eventDesignPreview(original,snapshot,state);

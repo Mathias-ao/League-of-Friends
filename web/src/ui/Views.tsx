@@ -1,3 +1,4 @@
+import {useScheduleClock} from '../hooks/useScheduleClock';
 import {formatLeaguePoints} from "../domain/seasonPoints";
 import {useEffect,useRef,useState} from 'react';
 import {ArrowRight,BookOpen,Users,Crown,Check,Lock,Swords,Flag,Heart,Search,Shield,Upload,X} from 'lucide-react';
@@ -181,9 +182,11 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
   const [file,setFile]=useState<File|null>(null);
   const [processing,setProcessing]=useState(false);
   const [error,setError]=useState('');
+  const now=useScheduleClock([data.match.playOpensAt]);
+  const playLocked=!!data.match.playOpensAt&&Date.parse(data.match.playOpensAt)>now;
   const ready=game.replay?.statisticsState==='READY'&&!!game.replay.statisticsId;
   const analyze=async()=>{
-    if(!file)return;
+    if(!file||playLocked)return;
     setProcessing(true);setError('');
     try{
       await repository.uploadReplay(data.match.matchId,game.gameId,file);
@@ -192,11 +195,11 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
     finally{setProcessing(false);}
   };
   return <section className={'replay-conclusion '+(ready?'ready':'')}>
-    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
+    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':playLocked?<>This Battle opens <DateLabel value={data.match.playOpensAt}/>. Arrange a time with your opponent once the window opens.</>:'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
     {!ready&&data.viewer.isParticipant&&<div className="replay-upload-form">
-      <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
+      <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing||playLocked} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
       {file&&<div className="replay-file-selected"><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB</span></div>}
-      <button className="primary" disabled={!file||processing} onClick={()=>void analyze()}>{processing?'Analyzing battle…':'Analyze battle'}</button>
+      <button className="primary" disabled={!file||processing||playLocked} onClick={()=>void analyze()}>{processing?'Analyzing battle…':'Analyze battle'}</button>
       {processing&&<div className="replay-processing" role="status"><AofSeal variant="simple" tone="quiet" size={58} animate/><p>Reading recording · building canonical evidence · calculating statistics…</p></div>}
     </div>}
     {ready&&<button className="primary" onClick={()=>document.getElementById('battle-statistics')?.scrollIntoView({behavior:'smooth'})}>View Battle statistics<ArrowRight size={16}/></button>}
@@ -205,6 +208,8 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
 }
 
 export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
+  const now=useScheduleClock([data.match.playOpensAt]);
+  const playLocked=!!data.match.playOpensAt&&Date.parse(data.match.playOpensAt)>now;
   const [dispute,setDispute]=useState<string|null>(null),[reason,setReason]=useState(''),[category,setCategory]=useState('WRONG_RESULT');
   const [resetDraft,setResetDraft]=useState<string|null>(null),[resetReason,setResetReason]=useState(''),[rerollDraft,setRerollDraft]=useState(false);
   const [battleOrdersGameId,setBattleOrdersGameId]=useState<string|null>(null);
@@ -272,12 +277,12 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
         </>}
       </section>:null;
       return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{data.viewer.isParticipant&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>Dispute result</button>}</div>
-        {!game.draftRequired&&<div className="battle-orders-issued"><div><span className="eyebrow">WARM-UP BATTLE ORDERS</span><strong>The battlefield is ready.</strong><p>No civilization draft. Choose civilizations in AoE2:DE, play the Game, then return with the recording.</p></div><div className="battle-orders-issued-actions"><button className="primary" onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button></div></div>}
+        {!game.draftRequired&&<div className="battle-orders-issued"><div><span className="eyebrow">{isWarmupMatch(data.match)?'WARM-UP BATTLE ORDERS':'BATTLE ORDERS'}</span><strong>{playLocked?'The play window has not opened.':'The battlefield is ready.'}</strong><p>{playLocked?<>Opens <DateLabel value={data.match.playOpensAt}/>. Agree a time with your opponent during the warm-up window.</>:<>No civilization draft. Choose civilizations in AoE2:DE, play the Game, then return with the recording.</>}{data.match.playClosesAt&&<> Finish play before <DateLabel value={data.match.playClosesAt}/>.</>}</p></div><div className="battle-orders-issued-actions"><button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button></div></div>}
         {draft?.status==='COMPLETED'&&<>
           <div className="battle-orders-issued">
             <div><span className="eyebrow">BATTLE ORDERS ISSUED</span><strong>The hosts are ready.</strong><p>Teams and civilizations are locked for this Game.</p></div>
             <div className="battle-orders-issued-actions">
-              <button className="primary" onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button>
+              <button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button>
               {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&<button className="text-button small admin-recovery-button" onClick={()=>{setResetDraft(resetDraft===game.gameId?null:game.gameId);setResetReason('');setRerollDraft(false);}}>{resetDraft===game.gameId?'Cancel recovery':'Reset / reroll draft'}</button>}
             </div>
           </div>

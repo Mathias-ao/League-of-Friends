@@ -1,3 +1,4 @@
+import {checkInWindow} from "../../services/eventTiming.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../../auth/authorization.js";
@@ -35,6 +36,7 @@ export const checkInToEvent = onCall<CheckInInput>(callableOptions, async (reque
 
     const event = eventSnapshot.data() as {
       status?: string;
+      startsAt?:Timestamp;
       checkInOpensAt?: Timestamp;
       checkInClosesAt?: Timestamp | null;
     };
@@ -52,13 +54,17 @@ export const checkInToEvent = onCall<CheckInInput>(callableOptions, async (reque
     }
 
     const now = Timestamp.now();
-    if (event.checkInOpensAt instanceof Timestamp && now.toMillis() < event.checkInOpensAt.toMillis()) {
+    const window=checkInWindow(event);
+    if(!(window.opensAt instanceof Timestamp))throw new HttpsError("failed-precondition","The organizer has not set a main-event check-in window.");
+    const closesAt=window.closesAt;
+    if (now.toMillis() < window.opensAt.toMillis()) {
       throw new HttpsError("failed-precondition", "Check-in has not opened yet.");
     }
-    if (event.checkInClosesAt instanceof Timestamp && now.toMillis() > event.checkInClosesAt.toMillis()) {
+    if (closesAt instanceof Timestamp && now.toMillis() >= closesAt.toMillis()) {
       throw new HttpsError("failed-precondition", "Check-in has closed.");
     }
 
+    if(participant.attendanceStatus==="CHECKED_IN")return;
     transaction.update(participantRef, {
       attendanceStatus: "CHECKED_IN",
       checkedInAt: now,

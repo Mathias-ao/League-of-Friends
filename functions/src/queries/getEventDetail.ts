@@ -1,3 +1,4 @@
+import {matchPlayWindow,checkInWindow} from "../services/eventTiming.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../auth/authorization.js";
@@ -21,6 +22,7 @@ interface EventDocument {
   startsAt?: Timestamp | null;
   endsAt?: Timestamp | null;
   signupDeadlineAt?: Timestamp | null;
+  warmupOpensAt?:Timestamp|null;
   checkInOpensAt?: Timestamp | null;
   checkInClosesAt?: Timestamp | null;
   minParticipants?: number | null;
@@ -48,6 +50,8 @@ interface MatchDocument {
   teamSizes?: [number, number] | null;
   participants?: MatchParticipant[];
   status?: string;
+  playOpensAt?:Timestamp|null;
+  playClosesAt?:Timestamp|null;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   completedAt?: Timestamp | null;
   firstCompletedAt?: Timestamp | null;
@@ -71,6 +75,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
   if (!eventSnapshot.exists) throw new HttpsError("not-found", "Event not found.");
 
   const event = eventSnapshot.data() as EventDocument;
+  const checkIn=checkInWindow(event);
   const players = playerMap(playersSnapshot);
   const participantDocs = participantsSnapshot.docs.map((document) => ({
     id: document.id,
@@ -92,6 +97,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
     .sort((left, right) => Number(left.data.matchNumber ?? Number.MAX_SAFE_INTEGER) - Number(right.data.matchNumber ?? Number.MAX_SAFE_INTEGER)
       || left.id.localeCompare(right.id))
     .map(({ id: matchId, data: match }) => {
+      const window=matchPlayWindow(match,event);
       const participants = Array.isArray(match.participants) ? match.participants : [];
       const result = match.canonicalResult ?? null;
       const winningPlayerIds = Array.isArray(result?.winningPlayerIds) ? result.winningPlayerIds : [];
@@ -102,6 +108,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
         scoringAct:match.scoringSnapshot?.rules?.act??null,
         teamSizes: match.teamSizes ?? null,
         status: match.status ?? "UNKNOWN",
+        playOpensAt:iso(window.opensAt),playClosesAt:iso(window.closesAt),
         draftRequired: match.gameConfigSnapshot?.civilizations?.mode === "DRAFT",
         processingState: match.processingState ?? null,
         completedAt: iso(match.completedAt ?? match.firstCompletedAt),
@@ -142,8 +149,9 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
       startsAt: iso(event.startsAt),
       endsAt: iso(event.endsAt),
       signupDeadlineAt: iso(event.signupDeadlineAt),
-      checkInOpensAt: iso(event.checkInOpensAt),
-      checkInClosesAt: iso(event.checkInClosesAt),
+      checkInOpensAt: iso(checkIn.opensAt),
+      checkInClosesAt: iso(checkIn.closesAt),
+      warmupOpensAt:iso(event.warmupOpensAt??(event.startsAt instanceof Timestamp?Timestamp.fromMillis(event.startsAt.toMillis()-7*86400000):null)),
       minParticipants: event.minParticipants ?? null,
       maxParticipants: event.maxParticipants ?? null,
       waitingListEnabled: event.waitingListEnabled !== false,
