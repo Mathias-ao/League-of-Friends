@@ -88,3 +88,76 @@
   .ruby-scrollbar__thumb img,
   .ruby-scrollbar__rail::before{transition:none}
 }
+
+/* Dialog-scoped ruby controls: same gemstone and engraved bronze guide,
+   reduced to fit the narrower Event and Battle detail windows. */
+.ruby-dialog-scroll{
+  position:fixed;
+  width:64px;
+  z-index:5;
+  pointer-events:none;
+}
+.ruby-dialog-scroll[data-visible="false"]{display:none}
+.ruby-dialog-scroll__rail{
+  position:relative;
+  height:100%;
+  width:100%;
+  pointer-events:auto;
+  cursor:pointer;
+}
+.ruby-dialog-scroll__rail::before{
+  content:"";
+  position:absolute;
+  top:0;bottom:0;
+  left:50%;
+  width:3px;
+  transform:translateX(-50%);
+  pointer-events:none;
+  background:linear-gradient(90deg,
+    rgba(34,21,13,.72) 0 33%,
+    rgba(134,101,60,.55) 33% 66%,
+    rgba(222,183,123,.44) 66% 100%);
+  box-shadow:0 0 2px rgba(30,17,10,.35);
+  opacity:.62;
+  transition:opacity .16s ease;
+}
+.ruby-dialog-scroll__rail:hover::before{opacity:.95}
+.ruby-dialog-scroll__thumb{
+  position:absolute;
+  top:0;left:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  will-change:transform;
+}
+.ruby-dialog-scroll__thumb:active{cursor:grabbing}
+.ruby-dialog-scroll__thumb:focus-visible{outline:2px solid #dab47b;outline-offset:2px}
+.ruby-dialog-scroll__thumb img{
+  display:block;
+  height:86px;
+  max-width:100%;
+  width:auto;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 3px 5px rgba(38,21,14,.68));
+}
+.ruby-dialog-scroll__thumb:hover img{
+  filter:brightness(1.12) drop-shadow(0 3px 7px rgba(53,25,12,.74));
+}
+/* The dialog continues to own scrolling, with its native scrollbars hidden only
+   while a working ruby control is mounted on a desktop pointer device. */
+@media (hover:hover) and (pointer:fine) and (min-width:700px){
+  dialog.ruby-dialog-scroll-active{scrollbar-width:none}
+  dialog.ruby-dialog-scroll-active::-webkit-scrollbar{display:none}
+}
+@media not ((hover:hover) and (pointer:fine) and (min-width:700px)){
+  .ruby-dialog-scroll{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .ruby-dialog-scroll__rail::before{transition:none}
+}
