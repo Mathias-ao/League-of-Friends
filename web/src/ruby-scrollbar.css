@@ -1,25 +1,47 @@
-/* Fixed-size PNG ruby, synchronized with the native document scrollbar. */
+/* Age of Friends ruby scrollbar — antique bronze engraved guide, no dark slab.
+   The existing PNG is rendered at its intrinsic aspect ratio, never stretched. */
 .ruby-scrollbar{
   position:fixed;
   z-index:100;
   top:0;
-  right:0;
+  right:5px;
+  width:78px;
   height:100dvh;
-  width:48px;
-  padding:10px 5px;
+  padding:14px 0;
   pointer-events:none;
 }
 .ruby-scrollbar[data-visible="false"]{display:none}
 .ruby-scrollbar__rail{
   position:relative;
-  height:100%;
   width:100%;
+  height:100%;
   pointer-events:auto;
-  border-left:1px solid rgba(181,149,105,.27);
-  border-right:1px solid rgba(0,0,0,.7);
-  background:linear-gradient(90deg,#0d0c0e,#29201e 45%,#0c0a0c);
-  box-shadow:inset 0 0 9px #000c;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  cursor:pointer;
 }
+/* A two-pixel engraved line: umber cut and aged-brass catching light.
+   There is deliberately no full-height opaque panel behind it. */
+.ruby-scrollbar__rail::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:50%;
+  width:3px;
+  transform:translateX(-50%);
+  pointer-events:none;
+  background:linear-gradient(90deg,
+    rgba(34,21,13,.70) 0 33%,
+    rgba(134,101,60,.55) 33% 66%,
+    rgba(222,183,123,.38) 66% 100%);
+  box-shadow:0 0 2px rgba(30,17,10,.28);
+  opacity:.62;
+  transition:opacity .16s ease;
+}
+.ruby-scrollbar__rail:hover::before,
+.ruby-scrollbar__rail:has(.ruby-scrollbar__thumb:active)::before{opacity:.95}
 .ruby-scrollbar__thumb{
   position:absolute;
   top:0;
@@ -31,23 +53,29 @@
   cursor:grab;
   touch-action:none;
   user-select:none;
-  outline-offset:1px;
+  outline-offset:2px;
   will-change:transform;
 }
 .ruby-scrollbar__thumb:active{cursor:grabbing}
-.ruby-scrollbar__thumb:focus-visible{outline:2px solid #dfb777}
+.ruby-scrollbar__thumb:focus-visible{outline:2px solid #dab47b}
 .ruby-scrollbar__thumb img{
   display:block;
+  height:124px;
   width:auto;
-  height:64px;
   max-width:100%;
   object-fit:contain;
   pointer-events:none;
   user-select:none;
-  filter:drop-shadow(0 2px 5px #000a);
+  filter:drop-shadow(0 3px 5px rgba(38,21,14,.65));
+  transition:filter .16s ease;
 }
-.ruby-scrollbar__thumb:hover img{filter:brightness(1.12) drop-shadow(0 2px 6px #000c)}
-/* No native thumb only where the fixed ruby is usable. Keep mobile native scrolling. */
+.ruby-scrollbar__thumb:hover img{
+  filter:brightness(1.12) drop-shadow(0 3px 7px rgba(53,25,12,.72));
+}
+.ruby-scrollbar__thumb:active img{
+  filter:brightness(1.16) drop-shadow(0 3px 8px rgba(62,26,14,.80));
+}
+/* Hide the native document thumb only while our desktop control is usable. */
 @media (hover:hover) and (pointer:fine) and (min-width:700px){
   html.ruby-scrollbar-enabled{scrollbar-width:none}
   html.ruby-scrollbar-enabled::-webkit-scrollbar{display:none}
@@ -57,4 +85,6 @@
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
+  .ruby-scrollbar__thumb img,
+  .ruby-scrollbar__rail::before{transition:none}
 }
