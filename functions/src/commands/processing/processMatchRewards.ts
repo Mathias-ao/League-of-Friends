@@ -1,3 +1,4 @@
+import {reconcileBestWarmups,BEST_WARMUP_POLICY} from "../../services/bestWarmup.js";
 import {createHash} from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -22,6 +23,7 @@ export interface ProcessMatchRewardsInput {
 }
 
 interface MatchForRewards {
+  warmupScoringPolicy?:string;
   seasonId?: string | null;
   format?:MatchFormat;
   scoringSourceToken?:string;
@@ -154,9 +156,13 @@ export async function processMatchRewards(
       if(!match.eventId||!match.seasonId)throw new HttpsError("failed-precondition","Season points require an Event and Season.");
       const eventRef=db.collection(collections.events).doc(match.eventId);
       const slots=await Promise.all(match.participants.map(p=>transaction.get(eventRef.collection("scoringSlots").doc(scoringSlotId(seasonRules!.act,p.playerId)))));
-      if(slots.some((slot,index)=>slot.data()?.matchId!==matchId||slot.data()?.seasonId!==match.seasonId||
+      if(match.warmupScoringPolicy!==BEST_WARMUP_POLICY && slots.some((slot,index)=>slot.data()?.matchId!==matchId||slot.data()?.seasonId!==match.seasonId||
         slot.data()?.playerId!==match.participants![index].playerId||slot.data()?.act!==seasonRules!.act)) {
         throw new HttpsError("failed-precondition","This Match does not own its players' designated scoring slots.");
+      }
+      if(match.warmupScoringPolicy===BEST_WARMUP_POLICY) {
+        const event=(await transaction.get(eventRef)).data();
+        if(seasonRules.act!=="WARMUP"||event?.warmupPolicy?.scoringPolicy!==BEST_WARMUP_POLICY||!event.warmupMatchIds?.includes(matchId)||slots.some((slot,index)=>slot.data()?.playerId!==match.participants![index].playerId||slot.data()?.seasonId!==match.seasonId||slot.data()?.act!=="WARMUP"))throw new HttpsError("failed-precondition","The warm-up is not registered under the Event best-result policy.");
       }
       const gameId=typeof match.canonicalResult.sourceGameId==="string" ? match.canonicalResult.sourceGameId:null;
       const gameRef=gameId ? matchRef.collection("games").doc(gameId):null;
@@ -211,6 +217,11 @@ export async function processMatchRewards(
       throw error;
     }
 
+    // Event best-result reconciliation owns warm-up points. Other Battle
+    // rewards and evidence still follow the normal per-Match pipeline.
+    if(match.warmupScoringPolicy===BEST_WARMUP_POLICY)for(const reward of rewards) {
+      reward.leaguePoints.matchCompletion=0;reward.leaguePoints.matchWin=0;
+    }
     if ((match.context?.affectsLeaguePoints || match.context?.affectsWarRoomPoints) && !match.seasonId) {
       throw new HttpsError("failed-precondition", "A Season is required for competition point rewards.");
     }
@@ -469,6 +480,8 @@ export async function processMatchRewards(
     };
   });
 
+  const current=(await matchRef.get()).data();
+  if(current?.warmupScoringPolicy===BEST_WARMUP_POLICY&&current.eventId)await reconcileBestWarmups(current.eventId);
   return {
     success: true,
     matchId,

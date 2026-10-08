@@ -23,6 +23,7 @@ interface MatchDetailInput {
 }
 
 interface MatchDocument {
+  warmupScoringPolicy?:string;
   opponentKind?:string;aiOpponent?:any;aiParticipation?:any;
   seasonId?: string | null;
   scoringSnapshot?:{rules?:Record<string,unknown>};
@@ -111,6 +112,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
   const event=match.scoringSnapshot?.rules?.act==="WARMUP"&&!(match.playOpensAt instanceof Timestamp)&&match.eventId
     ?(await db.collection(collections.events).doc(match.eventId).get()).data():undefined;
   const window=matchPlayWindow(match,event);
+  const warmupSelections=match.warmupScoringPolicy==='AOF_BEST_WARMUP_V1'&&match.eventId?(await db.collection('events').doc(match.eventId).collection('warmupSelections').get()).docs:[];
   const participants = Array.isArray(match.participants) ? match.participants : [];
   const viewerIsParticipant = participants.some((participant) => participant.playerId === actor.playerId);
   const canSeePendingResultClaims = viewerIsParticipant || actor.role === "ADMIN";
@@ -191,6 +193,8 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       } : null,
       result: canonicalResult(game.canonicalResult),
       resultDisputeOpen: Boolean(game.activeResultDisputeId),
+      activeResultDisputeId:actor.role==='ADMIN'?game.activeResultDisputeId??null:null,
+      outcomeQualification:placementSource?.outcomeQualification??null,
       replay: {
         rawStatsState: game.rawStatsState ?? null,
         derivedStatsState: game.derivedStatsState ?? null,
@@ -217,6 +221,8 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
     generatedAt: new Date().toISOString(),
     match: {
       matchId,opponentKind:match.opponentKind??"HUMAN",aiOpponent:match.aiOpponent??null,aiParticipation:match.aiParticipation??null,
+      warmupScoringPolicy:match.warmupScoringPolicy??null,
+      warmupCountedPlayerIds:match.status==='COMPLETED'?warmupSelections.filter(s=>s.data().selected?.matchId===matchId&&s.data().selected?.revision===match.canonicalResult?.revision).map(s=>s.id):[],
       seasonId: match.seasonId ?? null,
       eventId: match.eventId ?? null,
       challengeId: match.challengeId ?? null,
@@ -233,7 +239,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       scoringRules:match.scoringSnapshot?.rules??null,
       scoringState:match.status==="DISPUTED" ? "DISPUTED":
         match.scoringSnapshot?.rules?.modelVersion==="AOF_SEASON_POINTS_V1" && match.scoringResultRevision!==match.canonicalResult?.revision ? "PENDING":match.scoringState??null,
-      scoringBreakdown:match.status==="COMPLETED" && match.scoringResultRevision===match.canonicalResult?.revision ? match.scoringBreakdown??[]:[],
+      scoringBreakdown:match.status==="COMPLETED" && match.scoringResultRevision===match.canonicalResult?.revision ? match.warmupScoringPolicy==='AOF_BEST_WARMUP_V1'?participants.map(p=>{const selected=warmupSelections.find(s=>s.id===p.playerId)?.data().selected,counted=selected?.matchId===matchId&&selected?.revision===match.canonicalResult?.revision;return {playerId:p.playerId,matchCompletion:counted?1:0,matchWin:counted&&selected.win?2:0,placement:0,emperor:0,placementState:'NOT_APPLICABLE'};}):match.scoringBreakdown??[]:[],
       completedAt: iso(match.completedAt ?? match.firstCompletedAt),
       participants: participants.map((participant) => ({
         ...publicPlayer(participant.playerId, players.get(participant.playerId)),

@@ -68,11 +68,13 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     }
   }
   async signOut(){await signOut(this.auth);}
-  async requestMembership(steamName:string,discordName:string,favor:string){await this.call('requestLeagueMembership',{steamName,discordName,favor});}
+  async requestMembership(steamName:string,discordName:string,favor:string){await this.call('requestLeagueMembership',{leagueAlias:steamName,discordName,favor});}
   generateEmperorsFavors(batchName:string,count:number){return this.call<EmperorsFavorBatch>('adminGenerateEmperorsFavors',{batchName,count});}
   async replaceWarmupOpponent(matchId:string,withdrawnPlayerId:string,replacementPlayerId:string,reason:string){await this.call('adminReplaceWarmupOpponent',{matchId,withdrawnPlayerId,replacementPlayerId,reason});}
   async rejectAIWarmup(matchId:string,reason:string){await this.call('adminRejectAIWarmup',{matchId,reason});}
   async resolveUnpairedWarmup(eventId:string,reason:string){await this.call('adminResolveUnpairedWarmup',{eventId,reason});}
+  async assignUnpairedWarmup(eventId:string,opponentPlayerId:string,reason:string){await this.call('adminAssignUnpairedWarmup',{eventId,opponentPlayerId,reason,opponentAgreed:true});}
+  async rejectUnresolvedEventMatch(matchId:string,reason:string){await this.call('adminRejectUnresolvedEventMatch',{matchId,reason});}
   async configureWarmups(eventId:string,map:string,aiDifficulty:string){await this.call('adminConfigureEventWarmups',{eventId,map,aiDifficulty});}
   async challengeGuest(eventId:string,guestPlayerId:string){await this.call('challengeWarmupGuest',{eventId,guestPlayerId});}
   async respondGuest(eventId:string,challengeId:string,accept:boolean){await this.call('respondToWarmupGuest',{eventId,challengeId,accept});}
@@ -84,7 +86,17 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async enterSeason(seasonId:string){await this.call('enterSeason',{seasonId});}
   async rsvp(eventId:string,rsvp:'YES'|'NO'){await this.call('setEventRsvp',{eventId,rsvp});}
   async checkIn(eventId:string){await this.call('checkInToEvent',{eventId});}
-  async formEventMatches(eventId:string){const plan=await this.call<{planId:string}>('adminGenerateMatchPlan',{requestId:crypto.randomUUID(),eventId});await this.call('adminApproveMatchPlan',{requestId:crypto.randomUUID(),eventId,planId:plan.planId});}
+  async createEvent(input:Record<string,unknown>){return this.call<{eventId:string}>('adminCreateEvent',{...input,requestId:crypto.randomUUID()});}
+  async publishEvent(eventId:string){await this.call('adminPublishEvent',{eventId,requestId:crypto.randomUUID()});}
+  async formEventMatches(eventId:string,options?:{pairingMode:'RANDOM'|'ELO_BALANCED';force:boolean;reason:string}){await this.call('adminGenerateMatchPlan',{requestId:crypto.randomUUID(),eventId,...options});}
+  async markEventAttendance(eventId:string,playerId:string,status:'LATE_ADDED'|'NO_SHOW',reason:string){await this.call('adminMarkEventAttendance',{eventId,playerId,status,reason});}
+  async approveEventPairing(eventId:string,planId:string){await this.call('adminApproveMatchPlan',{requestId:crypto.randomUUID(),eventId,planId});}
+  async reviewRecordingResult(matchId:string,gameId:string,sourceHash:string,outcome:Record<string,unknown>,reason:string,playedWithinWindow:boolean){await this.call('adminReviewRecordingResult',{matchId,gameId,sourceHash,outcome,reason,playedWithinWindow});}
+  async resolveResultDispute(matchId:string,gameId:string,disputeId:string,resolution:'UPHOLD'|'CORRECT',outcome:Record<string,unknown>,reason:string,expectedSourceHash?:string){await this.call('adminResolveCanonicalResultDispute',{requestId:crypto.randomUUID(),matchId,gameId,disputeId,resolution,reason,...(expectedSourceHash?{expectedSourceHash}:{}),...outcome});}
+  async finalizeSeries(matchId:string,expectedResultRevision:number,reason:string){await this.call('adminFinalizeMatchSeries',{requestId:crypto.randomUUID(),matchId,expectedResultRevision,reason});}
+  async retryResultProcessing(matchId:string,reason:string){const result=await this.call<{success:boolean;lastError:string|null}>('adminRetryResultProcessing',{matchId,reason});if(!result.success)throw new Error(result.lastError??'Processing still needs attention.');}
+  async confirmStarters(matchId:string,starterPlayerIds:string[],reason:string){await this.call('adminConfirmMatchStarters',{requestId:crypto.randomUUID(),matchId,starterPlayerIds,reason});}
+  async bindReplayParticipants(matchId:string,gameId:string,bindings:{playerId:string;sourceName:string}[],reason:string){await this.call('adminBindReplayParticipants',{matchId,gameId,bindings,reason});}
   async ensureCivilizationDraft(matchId:string,gameId:string){await this.call('ensureCivilizationDraft',{matchId,gameId});}
   async pickCivilization(matchId:string,gameId:string,civilization:string){await this.call('makeCivilizationDraftPick',{matchId,gameId,civilization});}
   async resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean){await this.call('adminResetCivilizationDraft',{requestId:crypto.randomUUID(),matchId,gameId,reason,rerollOrder});}

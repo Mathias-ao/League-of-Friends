@@ -1,3 +1,5 @@
+import {EmperorCampaignControls} from './EmperorCampaignControls';
+import {EmperorBattleControls} from './EmperorControls';
 import {AIWarmupReview,LateWarmupReview} from './EventLifecycle';
 import {useScheduleClock} from '../hooks/useScheduleClock';
 import {formatLeaguePoints} from "../domain/seasonPoints";
@@ -38,8 +40,9 @@ export function SeasonView(props:ViewProps&{onRules:()=>void}){
     </div></section>
   </>;
 }
-export function EventsView({snapshot,openEvent}:ViewProps){
-  return <section className="section"><div className="section-heading"><div><span className="eyebrow">SEASON I</span><h1>The campaign</h1></div><span className="muted">One season. Many battlefields.</span></div><div className="event-list">
+export function EventsView(props:ViewProps){
+  const {snapshot,openEvent}=props;
+  return <section className="section"><div className="section-heading"><div><span className="eyebrow">SEASON I</span><h1>The campaign</h1></div><span className="muted">One season. Many battlefields.</span></div>{snapshot.viewer?.role==='ADMIN'&&<EmperorCampaignControls {...props}/>}<div className="event-list">
     {snapshot.events.map((e,i)=><article key={e.eventId} className="panel event-list-card"><span className="event-number">{String(i+1).padStart(2,'0')}</span><Sigil kind="flag" size={32}/><div><span className="eyebrow">{e.status.replaceAll('_',' ')}</span><h2>{e.title}</h2><p>{isLombardia(e)?lombardia.display.formatLine:formatName(e.competitionStyle)}</p><p className="muted"><DateLabel value={e.startsAt}/></p></div><button className="primary" onClick={()=>openEvent(e.eventId)}>View event<ArrowRight size={16}/></button></article>)}
     {plannedEvents.map((e,i)=><article className="panel event-list-card planned" key={e.id}><span className="event-number">{String(i+2).padStart(2,'0')}</span><Sigil kind={i?'ffa':'team'} size={32}/><div><span className="eyebrow">{e.period} · PLANNED</span><h2>{e.title}</h2><p>{e.format}</p><p className="muted">{e.description}</p></div><span className="quiet-badge">Details to come</span></article>)}
   </div><p className="footnote">Later event details are provisional. Final dates and rules will be announced with each event.</p></section>;
@@ -179,7 +182,7 @@ function BattleOrdersDialog({data,game,onClose}:{data:MatchDetail;game:MatchDeta
 }
 
 
-function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;game:MatchDetail['games'][number];repository:ViewProps['repository'];onUpdated:()=>void}){
+function ReplayConclusion({data,game,repository,onUpdated,admin=false}:{admin?:boolean;data:MatchDetail;game:MatchDetail['games'][number];repository:ViewProps['repository'];onUpdated:()=>void}){
   const [file,setFile]=useState<File|null>(null);
   const [processing,setProcessing]=useState(false);
   const [error,setError]=useState('');
@@ -196,13 +199,14 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
     finally{setProcessing(false);}
   };
   return <section className={'replay-conclusion '+(ready?'ready':'')}>
-    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':playLocked?<>This Battle opens <DateLabel value={data.match.playOpensAt}/>. Arrange a time with your opponent once the window opens.</>:'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
-    {!ready&&data.viewer.isParticipant&&<div className="replay-upload-form">
+    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Validated recording outcomes become official results and feed Event points. Evidence that needs review remains with the Emperor.':playLocked?<>This Battle opens <DateLabel value={data.match.playOpensAt}/>. Arrange a time with your opponent once the window opens.</>:'Choose one .aoe2record. Age of Friends will extract the outcome and Battle Statistics from the recording.'}</p></div></div>
+    {(!game.result&&(data.viewer.isParticipant||admin)||ready&&admin&&game.resultDisputeOpen)&&<div className="replay-upload-form">
       <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing||playLocked} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
       {file&&<div className="replay-file-selected"><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB</span></div>}
-      <button className="primary" disabled={!file||processing||playLocked} onClick={()=>void analyze()}>{processing?'Analyzing battle…':'Analyze battle'}</button>
+      <button className="primary" disabled={!file||processing||playLocked} onClick={()=>void analyze()}>{processing?'Analyzing battle…':ready?game.resultDisputeOpen?'Replace disputed recording':'Replace unresolved recording':'Submit recording and result'}</button>
       {processing&&<div className="replay-processing" role="status"><AofSeal variant="simple" tone="quiet" size={58} animate/><p>Reading recording · building canonical evidence · calculating statistics…</p></div>}
     </div>}
+    {game.outcomeQualification?.state==='PENDING_ADMIN_REVIEW'&&!game.result&&<p role="status">Emperor review needed: {game.outcomeQualification.reason}</p>}
     {ready&&<button className="primary" onClick={()=>document.getElementById('battle-statistics')?.scrollIntoView({behavior:'smooth'})}>View Battle statistics<ArrowRight size={16}/></button>}
     {error&&<div className="alert" role="alert">{error}</div>}
   </section>;
@@ -277,7 +281,7 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
           </div>}
         </>}
       </section>:null;
-      return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{data.viewer.isParticipant&&data.match.opponentKind!=='AI'&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>Dispute result</button>}</div>
+      return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{(data.viewer.isParticipant||snapshot.viewer?.role==='ADMIN')&&data.match.opponentKind!=='AI'&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>{data.viewer.isParticipant?'Dispute result':'Open correction review'}</button>}</div>
         {!game.draftRequired&&<div className="battle-orders-issued"><div><span className="eyebrow">{isWarmupMatch(data.match)?'WARM-UP BATTLE ORDERS':'BATTLE ORDERS'}</span><strong>{playLocked?'The play window has not opened.':'The battlefield is ready.'}</strong><p>{playLocked?<>Opens <DateLabel value={data.match.playOpensAt}/>. Agree a time with your opponent during the warm-up window.</>:<>No civilization draft. Choose civilizations in AoE2:DE, play the Game, then return with the recording.</>}{data.match.playClosesAt&&<> Finish play before <DateLabel value={data.match.playClosesAt}/>.</>}</p></div><div className="battle-orders-issued-actions"><button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button></div></div>}
         {draft?.status==='COMPLETED'&&<>
           <div className="battle-orders-issued">
@@ -297,10 +301,12 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
         {draft?.status==='COMPLETED'?<details className="draft-record-details"><summary><span><strong>View draft record</strong><small>Pick order, draft rules and administrator recovery</small></span><span className="quiet-badge">{draft.selections.length} / {draft.turns.length} CHOSEN</span></summary>{draftPanel}</details>:draftPanel}
         {draft?.status!=='COMPLETED'&&<div className="game-players">{game.players.map(player=><div key={player.playerId}><Avatar player={player}/><span><strong>{player.steamName}</strong><small>{player.civilization?civilizationName(player.civilization):'Civilization not yet selected'}{player.team!=null?' · Team '+player.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(player.playerId)&&<span className="gold">Winner</span>}</div>)}</div>}<p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':data.match.opponentKind==='AI'&&data.match.status==='COMPLETED'?'AI participation verified':game.result?'Final result · Revision '+game.result.revision:draft?.status==='COMPLETED'?'Battle awaiting a qualified result.':'Awaiting a qualified result.'}</p>
         {dispute===game.gameId&&<form className="form dispute-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.dispute(data.match.matchId,game.gameId,category,reason.trim()),'Dispute submitted for review.')){setDispute(null);onUpdated();}}}><label>What needs correcting?<select value={category} onChange={e=>setCategory(e.target.value)}><option value="WRONG_RESULT">Wrong result</option><option value="WRONG_REPLAY">Wrong replay</option><option value="PLAYER_MISMATCH">Player mismatch</option><option value="OTHER">Other</option></select></label><label>Reason<textarea required maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="primary" disabled={busy||!reason.trim()}>Submit dispute</button></form>}
+        {snapshot.viewer?.role==='ADMIN'&&data.match.opponentKind!=='AI'&&<EmperorBattleControls data={data} gameId={game.gameId} repository={repository} onUpdated={onUpdated}/>}
         <AIWarmupReview data={data} gameId={game.gameId} repository={repository} admin={snapshot.viewer?.role==='ADMIN'} onUpdated={onUpdated}/>
         <LateWarmupReview data={data} gameId={game.gameId} repository={repository} onUpdated={onUpdated}/>
         {game.replay?.placementReason&&<p role="status">Finishing order pending: {game.replay.placementReason}</p>}
-        <ReplayConclusion data={data} game={game} repository={repository} onUpdated={onUpdated}/>
+        {data.match.warmupScoringPolicy==='AOF_BEST_WARMUP_V1'&&<p>Only each player’s best warm-up counts in this Event. {data.match.warmupCountedPlayerIds?.length?`This Battle currently counts for ${data.match.participants.filter(p=>data.match.warmupCountedPlayerIds!.includes(p.playerId)).map(p=>p.steamName).join(', ')}.`:'No Event warm-up award currently selects this Battle.'}</p>}
+        <ReplayConclusion admin={snapshot.viewer?.role==='ADMIN'} data={data} game={game} repository={repository} onUpdated={onUpdated}/>
       </article>;
     })}
     {!data.games.length&&<Empty title="The Game plan is not ready">Your Games will appear after the match plan is approved.</Empty>}
@@ -311,7 +317,7 @@ export function ProfileDialog({data,snapshot,preview}:ViewProps&{data:PlayerProf
   const [scope,setScope]=useState('season'),own=data.player.playerId===snapshot.viewer?.playerId;
   const stats=scope==='season'?data.activeSeason?.competition:data.lifetime.competition;
   const values:[string,string|number|null|undefined][]=[['Played',stats?.matchesPlayed],['Won',stats?.matchesWon],['Lost',stats?.matchesLost],['Win rate',stats&&stats.matchesPlayed>0?Math.round(stats.matchesWon/stats.matchesPlayed*100)+'%':null]];
-  return <><div className="profile-overview"><div className="profile-portrait"><Avatar player={data.player} large/><span className="eyebrow">NEWCOMER</span></div><div><span className="eyebrow">PERSISTENT LEAGUE IDENTITY</span><h3>{data.player.steamName}</h3><p>Your banner outlives a single season.</p><span className="quiet-badge">Military identity awaiting qualified evidence</span></div></div>
+  return <><div className="profile-overview"><div className="profile-portrait"><Avatar player={data.player} large/><span className="eyebrow">NEWCOMER</span></div><div><span className="eyebrow">PERSISTENT LEAGUE IDENTITY</span><h3>{data.player.steamName}</h3><p>Your banner outlives a single season.</p>{!!data.player.nicknames?.length&&<p>Earlier Steam names: {data.player.nicknames.join(', ')}</p>}<span className="quiet-badge">Military identity awaiting qualified evidence</span></div></div>
     <div className="section-heading"><h3>Battle record{preview?' · Sample':''}</h3><select aria-label="Player record scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="season">This season</option><option value="lifetime">Lifetime</option></select></div><div className="profile-record">{values.map(([label,value])=><div key={label}><strong>{value??'—'}</strong><span>{label}</span></div>)}</div>
     <h3>Selected achievements</h3>{data.achievements.length?<div className="achievements">{data.achievements.slice(0,3).map(a=><div key={a.awardId}><Shield size={22}/><strong>{a.name}</strong><p>{a.description}</p></div>)}</div>:<p className="muted">No achievements are showcased. Achievement rules are awaiting validated statistics.</p>}{own&&<p className="footnote">Your full collection and personal progression belong only to you.</p>}<hr/><h3>Shared history</h3><div className="history-columns"><section><span className="eyebrow">ACROSS THE BATTLEFIELD</span>{data.opponents.length?data.opponents.map(r=><p key={r.player.playerId}>{r.player.steamName}<span>{r.matchesTogether} encounters</span></p>):<p className="muted">No recorded opponents yet.</p>}</section><section><span className="eyebrow">UNDER ONE BANNER</span>{data.teammates.length?data.teammates.map(r=><p key={r.player.playerId}>{r.player.steamName}<span>{r.matchesTogether} together</span></p>):<p className="muted">No recorded teammates yet.</p>}</section></div><p className="footnote">Rivalry, Enemy and Friend progression will be drawn from validated battle evidence.</p>
   </>;

@@ -16,13 +16,14 @@ export function drawWarmups(ids:string[],seed:string) {
   return {pairs,unpairedPlayerId};
 }
 /** All reads and scoring-slot checks are the caller's transaction responsibility. */
-export function writeWarmup(tx:Transaction,eventRef:DocumentReference,event:any,ids:string[],matchId:string,now:Timestamp,ai=false,emperorPlayerId:string|null=null,transferIds:string[]=[]) {
+export function writeWarmup(tx:Transaction,eventRef:DocumentReference,event:any,ids:string[],matchId:string,now:Timestamp,ai=false,emperorPlayerId:string|null=null,transferIds:string[]=[],extraIds:string[]=[]) {
   const window=warmupWindow(event.startsAt,event.warmupOpensAt,event.timezone);
   const gameConfig={...event.warmupPolicy.gameConfig,diplomacyEnabled:false};
   const participants=ids.map((playerId,i)=>({playerId,slot:i+1,team:i+1}));
   const aiOpponent=ai?{kind:'AI',opponentId:'AI_OPPONENT',label:'AI',difficulty:event.warmupPolicy.aiDifficulty,qualification:'CONFIGURATION_PENDING'}:null;
   const matchRef=db.collection('matches').doc(matchId);
   tx.create(matchRef,{seasonId:event.seasonId,eventId:eventRef.id,matchNumber:0,format:'ONE_V_ONE',status:'READY',participants,
+    warmupScoringPolicy:!ai&&event.warmupPolicy?.scoringPolicy==='AOF_BEST_WARMUP_V1'?'AOF_BEST_WARMUP_V1':null,
     opponentKind:ai?'AI':'HUMAN',aiOpponent,emperorPlayerIdAtApproval:emperorPlayerId,
     context:{type:'SEASON_EVENT',affectsLeaguePoints:true,affectsWarRoomPoints:false,affectsGold:!ai,
       affectsSeasonStats:!ai,affectsLifetimeStats:!ai,affectsPowerRating:!ai,affectsRelationships:!ai,affectsHumanRecords:!ai},
@@ -36,7 +37,7 @@ export function writeWarmup(tx:Transaction,eventRef:DocumentReference,event:any,
     replay:null,canonicalResult:null,createdAt:now,updatedAt:now});
   for(const playerId of ids){const slot=eventRef.collection('scoringSlots').doc(scoringSlotId('WARMUP',playerId));
     if(transferIds.includes(playerId))tx.update(slot,{matchId,updatedAt:now});
-    else tx.create(slot,{playerId,act:'WARMUP',matchId,seasonId:event.seasonId,createdAt:now});
+    else if(!extraIds.includes(playerId))tx.create(slot,{playerId,act:'WARMUP',matchId,seasonId:event.seasonId,createdAt:now});
   }
 }
 /** Retry-safe scheduler; legacy Events opt in through configuration, never migration by guess. */
@@ -70,9 +71,11 @@ export async function advanceEventWarmups(eventId:string,nowMs=Date.now()) {
         for(const invite of invites.docs)if(invite.data().status==='PENDING')tx.update(invite.ref,{status:'EXPIRED',resolvedAt:now});
         tx.update(ref,{warmupSchedule:{...schedule,status:'ADMIN_REVIEW',reason:'Unpaired player withdrew or became ineligible'},updatedAt:now});return {changed:true};
       }
-      const id=eventId+'-AI-W';writeWarmup(tx,ref,event,[playerId],id,now,true);
+      // No AI fallback. An unpaired player may invite any active league player
+      // until the Event day's warm-up window closes.
+      tx.update(ref,{warmupSchedule:{...schedule,status:'ADMIN_REVIEW',reason:'A human opponent is still needed'},updatedAt:now});
       for(const invite of invites.docs)if(invite.data().status==='PENDING')tx.update(invite.ref,{status:'EXPIRED',resolvedAt:now});
-      tx.update(ref,{warmupSchedule:{...schedule,status:'AI_ASSIGNED',matchId:id},warmupMatchIds:[...(event.warmupMatchIds??[]),id],updatedAt:now});return {changed:true};
+      return {changed:true};
     }
     return {changed:false};
   });

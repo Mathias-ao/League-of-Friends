@@ -20,7 +20,7 @@ test('Steam OpenID realm covers its callback and initiation rejects unknown orig
 test('Steam callbacks verify assertions, consume state once, and deliver tokens only to the initiating origin',async t=>{
   const records=memoryFirestore();const start=await beginSteamSignIn.run(startRequest);
   let requests=0;
-  t.mock.method(globalThis,'fetch',async(url,options)=>{requests++;assert.equal(url,'https://steamcommunity.com/openid/login');assert.equal(new URLSearchParams(options.body).get('openid.mode'),'check_authentication');return {ok:true,text:async()=> 'ns:http://specs.openid.net/auth/2.0\nis_valid:true\n'};});
+  t.mock.method(globalThis,'fetch',async(url,options)=>{if(String(url).includes('/profiles/'))return {ok:true,text:async()=>'<profile><steamID64>76561198000000000</steamID64><steamID>Verified Steam name</steamID></profile>'};requests++;assert.equal(url,'https://steamcommunity.com/openid/login');assert.equal(new URLSearchParams(options.body).get('openid.mode'),'check_authentication');return {ok:true,text:async()=> 'ns:http://specs.openid.net/auth/2.0\nis_valid:true\n'};});
   t.mock.method(getAuth(),'getUser',async uid=>({uid}));
   t.mock.method(getAuth(),'createCustomToken',async(uid,claims)=>{assert.equal(uid,'steam:76561198000000000');assert.equal(claims.provider,'steam');return 'synthetic-test-token';});
   const req=callbackRequest(assertion(start)),res=response();await steamAuthCallback(req,res);

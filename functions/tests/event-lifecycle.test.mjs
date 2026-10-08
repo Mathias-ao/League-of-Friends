@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Timestamp} from 'firebase-admin/firestore';
 import {memoryFirestore} from './support/memory-firestore.mjs';
 import {endOfEventDay} from '../lib/engines/eventCalendar.js';
-import {advanceEventWarmups,drawWarmups} from '../lib/services/warmupLifecycle.js';
+import {advanceEventWarmups,drawWarmups,writeWarmup} from '../lib/services/warmupLifecycle.js';
 import {challengeWarmupGuest,respondToWarmupGuest,adminReplaceWarmupOpponent,adminResolveUnpairedWarmup} from '../lib/commands/events/warmupChallenges.js';
 import {adminVerifyAIWarmup,disputeAIWarmup,adminRejectAIWarmup} from '../lib/commands/events/verifyAIWarmup.js';
 import {reconcileAIWarmupParticipation} from '../lib/services/aiWarmupParticipation.js';
@@ -25,7 +25,7 @@ const req=(data,uid='admin')=>({auth:{uid},data});
 function fixture(count=3){const now=Date.now(),ids=Array.from({length:count},(_,i)=>'p'+i),entries=[['leagueState/singleton',{activeSeasonId:'s',currentEmperorPlayerId:'admin'}],['seasons/s',{status:'ACTIVE'}]];
  for(const id of ['admin',...ids,'guest','other'])entries.push(['authLinks/'+id,{playerId:id}],['players/'+id,{steamName:id,membershipStatus:'ACTIVE',role:id==='admin'?'ADMIN':'PLAYER'}],['seasons/s/participants/'+id,{status:'ENTERED'}]);
  for(const id of ids)entries.push(['events/e/participants/'+id,{rsvp:'YES',signupState:'CONFIRMED',attendanceStatus:'CHECKED_IN'}]);
- entries.push(['events/e',{seasonId:'s',status:'PUBLISHED',startsAt:Timestamp.fromMillis(now+3*day),timezone:'Europe/Copenhagen',warmupPolicy:{modelVersion:'AOF_WARMUP_LIFECYCLE_V1',gameConfig:config,aiDifficulty:'Hard',guestAcceptanceDeadlineAt:Timestamp.fromMillis(now+day)},gameConfig:config,scoringSnapshot:seasonScoringSnapshot({act:'MAIN',diplomacyEnabled:false,placementPolicy:'NONE',emperorPlayerId:null}),goldRewardSnapshot:{matchCompletion:1,matchWin:2},competitionStyle:'BIG_TEAM',planningConfig:{allowAsymmetricTeams:true,preferredTeamSize:4,prioritizeLargestTeams:true}}]);
+ entries.push(['events/e',{seasonId:'s',status:'PUBLISHED',startsAt:Timestamp.fromMillis(now+3*day),timezone:'Europe/Copenhagen',warmupPolicy:{modelVersion:'AOF_WARMUP_LIFECYCLE_V1',scoringPolicy:'AOF_BEST_WARMUP_V1',gameConfig:config,aiDifficulty:'Hard',guestAcceptanceDeadlineAt:Timestamp.fromMillis(now+day)},gameConfig:config,scoringSnapshot:seasonScoringSnapshot({act:'MAIN',diplomacyEnabled:false,placementPolicy:'NONE',emperorPlayerId:null}),goldRewardSnapshot:{matchCompletion:1,matchWin:2},competitionStyle:'BIG_TEAM',planningConfig:{allowAsymmetricTeams:true,preferredTeamSize:4,prioritizeLargestTeams:true}}]);
  return {db:memoryFirestore(entries),now,ids};}
 
 test('calendar midnight follows local Event day across Danish DST transitions',()=>{
@@ -54,23 +54,24 @@ test('guest acceptance reserves both slots, does not sign up/check in the guest,
  assert.equal(db.get('events/e/warmupChallenges/'+unpaired+'_other').status,'EXPIRED');
  assert.equal((await respondToWarmupGuest.run(req({eventId:'e',challengeId:first.challengeId,accept:true},'guest'))).alreadyAccepted,true);
 });
-test('eligibility is rechecked at acceptance and a booked guest cannot be used again',async()=>{
+test('eligibility is rechecked at acceptance when a guest becomes inactive',async()=>{
  const {db,now}=fixture();await advanceEventWarmups('e',now);const id=db.get('events/e').warmupSchedule.unpairedPlayerId;
  const invite=await challengeWarmupGuest.run(req({eventId:'e',guestPlayerId:'guest'},id));
- db.set('events/e/participants/guest',{rsvp:'YES',signupState:'WAITING_LIST'});
- await assert.rejects(respondToWarmupGuest.run(req({eventId:'e',challengeId:invite.challengeId,accept:true},'guest')),/eligibility changed/);
+ db.set('players/guest',{...db.get('players/guest'),membershipStatus:'INACTIVE'});
+ await assert.rejects(respondToWarmupGuest.run(req({eventId:'e',challengeId:invite.challengeId,accept:true},'guest')),/membership is not active/);
  assert.equal(db.has('events/e/scoringSlots/WARMUP_guest'),false);
 });
-test('expired invitation becomes a real AI opponent record without a league-player identity',async()=>{
+test('expired invitations require human resolution and never create an AI fallback',async()=>{
  const {db,now}=fixture();await advanceEventWarmups('e',now);const id=db.get('events/e').warmupSchedule.unpairedPlayerId;
  await challengeWarmupGuest.run(req({eventId:'e',guestPlayerId:'guest'},id));
  await advanceEventWarmups('e',now+day+1);await advanceEventWarmups('e',now+day+2);
- const ai=db.get('matches/e-AI-W');assert.equal(ai.participants.length,1);assert.equal(ai.opponentKind,'AI');assert.equal(ai.aiOpponent.difficulty,'Hard');
- assert.equal(ai.context.affectsPowerRating,false);assert.equal(ai.context.affectsSeasonStats,false);assert.equal(db.has('players/AI_OPPONENT'),false);
- assert.equal(db.get('events/e').warmupMatchIds.filter(id=>id==='e-AI-W').length,1);
+ assert.equal(db.has('matches/e-AI-W'),false);assert.equal(db.get('events/e').warmupSchedule.status,'ADMIN_REVIEW');
+ assert.equal(db.get('events/e/warmupChallenges/'+id+'_guest').status,'EXPIRED');
 });
 test('AI participation is reviewed, awards exactly one point, reverses on dispute and requires re-verification after source replacement',async()=>{
- const {db,now}=fixture(1);await advanceEventWarmups('e',now);await advanceEventWarmups('e',now+day+1);
+ const {db,now}=fixture(1);
+ // Historical AI Battles remain reviewable, but the scheduler creates no new ones.
+ await import('../lib/config/firebase.js').then(async ({db:firestore})=>firestore.runTransaction(async tx=>{const ref=firestore.collection('events').doc('e');writeWarmup(tx,ref,db.get('events/e'),['p0'],'e-AI-W',Timestamp.fromMillis(now),true);}));
  const sourceHash='a'.repeat(64),playerId=db.get('matches/e-AI-W').participants[0].playerId;
  db.set('matches/e-AI-W/games/G1',{...db.get('matches/e-AI-W/games/G1'),activeReplayStatisticsId:sourceHash});
  db.set('matches/e-AI-W/games/G1/replaySources/'+sourceHash,{state:'READY',sourceHash,matchId:'e-AI-W',gameId:'G1',opponentMapping:[{replaySlot:2,opponentId:'AI_OPPONENT'}],playerMapping:[{replaySlot:1,playerId}]});

@@ -2,6 +2,9 @@ import { onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "./auth/authorization.js";
 import { callableOptions } from "./config/runtime.js";
 
+export {adminRetryResultProcessing} from "./commands/processing/retryResultProcessing.js";
+export {finalizeRecordingSeries} from "./triggers/recordingSeries.js";
+export {adminBindReplayParticipants} from "./commands/admin/bindReplayParticipants.js";
 export { bootstrapEmulatorAdmin } from "./dev/bootstrapEmulatorAdmin.js";
 export { beginSteamSignIn, steamAuthCallback } from "./auth/steamOpenId.js";
 export { seedReplayWarmupOpponent } from "./dev/seedReplayWarmupOpponent.js";
@@ -19,6 +22,7 @@ export { adminCreateEvent } from "./commands/events/createEvent.js";
 export { adminPublishEvent } from "./commands/events/publishEvent.js";
 export { setEventRsvp } from "./commands/events/setRsvp.js";
 export { checkInToEvent } from "./commands/events/checkIn.js";
+export {adminMarkEventAttendance} from "./commands/events/markAttendance.js";
 export { adminGenerateMatchPlan } from "./commands/events/generateMatchPlan.js";
 export { adminApproveMatchPlan } from "./commands/events/approveMatchPlan.js";
 export { ensureCivilizationDraft } from "./commands/drafts/ensureCivilizationDraft.js";
@@ -44,6 +48,8 @@ export { adminProcessAchievements } from "./commands/processing/processAchieveme
 export { adminProcessRivalries } from "./commands/processing/processRivalries.js";
 export { adminProcessRecords } from "./commands/processing/processRecords.js";
 export { adminProcessActivity } from "./commands/processing/processActivity.js";
+export {adminReviewRecordingResult} from "./commands/results/reviewRecordingResult.js";
+export {resolveResultsOnRecordingSource,resolveResultsOnActiveRecording} from "./triggers/recordingResults.js";
 export { processResultJob } from "./triggers/processResultJob.js";
 export { getLeagueBootstrap } from "./queries/getLeagueBootstrap.js";
 export { getEventDetail } from "./queries/getEventDetail.js";
@@ -71,15 +77,15 @@ export {rebuildStatisticsOnGameChange,rebuildStatisticsOnMatchChange,rebuildStat
 export {getPlayerSiteDirectory} from "./queries/getPlayerSiteDirectory.js";
 export {enterSeason} from "./commands/seasons/enterSeason.js";
 
-export {reconcileSeasonPointsOnGameSource,reconcileSeasonPointsOnPlacementSource} from "./triggers/seasonPoints.js";
+export {reconcileBestWarmupsOnMatch,reconcileSeasonPointsOnGameSource,reconcileSeasonPointsOnPlacementSource} from "./triggers/seasonPoints.js";
 
 export {adminConfirmMatchStarters} from "./commands/events/confirmMatchStarters.js";
 export {adminFinalizeMatchSeries} from "./commands/results/finalizeMatchSeries.js";
 
 export {adminConfigureEventWarmups,challengeWarmupGuest,respondToWarmupGuest} from './commands/events/warmupChallenges.js';
 export {scheduleEventWarmups} from './triggers/warmupSchedule.js';
-export {adminFinaliseEvent,adminResolveUnplayedEventMatch} from './commands/events/finaliseEvent.js';
+export {adminRejectUnresolvedEventMatch,adminFinaliseEvent,adminResolveUnplayedEventMatch} from './commands/events/finaliseEvent.js';
 export {adminVerifyAIWarmup,disputeAIWarmup} from './commands/events/verifyAIWarmup.js';
 export {qualifyFFAPlacementsOnGame,qualifyFFAPlacementsOnSource,qualifyFFAPlacementsOnMatch} from './triggers/ffaPlacements.js';
-export {adminReplaceWarmupOpponent,adminResolveUnpairedWarmup} from './commands/events/warmupChallenges.js';
+export {adminAssignUnpairedWarmup,adminReplaceWarmupOpponent,adminResolveUnpairedWarmup} from './commands/events/warmupChallenges.js';
 export {adminRejectAIWarmup} from './commands/events/verifyAIWarmup.js';

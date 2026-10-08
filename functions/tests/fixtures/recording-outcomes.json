@@ -1,0 +1,2341 @@
+[
+  {
+    "filename": "1v1_1.aoe2record",
+    "sourceHash": "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "Mr Greed",
+        "teamId": 2,
+        "civilizationId": 14
+      },
+      {
+        "replaySlot": 2,
+        "name": "T90Official",
+        "teamId": 3,
+        "civilizationId": 19
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181"
+      },
+      "game": {
+        "guid": "848628a5-934d-e64b-8d79-59c60040918a",
+        "observedDurationMs": 2230813,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 1,
+        "recordingVersion": {
+          "save_version": 68.0
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 180059,
+        "de.timestamp": 1788992343,
+        "de.guid": "848628a5-934d-e64b-8d79-59c60040918a",
+        "de.rms_map_id": 9,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 1,
+        "map.dimension": 120,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 9
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              4
+            ],
+            "2": [
+              0,
+              4,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 14
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 19
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 1,
+            "atMs": 2230813,
+            "sourceEventId": "OP348010",
+            "operationOrdinal": 348010,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP348011",
+            "timestampMs": 2230813,
+            "operationOrdinal": 348011,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 0,
+                      "rank": 137,
+                      "rating": 2394
+                    },
+                    {
+                      "number": 1,
+                      "rank": 76,
+                      "rating": 2507
+                    }
+                  ]
+                }
+              ],
+              "world_time": 2230813
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "filename": "1v1_2.aoe2record",
+    "sourceHash": "bcb0872742d2e6c2da1ed9844aed373e533adafe6b097765bcca3a9dd30e8836",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "Mr Greed",
+        "teamId": 2,
+        "civilizationId": 14
+      },
+      {
+        "replaySlot": 2,
+        "name": "T90Official",
+        "teamId": 3,
+        "civilizationId": 19
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "bcb0872742d2e6c2da1ed9844aed373e533adafe6b097765bcca3a9dd30e8836"
+      },
+      "game": {
+        "guid": "848628a5-934d-e64b-8d79-59c60040918a",
+        "observedDurationMs": 2230813,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 1,
+        "recordingVersion": {
+          "save_version": 68.0
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 180059,
+        "de.timestamp": 1788992343,
+        "de.guid": "848628a5-934d-e64b-8d79-59c60040918a",
+        "de.rms_map_id": 9,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 2,
+        "map.dimension": 120,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 9
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              4
+            ],
+            "2": [
+              0,
+              4,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 14
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 19
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 1,
+            "atMs": 2230813,
+            "sourceEventId": "OP348010",
+            "operationOrdinal": 348010,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP348012",
+            "timestampMs": 2230813,
+            "operationOrdinal": 348012,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 0,
+                      "rank": 137,
+                      "rating": 2394
+                    },
+                    {
+                      "number": 1,
+                      "rank": 76,
+                      "rating": 2507
+                    }
+                  ]
+                }
+              ],
+              "world_time": 2230813
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "filename": "aof-test-game-1.aoe2record",
+    "sourceHash": "df9fe94378c08d58e4d60b3f161c5f2f862d72f333472aad4cfdfa119730ed80",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "T90Official",
+        "teamId": 2,
+        "civilizationId": 3
+      },
+      {
+        "replaySlot": 2,
+        "name": "NOC | Target331",
+        "teamId": 3,
+        "civilizationId": 9
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "df9fe94378c08d58e4d60b3f161c5f2f862d72f333472aad4cfdfa119730ed80"
+      },
+      "game": {
+        "guid": "546545a3-c0dd-764d-a466-2d33226a7926",
+        "observedDurationMs": 963949,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 1,
+        "recordingVersion": {
+          "save_version": 68.9
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 185872,
+        "de.timestamp": 1790349977,
+        "de.guid": "546545a3-c0dd-764d-a466-2d33226a7926",
+        "de.rms_map_id": 140,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 1,
+        "map.dimension": 120,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 140
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              4
+            ],
+            "2": [
+              0,
+              4,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 3
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 9
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 2,
+            "atMs": 963949,
+            "sourceEventId": "OP149530",
+            "operationOrdinal": 149530,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP149531",
+            "timestampMs": 963949,
+            "operationOrdinal": 149531,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 0,
+                      "rank": 56,
+                      "rating": 2599
+                    },
+                    {
+                      "number": 1,
+                      "rank": 45,
+                      "rating": 2651
+                    }
+                  ]
+                }
+              ],
+              "world_time": 963949
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "filename": "aof-test-game-2.aoe2record",
+    "sourceHash": "f7eee7367005051dab146f0cec2734c344aa467844290323062f465c29e4b815",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "T90Official",
+        "teamId": 2,
+        "civilizationId": 5
+      },
+      {
+        "replaySlot": 2,
+        "name": "NOC | Target331",
+        "teamId": 3,
+        "civilizationId": 52
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "f7eee7367005051dab146f0cec2734c344aa467844290323062f465c29e4b815"
+      },
+      "game": {
+        "guid": "4e7bcea6-e296-564d-a814-837eedba4a87",
+        "observedDurationMs": 1976299,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 1,
+        "recordingVersion": {
+          "save_version": 68.9
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 185872,
+        "de.timestamp": 1790350699,
+        "de.guid": "4e7bcea6-e296-564d-a814-837eedba4a87",
+        "de.rms_map_id": 140,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 1,
+        "map.dimension": 120,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 140
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              4
+            ],
+            "2": [
+              0,
+              4,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 5
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 52
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 2,
+            "atMs": 1976299,
+            "sourceEventId": "OP307036",
+            "operationOrdinal": 307036,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP307040",
+            "timestampMs": 1976299,
+            "operationOrdinal": 307040,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 0,
+                      "rank": 56,
+                      "rating": 2599
+                    },
+                    {
+                      "number": 1,
+                      "rank": 45,
+                      "rating": 2651
+                    }
+                  ]
+                }
+              ],
+              "world_time": 1976299
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "filename": "aof-test-game-3.aoe2record",
+    "sourceHash": "c0c32f6e04a4b678abfc48b76f02894b900b1b9141ca7285f6c8103c1b11f5da",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "Mununez",
+        "teamId": 2,
+        "civilizationId": 50
+      },
+      {
+        "replaySlot": 2,
+        "name": "T90Official",
+        "teamId": 3,
+        "civilizationId": 1
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "c0c32f6e04a4b678abfc48b76f02894b900b1b9141ca7285f6c8103c1b11f5da"
+      },
+      "game": {
+        "guid": "b1e73ad5-49df-de43-a196-e36e4589d0e7",
+        "observedDurationMs": 2412551,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 1,
+        "recordingVersion": {
+          "save_version": 68.9
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 185872,
+        "de.timestamp": 1790362695,
+        "de.guid": "b1e73ad5-49df-de43-a196-e36e4589d0e7",
+        "de.rms_map_id": 9,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 2,
+        "map.dimension": 120,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 9
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              4
+            ],
+            "2": [
+              0,
+              4,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 50
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 1
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 1,
+            "atMs": 2412551,
+            "sourceEventId": "OP364516",
+            "operationOrdinal": 364516,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP364517",
+            "timestampMs": 2412551,
+            "operationOrdinal": 364517,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 0,
+                      "rank": 214,
+                      "rating": 2311
+                    },
+                    {
+                      "number": 1,
+                      "rank": 54,
+                      "rating": 2608
+                    }
+                  ]
+                }
+              ],
+              "world_time": 2412551
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "filename": "2v2.aoe2record",
+    "sourceHash": "87447e342f4134e59b5b2cd6fcf6f2e7f1324cbc899d413301b2f3a25cb7baaa",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "Radiant Mind",
+        "teamId": 2,
+        "civilizationId": 40
+      },
+      {
+        "replaySlot": 2,
+        "name": "RBase96",
+        "teamId": 3,
+        "civilizationId": 34
+      },
+      {
+        "replaySlot": 3,
+        "name": "ThreeMinuteHero",
+        "teamId": 2,
+        "civilizationId": 39
+      },
+      {
+        "replaySlot": 4,
+        "name": "Lorhey",
+        "teamId": 3,
+        "civilizationId": 16
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "87447e342f4134e59b5b2cd6fcf6f2e7f1324cbc899d413301b2f3a25cb7baaa"
+      },
+      "game": {
+        "guid": "ae321f00-a4e7-df4d-972a-ebdd14448b53",
+        "observedDurationMs": 2003471,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 2,
+        "recordingVersion": {
+          "save_version": 68.0
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 180059,
+        "de.timestamp": 1788973935,
+        "de.guid": "ae321f00-a4e7-df4d-972a-ebdd14448b53",
+        "de.rms_map_id": 149,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 4,
+        "map.dimension": 168,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 149
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              2,
+              2,
+              2
+            ],
+            "2": [
+              0,
+              2,
+              1,
+              2,
+              2
+            ],
+            "3": [
+              0,
+              2,
+              2,
+              1,
+              2
+            ],
+            "4": [
+              0,
+              2,
+              2,
+              2,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 40
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 34
+          }
+        },
+        {
+          "playerId": 3,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 39
+          }
+        },
+        {
+          "playerId": 4,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 16
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 3,
+            "atMs": 1993956,
+            "sourceEventId": "OP136202",
+            "operationOrdinal": 136202,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          },
+          {
+            "replaySlot": 1,
+            "atMs": 2003471,
+            "sourceEventId": "OP136845",
+            "operationOrdinal": 136845,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP136846",
+            "timestampMs": 2003471,
+            "operationOrdinal": 136846,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 2,
+                      "rank": 2651,
+                      "rating": 1649
+                    },
+                    {
+                      "number": 1,
+                      "rank": 2394,
+                      "rating": 1678
+                    },
+                    {
+                      "number": 3,
+                      "rank": 1908,
+                      "rating": 1740
+                    },
+                    {
+                      "number": 0,
+                      "rank": 2604,
+                      "rating": 1654
+                    }
+                  ]
+                },
+                {
+                  "id": 4,
+                  "players": [
+                    {
+                      "number": 2,
+                      "rank": 3096,
+                      "rating": 1549
+                    },
+                    {
+                      "number": 1,
+                      "rank": 6772,
+                      "rating": 1419
+                    },
+                    {
+                      "number": 3,
+                      "rank": 3958,
+                      "rating": 1511
+                    },
+                    {
+                      "number": 0,
+                      "rank": 3799,
+                      "rating": 1518
+                    }
+                  ]
+                }
+              ],
+              "world_time": 2003471
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "filename": "3v3.aoe2record",
+    "sourceHash": "6b67caa8f4198cc62afd7825c7c6029812e6a9adbc7a6241f4646ac41aa9ad9a",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "William Wallace",
+        "teamId": 2,
+        "civilizationId": 32
+      },
+      {
+        "replaySlot": 2,
+        "name": "Shirls",
+        "teamId": 3,
+        "civilizationId": 14
+      },
+      {
+        "replaySlot": 3,
+        "name": "Liability Lou",
+        "teamId": 2,
+        "civilizationId": 4
+      },
+      {
+        "replaySlot": 4,
+        "name": "Scogs",
+        "teamId": 3,
+        "civilizationId": 40
+      },
+      {
+        "replaySlot": 5,
+        "name": "Sherpder",
+        "teamId": 2,
+        "civilizationId": 17
+      },
+      {
+        "replaySlot": 6,
+        "name": "Dudezilla",
+        "teamId": 3,
+        "civilizationId": 37
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "6b67caa8f4198cc62afd7825c7c6029812e6a9adbc7a6241f4646ac41aa9ad9a"
+      },
+      "game": {
+        "guid": "69a33ef6-c65b-b340-bbc6-87e362b0a849",
+        "observedDurationMs": 1467416,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 3,
+        "recordingVersion": {
+          "save_version": 68.0
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 180059,
+        "de.timestamp": 1785681952,
+        "de.guid": "69a33ef6-c65b-b340-bbc6-87e362b0a849",
+        "de.rms_map_id": 17,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 4,
+        "map.dimension": 200,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 17
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              4,
+              2,
+              4,
+              2,
+              4
+            ],
+            "2": [
+              0,
+              4,
+              1,
+              4,
+              2,
+              4,
+              2
+            ],
+            "3": [
+              0,
+              2,
+              4,
+              1,
+              4,
+              2,
+              4
+            ],
+            "4": [
+              0,
+              4,
+              2,
+              4,
+              1,
+              4,
+              2
+            ],
+            "5": [
+              0,
+              2,
+              4,
+              2,
+              4,
+              1,
+              4
+            ],
+            "6": [
+              0,
+              4,
+              2,
+              4,
+              2,
+              4,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 32
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 14
+          }
+        },
+        {
+          "playerId": 3,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 4
+          }
+        },
+        {
+          "playerId": 4,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 40
+          }
+        },
+        {
+          "playerId": 5,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 17
+          }
+        },
+        {
+          "playerId": 6,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 37
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 1,
+            "atMs": 1438554,
+            "sourceEventId": "OP95340",
+            "operationOrdinal": 95340,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          },
+          {
+            "replaySlot": 3,
+            "atMs": 1458331,
+            "sourceEventId": "OP96759",
+            "operationOrdinal": 96759,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          },
+          {
+            "replaySlot": 5,
+            "atMs": 1467416,
+            "sourceEventId": "OP97417",
+            "operationOrdinal": 97417,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP97418",
+            "timestampMs": 1467416,
+            "operationOrdinal": 97418,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 4,
+                      "rank": 10597,
+                      "rating": 1243
+                    },
+                    {
+                      "number": 3,
+                      "rank": -1,
+                      "rating": 1305
+                    },
+                    {
+                      "number": 0,
+                      "rank": 8325,
+                      "rating": 1316
+                    },
+                    {
+                      "number": 5,
+                      "rank": -1,
+                      "rating": 963
+                    },
+                    {
+                      "number": 2,
+                      "rank": -1,
+                      "rating": 847
+                    },
+                    {
+                      "number": 1,
+                      "rank": -1,
+                      "rating": 1072
+                    }
+                  ]
+                },
+                {
+                  "id": 4,
+                  "players": [
+                    {
+                      "number": 4,
+                      "rank": 24185,
+                      "rating": 1141
+                    },
+                    {
+                      "number": 3,
+                      "rank": 24624,
+                      "rating": 1136
+                    },
+                    {
+                      "number": 0,
+                      "rank": 29893,
+                      "rating": 1079
+                    },
+                    {
+                      "number": 5,
+                      "rank": 27950,
+                      "rating": 1100
+                    },
+                    {
+                      "number": 2,
+                      "rank": 25928,
+                      "rating": 1121
+                    },
+                    {
+                      "number": 1,
+                      "rank": 25614,
+                      "rating": 1125
+                    }
+                  ]
+                }
+              ],
+              "world_time": 1467416
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "filename": "4v4.aoe2record",
+    "sourceHash": "e415855f5223562820f5a34daf1298455ba5cbd940a4b502f03d2d8a2436a123",
+    "players": [
+      {
+        "replaySlot": 1,
+        "name": "tomicoro7367",
+        "teamId": 2,
+        "civilizationId": 8
+      },
+      {
+        "replaySlot": 2,
+        "name": "Gauntlet",
+        "teamId": 3,
+        "civilizationId": 32
+      },
+      {
+        "replaySlot": 3,
+        "name": "terbo",
+        "teamId": 2,
+        "civilizationId": 5
+      },
+      {
+        "replaySlot": 4,
+        "name": "Sherpder",
+        "teamId": 3,
+        "civilizationId": 17
+      },
+      {
+        "replaySlot": 5,
+        "name": "Q8.Rasheed2",
+        "teamId": 2,
+        "civilizationId": 14
+      },
+      {
+        "replaySlot": 6,
+        "name": "Lazordos",
+        "teamId": 3,
+        "civilizationId": 13
+      },
+      {
+        "replaySlot": 7,
+        "name": "SMNT-Chifuego",
+        "teamId": 2,
+        "civilizationId": 31
+      },
+      {
+        "replaySlot": 8,
+        "name": "Selobate",
+        "teamId": 3,
+        "civilizationId": 25
+      }
+    ],
+    "matchFacts": {
+      "source": {
+        "replaySha256": "e415855f5223562820f5a34daf1298455ba5cbd940a4b502f03d2d8a2436a123"
+      },
+      "game": {
+        "guid": "d87db6f6-e2ea-744a-91a6-ec52a553c0de",
+        "observedDurationMs": 3295040,
+        "bodyParseComplete": true,
+        "resignationCommandCount": 4,
+        "recordingVersion": {
+          "save_version": 68.0
+        }
+      },
+      "headerFieldCandidates": {
+        "de.build": 180059,
+        "de.timestamp": 1785275671,
+        "de.guid": "d87db6f6-e2ea-744a-91a6-ec52a553c0de",
+        "de.rms_map_id": 17,
+        "de.rms_filename": null,
+        "de.rms_mod_id": null,
+        "de.difficulty_id": 0,
+        "de.population_limit": 200,
+        "de.speed": 1.690000057220459,
+        "de.rated": true,
+        "de.victory_type_id": 1,
+        "de.starting_resources_id": 0,
+        "de.starting_age_id": 0,
+        "de.ending_age_id": 3,
+        "de.treaty_length": 0,
+        "de.team_together": true,
+        "de.lock_teams": true,
+        "de.multiplayer": true,
+        "de.all_technologies": false,
+        "de.mod": "",
+        "de.visibility_id": 0,
+        "de.animals_enabled": true,
+        "de.lock_speed": true,
+        "de.cheats": false,
+        "de.record_game": true,
+        "de.shared_exploration": true,
+        "de.team_positions": true,
+        "de.predators_enabled": true,
+        "de.turbo_enabled": false,
+        "de.hidden_civs": false,
+        "de.dlc_ids": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "lobby.map_size": 0,
+        "lobby.population": 0,
+        "lobby.game_type_id": 0,
+        "lobby.reveal_map_id": 0,
+        "lobby.seed": 0,
+        "lobby.lock_teams": false,
+        "scenario.map_id": 0,
+        "scenario.difficulty_id": 0,
+        "metadata.speed": 1.690000057220459,
+        "metadata.owner_id": 7,
+        "map.dimension": 220,
+        "map.restore_time": 0,
+        "map.all_visible": false
+      },
+      "rules": {
+        "mapId": {
+          "value": 17
+        },
+        "rmsFilename": {
+          "value": null
+        },
+        "rmsModId": {
+          "value": null
+        },
+        "difficultyId": {
+          "value": 0
+        },
+        "mapSize": {
+          "value": 0
+        },
+        "population": {
+          "value": 200
+        },
+        "gameTypeId": {
+          "value": 0
+        },
+        "revealMapId": {
+          "value": 0
+        },
+        "seed": {
+          "value": 0
+        },
+        "lockTeams": {
+          "value": true
+        },
+        "speed": {
+          "value": 1.690000057220459
+        },
+        "rated": {
+          "value": true
+        },
+        "victoryTypeId": {
+          "value": 1
+        },
+        "startingResourcesId": {
+          "value": 0
+        },
+        "startingAgeId": {
+          "value": 0
+        },
+        "endingAgeId": {
+          "value": 3
+        },
+        "treatyLength": {
+          "value": 0
+        },
+        "teamTogether": {
+          "value": true
+        },
+        "multiplayer": {
+          "value": true
+        },
+        "allTechnologies": {
+          "value": false
+        },
+        "initialDiplomacyRaw": {
+          "value": {
+            "1": [
+              0,
+              1,
+              4,
+              2,
+              4,
+              2,
+              4,
+              2,
+              4
+            ],
+            "2": [
+              0,
+              4,
+              1,
+              4,
+              2,
+              4,
+              2,
+              4,
+              2
+            ],
+            "3": [
+              0,
+              2,
+              4,
+              1,
+              4,
+              2,
+              4,
+              2,
+              4
+            ],
+            "4": [
+              0,
+              4,
+              2,
+              4,
+              1,
+              4,
+              2,
+              4,
+              2
+            ],
+            "5": [
+              0,
+              2,
+              4,
+              2,
+              4,
+              1,
+              4,
+              2,
+              4
+            ],
+            "6": [
+              0,
+              4,
+              2,
+              4,
+              2,
+              4,
+              1,
+              4,
+              2
+            ],
+            "7": [
+              0,
+              2,
+              4,
+              2,
+              4,
+              2,
+              4,
+              1,
+              4
+            ],
+            "8": [
+              0,
+              4,
+              2,
+              4,
+              2,
+              4,
+              2,
+              4,
+              1
+            ]
+          }
+        }
+      },
+      "players": [
+        {
+          "playerId": 1,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 8
+          }
+        },
+        {
+          "playerId": 2,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 32
+          }
+        },
+        {
+          "playerId": 3,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 5
+          }
+        },
+        {
+          "playerId": 4,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 17
+          }
+        },
+        {
+          "playerId": 5,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 14
+          }
+        },
+        {
+          "playerId": 6,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 13
+          }
+        },
+        {
+          "playerId": 7,
+          "lobbyTeamIdRaw": 2,
+          "civilization": {
+            "rawId": 31
+          }
+        },
+        {
+          "playerId": 8,
+          "lobbyTeamIdRaw": 3,
+          "civilization": {
+            "rawId": 25
+          }
+        }
+      ],
+      "diplomacy": {
+        "commandTimelines": {}
+      },
+      "result": {
+        "resignationEvidence": [
+          {
+            "replaySlot": 4,
+            "atMs": 3268796,
+            "sourceEventId": "OP185515",
+            "operationOrdinal": 185515,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          },
+          {
+            "replaySlot": 2,
+            "atMs": 3274886,
+            "sourceEventId": "OP185831",
+            "operationOrdinal": 185831,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          },
+          {
+            "replaySlot": 6,
+            "atMs": 3279086,
+            "sourceEventId": "OP186043",
+            "operationOrdinal": 186043,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          },
+          {
+            "replaySlot": 8,
+            "atMs": 3295040,
+            "sourceEventId": "OP186779",
+            "operationOrdinal": 186779,
+            "commandLayout": "de_legacy_resign_v1",
+            "disconnected": false
+          }
+        ],
+        "postgameEvidence": [
+          {
+            "sourceEventId": "OP186780",
+            "timestampMs": 3295040,
+            "operationOrdinal": 186780,
+            "decoded": {
+              "leaderboards": [
+                {
+                  "id": 3,
+                  "players": [
+                    {
+                      "number": 3,
+                      "rank": 10541,
+                      "rating": 1243
+                    },
+                    {
+                      "number": 4,
+                      "rank": -1,
+                      "rating": 991
+                    },
+                    {
+                      "number": 1,
+                      "rank": 23676,
+                      "rating": 990
+                    },
+                    {
+                      "number": 5,
+                      "rank": -1,
+                      "rating": 959
+                    },
+                    {
+                      "number": 2,
+                      "rank": -1,
+                      "rating": 1190
+                    },
+                    {
+                      "number": 6,
+                      "rank": -1,
+                      "rating": 615
+                    }
+                  ]
+                },
+                {
+                  "id": 4,
+                  "players": [
+                    {
+                      "number": 3,
+                      "rank": 20654,
+                      "rating": 1181
+                    },
+                    {
+                      "number": 4,
+                      "rank": 29187,
+                      "rating": 1085
+                    },
+                    {
+                      "number": 1,
+                      "rank": 40855,
+                      "rating": 970
+                    },
+                    {
+                      "number": 5,
+                      "rank": 39763,
+                      "rating": 981
+                    },
+                    {
+                      "number": 2,
+                      "rank": 31409,
+                      "rating": 1062
+                    },
+                    {
+                      "number": 6,
+                      "rank": 35169,
+                      "rating": 1025
+                    },
+                    {
+                      "number": 0,
+                      "rank": 25656,
+                      "rating": 1123
+                    },
+                    {
+                      "number": 7,
+                      "rank": 40813,
+                      "rating": 971
+                    }
+                  ]
+                }
+              ],
+              "world_time": 3295040
+            }
+          }
+        ]
+      }
+    }
+  }
+]

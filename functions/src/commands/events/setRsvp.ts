@@ -128,7 +128,7 @@ export const setEventRsvp = onCall<SetEventRsvpInput>(callableOptions, async (re
       playerId: actor.playerId,
       rsvp,
       signupState,
-      attendanceStatus: existing?.attendanceStatus ?? "NOT_CHECKED",
+      attendanceStatus: rsvp==='NO' ? 'NOT_CHECKED':existing?.attendanceStatus ?? "NOT_CHECKED",
       respondedAt: now,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,

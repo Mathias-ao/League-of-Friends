@@ -40,6 +40,8 @@ export interface MatchForResult {
 }
 
 export interface GameForResult {
+  activeReplayStatisticsId?:string;
+  recordingResultBinding?:{sourceHash:string};
   status?: string;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   activeResultDisputeId?: string | null;
@@ -151,7 +153,7 @@ export function applyCanonicalGameResult(
     submissionId: string | null;
     submittedBy: string | null;
     confirmedBy: string | null;
-    source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED" | "ADMIN_CORRECTED";
+    source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED" | "ADMIN_CORRECTED" | "RECORDING_VERIFIED";
     outcome: GameOutcome;
     revision?: number;
     previousRevision?: number | null;

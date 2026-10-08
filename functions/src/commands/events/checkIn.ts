@@ -53,6 +53,7 @@ export const checkInToEvent = onCall<CheckInInput>(callableOptions, async (reque
       throw new HttpsError("failed-precondition", "Only confirmed participants can self check-in.");
     }
 
+    if(eventSnapshot.data()?.officialMatchIds?.length)throw new HttpsError("failed-precondition","Main Battles are already approved. Ask the Emperor to resolve a roster exception.");
     const now = Timestamp.now();
     const window=checkInWindow(event);
     if(!(window.opensAt instanceof Timestamp))throw new HttpsError("failed-precondition","The organizer has not set a main-event check-in window.");

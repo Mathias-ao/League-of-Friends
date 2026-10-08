@@ -1,4 +1,3 @@
-import {checkInWindow} from '../../services/eventTiming.js';
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
@@ -38,7 +37,7 @@ interface EventForApproval {
 }
 
 interface MatchPlanForApproval {
-  plannerVersion?:string;eligiblePlayerIds?:string[];
+  forced?:boolean;forceReason?:string;plannerVersion?:string;eligiblePlayerIds?:string[];
   status?: string;
   competitionStyle?: CompetitionStyle;
   matches?: ProposedMatch[];
@@ -99,11 +98,11 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
       throw new HttpsError("failed-precondition", "Match Plan contains no proposed Matches.");
     }
 
-    if(plan.plannerVersion==='MATCH_PLANNER_V2'){
-      const closing=checkInWindow(event).closesAt;
-      if(!closing||Date.now()<closing.toMillis())throw new HttpsError('failed-precondition','Close check-in before approving teams.');
-      const attendance=await transaction.get(eventRef.collection('participants'));
-      const current=attendance.docs.filter(d=>['CHECKED_IN','LATE_ADDED'].includes(d.data().attendanceStatus)).map(d=>d.id).sort();
+    if(['MATCH_PLANNER_V2','MATCH_PLANNER_V3'].includes(plan.plannerVersion??'')){
+        const attendance=await transaction.get(eventRef.collection('participants'));
+      const missing=attendance.docs.some(d=>d.data().rsvp==='YES'&&d.data().signupState==='CONFIRMED'&&!['CHECKED_IN','LATE_ADDED','NO_SHOW'].includes(d.data().attendanceStatus));
+      if(missing&&!(plan.plannerVersion==='MATCH_PLANNER_V3'&&plan.forced&&plan.forceReason))throw new HttpsError('failed-precondition','Complete check-in before approving teams.');
+      const current=attendance.docs.filter(d=>d.data().rsvp==='YES'&&d.data().signupState==='CONFIRMED'&&['CHECKED_IN','LATE_ADDED'].includes(d.data().attendanceStatus)).map(d=>d.id).sort();
       if(JSON.stringify(current)!==JSON.stringify([...(plan.eligiblePlayerIds??[])].sort()))throw new HttpsError('failed-precondition','Attendance changed; generate and review a new Match plan.');
     }
     let seasonRules;

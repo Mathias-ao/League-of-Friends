@@ -8,7 +8,9 @@ export function iso(value: Timestamp | null | undefined): string | null {
 export function publicPlayer(playerId: string, player: Player | undefined) {
   return {
     playerId,
-    steamName: player?.steamName ?? playerId,
+    steamName: player?.leagueAlias ? player.leagueAlias+(player.steamPersonaName&&player.steamPersonaName!==player.leagueAlias?" ("+player.steamPersonaName+")":"") : player?.steamName ?? playerId,
+    leagueAlias:player?.leagueAlias??null,steamPersonaName:player?.steamPersonaName??null,
+    nicknames:player?.steamNameHistory??[],
     avatarUrl: player?.avatarUrl ?? null,
     currentPowerRating: player?.currentPowerRating ?? null,
     provisionalRating: player?.provisionalRating ?? true,

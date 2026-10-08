@@ -2,13 +2,11 @@
 
 Agreed with the product owner on 2026-10-07. Policy version: AOF_SEASON_POINTS_V1.
 
-## Season Event contract and AI exception — 8 October 2026
+## Season Event contract and best warmup — 8 October 2026
 
-[CORE-IDENTITY.md — Season event contract](../project/CORE-IDENTITY.md#season-event-contract) governs Event structure and scheduling. Human warmups, including a warmup-only guest challenge, retain the normal 1 participation / 2 victory points and the one-WARMUP-per-player cap. The guest must be an active member entered in the Season and does not thereby sign up for the main event.
+[CORE-IDENTITY.md](../project/CORE-IDENTITY.md#season-event-contract) governs scheduling. `AOF_BEST_WARMUP_V1` Events permit any active league member to help an unpaired player, including someone with another warmup or no Season enrollment. Main signup remains separate. Each player receives exactly one eligible participation award and at most one victory award, selected from their best completed warmup. No new AI fallback is scheduled; historical AI participation retains its separate one-point review contract.
 
-If no guest accepts by the announced deadline, the agreed AI fallback awards the human player **1 participation point and no victory bonus**. The human warmup row below does not apply a victory bonus to AI Games. AI warmups retain Battle Statistics but do not affect competitive ratings, player Relationships or human-opponent records; Achievements require explicit AI eligibility.
-
-**Implementation status:** the current V1 human-pair callable/scoring path does not implement the AI exception or guest challenge lifecycle. Do not model an AI as a league player, silently mutate historical scoring snapshots, or claim the exception is deployed. Implement explicit opponent eligibility and version/snapshot the changed rules before enabling AI warmups. Gold and other AI-specific effects are not specified by this decision.
+Event-owned warmup ledger entries use `matchId: null`, `sourceMatchId` for the selected Battle, `eventWarmup: true` and `act: WARMUP`. A transaction reads all current accepted sources/results and reconciles each source's net award before changing the selection. Retry, dispute, correction or source withdrawal cannot double-count; the next eligible result may replace the withdrawn best. Event statistics and accomplishments follow the same per-player selection. Full Battle evidence and existing per-Battle Gold/rating/lifetime policies remain separate.
 
 Validated results and eligible awards update without an Event-release gate. Emperor Event finalisation is administrative and is distinct from Match-series result finalisation. Normal dispute, qualification and correction safeguards remain.
 
@@ -29,11 +27,11 @@ Streaks, achievements, Wonder wins and king snipes add no season leaderboard poi
 
 ## Opportunity caps and snapshots
 
-One designated WARMUP and one designated MAIN Match per player per Event. Approval reserves server-owned Event scoringSlots transactionally, before play. A second Match cannot claim the same player's act slot, even from another plan or concurrent approval. Extra play belongs outside season scoring.
+One designated MAIN Match per player per Event. Main approval reserves server-owned scoringSlots transactionally. In legacy warmup Events, the original one-designated-Match cap remains. New best-warmup Events reserve the first warmup slot but permit an extra helper Battle without overwriting it; Event-owned reconciliation enforces one best award regardless of how many helper Battles exist.
 
-A Match, not each Game or each uploaded POV, earns awards. BO1 is the existing result-acceptance path; future series must publish one aggregate Match result. Remakes, no-contests and cancelled Matches do not have an eligible completed Match result. Attendance check-in alone gives no points. Early legitimate elimination does not forfeit participation.
+A Match, not each Game or each uploaded POV, earns awards. BO1 publishes one result. A qualified recording-only team series automatically publishes one aggregate Match result once its majority is reached; unused Games become NO_CONTEST. Reviewed series can be concluded by the Emperor from accepted Games. Remakes, no-contests and cancelled Matches do not have an eligible completed Match result. Attendance check-in alone gives no points. Early legitimate elimination does not forfeit participation.
 
-Official roster/result authority remains the existing league result workflow. Keep no-shows out of the actual Match roster. This change does not infer attendance or winners from unqualified replay facts.
+Official roster/result authority remains the league canonical result workflow. Recording upload now invokes the separate qualified resolver and existing revision processing jobs; Emperor reviews remain source-bound. Keep no-shows out of the actual Match roster. This change does not infer attendance or winners from unqualified replay facts.
 
 New adminCreateEvent calls pin the V1 profile automatically. The previous arbitrary numeric scoringSnapshot input is retained as a compatibility input but does not override the agreed new-event rules. Existing Events and Matches retain their historical profile; deployment does not silently migrate them.
 
