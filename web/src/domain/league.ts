@@ -7,7 +7,11 @@ export class Player {
   get name(){return this.record.steamName;}
   get initials(){return this.name.replace(/[^\p{L}\p{N} ]/gu,'').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();}
 }
+/** Optional read contract for the Event publication producer; never inferred from play status. */
+export interface EventResultsRelease {state:'COLLECTING'|'PREPARING'|'BLOCKED'|'READY'|'RELEASED';revision?:number;publishedAt?:string|null;}
+export interface EventRoundoff {revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;happenings:Array<{title:string;description:string;matchId:string}>;}
 export interface EventRecord {
+  resultsRelease?:EventResultsRelease;
   eventId:string; title:string; description?:string; seasonId?:string|null; status:string; startsAt:string|null; endsAt?:string|null;
   signupDeadlineAt?:string|null; checkInOpensAt?:string|null; checkInClosesAt?:string|null; maxParticipants?:number|null;
   confirmedCount?:number; waitingListCount?:number; competitionStyle?:string|null;
@@ -49,7 +53,7 @@ export interface ReplayUploadResult {success:boolean;alreadyProcessed:boolean;ma
 export interface ReplayStatisticsResult {success:boolean;matchId:string;gameId:string;statisticsId:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;statistics:any;diplomacyReview?:any;officialOutcome?:any;socialIncidents?:any;}
 export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null;statisticsId?:string|null;statisticsState?:string|null;statisticsRevision?:number|null};}
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
-export interface EventDetail {event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
+export interface EventDetail {roundoff?:EventRoundoff;event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
 export interface AchievementSummary {awardId:string;achievementId?:string|null;name:string;description:string;scope?:string|null;seasonId?:string|null;firstAwardedAt?:string|null;evaluation?:Record<string,unknown>;}
 export interface LeagueRecordSummary {code:string;direction?:string;unit?:string;value?:number|null;holders?:Array<{playerId?:string;value?:number;matchId?:string;gameId?:string}>;}

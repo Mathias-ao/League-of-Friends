@@ -1,4 +1,5 @@
 import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type SocialHistoryResponse,type PlayerChronicleResponse,type PlayerChronicleRelationshipPage} from '../domain/league';
+import {eventDesignPreview,type EventDesignState} from './eventDesignPreview';
 import {lombardia} from './content';
 import {illustrativeGame} from './statisticsFixtures';
 import {previewRelationshipData} from './relationshipPreview';
@@ -6,6 +7,8 @@ import {EXPERIENCE_VERSION,type StatisticsScope,type StatisticsDataset} from '..
 /** Explicitly illustrative and memory-only. Never mutates real league data. */
 export class PreviewLeagueRepository implements LeagueRepository {
   readonly mode='preview' as const;
+  private designStates=new Map<string,EventDesignState>();
+  setEventDesignState(eventId:string,state:EventDesignState){this.designStates.set(eventId,state);}
   private listeners=new Set<()=>void>();
   private state:LeagueSnapshot={
     membership:'SIGNED_OUT',viewer:null,enteredSeason:false,hasLeagueHistory:false,season:{seasonId:'S001',name:'The Fiefdom of Bad Neighbors',status:'ACTIVE',currentEmperorPlayerId:'sample-you'},
@@ -20,7 +23,7 @@ export class PreviewLeagueRepository implements LeagueRepository {
     events:[{eventId:'E001',seasonId:'S001',title:lombardia.display.title,description:lombardia.story.homepageTeaser,status:'PUBLISHED',startsAt:null,maxParticipants:8,confirmedCount:5,waitingListCount:0,competitionStyle:'BIG_TEAM',viewer:{rsvp:'UNANSWERED',signupState:'NONE',attendanceStatus:'NOT_CHECKED'}}]
   };
   constructor(){
-    this.state.players=[...this.state.standings,...(this.state.emperor?[this.state.emperor]:[])];
+    this.state.players=[...this.state.standings,...(this.state.emperor?[this.state.emperor]:[]),{playerId:'sample-halvar',steamName:'Halvar'},{playerId:'sample-ulrik',steamName:'Ulrik'}];
     this.state.matches=[
       {matchId:'sample-duel',seasonId:'S001',format:'ONE_V_ONE',status:'COMPLETED',completedAt:'2026-09-06T18:00:00Z',participants:[{...this.state.emperor!,team:1},{...this.state.players[0],team:2}],result:{winningPlayerIds:['sample-ragnar'],revision:1}},
       {matchId:'sample-team',seasonId:'S001',format:'TWO_V_TWO',status:'COMPLETED',completedAt:'2026-09-08T18:00:00Z',participants:this.state.players.slice(0,4).map((p,i)=>({...p,team:i<2?1:2})),result:{winningPlayerIds:['sample-ragnar','sample-steve'],revision:1}}
@@ -146,10 +149,12 @@ export class PreviewLeagueRepository implements LeagueRepository {
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
-    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:this.state.players.filter(p=>p.playerId!=='sample-you'||e.viewer?.rsvp==='YES')},matches:this.state.matches.filter(m=>m.eventId===id)});
+    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:[...this.state.players.filter(p=>p.playerId!=='sample-you').slice(0,5),...(e.viewer?.rsvp==='YES'?[this.state.viewer??this.state.emperor!]:[])]},matches:this.state.matches.filter(m=>m.eventId===id)});
   }
   async match(id:string):Promise<MatchDetail>{
-    const m=this.state.matches.find(m=>m.matchId===id);if(!m)throw new Error('Battle not found.');
+    let m=this.state.matches.find(m=>m.matchId===id);
+    if(!m)for(const [eventId,state] of this.designStates){m=eventDesignPreview(await this.event(eventId),this.state,state).matches.find(match=>match.matchId===id);if(m)break;}
+    if(!m)throw new Error('Battle not found.');
     return structuredClone({match:m,viewer:{playerId:this.state.viewer?.playerId??'',isParticipant:m.participants.some(p=>p.playerId===this.state.viewer?.playerId)},games:[{gameId:'sample-game-1',gameNumber:1,status:m.status,players:m.participants.map(p=>({...p,civilization:null})),result:m.result?{revision:m.result.revision??1,winningPlayerIds:m.result.winningPlayerIds??[]}:null,resultDisputeOpen:m.status==='DISPUTED'}]});
   }
   async player(id:string):Promise<PlayerProfile>{

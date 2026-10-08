@@ -11,14 +11,14 @@ export function Avatar({player,large=false}:{player:PlayerRecord;large?:boolean}
 export function Empty({title,children,icon='team'}:{title:string;children:ReactNode;icon?:string}){
   return <div className="empty"><Sigil kind={icon} size={36}/><h3>{title}</h3><p>{children}</p></div>;
 }
-export function Modal({title,children,onClose,wide=false}:{title:string;children:ReactNode;onClose:()=>void;wide?:boolean}){
+export function Modal({title,children,onClose,wide=false,className=''}:{title:string;children:ReactNode;onClose:()=>void;wide?:boolean;className?:string}){
   const ref=useRef<HTMLDialogElement>(null);
   useEffect(()=>{
     const el=ref.current!,previous=document.activeElement as HTMLElement|null;
     el.showModal();const old=document.body.style.overflow;document.body.style.overflow='hidden';
     return ()=>{el.close();document.body.style.overflow=old;previous?.focus();};
   },[]);
-  return <dialog ref={ref} className={'modal '+(wide?'wide':'')} onCancel={onClose} aria-labelledby="dialog-title" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+  return <dialog ref={ref} className={'modal '+(wide?'wide ':'')+className} onCancel={onClose} aria-labelledby="dialog-title" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
     <div className="modal-heading"><h2 id="dialog-title">{title}</h2><button className="icon-button" aria-label="Close dialog" onClick={onClose}><X/></button></div>
     <div className="modal-body">{children}</div>
   </dialog>;

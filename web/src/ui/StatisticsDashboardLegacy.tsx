@@ -193,10 +193,9 @@ export function BattleStatisticsExperience(props:ViewProps&{data:MatchDetail}){
 
 export function MatchDialogWithStatistics(props:ViewProps&{data:MatchDetail;onUpdated:()=>void}){return <><MatchDialog {...props}/><hr className="statistics-divider"/><BattleStatisticsExperience {...props}/></>;}
 
+/** Event statistics now belong to the released roundoff, not an eager aggregate fetch. */
 export function EventDialogWithStatistics(props:ViewProps&{data:EventDetail;onUpdated:()=>void}){
-  const state=useStatistics(props.repository,{eventId:props.data.event.eventId});
-  const engine=new StatisticsExperience(state.dataset?.games??[]),highlights=state.dataset?.unavailableGames?[]:engine.highlights(4);
-  return <><EventDialog {...props}/><hr className="statistics-divider"/><section className="sx-dashboard"><span className="eyebrow">EVENT STATISTICS</span><h2>What remains of this campaign</h2><LoadState {...state}/>{state.dataset&&<><EvidenceNotice preview={props.preview} unavailable={state.dataset.unavailableGames}/><p>{engine.games.length} eligible Games · {new Set(engine.games.map(g=>g.matchId)).size} Battles</p>{highlights.length?<HighlightCards items={highlights} openMatch={props.openMatch}/>:<p>No qualified distinctions yet. Highlights appear when the evidence supports a distinction.</p>}<div className="sx-source-list">{[...new Set(engine.games.map(g=>g.matchId))].map(id=><button key={id} onClick={()=>props.openMatch(id)}>Battle {id}<ArrowRight size={16}/></button>)}</div></>}</section></>;
+  return <EventDialog {...props}/>;
 }
 
 export function SeasonStatisticsView(props:Pick<ViewProps,'snapshot'|'preview'|'repository'|'openPlayer'|'openMatch'>){
