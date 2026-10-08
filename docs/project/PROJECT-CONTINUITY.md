@@ -18,6 +18,12 @@ This file is the entrypoint for continuing Age of Friends without relying on old
 - `CURRENT-STATE.md` governs implementation status and task routing.
 - Old conversations are historical evidence only.
 
+## Season Event guidance
+
+Read [CORE-IDENTITY.md — Season event contract](CORE-IDENTITY.md#season-event-contract) before any Event, warmup, matchmaking, scoring or statistics-publication work. That contract records the 8 October 2026 decisions: guest-first odd-player warmups with an AI fallback, standings-based uneven main teams, roster approval before drafting, and updates without an Event-release gate.
+
+Specialist documents and historical descriptions must not override this contract. Use [CURRENT-STATE.md](CURRENT-STATE.md#season-event-contract--8-october-2026) to distinguish implemented behaviour from agreed work still pending. Code is evidence of implementation, not authority to reverse the product decision.
+
 ## Working procedure
 
 Choose one bounded outcome. Before editing, identify the relevant current behaviour, intended files and conflicts with the Core Identity. After meaningful work, record the changes, tests performed, remaining limitations and next action in GitHub.
