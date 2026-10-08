@@ -8,6 +8,7 @@ export { seedReplayWarmupOpponent } from "./dev/seedReplayWarmupOpponent.js";
 export { requestLeagueMembership } from "./commands/players/requestMembership.js";
 export { adminGenerateEmperorsFavors } from "./commands/admin/generateEmperorsFavors.js";
 export { adminSetMembershipStatus } from "./commands/players/setMembershipStatus.js";
+export { adminLinkSteamIdentity } from "./commands/players/linkSteamIdentity.js";
 export { adminSetPowerRatingConfig } from "./commands/admin/setPowerRatingConfig.js";
 export { adminSetReplayAnalysisConfig } from "./commands/admin/setReplayAnalysisConfig.js";
 export { adminUpsertAchievementDefinition } from "./commands/admin/upsertAchievementDefinition.js";
