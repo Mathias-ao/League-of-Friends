@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from typing import Any
 
-PROJECTOR_VERSION = "AOF_COMPACT_PROJECTOR_V1"
+PROJECTOR_VERSION = "AOF_COMPACT_PROJECTOR_V2"
 
 
 class CompactProjector:
@@ -52,7 +52,11 @@ class CompactProjector:
         def add(key: str, **values: Any) -> None:
             self.events[key].append({**base, **values})
         if name == 'RESIGN':
-            add('resignations')
+            layout = p.get('_rawLayout') or {}
+            add('resignations', operationOrdinal=event['operationOrdinal'],
+                commandLayout=layout.get('layout'),
+                disconnected=bool(layout['disconnectedRaw'])
+                if layout.get('disconnectedRaw') in (0, 1) else None)
         elif name == 'RESEARCH':
             add('researchEvents', technologyId=p.get('technology_id'), producerObjectIds=ids)
         elif name == 'BUILD':

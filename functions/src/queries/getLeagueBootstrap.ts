@@ -101,6 +101,7 @@ function eventSummary(eventId: string, event: EventDocument) {
     title: event.title ?? eventId,
     description: event.description ?? "",
     artworkUrl: event.artworkUrl ?? null,
+    officialMatchIds:(event as any).officialMatchIds??[],
     status: event.status ?? "UNKNOWN",
     startsAt: iso(event.startsAt),
     endsAt: iso(event.endsAt),

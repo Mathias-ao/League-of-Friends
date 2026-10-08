@@ -16,9 +16,13 @@ export interface EntityRef {
 }
 
 export interface Player {
+  leagueAlias?:string;
+  steamPersonaName?:string|null;
+  steamNameHistory?:string[];
+  steamIdentityVersion?:string;
   steamName: string;
   steamId64?: string | null;
-  steamNameNormalized: string;
+  steamNameNormalized: string | null;
   discordName: string | null;
   avatarUrl: string | null;
   membershipStatus: MembershipStatus;
@@ -37,6 +41,7 @@ export interface AuthLink {
 }
 
 export interface MatchPlanningConfig {
+  pairingMode?: "RANDOM" | "ELO_BALANCED";
   prioritizeLargestTeams: boolean;
   preferredTeamSize: 2 | 3 | 4 | null;
   allowAsymmetricTeams: boolean;
@@ -45,6 +50,7 @@ export interface MatchPlanningConfig {
 }
 
 export interface MapConfiguration {
+  recordingMapIds?:Record<string,number>;
   pool: string[];
   selectionMode: "ADMIN" | "RANDOM" | "PLAYER_CHOICE" | "UNRESTRICTED";
 }
@@ -142,7 +148,7 @@ export type CanonicalGameResult = GameOutcome & {
   winningPlayerIds: string[];
   /** Non-winning official roster members; absent on historical results. */
   losingPlayerIds?: string[];
-  source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED" | "ADMIN_CORRECTED";
+  source: "PLAYER_CONFIRMED" | "ADMIN_RESOLVED" | "ADMIN_CORRECTED" | "RECORDING_VERIFIED";
   submissionId: string | null;
   submittedBy: string | null;
   confirmedBy: string | null;

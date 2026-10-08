@@ -178,6 +178,9 @@ test('Battle accomplishments use one accepted Game while the parent series remai
   assert.ok(cards.every(card=>!card.detail.includes('Warm-up and main Games are considered')));
   const standalone=selectBattleShowcase({match:{...match,eventId:null},game:{...game,eventId:null}});
   assert.equal(standalone.length,cards.length);
+  const warmGame=input.games[1],warmMatch={...input.matches[1],countedWarmupPlayerIds:[]};
+  warmGame.players[0].values.raidsOut=35;
+  assert.ok(selectBattleShowcase({match:warmMatch,game:warmGame}).length,'individual Battle distinctions do not require a counted Event warm-up');
 });
 test('Battle accomplishments reject disputed, unqualified, mismatched or illustrative production evidence',async()=>{
   const {selectBattleShowcase}=await import('../lib/engines/eventRoundoffShowcase.js');

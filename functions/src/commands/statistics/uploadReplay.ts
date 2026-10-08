@@ -1,3 +1,5 @@
+import {resolveRecordingResult} from "../../services/recordingResult.js";
+import {refreshSteamProfile} from "../../services/steamProfile.js";
 import {assertMatchPlayOpened,matchPlayWindow} from "../../services/eventTiming.js";
 import { createHash } from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
@@ -28,6 +30,7 @@ interface ReplayBinding {
 
 interface GameForReplayUpload {
   status?: string;
+  canonicalResult?:unknown;activeResultDisputeId?:string;
   players?: GamePlayer[];
   replayParticipantBindings?: ReplayBinding[];
   replayStatisticsRevision?: number;
@@ -164,26 +167,33 @@ async function resolvePlayerMapping(
   workerPlayers: WorkerPlayer[],
 ): Promise<Array<{ replaySlot: number; sourceName: string; playerId: string }>> {
   const gamePlayerIds = (game.players ?? []).map((player) => player.playerId);
-  if (gamePlayerIds.length < 2 || workerPlayers.length !== gamePlayerIds.length) {
+  if (gamePlayerIds.length < (game.aiOpponent ? 1 : 2)) {
     throw new HttpsError("failed-precondition", "Replay participant count does not match this Game.");
   }
 
   const explicit = new Map(
     (game.replayParticipantBindings ?? []).map((binding) => [binding.sourceNameNormalized, binding.playerId]),
   );
-  const playerDocs = await Promise.all(
+  let playerDocs = await Promise.all(
     gamePlayerIds.map(async (playerId) => ({
       playerId,
       snapshot: await db.collection(collections.players).doc(playerId).get(),
     })),
   );
+  const observed=new Set(workerPlayers.map(p=>normalizeName(p.sourceName)));
+  const needsRefresh=playerDocs.filter(({snapshot})=>snapshot.data()?.steamId64&&
+    ![snapshot.data()?.steamPersonaName,...(snapshot.data()?.steamNameHistory??[])].some(name=>typeof name==='string'&&observed.has(normalizeName(name))));
+  if(needsRefresh.length) {
+    await Promise.all(needsRefresh.map(p=>refreshSteamProfile(p.snapshot.data()!.steamId64)));
+    playerDocs=await Promise.all(gamePlayerIds.map(async playerId=>({playerId,snapshot:await db.collection(collections.players).doc(playerId).get()})));
+  }
   const bySteamName = new Map<string, string[]>();
   for (const { playerId, snapshot } of playerDocs) {
-    const normalized = String(snapshot.data()?.steamNameNormalized ?? "").trim();
-    if (!normalized) continue;
-    const list = bySteamName.get(normalized) ?? [];
-    list.push(playerId);
-    bySteamName.set(normalized, list);
+    const player=snapshot.data();
+    const names=player?.steamPersonaName ? [player.steamPersonaName,...(player.steamNameHistory??[])] : player?.steamIdentityVersion ? [] : [player?.steamName];
+    for(const normalized of new Set(names.filter((name:any)=>typeof name==='string'&&name.trim()).map((name:string)=>normalizeName(name)))) {
+      const list=bySteamName.get(normalized)??[];list.push(playerId);bySteamName.set(normalized,list);
+    }
   }
 
   const used = new Set<string>();
@@ -250,15 +260,18 @@ export const uploadReplay = onCall<UploadReplayInput>(
       throw new HttpsError("permission-denied", "Only a Game participant or administrator may upload its replay.");
     }
 
+    if(game.canonicalResult&&game.activeReplayStatisticsId!==localSourceHash&&!(actor.role==='ADMIN'&&game.activeResultDisputeId))throw new HttpsError("failed-precondition","Open a correction dispute before the Emperor replaces an accepted recording.");
     const match=matchSnapshot.data()!;
     const event=match.scoringSnapshot?.rules?.act==="WARMUP"&&!(match.playOpensAt instanceof Timestamp)&&match.eventId
       ?(await db.collection(collections.events).doc(match.eventId).get()).data():undefined;
     const window=matchPlayWindow(match,event);
     assertMatchPlayOpened({playOpensAt:window.opensAt});
     if (existingSource.exists && existingSource.data()?.state === "READY") {
+      const resolution=game.activeReplayStatisticsId===localSourceHash?await resolveRecordingResult(matchId,gameId):null;
       return {
         success: true,
         alreadyProcessed: true,
+        outcomeResolution:resolution,
         matchId,
         gameId,
         statisticsId: localSourceHash,
@@ -321,6 +334,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
         };
       }
 
+      if(freshGame.canonicalResult&&freshGame.activeReplayStatisticsId!==localSourceHash&&!(actor.role==='ADMIN'&&freshGame.activeResultDisputeId))throw new HttpsError("failed-precondition","The result was accepted during analysis. Open a correction dispute before replacing it.");
       const revision = Number(freshGame.replayStatisticsRevision ?? 0) + 1;
       const now = Timestamp.now();
       const metadata=statisticsMetadata(matchId,gameId,matchSnapshot.data(),{...freshGame,replayStatisticsRevision:revision},{sourceHash:localSourceHash,playerMapping,opponentMapping});
@@ -383,6 +397,9 @@ export const uploadReplay = onCall<UploadReplayInput>(
       return { alreadyProcessed: false, revision };
     });
 
+    // If resolution fails, evidence remains saved and the retryable resolver trigger
+    // can recover. The caller sees the problem instead of an invented result.
+    const resolution=await resolveRecordingResult(matchId,gameId);
     return {
       success: true,
       alreadyProcessed: transactionResult.alreadyProcessed,
@@ -391,6 +408,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
       statisticsId: localSourceHash,
       sourceHash: localSourceHash,
       replayStatisticsRevision: transactionResult.revision,
+      outcomeResolution:resolution,
       playerMapping,
       resultQualification: "UNRESOLVED",
     };

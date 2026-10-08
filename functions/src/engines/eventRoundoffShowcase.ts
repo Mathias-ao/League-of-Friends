@@ -8,6 +8,7 @@ export interface EventShowcaseItem {
   title:string;value:string;detail:string;playerIds:string[];sources:ShowcaseSource[];
 }
 export interface ShowcaseMatch {
+  countedWarmupPlayerIds?:string[];
   matchId:string;eventId?:string|null;format?:string|null;status:string;scoringAct?:string|null;
   /** Producer-owned manifest of accepted Games, including series Games. Never inferred from uploads. */
   acceptedGameIds?:string[];
@@ -67,11 +68,12 @@ function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem
   }).sort((a,b)=>key(a).localeCompare(key(b)));
   const gameMap=new Map(games.map(g=>[key(g),g]));
   const playerIds=[...new Set(eventMatches.flatMap(m=>m.participants.map(p=>p.playerId)))].sort();
-  const complete=(id:string)=>eventMatches.filter(m=>m.participants.some(p=>p.playerId===id)).every(m=>matchMap.has(m.matchId)&&manifestValid(m)&&m.acceptedGameIds!.every(gameId=>gameMap.has(key({matchId:m.matchId,gameId}))));
+  const counts=(m:ShowcaseMatch,id:string)=>battle||m.scoringAct!=='WARMUP'||m.countedWarmupPlayerIds==null||m.countedWarmupPlayerIds.includes(id);
+  const complete=(id:string)=>eventMatches.filter(m=>m.participants.some(p=>p.playerId===id)&&counts(m,id)).every(m=>matchMap.has(m.matchId)&&manifestValid(m)&&m.acceptedGameIds!.every(gameId=>gameMap.has(key({matchId:m.matchId,gameId}))));
   const emperorWins=matches.filter(m=>m.scoringAct==='WARMUP'&&m.format==='ONE_V_ONE'&&m.participants.length===2&&!!m.emperorPlayerIdAtApproval&&m.participants.some(p=>p.playerId===m.emperorPlayerIdAtApproval)&&resultValid(m)&&m.result!.winningPlayerIds!.length===1&&m.result!.winningPlayerIds![0]!==m.emperorPlayerIdAtApproval&&eventMatches.filter(q=>q.scoringAct==='WARMUP'&&q.participants.some(p=>p.playerId===m.emperorPlayerIdAtApproval)).length===1);
   if(!battle&&emperorWins.length===1){const m=emperorWins[0];candidates.push(make('emperor','SPECIAL','Victory',m.result!.winningPlayerIds!,'1 duel won','Sole confirmed winner against the Emperor pinned before this designated 1v1 warm-up. Team games and FFA do not qualify.',[resultSource(m)],'emperor'));}
   const unbeaten=playerIds.filter(id=>{
-    const slots=eventMatches.filter(m=>m.participants.some(p=>p.playerId===id)&&['WARMUP','MAIN'].includes(m.scoringAct??''));
+    const slots=eventMatches.filter(m=>m.participants.some(p=>p.playerId===id)&&counts(m,id)&&['WARMUP','MAIN'].includes(m.scoringAct??''));
     return slots.length===2&&slots.filter(m=>m.scoringAct==='WARMUP').length===1&&slots.filter(m=>m.scoringAct==='MAIN').length===1&&slots.every(m=>matchMap.has(m.matchId)&&resultValid(m)&&m.result!.winningPlayerIds!.includes(id));
   });
   if(!battle&&unbeaten.length)candidates.push(make('unbeaten','EXCEPTIONAL','Victory',unbeaten,'2 wins · 2 Matches','Won both their designated warm-up and main Match, from confirmed result revisions.',matches.filter(m=>['WARMUP','MAIN'].includes(m.scoringAct??'')&&m.participants.some(p=>unbeaten.includes(p.playerId))).map(resultSource),'victory'));
@@ -79,7 +81,7 @@ function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem
   for(const rule of [...EVENT_SHOWCASE_METRICS,great]){
     const field:Candidate[]=[];
     for(const id of playerIds){
-      const all=games.filter(g=>g.players.some(p=>p.playerId===id));
+      const all=games.filter(g=>g.players.some(p=>p.playerId===id)&&counts(matchMap.get(g.matchId)!,id));
       const applicable=all.filter(g=>{
         const p=g.players.find(p=>p.playerId===id)!;
         return (!rule.teamOnly||allied(g,p))&&(!rule.age||matchMap.get(g.matchId)?.standardStart===true)&&(!rule.checkpoint||g.durationMs>=rule.checkpoint);

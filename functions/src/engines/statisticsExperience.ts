@@ -67,6 +67,7 @@ export interface PlayerMeasurement {
   details:{label:string;value:string;atMs:number|null;category:Category}[];
 }
 export interface GameStatistics {
+  countedEventPlayerIds?:string[];
   bindingKey?:string;version:string;matchId:string;gameId:string;seasonId:string|null;eventId:string|null;format:string;contextKey:string;
   orderAtMs:number;revision:number;sourceHash:string;eligible:boolean;exclusionReason:string|null;
   affectsSeason:boolean;affectsLifetime:boolean;durationMs:number;players:PlayerMeasurement[];
@@ -92,6 +93,7 @@ export const median = (values:number[]):number|null => {if(!values.length)return
 
 /** A team-only Season metric is eligible only when this player has a same-team ally in the Game. */
 export function metricEligible(metric:MetricDefinition,game:GameStatistics,player:PlayerMeasurement):boolean {
+  if(game.countedEventPlayerIds&&!game.countedEventPlayerIds.includes(player.playerId))return false;
   if((metric.eligibility??'all')!=='team')return true;
   if(player.team==null)return false;
   return game.players.some(other=>other.playerId!==player.playerId&&other.team===player.team);
@@ -190,9 +192,9 @@ export class StatisticsExperience {
     this.games=[...revisions.values()].sort((a,b)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId)).filter(g=>{if(!g.eligible)return false;if(g.sourceHash&&hashes.has(g.sourceHash))return false;if(g.sourceHash)hashes.add(g.sourceHash);return true;});
   }
   aggregate(modeValue:AggregationMode='total'):AggregatePlayer[]{
-    const ids=[...new Set(this.games.flatMap(g=>g.players.map(p=>p.playerId)))];
+    const ids=[...new Set(this.games.flatMap(g=>g.players.filter(p=>!g.countedEventPlayerIds||g.countedEventPlayerIds.includes(p.playerId)).map(p=>p.playerId)))];
     return ids.map(playerId=>{
-      const pairs=this.games.flatMap(game=>game.players.filter(player=>player.playerId===playerId).map(player=>({game,player})));
+      const pairs=this.games.flatMap(game=>game.players.filter(player=>player.playerId===playerId&&(!game.countedEventPlayerIds||game.countedEventPlayerIds.includes(playerId))).map(player=>({game,player})));
       const samples=pairs.map(pair=>pair.player);
       const values:Record<string,AggregateValue>={};
       for(const m of METRICS){

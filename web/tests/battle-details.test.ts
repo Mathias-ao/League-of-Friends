@@ -91,3 +91,22 @@ test('disputes use their own focus-contained window and keep failed submissions 
   assert.equal(document.querySelector('dialog[open]'),null);assert.equal(updates,1);assert.equal(document.activeElement?.textContent,'Dispute result');
  }finally{await ctx.close();}
 });
+
+test('compact recording actions preserve unresolved replacement and Emperor-only disputed replacement',async()=>{
+ const ctx=await setup();const {data,props,root}=ctx;
+ const game=data.games[0];game.replay={statisticsState:'READY',statisticsId:'a'.repeat(64)};
+ const player={...props,snapshot:{...props.snapshot,viewer:{...props.snapshot.viewer!,role:'PLAYER' as const}}};
+ try{
+  game.result=null;game.status='AWAITING_CONFIRMATION';
+  await act(async()=>root.render(React.createElement(BattleDetails,{...player,data})));
+  assert.match(document.querySelector('.battle-recording-action')!.textContent!,/Replace unresolved recording/);
+  game.result={revision:1,winningPlayerIds:[data.match.participants[1].playerId]};game.status='COMPLETED';game.resultDisputeOpen=true;
+  await act(async()=>root.render(React.createElement(BattleDetails,{...player,data})));
+  assert.equal(document.querySelector('.battle-upload-button'),null,'participants cannot replace an official disputed result');
+  assert.equal(document.querySelector('.battle-accomplishments'),null,'current dispute immediately suppresses old qualified cards');
+  const admin={...props,snapshot:{...props.snapshot,viewer:{...props.snapshot.viewer!,role:'ADMIN' as const}}};
+  await act(async()=>root.render(React.createElement(BattleDetails,{...admin,data})));
+  assert.match(document.querySelector('.battle-recording-action')!.textContent!,/Replace disputed recording/);
+  assert.match(document.querySelector('.game-panel')!.textContent!,/Emperor.*Battle controls/);
+ }finally{await ctx.close();}
+});

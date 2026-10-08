@@ -37,7 +37,7 @@ interface CreateEventInput {
   checkInClosesAt?: string | null;
   warmupOpensAt?: string | null;
   timezone?:string;
-  warmupPolicy?:{gameConfig:GameConfiguration;aiDifficulty:string;guestAcceptanceDeadlineAt?:string};
+  warmupPolicy?:{gameConfig:GameConfiguration;aiDifficulty?:string;guestAcceptanceDeadlineAt?:string};
   minParticipants?: number | null;
   maxParticipants?: number | null;
   waitingListEnabled?: boolean;
@@ -163,9 +163,9 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
   }
 
   const warmupPolicy=input.warmupPolicy;
-  const guestDeadline=warmupPolicy ? parseDate(warmupPolicy.guestAcceptanceDeadlineAt,'guestAcceptanceDeadlineAt',true)??new Date(startsAt.getTime()-48*3600000):null;
+  const guestDeadline=warmupPolicy ? parseDate(warmupPolicy.guestAcceptanceDeadlineAt,'guestAcceptanceDeadlineAt',true)??new Date(endOfEventDay(startsAt.getTime(),timezone)-1):null;
   if(warmupPolicy&&warmupLead!==7*86400000)throw new HttpsError("invalid-argument","Automatic warm-ups open exactly seven days before kickoff.");
-  if(warmupPolicy&&(!['Easiest','Standard','Moderate','Hard','Hardest','Extreme'].includes(warmupPolicy.aiDifficulty)||!Array.isArray(warmupPolicy.gameConfig?.maps?.pool)||warmupPolicy.gameConfig.maps.pool.length!==1||warmupPolicy.gameConfig.maps.pool.some(map=>typeof map!=='string'||!map.trim()||map.length>80)||warmupPolicy.gameConfig.civilizations?.mode!=='UNRESTRICTED'||warmupPolicy.gameConfig.victory?.conquest!==true||warmupPolicy.gameConfig.victory.wonder||warmupPolicy.gameConfig.victory.relic||warmupPolicy.gameConfig.victory.customRuleCode||guestDeadline!.getTime()<=warmupOpensAt.getTime()||guestDeadline!.getTime()>=startsAt.getTime()))throw new HttpsError('invalid-argument','Warm-ups require an announced AI difficulty and map, unrestricted civilizations, conquest victory and a guest deadline between opening and kickoff.');
+  if(warmupPolicy&&(!Array.isArray(warmupPolicy.gameConfig?.maps?.pool)||warmupPolicy.gameConfig.maps.pool.length!==1||warmupPolicy.gameConfig.maps.pool.some(map=>typeof map!=='string'||!map.trim()||map.length>80)||warmupPolicy.gameConfig.civilizations?.mode!=='UNRESTRICTED'||warmupPolicy.gameConfig.victory?.conquest!==true||warmupPolicy.gameConfig.victory.wonder||warmupPolicy.gameConfig.victory.relic||warmupPolicy.gameConfig.victory.customRuleCode||guestDeadline!.getTime()<=warmupOpensAt.getTime()||guestDeadline!.getTime()>=endOfEventDay(startsAt.getTime(),timezone)))throw new HttpsError('invalid-argument','Warm-ups require an announced map, unrestricted civilizations, conquest victory and an invitation deadline within the warm-up window.');
   const eventRef = db.collection(collections.events).doc();
   const leagueStateRef = db.collection(collections.leagueState).doc(leagueStateDocumentId);
 
@@ -225,7 +225,7 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
       checkInClosesAt: Timestamp.fromDate(checkInClosesAt),
       warmupOpensAt: Timestamp.fromDate(warmupOpensAt),
       timezone, warmupClosesAt:Timestamp.fromMillis(endOfEventDay(startsAt.getTime(),timezone)),
-      warmupPolicy:warmupPolicy?{modelVersion:'AOF_WARMUP_LIFECYCLE_V1',gameConfig:{...warmupPolicy.gameConfig,diplomacyEnabled:false},aiDifficulty:warmupPolicy.aiDifficulty.trim(),guestAcceptanceDeadlineAt:Timestamp.fromDate(guestDeadline!)}:null,
+      warmupPolicy:warmupPolicy?{modelVersion:'AOF_WARMUP_LIFECYCLE_V1',gameConfig:{...warmupPolicy.gameConfig,diplomacyEnabled:false},scoringPolicy:'AOF_BEST_WARMUP_V1',guestAcceptanceDeadlineAt:Timestamp.fromDate(guestDeadline!)}:null,
       minParticipants,
       maxParticipants,
       waitingListEnabled: input.waitingListEnabled ?? true,

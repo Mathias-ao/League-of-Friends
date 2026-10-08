@@ -1,5 +1,5 @@
+import {randomUUID} from "node:crypto";
 import {maskUnavailableSeasonAwards,rankSeasonStandings} from '../../engines/seasonPoints.js';
-import {checkInWindow} from '../../services/eventTiming.js';
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
@@ -14,9 +14,13 @@ import { reserveIdempotencyKey } from "../../services/idempotency.js";
 interface GenerateMatchPlanInput {
   requestId: string;
   eventId: string;
+  pairingMode?: "RANDOM" | "ELO_BALANCED";
+  force?: boolean;
+  reason?: string;
 }
 
 interface EventForPlanning {
+  officialMatchIds?:string[];
   seasonId?:string;
   startsAt?:Timestamp;checkInClosesAt?:Timestamp;checkInOpensAt?:Timestamp;
   status?: string;
@@ -26,6 +30,7 @@ interface EventForPlanning {
 }
 
 interface EventParticipantForPlanning {
+  rsvp?:string;signupState?:string;
   attendanceStatus?: string;
 }
 
@@ -38,7 +43,11 @@ function countFormats(matches: Array<{ format: string }>): Record<string, number
 
 export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOptions, async (request) => {
   const actor = await requireAdmin(request);
-  const { requestId, eventId } = request.data;
+  const { requestId, eventId, pairingMode = "RANDOM", force = false, reason } = request.data;
+  if (!["RANDOM", "ELO_BALANCED"].includes(pairingMode) || typeof force !== "boolean" || force && (typeof reason !== "string" || reason.trim().length < 8 || reason.length > 1000)) {
+    throw new HttpsError("invalid-argument", "Choose the pairing mode and explain any forced draw.");
+  }
+  const seed = randomUUID();
 
   if (!eventId) {
     throw new HttpsError("invalid-argument", "eventId is required.");
@@ -64,6 +73,7 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
     if (event.status !== "PUBLISHED" && event.status !== "ACTIVE") {
       throw new HttpsError("failed-precondition", "Match Plans can only be generated for published or active Events.");
     }
+    if(event.officialMatchIds?.length)throw new HttpsError("failed-precondition","Main Battles are already approved. Use starter corrections or unplayed resolution.");
     if (!event.competitionStyle || !event.planningConfig) {
       throw new HttpsError("failed-precondition", "Event planning configuration is incomplete.");
     }
@@ -71,7 +81,7 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
     const eligiblePlayerIds = participantSnapshot.docs
       .filter((document) => {
         const participant = document.data() as EventParticipantForPlanning;
-        return participant.attendanceStatus === "CHECKED_IN" || participant.attendanceStatus === "LATE_ADDED";
+        return participant.rsvp === 'YES' && participant.signupState === 'CONFIRMED' && ['CHECKED_IN','LATE_ADDED'].includes(participant.attendanceStatus??'');
       })
       .map((document) => document.id);
 
@@ -85,8 +95,9 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
       );
     }
 
-    const closing=checkInWindow(event).closesAt;
-    if(closing&&Date.now()<closing.toMillis())throw new HttpsError('failed-precondition','Close check-in before forming main Battles.');
+    const missingCheckInPlayerIds=participantSnapshot.docs.filter(d=>d.data().rsvp==='YES'&&d.data().signupState==='CONFIRMED'&&!eligiblePlayerIds.includes(d.id)&&d.data().attendanceStatus!=='NO_SHOW').map(d=>d.id);
+    if(!force && missingCheckInPlayerIds.length)throw new HttpsError('failed-precondition','Wait for check-in to finish, or use the Emperor force draw with a reason.');
+    const planningConfig={...event.planningConfig,pairingMode};
     const [standings,scoringMatches,ledger]=event.seasonId?await Promise.all([
       transaction.get(db.collection(collections.seasons).doc(event.seasonId).collection('standings')),
       transaction.get(db.collection(collections.matches).where('seasonId','==',event.seasonId)),
@@ -103,7 +114,8 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
         throw new HttpsError("failed-precondition", `Checked-in player ${eligiblePlayerIds[index]} no longer exists.`);
       }
 
-      const player = playerSnapshot.data() as { currentPowerRating?: number | null };
+      const player = playerSnapshot.data() as { currentPowerRating?: number | null;membershipStatus?:string };
+      if(player.membershipStatus!=='ACTIVE')throw new HttpsError('failed-precondition','Resolve attendance for the inactive player before drawing teams.');
       return {
         playerId: playerSnapshot.id,
         seasonRank:ranked.find(row=>row.playerId===playerSnapshot.id)!.rank,
@@ -121,8 +133,8 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
     const plan = generateMatchPlan(
       event.competitionStyle,
       plannerPlayers,
-      event.planningConfig,
-      requestId,
+      planningConfig,
+      seed,
     );
 
     if (plan.matches.length === 0) {
@@ -143,12 +155,13 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
 
     const planDocument = {
       status: "PROPOSED" as const,
-      plannerVersion: "MATCH_PLANNER_V2",
+      plannerVersion: "MATCH_PLANNER_V3",
+      forced:force,forceReason:force?reason!.trim():null,missingCheckInPlayerIds,
       unevenTeamPolicy:"SEASON_STANDINGS_SMALLER_TEAM_V1",
       standingsSnapshot:ranked,
-      seed: requestId,
+      seed,
       competitionStyle: event.competitionStyle,
-      planningConfig: event.planningConfig,
+      planningConfig,
       eligiblePlayerIds,
       sittingOutPlayerIds: plan.sittingOutPlayerIds,
       matches: plan.matches,

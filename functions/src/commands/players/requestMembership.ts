@@ -14,7 +14,8 @@ import {
 } from "../../domain/emperorsFavor.js";
 
 interface RequestMembershipInput {
-  steamName: string;
+  leagueAlias?: string;
+  steamName?: string;
   discordName?: string | null;
   favor: string;
 }
@@ -41,12 +42,12 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(
         "Sign in with Steam before presenting an Emperor's Favor.",
       );
     }
-    const steamName = request.data.steamName?.trim();
+    const steamName = (request.data.leagueAlias??request.data.steamName)?.trim();
     const discordName = request.data.discordName?.trim() || null;
     const favor = normalizeEmperorsFavor(request.data.favor ?? "");
 
     if (!steamName || steamName.length > 100) {
-      throw new HttpsError("invalid-argument", "Steam name must contain 1–100 characters.");
+      throw new HttpsError("invalid-argument", "League alias must contain 1–100 characters.");
     }
     if (discordName && discordName.length > 100) {
       throw new HttpsError("invalid-argument", "Discord name must contain at most 100 characters.");
@@ -75,10 +76,11 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(
     const attemptRef = db.collection(collections.emperorFavorAttempts).doc(authUid);
 
     const outcome = await db.runTransaction(async (transaction) => {
-      const [existingAuthLink, favorDocument, attemptDocument] = await Promise.all([
+      const [existingAuthLink, favorDocument, attemptDocument, steamProfileDocument] = await Promise.all([
         transaction.get(authLinkRef),
         transaction.get(favorRef),
         transaction.get(attemptRef),
+        transaction.get(db.collection("steamProfiles").doc(steamId64)),
       ]);
 
       if (existingAuthLink.exists) {
@@ -144,8 +146,11 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(
 
       const player = {
         steamName,
+        leagueAlias:steamName,steamPersonaName:steamProfileDocument.data()?.steamPersonaName??null,
+        steamIdentityVersion:"AOF_STEAM_IDENTITY_V1",steamNameHistory:[],
+        steamProfileVerifiedAt:steamProfileDocument.data()?.verifiedAt??null,
         steamId64,
-        steamNameNormalized: normalizeSteamName(steamName),
+        steamNameNormalized: steamProfileDocument.data()?.steamPersonaName ? normalizeSteamName(steamProfileDocument.data()!.steamPersonaName):null,
         discordName,
         avatarUrl: null,
         membershipStatus: "ACTIVE" as const,

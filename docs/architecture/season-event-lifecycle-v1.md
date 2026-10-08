@@ -1,4 +1,6 @@
-# Season Event lifecycle V1
+# Season Event lifecycle V1 — historical implementation
+
+**Superseded policy:** the AI fallback, restricted guests, deadline-only main draw and pending live Roundoff below describe the earlier merged lifecycle implementation. The current contract is [Replay-driven Event flow V1](replay-driven-event-flow-v1.md): human helpers from any active league membership, one best warmup per player, main draw after check-in resolution with an explicit Emperor force option, recording-driven results and live Roundoff. Historical AI reviews remain supported. Do not use the older defaults below to configure a new Event.
 
 Implemented on `feat/season-event-lifecycle-v1`, based on main `97fedc803cc39bd7f9f6bc2b6c78d9638cdeb01d`. No deployment or historical migration is included. The [core Season Event contract](../project/CORE-IDENTITY.md#season-event-contract) remains authoritative.
 

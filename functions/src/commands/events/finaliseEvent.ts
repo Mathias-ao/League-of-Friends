@@ -40,3 +40,20 @@ export const adminResolveUnplayedEventMatch=onCall(callableOptions,async request
     return {success:true};
   });
 });
+
+/** Invalid recording evidence can be rejected before any official Game result.
+ * Accepted Battles continue through disputes; this cannot bypass reward reversal. */
+export const adminRejectUnresolvedEventMatch=onCall(callableOptions,async request=>{
+  const actor=await requireAdmin(request),{matchId,reason}=request.data;competitionId(matchId,'Battle');
+  if(typeof reason!=='string'||reason.trim().length<8||reason.length>1000)throw new HttpsError('invalid-argument','Explain why the recorded Battle is invalid.');
+  await db.runTransaction(async tx=>{
+    const ref=db.collection('matches').doc(matchId),match=(await tx.get(ref)).data();
+    if(!match?.eventId)throw new HttpsError('not-found','Event Battle not found.');
+    const [games,event,ledger]=await Promise.all([tx.get(ref.collection('games')),tx.get(db.collection('events').doc(match.eventId)),tx.get(db.collection('leaguePointLedger').where('matchId','==',matchId))]);
+    if(!['PUBLISHED','ACTIVE'].includes(event.data()?.status)||!['READY','ACTIVE','AWAITING_CONFIRMATION'].includes(match.status)||match.canonicalResult||ledger.size||games.docs.some(g=>g.data().canonicalResult||g.data().activeResultDisputeId)||!games.docs.some(g=>g.data().activeReplayStatisticsId))throw new HttpsError('failed-precondition','Reject only recorded Battles without any accepted Game result. Accepted results require the correction workflow.');
+    const now=Timestamp.now();
+    for(const game of games.docs)tx.update(game.ref,{status:'VOID',resolutionReason:reason.trim(),updatedAt:now});
+    tx.update(ref,{status:'VOID',resolutionReason:reason.trim(),resolvedBy:actor.playerId,updatedAt:now});
+    writeAdminAudit(tx,{actorUid:actor.authUid,actorPlayerId:actor.playerId,action:'UNRESOLVED_RECORDING_REJECTED',targetType:'MATCH',targetId:matchId,reason:reason.trim()});
+  });return {success:true};
+});

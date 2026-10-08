@@ -164,65 +164,51 @@ function systemInput(eventId: string, step: string, matchId: string) {
   };
 }
 
-export const processResultJob = onDocumentCreated(
-  {
-    document: "processingJobs/{jobId}",
-    region: "europe-west1",
-    retry: true,
-    timeoutSeconds: 540,
-  },
-  async (event) => {
-    const snapshot = event.data;
-    if (!snapshot) return;
-
-    const initial = snapshot.data() as ResultProcessingJob;
-    if (!MATCH_RESULT_TYPES.has(initial.type ?? "")) return;
-
-    const jobRef = snapshot.ref;
-    const claim = await claimJob(jobRef, event.id);
+export async function runResultProcessingJob(jobRef:FirebaseFirestore.DocumentReference,eventId:string) {
+    const claim = await claimJob(jobRef, eventId);
     if (!claim.claimed || !claim.matchId) return;
 
     const matchId = claim.matchId;
     try {
       if (await hasAnyPending(jobRef, ["SCORING", "GOLD"])) {
         await processMatchRewards(
-          systemInput(event.id, "REWARDS", matchId),
+          systemInput(eventId, "REWARDS", matchId),
           SYSTEM_RESULT_PROCESSING_ACTOR,
         );
       }
       if (await hasAnyPending(jobRef, ["POWER_RATING"])) {
         await processPowerRatings(
-          systemInput(event.id, "POWER_RATING", matchId),
+          systemInput(eventId, "POWER_RATING", matchId),
           SYSTEM_RESULT_PROCESSING_ACTOR,
         );
       }
       if (await hasAnyPending(jobRef, ["STATISTICS"])) {
         await processStatistics(
-          systemInput(event.id, "STATISTICS", matchId),
+          systemInput(eventId, "STATISTICS", matchId),
           SYSTEM_RESULT_PROCESSING_ACTOR,
         );
       }
       if (await hasAnyPending(jobRef, ["ACHIEVEMENTS"])) {
         await processAchievements(
-          systemInput(event.id, "ACHIEVEMENTS", matchId),
+          systemInput(eventId, "ACHIEVEMENTS", matchId),
           SYSTEM_RESULT_PROCESSING_ACTOR,
         );
       }
       if (await hasAnyPending(jobRef, ["RIVALRIES"])) {
         await processRivalries(
-          systemInput(event.id, "RIVALRIES", matchId),
+          systemInput(eventId, "RIVALRIES", matchId),
           SYSTEM_RESULT_PROCESSING_ACTOR,
         );
       }
       if (await hasAnyPending(jobRef, ["RECORDS"])) {
         await processRecords(
-          systemInput(event.id, "RECORDS", matchId),
+          systemInput(eventId, "RECORDS", matchId),
           SYSTEM_RESULT_PROCESSING_ACTOR,
         );
       }
       if (await hasAnyPending(jobRef, ["ACTIVITY"])) {
         await processActivity(
-          systemInput(event.id, "ACTIVITY", matchId),
+          systemInput(eventId, "ACTIVITY", matchId),
           SYSTEM_RESULT_PROCESSING_ACTOR,
         );
       }
@@ -241,5 +227,7 @@ export const processResultJob = onDocumentCreated(
         `Automatic result pipeline paused for ${matchId}: ${errorMessage(error)}`,
       );
     }
-  },
-);
+}
+export const processResultJob=onDocumentCreated({document:"processingJobs/{jobId}",region:"europe-west1",retry:true,timeoutSeconds:540},async event=>{
+  if(event.data)await runResultProcessingJob(event.data.ref,event.id);
+});

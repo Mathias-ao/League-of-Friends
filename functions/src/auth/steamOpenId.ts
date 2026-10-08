@@ -1,3 +1,4 @@
+import {refreshSteamProfile} from "../services/steamProfile.js";
 import { randomUUID } from "node:crypto";
 import { getAuth } from "firebase-admin/auth";
 import { Timestamp } from "firebase-admin/firestore";
@@ -203,6 +204,7 @@ export const steamAuthCallback = onRequest(
     try {
       const expectedReturnTo = callbackUrl(state);
       const steamId64 = await verifySteamAssertion(request.originalUrl, expectedReturnTo);
+      await refreshSteamProfile(steamId64);
       const token = await ensureFirebaseSteamUser(steamId64);
       response.status(200).send(popupPage(authState.origin, {
         type: "aof-steam-auth",

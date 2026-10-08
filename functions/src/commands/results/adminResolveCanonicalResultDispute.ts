@@ -10,7 +10,7 @@ import { reserveIdempotencyKey } from "../../services/idempotency.js";
 import {
   applyCanonicalGameResult,
   assertResultShape,
-  canonicalRevision,
+  canonicalRevision,isSingleGameMatch,
   rethrowResultValidation,
   resultProcessingJobId,
   type GameForResult,
@@ -24,6 +24,7 @@ interface AdminResolveCanonicalResultDisputeInput {
   disputeId: string;
   resolution: "UPHOLD" | "CORRECT";
   reason: string;
+  expectedSourceHash?:string;
   winnerTeam?: number | null;
   winnerPlayerId?: string | null;
   winnerPlayerIds?: string[];
@@ -79,13 +80,19 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
       if (game.activeResultDisputeId !== disputeId || match.activeResultDisputeId !== disputeId) {
         throw new HttpsError("failed-precondition", "This is not the active correction dispute for the result.");
       }
-      if (!game.canonicalResult || !match.canonicalResult) {
+      if (!game.canonicalResult || isSingleGameMatch(match)&&!match.canonicalResult) {
         throw new HttpsError("failed-precondition", "The disputed canonical result is missing.");
       }
 
+      if(game.recordingResultBinding&&!request.data.expectedSourceHash)throw new HttpsError("failed-precondition","Review the active recording and supply its source hash.");
+      if(request.data.expectedSourceHash&&request.data.expectedSourceHash!==game.activeReplayStatisticsId)throw new HttpsError("aborted","The active recording changed during review.");
+      const reviewedSource=request.data.expectedSourceHash?(await transaction.get(gameRef.collection('replaySources').doc(request.data.expectedSourceHash))).data():null;
+      if(request.data.expectedSourceHash&&(reviewedSource?.state!=='READY'||reviewedSource.sourceHash!==request.data.expectedSourceHash||reviewedSource.matchId!==matchId||reviewedSource.gameId!==gameId))throw new HttpsError("failed-precondition","The reviewed recording is unavailable or belongs to another Game.");
+      if(resolution==="UPHOLD"&&game.recordingResultBinding?.sourceHash&&game.recordingResultBinding.sourceHash!==game.activeReplayStatisticsId)throw new HttpsError("failed-precondition","The accepted recording was replaced. Correct and rebind the result after reviewing the new source.");
       const oldRevision = canonicalRevision(game.canonicalResult);
+      const matchRevision=match.canonicalResult?canonicalRevision(match.canonicalResult):oldRevision;
       const currentJobRef = db.collection(collections.processingJobs)
-        .doc(resultProcessingJobId(matchId, oldRevision));
+        .doc(resultProcessingJobId(matchId, matchRevision));
       const legacyJobRef = db.collection(collections.processingJobs).doc(`MATCH_RESULT_${matchId}`);
       const [currentJobSnapshot, legacyJobSnapshot] = await Promise.all([
         transaction.get(currentJobRef),
@@ -129,7 +136,7 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
           updatedAt: now,
         });
         transaction.update(matchRef, {
-          status: "COMPLETED",
+          status:match.canonicalResult?"COMPLETED":"ACTIVE",
           activeResultDisputeId: null,
           processingState: "PENDING",
           updatedAt: now,
@@ -170,7 +177,7 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
 
       const newRevision = oldRevision + 1;
       const gameHistoryRef = gameRef.collection("resultHistory").doc(`R${oldRevision}`);
-      const matchHistoryRef = matchRef.collection("resultHistory").doc(`R${oldRevision}`);
+      const matchHistoryRef = matchRef.collection("resultHistory").doc(`R${matchRevision}`);
 
       transaction.set(gameHistoryRef, {
         revision: oldRevision,
@@ -179,8 +186,8 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
         correctionCaseId: disputeId,
         archivedAt: now,
       });
-      transaction.set(matchHistoryRef, {
-        revision: oldRevision,
+      if(match.canonicalResult)transaction.set(matchHistoryRef, {
+        revision: matchRevision,
         canonicalResult: match.canonicalResult,
         replacedByRevision: newRevision,
         correctionCaseId: disputeId,
@@ -214,6 +221,7 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
         previousRevision: oldRevision,
         correctionCaseId: disputeId,
       });
+      if(request.data.expectedSourceHash)transaction.update(gameRef,{recordingResultBinding:{sourceHash:request.data.expectedSourceHash,resolverVersion:'AOF_ADMIN_RECORDING_REVIEW_V1',evidenceToken:null}});
 
       transaction.update(disputeRef, {
         status: "RESOLVED_CORRECTED",

@@ -6,6 +6,7 @@ import { callableOptions } from "../../config/runtime.js";
 import { collections } from "../../domain/collections.js";
 import { assertMatchParticipant } from "../../engines/resultEngine.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+import {writeAdminAudit} from '../../services/audit.js';
 import {
   assertResultShape,
   canonicalRevision,
@@ -73,7 +74,7 @@ export const disputeCanonicalGameResult = onCall<DisputeCanonicalGameResultInput
       assertResultShape(match);
 
       try {
-        assertMatchParticipant(match.participants, actor.playerId);
+        if(actor.role!=='ADMIN')assertMatchParticipant(match.participants, actor.playerId);
       } catch (error) {
         rethrowResultValidation(error);
       }
@@ -87,7 +88,7 @@ export const disputeCanonicalGameResult = onCall<DisputeCanonicalGameResultInput
 
       const revision = canonicalRevision(game.canonicalResult);
       const revisionedJobRef = db.collection(collections.processingJobs)
-        .doc(resultProcessingJobId(matchId, revision));
+        .doc(resultProcessingJobId(matchId, match.canonicalResult?canonicalRevision(match.canonicalResult):revision));
       const legacyJobRef = db.collection(collections.processingJobs).doc(`MATCH_RESULT_${matchId}`);
       const [revisionedJobSnapshot, legacyJobSnapshot] = await Promise.all([
         transaction.get(revisionedJobRef),
@@ -141,6 +142,7 @@ export const disputeCanonicalGameResult = onCall<DisputeCanonicalGameResultInput
           updatedAt: now,
         });
       }
+      if(actor.role==='ADMIN')writeAdminAudit(transaction,{actorUid:actor.authUid,actorPlayerId:actor.playerId,action:'RESULT_CORRECTION_REVIEW_OPENED',targetType:'GAME',targetId:matchId+'/'+gameId,reason,after:{disputeId:disputeRef.id,category,resultRevision:revision}});
 
       return {
         disputeId: disputeRef.id,
