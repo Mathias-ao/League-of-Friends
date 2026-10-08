@@ -9,7 +9,7 @@ export class Player {
 }
 /** Optional read contract for the Event publication producer; never inferred from play status. */
 export interface EventResultsRelease {state:'COLLECTING'|'PREPARING'|'BLOCKED'|'READY'|'RELEASED';revision?:number;publishedAt?:string|null;}
-export interface EventRoundoff {revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;happenings:Array<{title:string;description:string;matchId:string}>;}
+export interface EventRoundoff {revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;showcase?:import('./eventRoundoffShowcase').EventShowcaseItem[];}
 export interface EventRecord {
   resultsRelease?:EventResultsRelease;artworkUrl?:string|null;warmupOpensAt?:string|null;
   eventId:string; title:string; description?:string; seasonId?:string|null; status:string; startsAt:string|null; endsAt?:string|null;

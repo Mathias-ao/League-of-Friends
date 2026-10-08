@@ -1,4 +1,6 @@
 import type {EventDetail,LeagueSnapshot,MatchRecord} from '../domain/league';
+import {selectEventShowcase} from '../domain/eventRoundoffShowcase';
+import {illustrativeGame} from './statisticsFixtures';
 export type EventDesignState='current'|'pairings'|'main'|'preparing'|'released';
 /** Synthetic design states only; never a publication producer or a live-data fallback. */
 export function eventDesignPreview(data:EventDetail,snapshot:LeagueSnapshot,state:EventDesignState):EventDetail {
@@ -13,13 +15,11 @@ export function eventDesignPreview(data:EventDetail,snapshot:LeagueSnapshot,stat
     participants:players.slice(i*2,i*2+2).map((p,j)=>({...p,team:j+1,slot:j+1}))
   }));
   if(state!=='pairings')matches.push({matchId:`${eventId}-design-M1`,eventId,format:'FOUR_V_FOUR',scoringAct:'MAIN',status:state==='main'?'READY':'COMPLETED',participants:players.map((p,i)=>({...p,team:i<4?1:2,slot:i+1}))});
+  for(const match of matches)if(match.status==='COMPLETED')match.result={revision:1,winningPlayerIds:match.participants.filter(p=>p.team===1).map(p=>p.playerId)};
   const result:EventDetail={...data,
     event:{...data.event,startsAt:'2026-10-24T17:00:00Z',signupDeadlineAt:'2026-10-17T17:00:00Z',checkInOpensAt:'2026-10-24T16:30:00Z',checkInClosesAt:'2026-10-24T17:00:00Z',warmupOpensAt:'2026-10-17T17:00:00Z',maxParticipants:8,status:state==='preparing'||state==='released'?'COMPLETED':'ACTIVE',resultsRelease:{state:state==='released'?'RELEASED':state==='preparing'?'PREPARING':'COLLECTING',revision:state==='released'?1:undefined}},
     viewer:{...data.viewer,rsvp:'YES',signupState:'CONFIRMED',attendanceStatus:state==='pairings'?'NOT_CHECKED':'CHECKED_IN'},
     signup:{...data.signup,confirmedCount:players.length,waitingListCount:0,confirmed:players.map(p=>({...p,attendanceStatus:state==='pairings'?'NOT_CHECKED':'CHECKED_IN'}))},matches,roundoff:undefined};
-  if(state==='released')result.roundoff={revision:1,points:players.map((p,i)=>({playerId:p.playerId,warmup:i%2===0?3:1,main:i<4?10:4,placement:0,emperor:0})),happenings:[
-    {title:'Four duels, one battlefield',description:'The warm-ups gave way to the main 4v4. Both acts are collected in this Event record.',matchId:`${eventId}-design-M1`},
-    {title:'The first encounter',description:`${players[0]?.steamName} and ${players[1]?.steamName} opened the warm-up act. Revisit their Battle record.`,matchId:`${eventId}-design-W1`}
-  ]};
+  if(state==='released')result.roundoff={revision:1,points:players.map((p,i)=>({playerId:p.playerId,warmup:i%2===0?3:1,main:i<4?10:4,placement:0,emperor:0})),showcase:selectEventShowcase({eventId,matches,games:matches.map((m,i)=>illustrativeGame(m,i,players)),illustrative:true})};
   return result;
 }

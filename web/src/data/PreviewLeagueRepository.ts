@@ -63,6 +63,13 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async replayStatistics():Promise<ReplayStatisticsResult>{throw new Error('Replay statistics are available in live Matches.');}
   async statisticsExperience(scope:StatisticsScope):Promise<StatisticsDataset>{
     if(this.state.membership!=='ACTIVE')throw new Error('Join the league to view statistics.');
+    if(scope.matchId){
+      for(const [eventId,state] of this.designStates){
+        const design=eventDesignPreview(await this.event(eventId),this.state,state);
+        const index=design.matches.findIndex(m=>m.matchId===scope.matchId);
+        if(index>=0){const match=design.matches[index];return {version:EXPERIENCE_VERSION,unavailableGames:0,games:(!scope.eventId||scope.eventId===eventId)&&(!scope.seasonId||scope.seasonId===design.event.seasonId)?[illustrativeGame(match,index,design.matches.flatMap(m=>m.participants))]:[]};}
+      }
+    }
     return {version:EXPERIENCE_VERSION,unavailableGames:0,games:this.state.matches.filter(m=>(!scope.matchId||m.matchId===scope.matchId)&&(!scope.eventId||m.eventId===scope.eventId)&&(!scope.seasonId||m.seasonId===scope.seasonId)).map(m=>illustrativeGame(m,m.matchId.startsWith('preview-battle-')?Number(m.matchId.slice('preview-battle-'.length))-1:['sample-duel','sample-team'].indexOf(m.matchId),this.state.players))};
   }
   async socialHistory():Promise<SocialHistoryResponse>{

@@ -38,10 +38,18 @@ test('Event details retain all pairings, personal navigation and an explicit rel
   await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:released})));
   assert.equal(document.querySelectorAll('.event-points tbody tr').length,8);
   assert.equal(document.querySelector('.event-points tr.is-yours td:last-child')?.textContent,'13');
-  assert.equal(document.querySelectorAll('.event-roundoff-happenings article').length,2);
-  await click('.event-roundoff-happenings button');assert.equal(visited.pop(),'E001-design-M1');
+  assert.equal(document.querySelectorAll('.event-showcase-grid article').length,5);
+  assert.equal(document.querySelector('.event-roundoff-happenings'),null);
+  assert.ok(document.querySelector('.event-showcase-value')?.textContent?.includes('2 wins'));
+  assert.ok(!document.querySelector('.event-showcase')?.textContent?.includes('FROM THE EVENT'));
+  await click('.event-showcase-sources button');assert.equal(visited.pop(),'E001-design-M1');
   assert.equal(hasReleasedRoundoff({...released,roundoff:{...released.roundoff!,revision:2}}),false);
   assert.equal(hasReleasedRoundoff({...released,event:{...released.event,resultsRelease:{state:'READY',revision:1}}}),false);
+  await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:{...released,roundoff:{...released.roundoff!,showcase:undefined}}})));
+  assert.ok(document.querySelector('.event-points'),'legacy released points remain readable');
+  assert.match(document.querySelector('.event-showcase')!.textContent!,/not yet been included/);
+  await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:{...released,roundoff:{...released.roundoff!,showcase:[]}}})));
+  assert.match(document.querySelector('.event-showcase')!.textContent!,/No notable performances have qualified/);
   await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:{...released,roundoff:{...released.roundoff!,revision:2}}})));
   assert.equal(document.querySelector('.event-points'),null,'stale roundoff revisions stay closed');
 
@@ -67,6 +75,7 @@ test('preview phase Battles resolve through the repository and preserve their di
   repo.setEventDesignState('E001',state);
   const detail=eventDesignPreview(original,snapshot,state);
   for(const match of detail.matches){const opened=await repo.match(match.matchId);assert.equal(opened.match.status,match.status);assert.equal(opened.match.participants.length,match.participants.length);}
+  if(state==='released')for(const item of detail.roundoff!.showcase!){for(const source of item.sources){if(!source.gameId)continue;const dataset=await repo.statisticsExperience({matchId:source.matchId});assert.equal(dataset.games.length,1);assert.equal(dataset.games[0].sourceHash,source.sourceHash);assert.equal(dataset.games[0].revision,source.revision);assert.ok(dataset.games[0].players.some(p=>item.playerIds.includes(p.playerId)));}}
  }
  repo.setEventDesignState('E001','current');
  await assert.rejects(repo.match('E001-design-M1'),/Battle not found/);
