@@ -1,3 +1,4 @@
+import {endOfEventDay} from '../lib/engines/eventCalendar.js';
 import {createHash} from "node:crypto";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -39,7 +40,7 @@ test('Event creation defaults to a seven-day warm-up and a bounded main-event ch
 test('warm-ups can be paired early, but result and recording submission wait for the opening date',async()=>{
  const db=fixture(),now=Date.now();db.set('events/e1',event(now));
  await adminCreateEventWarmups.run(request({requestId:'pair-early',eventId:'e1',pairs:[['p1','p2']],gameConfig:config}));
- const match=db.get('matches/e1-W1');assert.equal(match.playOpensAt.toMillis(),now+3*day);assert.equal(match.playClosesAt.toMillis(),now+10*day);
+ const match=db.get('matches/e1-W1');assert.equal(match.playOpensAt.toMillis(),now+3*day);assert.equal(match.playClosesAt.toMillis(),endOfEventDay(now+10*day));
  const detail=await getEventDetail.run(request({eventId:'e1'},'p1'));
  assert.equal(detail.matches[0].playOpensAt,new Date(now+3*day).toISOString());
  const battle=await getMatchDetail.run(request({matchId:'e1-W1'},'p1'));assert.equal(battle.viewer.canSubmitResult,false);

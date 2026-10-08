@@ -12,6 +12,7 @@ import type {
 import { ResultValidationError, normalizeOutcome, winningPlayerIds, losingPlayerIds } from "../../engines/resultEngine.js";
 
 export interface MatchForResult {
+  opponentKind?:string;
   seasonId?: string | null;
   eventId?: string | null;
   format?: MatchFormat;
@@ -69,6 +70,7 @@ export function assertResultShape(match: MatchForResult): asserts match is Match
   format: MatchFormat;
   participants: MatchParticipant[];
 } {
+  if(match.opponentKind==='AI')throw new HttpsError('failed-precondition','AI warm-ups use the participation review workflow.');
   if (!match.format || !Array.isArray(match.participants) || match.participants.length < 2) {
     throw new HttpsError("failed-precondition", "Match result configuration is incomplete.");
   }

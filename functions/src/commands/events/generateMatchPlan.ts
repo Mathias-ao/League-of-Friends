@@ -1,3 +1,5 @@
+import {maskUnavailableSeasonAwards,rankSeasonStandings} from '../../engines/seasonPoints.js';
+import {checkInWindow} from '../../services/eventTiming.js';
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
@@ -15,6 +17,8 @@ interface GenerateMatchPlanInput {
 }
 
 interface EventForPlanning {
+  seasonId?:string;
+  startsAt?:Timestamp;checkInClosesAt?:Timestamp;checkInOpensAt?:Timestamp;
   status?: string;
   competitionStyle?: CompetitionStyle;
   planningConfig?: MatchPlanningConfig;
@@ -81,6 +85,15 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
       );
     }
 
+    const closing=checkInWindow(event).closesAt;
+    if(closing&&Date.now()<closing.toMillis())throw new HttpsError('failed-precondition','Close check-in before forming main Battles.');
+    const [standings,scoringMatches,ledger]=event.seasonId?await Promise.all([
+      transaction.get(db.collection(collections.seasons).doc(event.seasonId).collection('standings')),
+      transaction.get(db.collection(collections.matches).where('seasonId','==',event.seasonId)),
+      transaction.get(db.collection(collections.leaguePointLedger).where('seasonId','==',event.seasonId)),
+    ]):[null,null,null];
+    const rows=eligiblePlayerIds.map(playerId=>({playerId,steamName:playerId,leaguePoints:0,...(standings?.docs.find(d=>d.id===playerId)?.data()??{})}));
+    const ranked=rankSeasonStandings(maskUnavailableSeasonAwards(rows,scoringMatches?.docs.map(d=>({matchId:d.id,...d.data()}))??[],ledger?.docs.map(d=>d.data())??[]));
     const playerSnapshots = await Promise.all(
       eligiblePlayerIds.map((playerId) => transaction.get(db.collection(collections.players).doc(playerId))),
     );
@@ -93,6 +106,7 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
       const player = playerSnapshot.data() as { currentPowerRating?: number | null };
       return {
         playerId: playerSnapshot.id,
+        seasonRank:ranked.find(row=>row.playerId===playerSnapshot.id)!.rank,
         powerRating: typeof player.currentPowerRating === "number" ? player.currentPowerRating : null,
       };
     });
@@ -129,7 +143,9 @@ export const adminGenerateMatchPlan = onCall<GenerateMatchPlanInput>(callableOpt
 
     const planDocument = {
       status: "PROPOSED" as const,
-      plannerVersion: "MATCH_PLANNER_V1",
+      plannerVersion: "MATCH_PLANNER_V2",
+      unevenTeamPolicy:"SEASON_STANDINGS_SMALLER_TEAM_V1",
+      standingsSnapshot:ranked,
       seed: requestId,
       competitionStyle: event.competitionStyle,
       planningConfig: event.planningConfig,

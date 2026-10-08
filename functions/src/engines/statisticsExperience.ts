@@ -77,9 +77,10 @@ export interface StatisticsDataset {version:string;games:GameStatistics[];unavai
 export interface ProjectionMetadata extends Omit<GameStatistics,'version'|'durationMs'|'players'|'episodes'|'evidenceTruncated'|'warnings'> {
   roster:{playerId:string;steamName?:string;team?:number|null;civilization?:string|null}[];
   mapping:{replaySlot:number;playerId:string}[];
+  opponents?:{replaySlot:number;opponentId:string}[];
 }
 export function statisticsBindingKey(metadata:ProjectionMetadata):string {
-  return JSON.stringify({sourceHash:metadata.sourceHash,mapping:[...metadata.mapping].sort((a,b)=>a.replaySlot-b.replaySlot),roster:metadata.roster.map(p=>({playerId:p.playerId,team:p.team??null,civilization:p.civilization??null})).sort((a,b)=>a.playerId.localeCompare(b.playerId))});
+  return JSON.stringify({sourceHash:metadata.sourceHash,...(metadata.opponents?.length?{opponents:[...metadata.opponents].sort((a,b)=>a.replaySlot-b.replaySlot)}:{}),mapping:[...metadata.mapping].sort((a,b)=>a.replaySlot-b.replaySlot),roster:metadata.roster.map(p=>({playerId:p.playerId,team:p.team??null,civilization:p.civilization??null})).sort((a,b)=>a.playerId.localeCompare(b.playerId))});
 }
 type Bag = Record<string,any>;
 const object = (value:unknown):Bag => value && typeof value==='object'&&!Array.isArray(value)?value as Bag:{};
@@ -102,6 +103,8 @@ export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):Game
   const sourceIds=new Map<string,string>();
   const seenSlots=new Set<number>(),seenPlayers=new Set<string>();
   for(const p of participants){
+    const opponent=metadata.opponents?.find(o=>o.replaySlot===p.replaySlot);
+    if(opponent){if(seenSlots.has(p.replaySlot))throw new Error('Duplicate opponent slot.');seenSlots.add(p.replaySlot);continue;}
     const bindings=metadata.mapping.filter(m=>m.replaySlot===p.replaySlot);
     const binding=bindings.length===1?bindings[0]:null;
     if(!binding||seenSlots.has(p.replaySlot)||seenPlayers.has(binding.playerId)||!metadata.roster.some(r=>r.playerId===binding.playerId))throw new Error('Replay participant mapping is incomplete or ambiguous.');
@@ -117,7 +120,7 @@ export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):Game
     const id=`${kind}:${e.raidId??e.battleId??e.skirmishId??start}:${actors.join(',')}:${targets.join(',')}`;
     episodes.set(id,{id,kind,atMs:start,endMs:Math.max(start,end??start),actors,targets,label});
   };
-  const players=participants.map(p=>{
+  const players=participants.filter(p=>sourceIds.has(String(p.playerId))).map(p=>{
     const playerId=sourceIds.get(String(p.playerId))!,roster=metadata.roster.find(r=>r.playerId===playerId)!;
     const values:Record<string,number|null>={},unavailable:Record<string,string>={},models:Record<string,string>={};
     for(const m of METRICS){
@@ -168,7 +171,7 @@ export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):Game
     return result;
   });
   const allEpisodes=[...episodes.values()].sort((a,b)=>a.atMs-b.atMs||a.id.localeCompare(b.id));
-  const {mapping:_,roster:__,...base}=metadata;
+  const {mapping:_,roster:__,opponents:___,...base}=metadata;
   return {...base,bindingKey:statisticsBindingKey(metadata),version:EXPERIENCE_VERSION,durationMs:number(data.scope?.observedUntilMs)??0,players,episodes:allEpisodes.slice(0,600),evidenceTruncated:allEpisodes.length>600,
     warnings:array(data.warnings).map(w=>String(w.message??w.code)).slice(0,30)};
 }
@@ -224,7 +227,7 @@ export class StatisticsExperience {
   }
   records():StatisticRecord[]{
     const result=new Map<string,StatisticRecord[]>();
-    for(const g of this.games)for(const m of METRICS.filter(m=>m.record)){
+    for(const g of this.games.filter(game=>game.format!=='AI_WARMUP'))for(const m of METRICS.filter(m=>m.record)){
       for(const p of g.players){if(!metricEligible(m,g,p))continue;const value=p.values[m.id];if(value==null||value===0||!p.models[m.id]||p.models[m.id]==='unknown')continue;
         const key=[m.id,g.contextKey,p.models[m.id]].join('|'),previous=result.get(key)??[];
         const record={metricId:m.id,value,playerId:p.playerId,name:p.name,matchId:g.matchId,gameId:g.gameId,civilization:p.civilization,orderAtMs:g.orderAtMs,contextKey:g.contextKey,model:p.models[m.id]};

@@ -1,11 +1,12 @@
+import {endOfEventDay} from '../engines/eventCalendar.js';
 import {Timestamp} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
 
 const day=86400000;
 /** Existing Events without an explicit warm-up date use the seven-day default. */
-export function warmupWindow(startsAt:Timestamp|null|undefined,warmupOpensAt?:Timestamp|null){
+export function warmupWindow(startsAt:Timestamp|null|undefined,warmupOpensAt?:Timestamp|null,timezone?:string){
  if(!(startsAt instanceof Timestamp))throw new HttpsError('failed-precondition','Set the main Event date before scheduling warm-ups.');
- const closesAt=startsAt,opensAt=warmupOpensAt??Timestamp.fromMillis(startsAt.toMillis()-7*day);
+ const closesAt=Timestamp.fromMillis(endOfEventDay(startsAt.toMillis(),timezone)),opensAt=warmupOpensAt??Timestamp.fromMillis(startsAt.toMillis()-7*day);
  const lead=startsAt.toMillis()-opensAt.toMillis();
  if(lead<5*day||lead>7*day)throw new HttpsError('failed-precondition','Warm-ups must open five to seven days before the main Event.');
  return {opensAt,closesAt};
@@ -22,9 +23,9 @@ interface ScheduledMatch {
  scoringSnapshot?:{rules?:Record<string,unknown>};
 }
 /** Derive dates for already-created warm-ups without changing their result or status. */
-export function matchPlayWindow(match:ScheduledMatch,event?:{startsAt?:Timestamp|null;warmupOpensAt?:Timestamp|null}){
+export function matchPlayWindow(match:ScheduledMatch,event?:{startsAt?:Timestamp|null;warmupOpensAt?:Timestamp|null;timezone?:string}){
  if(match.playOpensAt instanceof Timestamp)return {opensAt:match.playOpensAt,closesAt:match.playClosesAt??null};
- if(match.scoringSnapshot?.rules?.act==='WARMUP')return warmupWindow(event?.startsAt,event?.warmupOpensAt);
+ if(match.scoringSnapshot?.rules?.act==='WARMUP')return warmupWindow(event?.startsAt,event?.warmupOpensAt,event?.timezone);
  return {opensAt:null,closesAt:null};
 }
 

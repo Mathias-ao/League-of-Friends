@@ -23,6 +23,7 @@ interface MatchDetailInput {
 }
 
 interface MatchDocument {
+  opponentKind?:string;aiOpponent?:any;aiParticipation?:any;
   seasonId?: string | null;
   scoringSnapshot?:{rules?:Record<string,unknown>};
   scoringState?:string;
@@ -126,6 +127,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
     const viewerAvailableCivilizations = draft && viewerGamePlayer
       ? availableCivilizationsForPlayer(draft, actor.playerId, viewerGamePlayer.team)
       : [];
+    const placementSource=game.activeReplayStatisticsId?(await gameSnapshot.ref.collection('replaySources').doc(game.activeReplayStatisticsId).get()).data():null;
     const submissionsSnapshot = canSeePendingResultClaims
       ? await gameSnapshot.ref.collection("resultSubmissions").get()
       : null;
@@ -200,9 +202,11 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
         statisticsId: game.activeReplayStatisticsId ?? null,
         statisticsState: game.replayStatisticsState ?? null,
         statisticsRevision: game.replayStatisticsRevision ?? null,
+        placementReason:placementSource?.placementQualification?.reason??null,
       },
       viewerSubmission,
       confirmationRequests,
+      timingReviewRequests:actor.role==='ADMIN'?submissions.filter(s=>s.status==='PENDING_ADMIN_REVIEW'):[],
     };
   }));
 
@@ -212,7 +216,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
     schemaVersion: "MATCH_DETAIL_V1",
     generatedAt: new Date().toISOString(),
     match: {
-      matchId,
+      matchId,opponentKind:match.opponentKind??"HUMAN",aiOpponent:match.aiOpponent??null,aiParticipation:match.aiParticipation??null,
       seasonId: match.seasonId ?? null,
       eventId: match.eventId ?? null,
       challengeId: match.challengeId ?? null,
@@ -241,7 +245,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
     viewer: {
       playerId: actor.playerId,
       isParticipant: viewerIsParticipant,
-      canSubmitResult: viewerIsParticipant && (!window.opensAt||Date.now()>=window.opensAt.toMillis()) && !["COMPLETED", "CANCELLED", "DISPUTED"].includes(match.status ?? ""),
+      canSubmitResult: match.opponentKind!=='AI' && viewerIsParticipant && (!window.opensAt||Date.now()>=window.opensAt.toMillis()) && !["COMPLETED", "CANCELLED", "DISPUTED", "VOID"].includes(match.status ?? ""),
     },
     games: gameRows,
   };

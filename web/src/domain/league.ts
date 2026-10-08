@@ -11,6 +11,7 @@ export class Player {
 export interface EventResultsRelease {state:'COLLECTING'|'PREPARING'|'BLOCKED'|'READY'|'RELEASED';revision?:number;publishedAt?:string|null;}
 export interface EventRoundoff {revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;showcase?:import('./eventRoundoffShowcase').EventShowcaseItem[];}
 export interface EventRecord {
+  timezone?:string;
   resultsRelease?:EventResultsRelease;artworkUrl?:string|null;warmupOpensAt?:string|null;
   eventId:string; title:string; description?:string; seasonId?:string|null; status:string; startsAt:string|null; endsAt?:string|null;
   signupDeadlineAt?:string|null; checkInOpensAt?:string|null; checkInClosesAt?:string|null; maxParticipants?:number|null;
@@ -39,7 +40,8 @@ export class LeagueEvent {
     return ['PUBLISHED','ACTIVE'].includes(e.status)&&e.viewer?.rsvp==='YES'&&e.viewer.signupState==='CONFIRMED'&&e.viewer.attendanceStatus!=='CHECKED_IN'&&!!e.checkInOpensAt&&Date.parse(e.checkInOpensAt)<=now&&(!e.checkInClosesAt||Date.parse(e.checkInClosesAt)>now);
   }
 }
-export interface MatchRecord {playOpensAt?:string|null;playClosesAt?:string|null;scoringAct?:string|null;scoringRules?:Record<string,unknown>|null;scoringState?:string|null;scoringBreakdown?:Array<{playerId:string;matchCompletion:number;matchWin:number;placement:number;emperor:number;placementState:string}>;matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
+export interface MatchRecord {
+  opponentKind?:string;aiOpponent?:{difficulty:string};aiParticipation?:{state:string};playOpensAt?:string|null;playClosesAt?:string|null;scoringAct?:string|null;scoringRules?:Record<string,unknown>|null;scoringState?:string|null;scoringBreakdown?:Array<{playerId:string;matchCompletion:number;matchWin:number;placement:number;emperor:number;placementState:string}>;matchId:string;eventId?:string|null;seasonId?:string|null;format:string|null;status:string;draftRequired?:boolean;completedAt?:string|null;seriesRule?:{maxGames:number;gamesRequiredToWin:number};participants:(PlayerRecord&{team?:number|null;slot?:number})[];result?:{winningPlayerIds?:string[];revision?:number;winners?:PlayerRecord[]}|null;}
 export interface CivilizationDraftTurnRecord {index:number;playerId:string;team:number|null;slot:number;status:'PENDING'|'COMPLETED';civilization:string|null;}
 export interface CivilizationDraftSelectionRecord {turnIndex:number;playerId:string;team:number|null;civilization:string;}
 export interface CivilizationDraftRecord {
@@ -51,9 +53,9 @@ export interface CivilizationDraftRecord {
 export interface ReplayPlayerMapping {replaySlot:number;sourceName:string;playerId:string;}
 export interface ReplayUploadResult {success:boolean;alreadyProcessed:boolean;matchId:string;gameId:string;statisticsId:string;sourceHash:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;replayStatisticsRevision?:number;}
 export interface ReplayStatisticsResult {success:boolean;matchId:string;gameId:string;statisticsId:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;statistics:any;diplomacyReview?:any;officialOutcome?:any;socialIncidents?:any;}
-export interface GameRecord {gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{rawStatsState?:string|null;analysisState?:string|null;statisticsId?:string|null;statisticsState?:string|null;statisticsRevision?:number|null};}
+export interface GameRecord {timingReviewRequests?:{submissionId:string;submittedBy:PlayerRecord;outcome:Record<string,unknown>|null}[];gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{placementReason?:string|null;rawStatsState?:string|null;analysisState?:string|null;statisticsId?:string|null;statisticsState?:string|null;statisticsRevision?:number|null};}
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
-export interface EventDetail {roundoff?:EventRoundoff;event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
+export interface EventDetail {warmup?:{configured:boolean;schedule:{status:string;unpairedPlayerId:string|null}|null;aiDifficulty:string|null;map:string|null;guestAcceptanceDeadlineAt:string|null;eligibleGuests:PlayerRecord[];replacementGuests?:PlayerRecord[];challenges:{challengeId:string;status:string;challengerName?:string;guestName?:string;challengerPlayerId:string;guestPlayerId:string;deadlineAt:string|null}[];isGuest:boolean};finalisation?:{notices?:{matchId:string;message:string}[];canFinalise:boolean;blockers:{kind:string;matchId?:string;message:string}[];revision:number;finalisedAt:string|null}|null;roundoff?:EventRoundoff;event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
 export interface AchievementSummary {awardId:string;achievementId?:string|null;name:string;description:string;scope?:string|null;seasonId?:string|null;firstAwardedAt?:string|null;evaluation?:Record<string,unknown>;}
 export interface LeagueRecordSummary {code:string;direction?:string;unit?:string;value?:number|null;holders?:Array<{playerId?:string;value?:number;matchId?:string;gameId?:string}>;}
@@ -130,6 +132,17 @@ export function currentLeagueEvent(snapshot:Pick<LeagueSnapshot,'viewer'|'events
 export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){return snapshot.membership==='ACTIVE'&&(snapshot.enteredSeason||snapshot.hasLeagueHistory);}
 export interface LeagueRepository {
   readonly mode:'preview'|'live';
+  replaceWarmupOpponent?(matchId:string,withdrawnPlayerId:string,replacementPlayerId:string,reason:string):Promise<void>;
+  rejectAIWarmup?(matchId:string,reason:string):Promise<void>;
+  resolveUnpairedWarmup?(eventId:string,reason:string):Promise<void>;
+  configureWarmups?(eventId:string,map:string,aiDifficulty:string):Promise<void>;
+  challengeGuest?(eventId:string,guestPlayerId:string):Promise<void>;
+  respondGuest?(eventId:string,challengeId:string,accept:boolean):Promise<void>;
+  finaliseEvent?(eventId:string,expectedRevision:number):Promise<void>;
+  resolveUnplayedMatch?(matchId:string,reason:string):Promise<void>;
+  verifyAIWarmup?(matchId:string,sourceHash:string,reason:string):Promise<void>;
+  disputeAIWarmup?(matchId:string,reason:string):Promise<void>;
+  reviewLateWarmup?(matchId:string,gameId:string,submissionId:string,sourceHash:string,reason:string,rejectTimingEvidence?:boolean):Promise<void>;
   load():Promise<LeagueSnapshot>;signIn():Promise<void>;signOut():Promise<void>;
   requestMembership(steamName:string,discordName:string,favor:string):Promise<void>;
   generateEmperorsFavors(batchName:string,count:number):Promise<EmperorsFavorBatch>;

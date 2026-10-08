@@ -1,3 +1,4 @@
+import {eventTimezone,endOfEventDay} from '../../engines/eventCalendar.js';
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
@@ -35,6 +36,8 @@ interface CreateEventInput {
   checkInOpensAt?: string | null;
   checkInClosesAt?: string | null;
   warmupOpensAt?: string | null;
+  timezone?:string;
+  warmupPolicy?:{gameConfig:GameConfiguration;aiDifficulty:string;guestAcceptanceDeadlineAt?:string};
   minParticipants?: number | null;
   maxParticipants?: number | null;
   waitingListEnabled?: boolean;
@@ -125,6 +128,8 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
   }
 
   const startsAt = parseDate(input.startsAt, "startsAt")!;
+  let timezone:string;
+  try{timezone=eventTimezone(input.timezone);}catch{throw new HttpsError('invalid-argument','Provide a valid Event timezone.');}
   const endsAt = parseDate(input.endsAt, "endsAt", true);
   const signupDeadlineAt = parseDate(input.signupDeadlineAt, "signupDeadlineAt")!;
   const checkInOpensAt = parseDate(input.checkInOpensAt, "checkInOpensAt", true) ?? new Date(startsAt.getTime()-30*60000);
@@ -157,6 +162,10 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
     throw error;
   }
 
+  const warmupPolicy=input.warmupPolicy;
+  const guestDeadline=warmupPolicy ? parseDate(warmupPolicy.guestAcceptanceDeadlineAt,'guestAcceptanceDeadlineAt',true)??new Date(startsAt.getTime()-48*3600000):null;
+  if(warmupPolicy&&warmupLead!==7*86400000)throw new HttpsError("invalid-argument","Automatic warm-ups open exactly seven days before kickoff.");
+  if(warmupPolicy&&(!['Easiest','Standard','Moderate','Hard','Hardest','Extreme'].includes(warmupPolicy.aiDifficulty)||!Array.isArray(warmupPolicy.gameConfig?.maps?.pool)||warmupPolicy.gameConfig.maps.pool.length!==1||warmupPolicy.gameConfig.maps.pool.some(map=>typeof map!=='string'||!map.trim()||map.length>80)||warmupPolicy.gameConfig.civilizations?.mode!=='UNRESTRICTED'||warmupPolicy.gameConfig.victory?.conquest!==true||warmupPolicy.gameConfig.victory.wonder||warmupPolicy.gameConfig.victory.relic||warmupPolicy.gameConfig.victory.customRuleCode||guestDeadline!.getTime()<=warmupOpensAt.getTime()||guestDeadline!.getTime()>=startsAt.getTime()))throw new HttpsError('invalid-argument','Warm-ups require an announced AI difficulty and map, unrestricted civilizations, conquest victory and a guest deadline between opening and kickoff.');
   const eventRef = db.collection(collections.events).doc();
   const leagueStateRef = db.collection(collections.leagueState).doc(leagueStateDocumentId);
 
@@ -215,6 +224,8 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
       checkInOpensAt: Timestamp.fromDate(checkInOpensAt),
       checkInClosesAt: Timestamp.fromDate(checkInClosesAt),
       warmupOpensAt: Timestamp.fromDate(warmupOpensAt),
+      timezone, warmupClosesAt:Timestamp.fromMillis(endOfEventDay(startsAt.getTime(),timezone)),
+      warmupPolicy:warmupPolicy?{modelVersion:'AOF_WARMUP_LIFECYCLE_V1',gameConfig:{...warmupPolicy.gameConfig,diplomacyEnabled:false},aiDifficulty:warmupPolicy.aiDifficulty.trim(),guestAcceptanceDeadlineAt:Timestamp.fromDate(guestDeadline!)}:null,
       minParticipants,
       maxParticipants,
       waitingListEnabled: input.waitingListEnabled ?? true,

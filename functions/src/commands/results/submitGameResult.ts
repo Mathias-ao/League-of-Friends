@@ -52,12 +52,14 @@ export const submitGameResult = onCall<SubmitGameResultInput>(callableOptions, a
     const match = matchSnapshot.data() as MatchForResult;
     const game = gameSnapshot.data() as GameForResult;
     assertResultShape(match);
+    const timing=matchSnapshot.data();
+    const requiresTimingReview=timing?.timingPolicy==='AOF_WARMUP_LIFECYCLE_V1'&&timing.playClosesAt?.toMillis()<=Date.now();
     const event=match.scoringSnapshot?.rules?.act==="WARMUP"&&!(matchSnapshot.data()?.playOpensAt instanceof Timestamp)&&match.eventId
       ?(await transaction.get(db.collection(collections.events).doc(match.eventId))).data():undefined;
     const window=matchPlayWindow(matchSnapshot.data()!,event);
     assertMatchPlayOpened({playOpensAt:window.opensAt});
 
-    if (match.status === "COMPLETED" || match.status === "CANCELLED") {
+    if (match.status === "COMPLETED" || match.status === "CANCELLED" || match.status === "VOID") {
       throw new HttpsError("failed-precondition", "This Match no longer accepts result submissions.");
     }
     if (game.status === "COMPLETED" || game.status === "REMAKE" || game.status === "NO_CONTEST") {
@@ -79,7 +81,7 @@ export const submitGameResult = onCall<SubmitGameResultInput>(callableOptions, a
 
     if (existingSubmissionSnapshot.exists) {
       const existing = existingSubmissionSnapshot.data() as ResultSubmissionDocument;
-      if (existing.status === "PENDING_CONFIRMATION" && sameOutcome(existing.outcome, outcome)) {
+      if (["PENDING_CONFIRMATION","PENDING_ADMIN_REVIEW"].includes(existing.status) && sameOutcome(existing.outcome, outcome)) {
         return {
           submissionId: submissionRef.id,
           outcome,
@@ -95,7 +97,8 @@ export const submitGameResult = onCall<SubmitGameResultInput>(callableOptions, a
     transaction.set(submissionRef, {
       submittedBy: actor.playerId,
       outcome,
-      status: "PENDING_CONFIRMATION",
+      status: requiresTimingReview?"PENDING_ADMIN_REVIEW":"PENDING_CONFIRMATION",
+      requiresTimingReview,
       submittedAt: existingSubmissionSnapshot.exists
         ? existingSubmissionSnapshot.data()?.submittedAt ?? now
         : now,

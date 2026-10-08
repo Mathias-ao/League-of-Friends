@@ -9,19 +9,20 @@ import {SEASON_SHOWCASE_VERSION,augmentSeasonShowcase} from '../engines/seasonSh
 const stable=(value:any):any=>Array.isArray(value)?value.map(stable):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value;
 export function statisticsMetadata(matchId:string,gameId:string,match:any,game:any,source:any):ProjectionMetadata {
   const disputed=!!game.activeResultDisputeId||!!match.activeResultDisputeId||game.status==='DISPUTED'||match.status==='DISPUTED';
-  const eligible=!disputed&&game.status==='COMPLETED'&&!!game.canonicalResult&&!['CANCELLED','VOID','PROPOSED'].includes(match.status);
+  const accepted=match.opponentKind==='AI'?match.aiParticipation?.state==='ADMIN_VERIFIED'&&match.aiParticipation.sourceHash===source.sourceHash&&game.activeReplayStatisticsId===source.sourceHash:!!game.canonicalResult;
+  const eligible=!disputed&&game.status==='COMPLETED'&&accepted&&!['CANCELLED','VOID','PROPOSED'].includes(match.status);
   const iso=game.completedAt??match.completedAt??match.firstCompletedAt;
   const orderAtMs=typeof iso?.toMillis==='function'?iso.toMillis():typeof iso==='string'?Date.parse(iso):0;
   const config=game.gameConfigSnapshot??match.gameConfigSnapshot??{};
   // Until the played map is retained in this read model, a multi-map or unknown
   // pool cannot support cross-Game timing/record comparisons.
   const comparisonConfig=config.maps?.pool?.length===1?config:{...config,recordScope:matchId+'/'+gameId};
-  return {matchId,gameId,seasonId:match.seasonId??null,eventId:match.eventId??null,format:match.format??'UNKNOWN',
-    contextKey:[match.format??'UNKNOWN',JSON.stringify(stable(comparisonConfig))].join(' · '),
+  return {matchId,gameId,seasonId:match.seasonId??null,eventId:match.eventId??null,format:match.opponentKind==='AI'?'AI_WARMUP':match.format??'UNKNOWN',
+    contextKey:[match.opponentKind==='AI'?'AI_WARMUP':match.format??'UNKNOWN',JSON.stringify(stable(comparisonConfig))].join(' · '),
     orderAtMs:Number.isFinite(orderAtMs)?orderAtMs:0,revision:Number(game.replayStatisticsRevision??1),sourceHash:source.sourceHash??'',
     eligible,exclusionReason:eligible?null:disputed?'Result disputed':'Official Game result pending',
     affectsSeason:match.context?.affectsSeasonStats!==false,affectsLifetime:match.context?.affectsLifetimeStats!==false,
-    roster:(game.players??[]).map((p:any)=>({...p,steamName:source.playerMapping?.find((m:any)=>m.playerId===p.playerId)?.sourceName??p.playerId})),mapping:source.playerMapping??[]};
+    roster:(game.players??[]).map((p:any)=>({...p,steamName:source.playerMapping?.find((m:any)=>m.playerId===p.playerId)?.sourceName??p.playerId})),mapping:source.playerMapping??[],opponents:source.opponentMapping??[]};
 }
 
 async function hydrateProjection(matchId:string,gameId:string,match:any,game:any,sourceRef:DocumentReference,source:any):Promise<void>{
@@ -52,7 +53,7 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
   const names=new Map<string,string>(identities.docs.map((p:any)=>[p.id,p.data().steamName??p.id]));
   const games:GameStatistics[]=[];let unavailableGames=0;
   const checkpoints:{ref:DocumentReference;token:string;kind:string}[]=[];
-  const token=(value:any,kind:string)=>JSON.stringify(stable(kind==='match'?{status:value?.status,context:value?.context,format:value?.format,seasonId:value?.seasonId,eventId:value?.eventId,completedAt:value?.completedAt,firstCompletedAt:value?.firstCompletedAt,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot}:kind==='game'?{status:value?.status,result:value?.canonicalResult,players:value?.players,source:value?.activeReplayStatisticsId,revision:value?.replayStatisticsRevision,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,completedAt:value?.completedAt}:{state:value?.state,hash:value?.sourceHash,statistics:value?.statistics,mapping:value?.playerMapping}));
+  const token=(value:any,kind:string)=>JSON.stringify(stable(kind==='match'?{status:value?.status,opponentKind:value?.opponentKind,aiParticipation:value?.aiParticipation,context:value?.context,format:value?.format,seasonId:value?.seasonId,eventId:value?.eventId,completedAt:value?.completedAt,firstCompletedAt:value?.firstCompletedAt,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot}:kind==='game'?{status:value?.status,result:value?.canonicalResult,players:value?.players,source:value?.activeReplayStatisticsId,revision:value?.replayStatisticsRevision,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,completedAt:value?.completedAt}:{state:value?.state,hash:value?.sourceHash,statistics:value?.statistics,mapping:value?.playerMapping,opponents:value?.opponentMapping}));
   const checkpoint=(ref:DocumentReference,value:any,kind:string)=>{if(!transaction)checkpoints.push({ref,token:token(value,kind),kind});};
   for(const matchSnapshot of snapshots){
     if(!matchSnapshot.exists)continue;

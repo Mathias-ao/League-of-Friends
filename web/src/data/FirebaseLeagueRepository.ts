@@ -70,6 +70,17 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async signOut(){await signOut(this.auth);}
   async requestMembership(steamName:string,discordName:string,favor:string){await this.call('requestLeagueMembership',{steamName,discordName,favor});}
   generateEmperorsFavors(batchName:string,count:number){return this.call<EmperorsFavorBatch>('adminGenerateEmperorsFavors',{batchName,count});}
+  async replaceWarmupOpponent(matchId:string,withdrawnPlayerId:string,replacementPlayerId:string,reason:string){await this.call('adminReplaceWarmupOpponent',{matchId,withdrawnPlayerId,replacementPlayerId,reason});}
+  async rejectAIWarmup(matchId:string,reason:string){await this.call('adminRejectAIWarmup',{matchId,reason});}
+  async resolveUnpairedWarmup(eventId:string,reason:string){await this.call('adminResolveUnpairedWarmup',{eventId,reason});}
+  async configureWarmups(eventId:string,map:string,aiDifficulty:string){await this.call('adminConfigureEventWarmups',{eventId,map,aiDifficulty});}
+  async challengeGuest(eventId:string,guestPlayerId:string){await this.call('challengeWarmupGuest',{eventId,guestPlayerId});}
+  async respondGuest(eventId:string,challengeId:string,accept:boolean){await this.call('respondToWarmupGuest',{eventId,challengeId,accept});}
+  async finaliseEvent(eventId:string,expectedRevision:number){await this.call('adminFinaliseEvent',{eventId,expectedRevision});}
+  async resolveUnplayedMatch(matchId:string,reason:string){await this.call('adminResolveUnplayedEventMatch',{matchId,reason});}
+  async verifyAIWarmup(matchId:string,sourceHash:string,reason:string){await this.call('adminVerifyAIWarmup',{matchId,sourceHash,reason,settingsVerified:true,playedWithinWindow:true});}
+  async disputeAIWarmup(matchId:string,reason:string){await this.call('disputeAIWarmup',{matchId,reason});}
+  async reviewLateWarmup(matchId:string,gameId:string,submissionId:string,sourceHash:string,reason:string,rejectTimingEvidence=false){await this.call('adminResolveGameResult',{requestId:crypto.randomUUID(),matchId,gameId,submissionId,sourceHash,reason,playedWithinWindow:!rejectTimingEvidence,rejectTimingEvidence});}
   async enterSeason(seasonId:string){await this.call('enterSeason',{seasonId});}
   async rsvp(eventId:string,rsvp:'YES'|'NO'){await this.call('setEventRsvp',{eventId,rsvp});}
   async checkIn(eventId:string){await this.call('checkInToEvent',{eventId});}

@@ -7,6 +7,7 @@ export interface VerifiedFFAPlacements {
 export interface PlacementSourceBinding {
   sourceStatisticsId:string;replaySha256:string;rosterIds:string[];resultRevision:number;
   policy:PlacementPolicy;winnerIds:string[];
+  replayPlayerMapping?:Array<{replayPlayerId:number;playerId:string}>;
 }
 /** Only active, server-owned qualified replay evidence; never caller-supplied ranks. */
 export function verifiedFFAPlacements(value:unknown,binding:PlacementSourceBinding):VerifiedFFAPlacements|null {
