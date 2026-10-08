@@ -30,6 +30,17 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(
   emperorsFavorCallableOptions,
   async (request) => {
     const authUid = requireAuth(request);
+    const steamId64 =
+      request.auth?.token.provider === "steam" &&
+      typeof request.auth.token.steamId64 === "string"
+        ? request.auth.token.steamId64
+        : null;
+    if (!steamId64 || authUid !== `steam:${steamId64}`) {
+      throw new HttpsError(
+        "permission-denied",
+        "Sign in with Steam before presenting an Emperor's Favor.",
+      );
+    }
     const steamName = request.data.steamName?.trim();
     const discordName = request.data.discordName?.trim() || null;
     const favor = normalizeEmperorsFavor(request.data.favor ?? "");
@@ -133,6 +144,7 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(
 
       const player = {
         steamName,
+        steamId64,
         steamNameNormalized: normalizeSteamName(steamName),
         discordName,
         avatarUrl: null,
@@ -159,6 +171,8 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(
       transaction.create(playerRef, player);
       transaction.create(authLinkRef, {
         playerId: playerRef.id,
+        provider: "STEAM",
+        steamId64,
         createdAt: now,
       });
       transaction.update(favorRef, {
@@ -188,7 +202,7 @@ export const requestLeagueMembership = onCall<RequestMembershipInput>(
     if (outcome.type === "ALREADY_LINKED") {
       throw new HttpsError(
         "already-exists",
-        "This Google account is already linked to a league player.",
+        "This Steam account is already linked to a league player.",
       );
     }
     if (outcome.type === "RATE_LIMITED") {
