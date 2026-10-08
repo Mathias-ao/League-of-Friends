@@ -17,7 +17,7 @@ export async function readSocialHistory(ownerPlayerId:string){
   const gameToken=(v:any)=>JSON.stringify({status:v?.status,dispute:v?.activeResultDisputeId??null,statisticsId:v?.activeReplayStatisticsId??null,
     result:v?.canonicalResult??null,players:v?.players??null,number:v?.gameNumber});
   const checkpoints:any[]=matches.docs.map(doc=>({ref:doc.ref,token:matchToken(doc.data()),type:'MATCH'}));
-  const ordered=matches.docs.map(doc=>({doc,data:doc.data(),at:(doc.data().firstCompletedAt??doc.data().completedAt)?.toMillis?.()}));
+  const ordered=matches.docs.filter(doc=>doc.data().opponentKind!=='AI').map(doc=>({doc,data:doc.data(),at:(doc.data().firstCompletedAt??doc.data().completedAt)?.toMillis?.()}));
   if(ordered.some(m=>!Number.isSafeInteger(m.at)))throw new HttpsError('failed-precondition','Accepted Battle chronology is missing; social stages cannot be ordered.');
   ordered.sort((a,b)=>a.at-b.at||a.doc.id.localeCompare(b.doc.id));
   const project=process.env.GCLOUD_PROJECT||process.env.GOOGLE_CLOUD_PROJECT;

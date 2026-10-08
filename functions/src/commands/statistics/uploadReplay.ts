@@ -33,6 +33,7 @@ interface GameForReplayUpload {
   replayStatisticsRevision?: number;
   activeReplayStatisticsId?: string | null;
   replay?: Record<string, unknown> | null;
+  aiOpponent?:{opponentId:string;difficulty:string};
 }
 
 interface WorkerPlayer {
@@ -186,7 +187,10 @@ async function resolvePlayerMapping(
   }
 
   const used = new Set<string>();
-  const mapping = workerPlayers
+  const expectedCount=game.aiOpponent?gamePlayerIds.length+1:gamePlayerIds.length;
+  if(workerPlayers.length!==expectedCount)throw new HttpsError("failed-precondition","Recording roster does not match the approved Game.");
+  const candidatesForHuman=game.aiOpponent?workerPlayers.filter(source=>explicit.has(normalizeName(source.sourceName))||bySteamName.has(normalizeName(source.sourceName))):workerPlayers;
+  const mapping = candidatesForHuman
     .map((source) => {
       const normalized = normalizeName(source.sourceName);
       const explicitPlayer = explicit.get(normalized);
@@ -288,6 +292,8 @@ export const uploadReplay = onCall<UploadReplayInput>(
       throw new HttpsError("internal", error instanceof Error ? error.message : "Recording match facts failed validation.");
     }
     const playerMapping = await resolvePlayerMapping(game, worker.sourcePlayers);
+    const opponentMapping=game.aiOpponent?worker.sourcePlayers.filter(p=>!playerMapping.some(m=>m.replaySlot===p.replaySlot)).map(p=>({replaySlot:p.replaySlot,sourceName:p.sourceName,opponentId:game.aiOpponent!.opponentId,qualification:"ADMIN_REVIEW_REQUIRED"})):[];
+    if(game.aiOpponent&&opponentMapping.length!==1)throw new HttpsError("failed-precondition","AI opponent mapping is ambiguous.");
     const statisticsBytes = Buffer.from(JSON.stringify(worker.statistics));
     const statisticsSha256 = sha256(statisticsBytes);
     const prefix = "replay-evidence/" + matchId + "/" + gameId + "/" + localSourceHash;
@@ -317,7 +323,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
 
       const revision = Number(freshGame.replayStatisticsRevision ?? 0) + 1;
       const now = Timestamp.now();
-      const metadata=statisticsMetadata(matchId,gameId,matchSnapshot.data(),{...freshGame,replayStatisticsRevision:revision},{sourceHash:localSourceHash,playerMapping});
+      const metadata=statisticsMetadata(matchId,gameId,matchSnapshot.data(),{...freshGame,replayStatisticsRevision:revision},{sourceHash:localSourceHash,playerMapping,opponentMapping});
       const experience=augmentSeasonShowcase(worker.statistics,projectStatistics(worker.statistics,metadata),metadata);
       transaction.create(sourceRef, {
         experience,
@@ -333,7 +339,8 @@ export const uploadReplay = onCall<UploadReplayInput>(
           ...currentOfficialGameOutcome(freshGame, matchSnapshot.data()),
           historicalSnapshotOnly: true,
         },
-        playerMapping,
+        playerMapping,opponentMapping,
+        timingQualification:match.timingPolicy&&window.closesAt&&Date.now()>=window.closesAt.toMillis()?"ADMIN_REVIEW_REQUIRED":"WITHIN_UPLOAD_WINDOW",
         parser: {
           name: worker.parserName,
           version: worker.parserVersion,

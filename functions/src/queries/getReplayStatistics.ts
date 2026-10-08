@@ -66,7 +66,7 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
   }
 
   const officialOutcome = currentOfficialGameOutcome(gameSnapshot.data(), matchSnapshot.data());
-  const socialIncidents = projectSocialIncidents({ statistics, playerMapping: source.playerMapping ?? [], officialOutcome,
+  const socialIncidents = matchSnapshot.data()?.opponentKind==='AI'?{status:'UNAVAILABLE',reason:'AI warm-ups do not produce player Relationships or Reputation.'}:projectSocialIncidents({ statistics, playerMapping: source.playerMapping ?? [], officialOutcome,
     context: { gameId, battleId: matchId } });
 
   return {

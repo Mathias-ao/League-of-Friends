@@ -193,3 +193,8 @@
 @media(max-width:540px){.event-campaign-prose p{font-size:1.02rem;line-height:1.7}.event-campaign-dialog .event-campaign-parchment{padding:58px 26px 32px}.event-campaign-trigger{font-size:.7rem!important}}
 
 .event-details .avatar{background:linear-gradient(135deg,#5b412b,#291c14);border-color:#96724975;color:#ead4ad}
+
+.event-lifecycle{margin:1.5rem 0;padding:1rem;border-top:1px solid var(--border, #655536);line-height:1.6}
+.event-lifecycle select,.event-lifecycle input,.event-lifecycle textarea,.ai-warmup-review textarea{max-width:100%;width:100%;padding:.65rem}
+.event-lifecycle button{margin:.5rem .5rem .5rem 0}
+.event-lifecycle details{margin:1rem 0}.event-lifecycle summary{cursor:pointer}

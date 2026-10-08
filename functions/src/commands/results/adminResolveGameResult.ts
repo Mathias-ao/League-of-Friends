@@ -22,6 +22,8 @@ interface AdminResolveGameResultInput {
   gameId: string;
   submissionId: string;
   reason: string;
+  sourceHash?:string;
+  playedWithinWindow?:boolean;
 }
 
 export const adminResolveGameResult = onCall<AdminResolveGameResultInput>(callableOptions, async (request) => {
@@ -55,6 +57,12 @@ export const adminResolveGameResult = onCall<AdminResolveGameResultInput>(callab
     const game = gameSnapshot.data() as GameForResult;
     const submission = submissionSnapshot.data() as ResultSubmissionDocument;
     assertResultShape(match);
+    if(submissionSnapshot.data()?.requiresTimingReview) {
+      const sourceHash=request.data.sourceHash;
+      if(typeof sourceHash!=='string'||!/^[0-9a-f]{64}$/.test(sourceHash)||gameSnapshot.data()?.activeReplayStatisticsId!==sourceHash||request.data.playedWithinWindow!==true||reason.length<8)throw new HttpsError('failed-precondition','Verify timely completion against the active recording and explain the evidence.');
+      const source=(await transaction.get(gameRef.collection('replaySources').doc(sourceHash))).data();
+      if(source?.state!=='READY'||source.sourceHash!==sourceHash||source.matchId!==matchId||source.gameId!==gameId)throw new HttpsError('failed-precondition','The active recording is not ready for timing review.');
+    }
 
     if (game.status === "COMPLETED") {
       throw new HttpsError("failed-precondition", "This Game already has a canonical result.");
@@ -109,6 +117,7 @@ export const adminResolveGameResult = onCall<AdminResolveGameResultInput>(callab
       },
       after: {
         submissionId,
+        timingReview:submissionSnapshot.data()?.requiresTimingReview?{sourceHash:request.data.sourceHash,playedWithinWindow:true}:null,
         canonicalResult: accepted.canonicalResult,
         matchCompleted: accepted.matchCompleted,
       },

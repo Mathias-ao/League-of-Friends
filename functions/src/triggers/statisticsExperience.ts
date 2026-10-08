@@ -7,13 +7,13 @@ export const rebuildStatisticsOnGameChange=onDocumentWritten({document:'matches/
   if(signature(before)!==signature(after))await rebuildStatisticsReadModels();
 });
 export const rebuildStatisticsOnMatchChange=onDocumentWritten({document:'matches/{matchId}',region:'europe-west1',retry:true},async event=>{
-  const signature=(m:any)=>JSON.stringify([m?.status,m?.activeResultDisputeId,m?.seasonId,m?.context,m?.gameConfigSnapshot,m?.completedAt,m?.format]);
+  const signature=(m:any)=>JSON.stringify([m?.status,m?.opponentKind,m?.aiParticipation,m?.activeResultDisputeId,m?.seasonId,m?.context,m?.gameConfigSnapshot,m?.completedAt,m?.format]);
   if(signature(event.data?.before.data())!==signature(event.data?.after.data()))await rebuildStatisticsReadModels();
 });
 
 // Also rebuild after lazy hydration of a pre-V1 source. This never writes sources,
 // so duplicate delivery is safe and does not form a trigger loop.
 export const rebuildStatisticsOnSourceChange=onDocumentWritten({document:'matches/{matchId}/games/{gameId}/replaySources/{sourceId}',region:'europe-west1',retry:true},async event=>{
-  const signature=(s:any)=>JSON.stringify([s?.state,s?.experience,s?.playerMapping,s?.sourceHash,s?.statistics]);
+  const signature=(s:any)=>JSON.stringify([s?.state,s?.experience,s?.playerMapping,s?.opponentMapping,s?.sourceHash,s?.statistics]);
   if(signature(event.data?.before.data())!==signature(event.data?.after.data()))await rebuildStatisticsReadModels();
 });

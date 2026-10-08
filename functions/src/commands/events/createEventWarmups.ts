@@ -32,8 +32,8 @@ export const adminCreateEventWarmups=onCall<Input>(callableOptions,async request
     if(!event||!["PUBLISHED","ACTIVE"].includes(event.status)||!event.seasonId) {
       throw new HttpsError("failed-precondition","Warm-ups require a published or active season Event.");
     }
-    const window=warmupWindow(event.startsAt,event.warmupOpensAt);
-    if(Date.now()>=window.closesAt.toMillis())throw new HttpsError("failed-precondition","Schedule warm-ups before the main Event starts.");
+    const window=warmupWindow(event.startsAt,event.warmupOpensAt,event.timezone);
+    if(Date.now()>=event.startsAt.toMillis())throw new HttpsError("failed-precondition","Schedule warm-ups before the main Event starts.");
     let rules;
     try{rules=validateSeasonScoringRules(event.scoringSnapshot?.rules??{});}
     catch(error){throw new HttpsError("failed-precondition",(error as Error).message);}

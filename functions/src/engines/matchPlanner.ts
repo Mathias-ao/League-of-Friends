@@ -8,6 +8,7 @@ import type {
 export interface PlannerPlayer {
   playerId: string;
   powerRating: number | null;
+  seasonRank?:number;
 }
 
 export interface MatchPlanResult {
@@ -105,6 +106,13 @@ function makeBalancedTeamMatch(
     throw new Error("Team match player count does not match requested team sizes.");
   }
 
+  if(teamOneSize!==teamTwoSize&&players.every(p=>Number.isInteger(p.seasonRank))) {
+    const ordered=[...players].sort((a,b)=>a.seasonRank!-b.seasonRank!||stableHash(seed+':rank:'+a.playerId)-stableHash(seed+':rank:'+b.playerId)||a.playerId.localeCompare(b.playerId));
+    const small=ordered.slice(0,Math.min(teamOneSize,teamTwoSize)),large=ordered.slice(small.length);
+    const one=teamOneSize<teamTwoSize?small:large,two=teamOneSize<teamTwoSize?large:small;
+    return {format:teamFormat(teamOneSize,teamTwoSize),teamSizes:[teamOneSize,teamTwoSize],
+      participants:[...one.map((p,i)=>({playerId:p.playerId,team:1,slot:i+1})),...two.map((p,i)=>({playerId:p.playerId,team:2,slot:one.length+i+1}))]};
+  }
   let bestTeamOne: PlannerPlayer[] | null = null;
   let bestTeamTwo: PlannerPlayer[] | null = null;
   let bestDifference = Number.POSITIVE_INFINITY;

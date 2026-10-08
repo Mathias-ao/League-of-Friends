@@ -1,3 +1,4 @@
+import {readEventFinalisation} from '../services/eventFinalisation.js';
 import {matchPlayWindow,checkInWindow} from "../services/eventTiming.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -13,6 +14,7 @@ interface EventDetailInput {
 }
 
 interface EventDocument {
+  timezone?:string;warmupPolicy?:any;warmupSchedule?:any;finalisationRevision?:number;
   seasonId?: string | null;
   title?: string;
   description?: string;
@@ -43,6 +45,7 @@ interface ParticipantDocument {
 }
 
 interface MatchDocument {
+  opponentKind?:string;aiOpponent?:any;
   eventId?: string | null;
   matchNumber?: number;
   format?: string;
@@ -76,6 +79,10 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
 
   const event = eventSnapshot.data() as EventDocument;
   const checkIn=checkInWindow(event);
+  const [challenges,seasonMembers,slots,guests]=await Promise.all([eventRef.collection('warmupChallenges').get(),event.seasonId?db.collection('seasons').doc(event.seasonId).collection('participants').get():Promise.resolve(null),eventRef.collection('scoringSlots').get(),eventRef.collection('warmupGuests').get()]);
+  const finalisation=actor.role==='ADMIN'?await readEventFinalisation(eventRef,event):null;
+  const invites=challenges.docs.filter(d=>d.data().guestPlayerId===actor.playerId||d.data().challengerPlayerId===actor.playerId||actor.role==='ADMIN').map(d=>({challengeId:d.id,...d.data(),challengerName:playersSnapshot.docs.find(p=>p.id===d.data().challengerPlayerId)?.data().steamName??d.data().challengerPlayerId,guestName:playersSnapshot.docs.find(p=>p.id===d.data().guestPlayerId)?.data().steamName??d.data().guestPlayerId,deadlineAt:iso(d.data().deadlineAt)}));
+  const eligibleGuestIds=event.warmupSchedule?.unpairedPlayerId===actor.playerId&&event.warmupSchedule?.status==='GUEST_PENDING'?playersSnapshot.docs.filter(d=>d.id!==actor.playerId&&d.data().membershipStatus==='ACTIVE'&&seasonMembers?.docs.some(m=>m.id===d.id&&m.data().status==='ENTERED')&&!participantsSnapshot.docs.some(p=>p.id===d.id&&p.data().rsvp==='YES')&&!slots.docs.some(slot=>slot.data().act==='WARMUP'&&slot.data().playerId===d.id)).map(d=>d.id):[];
   const players = playerMap(playersSnapshot);
   const participantDocs = participantsSnapshot.docs.map((document) => ({
     id: document.id,
@@ -102,7 +109,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
       const result = match.canonicalResult ?? null;
       const winningPlayerIds = Array.isArray(result?.winningPlayerIds) ? result.winningPlayerIds : [];
       return {
-        matchId,
+        matchId,opponentKind:match.opponentKind??"HUMAN",aiOpponent:match.aiOpponent??null,
         matchNumber: Number(match.matchNumber ?? 0),
         format: match.format ?? null,
         scoringAct:match.scoringSnapshot?.rules?.act??null,
@@ -140,6 +147,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
     generatedAt: new Date().toISOString(),
     event: {
       eventId,
+      timezone:event.timezone??"Europe/Copenhagen",
       seasonId: event.seasonId ?? null,
       title: event.title ?? eventId,
       description: event.description ?? "",
@@ -159,6 +167,8 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
       competitionStyle: event.competitionStyle ?? null,
       officialMatchIds: Array.isArray(event.officialMatchIds) ? event.officialMatchIds : [],
     },
+    warmup:{configured:!!event.warmupPolicy,schedule:event.warmupSchedule?{status:event.warmupSchedule.status,unpairedPlayerId:event.warmupSchedule.unpairedPlayerId??null}:null,aiDifficulty:event.warmupPolicy?.aiDifficulty??null,map:event.warmupPolicy?.gameConfig?.maps?.pool?.[0]??null,guestAcceptanceDeadlineAt:iso(event.warmupPolicy?.guestAcceptanceDeadlineAt),challenges:invites,eligibleGuests:eligibleGuestIds.map(id=>publicPlayer(id,players.get(id))),replacementGuests:actor.role==='ADMIN'?playersSnapshot.docs.filter(d=>d.data().membershipStatus==='ACTIVE'&&seasonMembers?.docs.some(m=>m.id===d.id&&m.data().status==='ENTERED')&&!participantsSnapshot.docs.some(p=>p.id===d.id&&p.data().rsvp==='YES')&&!slots.docs.some(slot=>slot.data().act==='WARMUP'&&slot.data().playerId===d.id)).map(d=>publicPlayer(d.id,players.get(d.id))):[],isGuest:guests.docs.some(d=>d.id===actor.playerId)},
+    finalisation,
     viewer: {
       playerId: actor.playerId,
       role: actor.role,
