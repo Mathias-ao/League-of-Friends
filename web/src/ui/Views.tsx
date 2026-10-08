@@ -1,5 +1,7 @@
 import {EmperorCampaignControls} from './EmperorCampaignControls';
 import {EmperorBattleControls} from './EmperorControls';
+import {BattleOverlay} from './BattleOverlay';
+import type {GameStatistics} from '../domain/statistics';
 import {AIWarmupReview,LateWarmupReview} from './EventLifecycle';
 import {useScheduleClock} from '../hooks/useScheduleClock';
 import {formatLeaguePoints} from "../domain/seasonPoints";
@@ -166,7 +168,7 @@ function BattleOrdersDialog({data,game,onClose}:{data:MatchDetail;game:MatchDeta
       <button className="battle-orders-close" aria-label="Close Battle Orders" onClick={onClose}><X size={24}/></button>
       <header className="battle-orders-heading">
         <span className="eyebrow">BATTLE ORDERS · GAME {game.gameNumber}</span>
-        <h2 id="battle-orders-title">{game.draftRequired?'The hosts are ready':'Warm-up battle ready'}</h2>
+        <h2 id="battle-orders-title">{game.status==='COMPLETED'?'The Battle orders':game.draftRequired?'The hosts are ready':'Warm-up battle ready'}</h2>
         <p>{game.draftRequired?'Draft complete. Form the lobby in Age of Empires II: DE exactly as ordered below.':'No Age of Friends civilization draft. Choose civilizations in Age of Empires II: DE and play the Game.'}</p>
       </header>
       <div className={'battle-orders-confrontation '+(twoTeams?'two-teams':'multi-team')}>
@@ -182,39 +184,54 @@ function BattleOrdersDialog({data,game,onClose}:{data:MatchDetail;game:MatchDeta
 }
 
 
-function ReplayConclusion({data,game,repository,onUpdated,admin=false}:{admin?:boolean;data:MatchDetail;game:MatchDetail['games'][number];repository:ViewProps['repository'];onUpdated:()=>void}){
-  const [file,setFile]=useState<File|null>(null);
+function ReplayConclusion({data,game,repository,onUpdated,onViewStatistics,compact=false,droppedFile,processed=false,admin=false}:{admin?:boolean;processed?:boolean;compact?:boolean;droppedFile?:{gameId:string;file:File}|null;onViewStatistics?:()=>void;data:MatchDetail;game:MatchDetail['games'][number];repository:ViewProps['repository'];onUpdated:()=>void}){
+  const [file,setFile]=useState<File|null>(null),inputRef=useRef<HTMLInputElement>(null),uploading=useRef(false);
   const [processing,setProcessing]=useState(false);
   const [error,setError]=useState('');
   const now=useScheduleClock([data.match.playOpensAt]);
   const playLocked=!!data.match.playOpensAt&&Date.parse(data.match.playOpensAt)>now;
-  const ready=game.replay?.statisticsState==='READY'&&!!game.replay.statisticsId;
-  const analyze=async()=>{
-    if(!file||playLocked)return;
+  const ready=processed||game.replay?.statisticsState==='READY'&&!!game.replay.statisticsId;
+  const recordingClosed=['CANCELLED','VOID'].includes(game.status)||data.match.status==='CANCELLED';
+  const canUpload=!game.result&&(data.viewer.isParticipant||admin)||ready&&admin&&game.resultDisputeOpen;
+  const analyze=async(recording=file)=>{
+    if(!recording||uploading.current)return;
+    if(recordingClosed){setError('This Battle is cancelled. Recording upload is closed.');return;}
+    if(playLocked||!canUpload){setError(playLocked?'The play window has not opened.':'Recording replacement requires an unresolved result or authorized correction review.');return;}
+    if(!/\.(aoe2record|mgz)$/i.test(recording.name)||recording.size===0){setError('Choose or drop one non-empty .aoe2record file.');return;}
+    uploading.current=true;setFile(recording);
     setProcessing(true);setError('');
     try{
-      await repository.uploadReplay(data.match.matchId,game.gameId,file);
+      await repository.uploadReplay(data.match.matchId,game.gameId,recording);
       onUpdated();
     }catch(e){setError(e instanceof Error?e.message:'Replay processing failed.');}
-    finally{setProcessing(false);}
+    finally{uploading.current=false;setProcessing(false);}
   };
+  useEffect(()=>{if(droppedFile)void analyze(droppedFile.file);},[droppedFile]);
+  if(compact)return <div className="battle-recording-action">
+    {ready&&<span className="battle-recording-ready"><Check size={14}/>Recording processed</span>}
+    {canUpload?<><button className="battle-upload-button" disabled={processing||playLocked||recordingClosed} onClick={()=>inputRef.current?.click()}><Upload size={15}/>{processing?'Processing recording…':ready?game.resultDisputeOpen?'Replace disputed recording':'Replace unresolved recording':'Upload recording'}</button><input ref={inputRef} type="file" aria-label="Choose Battle recording" hidden accept=".aoe2record,.mgz" disabled={processing||playLocked||recordingClosed} onChange={event=>{const recording=event.target.files?.[0];if(recording)void analyze(recording);event.target.value='';}}/></>:!ready&&<span className="battle-recording-pending">Recording pending</span>}
+    {processing&&<small role="status">Extracting Battle statistics…</small>}
+    {!processing&&file&&<small>{file.name}</small>}
+    {error&&<p role="alert">{error}</p>}
+  </div>;
   return <section className={'replay-conclusion '+(ready?'ready':'')}>
-    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Validated recording outcomes become official results and feed Event points. Evidence that needs review remains with the Emperor.':playLocked?<>This Battle opens <DateLabel value={data.match.playOpensAt}/>. Arrange a time with your opponent once the window opens.</>:'Choose one .aoe2record. Age of Friends will extract the outcome and Battle Statistics from the recording.'}</p></div></div>
-    {(!game.result&&(data.viewer.isParticipant||admin)||ready&&admin&&game.resultDisputeOpen)&&<div className="replay-upload-form">
-      <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing||playLocked} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
+    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Recording processed':data.viewer.isParticipant?'Submit the recording':'Recording pending'}</strong><p>{ready?'Validated recording outcomes become official results and feed Event points. Evidence that needs review remains with the Emperor.':playLocked?<>This Battle opens <DateLabel value={data.match.playOpensAt}/>. Arrange a time with your opponent once the window opens.</>:'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
+    {canUpload&&<div className="replay-upload-form">
+      <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing||playLocked||recordingClosed} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
       {file&&<div className="replay-file-selected"><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB</span></div>}
       <button className="primary" disabled={!file||processing||playLocked} onClick={()=>void analyze()}>{processing?'Analyzing battle…':ready?game.resultDisputeOpen?'Replace disputed recording':'Replace unresolved recording':'Submit recording and result'}</button>
       {processing&&<div className="replay-processing" role="status"><AofSeal variant="simple" tone="quiet" size={58} animate/><p>Reading recording · building canonical evidence · calculating statistics…</p></div>}
     </div>}
     {game.outcomeQualification?.state==='PENDING_ADMIN_REVIEW'&&!game.result&&<p role="status">Emperor review needed: {game.outcomeQualification.reason}</p>}
-    {ready&&<button className="primary" onClick={()=>document.getElementById('battle-statistics')?.scrollIntoView({behavior:'smooth'})}>View Battle statistics<ArrowRight size={16}/></button>}
+    {ready&&<button className="primary" onClick={()=>onViewStatistics?onViewStatistics():document.getElementById('battle-statistics')?.scrollIntoView({behavior:'smooth'})}>View Battle statistics<ArrowRight size={16}/></button>}
     {error&&<div className="alert" role="alert">{error}</div>}
   </section>;
 }
 
-export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
+export function MatchDialog({data,snapshot,busy,repository,act,onUpdated,gameId,compact=false,onViewStatistics,recordedGame}:ViewProps&{data:MatchDetail;onUpdated:()=>void;gameId?:string;compact?:boolean;onViewStatistics?:()=>void;recordedGame?:GameStatistics}){
   const now=useScheduleClock([data.match.playOpensAt]);
   const playLocked=!!data.match.playOpensAt&&Date.parse(data.match.playOpensAt)>now;
+  const [drop,setDrop]=useState<{gameId:string;file:File}|null>(null),[dragging,setDragging]=useState<string|null>(null),[disputeError,setDisputeError]=useState('');
   const [dispute,setDispute]=useState<string|null>(null),[reason,setReason]=useState(''),[category,setCategory]=useState('WRONG_RESULT');
   const [resetDraft,setResetDraft]=useState<string|null>(null),[resetReason,setResetReason]=useState(''),[rerollDraft,setRerollDraft]=useState(false);
   const [battleOrdersGameId,setBattleOrdersGameId]=useState<string|null>(null);
@@ -227,16 +244,16 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
     TEAM_UNIQUE_IN_MATCH:'Teams cannot reuse a civilization in this Match',
     MATCH_UNIQUE:'A civilization can appear only once in this Match'
   } as Record<string,string>)[value]??value.replaceAll('_',' ');
-  const liveDraftIds=data.viewer.isParticipant?data.games.filter(game=>game.draft?.status==='ACTIVE').map(game=>game.gameId):[];
+  const liveDraftIds=data.viewer.isParticipant?data.games.filter(game=>(gameId===undefined||game.gameId===gameId)&&game.draft?.status==='ACTIVE').map(game=>game.gameId):[];
   const liveDraftKey=liveDraftIds.join('|');
-  const completedDraftKey=data.games.filter(game=>game.draft?.status==='COMPLETED').map(game=>game.gameId+':'+game.draft!.revision+':'+game.draft!.stateVersion).join('|');
+  const completedDraftKey=data.games.filter(game=>(gameId===undefined||game.gameId===gameId)&&game.draft?.status==='COMPLETED').map(game=>game.gameId+':'+game.draft!.revision+':'+game.draft!.stateVersion).join('|');
   useEffect(()=>{
     if(!liveDraftKey)return;
     const stops=liveDraftIds.map(gameId=>repository.watchCivilizationDraft(data.match.matchId,gameId,onUpdated));
     return ()=>stops.forEach(stop=>stop());
   },[repository,data.match.matchId,liveDraftKey]);
   useEffect(()=>{
-    for(const game of data.games){
+    for(const game of data.games.filter(game=>gameId===undefined||game.gameId===gameId)){
       if(game.draft?.status!=='COMPLETED')continue;
       if(completedAtMount.current.has(game.gameId)||announcedCompletions.current.has(game.gameId))continue;
       announcedCompletions.current.add(game.gameId);
@@ -245,17 +262,20 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
     }
   },[completedDraftKey]);
   const battleOrdersGame=data.games.find(game=>game.gameId===battleOrdersGameId&&(!game.draftRequired||game.draft?.status==='COMPLETED'))??null;
-  return <><div className="detail-meta"><span className="eyebrow">{formatName(data.match.format)} · {data.match.matchId}</span><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></div>
-    {data.match.scoringRules?.modelVersion==='AOF_SEASON_POINTS_V1'&&<section className="panel" aria-label="Season points">
+  return <>{!compact&&<div className="detail-meta"><span className="eyebrow">{formatName(data.match.format)} · {data.match.matchId}</span><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></div>}
+    {data.match.scoringRules?.modelVersion==='AOF_SEASON_POINTS_V1'&&<section className={compact?"battle-points":"panel"} aria-label="Season points">
+      <details open={compact?undefined:true}><summary>Match points · {data.match.scoringAct==='WARMUP'?'Warm-up':'Main event'}</summary>
       <span className="eyebrow">{data.match.scoringAct==='WARMUP'?'ACT I · WARM-UP':'ACT II · MAIN EVENT'} · SEASON POINTS</span>
       <p>{data.match.opponentKind==='AI'?'1 for participation; no victory bonus':data.match.scoringAct==='WARMUP'?'1 for participation · +2 for victory':data.match.format==='FFA'&&data.match.scoringRules.diplomacyEnabled?'4 for participation · 6 victory points shared equally by the official winners':'4 for participation · +6 for victory'}{data.match.scoringAct==='MAIN'&&' · +2 for eligible winners against the Emperor'}</p>
       {data.match.format==='FFA'&&data.match.scoringRules.diplomacyEnabled===false&&<p>Second: +2 with at least 3 starters. Third: +1 with at least 5 starters. Placements require verified results.</p>}
+      </details>
       {data.match.scoringState==='PLACEMENTS_PENDING'&&<p role="status">Victory and participation points are awarded. Placement points await a verified finishing order.</p>}
       {data.match.scoringState==='DISPUTED'&&<p role="status">These points are excluded from the standings while the result is disputed.</p>}
-      {(data.match.scoringBreakdown??[]).map(row=><p key={row.playerId}><strong>{playerName(row.playerId)}</strong>: {formatLeaguePoints(row.matchCompletion+row.matchWin+row.placement+row.emperor)} points · participation {formatLeaguePoints(row.matchCompletion)} · victory {formatLeaguePoints(row.matchWin)}{row.placement>0&&<> · placement {formatLeaguePoints(row.placement)}</>}{row.emperor>0&&<> · Emperor {row.emperor}</>}</p>)}
+      <div className="battle-point-totals">{(data.match.scoringBreakdown??[]).map(row=><div key={row.playerId}><strong>{playerName(row.playerId)}</strong>: <span>{formatLeaguePoints(row.matchCompletion+row.matchWin+row.placement+row.emperor)} points</span><small>Participation {formatLeaguePoints(row.matchCompletion)} · victory {formatLeaguePoints(row.matchWin)}{row.placement>0&&<> · placement {formatLeaguePoints(row.placement)}</>}{row.emperor>0&&<> · Emperor {row.emperor}</>}</small></div>)}</div>
     </section>}
-    {data.games.map(game=>{
+    {data.games.filter(game=>gameId===undefined||game.gameId===gameId).map(game=>{
       const draft=game.draft??null;
+      const finished=['COMPLETED','CANCELLED','VOID'].includes(game.status)||['COMPLETED','CANCELLED'].includes(data.match.status);
       const currentTurn=draft?.currentTurnIndex!=null?draft.turns[draft.currentTurnIndex]??null:null;
       const draftPanel=game.draftRequired?<section className={'civilization-draft '+(draft?.status==='COMPLETED'?'draft-complete':'')}>
         <div className="draft-heading"><div><span className="eyebrow">{draft?.status==='COMPLETED'?'DRAFT RECORD':'CIVILIZATION MUSTER'}</span><h4>{draft?.status==='COMPLETED'?'Civilizations locked':currentTurn?playerName(currentTurn.playerId)+' chooses next':'Awaiting the draft'}</h4></div>{draft&&<span className="quiet-badge">{draft.selections.length} / {draft.turns.length} CHOSEN</span>}</div>
@@ -281,9 +301,10 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
           </div>}
         </>}
       </section>:null;
-      return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{(data.viewer.isParticipant||snapshot.viewer?.role==='ADMIN')&&data.match.opponentKind!=='AI'&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>{data.viewer.isParticipant?'Dispute result':'Open correction review'}</button>}</div>
-        {!game.draftRequired&&<div className="battle-orders-issued"><div><span className="eyebrow">{isWarmupMatch(data.match)?'WARM-UP BATTLE ORDERS':'BATTLE ORDERS'}</span><strong>{playLocked?'The play window has not opened.':'The battlefield is ready.'}</strong><p>{playLocked?<>Opens <DateLabel value={data.match.playOpensAt}/>. Agree a time with your opponent during the warm-up window.</>:<>No civilization draft. Choose civilizations in AoE2:DE, play the Game, then return with the recording.</>}{data.match.playClosesAt&&<> Finish play before <DateLabel value={data.match.playClosesAt}/>.</>}</p></div><div className="battle-orders-issued-actions"><button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button></div></div>}
-        {draft?.status==='COMPLETED'&&<>
+      return <article className={'game-panel '+(dragging===game.gameId?'is-dragging':'')} key={game.gameId} onDragOver={event=>{if(!(event.target as Element).closest('dialog')&&compact&&(data.viewer.isParticipant||snapshot.viewer?.role==='ADMIN')&&(!game.result||snapshot.viewer?.role==='ADMIN'&&game.resultDisputeOpen)&&!playLocked&&event.dataTransfer.types.includes('Files')){event.preventDefault();event.dataTransfer.dropEffect='copy';setDragging(game.gameId);}}} onDragLeave={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node))setDragging(null);}} onDrop={event=>{if((event.target as Element).closest('dialog'))return;event.preventDefault();setDragging(null);if(event.dataTransfer.files.length===1)setDrop({gameId:game.gameId,file:event.dataTransfer.files[0]});else setDrop({gameId:game.gameId,file:new File([],'invalid-drop')});}}><div className="section-heading"><h3>{finished?'Result':'Game '+game.gameNumber}</h3><div className="battle-result-actions">{!compact&&finished&&(!game.draftRequired||draft?.status==='COMPLETED')&&<button className="text-button small" onClick={()=>setBattleOrdersGameId(game.gameId)}>View orders</button>}{(data.viewer.isParticipant||snapshot.viewer?.role==='ADMIN')&&data.match.opponentKind!=='AI'&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>{setDispute(game.gameId);setDisputeError('');setReason('');}}>{data.viewer.isParticipant?'Dispute result':'Open correction review'}</button>}</div></div>
+        {compact&&<div className="battle-command-bar"><div><span className="eyebrow">{finished?'BATTLE RESULT':playLocked?'AWAITING THE PLAY WINDOW':draft?.status==='ACTIVE'?'CIVILIZATION DRAFT':'BATTLE ORDERS'}</span><strong>{finished?'The record of the field':playLocked?'The battlefield opens soon':draft?.status==='ACTIVE'?'Gather the civilizations':'Take the field'}</strong><p>{finished?'Teams, recording and qualified performances.':playLocked?<>Opens <DateLabel value={data.match.playOpensAt}/>.</>:game.draftRequired?'Use the approved teams and drafted civilizations.':'Choose civilizations in AoE2:DE, then return with the recording.'}</p></div><div className="battle-command-actions">{(!game.draftRequired||draft?.status==='COMPLETED')&&<button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>{finished?'View Battle Orders':'Open Battle Orders'}<ArrowRight size={16}/></button>}<ReplayConclusion admin={snapshot.viewer?.role==='ADMIN'} data={data} game={game} repository={repository} onUpdated={onUpdated} compact processed={!!recordedGame&&recordedGame.gameId===game.gameId} droppedFile={drop?.gameId===game.gameId?drop:null}/></div></div>}
+        {!compact&&!finished&&!game.draftRequired&&<div className="battle-orders-issued"><div><span className="eyebrow">{isWarmupMatch(data.match)?'WARM-UP BATTLE ORDERS':'BATTLE ORDERS'}</span><strong>{playLocked?'The play window has not opened.':'The battlefield is ready.'}</strong><p>{playLocked?<>Opens <DateLabel value={data.match.playOpensAt}/>. Agree a time with your opponent during the warm-up window.</>:<>No civilization draft. Choose civilizations in AoE2:DE, play the Game, then return with the recording.</>}{data.match.playClosesAt&&<> Finish play before <DateLabel value={data.match.playClosesAt}/>.</>}</p></div><div className="battle-orders-issued-actions"><button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button></div></div>}
+        {!compact&&!finished&&draft?.status==='COMPLETED'&&<>
           <div className="battle-orders-issued">
             <div><span className="eyebrow">BATTLE ORDERS ISSUED</span><strong>The hosts are ready.</strong><p>Teams and civilizations are locked for this Game.</p></div>
             <div className="battle-orders-issued-actions">
@@ -298,15 +319,18 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
             <button className="primary" disabled={busy||!resetReason.trim()}>{rerollDraft?'Reset and reroll draft':'Reset draft with same order'}</button>
           </form>}
         </>}
+        {compact&&draft?.status==='COMPLETED'&&!finished&&snapshot.viewer?.role==='ADMIN'&&<details className="battle-draft-recovery"><summary>Emperor · Draft recovery</summary><form className="form" onSubmit={async event=>{event.preventDefault();if(await act(()=>repository.resetCivilizationDraft(data.match.matchId,game.gameId,resetReason.trim(),rerollDraft),'The civilization muster has been reset.')){setResetReason('');setRerollDraft(false);onUpdated();}}}><label>Reason<textarea required maxLength={1000} value={resetReason} onChange={event=>setResetReason(event.target.value)}/></label><label><input type="checkbox" checked={rerollDraft} onChange={event=>setRerollDraft(event.target.checked)}/>Reroll the draft order</label><button disabled={busy||!resetReason.trim()}>Reset / reroll draft</button></form></details>}
         {draft?.status==='COMPLETED'?<details className="draft-record-details"><summary><span><strong>View draft record</strong><small>Pick order, draft rules and administrator recovery</small></span><span className="quiet-badge">{draft.selections.length} / {draft.turns.length} CHOSEN</span></summary>{draftPanel}</details>:draftPanel}
-        {draft?.status!=='COMPLETED'&&<div className="game-players">{game.players.map(player=><div key={player.playerId}><Avatar player={player}/><span><strong>{player.steamName}</strong><small>{player.civilization?civilizationName(player.civilization):'Civilization not yet selected'}{player.team!=null?' · Team '+player.team:''}</small></span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(player.playerId)&&<span className="gold">Winner</span>}</div>)}</div>}<p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':data.match.opponentKind==='AI'&&data.match.status==='COMPLETED'?'AI participation verified':game.result?'Final result · Revision '+game.result.revision:draft?.status==='COMPLETED'?'Battle awaiting a qualified result.':'Awaiting a qualified result.'}</p>
-        {dispute===game.gameId&&<form className="form dispute-form" onSubmit={async e=>{e.preventDefault();if(await act(()=>repository.dispute(data.match.matchId,game.gameId,category,reason.trim()),'Dispute submitted for review.')){setDispute(null);onUpdated();}}}><label>What needs correcting?<select value={category} onChange={e=>setCategory(e.target.value)}><option value="WRONG_RESULT">Wrong result</option><option value="WRONG_REPLAY">Wrong replay</option><option value="PLAYER_MISMATCH">Player mismatch</option><option value="OTHER">Other</option></select></label><label>Reason<textarea required maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="primary" disabled={busy||!reason.trim()}>Submit dispute</button></form>}
+        {draft?.status!=='ACTIVE'&&<div className={'battle-roster '+(new Set(game.players.map(player=>player.team??null)).size===2?'two-sides':'')}>{[...new Set(game.players.map(player=>player.team??null))].map(team=><section className="battle-roster-side" key={String(team)}><span className="eyebrow">{team==null?'THE FIELD':'SIDE '+team}</span><div className="game-players">{game.players.filter(player=>(player.team??null)===team).map(player=><div key={player.playerId}><Avatar player={player}/><span><strong>{player.steamName}</strong><small>{player.civilization?civilizationName(player.civilization):recordedGame?.players.find(row=>row.playerId===player.playerId)?.civilization??'Civilization unavailable'}</small>{recordedGame&&<span className="battle-player-reading"><small><b>Opening</b>{recordedGame.players.find(row=>row.playerId===player.playerId)?.opening??'Unclassified'}</small><small><b>Main unit · most queued</b>{recordedGame.players.find(row=>row.playerId===player.playerId)?.mainUnit??'Unavailable'}</small></span>}</span>{!game.resultDisputeOpen&&game.result?.winningPlayerIds.includes(player.playerId)&&<span className="gold battle-winner">Winner</span>}</div>)}</div></section>)}{data.match.opponentKind==='AI'&&<section className="battle-roster-side battle-ai-side"><span className="eyebrow">AI OPPONENT</span><strong>Age of Empires II AI</strong><small>{data.match.aiOpponent?.difficulty??'Announced difficulty'}</small></section>}</div>}<p className={game.resultDisputeOpen?'disputed':'muted'}>{game.resultDisputeOpen?'Result under correction review.':data.match.opponentKind==='AI'&&data.match.status==='COMPLETED'?'AI participation verified':game.result?'Final result · Revision '+game.result.revision:draft?.status==='COMPLETED'?'Battle awaiting a qualified result.':'Awaiting a qualified result.'}</p>
+        {dispute===game.gameId&&<BattleOverlay title="Dispute result" onClose={()=>setDispute(null)}>{disputeError&&<p className="alert" role="alert">{disputeError}</p>}<form className="form dispute-form" onSubmit={async e=>{e.preventDefault();setDisputeError('');try{if(await act(()=>repository.dispute(data.match.matchId,game.gameId,category,reason.trim()),'Dispute submitted for review.')){setDispute(null);onUpdated();}else setDisputeError('The dispute could not be submitted. Try again.');}catch(error){setDisputeError(error instanceof Error?error.message:'The dispute could not be submitted.');}}}><label>What needs correcting?<select value={category} onChange={e=>setCategory(e.target.value)}><option value="WRONG_RESULT">Wrong result</option><option value="WRONG_REPLAY">Wrong replay</option><option value="PLAYER_MISMATCH">Player mismatch</option><option value="OTHER">Other</option></select></label><label>Reason<textarea required maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="primary" disabled={busy||!reason.trim()}>Submit dispute</button></form></BattleOverlay>}
         {snapshot.viewer?.role==='ADMIN'&&data.match.opponentKind!=='AI'&&<EmperorBattleControls data={data} gameId={game.gameId} repository={repository} onUpdated={onUpdated}/>}
+        {compact&&game.outcomeQualification?.state==='PENDING_ADMIN_REVIEW'&&!game.result&&<p role="status">Emperor review needed: {game.outcomeQualification.reason}</p>}
+        {data.match.warmupScoringPolicy==='AOF_BEST_WARMUP_V1'&&<p>Only each player’s best warm-up counts in this Event. {data.match.warmupCountedPlayerIds?.length?`This Battle currently counts for ${data.match.participants.filter(player=>data.match.warmupCountedPlayerIds!.includes(player.playerId)).map(player=>player.steamName).join(', ')}.`:'No Event warm-up award currently selects this Battle.'}</p>}
         <AIWarmupReview data={data} gameId={game.gameId} repository={repository} admin={snapshot.viewer?.role==='ADMIN'} onUpdated={onUpdated}/>
         <LateWarmupReview data={data} gameId={game.gameId} repository={repository} onUpdated={onUpdated}/>
         {game.replay?.placementReason&&<p role="status">Finishing order pending: {game.replay.placementReason}</p>}
-        {data.match.warmupScoringPolicy==='AOF_BEST_WARMUP_V1'&&<p>Only each player’s best warm-up counts in this Event. {data.match.warmupCountedPlayerIds?.length?`This Battle currently counts for ${data.match.participants.filter(p=>data.match.warmupCountedPlayerIds!.includes(p.playerId)).map(p=>p.steamName).join(', ')}.`:'No Event warm-up award currently selects this Battle.'}</p>}
-        <ReplayConclusion admin={snapshot.viewer?.role==='ADMIN'} data={data} game={game} repository={repository} onUpdated={onUpdated}/>
+        {!compact&&<ReplayConclusion admin={snapshot.viewer?.role==='ADMIN'} data={data} game={game} repository={repository} onUpdated={onUpdated} onViewStatistics={onViewStatistics}/>}
+        {compact&&data.viewer.isParticipant&&!recordedGame&&game.replay?.statisticsState!=='READY'&&<p className="battle-drop-hint">{playLocked?'Recording upload opens with the play window.':'Drop one .aoe2record anywhere on this battlefield, or use Upload recording.'}</p>}
       </article>;
     })}
     {!data.games.length&&<Empty title="The Game plan is not ready">Your Games will appear after the match plan is approved.</Empty>}

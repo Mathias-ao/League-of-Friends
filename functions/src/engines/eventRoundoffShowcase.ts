@@ -42,34 +42,42 @@ const make=(id:string,tier:ShowcaseTier,category:ShowcaseCategory,players:string
 const label=(r:MetricRule,value:number)=>r.age?`≈ ${clock(value)}`:`${r.aggregation==='GOLD'?value.toFixed(2):r.aggregation==='APM'?value.toFixed(1):r.aggregation==='RESPONSES'?value.toFixed(1):integer(value)} ${r.unit}`;
 const gameLabel=(r:MetricRule,value:number)=>r.aggregation==='GOLD'?`≈ ${value.toFixed(1)}% gold influence`:label(r,value);
 
-/** Pure release-producer helper. Does not fetch, qualify raw recordings, grant awards or publish.
+/** Pure curation helper. Does not fetch, qualify raw recordings, grant awards or publish.
  * Producer resolves accepted Game manifests and canonical source bindings before calling.
  * Totals require every applicable accepted Game; unknown is never zero.
  */
-export function selectEventShowcase(input:EventShowcaseInput):EventShowcaseItem[]{
+export function selectEventShowcase(input:EventShowcaseInput):EventShowcaseItem[]{return selectShowcase(input);}
+
+/** One accepted Game, using the Event catalogue without campaign or historical claims. */
+export function selectBattleShowcase(input:{match:ShowcaseMatch;game:GameStatistics;illustrative?:boolean}):EventShowcaseItem[]{
+  if(input.match.status==='DISPUTED'||input.match.status==='CANCELLED'||input.match.status==='VOID')return [];
+  return selectShowcase({eventId:input.game.eventId??'',matches:[{...input.match,acceptedGameIds:[input.game.gameId]}],games:[input.game],illustrative:input.illustrative},true).slice(0,4);
+}
+
+function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem[]{
   const illustrative=input.illustrative===true,candidates:Candidate[]=[];
-  const eventMatches=input.matches.filter(m=>m.eventId===input.eventId&&m.status!=='CANCELLED');
-  const matches=eventMatches.filter(m=>m.status==='COMPLETED'&&eventMatches.filter(q=>q.matchId===m.matchId).length===1&&m.participants.length>=2&&new Set(m.participants.map(p=>p.playerId)).size===m.participants.length);
+  const eventMatches=input.matches.filter(m=>(battle||m.eventId===input.eventId)&&m.status!=='CANCELLED');
+  const matches=eventMatches.filter(m=>(battle||m.status==='COMPLETED')&&eventMatches.filter(q=>q.matchId===m.matchId).length===1&&m.participants.length>=2&&new Set(m.participants.map(p=>p.playerId)).size===m.participants.length);
   const matchMap=new Map(matches.map(m=>[m.matchId,m]));
   const source=(g:GameStatistics,metric:string,player:PlayerMeasurement,role:'EVENT'|'HISTORY'='EVENT'):ShowcaseSource=>({matchId:g.matchId,gameId:g.gameId,revision:g.revision,sourceHash:g.sourceHash,model:player.models[metric],act:matchMap.get(g.matchId)?.scoringAct,role});
   const resultSource=(m:ShowcaseMatch):ShowcaseSource=>({matchId:m.matchId,revision:m.result!.revision!,act:m.scoringAct,role:'EVENT'});
   const manifestValid=(m:ShowcaseMatch)=>Array.isArray(m.acceptedGameIds)&&m.acceptedGameIds.length>0&&new Set(m.acceptedGameIds).size===m.acceptedGameIds.length;
   const games=input.games.filter(g=>{
     const m=matchMap.get(g.matchId);
-    return !!m&&manifestValid(m)&&m.acceptedGameIds!.includes(g.gameId)&&g.eventId===input.eventId&&basicGame(g,illustrative)&&(!m.format||m.format===g.format)&&input.games.filter(q=>key(q)===key(g)).length===1&&input.games.filter(q=>q.sourceHash===g.sourceHash&&key(q)!==key(g)).length===0&&g.players.length===m.participants.length&&new Set(g.players.map(p=>p.playerId)).size===g.players.length&&g.players.every(p=>m.participants.some(q=>q.playerId===p.playerId&&(q.team??null)===p.team));
+    return !!m&&manifestValid(m)&&m.acceptedGameIds!.includes(g.gameId)&&(battle?g.eventId===(m.eventId??null):g.eventId===input.eventId)&&basicGame(g,illustrative)&&(!m.format||m.format===g.format)&&input.games.filter(q=>key(q)===key(g)).length===1&&input.games.filter(q=>q.sourceHash===g.sourceHash&&key(q)!==key(g)).length===0&&g.players.length===m.participants.length&&new Set(g.players.map(p=>p.playerId)).size===g.players.length&&g.players.every(p=>m.participants.some(q=>q.playerId===p.playerId&&(q.team??null)===p.team));
   }).sort((a,b)=>key(a).localeCompare(key(b)));
   const gameMap=new Map(games.map(g=>[key(g),g]));
   const playerIds=[...new Set(eventMatches.flatMap(m=>m.participants.map(p=>p.playerId)))].sort();
-  const counts=(m:ShowcaseMatch,id:string)=>m.scoringAct!=='WARMUP'||m.countedWarmupPlayerIds==null||m.countedWarmupPlayerIds.includes(id);
+  const counts=(m:ShowcaseMatch,id:string)=>battle||m.scoringAct!=='WARMUP'||m.countedWarmupPlayerIds==null||m.countedWarmupPlayerIds.includes(id);
   const complete=(id:string)=>eventMatches.filter(m=>m.participants.some(p=>p.playerId===id)&&counts(m,id)).every(m=>matchMap.has(m.matchId)&&manifestValid(m)&&m.acceptedGameIds!.every(gameId=>gameMap.has(key({matchId:m.matchId,gameId}))));
   const emperorWins=matches.filter(m=>m.scoringAct==='WARMUP'&&m.format==='ONE_V_ONE'&&m.participants.length===2&&!!m.emperorPlayerIdAtApproval&&m.participants.some(p=>p.playerId===m.emperorPlayerIdAtApproval)&&resultValid(m)&&m.result!.winningPlayerIds!.length===1&&m.result!.winningPlayerIds![0]!==m.emperorPlayerIdAtApproval&&eventMatches.filter(q=>q.scoringAct==='WARMUP'&&q.participants.some(p=>p.playerId===m.emperorPlayerIdAtApproval)).length===1);
-  if(emperorWins.length===1){const m=emperorWins[0];candidates.push(make('emperor','SPECIAL','Victory',m.result!.winningPlayerIds!,'1 duel won','Sole confirmed winner against the Emperor pinned before this designated 1v1 warm-up. Team games and FFA do not qualify.',[resultSource(m)],'emperor'));}
+  if(!battle&&emperorWins.length===1){const m=emperorWins[0];candidates.push(make('emperor','SPECIAL','Victory',m.result!.winningPlayerIds!,'1 duel won','Sole confirmed winner against the Emperor pinned before this designated 1v1 warm-up. Team games and FFA do not qualify.',[resultSource(m)],'emperor'));}
   const unbeaten=playerIds.filter(id=>{
     const slots=eventMatches.filter(m=>m.participants.some(p=>p.playerId===id)&&counts(m,id)&&['WARMUP','MAIN'].includes(m.scoringAct??''));
     return slots.length===2&&slots.filter(m=>m.scoringAct==='WARMUP').length===1&&slots.filter(m=>m.scoringAct==='MAIN').length===1&&slots.every(m=>matchMap.has(m.matchId)&&resultValid(m)&&m.result!.winningPlayerIds!.includes(id));
   });
-  if(unbeaten.length)candidates.push(make('unbeaten','EXCEPTIONAL','Victory',unbeaten,'2 wins · 2 Matches','Won both their designated warm-up and main Match, from confirmed result revisions.',matches.filter(m=>['WARMUP','MAIN'].includes(m.scoringAct??'')&&m.participants.some(p=>unbeaten.includes(p.playerId))).map(resultSource),'victory'));
-  const great:MetricRule={id:'greatBattles',title:'',category:'Army',emblem:'swords',family:'great-battle',aggregation:'SUM',thresholds:[Infinity,1,2],unit:'detected Great Battles',meaning:'Participation in detected Great Battle episodes across Event Games.'};
+  if(!battle&&unbeaten.length)candidates.push(make('unbeaten','EXCEPTIONAL','Victory',unbeaten,'2 wins · 2 Matches','Won both their designated warm-up and main Match, from confirmed result revisions.',matches.filter(m=>['WARMUP','MAIN'].includes(m.scoringAct??'')&&m.participants.some(p=>unbeaten.includes(p.playerId))).map(resultSource),'victory'));
+  const great:MetricRule={id:'greatBattles',title:'',category:'Army',emblem:'swords',family:'great-battle',aggregation:'SUM',thresholds:[Infinity,1,2],unit:'detected Great Battles',meaning:battle?'Participation in detected Great Battle episodes in this Game.':'Participation in detected Great Battle episodes across Event Games.'};
   for(const rule of [...EVENT_SHOWCASE_METRICS,great]){
     const field:Candidate[]=[];
     for(const id of playerIds){
@@ -100,9 +108,10 @@ export function selectEventShowcase(input:EventShowcaseInput):EventShowcaseItem[
       const tierIndex=[2,1,0].find(t=>(rule.lower?value<=rule.thresholds[t]+1e-9:value>=rule.thresholds[t]-1e-9)&&(rule.aggregation!=='GOLD'||peak>=[20,30,40][t]));
       if(tierIndex===undefined)continue;
       const tier=(['NOTABLE','EXCEPTIONAL','EXTRAORDINARY'] as const)[tierIndex];
-      const coverage=rule.aggregation==='BEST'?`Best eligible performance across ${applicable.length} Game${applicable.length===1?'':'s'}.`:`Event ${rule.aggregation==='SUM'?'total':'measurement'} across ${valid.length} applicable Game${valid.length===1?'':'s'}. Warm-up and main Games are considered.`;
-      const goldDetail=rule.aggregation==='GOLD'?` Event index ${value.toFixed(2)} × equal share. ${valid.map(({g,p})=>`${matchMap.get(g.matchId)?.scoringAct==='WARMUP'?'Warm-up':'Game'}: ≈ ${p.values.goldControl!.toFixed(1)}%`).join('; ')}.`:'';
-      const card=make(rule.id,tier,rule.category,[id],rule.aggregation==='GOLD'?`≈ ${peak.toFixed(1)}% peak influence`:label(rule,value),`${coverage} ${rule.meaning}${goldDetail}`,used.map(({g,p})=>source(g,rule.id,p)),rule.family,value);
+      const coverage=battle?'Qualified measurement from this Game.':rule.aggregation==='BEST'?`Best eligible performance across ${applicable.length} Game${applicable.length===1?'':'s'}.`:`Event ${rule.aggregation==='SUM'?'total':'measurement'} across ${valid.length} applicable Game${valid.length===1?'':'s'}. Warm-up and main Games are considered.`;
+      const goldDetail=rule.aggregation==='GOLD'?` ${battle?'Game':'Event'} index ${value.toFixed(2)} × equal share. ${valid.map(({g,p})=>`${matchMap.get(g.matchId)?.scoringAct==='WARMUP'?'Warm-up':'Game'}: ≈ ${p.values.goldControl!.toFixed(1)}%`).join('; ')}.`:'';
+      const card=make(rule.id,tier,rule.category,[id],rule.aggregation==='GOLD'?`≈ ${peak.toFixed(1)}% peak influence`:label(rule,value),`${coverage} ${battle?rule.meaning.replaceAll('across Event Games','in this Game').replaceAll('summed across Games','in this Game'):rule.meaning}${goldDetail}`,used.map(({g,p})=>source(g,rule.id,p)),rule.family,value);
+      if(battle&&rule.id==='raidsOut')card.title='Raiding pressure';
       card.lower=rule.lower;card.model=valid[0].p.models[rule.id];field.push(card);
     }
     if(new Set(field.map(c=>c.model)).size!==1)continue;
@@ -112,7 +121,7 @@ export function selectEventShowcase(input:EventShowcaseInput):EventShowcaseItem[
   // Historical comparisons are Game measurements, never Event totals or automatic awards.
   const eventStart=Math.min(...games.map(g=>g.orderAtMs));
   const history=(input.publishedHistory??[]).filter(g=>g.eventId!==input.eventId&&g.orderAtMs<eventStart&&basicGame(g,illustrative)&&!games.some(e=>e.sourceHash===g.sourceHash)&&(input.publishedHistory??[]).filter(q=>key(q)===key(g)).length===1&&!(input.publishedHistory??[]).some(q=>q.sourceHash===g.sourceHash&&key(q)!==key(g)));
-  for(const g of games)for(const p of g.players)for(const rule of EVENT_SHOWCASE_METRICS){
+  for(const g of (battle?[]:games))for(const p of g.players)for(const rule of EVENT_SHOWCASE_METRICS){
     if(!measured(p,rule.id,illustrative)||p.values[rule.id]===0||(rule.teamOnly&&!allied(g,p))||(rule.age&&(matchMap.get(g.matchId)?.standardStart!==true||p.values[rule.id]!>g.durationMs))||(rule.checkpoint&&g.durationMs<rule.checkpoint))continue;
     for(const scope of ['league-record','season-record','personal-best'] as const){
       if(scope==='league-record'&&!g.affectsLifetime||scope==='season-record'&&!g.affectsSeason)continue;
