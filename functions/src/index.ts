@@ -67,3 +67,7 @@ export {getStatisticsExperience} from "./queries/getStatisticsExperience.js";
 export {rebuildStatisticsOnGameChange,rebuildStatisticsOnMatchChange,rebuildStatisticsOnSourceChange} from "./triggers/statisticsExperience.js";
 export {getPlayerSiteDirectory} from "./queries/getPlayerSiteDirectory.js";
 export {enterSeason} from "./commands/seasons/enterSeason.js";
+export {adminScheduleScoringWarmup} from './commands/events/scheduleScoringWarmup.js';
+export {adminVerifyFfaPlacements} from './commands/results/verifyFfaPlacements.js';
+export {adminFinalizeMatchSeries} from './commands/results/finalizeMatchSeries.js';
+export {adminConfirmMatchStarters} from './commands/events/confirmMatchStarters.js';

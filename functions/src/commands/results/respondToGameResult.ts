@@ -82,7 +82,7 @@ export const respondToGameResult = onCall<RespondToGameResultInput>(callableOpti
     }
 
     try {
-      assertIndependentConfirmation(match.participants, submission.submittedBy, actor.playerId);
+      assertIndependentConfirmation(match.participants, submission.submittedBy, actor.playerId, submission.outcome);
     } catch (error) {
       rethrowResultValidation(error);
     }

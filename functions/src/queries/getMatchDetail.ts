@@ -33,6 +33,8 @@ interface MatchDocument {
   status?: string;
   seriesRule?: SeriesRule;
   context?: Record<string, unknown> | null;
+  seasonScoring?: Record<string, unknown>;
+  seasonScoringSummary?: Record<string, unknown>;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   processingState?: string | null;
   completedAt?: Timestamp | null;
@@ -79,6 +81,8 @@ function canonicalResult(result: MatchDocument["canonicalResult"] | GameDocument
     winnerTeam: result.winnerTeam ?? null,
     winnerPlayerId: result.winnerPlayerId ?? null,
     winningPlayerIds: Array.isArray(result.winningPlayerIds) ? result.winningPlayerIds : [],
+    coalitionPlayerIds: result.coalitionPlayerIds ?? null,
+    ffaPlacements: result.ffaPlacements ?? null,
     submittedBy: result.submittedBy ?? null,
     confirmedBy: result.confirmedBy ?? null,
   };
@@ -212,6 +216,8 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       status: match.status ?? "UNKNOWN",
       seriesRule: match.seriesRule ?? { maxGames: 1, gamesRequiredToWin: 1 },
       processingState: match.processingState ?? null,
+      seasonScoring: match.seasonScoring ?? null,
+      seasonScoringSummary: match.seasonScoringSummary ?? null,
       context: match.context ?? {},
       completedAt: iso(match.completedAt ?? match.firstCompletedAt),
       participants: participants.map((participant) => ({

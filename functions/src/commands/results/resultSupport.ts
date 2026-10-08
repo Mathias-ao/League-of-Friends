@@ -3,6 +3,7 @@ import { HttpsError } from "firebase-functions/v2/https";
 import { db } from "../../config/firebase.js";
 import { collections } from "../../domain/collections.js";
 import type {
+  SeasonScoringLock,
   CanonicalGameResult,
   GameOutcome,
   MatchFormat,
@@ -15,6 +16,8 @@ export interface MatchForResult {
   seasonId?: string | null;
   eventId?: string | null;
   format?: MatchFormat;
+  seasonScoring?: SeasonScoringLock;
+  gameConfigSnapshot?: { diplomacyEnabled?: boolean | null };
   participants?: MatchParticipant[];
   status?: string;
   seriesRule?: SeriesRule;
@@ -210,6 +213,7 @@ export function applyCanonicalGameResult(
   } else {
     transaction.update(input.matchRef, {
       status: "ACTIVE",
+      activeResultDisputeId: null,
       updatedAt: now,
     });
   }

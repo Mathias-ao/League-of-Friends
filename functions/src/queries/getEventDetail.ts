@@ -28,6 +28,9 @@ interface EventDocument {
   waitingListEnabled?: boolean;
   signupRosterVisibility?: string;
   competitionStyle?: string;
+  placementRule?: string;
+  placementDescription?: string;
+  scoringSnapshot?: Record<string, unknown>;
   officialMatchIds?: string[];
 }
 
@@ -50,6 +53,7 @@ interface MatchDocument {
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
   completedAt?: Timestamp | null;
   firstCompletedAt?: Timestamp | null;
+  seasonScoring?: Record<string,unknown>;
   processingState?: string | null;
   gameConfigSnapshot?: { civilizations?: { mode?: string } };
 }
@@ -102,6 +106,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
         status: match.status ?? "UNKNOWN",
         draftRequired: match.gameConfigSnapshot?.civilizations?.mode === "DRAFT",
         processingState: match.processingState ?? null,
+        seasonScoring: match.seasonScoring ?? null,
         completedAt: iso(match.completedAt ?? match.firstCompletedAt),
         participants: participants.map((participant) => ({
           ...publicPlayer(participant.playerId, players.get(participant.playerId)),
@@ -147,6 +152,9 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
       waitingListEnabled: event.waitingListEnabled !== false,
       signupRosterVisibility: event.signupRosterVisibility ?? "VISIBLE",
       competitionStyle: event.competitionStyle ?? null,
+    placementRule: event.placementRule ?? null,
+    placementDescription: event.placementDescription ?? null,
+    scoringSnapshot: event.scoringSnapshot ?? null,
       officialMatchIds: Array.isArray(event.officialMatchIds) ? event.officialMatchIds : [],
     },
     viewer: {

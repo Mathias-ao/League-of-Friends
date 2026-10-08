@@ -244,6 +244,10 @@ function Rules(){
     ['Civilizations','Civilization drafting happens inside Age of Friends. Event rules decide the pool, turn order, uniqueness within a Game, and whether a civilization may be reused later in the same Match.'],
     ['After the battle','Keep your .aoe2record locally. Upload it when replay submission is available. There are no manual post-match statistics forms.'],
     ['Results and corrections','Qualified results become final directly. Use the small dispute option on a completed Game to request a correction.'],
+    ['Season points','One scoring opportunity per act per event. Main event: 4 participation points +6 for winning. Warm-up: 1 +2. A series scores once. No-show and no-contest matches earn no participation points.'],
+    ['Free-for-all','Diplomatic FFA: official winners divide the six-point victory bonus; no placement bonuses. Nondiplomatic FFA: first +6; second +2 with at least three starters; third +1 with at least five. Placement bonuses need a verified order and the announced ranking method.'],
+    ['The Emperor bounty','Eligible main-event winners against the Emperor receive +2. The Emperor identity is locked before play. Temporary allies do not share winner points.'],
+    ['Season distinctions','Streaks, achievements, Wonder wins and king snipes award no additional season points. Equal points use main-event wins, then warm-up wins; otherwise players share a rank.'],
     ['Points and legacy','League Points, War Room Points, relationship progression and Gold are separate. Season points reset; your player identity persists.']
   ];
   return <div className="rules">{rows.map(([heading,body])=><section key={heading}><h3>{heading}</h3><p>{body}</p></section>)}</div>;

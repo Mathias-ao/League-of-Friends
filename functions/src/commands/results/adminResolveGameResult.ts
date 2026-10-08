@@ -62,7 +62,7 @@ export const adminResolveGameResult = onCall<AdminResolveGameResultInput>(callab
 
     let outcome;
     try {
-      outcome = normalizeOutcome(match.format, match.participants, submission.outcome);
+      outcome = normalizeOutcome(match.format, match.participants, submission.outcome, {diplomacyEnabled: match.seasonScoring?.diplomacyEnabled === true});
     } catch (error) {
       rethrowResultValidation(error);
     }

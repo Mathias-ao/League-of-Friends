@@ -6,6 +6,8 @@ import { callableOptions } from "../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../domain/collections.js";
 import { iso, playerMap, publicPlayer } from "./querySupport.js";
 
+import {rankSeasonStandings} from "../engines/seasonScoring.js";
+
 interface LeagueStateDocument {
   activeSeasonId?: string | null;
   featuredEventId?: string | null;
@@ -52,6 +54,11 @@ interface EventParticipantDocument {
 interface StandingDocument {
   playerId?: string;
   leaguePoints?: number;
+  leaguePointUnits?: number;
+  mainEventWins?: number;
+  warmupWins?: number;
+  mainEventsPlayed?: number;
+  warmupsPlayed?: number;
 }
 
 interface RivalryDocument {
@@ -239,13 +246,13 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       return {
         ...publicPlayer(playerId, players.get(playerId)),
         leaguePoints: Number(standing.leaguePoints ?? 0),
+        leaguePointUnits: standing.leaguePointUnits,
+        mainEventWins: Number(standing.mainEventWins ?? 0),
+        warmupWins: Number(standing.warmupWins ?? 0),
+        mainEventsPlayed: Number(standing.mainEventsPlayed ?? 0),
+        warmupsPlayed: Number(standing.warmupsPlayed ?? 0),
       };
-    })
-    .sort((left, right) => (
-      right.leaguePoints - left.leaguePoints ||
-      Number(right.currentPowerRating ?? -Infinity) - Number(left.currentPowerRating ?? -Infinity) ||
-      left.steamName.localeCompare(right.steamName)
-    ));
+    });
   const emperor = currentEmperorPlayerId
     ? orderedStandings.find((standing) => standing.playerId === currentEmperorPlayerId)
       ?? (players.has(currentEmperorPlayerId) ? {
@@ -253,9 +260,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
         leaguePoints: 0,
       } : null)
     : null;
-  const leaderboard = orderedStandings
-    .filter((standing) => standing.playerId !== currentEmperorPlayerId)
-    .map((standing, index) => ({ ...standing, rank: index + 1 }));
+  const leaderboard = rankSeasonStandings(orderedStandings.filter(standing => standing.playerId !== currentEmperorPlayerId));
 
   const viewerRivalries = rivalriesSnapshot.docs
     .map((document) => ({ pairId: document.id, ...document.data() as RivalryDocument }))

@@ -5,6 +5,7 @@ import { db } from "../../config/firebase.js";
 import { callableOptions } from "../../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../../domain/collections.js";
 import type {
+  FfaPlacementRule,
   CompetitionStyle,
   GameConfiguration,
   GoldRewardConfig,
@@ -17,6 +18,8 @@ import {
 } from "../../engines/civilizationDraftEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
+
+import {scoringSnapshot, lockSeasonScoring} from "../../engines/seasonScoring.js";
 
 interface ReplayParticipantBindingInput {
   sourceName: string;
@@ -39,7 +42,9 @@ interface CreateEventInput {
   competitionStyle: CompetitionStyle;
   planningConfig: MatchPlanningConfig;
   gameConfig: GameConfiguration;
-  scoringSnapshot: ScoringSnapshot;
+  scoringSnapshot?: ScoringSnapshot;
+  placementRule?: FfaPlacementRule;
+  placementDescription?: string;
   goldRewardSnapshot: GoldRewardConfig;
   replayParticipantBindings?: ReplayParticipantBindingInput[];
 }
@@ -135,17 +140,18 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
     throw new HttpsError("invalid-argument", "Check-in cannot open after the event starts.");
   }
 
-  if (!input.planningConfig || !input.gameConfig || !input.scoringSnapshot || !input.goldRewardSnapshot) {
-    throw new HttpsError("invalid-argument", "Event planning, game, scoring, and Gold configurations are required.");
+  if (!input.planningConfig || !input.gameConfig || !input.goldRewardSnapshot) {
+    throw new HttpsError("invalid-argument", "Event planning, game and Gold configurations are required.");
   }
 
   try {
     validateCivilizationDraftConfiguration(input.gameConfig.civilizations);
+    lockSeasonScoring({act: "MAIN_EVENT", format: input.competitionStyle === "FFA" ? "FFA" : "ONE_V_ONE", gameConfig: input.gameConfig, emperorPlayerId: null, placementRule: input.placementRule, placementDescription: input.placementDescription});
   } catch (error) {
     if (error instanceof CivilizationDraftValidationError) {
       throw new HttpsError("invalid-argument", `Invalid civilization draft configuration: ${error.message}`);
     }
-    throw error;
+    throw new HttpsError("invalid-argument", error instanceof Error ? error.message : "Invalid scoring configuration.");
   }
 
   const eventRef = db.collection(collections.events).doc();
@@ -203,7 +209,9 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
       competitionStyle: input.competitionStyle,
       planningConfig: input.planningConfig,
       gameConfig: input.gameConfig,
-      scoringSnapshot: input.scoringSnapshot,
+      scoringSnapshot: scoringSnapshot(),
+      placementRule: input.placementRule ?? null,
+      placementDescription: input.placementDescription?.trim() || null,
       goldRewardSnapshot: input.goldRewardSnapshot,
       specialMechanics: [],
       replayParticipantBindings,

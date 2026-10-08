@@ -13,6 +13,7 @@ export class ResultValidationError extends Error {
 }
 
 export interface SubmittedOutcomeInput {
+  coalitionPlayerIds?: string[];
   winnerTeam?: number | null;
   winnerPlayerId?: string | null;
 }
@@ -33,7 +34,18 @@ export function normalizeOutcome(
   format: MatchFormat,
   participants: MatchParticipant[],
   input: SubmittedOutcomeInput,
+  options: { diplomacyEnabled?: boolean } = {},
 ): GameOutcome {
+  if (input.coalitionPlayerIds != null) {
+    const ids = input.coalitionPlayerIds;
+    if (format !== "FFA" || options.diplomacyEnabled !== true || !Array.isArray(ids) ||
+      ids.length < 2 || ids.length >= participants.length ||
+      new Set(ids).size !== ids.length || ids.some(id => typeof id !== "string" || !participantById(participants, id)) ||
+      input.winnerPlayerId != null || input.winnerTeam != null) {
+      throw new ResultValidationError("INVALID_ARGUMENT", "A winning coalition requires distinct diplomatic FFA participants and at least one nonwinner.");
+    }
+    return {type: "COALITION_WIN", winnerTeam: null, winnerPlayerId: null, coalitionPlayerIds: [...ids].sort()};
+  }
   if (format === "FFA") {
     const winnerPlayerId = input.winnerPlayerId?.trim();
     if (!winnerPlayerId || !participantById(participants, winnerPlayerId)) {
@@ -64,6 +76,7 @@ export function normalizeOutcome(
 }
 
 export function winningPlayerIds(outcome: GameOutcome, participants: MatchParticipant[]): string[] {
+  if (outcome.type === "COALITION_WIN") return [...outcome.coalitionPlayerIds];
   if (outcome.type === "PLAYER_WIN") {
     return [outcome.winnerPlayerId];
   }
@@ -77,12 +90,17 @@ export function assertIndependentConfirmation(
   participants: MatchParticipant[],
   submittedBy: string,
   confirmedBy: string,
+  outcome?: GameOutcome,
 ): void {
   const submitter = assertMatchParticipant(participants, submittedBy);
   const confirmer = assertMatchParticipant(participants, confirmedBy);
 
   if (submittedBy === confirmedBy) {
     throw new ResultValidationError("FAILED_PRECONDITION", "A player cannot confirm their own result submission.");
+  }
+
+  if (outcome?.type === 'COALITION_WIN' && outcome.coalitionPlayerIds.includes(submittedBy) && outcome.coalitionPlayerIds.includes(confirmedBy)) {
+    throw new ResultValidationError('FAILED_PRECONDITION', 'A coalition winner must obtain confirmation outside the winning coalition.');
   }
 
   if (submitter.team != null && confirmer.team === submitter.team) {

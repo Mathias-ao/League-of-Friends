@@ -4,7 +4,7 @@ import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { callableOptions } from "../../config/runtime.js";
 import { collections } from "../../domain/collections.js";
-import type { CanonicalGameResult, MatchParticipant } from "../../domain/types.js";
+import type { CanonicalGameResult, MatchParticipant, MatchFormat, SeasonScoringLock } from "../../domain/types.js";
 import { computeMatchRewards, RewardConfigurationError } from "../../engines/rewardEngine.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
@@ -14,12 +14,18 @@ import {
 } from "../../services/resultProcessingActor.js";
 import { canonicalRevision, resultProcessingJobId } from "../results/resultSupport.js";
 
+import {POINT_UNITS, SEASON_SCORING_VERSION} from "../../engines/seasonScoring.js";
+import {scoringSlotRef} from "../../services/scoringSlots.js";
+
 export interface ProcessMatchRewardsInput {
   requestId: string;
   matchId: string;
 }
 
 interface MatchForRewards {
+  format?: MatchFormat;
+  seasonScoring?: SeasonScoringLock;
+  seasonScoringApplied?: Record<string, {mainEventWins: number; warmupWins: number; mainEventsPlayed: number; warmupsPlayed: number}>;
   seasonId?: string | null;
   eventId?: string | null;
   status?: string;
@@ -158,6 +164,8 @@ export async function processMatchRewards(
     try {
       rewards = computeMatchRewards({
         participants: match.participants,
+        format: match.format,
+        seasonScoring: match.seasonScoring,
         canonicalResult,
         context: match.context,
         scoringSnapshot: match.scoringSnapshot,
@@ -172,6 +180,13 @@ export async function processMatchRewards(
 
     if ((match.context?.affectsLeaguePoints || match.context?.affectsWarRoomPoints) && !match.seasonId) {
       throw new HttpsError("failed-precondition", "A Season is required for competition point rewards.");
+    }
+
+    const v1 = match.context?.affectsLeaguePoints && match.scoringSnapshot?.rules?.seasonScoringVersion === SEASON_SCORING_VERSION;
+    if (v1) {
+      if (!match.eventId || !match.seasonScoring) throw new HttpsError('failed-precondition', 'Season scoring requires a designated Event act.');
+      const slots = await Promise.all(rewards.map(r => transaction.get(scoringSlotRef(db.collection(collections.events).doc(match.eventId!), match.seasonScoring!.act, r.playerId))));
+      if (slots.some(s => !s.exists || s.data()?.matchId !== matchId)) throw new HttpsError('failed-precondition', 'Only the designated scoring Match may award this Event act.');
     }
 
     const playerRefs = rewards.map((reward) => db.collection(collections.players).doc(reward.playerId));
@@ -218,12 +233,19 @@ export async function processMatchRewards(
       const leagueComponents = [
         ["MATCH_COMPLETION", reward.leaguePoints.matchCompletion],
         ["MATCH_WIN", reward.leaguePoints.matchWin],
+        ["FFA_PLACEMENT", reward.leaguePoints.ffaPlacement ?? 0],
+        ["EMPEROR_BOUNTY", reward.leaguePoints.emperorBounty ?? 0],
       ] as const;
       let playerLeagueDelta = 0;
 
       for (const [component, desired] of leagueComponents) {
         const current = netForComponent(leagueLedgerSnapshot.docs, reward.playerId, component);
-        const delta = desired - current;
+        const currentUnits = leagueLedgerSnapshot.docs.reduce((total, doc) => {
+          const entry = doc.data();
+          return entry.playerId === reward.playerId && entry.component === component
+            ? total + Number(entry.amountUnits ?? Math.round(Number(entry.amount ?? 0) * POINT_UNITS)) : total;
+        }, 0);
+        const delta = v1 ? (Math.round(desired * POINT_UNITS) - currentUnits) / POINT_UNITS : desired - current;
         if (delta === 0) continue;
 
         const entryRef = db.collection(collections.leaguePointLedger)
@@ -235,6 +257,9 @@ export async function processMatchRewards(
           matchId,
           gameId: null,
           amount: delta,
+          amountUnits: Math.round(delta * POINT_UNITS),
+          scoringVersion: match.scoringSnapshot?.rules?.seasonScoringVersion ?? null,
+          scoringAct: match.seasonScoring?.act ?? null,
           component,
           reasonCode: component,
           description: revision === 1
@@ -251,20 +276,21 @@ export async function processMatchRewards(
         totalLeaguePointDelta += delta;
       }
 
-      if (match.seasonId && playerLeagueDelta !== 0) {
-        const standingSnapshot = standingSnapshots[index];
-        const previousPoints = standingSnapshot?.exists
-          ? Number(standingSnapshot.data()?.leaguePoints ?? 0)
-          : 0;
-        transaction.set(
-          standingRefs[index],
-          {
-            playerId: reward.playerId,
-            leaguePoints: previousPoints + playerLeagueDelta,
-            updatedAt: now,
-          },
-          { merge: true },
-        );
+      const counters = reward.seasonCounters;
+      const previousCounters = match.seasonScoringApplied?.[reward.playerId];
+      const counterDelta = (field: 'mainEventWins' | 'warmupWins' | 'mainEventsPlayed' | 'warmupsPlayed') => (counters?.[field] ?? 0) - (previousCounters?.[field] ?? 0);
+      if (match.seasonId && (playerLeagueDelta !== 0 || counters || previousCounters)) {
+        const standing = standingSnapshots[index]?.data() ?? {};
+        const previousUnits = Number(standing.leaguePointUnits ?? Math.round(Number(standing.leaguePoints ?? 0) * POINT_UNITS));
+        const units = previousUnits + Math.round(playerLeagueDelta * POINT_UNITS);
+        transaction.set(standingRefs[index], {
+          playerId: reward.playerId, ...(v1 ? {leaguePointUnits: units} : {}), leaguePoints: v1 ? units / POINT_UNITS : Number(standing.leaguePoints ?? 0) + playerLeagueDelta,
+          mainEventWins: Number(standing.mainEventWins ?? 0) + counterDelta('mainEventWins'),
+          warmupWins: Number(standing.warmupWins ?? 0) + counterDelta('warmupWins'),
+          mainEventsPlayed: Number(standing.mainEventsPlayed ?? 0) + counterDelta('mainEventsPlayed'),
+          warmupsPlayed: Number(standing.warmupsPlayed ?? 0) + counterDelta('warmupsPlayed'),
+          updatedAt: now,
+        }, {merge: true});
       }
 
       const warRoomComponents = [
@@ -377,6 +403,9 @@ export async function processMatchRewards(
 
     transaction.update(matchRef, {
       processingState: jobCompleted ? "COMPLETE" : "PENDING",
+      ...(v1 ? {seasonScoringApplied: Object.fromEntries(rewards.map(r => [r.playerId, r.seasonCounters])),
+        seasonScoringSummary: {version: SEASON_SCORING_VERSION, resultRevision: revision, act: match.seasonScoring!.act,
+          placementStatus: rewards[0]?.placementStatus ?? 'NOT_APPLICABLE', rewards: rewards.map(r => ({playerId: r.playerId, ...r.leaguePoints}))}} : {}),
       updatedAt: now,
     });
 

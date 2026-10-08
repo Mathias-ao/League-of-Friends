@@ -3,8 +3,9 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { callableOptions } from "../../config/runtime.js";
-import { collections } from "../../domain/collections.js";
+import { collections, leagueStateDocumentId } from "../../domain/collections.js";
 import type {
+  FfaPlacementRule,
   CompetitionStyle,
   GameConfiguration,
   GoldRewardConfig,
@@ -18,6 +19,9 @@ import {
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
+import {lockSeasonScoring, SEASON_SCORING_VERSION} from "../../engines/seasonScoring.js";
+import {prepareScoringSlots} from "../../services/scoringSlots.js";
+
 interface ApproveMatchPlanInput {
   requestId: string;
   eventId: string;
@@ -26,6 +30,8 @@ interface ApproveMatchPlanInput {
 
 interface EventForApproval {
   seasonId?: string;
+  placementRule?: FfaPlacementRule;
+  placementDescription?: string;
   status?: string;
   currentMatchPlanId?: string | null;
   gameConfig?: GameConfiguration;
@@ -94,6 +100,13 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
       throw new HttpsError("failed-precondition", "Match Plan contains no proposed Matches.");
     }
 
+    const v1 = event.scoringSnapshot.rules?.seasonScoringVersion === SEASON_SCORING_VERSION;
+    const state = v1 ? await transaction.get(db.collection(collections.leagueState).doc(leagueStateDocumentId)) : null;
+    const locks = plan.matches.map(proposed => v1 ? lockSeasonScoring({act: 'MAIN_EVENT', format: proposed.format,
+      gameConfig: event.gameConfig!, emperorPlayerId: state?.data()?.currentEmperorPlayerId ?? null,
+      placementRule: event.placementRule, placementDescription: event.placementDescription}) : null);
+    const commitSlots = v1 ? await prepareScoringSlots(transaction, eventRef, 'MAIN_EVENT', plan.matches.map((m, i) => ({matchId: `${planId}-M${i + 1}`, participants: m.participants}))) : () => {};
+
     await reserveIdempotencyKey(
       transaction,
       requestId,
@@ -101,6 +114,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
       actor.authUid,
     );
 
+    commitSlots();
     const now = Timestamp.now();
     const officialMatchIds: string[] = [];
     const gameConfig = event.gameConfig;
@@ -147,7 +161,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
           affectsGold: true,
           affectsSeasonStats: true,
           affectsLifetimeStats: true,
-          affectsPowerRating: true,
+          affectsPowerRating: !(proposedMatch.format === "FFA" && locks[index]?.diplomacyEnabled),
         },
         format: proposedMatch.format,
         teamSizes: proposedMatch.teamSizes ?? null,
@@ -160,6 +174,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
         },
         gameConfigSnapshot: gameConfig,
         scoringSnapshot,
+        ...(locks[index] ? {seasonScoring: locks[index]} : {}),
         goldRewardSnapshot,
         canonicalResult: null,
         createdBy: actor.playerId,
