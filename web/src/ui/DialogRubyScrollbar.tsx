@@ -15,7 +15,8 @@ export function DialogRubyScrollbar({target}:{target:RefObject<HTMLDivElement|nu
       frame=0;
       const max=Math.max(0,el.scrollHeight-el.clientHeight);
       const thumb=thumbRef.current?.getBoundingClientRect().height||86;
-      const travel=Math.max(0,(railRef.current?.clientHeight||0)-thumb);
+      // The control starts hidden; measure the actual scroll viewport, not the hidden rail.
+      const travel=Math.max(0,el.clientHeight-8-thumb);
       const top=el.parentElement?.querySelector('.modal-heading')?.getBoundingClientRect().height||72;
       const desktop=window.matchMedia('(min-width:700px) and (hover:hover) and (pointer:fine)').matches;
       const visible=desktop&&max>2&&travel>0;
