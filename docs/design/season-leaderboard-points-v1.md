@@ -2,7 +2,7 @@
 
 Agreed with the product owner on 2026-10-07. Policy version: AOF_SEASON_POINTS_V1.
 
-Publication direction updated on 2026-10-08: calculate each designated Match privately, then release warm-up and main consequences together after the Event roundoff is ready. [Event results publication V1](../architecture/event-results-publication-v1.md) defines the proposed integration contract. The award amounts and caps below remain unchanged. The Event publication gate is not yet implemented; current main still exposes accepted Match consequences individually.
+Publication direction updated on 2026-10-08: calculate each designated Match privately, then release warm-up and main point/progression consequences together after the Event roundoff is ready. Individual Battle statistics may be shown in Battle details before this release; that does not publish leaderboard points. [Event results publication V1](../architecture/event-results-publication-v1.md) defines the proposed integration contract. The award amounts and caps below remain unchanged. The Event publication gate is not yet implemented; current main still exposes accepted Match consequences individually.
 
 ## Awards
 

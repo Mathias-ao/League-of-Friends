@@ -6,22 +6,30 @@ Product direction: Mathias, 8 October 2026. Status: design contract; not impleme
 
 Each player has one designated 1v1 warm-up and one designated main Match per Event. Eight players normally produce four warm-up Games followed by the main event; a BO1 4v4 main produces five Games total. A main event with several Matches or a series has a different explicit Game manifest. Another replay perspective is evidence for the same Game, not another Game or scoring opportunity.
 
-Every Game is processed as soon as its recording arrives. Qualified evidence feeds results, statistics, reputation and directed relationship interpretation. Each accepted Match earns its own configured competition rewards once. Processing and publication are separate: all new Event-derived player-facing results remain private until the Event roundoff is prepared and the complete Event package is released.
+Every Game is processed as soon as its recording arrives. Qualified evidence feeds results, statistics, reputation and directed relationship interpretation. Each accepted Match earns its own configured competition rewards once. Processing and publication are separate: individual Battle statistics may be shown in their Battle details as soon as they are processed, while Event/Season/player aggregates and progression remain private until the Event roundoff is prepared and the complete Event package is released.
 
-This supersedes any earlier plan to publish warm-up points, statistics or social progression during the week before the main event. Warm-ups still take place in that week, but their consequences are revealed with the Event. Prior published Events remain visible throughout.
+This supersedes any earlier plan to publish warm-up points, aggregate statistics or social progression during the week before the main event. Warm-ups still take place in that week and their individual Battle statistics are available, but their cumulative consequences are revealed with the Event. Prior published Events remain visible throughout.
 
 ## Private work and public state
 
 | Private processing | Public website before release |
 | --- | --- |
-| Retained canonical evidence, qualified result revisions and detailed statistics | Event announcement, signup, check-in, approved rosters and drafts |
+| Retained canonical evidence, result qualification and staged Event contributions | Event announcement, signup, check-in, approved rosters and drafts; processed statistics in individual Battle details |
 | Match point breakdowns, statistical contributions and rating changes | Previously released standings, profiles, statistics and rating views |
 | Reputation/relationship contributions and staged chronological projections | Previously released reputation, relationships, Chronicles and achievements |
 | Event roundoff, award candidates and publication readiness | The player's upload receipt and pending/received/processing status |
 
-An uploader can see whether their file was received or requires action without seeing derived winners, point awards, statistical highlights or social decisions through the website. Scheduling information and civilization drafting must continue working while results are withheld. Administrator exception tools can inspect private processing with explicit authorization. Direct player Firestore reads, callable responses, activity feeds, totals, records and client caches must respect the same boundary.
+An uploader can see whether their file was received or requires action. Authorized league players can open the individual Battle details to see processed statistical measurements, timelines, evidence and qualified Battle-level highlights before Event release. This does not publish point awards, Event distinctions, reputation gains, relationship changes, achievements or Chronicle progression. Scheduling information and civilization drafting must continue working while results are withheld. Administrator exception tools can inspect private processing with explicit authorization. Direct player Firestore reads, callable responses, activity feeds, totals, records and client caches must respect this distinction between live individual Battle statistics and held cumulative consequences.
 
 Operational match planning must state which rating snapshot it uses. Proposed V1 default: use the last published rating snapshot for the Event's main plan so unpublished warm-up outcomes do not silently influence player-facing competition setup. This is a planning choice to confirm when implementing, not an alteration to the rating formula. Existing scoring rules still pin the Emperor at main-plan approval.
+
+## Live Battle statistics exception
+
+This exception applies to both warm-up and main-event Battles. The focused Battle view and its detailed five-category statistics can read the current qualified Game/Battle evidence while the Event is still collecting or preparing results. Existing league-access permissions and source/result qualification labels remain applicable; the exception does not promote unqualified winner or finishing-order claims.
+
+Keep these views scoped to the individual Battle. A player can inspect age timings, economy, military encounters, map presence and execution without updating Event/Season statistics, profile averages, records, leaderboard totals, reputation, relationships, achievements or Chronicles. Cross-Battle comparisons may use the last published baseline; they must not expose private Event aggregates or present staged record/award candidates as earned recognition.
+
+Live Battle responses carry their own active source/result revision and a separate Event-release status. They are intentionally independent of the cumulative published snapshot. A missing later replay, Event blocker or unreleased Event must not hide already available Battle statistics. Source replacement or correction updates the live Battle view with appropriate qualification labels; cumulative effects still reconcile through the Event publication gate. Caches distinguish live Battle revisions from published cumulative revisions.
 
 ## Proposed release lifecycle
 
@@ -57,9 +65,9 @@ Missing recordings, disputed results, failed jobs and unsupported required evide
 
 Workers write private, revisioned Event contributions; they do not expose intermediate changes through live public balances or profiles. Prepare a new immutable published league/Season snapshot incorporating the Event and previously published Events, with all affected views and the roundoff already materialized and checked. Large preparation can use batches/jobs; it must not depend on one huge Firestore transaction.
 
-A small final transaction compares the expected prior published revision and input fingerprint, then advances the shared published-revision pointer. All public readers resolve through that revision. A refresh spanning multiple callables carries one revision token so it cannot combine an old leaderboard with new profiles or Chronicles. A failed preparation leaves the existing public snapshot intact; retrying release cannot add the Event twice.
+A small final transaction compares the expected prior published revision and input fingerprint, then advances the shared published-revision pointer. All public cumulative readers resolve through that revision; live individual Battle statistics use the exception above. A refresh spanning multiple callables carries one revision token so it cannot combine an old leaderboard with new profiles or Chronicles. A failed preparation leaves the existing public snapshot intact; retrying release cannot add the Event twice.
 
-Event results become visible across leaderboard, statistics, player profiles, reputation, relationships, Chronicles, achievements, records and activity from the same release. Rating, Gold, identity and War Room effects need the same boundary wherever they are player-facing. Public readers must not consult a private mutable balance as a shortcut. The Event roundoff is the principal entry point to the released package; players need not open it individually to unlock other views.
+Event results become visible across leaderboard, Event/Season/player statistics, player profiles, reputation, relationships, Chronicles, achievements, records and activity from the same release. Rating, Gold, identity and War Room effects need the same boundary wherever they are player-facing. Public readers must not consult a private mutable balance as a shortcut. The Event roundoff is the principal entry point to the released package; players need not open it individually to unlock other views.
 
 ## Event roundoff
 
@@ -92,9 +100,9 @@ Implementation sequence:
 1. Introduce the Event manifest, pinned processing dependencies and revisioned contribution interfaces alongside result/placement qualification and the remaining core rule configurations.
 2. Route existing engines into private Event contributions and build deterministic candidate projections; retain Match-level scoring caps and Game identity.
 3. Add readiness coordination, factual roundoff preparation, the immutable published snapshot and atomic publication pointer.
-4. Move every public callable/direct read and website cache onto the publication boundary; add upload-status and Event awaiting-results/roundoff surfaces.
+4. Move all cumulative public callables/direct reads and website caches onto the publication boundary while retaining live individual Battle statistics; add upload-status and Event awaiting-results/roundoff surfaces.
 5. Route disputes, source replacements, late revisions and subsequent Event rebuilds through the same publication model. Adopt for new Events explicitly; preserve historical released data rather than silently staging it.
 
-Required integration acceptance: eight players/four warm-ups/main; several main Matches; series; warm-ups uploaded out of order; last main Game arriving before a warm-up; retries and second perspectives; unavailable sources/mapping ambiguity; source switch/result correction during preparation; required placements pending; no-shows/cancellations; unavailable core configuration; worker failure/retry; no intermediate output through any public read; exact point totals; common-revision read consistency; release retry/race; corrected published Event with downstream rebuild; isolation from unrelated non-Event Matches.
+Required integration acceptance: eight players/four warm-ups/main; several main Matches; series; warm-ups uploaded out of order; last main Game arriving before a warm-up; retries and second perspectives; unavailable sources/mapping ambiguity; source switch/result correction during preparation; required placements pending; no-shows/cancellations; unavailable core configuration; worker failure/retry; live focused/detailed Battle statistics available before release for both acts; Event blockers do not hide available Battle statistics; no intermediate cumulative/progression output through any public read; isolated live Battle versus published aggregate caches; exact point totals; common-revision read consistency; release retry/race; corrected published Event with downstream rebuild; isolation from unrelated non-Event Matches.
 
 Full V1 final acceptance starts only when the agreed core systems are functional and the Event release path passes these integration checks. This contract does not narrow acceptance to a leaderboard-only or Event-I-only build.
