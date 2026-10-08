@@ -138,7 +138,7 @@ export function App({repository}:{repository:LeagueRepository}){
     next?.viewer?.attendanceStatus==='CHECKED_IN'?{label:'Muster forming',run:()=>openEvent(next.eventId)}:
     null;
   const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate};
-  const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Battle details':dialog?.type==='player'?dialog.data.player.steamName:'';
+  const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Field of Battle':dialog?.type==='player'?dialog.data.player.steamName:'';
   const showContent=sectionOpen||showSeasonGate||(!leagueEntryVisible&&!!error);
   return <>
     <div className={leagueEntryVisible?'league-entry-underlay':''} inert={leagueEntryVisible}>

@@ -4,6 +4,7 @@ import React,{act} from 'react';
 import {JSDOM} from 'jsdom';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 import {BattleDetails} from '../src/ui/BattleDetails';
+import {BattleStatistics} from '../src/ui/BattleStatistics';
 
 async function setup(){
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});
@@ -31,16 +32,21 @@ test('Battle view is compact, opposing players gain recording readings, and stat
   assert.equal(document.querySelector('.sx-timeline'),null,'timeline does not lengthen the Battle');
   assert.equal(document.querySelector('.br-review'),null,'record review is not a main section');
   assert.match(document.querySelector('.battle-command-actions')!.textContent!,/View Battle Orders.*Recording processed/);
-  await click('Full statistics');
+  await click('Open Battle Ledger');
   const overlay=document.querySelector('dialog[open]')!;
   assert.match(overlay.getAttribute('aria-labelledby')!,/./);
   assert.ok(overlay.querySelector('.sx-timeline'));
   assert.equal(overlay.querySelectorAll('.sx-tabs button').length,5);
+  for(const category of ['Opening','Economy','Military','Map Presence','Execution']){
+   await click(category);assert.equal(overlay.querySelectorAll('tbody tr[data-metric]').length,8,category+' has eight selected metrics');
+  }
   await click('Economy');assert.ok(overlay.querySelector('[aria-label="Economy statistics"]'));
+  assert.ok(overlay.querySelector('[data-metric="farmsPlaced"]'),'new Season measurements appear directly');
+  assert.equal(overlay.querySelector('[data-metric="combatApm"]'),null);
   assert.equal(overlay.querySelector('.br-review'),null,'raw recording review is absent from player statistics');
   await act(async()=>overlay.dispatchEvent(new ctx.dom.window.Event('cancel',{cancelable:true})));
   assert.equal(document.querySelector('dialog[open]'),null);
-  assert.equal(document.activeElement?.textContent,'Full statistics');
+  assert.equal(document.activeElement?.textContent,'Open Battle Ledger');
  }finally{await ctx.close();}
 });
 
@@ -69,7 +75,7 @@ test('unprocessed Games never borrow another Game’s statistics; recording sele
   assert.deepEqual(submitted[1],['sample-duel','G2','dropped.aoe2record']);assert.equal(updates,2);
   const invalid=new ctx.dom.window.Event('drop',{bubbles:true,cancelable:true});Object.defineProperty(invalid,'dataTransfer',{value:{files:[new ctx.dom.window.File(['x'],'wrong.txt')]}});
   await act(async()=>panel.dispatchEvent(invalid));assert.equal(submitted.length,2);assert.match(panel.querySelector('[role=alert]')!.textContent!,/non-empty .aoe2record/);
-  await ctx.click('Full statistics');assert.equal(document.querySelector('dialog[open] .sx-timeline'),null);assert.match(document.querySelector('dialog[open]')!.textContent!,/no processed recording/);
+  await ctx.click('Open Battle Ledger');assert.equal(document.querySelector('dialog[open] .sx-timeline'),null);assert.match(document.querySelector('dialog[open]')!.textContent!,/no processed recording/);
  }finally{await ctx.close();}
 });
 
@@ -108,5 +114,35 @@ test('compact recording actions preserve unresolved replacement and Emperor-only
   await act(async()=>root.render(React.createElement(BattleDetails,{...admin,data})));
   assert.match(document.querySelector('.battle-recording-action')!.textContent!,/Replace disputed recording/);
   assert.match(document.querySelector('.game-panel')!.textContent!,/Emperor.*Battle controls/);
+ }finally{await ctx.close();}
+});
+
+
+test('Battle Ledger reads single-Game Season values, preserves unknowns and zeroes, and adapts allied metrics',async()=>{
+ const ctx=await setup();const {root,repository}=ctx;
+ const dataset=await repository.statisticsExperience({matchId:'sample-duel'}),game=dataset.games[0];
+ const player=game.players[0];player.values.farmsPlaced=0;delete player.values.villagers20;player.unavailable.villagers20='Recording stopped before 20:00.';
+ player.values.total=12345;player.values.apm=NaN;
+ try{
+  await act(async()=>root.render(React.createElement(BattleStatistics,{game,preview:false,provisional:true,openPlayer:()=>{}})));
+  assert.match(document.querySelector('.sx-notice')!.textContent!,/Provisional/);
+  await ctx.click('Economy');
+  const cells=(id:string)=>[...document.querySelectorAll(`[data-metric="${id}"] td button`)];
+  const names=[...document.querySelectorAll('thead th button')].map(button=>button.textContent);
+  const index=names.indexOf(player.name);
+  assert.equal(cells('total')[index].textContent,'12345','uses the selected Game value without aggregation');
+  assert.equal(cells('farmsPlaced')[index].textContent,'0','observed zero is preserved');
+  assert.equal(cells('villagers20')[index].textContent,'—','absent value stays unavailable');
+  await act(async()=>{(cells('villagers20')[index] as HTMLButtonElement).focus();(cells('villagers20')[index] as HTMLButtonElement).click();});
+  assert.match(document.querySelector('[aria-label="Statistic evidence"]')!.textContent!,/Recording stopped before 20:00/);
+  assert.equal(document.activeElement,document.querySelector('[aria-label="Statistic evidence"]'));
+  await ctx.click('Military');
+  assert.equal(document.querySelector('[data-metric="cooperation"]'),null,'duels do not present team-only rows');
+  await ctx.click('Execution');assert.equal(cells('apm')[index].textContent,'—','nonfinite values stay unavailable');
+  game.players[1].team=game.players[0].team;player.values.assistsOut=3;
+  await act(async()=>root.render(React.createElement(BattleStatistics,{game,preview:false,provisional:false,openPlayer:()=>{}})));
+  await ctx.click('Military');assert.equal(document.querySelectorAll('tbody tr[data-metric]').length,8);
+  assert.ok(document.querySelector('[data-metric="cooperation"]'));assert.ok(document.querySelector('[data-metric="assistsOut"]'));
+  assert.equal(document.querySelector('[data-metric="castles"]'),null);
  }finally{await ctx.close();}
 });
