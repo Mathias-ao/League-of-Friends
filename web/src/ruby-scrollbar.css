@@ -1,101 +1,35 @@
-/* Age of Friends ruby scrollbar — antique bronze engraved guide, no dark slab.
-   The existing PNG is rendered at its intrinsic aspect ratio, never stretched. */
-.ruby-scrollbar{
-  position:fixed;
-  z-index:100;
-  top:0;
-  right:5px;
-  width:78px;
-  height:100dvh;
-  padding:14px 0;
-  pointer-events:none;
-}
-.ruby-scrollbar[data-visible="false"]{display:none}
-.ruby-scrollbar__rail{
-  position:relative;
-  width:100%;
-  height:100%;
-  pointer-events:auto;
-  background:transparent;
-  border:0;
-  box-shadow:none;
-  cursor:pointer;
-}
-/* A two-pixel engraved line: umber cut and aged-brass catching light.
-   There is deliberately no full-height opaque panel behind it. */
-.ruby-scrollbar__rail::before{
-  content:"";
-  position:absolute;
-  top:0;
-  bottom:0;
-  left:50%;
-  width:3px;
-  transform:translateX(-50%);
-  pointer-events:none;
-  background:linear-gradient(90deg,
-    rgba(34,21,13,.70) 0 33%,
-    rgba(134,101,60,.55) 33% 66%,
-    rgba(222,183,123,.38) 66% 100%);
-  box-shadow:0 0 2px rgba(30,17,10,.28);
-  opacity:.62;
-  transition:opacity .16s ease;
-}
-.ruby-scrollbar__rail:hover::before,
-.ruby-scrollbar__rail:has(.ruby-scrollbar__thumb:active)::before{opacity:.95}
-.ruby-scrollbar__thumb{
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
+/* Ruby scrollbars belong to Event and Battle details, not the landing page.
+   Each dialog reserves its own gutter, preventing overlays on content and headers. */
+.modal.ruby-contained-dialog[open]{
   display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:grab;
-  touch-action:none;
-  user-select:none;
-  outline-offset:2px;
-  will-change:transform;
-}
-.ruby-scrollbar__thumb:active{cursor:grabbing}
-.ruby-scrollbar__thumb:focus-visible{outline:2px solid #dab47b}
-.ruby-scrollbar__thumb img{
-  display:block;
-  height:124px;
-  width:auto;
-  max-width:100%;
-  object-fit:contain;
-  pointer-events:none;
-  user-select:none;
-  filter:drop-shadow(0 3px 5px rgba(38,21,14,.65));
-  transition:filter .16s ease;
-}
-.ruby-scrollbar__thumb:hover img{
-  filter:brightness(1.12) drop-shadow(0 3px 7px rgba(53,25,12,.72));
-}
-.ruby-scrollbar__thumb:active img{
-  filter:brightness(1.16) drop-shadow(0 3px 8px rgba(62,26,14,.80));
-}
-/* Hide the native document thumb only while our desktop control is usable. */
-@media (hover:hover) and (pointer:fine) and (min-width:700px){
-  html.ruby-scrollbar-enabled{scrollbar-width:none}
-  html.ruby-scrollbar-enabled::-webkit-scrollbar{display:none}
-}
-@media not ((hover:hover) and (pointer:fine) and (min-width:700px)){
-  .ruby-scrollbar{display:none}
-}
-@media (prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  .ruby-scrollbar__thumb img,
-  .ruby-scrollbar__rail::before{transition:none}
-}
-
-/* Dialog-scoped ruby controls: same gemstone and engraved bronze guide,
-   reduced to fit the narrower Event and Battle detail windows. */
-.ruby-dialog-scroll{
+  flex-direction:column;
+  overflow:hidden;
   position:fixed;
+}
+.ruby-contained-dialog > .modal-heading{
+  flex:0 0 auto;
+  position:relative;
+  top:auto;
+  z-index:2;
+}
+.ruby-contained-dialog > .modal-body{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  /* The visual scrollbar never covers buttons, tables or battle art. */
+  margin-right:64px;
+}
+.ruby-dialog-scroll{
+  position:absolute;
+  top:var(--ruby-dialog-top,72px);
+  bottom:8px;
+  right:0;
   width:64px;
-  z-index:5;
+  padding:0 8px;
   pointer-events:none;
+  background:linear-gradient(90deg,#211710,#302319 52%,#211710);
+  border-left:1px solid rgba(130,99,62,.3);
 }
 .ruby-dialog-scroll[data-visible="false"]{display:none}
 .ruby-dialog-scroll__rail{
@@ -108,30 +42,26 @@
 .ruby-dialog-scroll__rail::before{
   content:"";
   position:absolute;
-  top:0;bottom:0;
+  top:0;
+  bottom:0;
   left:50%;
-  width:3px;
+  width:2px;
   transform:translateX(-50%);
+  background:linear-gradient(90deg,#26180f 0 50%,#99754a 50% 100%);
+  opacity:.68;
   pointer-events:none;
-  background:linear-gradient(90deg,
-    rgba(34,21,13,.72) 0 33%,
-    rgba(134,101,60,.55) 33% 66%,
-    rgba(222,183,123,.44) 66% 100%);
-  box-shadow:0 0 2px rgba(30,17,10,.35);
-  opacity:.62;
-  transition:opacity .16s ease;
 }
-.ruby-dialog-scroll__rail:hover::before{opacity:.95}
 .ruby-dialog-scroll__thumb{
   position:absolute;
-  top:0;left:0;
+  top:0;
+  left:0;
+  width:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  width:100%;
-  cursor:grab;
   touch-action:none;
   user-select:none;
+  cursor:grab;
   will-change:transform;
 }
 .ruby-dialog-scroll__thumb:active{cursor:grabbing}
@@ -139,25 +69,20 @@
 .ruby-dialog-scroll__thumb img{
   display:block;
   height:86px;
-  max-width:100%;
   width:auto;
+  max-width:100%;
   object-fit:contain;
   pointer-events:none;
   user-select:none;
   filter:drop-shadow(0 3px 5px rgba(38,21,14,.68));
 }
-.ruby-dialog-scroll__thumb:hover img{
-  filter:brightness(1.12) drop-shadow(0 3px 7px rgba(53,25,12,.74));
-}
-/* The dialog continues to own scrolling, with its native scrollbars hidden only
-   while a working ruby control is mounted on a desktop pointer device. */
+.ruby-dialog-scroll__thumb:hover img{filter:brightness(1.12) drop-shadow(0 3px 7px rgba(53,25,12,.74))}
 @media (hover:hover) and (pointer:fine) and (min-width:700px){
-  dialog.ruby-dialog-scroll-active{scrollbar-width:none}
-  dialog.ruby-dialog-scroll-active::-webkit-scrollbar{display:none}
+  .ruby-contained-dialog > .modal-body.ruby-dialog-scroll-active{scrollbar-width:none}
+  .ruby-contained-dialog > .modal-body.ruby-dialog-scroll-active::-webkit-scrollbar{display:none}
 }
 @media not ((hover:hover) and (pointer:fine) and (min-width:700px)){
+  .ruby-contained-dialog > .modal-body{margin-right:0}
   .ruby-dialog-scroll{display:none}
 }
-@media (prefers-reduced-motion:reduce){
-  .ruby-dialog-scroll__rail::before{transition:none}
-}
+@media (prefers-reduced-motion:reduce){.ruby-dialog-scroll__thumb img{transition:none}}
