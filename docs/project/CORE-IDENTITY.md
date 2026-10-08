@@ -1,6 +1,7 @@
 # Age of Friends — Core Identity & Philosophy
 
-Status date: 2 October 2026  
+Status date: 8 October 2026
+
 Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development.
 
 ## 1. How to use this file
@@ -47,6 +48,7 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 - Processing must be idempotent; corrections and disputes must be auditable.
 - Do not ask players to manually enter post-match statistics. Their required post-match action is replay upload.
 - A result normally becomes final directly, with a small dispute option. A resolved correction invalidates the prior canonical result so only one result contributes to statistics and social interpretation.
+- **Event release boundary (8 October 2026):** each player has one 1v1 warm-up and one main scoring opportunity per Event. Process each recording privately as it arrives; withhold all new Event-derived player-facing results until main play is over, all required Games/core systems are reconciled and an Event roundoff is prepared. Release the roundoff and the Event's contributions coherently to standings, statistics, profiles, reputation, relationships, Chronicles and achievements. Warm-up consequences are released with the Event, superseding earlier interim-publication direction. The proposed engineering contract and implementation gaps are in [Event results publication V1](../architecture/event-results-publication-v1.md); this publication gate is not yet implemented.
 
 ## 4. Current competition identity
 

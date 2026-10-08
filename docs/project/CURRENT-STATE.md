@@ -1,5 +1,9 @@
 # Age of Friends — Current State
 
+## Event-wide results release — 8 October 2026
+
+New product direction: one designated 1v1 warm-up per player (four Games for eight players), followed by the main event. Process every recording privately into all applicable core systems. Once main play ends and all required Games are processed, prepare an Event roundoff with qualified happenings and each player's earned points, then release the complete Event package together across the website. This supersedes publishing warm-up consequences before the main event. [Event results publication V1](../architecture/event-results-publication-v1.md) records the proposed manifest/readiness/publication/correction contract and implementation sequence. **Design only:** current processors and public reads still publish individual Match consequences; no Event release gate or atomic roundoff publication exists yet. Automatic replay result/placement qualification and official social/identity/achievement configuration remain prerequisites for full V1 readiness.
+
 ## Statistics launch-readiness — 7 October 2026
 
 [`CURRENT-STATS.md`](CURRENT-STATS.md) is the current statistics authority and supersedes
