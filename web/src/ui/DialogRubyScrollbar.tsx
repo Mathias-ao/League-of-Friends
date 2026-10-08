@@ -26,6 +26,8 @@ export function DialogRubyScrollbar({target}:{target:RefObject<HTMLDialogElement
     const observer=new ResizeObserver(schedule);
     observer.observe(el);
     if(el.firstElementChild)observer.observe(el.firstElementChild);
+    const modalBody=el.querySelector('.modal-body');
+    if(modalBody)observer.observe(modalBody);
     if(thumbRef.current)observer.observe(thumbRef.current);
     el.addEventListener('scroll',schedule,{passive:true});
     window.addEventListener('resize',schedule);
