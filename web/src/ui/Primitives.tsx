@@ -14,15 +14,17 @@ export function Empty({title,children,icon='team'}:{title:string;children:ReactN
 }
 export function Modal({title,children,onClose,wide=false,className=''}:{title:string;children:ReactNode;onClose:()=>void;wide?:boolean;className?:string}){
   const ref=useRef<HTMLDialogElement>(null);
+  const scrollRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
     const el=ref.current!,previous=document.activeElement as HTMLElement|null;
     el.showModal();const old=document.body.style.overflow;document.body.style.overflow='hidden';
     return ()=>{el.close();document.body.style.overflow=old;previous?.focus();};
   },[]);
-  return <dialog ref={ref} className={'modal '+(wide?'wide ':'')+className} onCancel={onClose} aria-labelledby="dialog-title" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+  const rubyDialog=className.includes('event-modal')||className.includes('battle-modal');
+  return <dialog ref={ref} className={'modal '+(wide?'wide ':'')+className+(rubyDialog?' ruby-contained-dialog':'')} onCancel={onClose} aria-labelledby="dialog-title" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
     <div className="modal-heading"><h2 id="dialog-title">{title}</h2><button className="icon-button" aria-label="Close dialog" onClick={onClose}><X/></button></div>
-    <div className="modal-body">{children}</div>
-    {(className.includes("event-modal")||className.includes("battle-modal"))&&<DialogRubyScrollbar target={ref}/>}
+    <div ref={scrollRef} className="modal-body">{children}</div>
+    {(className.includes("event-modal")||className.includes("battle-modal"))&&<DialogRubyScrollbar target={scrollRef}/>}
   </dialog>;
 }
 export function DateLabel({value}:{value:string|null|undefined}){
