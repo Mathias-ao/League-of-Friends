@@ -3,7 +3,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { callableOptions } from "../../config/runtime.js";
-import { collections } from "../../domain/collections.js";
+import { collections, leagueStateDocumentId } from "../../domain/collections.js";
 import type {
   CompetitionStyle,
   GameConfiguration,
@@ -15,6 +15,7 @@ import {
   CivilizationDraftValidationError,
   createCivilizationDraft,
 } from "../../engines/civilizationDraftEngine.js";
+import {seasonScoringSnapshot,validateSeasonScoringRules,assertSeasonMatchRules,assertScoringRoster,scoringSlotId} from "../../engines/seasonPoints.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
@@ -53,9 +54,10 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
   const planRef = eventRef.collection("matchPlans").doc(planId);
 
   const transactionResult = await db.runTransaction(async (transaction) => {
-    const [eventSnapshot, planSnapshot] = await Promise.all([
+    const [eventSnapshot, planSnapshot, leagueSnapshot] = await Promise.all([
       transaction.get(eventRef),
       transaction.get(planRef),
+      transaction.get(db.collection(collections.leagueState).doc(leagueStateDocumentId)),
     ]);
 
     if (!eventSnapshot.exists) {
@@ -94,6 +96,28 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
       throw new HttpsError("failed-precondition", "Match Plan contains no proposed Matches.");
     }
 
+    let seasonRules;
+    try {seasonRules=validateSeasonScoringRules(event.scoringSnapshot.rules);}
+    catch(error){throw new HttpsError("failed-precondition",(error as Error).message);}
+    const slots=seasonRules ? plan.matches.flatMap(proposed=>proposed.participants.map(p=>({
+      ref:eventRef.collection("scoringSlots").doc(scoringSlotId("MAIN",p.playerId)),playerId:p.playerId,
+    }))):[];
+    if(new Set(slots.map(slot=>slot.playerId)).size!==slots.length) {
+      throw new HttpsError("failed-precondition","A player may have only one main scoring Match per Event.");
+    }
+    const slotSnapshots=await Promise.all(slots.map(slot=>transaction.get(slot.ref)));
+    if(slotSnapshots.some(snapshot=>snapshot.exists))throw new HttpsError("failed-precondition","A main scoring slot is already reserved; keep the existing designated Match.");
+    const emperorSnapshot=await transaction.get(db.collection(collections.players));
+    const emperorPlayerId=leagueSnapshot.data()?.currentEmperorPlayerId ??
+      emperorSnapshot.docs.find(document=>document.data().role==="ADMIN"&&document.data().membershipStatus==="ACTIVE")?.id ?? null;
+    const pinnedScoring=seasonRules ? seasonScoringSnapshot({...seasonRules,act:"MAIN",emperorPlayerId}):event.scoringSnapshot;
+    if(seasonRules) {
+      try{for(const proposed of plan.matches) {
+        assertScoringRoster(proposed.participants);
+        assertSeasonMatchRules(seasonRules,proposed.format);
+      }}catch(error){throw new HttpsError("failed-precondition",(error as Error).message);}
+    }
+
     await reserveIdempotencyKey(
       transaction,
       requestId,
@@ -104,7 +128,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
     const now = Timestamp.now();
     const officialMatchIds: string[] = [];
     const gameConfig = event.gameConfig;
-    const scoringSnapshot = event.scoringSnapshot;
+    const scoringSnapshot = pinnedScoring;
     const goldRewardSnapshot = event.goldRewardSnapshot;
 
     plan.matches.forEach((proposedMatch, index) => {
@@ -147,7 +171,7 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
           affectsGold: true,
           affectsSeasonStats: true,
           affectsLifetimeStats: true,
-          affectsPowerRating: true,
+          affectsPowerRating:true,
         },
         format: proposedMatch.format,
         teamSizes: proposedMatch.teamSizes ?? null,
@@ -192,6 +216,11 @@ export const adminApproveMatchPlan = onCall<ApproveMatchPlanInput>(callableOptio
         updatedAt: now,
       };
 
+      if(seasonRules)for(const participant of proposedMatch.participants) {
+        transaction.create(eventRef.collection("scoringSlots").doc(scoringSlotId("MAIN",participant.playerId)),{
+          playerId:participant.playerId,act:"MAIN",matchId,seasonId:event.seasonId,createdAt:now,
+        });
+      }
       transaction.create(matchRef, matchDocument);
       transaction.create(gameRef, gameDocument);
       if (civilizationDraft) {

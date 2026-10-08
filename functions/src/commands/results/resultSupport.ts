@@ -9,12 +9,13 @@ import type {
   MatchParticipant,
   SeriesRule,
 } from "../../domain/types.js";
-import { ResultValidationError, winningPlayerIds, losingPlayerIds } from "../../engines/resultEngine.js";
+import { ResultValidationError, normalizeOutcome, winningPlayerIds, losingPlayerIds } from "../../engines/resultEngine.js";
 
 export interface MatchForResult {
   seasonId?: string | null;
   eventId?: string | null;
   format?: MatchFormat;
+  gameConfigSnapshot?: {diplomacyEnabled?:boolean|null};
   participants?: MatchParticipant[];
   status?: string;
   seriesRule?: SeriesRule;
@@ -96,6 +97,7 @@ export function queueResultProcessingJob(
     revision: number;
     previousRevision: number | null;
     correctionCaseId: string | null;
+    affectsPowerRating?:boolean;
   },
 ): void {
   const now = Timestamp.now();
@@ -118,7 +120,7 @@ export function queueResultProcessingJob(
       pendingSteps: [
         "SCORING",
         "GOLD",
-        "POWER_RATING",
+        ...(input.affectsPowerRating===false ? [] : ["POWER_RATING"]),
         "STATISTICS",
         "ACHIEVEMENTS",
         "RIVALRIES",
@@ -157,11 +159,14 @@ export function applyCanonicalGameResult(
   const now = Timestamp.now();
   const revision = input.revision ?? 1;
   const firstCompletedAt = input.match.firstCompletedAt ?? input.match.completedAt ?? now;
+  let outcome;
+  try {outcome=normalizeOutcome(input.match.format,input.match.participants,input.outcome,input.match.gameConfigSnapshot);}
+  catch(error) {rethrowResultValidation(error);}
   const canonicalResult: CanonicalGameResult = {
-    ...input.outcome,
+    ...outcome,
     revision,
-    winningPlayerIds: winningPlayerIds(input.outcome, input.match.participants),
-    losingPlayerIds: losingPlayerIds(input.outcome, input.match.participants),
+    winningPlayerIds: winningPlayerIds(outcome, input.match.participants),
+    losingPlayerIds: losingPlayerIds(outcome, input.match.participants),
     source: input.source,
     submissionId: input.submissionId,
     submittedBy: input.submittedBy,
@@ -206,10 +211,12 @@ export function applyCanonicalGameResult(
       revision,
       previousRevision: input.previousRevision ?? null,
       correctionCaseId: input.correctionCaseId ?? null,
+      affectsPowerRating:input.match.context?.affectsPowerRating,
     });
   } else {
     transaction.update(input.matchRef, {
       status: "ACTIVE",
+      activeResultDisputeId: null,
       updatedAt: now,
     });
   }

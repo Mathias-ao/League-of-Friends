@@ -6,6 +6,7 @@ import { requireLeaguePlayer } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { collections } from "../../domain/collections.js";
 import type { GamePlayer } from "../../domain/types.js";
+import {augmentSeasonShowcase} from "../../engines/seasonShowcaseProjection.js";
 import {projectStatistics} from "../../engines/statisticsExperience.js";
 import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
 import {validateRecordingMatchFacts, currentOfficialGameOutcome} from "../../engines/recordingMatchFacts.js";
@@ -310,8 +311,10 @@ export const uploadReplay = onCall<UploadReplayInput>(
 
       const revision = Number(freshGame.replayStatisticsRevision ?? 0) + 1;
       const now = Timestamp.now();
+      const metadata=statisticsMetadata(matchId,gameId,matchSnapshot.data(),{...freshGame,replayStatisticsRevision:revision},{sourceHash:localSourceHash,playerMapping});
+      const experience=augmentSeasonShowcase(worker.statistics,projectStatistics(worker.statistics,metadata),metadata);
       transaction.create(sourceRef, {
-        experience: projectStatistics(worker.statistics, statisticsMetadata(matchId, gameId, matchSnapshot.data(), {...freshGame,replayStatisticsRevision:revision}, {sourceHash:localSourceHash,playerMapping})),
+        experience,
         state: "READY",
         matchId,
         gameId,

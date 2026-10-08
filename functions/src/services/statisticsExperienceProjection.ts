@@ -3,7 +3,7 @@ import {getStorage} from 'firebase-admin/storage';
 import {Timestamp,type Transaction,type DocumentReference,type Query} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
 import {db} from '../config/firebase.js';
-import {EXPERIENCE_VERSION,StatisticsExperience,projectStatistics,type GameStatistics,type ProjectionMetadata,type StatisticsScope,type StatisticsDataset} from '../engines/statisticsExperience.js';
+import {EXPERIENCE_VERSION,StatisticsExperience,statisticsBindingKey,projectStatistics,type GameStatistics,type ProjectionMetadata,type StatisticsScope,type StatisticsDataset} from '../engines/statisticsExperience.js';
 import {SEASON_SHOWCASE_VERSION,augmentSeasonShowcase} from '../engines/seasonShowcaseProjection.js';
 
 const stable=(value:any):any=>Array.isArray(value)?value.map(stable):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value;
@@ -25,14 +25,14 @@ export function statisticsMetadata(matchId:string,gameId:string,match:any,game:a
 }
 
 async function hydrateProjection(matchId:string,gameId:string,match:any,game:any,sourceRef:DocumentReference,source:any):Promise<void>{
-  if(source.experience?.version===EXPERIENCE_VERSION&&source.experience?.seasonShowcaseVersion===SEASON_SHOWCASE_VERSION)return;
+  const metadata=statisticsMetadata(matchId,gameId,match,game,source);
+  if(source.experience?.version===EXPERIENCE_VERSION&&source.experience?.seasonShowcaseVersion===SEASON_SHOWCASE_VERSION&&source.experience?.bindingKey===statisticsBindingKey(metadata))return;
   if(!source.statistics?.path||!source.statistics?.sha256)return;
   const project=process.env.GCLOUD_PROJECT||process.env.GOOGLE_CLOUD_PROJECT;
   const bucket=process.env.REPLAY_BUCKET||`${project}.appspot.com`;
   const [bytes]=await getStorage().bucket(bucket).file(source.statistics.path).download();
   if(createHash('sha256').update(bytes).digest('hex')!==source.statistics.sha256)throw new HttpsError('data-loss','Stored statistics failed integrity verification.');
   const raw=JSON.parse(bytes.toString('utf8'));
-  const metadata=statisticsMetadata(matchId,gameId,match,game,source);
   const experience=augmentSeasonShowcase(raw,projectStatistics(raw,metadata),metadata);
   // Immutable source revision: backfill presentation only, never promote another replay.
   await sourceRef.update({experience});
@@ -45,23 +45,31 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
   if(scope.seasonId)query=query.where('seasonId','==',scope.seasonId);
   else if(scope.eventId)query=query.where('eventId','==',scope.eventId);
   const snapshots=scope.matchId?[await read(db.collection('matches').doc(scope.matchId))]:(await read(query)).docs;
+  const queries:{ref:Query;ids:string}[]=[];
+  const queryIds=(docs:any[])=>JSON.stringify(docs.map(doc=>doc.id).sort());
+  if(!transaction&&!scope.matchId)queries.push({ref:query,ids:queryIds(snapshots)});
   const identities=await read(db.collection('players'));
   const names=new Map<string,string>(identities.docs.map((p:any)=>[p.id,p.data().steamName??p.id]));
   const games:GameStatistics[]=[];let unavailableGames=0;
+  const checkpoints:{ref:DocumentReference;token:string;kind:string}[]=[];
+  const token=(value:any,kind:string)=>JSON.stringify(stable(kind==='match'?{status:value?.status,context:value?.context,format:value?.format,seasonId:value?.seasonId,eventId:value?.eventId,completedAt:value?.completedAt,firstCompletedAt:value?.firstCompletedAt,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot}:kind==='game'?{status:value?.status,result:value?.canonicalResult,players:value?.players,source:value?.activeReplayStatisticsId,revision:value?.replayStatisticsRevision,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,completedAt:value?.completedAt}:{state:value?.state,hash:value?.sourceHash,statistics:value?.statistics,mapping:value?.playerMapping}));
+  const checkpoint=(ref:DocumentReference,value:any,kind:string)=>{if(!transaction)checkpoints.push({ref,token:token(value,kind),kind});};
   for(const matchSnapshot of snapshots){
     if(!matchSnapshot.exists)continue;
-    const match=matchSnapshot.data();
+    const match=matchSnapshot.data();checkpoint(matchSnapshot.ref,match,'match');
     if(match.status==='PROPOSED')continue;
     if(scope.seasonId&&match.seasonId!==scope.seasonId||scope.eventId&&match.eventId!==scope.eventId)continue;
-    const gameSnapshots=await read(matchSnapshot.ref.collection('games'));
+    const gameQuery=matchSnapshot.ref.collection('games'),gameSnapshots=await read(gameQuery);
+    if(!transaction)queries.push({ref:gameQuery,ids:queryIds(gameSnapshots.docs)});
     for(const gameSnapshot of gameSnapshots.docs){
-      const game=gameSnapshot.data(),sourceId=game.activeReplayStatisticsId;
+      const game=gameSnapshot.data(),sourceId=game.activeReplayStatisticsId;checkpoint(gameSnapshot.ref,game,'game');
       if(!sourceId){if(game.status==='COMPLETED')unavailableGames++;continue;}
       const sourceRef=gameSnapshot.ref.collection('replaySources').doc(sourceId),sourceSnapshot=await read(sourceRef);
       if(!sourceSnapshot.exists||sourceSnapshot.data().state!=='READY'){unavailableGames++;continue;}
-      let source=sourceSnapshot.data();
-      if(hydrate&&(source.experience?.version!==EXPERIENCE_VERSION||source.experience?.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION)){await hydrateProjection(matchSnapshot.id,gameSnapshot.id,match,game,sourceRef,source);source=(await sourceRef.get()).data();}
-      if(source?.experience?.version!==EXPERIENCE_VERSION){unavailableGames++;continue;}
+      let source=sourceSnapshot.data();checkpoint(sourceRef,source,'source');
+      const expectedBinding=statisticsBindingKey(statisticsMetadata(matchSnapshot.id,gameSnapshot.id,match,game,source));
+      if(hydrate&&(source.experience?.version!==EXPERIENCE_VERSION||source.experience?.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION||source.experience?.bindingKey!==expectedBinding)){await hydrateProjection(matchSnapshot.id,gameSnapshot.id,match,game,sourceRef,source);source=(await sourceRef.get()).data();}
+      if(source?.experience?.version!==EXPERIENCE_VERSION||source.experience?.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION||source.experience?.bindingKey!==expectedBinding){unavailableGames++;continue;}
       const metadata=statisticsMetadata(matchSnapshot.id,gameSnapshot.id,match,game,source);
       const {mapping:_,roster,...base}=metadata;
       const experience=source.experience as GameStatistics;
@@ -69,6 +77,8 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
       games.push({...experience,...base,players:experience.players.map(p=>({...p,name:names.get(p.playerId)??p.name,team:roster.find(r=>r.playerId===p.playerId)?.team??null,civilization:roster.find(r=>r.playerId===p.playerId)?.civilization??null}))});
     }
   }
+  for(const c of checkpoints){const fresh=await c.ref.get();if(!fresh.exists||token(fresh.data(),c.kind)!==c.token)throw new HttpsError('aborted','Statistics inputs changed during loading; retry for a coherent revision.');}
+  for(const q of queries){const fresh=await q.ref.get();if(queryIds(fresh.docs)!==q.ids)throw new HttpsError('aborted','Statistics scope changed during loading; retry for a coherent revision.');}
   return {version:EXPERIENCE_VERSION,games,unavailableGames};
 }
 

@@ -1,6 +1,7 @@
+import {qualifyStatistics} from './statisticsQualification.js';
 import type {GameStatistics,ProjectionMetadata} from './statisticsExperience.js';
 
-export const SEASON_SHOWCASE_VERSION='AOF_SEASON_SHOWCASE_V1';
+export const SEASON_SHOWCASE_VERSION='AOF_SEASON_SHOWCASE_V2';
 
 type Bag=Record<string,any>;
 const object=(value:unknown):Bag=>value&&typeof value==='object'&&!Array.isArray(value)?value as Bag:{};
@@ -17,10 +18,14 @@ function wallStyle(value:unknown):string|null{
 
 function sumBattleTime(engagements:Bag):number|null{
   const battles=array(engagements.engagementEvidence?.battles);
-  if(!battles.length)return 0;
-  const durations=battles.map(row=>number(row.durationMs));
-  if(durations.some(value=>value===null))return null;
-  return (durations as number[]).reduce((sum,value)=>sum+value,0);
+  if(!Array.isArray(engagements.engagementEvidence?.battles))return null;
+  if(!battles.length)return engagements.battlesFought===0?0:null;
+  const intervals=battles.map(row=>({start:number(row.startedAtMs),end:number(row.endedAtMs)}));
+  if(intervals.some(row=>row.start===null||row.end===null||row.end<row.start))return null;
+  intervals.sort((a,b)=>a.start!-b.start!);
+  let total=0,start=intervals[0].start!,end=intervals[0].end!;
+  for(const row of intervals.slice(1)){if(row.start!<=end)end=Math.max(end,row.end!);else{total+=end-start;start=row.start!;end=row.end!;}}
+  return total+end-start;
 }
 
 function blacksmithBy30(military:Bag):number|null{
@@ -59,7 +64,7 @@ export function augmentSeasonShowcase(raw:unknown,game:GameStatistics,metadata:P
     const models=player.models as Record<string,string>;
     const unavailable=player.unavailable as Record<string,string>;
     const set=(id:string,value:unknown,model:string,reason?:string)=>{
-      const normalized=number(value);values[id]=normalized;models[id]=model||'unknown';
+      const normalized=reason?null:number(value);values[id]=normalized;models[id]=model||'unknown';
       if(normalized===null)unavailable[id]=reason??unavailable[id]??'Not observed, inapplicable, or insufficient evidence.';
       else delete unavailable[id];
     };
@@ -145,6 +150,7 @@ export function augmentSeasonShowcase(raw:unknown,game:GameStatistics,metadata:P
       firstMilitaryUnit:text(opening.firstMilitaryUnitQueued?.unit?.name),
       wallStyle:wallStyle(opening.wallStyle?.label),
     };
+    qualifyStatistics(player,p,data.scope,data.commandEvidence);
     models.firstMilitaryUnit=openingModel;
     models.wallStyle=openingModel;
     if(!(player as any).seasonText.firstMilitaryUnit)unavailable.firstMilitaryUnit='No military-unit queue request was observed.';

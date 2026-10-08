@@ -23,6 +23,10 @@ interface MatchDetailInput {
 
 interface MatchDocument {
   seasonId?: string | null;
+  scoringSnapshot?:{rules?:Record<string,unknown>};
+  scoringState?:string;
+  scoringResultRevision?:number;
+  scoringBreakdown?:unknown[];
   eventId?: string | null;
   challengeId?: string | null;
   sourceRivalryId?: string | null;
@@ -78,6 +82,7 @@ function canonicalResult(result: MatchDocument["canonicalResult"] | GameDocument
     source: result.source ?? null,
     winnerTeam: result.winnerTeam ?? null,
     winnerPlayerId: result.winnerPlayerId ?? null,
+    winnerPlayerIds:result.winnerPlayerIds??null,
     winningPlayerIds: Array.isArray(result.winningPlayerIds) ? result.winningPlayerIds : [],
     submittedBy: result.submittedBy ?? null,
     confirmedBy: result.confirmedBy ?? null,
@@ -213,6 +218,11 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       seriesRule: match.seriesRule ?? { maxGames: 1, gamesRequiredToWin: 1 },
       processingState: match.processingState ?? null,
       context: match.context ?? {},
+      scoringAct:match.scoringSnapshot?.rules?.act??null,
+      scoringRules:match.scoringSnapshot?.rules??null,
+      scoringState:match.status==="DISPUTED" ? "DISPUTED":
+        match.scoringSnapshot?.rules?.modelVersion==="AOF_SEASON_POINTS_V1" && match.scoringResultRevision!==match.canonicalResult?.revision ? "PENDING":match.scoringState??null,
+      scoringBreakdown:match.status==="COMPLETED" && match.scoringResultRevision===match.canonicalResult?.revision ? match.scoringBreakdown??[]:[],
       completedAt: iso(match.completedAt ?? match.firstCompletedAt),
       participants: participants.map((participant) => ({
         ...publicPlayer(participant.playerId, players.get(participant.playerId)),

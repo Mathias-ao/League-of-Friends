@@ -56,7 +56,7 @@ export function currentOfficialGameOutcome(gameValue: unknown, matchValue: unkno
   }
   if (!result || !Number.isInteger(result.revision) || result.revision<1 ||
       !["PLAYER_CONFIRMED","ADMIN_RESOLVED","ADMIN_CORRECTED"].includes(result.source) ||
-      !["PLAYER_WIN","TEAM_WIN"].includes(result.type)) return unknown("official_result_missing_or_invalid");
+      !["PLAYER_WIN","TEAM_WIN","COALITION_WIN"].includes(result.type)) return unknown("official_result_missing_or_invalid");
   const roster = Array.isArray(game.players) ? game.players.map((p:unknown)=>record(p)?.playerId) : [];
   const winners = result.winningPlayerIds;
   if (roster.length<2 || roster.some((id:unknown)=>typeof id!=="string" || !id) ||

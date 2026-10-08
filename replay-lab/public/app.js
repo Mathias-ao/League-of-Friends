@@ -248,7 +248,8 @@ const TECHNICAL_ROW_KEYS = new Set([
 ]);
 
 function humanizeKey(value) {
-  return String(value ?? "")
+  const labels={villagersTrained:"Villagers Queued",militaryUnitsTrained:"Military Units Queued",tradeUnitsTrained:"Trade Units Queued",housesBuilt:"House Placements",battlesFought:"Detected Battles",greatBattlesFought:"Detected Great Battles",raidsInitiated:"Detected Raids Initiated",raidsAgainstYou:"Detected Raids Received",composition:"Queue Composition",castles:"Castle Placements",militaryBuildings:"Military Placements",blacksmithBuildings:"Blacksmith Placements",universityBuildings:"University Placements",uniqueRelicsTouched:"Known Relics Targeted",firstRelicTouch:"First Relic Target Command"};
+  return labels[value] ?? String(value ?? "")
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());

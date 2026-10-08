@@ -1,11 +1,13 @@
+import {createHash} from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
 import { callableOptions } from "../../config/runtime.js";
 import { collections } from "../../domain/collections.js";
-import type { CanonicalGameResult, MatchParticipant } from "../../domain/types.js";
+import type { CanonicalGameResult, MatchParticipant, MatchFormat } from "../../domain/types.js";
 import { computeMatchRewards, RewardConfigurationError } from "../../engines/rewardEngine.js";
+import {validateSeasonScoringRules,scoringSlotId,POINT_UNITS,seasonPointUnits} from "../../engines/seasonPoints.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 import {
@@ -21,6 +23,9 @@ export interface ProcessMatchRewardsInput {
 
 interface MatchForRewards {
   seasonId?: string | null;
+  format?:MatchFormat;
+  scoringSourceToken?:string;
+  scoringPass?:number;
   eventId?: string | null;
   status?: string;
   participants?: MatchParticipant[];
@@ -53,17 +58,19 @@ interface LedgerDocument {
   matchId?: string | null;
   component?: string;
   amount?: number;
+  amountUnits?: number;
 }
 
 function netForComponent(
   docs: FirebaseFirestore.QueryDocumentSnapshot[],
   playerId: string,
   component: string,
+  units=false,
 ): number {
   return docs.reduce((total, document) => {
     const data = document.data() as LedgerDocument;
     if (data.playerId !== playerId || data.component !== component) return total;
-    return total + (typeof data.amount === "number" ? data.amount : 0);
+    return total + (units ? data.amountUnits??seasonPointUnits(data.amount??0) : data.amount??0);
   }, 0);
 }
 
@@ -138,8 +145,39 @@ export async function processMatchRewards(
       throw new HttpsError("failed-precondition", "Processing job revision does not match the canonical result.");
     }
 
+    let seasonRules;
+    try{seasonRules=validateSeasonScoringRules(match.scoringSnapshot?.rules??{});}
+    catch(error){throw new HttpsError("failed-precondition",(error as Error).message);}
+    let placementEvidence=null,placementSourceBinding;
+    let sourceToken="LEGACY";
+    if(seasonRules) {
+      if(!match.eventId||!match.seasonId)throw new HttpsError("failed-precondition","Season points require an Event and Season.");
+      const eventRef=db.collection(collections.events).doc(match.eventId);
+      const slots=await Promise.all(match.participants.map(p=>transaction.get(eventRef.collection("scoringSlots").doc(scoringSlotId(seasonRules!.act,p.playerId)))));
+      if(slots.some((slot,index)=>slot.data()?.matchId!==matchId||slot.data()?.seasonId!==match.seasonId||
+        slot.data()?.playerId!==match.participants![index].playerId||slot.data()?.act!==seasonRules!.act)) {
+        throw new HttpsError("failed-precondition","This Match does not own its players' designated scoring slots.");
+      }
+      const gameId=typeof match.canonicalResult.sourceGameId==="string" ? match.canonicalResult.sourceGameId:null;
+      const gameRef=gameId ? matchRef.collection("games").doc(gameId):null;
+      const game=gameRef ? (await transaction.get(gameRef)).data():null;
+      const statisticsId=game?.activeReplayStatisticsId;
+      const source=typeof statisticsId==="string"&&gameRef ?
+        (await transaction.get(gameRef.collection("replaySources").doc(statisticsId))).data():null;
+      const mappedIds=Array.isArray(source?.playerMapping) ? source!.playerMapping.map((p:{playerId:string})=>p.playerId):[];
+      if(source?.state==="READY"&&source.matchId===matchId&&source.gameId===gameId&&source.sourceHash===statisticsId&&
+        game?.replayStatisticsState==="READY"&&game?.status==="COMPLETED"&&!game.activeResultDisputeId&&
+        game.canonicalResult?.revision===revision&&mappedIds.length===match.participants.length&&
+        new Set(mappedIds).size===mappedIds.length&&mappedIds.every((id:string)=>match.participants!.some(p=>p.playerId===id))) {
+        placementEvidence=source.qualifiedFFAPlacements??null;
+        placementSourceBinding={sourceStatisticsId:statisticsId,replaySha256:source.sourceHash,
+          rosterIds:match.participants.map(p=>p.playerId),resultRevision:revision,
+          policy:seasonRules.placementPolicy,winnerIds:match.canonicalResult.winningPlayerIds??[]};
+      }
+      sourceToken=createHash("sha256").update(JSON.stringify([revision,statisticsId??null,placementSourceBinding??null,placementEvidence])).digest("hex");
+    }
     const completedSteps = new Set(job.completedSteps ?? []);
-    if (completedSteps.has("SCORING") && completedSteps.has("GOLD")) {
+    if (completedSteps.has("SCORING") && completedSteps.has("GOLD") && (!seasonRules || match.scoringSourceToken===sourceToken)) {
       return {
         resultRevision: revision,
         alreadyProcessed: true,
@@ -158,6 +196,9 @@ export async function processMatchRewards(
     try {
       rewards = computeMatchRewards({
         participants: match.participants,
+        format:match.format,
+        placementEvidence,
+        placementSourceBinding,
         canonicalResult,
         context: match.context,
         scoringSnapshot: match.scoringSnapshot,
@@ -210,6 +251,7 @@ export async function processMatchRewards(
     }
 
     const now = Timestamp.now();
+    const scoringPass=Number(match.scoringPass??0)+1;
     let totalLeaguePointDelta = 0;
     let totalWarRoomPointDelta = 0;
     let totalGoldDelta = 0;
@@ -218,16 +260,20 @@ export async function processMatchRewards(
       const leagueComponents = [
         ["MATCH_COMPLETION", reward.leaguePoints.matchCompletion],
         ["MATCH_WIN", reward.leaguePoints.matchWin],
+        ["FFA_PLACEMENT",reward.leaguePoints.placement],
+        ["EMPEROR_DEFEATED",reward.leaguePoints.emperor],
       ] as const;
       let playerLeagueDelta = 0;
+      let playerLeagueUnits = 0;
 
       for (const [component, desired] of leagueComponents) {
-        const current = netForComponent(leagueLedgerSnapshot.docs, reward.playerId, component);
-        const delta = desired - current;
+        const current = netForComponent(leagueLedgerSnapshot.docs, reward.playerId, component,!!seasonRules);
+        const deltaUnits=seasonRules ? seasonPointUnits(desired)-current:0;
+        const delta = seasonRules ? deltaUnits/POINT_UNITS:desired-current;
         if (delta === 0) continue;
 
         const entryRef = db.collection(collections.leaguePointLedger)
-          .doc(ledgerId(matchId, revision, reward.playerId, component));
+          .doc(ledgerId(matchId, revision, reward.playerId, seasonRules ? component+"_P"+scoringPass : component));
         transaction.create(entryRef, {
           seasonId: match.seasonId,
           playerId: reward.playerId,
@@ -235,6 +281,7 @@ export async function processMatchRewards(
           matchId,
           gameId: null,
           amount: delta,
+          ...(seasonRules?{amountUnits:deltaUnits}:{}),
           component,
           reasonCode: component,
           description: revision === 1
@@ -248,10 +295,15 @@ export async function processMatchRewards(
           createdAt: now,
         });
         playerLeagueDelta += delta;
+        playerLeagueUnits += deltaUnits;
         totalLeaguePointDelta += delta;
       }
 
-      if (match.seasonId && playerLeagueDelta !== 0) {
+      const previousWin=netForComponent(leagueLedgerSnapshot.docs,reward.playerId,"MATCH_WIN")>0;
+      const winDelta=Number(reward.leaguePoints.matchWin>0)-Number(previousWin);
+      const previousParticipation=netForComponent(leagueLedgerSnapshot.docs,reward.playerId,"MATCH_COMPLETION")>0;
+      const participationDelta=Number(reward.leaguePoints.matchCompletion>0)-Number(previousParticipation);
+      if (match.seasonId && (playerLeagueDelta!==0 || seasonRules && (winDelta!==0 || participationDelta!==0))) {
         const standingSnapshot = standingSnapshots[index];
         const previousPoints = standingSnapshot?.exists
           ? Number(standingSnapshot.data()?.leaguePoints ?? 0)
@@ -260,7 +312,14 @@ export async function processMatchRewards(
           standingRefs[index],
           {
             playerId: reward.playerId,
-            leaguePoints: previousPoints + playerLeagueDelta,
+            leaguePoints:seasonRules ? (Number(standingSnapshot?.data()?.leaguePointUnits??previousPoints*POINT_UNITS)+playerLeagueUnits)/POINT_UNITS:previousPoints+playerLeagueDelta,
+            ...(seasonRules ? {
+              leaguePointUnits:Number(standingSnapshot?.data()?.leaguePointUnits??previousPoints*POINT_UNITS)+playerLeagueUnits,
+              mainEventWins:Number(standingSnapshot?.data()?.mainEventWins??0)+(seasonRules.act==="MAIN" ? winDelta:0),
+              warmupWins:Number(standingSnapshot?.data()?.warmupWins??0)+(seasonRules.act==="WARMUP" ? winDelta:0),
+              mainEventsPlayed:Number(standingSnapshot?.data()?.mainEventsPlayed??0)+(seasonRules.act==="MAIN" ? participationDelta:0),
+              warmupsPlayed:Number(standingSnapshot?.data()?.warmupsPlayed??0)+(seasonRules.act==="WARMUP" ? participationDelta:0),
+            }:{}),
             updatedAt: now,
           },
           { merge: true },
@@ -360,6 +419,12 @@ export async function processMatchRewards(
       }
     });
 
+    if(seasonRules)transaction.update(matchRef,{
+      scoringSourceToken:sourceToken,scoringPass,scoringResultRevision:revision,
+      scoringState:rewards.some(reward=>reward.placementState==="PENDING") ? "PLACEMENTS_PENDING":"COMPLETE",
+      scoringBreakdown:rewards.map(reward=>({playerId:reward.playerId,...reward.leaguePoints,placementState:reward.placementState})),
+      updatedAt:now,
+    });
     completedSteps.add("SCORING");
     completedSteps.add("GOLD");
     const pendingSteps = (job.pendingSteps ?? []).filter((step) => step !== "SCORING" && step !== "GOLD");

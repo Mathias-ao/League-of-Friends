@@ -7,6 +7,8 @@ import { collections } from "../../domain/collections.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 
+import {seasonScoringSnapshot} from "../../engines/seasonPoints.js";
+
 interface CreateSeasonInput {
   requestId: string;
   name: string;
@@ -72,11 +74,7 @@ export const adminCreateSeason = onCall<CreateSeasonInput>(callableOptions, asyn
       status: "DRAFT" as const,
       startsAt: Timestamp.fromDate(startsAt),
       endsAt: Timestamp.fromDate(endsAt),
-      scoringDefaults: {
-        profileId: null,
-        profileVersion: 1,
-        rules: {},
-      },
+      scoringDefaults: seasonScoringSnapshot({act:"MAIN",diplomacyEnabled:null,placementPolicy:"NONE",emperorPlayerId:null}),
       championshipConfig: {
         version: 1,
         mode: "UNCONFIGURED",

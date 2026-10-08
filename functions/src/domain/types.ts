@@ -17,6 +17,7 @@ export interface EntityRef {
 
 export interface Player {
   steamName: string;
+  steamId64?: string | null;
   steamNameNormalized: string;
   discordName: string | null;
   avatarUrl: string | null;
@@ -31,6 +32,8 @@ export interface Player {
 
 export interface AuthLink {
   playerId: string;
+  provider?: "STEAM" | "LEGACY";
+  steamId64?: string | null;
 }
 
 export interface MatchPlanningConfig {
@@ -121,6 +124,7 @@ export interface GamePlayer extends MatchParticipant {
 }
 
 export type GameOutcome =
+  | {type:"COALITION_WIN";winnerTeam:null;winnerPlayerId:null;winnerPlayerIds:string[];}
   | {
       type: "TEAM_WIN";
       winnerTeam: number;
@@ -134,6 +138,7 @@ export type GameOutcome =
 
 export type CanonicalGameResult = GameOutcome & {
   revision: number;
+  seriesGameRevisions?: Record<string, number>;
   winningPlayerIds: string[];
   /** Non-winning official roster members; absent on historical results. */
   losingPlayerIds?: string[];

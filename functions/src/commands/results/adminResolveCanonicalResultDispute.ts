@@ -26,6 +26,7 @@ interface AdminResolveCanonicalResultDisputeInput {
   reason: string;
   winnerTeam?: number | null;
   winnerPlayerId?: string | null;
+  winnerPlayerIds?: string[];
 }
 
 interface ResultDisputeDocument {
@@ -97,7 +98,8 @@ export const adminResolveCanonicalResultDispute = onCall<AdminResolveCanonicalRe
           correctedOutcome = normalizeOutcome(match.format, match.participants, {
             winnerTeam: request.data.winnerTeam,
             winnerPlayerId: request.data.winnerPlayerId,
-          });
+            ...(request.data.winnerPlayerIds!=null ? {winnerPlayerIds:request.data.winnerPlayerIds} : {}),
+          }, match.gameConfigSnapshot);
         } catch (error) {
           rethrowResultValidation(error);
         }

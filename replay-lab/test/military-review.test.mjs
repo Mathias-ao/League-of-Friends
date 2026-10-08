@@ -35,3 +35,11 @@ test('military matrix renders one summary row and hides unattached control colum
   const attached = context.militaryControlMatrix({ ...input, townBellControl: { players: [] } });
   assert.match(attached, /<th>[^<]*TownBell/);
 });
+
+test('review labels describe queue requests and detected episodes without rewriting metric keys',()=>{
+  const source=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
+  const code=source.slice(source.indexOf('function humanizeKey'),source.indexOf('function summarizeRowObject'));
+  const context=vm.createContext({});vm.runInContext(code,context);
+  for(const [key,label] of [['militaryUnitsTrained','Military Units Queued'],['villagersTrained','Villagers Queued'],['housesBuilt','House Placements'],['battlesFought','Detected Battles'],['uniqueRelicsTouched','Known Relics Targeted']])assert.equal(context.humanizeKey(key),label);
+  assert.equal(context.humanizeKey('sourceEventId'),'Source Event Id');
+});

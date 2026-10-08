@@ -1,6 +1,7 @@
 export const collections = {
   leagueState: "leagueState",
   authLinks: "authLinks",
+  steamAuthStates: "steamAuthStates",
   emperorFavors: "emperorFavors",
   emperorFavorBatches: "emperorFavorBatches",
   emperorFavorAttempts: "emperorFavorAttempts",

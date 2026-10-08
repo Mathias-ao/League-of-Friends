@@ -24,11 +24,19 @@ For the statistics feature branch, follow the [V1 statistics test-run guide](../
 
 Without Firebase web configuration the site uses an explicitly labelled, memory-only preview. Sample names, standings and historical battles are illustrative. Signing in selects the example player; season entry, RSVP and a sample result dispute are local to the visit. The sample leaderboard is fixed illustrative content, not a simulated scoring pipeline. Reload resets the preview.
 
-Copy .env.example to .env.local and supply the Firebase web app's API key, auth domain, project ID and app ID for live mode. Partial configuration fails visibly. No service-account credential belongs in a Vite variable. Add the deployed origin to Firebase Authentication's authorized domains, enable Google sign-in and deploy the accompanying functions and rules together. Browser authentication persists between visits.
+Copy .env.example to .env.local and supply the Firebase web app's API key, auth domain, project ID and app ID for live mode. Partial configuration fails visibly. No service-account credential belongs in a Vite variable. Production sign-in uses Steam OpenID and exchanges the verified SteamID64 for a Firebase custom token; Google sign-in is no longer used by the player site. Deploy `beginSteamSignIn` and `steamAuthCallback` with the other functions. The default Firebase Hosting origins are allowed automatically; add any custom production origin to `STEAM_AUTH_ALLOWED_ORIGINS` in the Functions environment. Browser authentication persists between visits.
 
-VITE_USE_EMULATORS=true uses local Auth 9099 and Functions 5001. Do not ship emulator configuration. The repository's firebase.json serves web/dist with an SPA fallback; hash navigation supports refresh and back/forward.
+VITE_USE_EMULATORS=true keeps the existing local email/password emulator bootstrap for administrator development while production uses Steam. Do not ship emulator configuration. The repository's firebase.json serves web/dist with an SPA fallback; hash navigation supports refresh and back/forward.
 
 The generated Lombardy artwork could not be recovered. The news hero renders without a missing-image placeholder. VITE_HERO_IMAGE_URL can point to restored artwork in public/assets when available.
+
+## Steam authentication migration
+
+Steam is now the external sign-in identity. Steam's OpenID assertion yields a SteamID64; the backend mints a Firebase custom token with UID `steam:<steamId64>`. Firebase remains the session/callable authorization layer, not the user-facing identity provider.
+
+New players sign in with Steam and then redeem an Emperor's Favor. Favor redemption stores `steamId64` on the player and creates the Steam auth link. Existing player records must be linked once before Google is disabled for those users. Administrators can call `adminLinkSteamIdentity({playerId, steamId64})`; this preserves the existing AoF `playerId` and all league history while adding the deterministic Steam auth UID.
+
+No Steam Web API key is required for authentication itself. The current flow still asks a new player for the display Steam/AoE name during Favor redemption; profile-name/avatar enrichment can be added separately later.
 
 ## Object-oriented architecture
 
