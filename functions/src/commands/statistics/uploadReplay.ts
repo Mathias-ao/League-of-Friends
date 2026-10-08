@@ -1,3 +1,4 @@
+import {assertMatchPlayOpened,matchPlayWindow} from "../../services/eventTiming.js";
 import { createHash } from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
@@ -245,6 +246,11 @@ export const uploadReplay = onCall<UploadReplayInput>(
       throw new HttpsError("permission-denied", "Only a Game participant or administrator may upload its replay.");
     }
 
+    const match=matchSnapshot.data()!;
+    const event=match.scoringSnapshot?.rules?.act==="WARMUP"&&!(match.playOpensAt instanceof Timestamp)&&match.eventId
+      ?(await db.collection(collections.events).doc(match.eventId).get()).data():undefined;
+    const window=matchPlayWindow(match,event);
+    assertMatchPlayOpened({playOpensAt:window.opensAt});
     if (existingSource.exists && existingSource.data()?.state === "READY") {
       return {
         success: true,

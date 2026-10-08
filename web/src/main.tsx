@@ -34,6 +34,7 @@ import './statistics-hall-v14.css';
 import './statistics-runtime-fixes';
 import './player-profile-refinement.css';
 import './relationship-chronicle.css';
+import './event-details.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
 import type {LeagueRepository} from './domain/league';

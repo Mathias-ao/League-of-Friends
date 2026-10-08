@@ -1,3 +1,4 @@
+import {Timestamp} from "firebase-admin/firestore";
 import {getMatchDetail} from "../lib/queries/getMatchDetail.js";
 import {processPowerRatings} from "../lib/commands/processing/processPowerRatings.js";
 import test from "node:test";
@@ -20,7 +21,7 @@ function fixture({diplo=true,count=5}={}) {
   const participants=Array.from({length:count},(_,i)=>({playerId:"p"+(i+1),slot:i+1,team:null}));
   const scoringSnapshot=seasonScoringSnapshot({act:"MAIN",diplomacyEnabled:diplo,placementPolicy:diplo?"NONE":"ELIMINATION_ORDER",emperorPlayerId:null});
   const entries=[["leagueState/singleton",{activeSeasonId:"s1",currentEmperorPlayerId:"p"+count}],["seasons/s1",{status:"ACTIVE"}],
-    ["events/e1",{seasonId:"s1",status:"PUBLISHED",currentMatchPlanId:"plan1",gameConfig:{...config,diplomacyEnabled:diplo},scoringSnapshot,goldRewardSnapshot:{matchCompletion:1,matchWin:2}}],
+    ["events/e1",{seasonId:"s1",status:"PUBLISHED",startsAt:Timestamp.fromMillis(Date.now()+3*86400000),currentMatchPlanId:"plan1",gameConfig:{...config,diplomacyEnabled:diplo},scoringSnapshot,goldRewardSnapshot:{matchCompletion:1,matchWin:2}}],
     ["events/e1/matchPlans/plan1",{status:"PROPOSED",matches:[{format:"FFA",participants}]}]];
   for(const p of participants)entries.push(["players/"+p.playerId,{steamName:p.playerId,role:p.playerId==="p"+count?"ADMIN":"PLAYER",membershipStatus:"ACTIVE",goldBalance:0}],
     ["authLinks/"+p.playerId,{playerId:p.playerId}],["seasons/s1/participants/"+p.playerId,{status:"ENTERED"}]);

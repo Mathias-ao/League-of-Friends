@@ -1,3 +1,4 @@
+import {checkInWindow} from "../services/eventTiming.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../auth/authorization.js";
@@ -35,6 +36,7 @@ interface EventDocument {
   startsAt?: Timestamp | null;
   endsAt?: Timestamp | null;
   signupDeadlineAt?: Timestamp | null;
+  warmupOpensAt?:Timestamp|null;
   checkInOpensAt?: Timestamp | null;
   checkInClosesAt?: Timestamp | null;
   minParticipants?: number | null;
@@ -93,6 +95,7 @@ interface ActivityDocument {
 }
 
 function eventSummary(eventId: string, event: EventDocument) {
+  const checkIn=checkInWindow(event);
   return {
     eventId,
     title: event.title ?? eventId,
@@ -102,8 +105,9 @@ function eventSummary(eventId: string, event: EventDocument) {
     startsAt: iso(event.startsAt),
     endsAt: iso(event.endsAt),
     signupDeadlineAt: iso(event.signupDeadlineAt),
-    checkInOpensAt: iso(event.checkInOpensAt),
-    checkInClosesAt: iso(event.checkInClosesAt),
+    checkInOpensAt: iso(checkIn.opensAt),
+    checkInClosesAt: iso(checkIn.closesAt),
+    warmupOpensAt:iso(event.warmupOpensAt??(event.startsAt instanceof Timestamp?Timestamp.fromMillis(event.startsAt.toMillis()-7*86400000):null)),
     minParticipants: event.minParticipants ?? null,
     maxParticipants: event.maxParticipants ?? null,
     signupRosterVisibility: event.signupRosterVisibility ?? "VISIBLE",

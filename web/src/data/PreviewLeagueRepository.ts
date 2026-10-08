@@ -1,4 +1,5 @@
 import {LeagueEvent,type LeagueRepository,type LeagueSnapshot,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type SocialHistoryResponse,type PlayerChronicleResponse,type PlayerChronicleRelationshipPage} from '../domain/league';
+import {eventDesignPreview,type EventDesignState} from './eventDesignPreview';
 import {lombardia} from './content';
 import {illustrativeGame} from './statisticsFixtures';
 import {previewRelationshipData} from './relationshipPreview';
@@ -6,6 +7,8 @@ import {EXPERIENCE_VERSION,type StatisticsScope,type StatisticsDataset} from '..
 /** Explicitly illustrative and memory-only. Never mutates real league data. */
 export class PreviewLeagueRepository implements LeagueRepository {
   readonly mode='preview' as const;
+  private designStates=new Map<string,EventDesignState>();
+  setEventDesignState(eventId:string,state:EventDesignState){this.designStates.set(eventId,state);}
   private listeners=new Set<()=>void>();
   private state:LeagueSnapshot={
     membership:'SIGNED_OUT',viewer:null,enteredSeason:false,hasLeagueHistory:false,season:{seasonId:'S001',name:'The Fiefdom of Bad Neighbors',status:'ACTIVE',currentEmperorPlayerId:'sample-you'},
@@ -20,12 +23,14 @@ export class PreviewLeagueRepository implements LeagueRepository {
     events:[{eventId:'E001',seasonId:'S001',title:lombardia.display.title,description:lombardia.story.homepageTeaser,status:'PUBLISHED',startsAt:null,maxParticipants:8,confirmedCount:5,waitingListCount:0,competitionStyle:'BIG_TEAM',viewer:{rsvp:'UNANSWERED',signupState:'NONE',attendanceStatus:'NOT_CHECKED'}}]
   };
   constructor(){
-    this.state.players=[...this.state.standings,...(this.state.emperor?[this.state.emperor]:[])];
+    const mainDate=Date.now()+60*60000;
+    Object.assign(this.state.events[0],{startsAt:new Date(mainDate).toISOString(),warmupOpensAt:new Date(mainDate-7*86400000).toISOString(),checkInOpensAt:new Date(mainDate-75*60000).toISOString(),checkInClosesAt:new Date(mainDate).toISOString()});
+    this.state.players=[...this.state.standings,...(this.state.emperor?[this.state.emperor]:[]),{playerId:'sample-halvar',steamName:'Halvar'},{playerId:'sample-ulrik',steamName:'Ulrik'}];
     this.state.matches=[
       {matchId:'sample-duel',seasonId:'S001',format:'ONE_V_ONE',status:'COMPLETED',completedAt:'2026-09-06T18:00:00Z',participants:[{...this.state.emperor!,team:1},{...this.state.players[0],team:2}],result:{winningPlayerIds:['sample-ragnar'],revision:1}},
       {matchId:'sample-team',seasonId:'S001',format:'TWO_V_TWO',status:'COMPLETED',completedAt:'2026-09-08T18:00:00Z',participants:this.state.players.slice(0,4).map((p,i)=>({...p,team:i<2?1:2})),result:{winningPlayerIds:['sample-ragnar','sample-steve'],revision:1}}
     ];
-    this.state.events.push({eventId:'preview-campaign',seasonId:'S001',title:'Lombardia · illustrative campaign',status:'COMPLETED',startsAt:'2026-09-10T18:00:00Z'});
+    this.state.events.push({eventId:'preview-campaign',seasonId:'S001',title:'Lombardia · illustrative campaign',status:'COMPLETED',startsAt:'2026-09-10T18:00:00Z',confirmedCount:4,maxParticipants:4,competitionStyle:'TWO_V_TWO',viewer:{rsvp:'YES',signupState:'CONFIRMED',attendanceStatus:'CHECKED_IN'}});
     for(let index=0;index<8;index++)this.state.matches.push({matchId:`preview-battle-${index+1}`,seasonId:'S001',eventId:'preview-campaign',format:'TWO_V_TWO',status:'COMPLETED',completedAt:`2026-09-${String(10+index).padStart(2,'0')}T18:00:00Z`,participants:[this.state.players[0],this.state.players[1],this.state.players[2],this.state.emperor!].map((p,i)=>({...p,team:i<2?1:2,slot:i+1})),result:{winningPlayerIds:index%2?['sample-baguette','sample-you']:['sample-ragnar','sample-steve'],revision:1}});
   }
   async load(){return structuredClone(this.state);}
@@ -58,6 +63,13 @@ export class PreviewLeagueRepository implements LeagueRepository {
   async replayStatistics():Promise<ReplayStatisticsResult>{throw new Error('Replay statistics are available in live Matches.');}
   async statisticsExperience(scope:StatisticsScope):Promise<StatisticsDataset>{
     if(this.state.membership!=='ACTIVE')throw new Error('Join the league to view statistics.');
+    if(scope.matchId){
+      for(const [eventId,state] of this.designStates){
+        const design=eventDesignPreview(await this.event(eventId),this.state,state);
+        const index=design.matches.findIndex(m=>m.matchId===scope.matchId);
+        if(index>=0){const match=design.matches[index];return {version:EXPERIENCE_VERSION,unavailableGames:0,games:(!scope.eventId||scope.eventId===eventId)&&(!scope.seasonId||scope.seasonId===design.event.seasonId)?[illustrativeGame(match,index,design.matches.flatMap(m=>m.participants))]:[]};}
+      }
+    }
     return {version:EXPERIENCE_VERSION,unavailableGames:0,games:this.state.matches.filter(m=>(!scope.matchId||m.matchId===scope.matchId)&&(!scope.eventId||m.eventId===scope.eventId)&&(!scope.seasonId||m.seasonId===scope.seasonId)).map(m=>illustrativeGame(m,m.matchId.startsWith('preview-battle-')?Number(m.matchId.slice('preview-battle-'.length))-1:['sample-duel','sample-team'].indexOf(m.matchId),this.state.players))};
   }
   async socialHistory():Promise<SocialHistoryResponse>{
@@ -146,10 +158,16 @@ export class PreviewLeagueRepository implements LeagueRepository {
   watchCivilizationDraft(){return ()=>{};}
   async event(id:string):Promise<EventDetail>{
     const e=this.state.events.find(e=>e.eventId===id);if(!e)throw new Error('Event not found.');
-    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:e.confirmedCount??0,waitingListCount:0,rosterVisible:true,confirmed:this.state.players.filter(p=>p.playerId!=='sample-you'||e.viewer?.rsvp==='YES')},matches:this.state.matches.filter(m=>m.eventId===id)});
+    const matches=this.state.matches.filter(m=>m.eventId===id);
+    const confirmed=id==='E001'
+      ?[...this.state.players.filter(p=>p.playerId!=='sample-you').slice(0,5),...(e.viewer?.rsvp==='YES'?[{...(this.state.viewer??this.state.emperor!),attendanceStatus:e.viewer.attendanceStatus}]:[])]
+      :[...new Map(matches.flatMap(m=>m.participants).map(p=>[p.playerId,{...p,attendanceStatus:'CHECKED_IN'}])).values()];
+    return structuredClone({event:e,viewer:{playerId:this.state.viewer?.playerId??'',role:this.state.viewer?.role??'PLAYER',...e.viewer!},signup:{confirmedCount:confirmed.length,waitingListCount:0,rosterVisible:true,confirmed},matches});
   }
   async match(id:string):Promise<MatchDetail>{
-    const m=this.state.matches.find(m=>m.matchId===id);if(!m)throw new Error('Battle not found.');
+    let m=this.state.matches.find(m=>m.matchId===id);
+    if(!m)for(const [eventId,state] of this.designStates){m=eventDesignPreview(await this.event(eventId),this.state,state).matches.find(match=>match.matchId===id);if(m)break;}
+    if(!m)throw new Error('Battle not found.');
     return structuredClone({match:m,viewer:{playerId:this.state.viewer?.playerId??'',isParticipant:m.participants.some(p=>p.playerId===this.state.viewer?.playerId)},games:[{gameId:'sample-game-1',gameNumber:1,status:m.status,players:m.participants.map(p=>({...p,civilization:null})),result:m.result?{revision:m.result.revision??1,winningPlayerIds:m.result.winningPlayerIds??[]}:null,resultDisputeOpen:m.status==='DISPUTED'}]});
   }
   async player(id:string):Promise<PlayerProfile>{

@@ -19,6 +19,10 @@
 
 **Next action:** implement the contract in bounded changes, starting with warmup scheduling and guest acceptance; add AI eligibility before enabling the fallback, replace power-rating input for the uneven-team rule, and verify event-day ordering. Preserve existing scoring caps and evidence/correction safeguards. Documentation validation: cross-links and policy consistency reviewed; no runtime tests are required for this documentation-only change.
 
+## Event design and roundoff foundation — 8 October 2026
+
+Event details now provide Briefing/Battles/Roundoff tabs, campaign parchment, all warmup/main Battles, functioning check-in windows and a five-to-seven-day warmup opening window (seven days by default). The 64-row ranked accomplishment selector and seventeen original SVG emblems are implemented. Available roundoff payloads are displayed during play without requiring Event finalisation or RELEASED metadata; optional legacy revision mismatches remain excluded. The live roundoff producer remains pending. This does not implement guest acceptance, AI eligibility, automatic pairing generation, end-of-main-day deadline enforcement or standings-based uneven teams. The old [Event release proposal](../architecture/event-results-publication-v1.md) is superseded.
+
 ## Statistics launch-readiness — 7 October 2026
 
 [`CURRENT-STATS.md`](CURRENT-STATS.md) is the current statistics authority and supersedes

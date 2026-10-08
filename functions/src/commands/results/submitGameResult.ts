@@ -17,6 +17,7 @@ import {
   type ResultSubmissionDocument,
 } from "./resultSupport.js";
 
+import {assertMatchPlayOpened,matchPlayWindow} from "../../services/eventTiming.js";
 interface SubmitGameResultInput extends SubmittedOutcomeInput {
   matchId: string;
   gameId: string;
@@ -51,6 +52,10 @@ export const submitGameResult = onCall<SubmitGameResultInput>(callableOptions, a
     const match = matchSnapshot.data() as MatchForResult;
     const game = gameSnapshot.data() as GameForResult;
     assertResultShape(match);
+    const event=match.scoringSnapshot?.rules?.act==="WARMUP"&&!(matchSnapshot.data()?.playOpensAt instanceof Timestamp)&&match.eventId
+      ?(await transaction.get(db.collection(collections.events).doc(match.eventId))).data():undefined;
+    const window=matchPlayWindow(matchSnapshot.data()!,event);
+    assertMatchPlayOpened({playOpensAt:window.opensAt});
 
     if (match.status === "COMPLETED" || match.status === "CANCELLED") {
       throw new HttpsError("failed-precondition", "This Match no longer accepts result submissions.");

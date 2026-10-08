@@ -1,10 +1,11 @@
+import {useScheduleClock} from '../hooks/useScheduleClock';
 import {formatLeaguePoints} from "../domain/seasonPoints";
 import {useEffect,useRef,useState} from 'react';
 import {ArrowRight,BookOpen,Users,Crown,Check,Lock,Swords,Flag,Heart,Search,Shield,Upload,X} from 'lucide-react';
 import {isWarmupMatch,isMainEventMatch,LeagueEvent,LeagueService,RelationshipPolicy,currentLeagueEvent,formatName,isBattleOpen,isLombardia,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {plannedEvents,lombardia} from '../data/content';
 import {civilizationById,civilizationName} from '../data/civilizations';
-import {Avatar,DateLabel,Empty,Roster,Sigil} from './Primitives';
+import {Avatar,DateLabel,Empty,Sigil} from './Primitives';
 import {AofSeal} from './AofSeal';
 import type {ViewProps} from './App';
 
@@ -73,45 +74,7 @@ export function StatisticsView(){
     {categories.map((c,i)=><button key={c} id={'category-'+i} role="tab" aria-selected={category===c} aria-controls="statistics-panel" tabIndex={category===c?0:-1} className={category===c?'active':''} onClick={()=>setCategory(c)} onKeyDown={e=>{let index=i;if(e.key==='ArrowRight')index=(i+1)%categories.length;else if(e.key==='ArrowLeft')index=(i+categories.length-1)%categories.length;else if(e.key==='Home')index=0;else if(e.key==='End')index=categories.length-1;else return;e.preventDefault();setCategory(categories[index]);document.getElementById('category-'+index)?.focus();}}>{c}</button>)}
     </div><div id="statistics-panel" role="tabpanel" aria-labelledby={'category-'+categories.indexOf(category)} className="stat-grid">{groups[category].map(m=><article className="panel stat-card" key={m.label}><span className="eyebrow">{scope==='season'?'THIS SEASON':scope==='recent'?'RECENT GAMES':'LIFETIME'}</span><h2>{m.label}</h2><strong className="stat-unavailable">—</strong><span className="quiet-badge">Awaiting qualified data</span><p>{m.description}</p></article>)}</div><div className="section-heading"><h2>Achievements, awards & trophies</h2></div><div className="panel"><Empty title="Distinctions must be earned">Definitions and earning rules are pending reliable statistics. Selected achievements will appear on profiles; full collections remain private.</Empty></div></section>;
 }
-export function EventDialog(props:ViewProps&{data:EventDetail;onUpdated:()=>void}){
-  const {data,snapshot,busy,repository,act,enter,onUpdated,openMatch}=props;
-  const event=new LeagueEvent({...data.event,viewer:data.viewer});
-  const official=data.matches.filter(match=>match.status!=='PROPOSED');
-  const viewerMatches=official.filter(match=>match.participants.some(player=>player.playerId===data.viewer.playerId));
-  const warmup=viewerMatches.find(match=>isWarmupMatch(match))??official.find(match=>isWarmupMatch(match))??null;
-  const main=viewerMatches.find(match=>isMainEventMatch(match))??official.find(match=>isMainEventMatch(match))??null;
-  const extras=official.filter(match=>match.matchId!==warmup?.matchId&&match.matchId!==main?.matchId);
-  const checkedInCount=(data.signup.confirmed??[]).filter(player=>player.attendanceStatus==='CHECKED_IN').length;
-  const respond=async(value:'YES'|'NO')=>{
-    if(snapshot.membership!=='ACTIVE'||value==='YES'&&!snapshot.enteredSeason){enter();return;}
-    const fresh={...snapshot,events:[...snapshot.events.filter(e=>e.eventId!==event.id),{...data.event,viewer:data.viewer}]};
-    if(await act(()=>new LeagueService(repository).rsvp(fresh,event.id,value),'Your event response has been saved.'))onUpdated();
-  };
-  const checkIn=async()=>{
-    if(await act(()=>repository.checkIn(event.id),'You are checked in. Your banner is now eligible for the approved Match plan.'))onUpdated();
-  };
-  const checkInMessage=data.viewer.attendanceStatus==='CHECKED_IN'
-    ?(main?'Checked in · your Battle is ready.':'Checked in · the muster is forming.')
-    :data.viewer.rsvp==='YES'&&data.viewer.signupState==='CONFIRMED'
-      ?event.canCheckIn()?'Check-in is open. Confirm your attendance before the Match plan is formed.':data.event.checkInOpensAt?'Your banner is raised. Check-in opens at the time below.':'Your banner is raised. Check-in time is still to be announced.'
-      :data.viewer.signupState==='WAITING_LIST'?'Your banner is on the waiting list.':'Answer the call before event day.';
-  return <><div className="detail-meta"><span className="quiet-badge">{data.event.status.replaceAll('_',' ')}</span><span><DateLabel value={data.event.startsAt}/></span></div><p>{data.event.description??''}</p>
-    <div className="detail-acts">
-      {warmup?<button className="detail-act-link" onClick={()=>openMatch(warmup.matchId)}><Sigil kind="duel"/><span className="eyebrow">ACT I · WARM-UP</span><h3>{formatName(warmup.format)} · Open Battle</h3><p>{warmup.participants.map(player=>player.steamName).join(' · ')}</p><ArrowRight size={17}/></button>:<div><Sigil kind="duel"/><span className="eyebrow">ACT I · WARM-UP</span><h3>1v1 · 30 minutes</h3><p>Pairings follow the approved match plan.</p></div>}
-      {main?<button className="detail-act-link main-event-link" onClick={()=>openMatch(main.matchId)}><Sigil/><span className="eyebrow">ACT II · MAIN EVENT</span><h3>{formatName(main.format)} · {main.draftRequired?'Enter civilization draft':'Open Battle'}</h3><p>{main.draftRequired?'Teams are approved. Enter the muster and choose civilizations.':'The approved Battle is ready.'}</p><ArrowRight size={17}/></button>:<div><Sigil/><span className="eyebrow">ACT II · MAIN EVENT</span><h3>{isLombardia(data.event)?'4v4 · Lombardia':formatName(data.event.competitionStyle)}</h3><p>{data.viewer.attendanceStatus==='CHECKED_IN'?'Muster forming · teams appear when the Match plan is approved.':'The final Game shape follows attendance and check-in.'}</p></div>}
-    </div>
-    <div className="section-heading"><h3>The muster</h3><span className="muted">{data.signup.confirmedCount} confirmed · {checkedInCount} checked in · {data.signup.waitingListCount} waiting</span></div>
-    {data.signup.rosterVisible?<Roster players={data.signup.confirmed??[]}/>:<p className="muted">The roster will be revealed by the event organizer.</p>}
-    <div className={'participation-status '+(data.viewer.attendanceStatus==='CHECKED_IN'?'checked-in':'')}><Check size={17}/>{checkInMessage}</div>
-    <div className="actions">{event.canRsvp()&&<><button className="primary" disabled={busy||data.viewer.rsvp==='YES'} onClick={()=>void respond('YES')}>{snapshot.enteredSeason?'I’m in':'Enter season first'}</button><button className="text-button" disabled={busy||data.viewer.rsvp==='NO'} onClick={()=>void respond('NO')}>Decline</button></>}
-      {event.canCheckIn()&&<button className="primary check-in-action" disabled={busy} onClick={()=>void checkIn()}>Check in now<ArrowRight size={16}/></button>}
-      {data.viewer.attendanceStatus==='CHECKED_IN'&&main&&<button className="primary" onClick={()=>openMatch(main.matchId)}>{main.draftRequired?'Enter civilization draft':'Enter Battle'}<ArrowRight size={16}/></button>}
-      {snapshot.viewer?.role==='ADMIN'&&data.event.competitionStyle==='ONE_V_ONE'&&!official.length&&checkedInCount>=2&&<button className="primary" disabled={busy} onClick={async()=>{if(await act(()=>repository.formEventMatches(event.id),'The checked-in roster has been formed into an approved Battle.'))onUpdated();}}>Form warm-up battle<ArrowRight size={16}/></button>}
-      {data.viewer.attendanceStatus!=='CHECKED_IN'&&!event.canCheckIn()&&data.viewer.rsvp==='YES'&&data.viewer.signupState==='CONFIRMED'&&<span className="muted">{data.event.checkInOpensAt?<>Check-in opens <DateLabel value={data.event.checkInOpensAt}/></>:'Check-in time to be announced'}</span>}
-    </div>
-    {extras.length>0&&<><hr/><h3>Other Battles</h3>{extras.map(match=><button className="battle-row" key={match.matchId} onClick={()=>openMatch(match.matchId)}><Sigil kind="duel"/><span><strong>{formatName(match.format)} · {match.matchId}</strong><small>{match.participants.map(player=>player.steamName).join(' · ')}</small></span><ArrowRight size={17}/></button>)}</>}
-  </>;
-}
+export {EventDetails as EventDialog} from './EventDetails';
 
 function DraftTeamBoard({data,draft,currentPlayerId}:{data:MatchDetail;draft:NonNullable<MatchDetail['games'][number]['draft']>;currentPlayerId:string|null}){
   const teams=new Map<number|null,typeof draft.turns>();
@@ -219,9 +182,11 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
   const [file,setFile]=useState<File|null>(null);
   const [processing,setProcessing]=useState(false);
   const [error,setError]=useState('');
+  const now=useScheduleClock([data.match.playOpensAt]);
+  const playLocked=!!data.match.playOpensAt&&Date.parse(data.match.playOpensAt)>now;
   const ready=game.replay?.statisticsState==='READY'&&!!game.replay.statisticsId;
   const analyze=async()=>{
-    if(!file)return;
+    if(!file||playLocked)return;
     setProcessing(true);setError('');
     try{
       await repository.uploadReplay(data.match.matchId,game.gameId,file);
@@ -230,11 +195,11 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
     finally{setProcessing(false);}
   };
   return <section className={'replay-conclusion '+(ready?'ready':'')}>
-    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
+    <div className="replay-conclusion-heading">{ready?<AofSeal variant="mark" tone="ceremonial" size={34} className="replay-ready-seal"/>:<Upload size={24}/>}<div><span className="eyebrow">BATTLE CONCLUSION</span><strong>{ready?'Battle recording analyzed':'Submit the recording of this Game'}</strong><p>{ready?'Canonical evidence and Battle Statistics are retained for this Game.':playLocked?<>This Battle opens <DateLabel value={data.match.playOpensAt}/>. Arrange a time with your opponent once the window opens.</>:'Choose one .aoe2record. Age of Friends will decode it and calculate Battle Statistics.'}</p></div></div>
     {!ready&&data.viewer.isParticipant&&<div className="replay-upload-form">
-      <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
+      <label className="replay-file-picker">Choose .aoe2record<input type="file" accept=".aoe2record,.mgz" disabled={processing||playLocked} onChange={event=>setFile(event.target.files?.[0]??null)}/></label>
       {file&&<div className="replay-file-selected"><strong>{file.name}</strong><span>{(file.size/1024/1024).toFixed(2)} MB</span></div>}
-      <button className="primary" disabled={!file||processing} onClick={()=>void analyze()}>{processing?'Analyzing battle…':'Analyze battle'}</button>
+      <button className="primary" disabled={!file||processing||playLocked} onClick={()=>void analyze()}>{processing?'Analyzing battle…':'Analyze battle'}</button>
       {processing&&<div className="replay-processing" role="status"><AofSeal variant="simple" tone="quiet" size={58} animate/><p>Reading recording · building canonical evidence · calculating statistics…</p></div>}
     </div>}
     {ready&&<button className="primary" onClick={()=>document.getElementById('battle-statistics')?.scrollIntoView({behavior:'smooth'})}>View Battle statistics<ArrowRight size={16}/></button>}
@@ -243,6 +208,8 @@ function ReplayConclusion({data,game,repository,onUpdated}:{data:MatchDetail;gam
 }
 
 export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
+  const now=useScheduleClock([data.match.playOpensAt]);
+  const playLocked=!!data.match.playOpensAt&&Date.parse(data.match.playOpensAt)>now;
   const [dispute,setDispute]=useState<string|null>(null),[reason,setReason]=useState(''),[category,setCategory]=useState('WRONG_RESULT');
   const [resetDraft,setResetDraft]=useState<string|null>(null),[resetReason,setResetReason]=useState(''),[rerollDraft,setRerollDraft]=useState(false);
   const [battleOrdersGameId,setBattleOrdersGameId]=useState<string|null>(null);
@@ -310,12 +277,12 @@ export function MatchDialog({data,snapshot,busy,repository,act,onUpdated}:ViewPr
         </>}
       </section>:null;
       return <article className="game-panel" key={game.gameId}><div className="section-heading"><h3>Game {game.gameNumber}</h3>{data.viewer.isParticipant&&game.result&&!game.resultDisputeOpen&&game.status==='COMPLETED'&&<button className="text-button small" onClick={()=>setDispute(dispute===game.gameId?null:game.gameId)}>Dispute result</button>}</div>
-        {!game.draftRequired&&<div className="battle-orders-issued"><div><span className="eyebrow">WARM-UP BATTLE ORDERS</span><strong>The battlefield is ready.</strong><p>No civilization draft. Choose civilizations in AoE2:DE, play the Game, then return with the recording.</p></div><div className="battle-orders-issued-actions"><button className="primary" onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button></div></div>}
+        {!game.draftRequired&&<div className="battle-orders-issued"><div><span className="eyebrow">{isWarmupMatch(data.match)?'WARM-UP BATTLE ORDERS':'BATTLE ORDERS'}</span><strong>{playLocked?'The play window has not opened.':'The battlefield is ready.'}</strong><p>{playLocked?<>Opens <DateLabel value={data.match.playOpensAt}/>. Agree a time with your opponent during the warm-up window.</>:<>No civilization draft. Choose civilizations in AoE2:DE, play the Game, then return with the recording.</>}{data.match.playClosesAt&&<> Finish play before <DateLabel value={data.match.playClosesAt}/>.</>}</p></div><div className="battle-orders-issued-actions"><button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button></div></div>}
         {draft?.status==='COMPLETED'&&<>
           <div className="battle-orders-issued">
             <div><span className="eyebrow">BATTLE ORDERS ISSUED</span><strong>The hosts are ready.</strong><p>Teams and civilizations are locked for this Game.</p></div>
             <div className="battle-orders-issued-actions">
-              <button className="primary" onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button>
+              <button className="primary" disabled={playLocked} onClick={()=>setBattleOrdersGameId(game.gameId)}>Open Battle Orders<ArrowRight size={16}/></button>
               {snapshot.viewer?.role==='ADMIN'&&game.status!=='COMPLETED'&&<button className="text-button small admin-recovery-button" onClick={()=>{setResetDraft(resetDraft===game.gameId?null:game.gameId);setResetReason('');setRerollDraft(false);}}>{resetDraft===game.gameId?'Cancel recovery':'Reset / reroll draft'}</button>}
             </div>
           </div>

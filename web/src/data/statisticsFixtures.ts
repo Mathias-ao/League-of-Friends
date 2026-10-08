@@ -56,11 +56,20 @@ export function illustrativeGame(match:MatchRecord,index:number,players:PlayerRe
       seasonText:{firstMilitaryUnit:firstUnit[identity%firstUnit.length],wallStyle:wallStyle[identity%wallStyle.length]}} as PlayerMeasurement&{seasonText:Record<string,string>};
     return player;
   });
+  // Influence shares cannot collectively exceed 100%, even in an illustrative recording.
+  const influenceWeight=game.players.reduce((n,_,i)=>n+3+i*2,0);
+  for(const [i,p] of game.players.entries())p.values.goldControl=100*(3+i*2)/influenceWeight;
+  // Distinct, deliberately illustrative Event performances, also visible in linked Battle statistics.
+  if(match.matchId.endsWith('-design-M1')){
+    if(game.players[2])game.players[2].values.farmsPlaced=185;
+    if(game.players[4])game.players[4].values.battlesFought=34;
+    if(game.players[6])game.players[6].values.army20=8500;
+  }
   for(const [i,p] of game.players.entries()){
     const opponent=game.players.find(q=>q.team!==p.team)!;
-    const raids=2+(i+index)%4+(index===7&&i===1?7:0);
+    const raids=match.matchId.endsWith('-design-M1')&&i===1?22:2+(i+index)%4+(index===7&&i===1?7:0);
     for(let n=0;n<raids;n++){
-      const atMs=740000+n*150000+i*15000;
+      const atMs=740000+n*(raids>10?65000:150000)+i*15000;
       game.episodes.push({id:`raid-${i}-${n}`,kind:'raid',atMs,endMs:atMs+40000,actors:[p.playerId],targets:[opponent.playerId],label:'Detected raid'});
       p.values.raidsOut!++;opponent.values.raidsIn!++;opponent.values.received!++;
       if(n%3!==0){opponent.values.responded!++;opponent.responseTimes.push(8+i*2);}

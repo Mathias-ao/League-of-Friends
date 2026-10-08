@@ -1,3 +1,5 @@
+import {matchPlayWindow,checkInWindow} from "../services/eventTiming.js";
+import {Timestamp} from 'firebase-admin/firestore';
 import {onCall} from 'firebase-functions/v2/https';
 import {requireLeaguePlayer} from '../auth/authorization.js';
 import {db} from '../config/firebase.js';
@@ -30,9 +32,10 @@ export const getPlayerSiteDirectory=onCall(callableOptions,async request=>{
   const visibleEvents=eventsDoc.docs.filter(doc=>['PUBLISHED','ACTIVE','COMPLETED','CANCELLED','POSTPONED'].includes(doc.data().status));
   const events=await Promise.all(visibleEvents.map(async doc=>{
     const e=doc.data(),participants=await doc.ref.collection('participants').get();
+    const checkIn=checkInWindow(e);
     const own=participants.docs.find(p=>p.id===actor.playerId)?.data();
     return {eventId:doc.id,seasonId,title:String(e.title??doc.id),description:String(e.description??''),status:String(e.status),
-      startsAt:iso(e.startsAt),endsAt:iso(e.endsAt),signupDeadlineAt:iso(e.signupDeadlineAt),checkInOpensAt:iso(e.checkInOpensAt),checkInClosesAt:iso(e.checkInClosesAt),
+      startsAt:iso(e.startsAt),endsAt:iso(e.endsAt),signupDeadlineAt:iso(e.signupDeadlineAt),checkInOpensAt:iso(checkIn.opensAt),checkInClosesAt:iso(checkIn.closesAt),warmupOpensAt:iso(e.warmupOpensAt??(e.startsAt instanceof Timestamp?Timestamp.fromMillis(e.startsAt.toMillis()-7*86400000):null)),
       maxParticipants:e.maxParticipants??null,competitionStyle:e.competitionStyle??null,
       confirmedCount:participants.docs.filter(p=>p.data().rsvp==='YES'&&p.data().signupState==='CONFIRMED').length,
       waitingListCount:participants.docs.filter(p=>p.data().rsvp==='YES'&&p.data().signupState==='WAITING_LIST').length,
@@ -44,7 +47,8 @@ export const getPlayerSiteDirectory=onCall(callableOptions,async request=>{
     const m=doc.data();return m.status!=='PROPOSED'&&(!m.eventId||visibleIds.has(m.eventId));
   }).map(doc=>{
     const m=doc.data();
-    return {matchId:doc.id,seasonId,eventId:m.eventId??null,format:m.format??null,scoringAct:m.scoringSnapshot?.rules?.act??null,status:String(m.status??'UNKNOWN'),draftRequired:m.gameConfigSnapshot?.civilizations?.mode==='DRAFT',completedAt:iso(m.completedAt??m.firstCompletedAt),
+    const window=matchPlayWindow(m,visibleEvents.find(e=>e.id===m.eventId)?.data());
+    return {matchId:doc.id,seasonId,eventId:m.eventId??null,format:m.format??null,scoringAct:m.scoringSnapshot?.rules?.act??null,status:String(m.status??'UNKNOWN'),playOpensAt:iso(window.opensAt),playClosesAt:iso(window.closesAt),draftRequired:m.gameConfigSnapshot?.civilizations?.mode==='DRAFT',completedAt:iso(m.completedAt??m.firstCompletedAt),
       participants:((m.participants??[]) as MatchParticipant[]).map(p=>({...publicPlayer(p.playerId,players.get(p.playerId)),team:p.team,slot:p.slot})),
       result:m.canonicalResult&&m.status==='COMPLETED'?{revision:Number(m.canonicalResult.revision??1),winningPlayerIds:m.canonicalResult.winningPlayerIds??[]}:null};
   });

@@ -1,3 +1,4 @@
+import {matchPlayWindow} from "../services/eventTiming.js";
 import { Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../auth/authorization.js";
@@ -35,6 +36,8 @@ interface MatchDocument {
   teamSizes?: [number, number] | null;
   participants?: MatchParticipant[];
   status?: string;
+  playOpensAt?:Timestamp|null;
+  playClosesAt?:Timestamp|null;
   seriesRule?: SeriesRule;
   context?: Record<string, unknown> | null;
   canonicalResult?: (Partial<CanonicalGameResult> & Record<string, unknown>) | null;
@@ -104,6 +107,9 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
   if (!matchSnapshot.exists) throw new HttpsError("not-found", "Match not found.");
 
   const match = matchSnapshot.data() as MatchDocument;
+  const event=match.scoringSnapshot?.rules?.act==="WARMUP"&&!(match.playOpensAt instanceof Timestamp)&&match.eventId
+    ?(await db.collection(collections.events).doc(match.eventId).get()).data():undefined;
+  const window=matchPlayWindow(match,event);
   const participants = Array.isArray(match.participants) ? match.participants : [];
   const viewerIsParticipant = participants.some((participant) => participant.playerId === actor.playerId);
   const canSeePendingResultClaims = viewerIsParticipant || actor.role === "ADMIN";
@@ -215,6 +221,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       format: match.format ?? null,
       teamSizes: match.teamSizes ?? null,
       status: match.status ?? "UNKNOWN",
+      playOpensAt:iso(window.opensAt),playClosesAt:iso(window.closesAt),
       seriesRule: match.seriesRule ?? { maxGames: 1, gamesRequiredToWin: 1 },
       processingState: match.processingState ?? null,
       context: match.context ?? {},
@@ -234,7 +241,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
     viewer: {
       playerId: actor.playerId,
       isParticipant: viewerIsParticipant,
-      canSubmitResult: viewerIsParticipant && !["COMPLETED", "CANCELLED", "DISPUTED"].includes(match.status ?? ""),
+      canSubmitResult: viewerIsParticipant && (!window.opensAt||Date.now()>=window.opensAt.toMillis()) && !["COMPLETED", "CANCELLED", "DISPUTED"].includes(match.status ?? ""),
     },
     games: gameRows,
   };

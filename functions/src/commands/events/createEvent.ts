@@ -33,6 +33,8 @@ interface CreateEventInput {
   endsAt?: string | null;
   signupDeadlineAt: string;
   checkInOpensAt?: string | null;
+  checkInClosesAt?: string | null;
+  warmupOpensAt?: string | null;
   minParticipants?: number | null;
   maxParticipants?: number | null;
   waitingListEnabled?: boolean;
@@ -125,7 +127,12 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
   const startsAt = parseDate(input.startsAt, "startsAt")!;
   const endsAt = parseDate(input.endsAt, "endsAt", true);
   const signupDeadlineAt = parseDate(input.signupDeadlineAt, "signupDeadlineAt")!;
-  const checkInOpensAt = parseDate(input.checkInOpensAt, "checkInOpensAt", true) ?? startsAt;
+  const checkInOpensAt = parseDate(input.checkInOpensAt, "checkInOpensAt", true) ?? new Date(startsAt.getTime()-30*60000);
+  const checkInClosesAt=parseDate(input.checkInClosesAt,"checkInClosesAt",true)??startsAt;
+  const warmupOpensAt=parseDate(input.warmupOpensAt,"warmupOpensAt",true)??new Date(startsAt.getTime()-7*86400000);
+  const warmupLead=startsAt.getTime()-warmupOpensAt.getTime();
+  if(warmupLead<5*86400000||warmupLead>7*86400000)throw new HttpsError("invalid-argument","Warm-ups must open five to seven days before the main Event.");
+  if(checkInClosesAt<=checkInOpensAt||checkInClosesAt>startsAt)throw new HttpsError("invalid-argument","Check-in must close after it opens and no later than the main Event starts.");
 
   if (endsAt && endsAt <= startsAt) {
     throw new HttpsError("invalid-argument", "Event end must be after its start.");
@@ -206,7 +213,8 @@ export const adminCreateEvent = onCall<CreateEventInput>(callableOptions, async 
       endsAt: endsAt ? Timestamp.fromDate(endsAt) : null,
       signupDeadlineAt: Timestamp.fromDate(signupDeadlineAt),
       checkInOpensAt: Timestamp.fromDate(checkInOpensAt),
-      checkInClosesAt: null,
+      checkInClosesAt: Timestamp.fromDate(checkInClosesAt),
+      warmupOpensAt: Timestamp.fromDate(warmupOpensAt),
       minParticipants,
       maxParticipants,
       waitingListEnabled: input.waitingListEnabled ?? true,
