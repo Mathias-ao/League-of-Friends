@@ -106,6 +106,8 @@ test('late evidence needs source-bound Emperor review; stale hashes, players and
   await assert.rejects(adminReviewRecordingResult.run(req({...input,sourceHash:'f'.repeat(64)})),/recording changed/);
   await assert.rejects(adminReviewRecordingResult.run(req({...input,playedWithinWindow:false})),/Verify timely/);
   await adminReviewRecordingResult.run(req(input));assert.equal(records.get('matches/m').canonicalResult.source,'ADMIN_RESOLVED');
+  const accepted=structuredClone(records.get('matches/m/games/G1/replaySources/'+v.source.sourceHash).outcomeQualification);
+  await resolveRecordingResult('m','G1');assert.deepEqual(records.get('matches/m/games/G1/replaySources/'+v.source.sourceHash).outcomeQualification,accepted);
 });
 test('helper may accept an extra warmup without changing main signup or overwriting the first warmup slot',async()=>{
   const now=Date.now(),records=seedRecording();records.set('events/e',{seasonId:'s',status:'PUBLISHED',startsAt:Timestamp.fromMillis(now+86400000),warmupPolicy:{modelVersion:'AOF_WARMUP_LIFECYCLE_V1',scoringPolicy:'AOF_BEST_WARMUP_V1',gameConfig:config,guestAcceptanceDeadlineAt:Timestamp.fromMillis(now+86400000)},goldRewardSnapshot:{matchCompletion:0,matchWin:0}});

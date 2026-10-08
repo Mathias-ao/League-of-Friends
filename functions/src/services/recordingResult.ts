@@ -23,6 +23,7 @@ export async function resolveRecordingResult(matchId:string,gameId:string,review
     if(game.canonicalResult||game.activeResultDisputeId||match.activeResultDisputeId||['COMPLETED','CANCELLED','VOID','PROPOSED','DISPUTED'].includes(match.status)) {
       if(review)throw new HttpsError('failed-precondition','Use the correction dispute control for an accepted result.');
       // Never override an accepted human/admin result or reopen a cancelled Battle.
+      if(game.canonicalResult&&game.recordingResultBinding?.sourceHash===source.sourceHash)return {state:'RESULT_ALREADY_RESOLVED'};
       if(JSON.stringify(source.outcomeQualification)!==JSON.stringify(resolved))tx.update(ref,{outcomeQualification:resolved});
       return {state:'RESULT_ALREADY_RESOLVED'};
     }
