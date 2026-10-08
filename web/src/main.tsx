@@ -35,7 +35,9 @@ import './statistics-runtime-fixes';
 import './player-profile-refinement.css';
 import './relationship-chronicle.css';
 import './event-details.css';
+import './ruby-scrollbar.css';
 import {App} from './ui/App';
+import {RubyScrollbar} from './ui/RubyScrollbar';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
 import type {LeagueRepository} from './domain/league';
 
@@ -63,7 +65,7 @@ async function start(){
       :new PreviewLeagueRepository();
   }
 
-  createRoot(document.getElementById('root')!).render(<React.StrictMode><App repository={repository}/></React.StrictMode>);
+  createRoot(document.getElementById('root')!).render(<React.StrictMode><App repository={repository}/><RubyScrollbar/></React.StrictMode>);
 }
 start().catch(error=>{
   const message=document.createElement('p');message.className='fatal';
