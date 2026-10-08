@@ -7,7 +7,7 @@ export class Player {
   get name(){return this.record.steamName;}
   get initials(){return this.name.replace(/[^\p{L}\p{N} ]/gu,'').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();}
 }
-/** Optional read contract for the Event publication producer; never inferred from play status. */
+/** Optional legacy publication metadata; not an Event-finalisation gate. */
 export interface EventResultsRelease {state:'COLLECTING'|'PREPARING'|'BLOCKED'|'READY'|'RELEASED';revision?:number;publishedAt?:string|null;}
 export interface EventRoundoff {revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;showcase?:import('./eventRoundoffShowcase').EventShowcaseItem[];}
 export interface EventRecord {

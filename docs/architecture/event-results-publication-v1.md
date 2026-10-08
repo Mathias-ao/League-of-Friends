@@ -1,6 +1,6 @@
 # Event results publication V1
 
-Product direction: Mathias, 8 October 2026. Status: design contract; not implemented or deployed. The release mechanism below is the proposed engineering contract for that direction.
+Status: **superseded historical proposal; do not implement its Event release gate.** The later [Season event contract](../project/CORE-IDENTITY.md#season-event-contract), merged in #74, is authoritative: each system updates when its required evidence is validated; Emperor finalisation is administrative. The text below preserves the earlier discussion for context only. Source qualification, idempotency and correction safeguards remain relevant, but cumulative results are not withheld until an Event-wide release.
 
 ## Event is the unit of release
 

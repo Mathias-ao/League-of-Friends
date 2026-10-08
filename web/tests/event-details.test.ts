@@ -5,9 +5,9 @@ import {JSDOM} from 'jsdom';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 import {eventDesignPreview} from '../src/data/eventDesignPreview';
 import {EventDialogWithStatistics} from '../src/ui/StatisticsExperience';
-import {hasReleasedRoundoff} from '../src/ui/EventDetails';
+import {hasAvailableRoundoff} from '../src/ui/EventDetails';
 
-test('Event details retain all pairings, personal navigation and an explicit release boundary',async()=>{
+test('Event details retain all pairings, personal navigation and evidence-driven roundoff availability',async()=>{
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
  const {createRoot}=await import('react-dom/client');
@@ -30,7 +30,7 @@ test('Event details retain all pairings, personal navigation and an explicit rel
   await click('.event-pairing.is-yours');assert.equal(visited.pop(),'E001-design-W1');
   await click('.event-main-match button');assert.equal(visited.pop(),'E001-design-M1');
   await click('[role="tab"]:nth-child(3)');
-  assert.equal(document.querySelector('.event-points'),null,'completed play alone does not release points');
+  assert.equal(document.querySelector('.event-points'),null,'completed play alone does not invent roundoff data');
   assert.ok(document.querySelector('.event-roundoff-outline'));
   assert.equal(aggregateFetches,0,'opening Event details never eagerly loads cumulative Event statistics');
 
@@ -49,8 +49,13 @@ test('Event details retain all pairings, personal navigation and an explicit rel
   assert.ok(!document.querySelector('.event-showcase')?.textContent?.includes('FROM THE EVENT'));
   assert.equal(document.querySelector('.event-accomplishment-emblem')?.getAttribute('data-emblem'),'crown');
   await click('.event-showcase-sources button');assert.equal(visited.pop(),'E001-design-W1');
-  assert.equal(hasReleasedRoundoff({...released,roundoff:{...released.roundoff!,revision:2}}),false);
-  assert.equal(hasReleasedRoundoff({...released,event:{...released.event,resultsRelease:{state:'READY',revision:1}}}),false);
+  assert.equal(hasAvailableRoundoff({...released,roundoff:{...released.roundoff!,revision:2}}),false);
+  assert.equal(hasAvailableRoundoff({...released,event:{...released.event,resultsRelease:{state:'READY',revision:1}}}),true);
+  const active={...released,event:{...released.event,status:'ACTIVE',resultsRelease:undefined}};
+  await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:active})));
+  assert.ok(document.querySelector('.event-points'),'validated roundoff appears during play without release metadata');
+  assert.equal(document.querySelectorAll('.event-accomplishment-emblem').length,5);
+  assert.equal(hasAvailableRoundoff({...active,roundoff:{...active.roundoff!,revision:0}}),false);
   await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:{...released,roundoff:{...released.roundoff!,showcase:undefined}}})));
   assert.ok(document.querySelector('.event-points'),'legacy released points remain readable');
   assert.match(document.querySelector('.event-showcase')!.textContent!,/not yet been included/);

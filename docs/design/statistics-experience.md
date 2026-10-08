@@ -1,7 +1,15 @@
 # Statistics Experience
 
-Status: product direction anchored 18 September 2026.
+Status: product direction anchored 18 September 2026; Event availability aligned 8 October 2026.
 Purpose: Define the player-facing statistics hierarchy, shared vocabulary and presentation commitments without inventing formulas that have not yet been approved.
+
+## Event availability
+
+The [core Season event contract](../project/CORE-IDENTITY.md#season-event-contract) governs availability. Battle details, the Event roundoff, Season/Player statistics, leaderboards, Reputation, Relationships, Chronicles and Achievements update as each system's required evidence becomes validated and eligible. They do not wait for Emperor Event finalisation or a separate Event release. Normal evidence, rule-configuration, dispute and correction safeguards remain.
+
+Event aggregates can be partial while Battles remain unresolved; display their current coverage. A completed Event's conclusion and curated distinctions are a presentation stage, not a gate on statistics availability.
+
+AI warmups retain Battle Statistics but do not affect competitive ratings, player Relationships or human-opponent records. Achievements require explicit AI eligibility. This decision does not specify additional AI eligibility for other aggregates or interpretation systems; do not invent those rules.
 
 ## 1. Scope and terminology
 
@@ -10,7 +18,7 @@ Age of Friends uses several statistical scopes. They answer different player que
 | Player-facing scope | Question | Primary destination |
 |---|---|---|
 | **Battle Statistics** | What happened in this Battle? | Battle detail / Battle Statistics record |
-| **Event Statistics** | Who and what shaped this Event across its Battles? | Completed Event detail / Event Statistics |
+| **Event Statistics** | Who and what shaped this Event across its Battles? | Event detail / Event Statistics; completed Event archive |
 | **Player Statistics** | Who is this player and how do they tend to play? | Player profile |
 | **Season Statistics** | How does the league play this Season? | Main **Statistics** navigation tab |
 | **Lifetime Statistics** | What has this player done across Seasons? | Data layer only for Season I; player-facing UI activates when Season II makes it meaningfully distinct |
@@ -108,7 +116,7 @@ Each Event should occupy a wide horizontal presentation using its **Event-specif
 Typical state behavior:
 
 - **Upcoming:** Event details and signup.
-- **Active:** Event details and Battles.
+- **Active:** Event details, Battles and available Event Statistics/roundoff as validated evidence arrives.
 - **Completed:** Event record, constituent Battles and Event Statistics / conclusion.
 
 The completed Event remains the durable place to revisit Event distinctions after the hero has moved on to newer news.

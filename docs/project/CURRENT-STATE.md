@@ -1,8 +1,27 @@
 # Age of Friends — Current State
 
-## Event-wide results release — 8 October 2026
+## Season event contract — 8 October 2026
 
-New product direction: one designated 1v1 warm-up per player (four Games for eight players), followed by the main event. Process every recording into all applicable core systems. Individual warm-up/main Battle statistics are visible in their Battle details as soon as processed; cumulative Event/Season/player results and progression remain private. Once main play ends and all required Games are processed, prepare an Event roundoff with qualified happenings and each player's earned points, then release the complete Event package together across the website. This supersedes publishing warm-up cumulative consequences before the main event, with an explicit exception for individual Battle statistics. [Event results publication V1](../architecture/event-results-publication-v1.md) records the proposed manifest/readiness/publication/correction contract and implementation sequence. **Design only:** current processors and public reads still publish individual Match consequences; no Event release gate or atomic roundoff publication exists yet. Automatic replay result/placement qualification and official social/identity/achievement configuration remain prerequisites for full V1 readiness.
+**Product decision:** [CORE-IDENTITY.md — Season event contract](CORE-IDENTITY.md#season-event-contract) is authoritative. The earlier 1v2 warmup proposal and Event-release gate are superseded. Finalisation closes an Event administratively; it does not publish or unlock statistics. Evidence, rule configuration, disputes and corrections still determine eligibility.
+
+**Implementation audit against main at `49929016054cac795fa10af68d68115924baf0af`:** this documentation change adds no runtime behaviour and does not deploy or migrate data.
+
+| Area | Implemented foundation | Agreed work still pending |
+|---|---|---|
+| Warmup timing | Admin-created designated 1v1 pairs; one scoring warmup per player per Event. | Pairing generation at seven days before the main event and enforcement of the end-of-main-event-day completion deadline. |
+| Guest opponent | Warmup creation accepts active members entered in the Season without requiring main-event check-in or Event signup. | Challenge invitation/acceptance, warmup-only guest registration and the acceptance deadline. |
+| AI fallback | The warmup command requires two real, active Season players and enables normal human scoring/rating effects. | Explicit AI opponent representation, fixed announced difficulty/settings, participation-only scoring, rating/Relationship/human-record exclusions and AI-specific Achievement eligibility. Do not create a fake league player or send an AI Game through the human warmup path. |
+| Uneven main teams | Attendance-based flexible match planning and actual-roster drafting exist. The current planning command passes power ratings to the planner. | Use current Season standings to give higher-ranked players the numerical disadvantage. |
+| Event-day order | Check-in, plan approval, civilisation draft and Battle Orders have existing foundations. | Verify end-to-end enforcement of check-in closure and attendance resolution before approval/drafting. |
+| Updates and finalisation | Accepted Match result jobs update downstream systems without waiting for Event release. | Complete replay/statistics integration and an explicit administrative Event-finalisation flow; no Event-wide publication barrier is required. |
+
+**Implementation details not yet decided:** exact AI difficulty/settings, challenge acceptance interval, selection of the unpaired player, deadline timezone/upload-lateness handling, withdrawals and guest cancellations, and the uneven-team allocation/tie algorithm. These are not permission to replace the agreed product contract or invent scoring rules.
+
+**Next action:** implement the contract in bounded changes, starting with warmup scheduling and guest acceptance; add AI eligibility before enabling the fallback, replace power-rating input for the uneven-team rule, and verify event-day ordering. Preserve existing scoring caps and evidence/correction safeguards. Documentation validation: cross-links and policy consistency reviewed; no runtime tests are required for this documentation-only change.
+
+## Event design and roundoff foundation — 8 October 2026
+
+Event details now provide Briefing/Battles/Roundoff tabs, campaign parchment, all warmup/main Battles, functioning check-in windows and a five-to-seven-day warmup opening window (seven days by default). The 64-row ranked accomplishment selector and seventeen original SVG emblems are implemented. Available roundoff payloads are displayed during play without requiring Event finalisation or RELEASED metadata; optional legacy revision mismatches remain excluded. The live roundoff producer remains pending. This does not implement guest acceptance, AI eligibility, automatic pairing generation, end-of-main-day deadline enforcement or standings-based uneven teams. The old [Event release proposal](../architecture/event-results-publication-v1.md) is superseded.
 
 ## Statistics launch-readiness — 7 October 2026
 
