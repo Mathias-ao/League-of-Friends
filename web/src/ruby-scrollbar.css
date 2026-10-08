@@ -1,0 +1,99 @@
+/* Ruby scrollbars belong to Event and Battle details, not the landing page.
+   Each dialog reserves its own gutter, preventing overlays on content and headers. */
+.modal.ruby-contained-dialog[open]{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:fixed;
+}
+.ruby-contained-dialog > .modal-heading{
+  flex:0 0 auto;
+  position:relative;
+  top:auto;
+  z-index:2;
+}
+.ruby-contained-dialog > .modal-body{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  /* The visual scrollbar never covers buttons, tables or battle art. */
+  margin-right:44px;
+}
+.ruby-dialog-scroll{
+  position:absolute;
+  top:var(--ruby-dialog-top,72px);
+  bottom:8px;
+  right:0;
+  width:44px;
+  padding:0 2px;
+  pointer-events:none;
+  background:linear-gradient(90deg,rgba(43,30,21,.18),rgba(43,30,21,.38));
+  border-left:1px solid rgba(130,99,62,.18);
+}
+.ruby-dialog-scroll[data-visible="false"]{display:none}
+.ruby-dialog-scroll__rail{
+  position:relative;
+  height:100%;
+  width:100%;
+  pointer-events:auto;
+  cursor:pointer;
+}
+.ruby-dialog-scroll__rail::before{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:50%;
+  width:2px;
+  transform:translateX(-50%);
+  background:linear-gradient(90deg,#26180f 0 50%,#99754a 50% 100%);
+  opacity:.68;
+  pointer-events:none;
+}
+.ruby-dialog-scroll__thumb{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:none;
+  user-select:none;
+  cursor:grab;
+  will-change:transform;
+}
+.ruby-dialog-scroll__thumb:active{cursor:grabbing}
+.ruby-dialog-scroll__thumb:focus-visible{outline:2px solid #dab47b;outline-offset:2px}
+.ruby-dialog-scroll__thumb img{
+  display:block;
+  height:86px;
+  width:auto;
+  max-width:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 3px 5px rgba(38,21,14,.68));
+}
+.ruby-dialog-scroll__thumb:hover img{filter:brightness(1.12) drop-shadow(0 3px 7px rgba(53,25,12,.74))}
+@media (hover:hover) and (pointer:fine) and (min-width:700px){
+  .ruby-contained-dialog > .modal-body.ruby-dialog-scroll-active{scrollbar-width:none}
+  .ruby-contained-dialog > .modal-body.ruby-dialog-scroll-active::-webkit-scrollbar{display:none}
+}
+@media not ((hover:hover) and (pointer:fine) and (min-width:700px)){
+  .ruby-contained-dialog > .modal-body{margin-right:0}
+  .ruby-dialog-scroll{display:none}
+}
+@media (prefers-reduced-motion:reduce){.ruby-dialog-scroll__thumb img{transition:none}}
+
+/* The document retains native wheel, keyboard, touch and programmatic scrolling;
+   only its browser-drawn scrollbar is hidden. Dialog ruby controls are separate. */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
