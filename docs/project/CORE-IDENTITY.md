@@ -1,6 +1,6 @@
 # Age of Friends — Core Identity & Philosophy
 
-Status date: 2 October 2026  
+Status date: 8 October 2026  
 Purpose: Define the foundational soul, unshakeable design principles, and absolute source of truth for the Age of Friends ecosystem, ensuring product alignment across all stages of development.
 
 ## 1. How to use this file
@@ -56,6 +56,38 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 - Region and premise: European conflicts and rivalries relevant to AoE2 DE.
 - Tagline: **Good fences make good neighbors. Castles make better ones.**
 - Participation hierarchy: join the league once, enter each season separately, then answer each event signup separately.
+
+### Season event contract
+
+Agreed with Mathias on **8 October 2026**. This section is the authoritative product contract for season Events. It supersedes the earlier 1v2 warmup proposal and any proposal to withhold statistics until Event release. It defines intended behaviour, not a claim that every flow is implemented; see [CURRENT-STATE.md](CURRENT-STATE.md#season-event-contract--8-october-2026).
+
+#### Event
+
+Each Event consists of one warmup Match per player and a main event comprising one or more FFA or team Games. Players sign up in advance. The existing hierarchy and scoring cap remain: a Match may contain multiple Games, but each player has at most one designated scoring WARMUP Match and one designated scoring MAIN Match per Event.
+
+#### Warmup
+
+Warmup pairings are generated seven days before the scheduled main event. Players arrange their Matches independently and must complete them by the end of the main event's calendar day.
+
+Each player plays one 1v1. If the signup roster is odd, the unpaired player may challenge an active AoF member entered in the Season who did not sign up for the Event. Accepting registers the guest for the warmup only, without signing them up for the main event. Both players receive normal warmup points, and each may play only one scoring warmup per Event.
+
+The Event specifies a challenge acceptance deadline that leaves time to complete the Match. If no guest accepts by that deadline, the unpaired player faces an AI at a fixed, announced difficulty using standard warmup settings.
+
+AI warmups award one participation point and no victory bonus. Their Battle Statistics are retained, but they do not affect competitive ratings, player Relationships, or human-opponent records. Achievements apply only where their rules explicitly permit AI Games. An AI is not an AoF member or a league player identity. A 1v2 warmup with player-chosen handicaps is not the adopted fallback.
+
+#### Main event
+
+Check-in closes → attendance changes are resolved → teams and Matches are approved → civilisations are drafted under Event-specific rules → Battle Orders are issued → play begins.
+
+For team Games with an odd number of players, uneven teams are generated using current Season standings. Higher-ranked players receive the numerical disadvantage. This rule uses Season leaderboard rank, not power rating. The approved Match/Game plan determines the actual roster, teams, format and drafting rules.
+
+Recordings are uploaded after each Game. Processing updates Battle details and the Event roundoff. Once all Matches are resolved, the Emperor (admin) finalises the Event.
+
+#### Results and statistics
+
+Processed Game recordings provide the evidence for results, Battle and Season statistics, the Season leaderboard, player Reputations, player Relationships, Chronicles and Achievements.
+
+Each system updates as its required evidence is validated. Statistics and Achievement unlocks do not wait for Event finalisation. Emperor finalisation closes the Event administratively; it is not a publication gate. Normal evidence qualification, configured rule sets, eligibility, disputes and correction safeguards still apply. An Event-dependent award must wait for the evidence its own rule requires.
 
 ### Event I
 

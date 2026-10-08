@@ -27,6 +27,7 @@ Every task should begin with the latest `main` branch and these sources:
 
 | Source | Authority |
 |---|---|
+| [`docs/project/CORE-IDENTITY.md`](docs/project/CORE-IDENTITY.md) | Lasting product rules, including the authoritative [Season event contract](docs/project/CORE-IDENTITY.md#season-event-contract). |
 | [`docs/project/PROJECT-CONTINUITY.md`](docs/project/PROJECT-CONTINUITY.md) | Project identity, locked decisions, source authority and cross-workstream rules. |
 | [`docs/project/CURRENT-STATE.md`](docs/project/CURRENT-STATE.md) | Implemented state, known gaps, open decisions and routing for the next task. |
 | Current code and configuration | Implemented behavior. Code outranks a stale implementation description. |
@@ -46,6 +47,7 @@ The authority order and fresh-task procedure are defined in the continuity file.
 - Parser facts, deterministic reconstruction, inferred analysis and league scoring are separately versioned layers.
 - Players upload the replay after a Game; they do not manually enter statistics.
 - Results normally become final directly and retain a small dispute option. Only one active result contributes.
+- Season Events follow the [core Season event contract](docs/project/CORE-IDENTITY.md#season-event-contract): week-before warmups, guest challenge before AI fallback for an odd roster, standings-based uneven main teams, and validated updates without waiting for Emperor finalisation. See CURRENT-STATE.md for implementation gaps.
 - Authentication UID, durable league `playerId`, external profile ID, replay slot and object instance ID are different identities.
 - League Points, War Room Points and Gold are separate systems.
 - Player relationship currencies are Gallantry, Treachery and Chivalry; pair relationship tracks are separately Rivalry, Hostility and Bond. Their earning/progression rules are intentionally not yet frozen, and the current relationship engine requires migration before final exposure.

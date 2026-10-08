@@ -1,5 +1,24 @@
 # Age of Friends — Current State
 
+## Season event contract — 8 October 2026
+
+**Product decision:** [CORE-IDENTITY.md — Season event contract](CORE-IDENTITY.md#season-event-contract) is authoritative. The earlier 1v2 warmup proposal and Event-release gate are superseded. Finalisation closes an Event administratively; it does not publish or unlock statistics. Evidence, rule configuration, disputes and corrections still determine eligibility.
+
+**Implementation audit against main at `49929016054cac795fa10af68d68115924baf0af`:** this documentation change adds no runtime behaviour and does not deploy or migrate data.
+
+| Area | Implemented foundation | Agreed work still pending |
+|---|---|---|
+| Warmup timing | Admin-created designated 1v1 pairs; one scoring warmup per player per Event. | Pairing generation at seven days before the main event and enforcement of the end-of-main-event-day completion deadline. |
+| Guest opponent | Warmup creation accepts active members entered in the Season without requiring main-event check-in or Event signup. | Challenge invitation/acceptance, warmup-only guest registration and the acceptance deadline. |
+| AI fallback | The warmup command requires two real, active Season players and enables normal human scoring/rating effects. | Explicit AI opponent representation, fixed announced difficulty/settings, participation-only scoring, rating/Relationship/human-record exclusions and AI-specific Achievement eligibility. Do not create a fake league player or send an AI Game through the human warmup path. |
+| Uneven main teams | Attendance-based flexible match planning and actual-roster drafting exist. The current planning command passes power ratings to the planner. | Use current Season standings to give higher-ranked players the numerical disadvantage. |
+| Event-day order | Check-in, plan approval, civilisation draft and Battle Orders have existing foundations. | Verify end-to-end enforcement of check-in closure and attendance resolution before approval/drafting. |
+| Updates and finalisation | Accepted Match result jobs update downstream systems without waiting for Event release. | Complete replay/statistics integration and an explicit administrative Event-finalisation flow; no Event-wide publication barrier is required. |
+
+**Implementation details not yet decided:** exact AI difficulty/settings, challenge acceptance interval, selection of the unpaired player, deadline timezone/upload-lateness handling, withdrawals and guest cancellations, and the uneven-team allocation/tie algorithm. These are not permission to replace the agreed product contract or invent scoring rules.
+
+**Next action:** implement the contract in bounded changes, starting with warmup scheduling and guest acceptance; add AI eligibility before enabling the fallback, replace power-rating input for the uneven-team rule, and verify event-day ordering. Preserve existing scoring caps and evidence/correction safeguards. Documentation validation: cross-links and policy consistency reviewed; no runtime tests are required for this documentation-only change.
+
 ## Statistics launch-readiness — 7 October 2026
 
 [`CURRENT-STATS.md`](CURRENT-STATS.md) is the current statistics authority and supersedes

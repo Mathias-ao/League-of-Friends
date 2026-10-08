@@ -2,12 +2,22 @@
 
 Agreed with the product owner on 2026-10-07. Policy version: AOF_SEASON_POINTS_V1.
 
+## Season Event contract and AI exception — 8 October 2026
+
+[CORE-IDENTITY.md — Season event contract](../project/CORE-IDENTITY.md#season-event-contract) governs Event structure and scheduling. Human warmups, including a warmup-only guest challenge, retain the normal 1 participation / 2 victory points and the one-WARMUP-per-player cap. The guest must be an active member entered in the Season and does not thereby sign up for the main event.
+
+If no guest accepts by the announced deadline, the agreed AI fallback awards the human player **1 participation point and no victory bonus**. The human warmup row below does not apply a victory bonus to AI Games. AI warmups retain Battle Statistics but do not affect competitive ratings, player Relationships or human-opponent records; Achievements require explicit AI eligibility.
+
+**Implementation status:** the current V1 human-pair callable/scoring path does not implement the AI exception or guest challenge lifecycle. Do not model an AI as a league player, silently mutate historical scoring snapshots, or claim the exception is deployed. Implement explicit opponent eligibility and version/snapshot the changed rules before enabling AI warmups. Gold and other AI-specific effects are not specified by this decision.
+
+Validated results and eligible awards update without an Event-release gate. Emperor Event finalisation is administrative and is distinct from Match-series result finalisation. Normal dispute, qualification and correction safeguards remain.
+
 ## Awards
 
 | Scoring opportunity | Participation | Victory | Additional awards |
 |---|---:|---:|---|
 | Main team / individual Match | 4 | 6 per official winner | 2 per eligible winner against the Emperor |
-| Warm-up 1v1 Match | 1 | 2 | None |
+| Human warm-up 1v1 Match | 1 | 2 | None |
 | Diplomatic FFA | 4 | 6 divided by number of official winners | Emperor bounty where eligible; no placements |
 | Nondiplomatic FFA | 4 | 6 for first | Second: 2 with >=3 starters; third: 1 with >=5 starters |
 
