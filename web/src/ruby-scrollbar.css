@@ -86,3 +86,14 @@
   .ruby-dialog-scroll{display:none}
 }
 @media (prefers-reduced-motion:reduce){.ruby-dialog-scroll__thumb img{transition:none}}
+
+/* The document retains native wheel, keyboard, touch and programmatic scrolling;
+   only its browser-drawn scrollbar is hidden. Dialog ruby controls are separate. */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
