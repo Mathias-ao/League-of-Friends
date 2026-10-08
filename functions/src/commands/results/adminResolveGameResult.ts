@@ -24,6 +24,7 @@ interface AdminResolveGameResultInput {
   reason: string;
   sourceHash?:string;
   playedWithinWindow?:boolean;
+  rejectTimingEvidence?:boolean;
 }
 
 export const adminResolveGameResult = onCall<AdminResolveGameResultInput>(callableOptions, async (request) => {
@@ -57,6 +58,18 @@ export const adminResolveGameResult = onCall<AdminResolveGameResultInput>(callab
     const game = gameSnapshot.data() as GameForResult;
     const submission = submissionSnapshot.data() as ResultSubmissionDocument;
     assertResultShape(match);
+    if(request.data.rejectTimingEvidence===true) {
+      if(submission.status!=='PENDING_ADMIN_REVIEW'||!submissionSnapshot.data()?.requiresTimingReview||match.scoringSnapshot?.rules?.act!=='WARMUP'||match.canonicalResult||game.canonicalResult||reason.length<8)throw new HttpsError('failed-precondition','Only unresolved late warm-up evidence may be rejected through this review.');
+      const ledger=await transaction.get(db.collection('leaguePointLedger').where('matchId','==',matchId));
+      if(ledger.size)throw new HttpsError('failed-precondition','Awarded results require the correction workflow.');
+      await reserveIdempotencyKey(transaction,requestId,'adminResolveGameResult',actor.authUid);
+      const now=Timestamp.now();
+      transaction.update(matchRef,{status:'VOID',resolutionReason:reason,resolvedBy:actor.playerId,updatedAt:now});
+      transaction.update(gameRef,{status:'VOID',resolutionReason:reason,updatedAt:now});
+      transaction.update(submissionRef,{status:'REJECTED',resolvedBy:actor.playerId,resolutionReason:reason,updatedAt:now});
+      writeAdminAudit(transaction,{actorUid:actor.authUid,actorPlayerId:actor.playerId,action:'WARMUP_TIMING_EVIDENCE_REJECTED',targetType:'GAME',targetId:matchId+'/'+gameId,reason,after:{submissionId,status:'VOID'}});
+      return {matchCompleted:false,canonicalResult:null,rejected:true};
+    }
     if(submissionSnapshot.data()?.requiresTimingReview) {
       const sourceHash=request.data.sourceHash;
       if(typeof sourceHash!=='string'||!/^[0-9a-f]{64}$/.test(sourceHash)||gameSnapshot.data()?.activeReplayStatisticsId!==sourceHash||request.data.playedWithinWindow!==true||reason.length<8)throw new HttpsError('failed-precondition','Verify timely completion against the active recording and explain the evidence.');

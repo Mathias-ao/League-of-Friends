@@ -59,7 +59,7 @@ export const submitGameResult = onCall<SubmitGameResultInput>(callableOptions, a
     const window=matchPlayWindow(matchSnapshot.data()!,event);
     assertMatchPlayOpened({playOpensAt:window.opensAt});
 
-    if (match.status === "COMPLETED" || match.status === "CANCELLED") {
+    if (match.status === "COMPLETED" || match.status === "CANCELLED" || match.status === "VOID") {
       throw new HttpsError("failed-precondition", "This Match no longer accepts result submissions.");
     }
     if (game.status === "COMPLETED" || game.status === "REMAKE" || game.status === "NO_CONTEST") {

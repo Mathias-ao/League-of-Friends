@@ -114,6 +114,11 @@ test('late result claims require recording-bound timing review; independent conf
  db.set('matches/'+id+'/games/G1',{...db.get('matches/'+id+'/games/G1'),activeReplayStatisticsId:hash});
  db.set('matches/'+id+'/games/G1/replaySources/'+hash,{state:'READY',sourceHash:hash,matchId:id,gameId:'G1'});
  await adminResolveGameResult.run(req(data));assert.equal(db.get('matches/'+id).status,'COMPLETED');
+ const next=fixture(2);await advanceEventWarmups('e',next.now);const nextId=next.db.get('events/e').warmupMatchIds[0],nextMatch=next.db.get('matches/'+nextId),claimant=nextMatch.participants[0].playerId;
+ next.db.set('matches/'+nextId,{...nextMatch,playClosesAt:Timestamp.fromMillis(next.now-1)});
+ await submitGameResult.run(req({matchId:nextId,gameId:'G1',type:'WIN',winnerTeam:1},claimant));
+ await adminResolveGameResult.run(req({requestId:'reject-timing',matchId:nextId,gameId:'G1',submissionId:claimant,reason:'The Game was completed after the play deadline.',rejectTimingEvidence:true}));
+ assert.equal(next.db.get('matches/'+nextId).status,'VOID');assert.equal(next.db.has('seasons/s/standings/'+claimant),false);
 });
 
 test('AI Battle measurements retain the human, exclude synthetic league identity and human records, and bind review to source',()=>{

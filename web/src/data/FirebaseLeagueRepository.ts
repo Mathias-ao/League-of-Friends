@@ -80,7 +80,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async resolveUnplayedMatch(matchId:string,reason:string){await this.call('adminResolveUnplayedEventMatch',{matchId,reason});}
   async verifyAIWarmup(matchId:string,sourceHash:string,reason:string){await this.call('adminVerifyAIWarmup',{matchId,sourceHash,reason,settingsVerified:true,playedWithinWindow:true});}
   async disputeAIWarmup(matchId:string,reason:string){await this.call('disputeAIWarmup',{matchId,reason});}
-  async reviewLateWarmup(matchId:string,gameId:string,submissionId:string,sourceHash:string,reason:string){await this.call('adminResolveGameResult',{requestId:crypto.randomUUID(),matchId,gameId,submissionId,sourceHash,reason,playedWithinWindow:true});}
+  async reviewLateWarmup(matchId:string,gameId:string,submissionId:string,sourceHash:string,reason:string,rejectTimingEvidence=false){await this.call('adminResolveGameResult',{requestId:crypto.randomUUID(),matchId,gameId,submissionId,sourceHash,reason,playedWithinWindow:!rejectTimingEvidence,rejectTimingEvidence});}
   async enterSeason(seasonId:string){await this.call('enterSeason',{seasonId});}
   async rsvp(eventId:string,rsvp:'YES'|'NO'){await this.call('setEventRsvp',{eventId,rsvp});}
   async checkIn(eventId:string){await this.call('checkInToEvent',{eventId});}

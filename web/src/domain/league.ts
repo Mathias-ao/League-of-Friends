@@ -142,7 +142,7 @@ export interface LeagueRepository {
   resolveUnplayedMatch?(matchId:string,reason:string):Promise<void>;
   verifyAIWarmup?(matchId:string,sourceHash:string,reason:string):Promise<void>;
   disputeAIWarmup?(matchId:string,reason:string):Promise<void>;
-  reviewLateWarmup?(matchId:string,gameId:string,submissionId:string,sourceHash:string,reason:string):Promise<void>;
+  reviewLateWarmup?(matchId:string,gameId:string,submissionId:string,sourceHash:string,reason:string,rejectTimingEvidence?:boolean):Promise<void>;
   load():Promise<LeagueSnapshot>;signIn():Promise<void>;signOut():Promise<void>;
   requestMembership(steamName:string,discordName:string,favor:string):Promise<void>;
   generateEmperorsFavors(batchName:string,count:number):Promise<EmperorsFavorBatch>;
