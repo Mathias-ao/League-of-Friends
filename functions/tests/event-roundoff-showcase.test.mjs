@@ -192,3 +192,17 @@ test('Battle accomplishments reject disputed, unqualified, mismatched or illustr
   assert.deepEqual(selectBattleShowcase({match,game:{...game,sourceHash:'preview-recording'}}),[]);
   assert.ok(selectBattleShowcase({match,game:{...game,sourceHash:'preview-recording'},illustrative:true}).length);
 });
+
+test('uncounted extra warmups contribute to statistics-based accomplishments without changing counted victory honours',()=>{
+ const input=fixture(false),warm=input.matches[1],game=input.games[1];
+ const extra={...warm,matchId:'EXTRA',countedWarmupPlayerIds:[],result:{revision:1,winningPlayerIds:['p1']}};
+ input.matches[1]={...warm,countedWarmupPlayerIds:['p0']};
+ input.matches.push(extra);input.games.push({...game,matchId:'EXTRA',sourceHash:'e'.repeat(64),players:game.players.map(p=>({...p,values:{...p.values},models:{...p.models}}))});
+ set(input,'W0','p0','farmsPlaced',70);set(input,'EXTRA','p0','farmsPlaced',75);set(input,'M1','p0','farmsPlaced',60);
+ const card=find(input,'farmsPlaced');assert.ok(card);assert.match(card.value,/205 farm placements/);assert.deepEqual(card.sources.map(source=>source.matchId),['EXTRA','M1','W0']);
+ const victory=find(input,'unbeaten');assert.ok(victory?.playerIds.includes('p0'),'victory honour still uses the counted warm-up result');assert.ok(!victory.sources.some(source=>source.matchId==='EXTRA'),'uncounted loss does not become a counted victory source');
+ const saved=JSON.stringify(input);const extraGame=input.games.find(g=>g.matchId==='EXTRA');extraGame.eligible=false;extraGame.exclusionReason='Result disputed';
+ assert.equal(find(input,'farmsPlaced'),undefined,'ineligible extra Game is not treated as zero or a complete aggregate');
+ Object.assign(input,JSON.parse(saved));input.games.push({...input.games.find(g=>g.matchId==='EXTRA'),matchId:'DUPLICATE'});input.matches.push({...extra,matchId:'DUPLICATE'});
+ assert.equal(find(input,'farmsPlaced'),undefined,'duplicate recording identity cannot inflate accomplishments');
+});

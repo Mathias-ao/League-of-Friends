@@ -207,7 +207,7 @@ test('recording-only series conclude after the decisive Game, skip unused Games 
   await finalizeRecordingSeries.run(event);assert.equal([...records.keys()].filter(k=>k.startsWith('processingJobs/')).length,1);
 });
 
-test('live Roundoff and Event statistics count each best warmup once, while closure waits for reconciliation',async()=>{
+test('Event statistics retain both warmups while Roundoff points and closure use one best result',async()=>{
   const records=seedRecording(),event={seasonId:'s',status:'ACTIVE',startsAt:Timestamp.fromMillis(Date.now()-1000),warmupPolicy:{scoringPolicy:'AOF_BEST_WARMUP_V1'},warmupSchedule:{status:'COMPLETE'},warmupMatchIds:['w1','w2']};records.set('events/e',event);
   for(const [id,matchId] of [['p1','w1'],['p2','w1'],['p3','w2']]){records.set('players/'+id,{membershipStatus:'ACTIVE',goldBalance:0});records.set('events/e/scoringSlots/WARMUP_'+id,{playerId:id,matchId,seasonId:'s',act:'WARMUP'});}
   addWarmup(records,'w1',['p1','p2'],'p2');addWarmup(records,'w2',['p1','p3'],'p1');
@@ -217,9 +217,14 @@ test('live Roundoff and Event statistics count each best warmup once, while clos
     const raw={scope:{observedUntilMs:100},participants:source.playerMapping.map(p=>({replaySlot:p.replaySlot,playerId:p.replaySlot,economy:{resourceCommitment:{modelVersion:'cost-v1',resourcesCommitted:{total:id==='w1'?100:300}}}}))},metadata=statisticsMetadata(id,'G1',m,g,source);source.experience=augmentSeasonShowcase(raw,projectStatistics(raw,metadata),metadata);
     records.set('processingJobs/MATCH_RESULT_'+id+'_R1',{matchId:id,resultRevision:1,status:'COMPLETED',pendingSteps:[]});
   }
-  const scoped=await collectStatistics({eventId:'e'}),row=new StatisticsExperience(scoped.games).aggregate().find(p=>p.playerId==='p1');assert.equal(row.games,1);assert.equal(row.values.total.value,300);
+  const scoped=await collectStatistics({eventId:'e'}),row=new StatisticsExperience(scoped.games).aggregate().find(p=>p.playerId==='p1');assert.equal(row.games,2);assert.equal(row.values.total.value,400);
+  assert.equal(scoped.games.some(game=>'countedEventPlayerIds' in game),false,'statistics carry no scoring selection mask');
   assert.equal(new StatisticsExperience((await collectStatistics({seasonId:'s'})).games).aggregate().find(p=>p.playerId==='p1').games,2);
-  const roundoff=await readEventRoundoff('e');assert.equal(roundoff.points.find(p=>p.playerId==='p1').warmup,3);assert.ok(roundoff.revision>0);
+  const roundoff=await readEventRoundoff('e','p1');assert.equal(roundoff.points.find(p=>p.playerId==='p1').warmup,3);assert.ok(roundoff.revision>0);
+  assert.equal(roundoff.viewerWarmupSelection.matchId,'w2');assert.equal(roundoff.viewerWarmupSelection.points,3);
+  records.set('matches/w2',{...records.get('matches/w2'),status:'DISPUTED',activeResultDisputeId:'test-review'});
+  const disputed=await collectStatistics({eventId:'e'});assert.equal(new StatisticsExperience(disputed.games).aggregate().find(p=>p.playerId==='p1').games,1);
+  records.set('matches/w2',{...records.get('matches/w2'),status:'COMPLETED',activeResultDisputeId:null});
   records.set('matches/main',{eventId:'e',status:'CANCELLED',resolutionReason:'Main Battle explicitly cancelled.',scoringSnapshot:{rules:{act:'MAIN'}}});
   assert.equal((await readEventFinalisation(firestore.collection('events').doc('e'),event)).canFinalise,true);
   records.delete('events/e/warmupSelections/p1');assert.ok((await readEventFinalisation(firestore.collection('events').doc('e'),event)).blockers.some(b=>b.kind==='WARMUP_POINTS'));
@@ -252,4 +257,24 @@ test('Emperor can open an audited correction review without having played; unrel
   const input={requestId:'admin-review',matchId:'m',gameId:'G1',category:'OTHER',reason:'Emperor spotted an incorrect recording attribution.'};
   await assert.rejects(disputeCanonicalGameResult.run(req(input,'outsider')),/participant/i);
   await disputeCanonicalGameResult.run(req(input));assert.equal(records.get('matches/m').status,'DISPUTED');assert.ok([...records.values()].some(v=>v.action==='RESULT_CORRECTION_REVIEW_OPENED'));
+});
+
+test('personal counted-warmup receipt is viewer scoped and follows reconciled awards, disputes and source withdrawal',async()=>{
+ const records=seedRecording();records.set('events/e',{seasonId:'s',status:'ACTIVE',warmupPolicy:{scoringPolicy:'AOF_BEST_WARMUP_V1'},warmupMatchIds:['w1','w2']});
+ for(const [id,matchId] of [['p1','w1'],['p2','w1'],['p3','w2']]){records.set('players/'+id,{membershipStatus:'ACTIVE',goldBalance:0});records.set('events/e/scoringSlots/WARMUP_'+id,{playerId:id,matchId,seasonId:'s',act:'WARMUP'});}
+ addWarmup(records,'w1',['p1','p2'],'p2');addWarmup(records,'w2',['p1','p3'],'p1');
+ await processMatchRewards({matchId:'w1',requestId:'receipt1'},system);await processMatchRewards({matchId:'w2',requestId:'receipt2'},system);
+ assert.equal((await readEventRoundoff('e')).viewerWarmupSelection,null);
+ assert.equal((await readEventRoundoff('e','unrelated')).viewerWarmupSelection,null);
+ assert.equal((await readEventRoundoff('e','p2')).viewerWarmupSelection,null,'one warm-up needs no selection notice');
+ const selected=(await readEventRoundoff('e','p1')).viewerWarmupSelection;
+ assert.equal(selected.matchId,'w2');assert.equal(selected.points,3);assert.equal(selected.playerId,'p1');assert.equal(selected.otherWarmupCount,1);
+ const stored=records.get('events/e/warmupSelections/p1');records.set('events/e/warmupSelections/p1',{...stored,selected:{...stored.selected,sourceHash:'stale'}});
+ assert.equal((await readEventRoundoff('e','p1')).viewerWarmupSelection,null,'stale source cannot produce a receipt');records.set('events/e/warmupSelections/p1',stored);
+ records.set('matches/w2',{...records.get('matches/w2'),status:'DISPUTED',activeResultDisputeId:'review'});
+ assert.equal((await readEventRoundoff('e','p1')).viewerWarmupSelection,null,'dispute withdraws the old notice before reconciliation');
+ await reconcileBestWarmups('e');const fallback=(await readEventRoundoff('e','p1')).viewerWarmupSelection;
+ assert.equal(fallback.matchId,'w1');assert.equal(fallback.points,1);assert.equal(fallback.win,false);
+ records.set('matches/w1/games/G1',{...records.get('matches/w1/games/G1'),activeReplayStatisticsId:'missing'});
+ assert.equal((await readEventRoundoff('e','p1')).viewerWarmupSelection,null);
 });

@@ -18,7 +18,7 @@ Processed measurements add each player's opening classification and main militar
 
 A parent Match series need not be finished for an independently accepted Game to qualify. Player and team bindings, format, Event identity, current source revision, measurement models, completeness and dispute safeguards remain required. Unknown values do not become zero. Team-only claims remain inapplicable to 1v1/FFA without actual allies. Age thresholds remain disabled without a pinned standard-start setting. The same V1 metric thresholds are retained rather than introducing unapproved Battle-specific estimates.
 
-Campaign-wide unbeaten claims and historical records/personal bests are excluded. Emperor recognition is excluded because this Battle read does not carry the authoritative pre-warmup office pin required to establish it. Ordinary Games produce fewer cards or no strip. This selector grants no achievements, points or social progression; Event curation retains main #77’s best-warmup accounting. Battle distinctions describe the individual Game even when its warm-up is not the player’s counted Event warm-up.
+Campaign-wide unbeaten claims and historical records/personal bests are excluded. Emperor recognition is excluded because this Battle read does not carry the authoritative pre-warmup office pin required to establish it. Ordinary Games produce fewer cards or no strip. This selector grants no achievements, points or social progression; Event points retain best-warmup accounting; statistical curation includes all eligible warmups. Battle distinctions describe the individual Game even when its warm-up is not the player’s counted Event warm-up.
 
 ## Separate windows
 

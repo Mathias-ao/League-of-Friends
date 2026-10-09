@@ -108,3 +108,32 @@ test('participation actions continue through the existing service and refresh th
   assert.equal((await repo.event('E001')).viewer.rsvp,'NO');assert.equal(updates,2);
  }finally{await act(async()=>root.unmount());dom.window.close();}
 });
+
+test('extra-warmup selection hangs on the Event hero, opens a parchment receipt, and follows refreshed selections',async()=>{
+ const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+ dom.window.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};dom.window.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
+ const {createRoot}=await import('react-dom/client'),root=createRoot(document.getElementById('app')!);
+ const repository=new PreviewLeagueRepository();await repository.signIn();await repository.requestMembership('Reviewer','','K7M4Q9');await repository.enterSeason();
+ const snapshot=await repository.load(),original=await repository.event('E001'),data=eventDesignPreview(original,snapshot,'counted'),visited:string[]=[];
+ const props={repository,snapshot,preview:false,busy:false,openEvent:()=>{},openMatch:(id:string)=>visited.push(id),openPlayer:()=>{},act:async()=>true,enter:()=>{},navigate:()=>{},onUpdated:()=>{}};
+ const click=async(selector:string)=>{const button=document.querySelector(selector) as HTMLButtonElement;assert.ok(button,selector);await act(async()=>{button.focus();button.click();});};
+ try{
+  await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:original})));assert.equal(document.querySelector('.event-warmup-marker'),null);
+  await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data})));
+  const marker=document.querySelector('.event-briefing-hero .event-warmup-marker')!;assert.match(marker.textContent!,/\+3/);
+  await click('[role="tab"]:nth-child(2)');assert.ok(document.querySelector('.event-warmup-marker'),'marker stays across tabs');
+  await click('.event-warmup-marker');const note=document.querySelector('dialog[open]')!;
+  assert.ok(note.querySelector('.chronicle-parchment'));assert.match(note.textContent!,/automatically selected/);assert.match(note.textContent!,/\+3 Event points/);assert.match(note.textContent!,/Season leaderboard/);
+  const fallback={...data,roundoff:{...data.roundoff!,viewerWarmupSelection:{...data.roundoff!.viewerWarmupSelection!,matchId:data.matches[0].matchId,points:1,win:false,sourceHash:'fallback'}}};
+  await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:fallback})));
+  assert.match(note.textContent!,/\+1 Event points/);assert.match(note.textContent!,/Participation/);
+  await act(async()=>note.dispatchEvent(new dom.window.Event('cancel',{cancelable:true})));
+  assert.equal(document.querySelector('dialog[open]'),null);assert.equal(document.activeElement,marker);
+  await click('.event-warmup-marker');await click('.event-warmup-open-battle');assert.deepEqual(visited,[data.matches[0].matchId]);assert.equal(document.querySelector('dialog[open]'),null);
+  await click('.event-warmup-marker');await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:{...fallback,roundoff:{...fallback.roundoff!,viewerWarmupSelection:null}}})));
+  assert.equal(document.querySelector('.event-warmup-marker'),null);assert.equal(document.querySelector('dialog[open]'),null,'withdrawal removes the stale receipt');
+  await act(async()=>root.render(React.createElement(EventDialogWithStatistics,{...props,data:{...data,viewer:{...data.viewer,playerId:'another-player'}}})));
+  assert.equal(document.querySelector('.event-warmup-marker'),null,'receipt belongs to the viewer');
+ }finally{await act(async()=>root.unmount());dom.window.close();}
+});

@@ -7,6 +7,7 @@ import {formatLeaguePoints} from '../domain/seasonPoints';
 import {eventDesignPreview,type EventDesignState} from '../data/eventDesignPreview';
 import {lombardia} from '../data/content';
 import {Avatar,DateLabel} from './Primitives';
+import {EventWarmupNote} from './EventWarmupNote';
 import {CampaignBriefing} from './CampaignBriefing';
 import {EventRoundoffShowcase} from './EventRoundoffShowcase';
 import {useScheduleClock} from '../hooks/useScheduleClock';
@@ -27,6 +28,7 @@ export function EventDetails(props:ViewProps&{data:EventDetail;onUpdated:()=>voi
   const [storyOpen,setStoryOpen]=useState(false);
   useEffect(()=>{setTab('briefing');setDesignState('current');setStoryOpen(false);},[props.data.event.eventId]);
   const data=preview?eventDesignPreview(props.data,snapshot,designState):props.data;
+  const countedWarmup=data.roundoff?.viewerWarmupSelection?.playerId===data.viewer.playerId?data.roundoff.viewerWarmupSelection:null;
   const now=useScheduleClock([data.event.checkInOpensAt,data.event.checkInClosesAt,data.event.signupDeadlineAt,data.event.warmupOpensAt,data.event.startsAt]);
   const event=new LeagueEvent({...data.event,viewer:data.viewer});
   const official=data.matches.filter(match=>match.status!=='PROPOSED');
@@ -61,10 +63,11 @@ export function EventDetails(props:ViewProps&{data:EventDetail;onUpdated:()=>voi
     e.preventDefault();setTab(tabs[next].id);document.getElementById(`${tabId}-${tabs[next].id}`)?.focus();
   };
   return <div className="event-details">
-    {preview&&<div className="event-design-controls"><span>Illustrative Event states</span><label>Preview state<select value={designState} onChange={e=>{const state=e.target.value as EventDesignState;setDesignState(state);(repository as typeof repository&{setEventDesignState?:(id:string,state:EventDesignState)=>void}).setEventDesignState?.(data.event.eventId,state);setTab('briefing');}}><option value="current">Current preview data</option><option value="pairings">Warm-up pairings</option><option value="main">Main Battle ready</option><option value="preparing">Record being prepared</option><option value="released">Available roundoff</option></select></label></div>}
-    <header className={'event-briefing-hero '+(artwork?'with-artwork':'')} style={artwork?{backgroundImage:`linear-gradient(90deg,rgba(22,14,10,.96),rgba(22,14,10,.57) 68%,rgba(22,14,10,.3)),url(${JSON.stringify(artwork)})`}:undefined}>
+    {preview&&<div className="event-design-controls"><span>Illustrative Event states</span><label>Preview state<select value={designState} onChange={e=>{const state=e.target.value as EventDesignState;setDesignState(state);(repository as typeof repository&{setEventDesignState?:(id:string,state:EventDesignState)=>void}).setEventDesignState?.(data.event.eventId,state);setTab('briefing');}}><option value="current">Current preview data</option><option value="pairings">Warm-up pairings</option><option value="main">Main Battle ready</option><option value="preparing">Record being prepared</option><option value="released">Available roundoff</option><option value="counted">Counted extra warm-up</option></select></label></div>}
+    <header className={'event-briefing-hero '+(artwork?'with-artwork ':'')+(countedWarmup?'has-warmup-note':'')} style={artwork?{backgroundImage:`linear-gradient(90deg,rgba(22,14,10,.96),rgba(22,14,10,.57) 68%,rgba(22,14,10,.3)),url(${JSON.stringify(artwork)})`}:undefined}>
       <div><span className="event-phase"><Flag size={13}/>{phaseLabel}</span><h3>{isLombardia(data.event)?'The road to Milan':data.event.title}</h3><p>{data.event.description||(isLombardia(data.event)?lombardia.story.oneLine:'A new field of contest in the Season campaign.')}</p><button className="event-campaign-trigger" onClick={()=>setStoryOpen(true)} aria-haspopup="dialog"><BookOpen size={16}/>Read the campaign briefing<ArrowRight size={15}/></button></div>
       <div className="event-hero-facts"><span><Clock3 size={15}/><DateLabel value={data.event.startsAt}/></span><span><Swords size={15}/>{mains[0]?formatName(mains[0].format):isLombardia(data.event)?'4v4 · Lombardia':formatName(data.event.competitionStyle)}</span><span><Users size={15}/>{data.signup.confirmedCount} / {data.event.maxParticipants??'—'} banners raised</span></div>
+      {countedWarmup&&<EventWarmupNote key={data.event.eventId+'/'+data.viewer.playerId} note={countedWarmup} event={data.event} matches={official} openMatch={openMatch}/>}
     </header>
     <nav className="event-details-tabs" role="tablist" aria-label="Event details">
       {tabs.map((item,i)=><button key={item.id} id={`${tabId}-${item.id}`} role="tab" aria-selected={tab===item.id} aria-controls={`${tabId}-panel`} tabIndex={tab===item.id?0:-1} onClick={()=>chooseTab(item.id)} onKeyDown={e=>tabKey(e,i)}>{item.label}{item.id==='battles'&&<span>{official.length}</span>}</button>)}

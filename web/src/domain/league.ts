@@ -9,7 +9,8 @@ export class Player {
 }
 /** Optional legacy publication metadata; not an Event-finalisation gate. */
 export interface EventResultsRelease {state:'COLLECTING'|'PREPARING'|'BLOCKED'|'READY'|'RELEASED';revision?:number;publishedAt?:string|null;}
-export interface EventRoundoff {revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;showcase?:import('./eventRoundoffShowcase').EventShowcaseItem[];}
+export interface CountedWarmupNote {playerId:string;matchId:string;points:number;win:boolean;resultRevision:number;sourceHash:string;otherWarmupCount:number;}
+export interface EventRoundoff {viewerWarmupSelection?:CountedWarmupNote|null;revision:number;points:Array<{playerId:string;warmup:number;main:number;placement:number;emperor:number}>;showcase?:import('./eventRoundoffShowcase').EventShowcaseItem[];}
 export interface EventRecord {
   officialMatchIds?:string[];
   timezone?:string;
