@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {adminBindReplayParticipants} from '../lib/commands/admin/bindReplayParticipants.js';
 import {normalizeReplayName} from '../lib/services/steamProfile.js';
 import {memoryFirestore} from './support/memory-firestore.mjs';
+import {assignScheduledWarmupBindings,assignMainReplayBindings} from './support/replay-e2e-t90-mapping.mjs';
 
 const manifest=JSON.parse(readFileSync(new URL('./fixtures/replay-e2e-t90-manifest.json',import.meta.url),'utf8'));
 const recordings=new Map(manifest.recordings.map(recording=>[recording.id,recording]));
@@ -117,4 +118,46 @@ test('the real Emperor callable stores isolated per-Game identity bindings with 
     bindings:[{sourceName:'T90Official',playerId:'TEST-01'},{sourceName:'Dobbs351',playerId:'TEST-07'}],
     reason:'This replay participant is not an approved starter.',
   })),/Bind exactly the approved Game starters/);
+});
+
+test('scheduled warmup matcher adapts to real pairs instead of relying on the example draw',()=>{
+  const scheduled=[
+    {matchId:'E-AUTO-W2',playerIds:['TEST-03','TEST-04']},
+    {matchId:'E-AUTO-W4',playerIds:['TEST-05','TEST-06']},
+    {matchId:'E-AUTO-W1',playerIds:['TEST-01','TEST-08']},
+    {matchId:'E-AUTO-W3',playerIds:['TEST-02','TEST-07']},
+  ];
+  const result=assignScheduledWarmupBindings(manifest,scheduled);
+  assert.equal(result.length,4);
+  assert.equal(result[0].recordingId,'duel-dobbs');
+  assert.equal(result[0].matchId,'E-AUTO-W1');
+  assert.equal(result[0].bindings.find(row=>row.sourceName==='T90Official').playerId,'TEST-01');
+  const ids=result.flatMap(row=>row.bindings.map(x=>x.playerId));
+  assert.deepEqual([...ids].sort(),[...event.playerIds].sort());
+  const names=result.flatMap(row=>row.bindings.map(b=>normalizeReplayName(b.sourceName)));
+  assert.equal(names.filter(name=>name==='t90official').length,4);
+  assert.throws(()=>assignScheduledWarmupBindings(manifest,scheduled.slice(0,3)),/four scheduled/);
+  assert.throws(()=>assignScheduledWarmupBindings(manifest,[...scheduled.slice(0,3),scheduled[0]]),/Duplicate scheduled Match/);
+});
+
+test('main matcher uses extracted recorded sides and the approved random 4v4 teams',()=>{
+  const approved=event.playerIds.map((playerId,index)=>({playerId,team:index%2===0?1:2}));
+  const names=recordings.get('main-4v4').sourceNames;
+  // Deliberately constructed example sides; real source team IDs remain unverified/null.
+  const hypotheticalTeams=names.map((sourceName,index)=>({sourceName,teamId:index%2===0?2:3}));
+  const result=assignMainReplayBindings(manifest,approved,hypotheticalTeams);
+  assert.equal(result.bindings.length,8);
+  assert.deepEqual(new Set(result.bindings.map(b=>b.playerId)),new Set(event.playerIds));
+  assert.equal(result.bindings.find(b=>b.sourceName==='T90Official').playerId,'TEST-01');
+  const sourceTeams=new Map(hypotheticalTeams.map(r=>[normalizeReplayName(r.sourceName),r.teamId]));
+  const approvedTeams=new Map(approved.map(r=>[r.playerId,r.team]));
+  const t90RecordedSide=sourceTeams.get('t90official');
+  const t90ApprovedSide=approvedTeams.get('TEST-01');
+  for(const binding of result.bindings){
+    const observed=sourceTeams.get(normalizeReplayName(binding.sourceName));
+    const assigned=approvedTeams.get(binding.playerId);
+    assert.equal(assigned,t90RecordedSide===observed?t90ApprovedSide:3-t90ApprovedSide);
+  }
+  assert.throws(()=>assignMainReplayBindings(manifest,approved,[]),/extraction does not match/);
+  assert.throws(()=>assignMainReplayBindings(manifest,approved,hypotheticalTeams.map(p=>({...p,teamId:2}))),/not two teams/);
 });
