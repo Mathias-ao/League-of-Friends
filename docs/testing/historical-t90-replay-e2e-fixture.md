@@ -51,6 +51,30 @@ Use a separate disposable dataset of 15 seeded player identities, `SRC-T90` plus
 
 Test normalizing whitespace in `NO MAMES`, the accent in `VENÓN | BOTZANGA`, brackets in `[ASYNC]GodsPrisoner` and `[C82]sasuke`, and the pipe in `PUB | Fanjita`. Prove collision/duplicate, wrong-Game-roster, unauthorized binding, duplicate replay claim and post-acceptance rebinding safeguards.
 
+### Mapping helper
+
+The fixture's pure helper at [`functions/tests/support/replay-e2e-t90-mapping.mjs`](../../functions/tests/support/replay-e2e-t90-mapping.mjs) prepares binding rows **after** real topology has been captured. It makes no backend writes.
+
+```js
+const warmupAssignments = assignScheduledWarmupBindings(manifest, [
+  {matchId: 'ACTUAL-WARMUP-MATCH-ID', playerIds: ['TEST-01', 'TEST-07']},
+  // ... the other three actual approved 1v1 pairs
+]);
+// For each assignment, Emperor sends:
+// {matchId, gameId: 'G1', bindings, reason: 'Audited synthetic staging replay fixture ...'}
+
+// After reviewing 4v4 recording and the approved Event Match:
+const mainAssignment = assignMainReplayBindings(
+  manifest,
+  actualApprovedMainGamePlayers, // [{playerId, team}, ...] from the approved Game
+  actualExtractedReplayTeams,   // [{sourceName, teamId}, ...] from the original replay
+);
+// The Emperor submits mainAssignment.bindings to adminBindReplayParticipants
+// with the actual approved main matchId and gameId 'G1'.
+```
+
+The helper **throws** if it lacks the four disjoint scheduled warmup pairs, eight approved 4v4 starters, complete recorded team IDs or two valid 4-player source teams. It never invents a team or winner. Test fixture accounts are deliberately remapped across historical games; their aliases are never asserted as real Steam identities.
+
 ## 3. Populate real facts after receiving the eight files
 
 Use suggested filenames `duel-dobbs.aoe2record`, `duel-deaker.aoe2record`, `duel-salzz.aoe2record`, `duel-hackali.aoe2record`, `team-2v2-1.aoe2record` through `team-2v2-3.aoe2record`, and `main-4v4.aoe2record`. These filenames are **suggestions**, not proof of the original file names.
