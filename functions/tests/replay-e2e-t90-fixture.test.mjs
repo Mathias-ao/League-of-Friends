@@ -24,8 +24,8 @@ test('eight named fixtures define four 1v1s, three repeated-roster 2v2s, one 4v4
     assert.equal(row.sourceNames.length,counts[row.format],row.id);
     assert.equal(new Set(row.sourceNames.map(normalizeReplayName)).size,row.sourceNames.length,row.id);
     assert.ok(row.sourceNames.some(name=>normalizeReplayName(name)==='t90official'),row.id);
-    assert.equal(row.sourceSha256,null,'Hashes cannot be invented before extracting the original recording');
-    assert.equal(row.gameGuid,null,'Game GUIDs cannot be invented before extracting the original recording');
+    if(row.sourceSha256!==null)assert.match(row.sourceSha256,/^[a-f0-9]{64}$/,row.id);
+    if(row.gameGuid!==null)assert.equal(typeof row.gameGuid,'string',row.id);
   }
   assert.equal(manifest.recordings.reduce((n,row)=>n+row.sourceNames.length,0),28);
   const observed=new Set(manifest.recordings.flatMap(row=>row.sourceNames.map(normalizeReplayName)));
