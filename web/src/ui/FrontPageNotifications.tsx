@@ -18,7 +18,7 @@ export function FrontPageNotifications(props:Pick<ViewProps,'snapshot'|'reposito
   if(!canBrowseLeague(snapshot)||!snapshot.viewer)return;
   const playerId=snapshot.viewer.playerId;
   // Only fetch Events where this player actually has multiple eligible warm-ups.
-  const candidates=snapshot.events.filter(event=>!['CANCELLED','POSTPONED'].includes(event.status)&&(!event.seasonId||event.seasonId===snapshot.season?.seasonId)&&snapshot.matches.filter(match=>match.eventId===event.eventId&&match.warmupScoringPolicy==='AOF_BEST_WARMUP_V1'&&isWarmupMatch(match)&&!['CANCELLED','VOID','PROPOSED'].includes(match.status)&&match.participants.some(p=>p.playerId===playerId)).length>1);
+  const candidates=snapshot.events.filter(event=>!['CANCELLED','POSTPONED'].includes(event.status)&&(!event.seasonId||event.seasonId===snapshot.season?.seasonId)&&snapshot.matches.filter(match=>match.eventId===event.eventId&&isWarmupMatch(match)&&!['CANCELLED','VOID','PROPOSED'].includes(match.status)&&match.participants.some(p=>p.playerId===playerId)).length>1);
   void Promise.allSettled(candidates.map(event=>repository.event(event.eventId))).then(results=>{
    if(!current)return;
    const events=results.flatMap(result=>result.status==='fulfilled'&&result.value.viewer.playerId===playerId&&result.value.roundoff?.viewerWarmupSelection?.playerId===playerId?[result.value]:[]);

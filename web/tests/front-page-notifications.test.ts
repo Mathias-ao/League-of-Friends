@@ -80,6 +80,8 @@ test('only authenticated multiple-warm-up receipts become flags; stale requests 
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
  const {createRoot}=await import('react-dom/client');const root=createRoot(document.getElementById('app')!);
  const repository=new PreviewLeagueRepository(),snapshot=base();snapshot.matches.push({...warmup,matchId:'extra'});
+ // Live directory omits the scoring policy; the authenticated Event receipt is authoritative.
+ snapshot.matches=snapshot.matches.map(({warmupScoringPolicy,...match})=>match);
  let finish:(value:any)=>void=()=>{};
  repository.event=()=>new Promise(resolve=>{finish=resolve;});
  const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},enter:()=>{},act:async()=>true};
