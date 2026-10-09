@@ -256,7 +256,10 @@
         "mainVictoryPoints": 24,
         "totalBaseLeaguePoints": 72
       },
-      "automaticIdentityMatchingExpected": false
+      "automaticIdentityMatchingExpected": false,
+      "warmupBindingStrategy": "DYNAMIC_AFTER_SCHEDULED_DRAW",
+      "warmupsAreIllustrative": true,
+      "warmupStrategyDetail": "After actual scheduler pairs are created, assign the four 1v1 recordings to the four approved pairs one-to-one. Place the duel-dobbs recording on the warmup containing TEST-01 and bind its T90Official source slot to TEST-01; bind each other recording's T90Official source slot to one of its approved pair's accounts. The literal sample pairs below are not expected scheduler output."
     },
     "longitudinalIdentity": {
       "environment": "SEPARATE_DISPOSABLE_STAGING_DATASET_OR_MEMORY_TEST",
