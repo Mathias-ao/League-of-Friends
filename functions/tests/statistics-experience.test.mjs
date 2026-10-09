@@ -77,3 +77,12 @@ test('canonical projection maps directed evidence, null applicability, costs and
   assert.equal(projected.episodes.length,1);assert.deepEqual(projected.episodes[0].actors,['a']);assert.deepEqual(projected.episodes[0].targets,['b']);
   assert.throws(()=>projectStatistics(raw,{...metadata,mapping:[{replaySlot:1,playerId:'a'}]}),/mapping/);
 });
+
+test('scoring-selection masks cannot hide extra-warmup statistics, records or leaders',()=>{
+ const first=game(0),extra=game(1,{countedEventPlayerIds:[]});
+ extra.players[0].values.raidsOut=50;
+ const engine=new StatisticsExperience([first,extra]),row=engine.aggregate().find(player=>player.playerId==='a');
+ assert.equal(row.games,2);assert.equal(row.values.raidsOut.value,52);assert.equal(row.values.raidsOut.samples,2);
+ assert.deepEqual(engine.leaders('raidsOut'),['a']);assert.equal(engine.records().find(record=>record.metricId==='raidsOut').matchId,'match-1');
+ const corrected={...extra,revision:2,eligible:false};assert.equal(new StatisticsExperience([first,extra,corrected]).aggregate().find(player=>player.playerId==='a').values.raidsOut.value,2);
+});

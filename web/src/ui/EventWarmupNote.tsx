@@ -28,7 +28,7 @@ function WarmupParchment({note,title,opponent,onClose,openBattle}:{note:CountedW
    <header><span className="event-campaign-rubric">THE COUNTED DUEL</span><h2 id={titleId}>Your warm-up is entered</h2><p>{title}</p></header>
    <div className="event-warmup-receipt"><Check size={22} aria-hidden="true"/><strong>+{formatLeaguePoints(note.points)} Event points</strong><span>{note.win?'Victory':'Participation'} · against {opponent}</span></div>
    <p>AoF automatically selected this Battle as your best validated warm-up result. Only one warm-up counts toward your points for this Event and the Season leaderboard.</p>
-   <p>Your other {note.otherWarmupCount===1?'warm-up remains':'warm-ups remain'} in the Battle record. Equal results use a consistent tie-break. The counted Battle may change when further results or corrections are validated.</p>
+   <p>Your other {note.otherWarmupCount===1?'warm-up remains':'warm-ups remain'} in the Battle record and can contribute to Event statistics and accomplishments. Equal results use a consistent tie-break. The counted Battle may change when further results or corrections are validated.</p>
    <button type="button" className="event-warmup-open-battle" onClick={openBattle}>Open the counted Battle<ArrowRight size={16}/></button>
   </article></div>
  </dialog>,document.body);
