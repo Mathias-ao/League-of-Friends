@@ -1,0 +1,341 @@
+{
+  "schemaVersion": "AOF_REPLAY_E2E_FIXTURE_V1",
+  "title": "Eight user-described historical T90 recordings",
+  "evidenceStatus": "ROSTER_ONLY_AWAITING_ORIGINAL_RECORDINGS",
+  "warning": "User-provided names only. No bytes, SHA-256, GUID, map, winner, team or civilization is verified. Never use synthetic cross-identity mappings in production.",
+  "recordings": [
+    {
+      "id": "duel-dobbs",
+      "format": "ONE_V_ONE",
+      "expectedUploadFilename": "duel-dobbs.aoe2record",
+      "sourceNames": [
+        "Dobbs351",
+        "T90Official"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    },
+    {
+      "id": "duel-deaker",
+      "format": "ONE_V_ONE",
+      "expectedUploadFilename": "duel-deaker.aoe2record",
+      "sourceNames": [
+        "T90Official",
+        "deaKer"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    },
+    {
+      "id": "duel-salzz",
+      "format": "ONE_V_ONE",
+      "expectedUploadFilename": "duel-salzz.aoe2record",
+      "sourceNames": [
+        "T90Official",
+        "SalzZ_wide"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    },
+    {
+      "id": "duel-hackali",
+      "format": "ONE_V_ONE",
+      "expectedUploadFilename": "duel-hackali.aoe2record",
+      "sourceNames": [
+        "T90Official",
+        "Hackali"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    },
+    {
+      "id": "team-2v2-1",
+      "format": "TWO_V_TWO",
+      "expectedUploadFilename": "team-2v2-1.aoe2record",
+      "sourceNames": [
+        "T90Official",
+        "[ASYNC]GodsPrisoner",
+        "PUB | Fanjita",
+        "DanMT"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    },
+    {
+      "id": "team-2v2-2",
+      "format": "TWO_V_TWO",
+      "expectedUploadFilename": "team-2v2-2.aoe2record",
+      "sourceNames": [
+        "T90Official",
+        "[ASYNC]GodsPrisoner",
+        "PUB | Fanjita",
+        "DanMT"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    },
+    {
+      "id": "team-2v2-3",
+      "format": "TWO_V_TWO",
+      "expectedUploadFilename": "team-2v2-3.aoe2record",
+      "sourceNames": [
+        "T90Official",
+        "[ASYNC]GodsPrisoner",
+        "PUB | Fanjita",
+        "DanMT"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    },
+    {
+      "id": "main-4v4",
+      "format": "FOUR_V_FOUR",
+      "expectedUploadFilename": "main-4v4.aoe2record",
+      "sourceNames": [
+        "VENÓN | BOTZANGA",
+        "noru",
+        "FutureEwe5582",
+        "[C82]sasuke",
+        "kerwin",
+        "T90Official",
+        "Fer_amicus",
+        "NO MAMES"
+      ],
+      "sourceSha256": null,
+      "gameGuid": null,
+      "mapName": null,
+      "mapId": null,
+      "teamsByReplaySlot": null,
+      "civilizationsByReplaySlot": null,
+      "winningTeam": null,
+      "winningReplaySlots": null,
+      "saveVersion": null,
+      "build": null
+    }
+  ],
+  "scenarios": {
+    "eventRehearsal": {
+      "environment": "DEDICATED_DISPOSABLE_STAGING_ONLY",
+      "purpose": "Exercise a full eight-member Event using four disjoint synthetic warmups plus one 4v4 Game.",
+      "playerIds": [
+        "TEST-01",
+        "TEST-02",
+        "TEST-03",
+        "TEST-04",
+        "TEST-05",
+        "TEST-06",
+        "TEST-07",
+        "TEST-08"
+      ],
+      "warmups": [
+        {
+          "recordingId": "duel-dobbs",
+          "bindings": [
+            {
+              "sourceName": "T90Official",
+              "playerId": "TEST-01"
+            },
+            {
+              "sourceName": "Dobbs351",
+              "playerId": "TEST-02"
+            }
+          ]
+        },
+        {
+          "recordingId": "duel-deaker",
+          "bindings": [
+            {
+              "sourceName": "T90Official",
+              "playerId": "TEST-03"
+            },
+            {
+              "sourceName": "deaKer",
+              "playerId": "TEST-04"
+            }
+          ]
+        },
+        {
+          "recordingId": "duel-salzz",
+          "bindings": [
+            {
+              "sourceName": "T90Official",
+              "playerId": "TEST-05"
+            },
+            {
+              "sourceName": "SalzZ_wide",
+              "playerId": "TEST-06"
+            }
+          ]
+        },
+        {
+          "recordingId": "duel-hackali",
+          "bindings": [
+            {
+              "sourceName": "T90Official",
+              "playerId": "TEST-07"
+            },
+            {
+              "sourceName": "Hackali",
+              "playerId": "TEST-08"
+            }
+          ]
+        }
+      ],
+      "main": {
+        "recordingId": "main-4v4",
+        "fixedBinding": {
+          "sourceName": "T90Official",
+          "playerId": "TEST-01"
+        },
+        "strategy": "TEAM_ALIGNED_AFTER_APPROVAL",
+        "detail": "Generate/review/approve the real Match Plan. After examining the recorded team IDs, bind source players to the approved 4v4 roster so that every source team maps entirely to one approved team, keeping T90Official bound to TEST-01. Do not invent the team layout.",
+        "bindings": null
+      },
+      "expectedIfAllQualified": {
+        "warmupMatches": 4,
+        "mainMatches": 1,
+        "warmupParticipationPoints": 8,
+        "warmupVictoryPoints": 8,
+        "mainParticipationPoints": 32,
+        "mainVictoryPoints": 24,
+        "totalBaseLeaguePoints": 72
+      },
+      "automaticIdentityMatchingExpected": false
+    },
+    "longitudinalIdentity": {
+      "environment": "SEPARATE_DISPOSABLE_STAGING_DATASET_OR_MEMORY_TEST",
+      "purpose": "One immutable test identity per distinct source name across all eight recorded games.",
+      "identities": [
+        {
+          "sourceName": "T90Official",
+          "playerId": "SRC-T90"
+        },
+        {
+          "sourceName": "Dobbs351",
+          "playerId": "SRC-DOBBS"
+        },
+        {
+          "sourceName": "deaKer",
+          "playerId": "SRC-DEAKER"
+        },
+        {
+          "sourceName": "SalzZ_wide",
+          "playerId": "SRC-SALZZ"
+        },
+        {
+          "sourceName": "Hackali",
+          "playerId": "SRC-HACKALI"
+        },
+        {
+          "sourceName": "[ASYNC]GodsPrisoner",
+          "playerId": "SRC-GODS"
+        },
+        {
+          "sourceName": "PUB | Fanjita",
+          "playerId": "SRC-FANJITA"
+        },
+        {
+          "sourceName": "DanMT",
+          "playerId": "SRC-DANMT"
+        },
+        {
+          "sourceName": "VENÓN | BOTZANGA",
+          "playerId": "SRC-BOTZANGA"
+        },
+        {
+          "sourceName": "noru",
+          "playerId": "SRC-NORU"
+        },
+        {
+          "sourceName": "FutureEwe5582",
+          "playerId": "SRC-FUTUREEWE"
+        },
+        {
+          "sourceName": "[C82]sasuke",
+          "playerId": "SRC-SASUKE"
+        },
+        {
+          "sourceName": "kerwin",
+          "playerId": "SRC-KERWIN"
+        },
+        {
+          "sourceName": "Fer_amicus",
+          "playerId": "SRC-FER"
+        },
+        {
+          "sourceName": "NO MAMES",
+          "playerId": "SRC-NOMAMES"
+        }
+      ],
+      "shared2v2Roster": [
+        "SRC-T90",
+        "SRC-GODS",
+        "SRC-FANJITA",
+        "SRC-DANMT"
+      ],
+      "repeatedIdentity": {
+        "sourceName": "T90Official",
+        "playerId": "SRC-T90",
+        "expectedGameAppearances": 8
+      },
+      "allowSyntheticPlayerSwap": false,
+      "pointsMustNotMixWithEventRehearsal": true
+    }
+  }
+}
