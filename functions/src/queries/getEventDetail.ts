@@ -174,7 +174,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
     warmup:{configured:!!event.warmupPolicy,schedule:event.warmupSchedule?{status:event.warmupSchedule.status,unpairedPlayerId:event.warmupSchedule.unpairedPlayerId??null}:null,aiDifficulty:event.warmupPolicy?.aiDifficulty??null,map:event.warmupPolicy?.gameConfig?.maps?.pool?.[0]??null,guestAcceptanceDeadlineAt:iso(event.warmupPolicy?.guestAcceptanceDeadlineAt),challenges:invites,eligibleGuests:eligibleGuestIds.map(id=>publicPlayer(id,players.get(id))),replacementGuests:actor.role==='ADMIN'?playersSnapshot.docs.filter(d=>d.data().membershipStatus==='ACTIVE').map(d=>publicPlayer(d.id,players.get(d.id))):[],isGuest:guests.docs.some(d=>d.id===actor.playerId)},
     pairingPlan:plan?{planId:event.currentMatchPlanId,status:plan.status,pairingMode:plan.planningConfig?.pairingMode??"ELO_BALANCED",sittingOutPlayerIds:plan.sittingOutPlayerIds??[],matches:(plan.matches??[]).map((m:any)=>({...m,participants:m.participants.map((p:any)=>({...p,...publicPlayer(p.playerId,players.get(p.playerId))}))}))}:null,
     finalisation,
-    roundoff:await readEventRoundoff(eventId),
+    roundoff:await readEventRoundoff(eventId,actor.playerId),
     viewer: {
       playerId: actor.playerId,
       role: actor.role,

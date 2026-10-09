@@ -1,0 +1,13 @@
+# Counted warm-up receipt V1
+
+Product decision, 9 October 2026: retain automatic best-warmup selection. No player selection control is required. A player with more than one warm-up should receive a personal notice explaining which Battle counts toward Event and Season points.
+
+A Chronicle-style gold cloth bookmark hangs from the top-left of the Event hero and remains visible across Briefing, Battles and Roundoff. It shows the counted point amount. Clicking opens a small native parchment dialog with the Event title, selected opponent, victory/participation and point amount. It explains the automatic best-validated-result rule, consistent tie-break, one counted warm-up, and possible changes after later results/corrections. The note links directly to the selected Battle. Escape, close and backdrop dismissal restore focus to the bookmark. Refreshed selections update an open note; withdrawal removes the stale note. This is a persistent receipt, not a dismissible one-time alert.
+
+The backend's existing coherent Roundoff transaction returns an optional `viewerWarmupSelection`. The Event callable supplies the authenticated actor's player ID, never a client-supplied owner. The receipt requires multiple noncancelled policy warm-ups, the viewer's stored reconciled selection, current accepted Match/Game revision and active source, and matching net warm-up points (1 participation, 3 with victory). It is not inferred from roster order, the first personal Battle or an unprocessed result. Single-warm-up players and unrelated viewers receive no bookmark. Disputes, stale source/revision and inconsistent accounting suppress it until reconciliation supplies a valid current choice.
+
+No scoring, rewards, selection algorithm, statistics scope or Event-finalisation rules change. No new player choice command or notification write is introduced. The additive optional response preserves compatibility with older Event payloads.
+
+Preview: select **Counted extra warm-up** in the illustrative Event-state control. It gives the viewer an assigned loss and an extra won duel, with the latter selected for three points. This is synthetic preview data only.
+
+Validation: both builds, 69 web and 224 backend tests (293 total), callable-boundary checks and whitespace checks. Backend regression covers viewer scope, single-match omission, selected Battle/points, stale source, dispute withdrawal and reconciled fallback. UI regression covers hero/tab placement, parchment opening, correction refresh, Escape/focus return, navigation and withdrawn/other-viewer suppression. Full browser desktop/mobile rendering remains pending because no local browser executable is available.

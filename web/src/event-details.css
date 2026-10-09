@@ -198,3 +198,24 @@
 .event-lifecycle select,.event-lifecycle input,.event-lifecycle textarea,.ai-warmup-review textarea{max-width:100%;width:100%;padding:.65rem}
 .event-lifecycle button{margin:.5rem .5rem .5rem 0}
 .event-lifecycle details{margin:1rem 0}.event-lifecycle summary{cursor:pointer}
+
+/* A personal warm-up receipt hangs from the top-left of the campaign hero. */
+.event-briefing-hero{position:relative}
+.event-briefing-hero.has-warmup-note{padding-left:112px}
+.event-briefing-hero .event-warmup-marker{position:absolute;left:18px;top:0;width:68px;height:112px;display:block;padding:12px 5px 19px;z-index:2;box-shadow:none}
+.event-warmup-marker .bookmark-player-name{font-size:.48rem;line-height:1.45;white-space:normal}
+.event-warmup-marker>strong{display:block;color:#f3db9e;font:500 .9rem Cinzel,serif;margin-top:6px}
+.event-warmup-note-dialog{width:min(510px,calc(100vw - 24px))}
+.event-warmup-note-dialog .chronicle-scroll-stage{padding:12px 6px 18px}
+.event-warmup-note-dialog .event-warmup-parchment{min-height:0;padding:56px 34px 34px}
+.event-warmup-parchment header{text-align:center;border-bottom:1px solid #69452440;padding-bottom:18px}
+.event-warmup-parchment h2{font:500 1.3rem/1.5 Cinzel,serif;color:var(--chronicle-ink);margin:12px 0 8px}
+.event-warmup-parchment p{font:1rem/1.7 var(--chronicle-book-hand);color:var(--chronicle-ink-soft);margin:15px 0}
+.event-warmup-parchment header p{font-size:.9rem;font-style:italic;color:var(--chronicle-ink-faded);margin:0}
+.event-warmup-receipt{display:grid;justify-items:center;gap:6px;margin:22px 0;color:var(--chronicle-rubric)}
+.event-warmup-receipt strong{font:500 1.2rem Cinzel,serif}
+.event-warmup-receipt span{font:.95rem/1.6 var(--chronicle-book-hand);color:var(--chronicle-ink-soft);text-align:center}
+.event-warmup-open-battle{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:44px;padding:12px;border:1px solid #70462d66;color:#502a1c;background:#9d70351c;font:500 .72rem Cinzel,serif}
+.event-warmup-note-dialog button:focus-visible{outline:2px solid #70261f;outline-offset:4px}
+@media(max-width:540px){.event-briefing-hero.has-warmup-note{padding-left:86px}.event-briefing-hero .event-warmup-marker{left:10px;width:56px;height:101px}.event-warmup-marker .bookmark-player-name{width:auto;height:auto;font-size:.44rem}.event-warmup-note-dialog .event-warmup-parchment{padding:52px 25px 28px}}
+@media(forced-colors:active){.event-warmup-marker{clip-path:none;border:2px solid ButtonText;background:ButtonFace!important;color:ButtonText!important}}

@@ -253,3 +253,23 @@ test('Emperor can open an audited correction review without having played; unrel
   await assert.rejects(disputeCanonicalGameResult.run(req(input,'outsider')),/participant/i);
   await disputeCanonicalGameResult.run(req(input));assert.equal(records.get('matches/m').status,'DISPUTED');assert.ok([...records.values()].some(v=>v.action==='RESULT_CORRECTION_REVIEW_OPENED'));
 });
+
+test('personal counted-warmup receipt is viewer scoped and follows reconciled awards, disputes and source withdrawal',async()=>{
+ const records=seedRecording();records.set('events/e',{seasonId:'s',status:'ACTIVE',warmupPolicy:{scoringPolicy:'AOF_BEST_WARMUP_V1'},warmupMatchIds:['w1','w2']});
+ for(const [id,matchId] of [['p1','w1'],['p2','w1'],['p3','w2']]){records.set('players/'+id,{membershipStatus:'ACTIVE',goldBalance:0});records.set('events/e/scoringSlots/WARMUP_'+id,{playerId:id,matchId,seasonId:'s',act:'WARMUP'});}
+ addWarmup(records,'w1',['p1','p2'],'p2');addWarmup(records,'w2',['p1','p3'],'p1');
+ await processMatchRewards({matchId:'w1',requestId:'receipt1'},system);await processMatchRewards({matchId:'w2',requestId:'receipt2'},system);
+ assert.equal((await readEventRoundoff('e')).viewerWarmupSelection,null);
+ assert.equal((await readEventRoundoff('e','unrelated')).viewerWarmupSelection,null);
+ assert.equal((await readEventRoundoff('e','p2')).viewerWarmupSelection,null,'one warm-up needs no selection notice');
+ const selected=(await readEventRoundoff('e','p1')).viewerWarmupSelection;
+ assert.equal(selected.matchId,'w2');assert.equal(selected.points,3);assert.equal(selected.playerId,'p1');assert.equal(selected.otherWarmupCount,1);
+ const stored=records.get('events/e/warmupSelections/p1');records.set('events/e/warmupSelections/p1',{...stored,selected:{...stored.selected,sourceHash:'stale'}});
+ assert.equal((await readEventRoundoff('e','p1')).viewerWarmupSelection,null,'stale source cannot produce a receipt');records.set('events/e/warmupSelections/p1',stored);
+ records.set('matches/w2',{...records.get('matches/w2'),status:'DISPUTED',activeResultDisputeId:'review'});
+ assert.equal((await readEventRoundoff('e','p1')).viewerWarmupSelection,null,'dispute withdraws the old notice before reconciliation');
+ await reconcileBestWarmups('e');const fallback=(await readEventRoundoff('e','p1')).viewerWarmupSelection;
+ assert.equal(fallback.matchId,'w1');assert.equal(fallback.points,1);assert.equal(fallback.win,false);
+ records.set('matches/w1/games/G1',{...records.get('matches/w1/games/G1'),activeReplayStatisticsId:'missing'});
+ assert.equal((await readEventRoundoff('e','p1')).viewerWarmupSelection,null);
+});
