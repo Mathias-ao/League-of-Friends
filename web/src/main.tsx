@@ -35,6 +35,7 @@ import './statistics-runtime-fixes';
 import './player-profile-refinement.css';
 import './relationship-chronicle.css';
 import './event-details.css';
+import './front-page-notifications.css';
 import './ruby-scrollbar.css';
 import './battle-details.css';
 import {App} from './ui/App';
