@@ -1,0 +1,39 @@
+name: Historical T90 Replay Fixture Check
+
+on:
+  pull_request:
+    paths:
+      - "replay-fixtures/Update 185872_fixtures/**"
+      - "replay-tools/inspect_historical_t90.py"
+      - "functions/tests/fixtures/replay-e2e-t90-manifest.json"
+      - ".github/workflows/historical-t90-replays.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install replay decoder
+        run: python -m pip install -r replay-tools/requirements.txt
+      - name: Decode eight historical replay files and verify participant names
+        run: |
+          python replay-tools/inspect_historical_t90.py \
+            --fixture-dir "replay-fixtures/Update 185872_fixtures" \
+            --manifest "functions/tests/fixtures/replay-e2e-t90-manifest.json" \
+            --out "$RUNNER_TEMP/historical-t90-observations.json"
+      - name: Upload decoder observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-t90-observations
+          path: ${{ runner.temp }}/historical-t90-observations.json
+          if-no-files-found: warn
