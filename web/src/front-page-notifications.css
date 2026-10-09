@@ -1,0 +1,33 @@
+/* Chronicle cloth dispatches hang from the front-page masthead. */
+.header-action{align-self:stretch;min-width:0}
+.frontpage-notifications{display:flex;align-items:flex-start;gap:7px;margin-top:-22px;position:relative;z-index:2}
+.site-header .frontpage-notice-flag,.site-header .frontpage-counted-flag{position:relative;flex:0 0 56px;width:56px;height:102px;padding:16px 5px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#f1dfbb;text-shadow:0 1px 2px #23140e;filter:drop-shadow(0 3px 2px #38271960)}
+.site-header .frontpage-counted-flag{height:110px;padding-top:12px;gap:4px}
+.site-header .frontpage-counted-flag strong{font-family:var(--serif);font-size:.8rem;font-weight:500}
+.site-header .frontpage-notice-flag:hover,.site-header .frontpage-counted-flag:hover{color:#fff1d1}
+.frontpage-notifications .bookmark-player-name{font-size:.52rem;line-height:1.4;letter-spacing:.06em;white-space:normal;text-align:center;width:auto;height:auto}
+.frontpage-notifications .bookmark-monogram{flex-shrink:0}
+.frontpage-note-dialog .event-warmup-parchment{min-height:0}
+.frontpage-note-context{font-style:italic;color:var(--chronicle-ink-faded)}
+.frontpage-note-deadline{font-size:.88rem;border-top:1px solid #76593845;padding-top:14px}
+.frontpage-dispatch-list section+section{border-top:1px solid #76593855;margin-top:24px;padding-top:20px}
+.frontpage-dispatch-list h3{font-family:var(--chronicle-book-hand);font-size:1.3rem;color:var(--chronicle-rubric)}
+@media(max-width:900px){.frontpage-notifications{margin-top:-21px;gap:5px}.site-header .frontpage-notice-flag,.site-header .frontpage-counted-flag{flex-basis:46px;width:46px;height:95px;padding-left:3px;padding-right:3px}.frontpage-notifications .bookmark-player-name{font-size:.47rem}}
+@media(min-width:621px) and (max-width:760px){
+ .header-inner .header-action{grid-column:1 / -1;grid-row:2}
+ .header-inner .brand{grid-column:1 / -1;grid-row:1;justify-self:center}
+ .header-inner .header-account{grid-column:3;grid-row:1}
+ .frontpage-notifications{margin-top:0;margin-bottom:-22px}
+}
+@media(max-width:620px){
+ .header-inner .header-action{display:block;grid-column:1 / -1;grid-row:2}
+ .header-inner{row-gap:0;padding-bottom:0}
+ .frontpage-notifications{margin-top:12px;gap:8px;margin-bottom:-10px}
+ .site-header .frontpage-notice-flag,.site-header .frontpage-counted-flag{flex-basis:52px;width:52px;height:80px;padding-top:8px;gap:4px}
+ .frontpage-notifications .bookmark-player-name{font-size:.5rem;width:auto;height:auto}
+ .frontpage-notifications:empty{display:none}
+ .header-action:has(.frontpage-notifications:empty){display:none}
+ .frontpage-note-dialog .event-warmup-parchment{padding:52px 23px 30px}
+}
+@media(prefers-reduced-motion:reduce){.frontpage-notifications button{transition:none}.frontpage-note-dialog .chronicle-scroll-stage{animation:none}}
+@media(forced-colors:active){.site-header .frontpage-notice-flag,.site-header .frontpage-counted-flag{background:ButtonFace;color:ButtonText;clip-path:none;border:1px solid ButtonText}}

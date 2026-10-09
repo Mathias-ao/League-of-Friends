@@ -5,12 +5,12 @@ import type {CountedWarmupNote,EventRecord,MatchRecord} from '../domain/league';
 import {formatLeaguePoints} from '../domain/seasonPoints';
 
 /** Personal receipt of the existing automatic best-warmup decision; no scoring writes. */
-export function EventWarmupNote({note,event,matches,openMatch}:{note:CountedWarmupNote;event:EventRecord;matches:MatchRecord[];openMatch:(id:string)=>void}){
+export function EventWarmupNote({note,event,matches,openMatch,className='event-warmup-marker'}:{note:CountedWarmupNote;event:EventRecord;matches:MatchRecord[];openMatch:(id:string)=>void;className?:string}){
  const [open,setOpen]=useState(false);
  const match=matches.find(row=>row.matchId===note.matchId);
  const opponent=match?.participants.filter(player=>player.playerId!==note.playerId).map(player=>player.steamName).join(' · ')||'your opponent';
  return <>
-  <button type="button" className="chronicle-bookmark bookmark-cloth-3 event-warmup-marker" onClick={()=>setOpen(true)} aria-label="Your counted warm-up: open automatic selection note" aria-haspopup="dialog" title="See which warm-up counts toward your Event points">
+  <button type="button" className={`chronicle-bookmark bookmark-cloth-3 ${className}`} onClick={()=>setOpen(true)} aria-label={`Your counted warm-up: ${event.title} · open automatic selection note`} aria-haspopup="dialog" title="See which warm-up counts toward your Event points">
    <span className="bookmark-monogram" aria-hidden="true"><Swords size={17}/></span><span className="bookmark-player-name">Counted<br/>duel</span><strong>+{formatLeaguePoints(note.points)}</strong>
   </button>
   {open&&<WarmupParchment note={note} title={event.title} opponent={opponent} onClose={()=>setOpen(false)} openBattle={()=>{setOpen(false);openMatch(note.matchId);}}/>}
