@@ -64,6 +64,7 @@ def _inventory(counts: dict[str, Counter], catalog: dict, kind: str) -> dict[str
 
 def project_statistics_from_analysis(
     analysis: dict[str, Any], *, catalog_path: Path | None = None,
+    direct_shared: bool = False,
 ) -> dict:
     """Project statistics from compact analysis data without reopening CanonicalReplay."""
     validate_analysis_dataset(analysis)
@@ -138,6 +139,7 @@ def project_statistics_from_analysis(
         action_events=spatial_action_events,
         controller_seeds=True,
     )
+    producer_episodes = {} if direct_shared else None
     engagement_statistics = project_engagement_statistics(
         manifest=manifest,
         catalog=catalog,
@@ -146,6 +148,7 @@ def project_statistics_from_analysis(
         action_events=spatial_action_events,
         skirmish_statistics=skirmish_statistics,
         raid_statistics=raid_statistics,
+        episode_sink=producer_episodes,
     )
     execution_statistics = project_execution_statistics(
         manifest=manifest,
@@ -306,6 +309,12 @@ def project_statistics_from_analysis(
     if errors:
         first = errors[0]
         raise ValueError(f"Statistics schema validation failed at /{'/'.join(map(str, first.absolute_path))}: {first.message}")
+    if direct_shared:
+        from statistics_direct_shared import to_direct_shared_statistics
+        # Schema validation and both neutral social interpreters have already
+        # consumed unmodified full input. Convert directly from the producer's
+        # unique episode objects; do not serialize a duplicate full JSON.
+        return to_direct_shared_statistics(result, producer_episodes)
     return result
 
 
