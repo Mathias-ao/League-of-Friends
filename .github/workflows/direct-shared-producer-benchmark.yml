@@ -1,0 +1,83 @@
+name: Direct Shared Producer Benchmark
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/direct-shared-producer-benchmark.yml"
+      - "replay-tools/engagement_statistics.py"
+      - "replay-tools/statistics_projector.py"
+      - "replay-tools/statistics_direct_shared.py"
+      - "replay-tools/recorded_events_stream.py"
+      - "replay-tools/benchmark_direct_shared_producer.py"
+      - "replay-fixtures/build-185872/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity-and-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [1v1_t90-deak, 4v4_arabia, FFA_7]
+    name: "Direct producer ${{ matrix.fixture }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned replay parser
+        run: python -m pip install -r replay-tools/requirements.txt
+      - name: Verify paired current-build TownBell control
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          python - <<'PY'
+          import os, json
+          from pathlib import Path
+          root=Path("replay-fixtures/build-185872")
+          name=os.environ["FIXTURE"]
+          recording=root/(name+".aoe2record")
+          control=root/"townbell_build-185872"/(name+".json")
+          assert recording.is_file() and control.is_file()
+          with control.open(encoding="utf-8") as file:
+              report=json.load(file)
+          assert report.get("meta",{}).get("game_build")==185872
+          print("Verified paired recording and TownBell report:", name)
+          PY
+      - name: Extract one immutable Recorded Events dataset
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          mkdir -p ".replay-lab/direct-producer-$FIXTURE"
+          python replay-tools/recorded_events_stream.py --replay "replay-fixtures/build-185872/$FIXTURE.aoe2record" --out ".replay-lab/direct-producer-$FIXTURE/events.gz"
+      - name: Full projection and streaming serialization baseline
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          /usr/bin/time -v -o ".replay-lab/direct-producer-$FIXTURE/full-resources.txt" python replay-tools/recorded_events_stream.py --events ".replay-lab/direct-producer-$FIXTURE/events.gz" --metadata ".replay-lab/direct-producer-$FIXTURE/events.gz.metadata.json" --out ".replay-lab/direct-producer-$FIXTURE/full.json"
+      - name: Direct shared producer projection and serialization
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          /usr/bin/time -v -o ".replay-lab/direct-producer-$FIXTURE/direct-resources.txt" python replay-tools/recorded_events_stream.py --events ".replay-lab/direct-producer-$FIXTURE/events.gz" --metadata ".replay-lab/direct-producer-$FIXTURE/events.gz.metadata.json" --direct-shared --out ".replay-lab/direct-producer-$FIXTURE/direct.json"
+      - name: Verify all statistics and compare storage
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          /usr/bin/time -v -o ".replay-lab/direct-producer-$FIXTURE/verify-resources.txt" python replay-tools/benchmark_direct_shared_producer.py --full ".replay-lab/direct-producer-$FIXTURE/full.json" --direct ".replay-lab/direct-producer-$FIXTURE/direct.json" --fixture "$FIXTURE" --report ".replay-lab/direct-producer-$FIXTURE/report.json"
+      - name: Upload small reports only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: direct-producer-${{ matrix.fixture }}
+          path: |
+            .replay-lab/direct-producer-${{ matrix.fixture }}/report.json
+            .replay-lab/direct-producer-${{ matrix.fixture }}/full-resources.txt
+            .replay-lab/direct-producer-${{ matrix.fixture }}/direct-resources.txt
+            .replay-lab/direct-producer-${{ matrix.fixture }}/verify-resources.txt
+          if-no-files-found: warn
+          retention-days: 14
