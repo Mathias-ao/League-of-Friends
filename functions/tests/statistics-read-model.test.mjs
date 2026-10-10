@@ -44,6 +44,13 @@ test('authenticated reads and persisted totals follow active source, dispute, co
   const correction=structuredClone(source);correction.sourceHash='replacement';correction.experience.bindingKey=statisticsBindingKey(statisticsMetadata('m','g',match,g,correction));correction.experience.players[0].values.total=350;
   records.set('matches/m/games/g/replaySources/new',correction);g.activeReplayStatisticsId='new';g.replayStatisticsRevision=2;
   await rebuildStatisticsReadModels();assert.equal(lifetime().values.total.value,350);
+  // A native-looking source cannot borrow the ordinary READY scalar pipeline
+  // without explicit atomic native publication/official source qualification.
+  correction.statistics={projectionDeliveryVersion:'AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL'};
+  const blockedNative=await collectStatistics({matchId:'m'});
+  assert.equal(blockedNative.games.length,0);
+  assert.equal(blockedNative.unavailableGames,1);
+  delete correction.statistics;
   match.context.affectsSeasonStats=false;await rebuildStatisticsReadModels();assert.equal(season().games,0);assert.equal(lifetime().games,1);
   match.context.affectsLifetimeStats=false;await rebuildStatisticsReadModels();assert.equal(lifetime().games,0);
   match.context.affectsLifetimeStats=true;await rebuildStatisticsReadModels();assert.equal(lifetime().games,1);

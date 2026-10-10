@@ -79,7 +79,7 @@ export interface ProjectionMetadata extends Omit<GameStatistics,'version'|'durat
   mapping:{replaySlot:number;playerId:string}[];
   opponents?:{replaySlot:number;opponentId:string}[];
 }
-export function statisticsBindingKey(metadata:ProjectionMetadata):string {
+export function statisticsBindingKey(metadata:Pick<ProjectionMetadata,'sourceHash'|'roster'|'mapping'|'opponents'>):string {
   return JSON.stringify({sourceHash:metadata.sourceHash,...(metadata.opponents?.length?{opponents:[...metadata.opponents].sort((a,b)=>a.replaySlot-b.replaySlot)}:{}),mapping:[...metadata.mapping].sort((a,b)=>a.replaySlot-b.replaySlot),roster:metadata.roster.map(p=>({playerId:p.playerId,team:p.team??null,civilization:p.civilization??null})).sort((a,b)=>a.playerId.localeCompare(b.playerId))});
 }
 type Bag = Record<string,any>;

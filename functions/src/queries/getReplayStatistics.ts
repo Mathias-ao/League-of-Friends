@@ -8,6 +8,8 @@ import { db } from "../config/firebase.js";
 import { collections } from "../domain/collections.js";
 import { callableOptions } from "../config/runtime.js";
 import {currentOfficialGameOutcome} from "../engines/recordingMatchFacts.js";
+import {NATIVE_SHARED_DELIVERY} from "../engines/activeNativeStatisticsSource.js";
+import {bindingDigest} from "../engines/nativeRecordingIntegration.js";
 
 interface Input {
   matchId: string;
@@ -40,6 +42,12 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
   if (!sourceSnapshot.exists || sourceSnapshot.data()?.state !== "READY") {
     throw new HttpsError("failed-precondition", "The active replay statistics revision is unavailable.");
   }
+  const stored=sourceSnapshot.data();
+  if(stored?.nativePublicationVersion!==undefined||
+     stored?.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
+     stored?.statistics?.projectionDeliveryVersion===NATIVE_SHARED_DELIVERY)
+    throw new HttpsError('failed-precondition','Native Battle evidence requires its versioned bounded reader, not a full legacy JSON response.');
+  const coherenceToken=bindingDigest({match:matchSnapshot.data(),game:gameSnapshot.data(),source:sourceSnapshot.data()});
   const source = sourceSnapshot.data() as {
     playerMapping?: unknown[];
     resultQualification?: string;
@@ -61,6 +69,17 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
   const officialOutcome = currentOfficialGameOutcome(gameSnapshot.data(), matchSnapshot.data());
   const socialIncidents = matchSnapshot.data()?.opponentKind==='AI'?{status:'UNAVAILABLE',reason:'AI warm-ups do not produce player Relationships or Reputation.'}:projectSocialIncidents({ statistics, playerMapping: source.playerMapping ?? [], officialOutcome,
     context: { gameId, battleId: matchId } });
+
+  // Preserve original source/result coherence if a dispute or correction starts
+  // during the large Storage transfer or subsequent social interpretation.
+  const [freshMatch,freshGame,freshSource]=await Promise.all([
+    db.collection(collections.matches).doc(matchId).get(),gameRef.get(),
+    gameRef.collection('replaySources').doc(statisticsId).get(),
+  ]);
+  if(!freshMatch.exists||!freshGame.exists||!freshSource.exists||
+    freshGame.data()?.activeReplayStatisticsId!==statisticsId||
+    bindingDigest({match:freshMatch.data(),game:freshGame.data(),source:freshSource.data()})!==coherenceToken)
+    throw new HttpsError('aborted','Battle statistics or official result changed during the read. Retry.');
 
   return {
     success: true,
