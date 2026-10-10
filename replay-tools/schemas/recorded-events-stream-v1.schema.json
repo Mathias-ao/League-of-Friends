@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ageoffriends.example/schemas/recorded-events-stream-v1.schema.json",
+  "title": "Recorded Events V1 JSONL record",
+  "description": "One gzip member of UTF-8 JSONL. Ordered header, objects, tiles, operations, end. Cross-record invariants and external dual integrity are enforced by StreamValidator/read_records. The experimental monolithic JSON contract is a different format.",
+  "oneOf": [
+    {"type": "array", "minItems": 5, "maxItems": 5, "prefixItems": [{"const": "sync"}, {"type": "integer", "minimum": 0}, {"type": "integer", "minimum": 0}, {"enum": ["complete", "partial"]}, {"type": "array", "items": {"type": "string"}}]},
+    {"type": "array", "minItems": 2, "maxItems": 2, "prefixItems": [{"const": "header"}, {"$ref": "#/$defs/header"}]},
+    {"type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{"const": "object"}, {"type": "integer", "minimum": 0}, {"type": "array", "minItems": 7, "maxItems": 7}]},
+    {"type": "array", "minItems": 4, "maxItems": 4, "prefixItems": [{"const": "tile"}, {"type": "integer", "minimum": 0}, {"type": ["integer", "null"]}, {"type": ["integer", "null"]}]},
+    {"type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [{"const": "event"}, {"type": "integer", "minimum": 0}, {"$ref": "#/$defs/event"}]},
+    {"type": "array", "minItems": 2, "maxItems": 2, "prefixItems": [{"const": "end"}, {"type": "object", "required": ["operationCount", "initialObjectCount", "tileCount", "observedUntilMs", "operationCounts", "decodeStatusCounts", "framing"], "properties": {"framing": {"enum": ["complete", "partial"]}}}]}
+  ],
+  "$defs": {
+    "header": {
+      "type": "object",
+      "required": ["datasetVersion", "schemaVersion", "retentionVersion", "layer", "source", "extraction", "context", "recordingHeader", "initialPlayerObservations", "qualification", "eventColumns", "objectColumns"],
+      "properties": {
+        "datasetVersion": {"const": "AOF_RECORDED_EVENTS_V1"},
+        "schemaVersion": {"const": "1.0.0"},
+        "retentionVersion": {"const": "AOF_RECORDED_EVENTS_RETENTION_V1"},
+        "layer": {"const": "decoded_observations"},
+        "source": {"type": "object", "additionalProperties": false, "required": ["sha256", "bytes"], "properties": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "bytes": {"type": "integer", "minimum": 1}}},
+        "extraction": {"type": "object", "required": ["revision", "extractorCodeSha256", "decoderCodeSha256", "parserVersion", "normalizerVersion"]},
+        "context": {"type": "object", "required": ["source", "participants", "teams", "initialDiplomacy", "match", "initialState"]},
+        "initialPlayerObservations": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"type": "object", "required": ["playerId", "position", "playerTypeRaw"]}},
+        "qualification": {"type": "object", "required": ["compatibility", "initialObjects", "initialPlayerResources", "gameElapsedOriginQualified", "semanticCompleteness", "chatContent", "rawBytes"]},
+        "eventColumns": {"const": ["timestampMs", "sourceOperation", "eventType", "sourceActionCode", "sourceActionName", "actorPlayerId", "targetPlayerId", "objectInstanceIds", "targetInstanceId", "entity", "position", "endPosition", "payload", "decodeStatus", "warningCodes", "sequence", "layoutObservations"]},
+        "objectColumns": {"const": ["ownerPlayerId", "objectId", "classId", "instanceId", "objectBlockIndex", "position", "entity"]}
+      }
+    },
+    "event": {
+      "type": "array", "minItems": 17, "maxItems": 17,
+      "prefixItems": [
+        {"type": "integer", "minimum": 0},
+        {"enum": ["ACTION", "SYNC", "VIEWLOCK", "CHAT", "POSTGAME", "START", "SAVE", "UNKNOWN"]},
+        {"type": "string"}, {"type": ["integer", "null"]}, {"type": ["string", "null"]},
+        {"type": ["integer", "null"]}, {"type": ["integer", "null"]},
+        {"type": "array", "items": {"type": "integer"}}, {"type": ["integer", "null"]},
+        {"type": ["object", "null"]}, {"type": ["object", "null"]}, {"type": ["object", "null"]},
+        {"type": "object"}, {"enum": ["complete", "partial", "failed", "unknown_action"]},
+        {"type": "array", "items": {"type": "string"}}, {"type": ["integer", "null"]}, {"type": "object"}
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Recorded Events statistics V1 source overlay on canonical-statistics-v1.schema.json",
+  "description": "Applied by the shared projector to the unchanged legacy schema. Changes provenance only; existing statistical definitions remain unchanged.",
+  "properties": {
+    "statisticsSchemaVersion": {"const": "1.2.0"},
+    "statisticsProjectionVersion": {"const": "AOF_RECORDED_EVENTS_STATISTICS_V1"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["replaySha256", "recordedEventsSha256", "recordedEventsVersion", "extractionRunId", "parserVersion"],
+      "properties": {
+        "replaySha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "recordedEventsSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "recordedEventsVersion": {"const": "AOF_RECORDED_EVENTS_V1"},
+        "extractionRunId": {"type": "string", "format": "uuid"},
+        "parserVersion": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -1,5 +1,28 @@
 # CanonicalReplay extraction and conformance
 
+## Direct Recorded Events V1 (Milestones 1–2)
+
+The [native V1 contract](../docs/architecture/recorded-events-v1-contract.md)
+defines the new retained chronology. Direct extraction writes one verified gzip
+JSONL artifact; projection reads only that artifact and its integrity metadata.
+It does not create a canonical archive, retain source bytes or persist Analysis V5.
+The production HTTP worker and Firebase upload remain on their existing path.
+
+```bash
+python replay-tools/recorded_events_stream.py --replay replay.aoe2record --out output/events.jsonl.gz
+python replay-tools/recorded_events_stream.py --events output/events.jsonl.gz --metadata output/events.jsonl.gz.metadata.json --out output/statistics.json
+# Extend an existing PR83 baseline; outputs are local and the directory must be new.
+python replay-tools/benchmark_direct_events.py --replay replay-fixtures/4v4.aoe2record --baseline output/baseline-4v4 --output output/direct-4v4
+```
+
+See the [acceptance report](../docs/testing/recorded-events-direct-v1-acceptance.md)
+for full-statistics equivalence, actual memory/time measurements and remaining
+storage, publication, retrieval and recalculation work. Existing statistical
+models intentionally retain their current elevation behavior and unavailable
+initial-resource values. Native provenance is explicitly versioned.
+
+## Earlier converter experiment and canonical tooling
+
 **Experimental successor (not wired to production):** [Recorded Events V1 assessment,
 schema and migration gates](../docs/architecture/recorded-events-v1-assessment.md)
 and [four-format measurements](../docs/testing/recorded-events-benchmark-2026-10-10.md).
