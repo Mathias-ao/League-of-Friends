@@ -238,16 +238,23 @@ export const uploadReplay = onCall<UploadReplayInput>(
       throw new HttpsError("invalid-argument", "Choose an .aoe2record recording.");
     }
     const bytes = replayBytes(request.data.replayBase64);
+    // The upload payload has already reached Functions at this point. A worker
+    // trace can be correlated by request timing without logging replay/user data.
+    const tracing = process.env.AOF_REPLAY_UPLOAD_PERF_TRACE === "1";
+    const traceStart = Date.now();
+    const trace: Record<string, number> = {};
     const localSourceHash = sha256(bytes);
 
     const matchRef = db.collection(collections.matches).doc(matchId);
     const gameRef = matchRef.collection("games").doc(gameId);
     const sourceRef = gameRef.collection("replaySources").doc(localSourceHash);
+    const authorityReadStarted = Date.now();
     const [matchSnapshot, gameSnapshot, existingSource] = await Promise.all([
       matchRef.get(),
       gameRef.get(),
       sourceRef.get(),
     ]);
+    if (tracing) trace.authorityReadMs = Date.now() - authorityReadStarted;
     if (!matchSnapshot.exists) throw new HttpsError("not-found", "Match not found.");
     if (!gameSnapshot.exists) throw new HttpsError("not-found", "Game not found.");
 
@@ -278,7 +285,9 @@ export const uploadReplay = onCall<UploadReplayInput>(
       };
     }
 
+    const workerStarted = Date.now();
     const worker = await callWorker(fileName, request.data.replayBase64);
+    if (tracing) trace.workerHttpRoundTripMs = Date.now() - workerStarted;
     if (!/^[0-9a-f]{64}$/.test(worker.sourceHash) || worker.sourceHash !== localSourceHash) {
       throw new HttpsError("internal", "Replay worker source hash did not match the uploaded recording.");
     }
@@ -286,6 +295,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
       throw new HttpsError("internal", "Statistics provenance does not match the uploaded recording.");
     }
 
+    const artifactStarted = Date.now();
     const bundleBytes = Buffer.from(worker.canonicalBundleBase64, "base64");
     if (bundleBytes.length !== worker.canonicalBundleBytes || sha256(bundleBytes) !== worker.canonicalBundleSha256) {
       throw new HttpsError("internal", "Canonical evidence bundle failed integrity verification.");
@@ -309,9 +319,15 @@ export const uploadReplay = onCall<UploadReplayInput>(
     const canonicalPath = prefix + "/canonical-bundle.zip";
     const statisticsPath = prefix + "/statistics.json.gz";
 
+    if (tracing) trace.mappingAndArtifactPreparationMs = Date.now() - artifactStarted;
+    const canonicalSaveStarted = Date.now();
     await verifiedSave(canonicalPath, bundleBytes, worker.canonicalBundleSha256, "application/zip");
+    if (tracing) trace.canonicalSaveAndVerifyMs = Date.now() - canonicalSaveStarted;
+    const statisticsSaveStarted = Date.now();
     await verifiedSave(statisticsPath, statisticsArtifact.bytes, statisticsArtifact.metadata.sha256, "application/gzip");
+    if (tracing) trace.statisticsSaveAndVerifyMs = Date.now() - statisticsSaveStarted;
 
+    const publicationStarted = Date.now();
     const transactionResult = await db.runTransaction(async (transaction) => {
       const [freshGameSnapshot, freshSourceSnapshot] = await Promise.all([
         transaction.get(gameRef),
@@ -393,9 +409,22 @@ export const uploadReplay = onCall<UploadReplayInput>(
       return { alreadyProcessed: false, revision };
     });
 
+    if (tracing) trace.readyPublicationTransactionMs = Date.now() - publicationStarted;
     // If resolution fails, evidence remains saved and the retryable resolver trigger
     // can recover. The caller sees the problem instead of an invented result.
+    const resolutionStarted = Date.now();
     const resolution=await resolveRecordingResult(matchId,gameId);
+    if (tracing) {
+      trace.resultResolutionMs = Date.now() - resolutionStarted;
+      trace.serverReceivedToResolutionMs = Date.now() - traceStart;
+      // Intentionally no user IDs, game IDs, replay names, source hashes or stats.
+      console.info(JSON.stringify({
+        event: "AOF_UPLOAD_SERVER_PERFORMANCE_V1",
+        phase: "complete",
+        timings: trace,
+        sourceBytes: bytes.length,
+      }));
+    }
     return {
       success: true,
       alreadyProcessed: transactionResult.alreadyProcessed,
