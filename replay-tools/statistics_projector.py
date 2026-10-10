@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 import json
+import time
 from pathlib import Path
 from statistics import median
 from typing import Any
@@ -65,8 +66,18 @@ def _inventory(counts: dict[str, Counter], catalog: dict, kind: str) -> dict[str
 def project_statistics_from_analysis(
     analysis: dict[str, Any], *, catalog_path: Path | None = None,
     direct_shared: bool = False,
+    stage_timings: dict[str, float] | None = None,
 ) -> dict:
     """Project statistics from compact analysis data without reopening CanonicalReplay."""
+    checkpoint = time.perf_counter()
+
+    def mark_stage(label: str) -> None:
+        nonlocal checkpoint
+        now = time.perf_counter()
+        if stage_timings is not None:
+            stage_timings[label] = round((now - checkpoint) * 1000, 3)
+        checkpoint = now
+
     validate_analysis_dataset(analysis)
     # Detectors consume interpreted lobby groups. MatchFacts still consumes the
     # untouched analysis manifest, retaining the exact raw DE values.
@@ -74,6 +85,7 @@ def project_statistics_from_analysis(
     registry = build_registry()
     catalog = read_json(catalog_path or select_entity_catalog(manifest))
     slots = {p["playerId"] for p in manifest["participants"]}
+    mark_stage("analysisValidationAndCatalogMs")
 
     action_counts: dict[str, Counter] = defaultdict(Counter)
     action_times: dict[str, list[int]] = defaultdict(list)
@@ -96,12 +108,14 @@ def project_statistics_from_analysis(
                     formation_modes[player].add(str(payload[key]))
                     break
 
+    mark_stage("actionIndexMs")
     body = analysis["body"]
     fundamentals = analysis["fundamentals"]
     initial_objects = analysis["initialObjects"]
     build_orders = classify_build_orders(
         manifest=manifest, body=body, catalog=catalog, initial_objects=initial_objects,
     )
+    mark_stage("buildOrderMs")
     raid_statistics = detect_raids(
         manifest=manifest,
         catalog=catalog,
@@ -109,6 +123,7 @@ def project_statistics_from_analysis(
         build_events=body["buildEvents"],
         action_events=spatial_action_events,
     )
+    mark_stage("raidDetectionMs")
     opening_statistics = project_opening_statistics(
         manifest=manifest,
         body=body,
@@ -116,11 +131,13 @@ def project_statistics_from_analysis(
         observed_until_ms=body["durationMs"],
         initial_objects=initial_objects,
     )
+    mark_stage("openingMs")
     resource_commitment_statistics = project_resource_commitment(
         manifest=manifest,
         body=body,
         catalog=catalog,
     )
+    mark_stage("resourceCommitmentMs")
     economy_statistics = project_economy_statistics(
         manifest=manifest,
         body=body,
@@ -128,17 +145,20 @@ def project_statistics_from_analysis(
         initial_objects=initial_objects,
         action_events=analysis["actionEvents"],
     )
+    mark_stage("economyMs")
     military_statistics = project_military_statistics(
         manifest=manifest,
         body=body,
         catalog=catalog,
     )
+    mark_stage("militaryMs")
     skirmish_statistics = detect_skirmishes(
         manifest=manifest,
         initial_objects=initial_objects,
         action_events=spatial_action_events,
         controller_seeds=True,
     )
+    mark_stage("skirmishDetectionMs")
     producer_episodes = {} if direct_shared else None
     engagement_statistics = project_engagement_statistics(
         manifest=manifest,
@@ -150,6 +170,7 @@ def project_statistics_from_analysis(
         raid_statistics=raid_statistics,
         episode_sink=producer_episodes,
     )
+    mark_stage("engagementInferenceMs")
     execution_statistics = project_execution_statistics(
         manifest=manifest,
         catalog=catalog,
@@ -163,6 +184,7 @@ def project_statistics_from_analysis(
         build_events=body["buildEvents"],
         body=body,
     )
+    mark_stage("executionMs")
     map_presence_statistics = project_map_presence(
         manifest=manifest,
         catalog=catalog,
@@ -171,6 +193,7 @@ def project_statistics_from_analysis(
         wall_events=body.get("wallEvents", []),
         action_events=spatial_action_events,
     )
+    mark_stage("mapPresenceMs")
     forward_eco_statistics = project_forward_eco(
         manifest=manifest,
         catalog=catalog,
@@ -180,6 +203,7 @@ def project_statistics_from_analysis(
     for player, forward_eco in forward_eco_statistics.items():
         map_presence_statistics[player]["forwardEco"] = forward_eco
 
+    mark_stage("forwardEconomyMs")
     participants = []
     for participant in manifest["participants"]:
         player = str(participant["playerId"])
@@ -224,6 +248,7 @@ def project_statistics_from_analysis(
             },
         })
 
+    mark_stage("participantAssemblyMs")
     queue_counts = {p: Counter(v) for p, v in fundamentals["queueCommandCountsByPlayerAndRawUnit"].items()}
     research_counts = {p: Counter(v) for p, v in fundamentals["researchCommandCountsByPlayerAndRawTechnology"].items()}
     building_counts = {p: Counter(v) for p, v in fundamentals["buildingPlacementCountsByPlayerAndRawBuilding"].items()}
@@ -295,11 +320,13 @@ def project_statistics_from_analysis(
     }
     # Context is an additive, independently versioned view. Existing statistics,
     # the schema digest and neutral deed identities remain unchanged.
+    mark_stage("resultAndPairSocialMs")
     result["pairSocialEvidence"]["episodeContext"] = project_pair_episode_context(
         pair_evidence=result["pairSocialEvidence"], raid_statistics=raid_statistics,
         engagement_statistics=engagement_statistics,
         execution_statistics=execution_statistics, action_events=spatial_action_events,
     )
+    mark_stage("pairEpisodeContextMs")
     schema = read_json(STATISTICS_SCHEMA)
     if event_native:
         # The small overlay retains every existing statistics section/constraint.
@@ -309,12 +336,15 @@ def project_statistics_from_analysis(
     if errors:
         first = errors[0]
         raise ValueError(f"Statistics schema validation failed at /{'/'.join(map(str, first.absolute_path))}: {first.message}")
+    mark_stage("statisticsSchemaValidationMs")
     if direct_shared:
         from statistics_direct_shared import to_direct_shared_statistics
         # Schema validation and both neutral social interpreters have already
         # consumed unmodified full input. Convert directly from the producer's
         # unique episode objects; do not serialize a duplicate full JSON.
-        return to_direct_shared_statistics(result, producer_episodes)
+        compact = to_direct_shared_statistics(result, producer_episodes)
+        mark_stage("directSharedPackingMs")
+        return compact
     return result
 
 
