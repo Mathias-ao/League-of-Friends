@@ -57,6 +57,12 @@ jobs:
             --mode direct-events-candidate \
             --replay ".fixture-corpus/replay-fixtures/build-185872/$FIXTURE.aoe2record" \
             --out ".replay-lab/fast-candidate-$FIXTURE/report.json"
+      - name: Verify original and indexed detectors are fully equivalent
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          python replay-tools/verify_action_time_window_parity.py \
+            --replay ".fixture-corpus/replay-fixtures/build-185872/$FIXTURE.aoe2record"
       - name: Summarize performance target (not a release gate)
         env:
           FIXTURE: ${{ matrix.fixture }}
