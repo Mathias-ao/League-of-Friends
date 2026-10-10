@@ -153,7 +153,7 @@ test('bounded native Battle detail is visible only for a qualified active, undis
  const ctx=await setup();const {data,props,root,repository,click}=ctx;
  const game=data.games[0];game.replay={
    statisticsState:'READY',statisticsId:'a'.repeat(64),statisticsRevision:2,
-   statisticsDelivery:'NATIVE_BOUNDED_V1',
+   statisticsDelivery:'NATIVE_BOUNDED_V1',nativeSocialRecordAvailable:true,
    nativePlayerMapping:[{playerId:game.players[0].playerId,replaySlot:1},
      {playerId:game.players[1].playerId,replaySlot:2}],
  };
@@ -171,6 +171,7 @@ test('bounded native Battle detail is visible only for a qualified active, undis
    await click('Open Battle Ledger');
    const panel=document.querySelector('[aria-label="Recorded Events Battle detail"]');
    assert.ok(panel,'qualified active Game exposes the bounded evidence browser');
+   assert.ok(document.querySelector('.native-record'),'separately enabled active social record is visible');
    await act(async()=>{await Promise.resolve();});
    assert.equal(calls[0]?.matchId,data.match.matchId);
    assert.equal(calls[0]?.gameId,game.gameId);
@@ -181,6 +182,7 @@ test('bounded native Battle detail is visible only for a qualified active, undis
    game.resultDisputeOpen=true;
    await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
    assert.equal(document.querySelector('[aria-label="Recorded Events Battle detail"]'),null);
+   assert.equal(document.querySelector('.native-record'),null,'disputed social record is unavailable');
    game.resultDisputeOpen=false;
    game.replay.statisticsDelivery='LEGACY';
    await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
