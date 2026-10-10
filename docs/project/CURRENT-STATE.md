@@ -6,15 +6,24 @@ Last reviewed: **10 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for b
 
 ## Current product and implementation
 
-**Unmerged event-first V1 work:** the approved successor architecture now has a
-[native event contract and direct extraction/projection implementation](../architecture/recorded-events-v1-contract.md)
-with [local acceptance evidence](../testing/recorded-events-direct-v1-acceptance.md).
-Draft PR #90 has four passing native equivalence cases; overall regression sign-off
-remains conditional on four inherited legacy golden mismatches documented there.
-The current Firebase upload still generates canonical archives. Permanent native
-event publication, bounded frontend retrieval, recalculation jobs and staging
-cutover acceptance remain subsequent milestones; this branch does not change
-official results, points or any deployed environment.
+**Merged recording-processing foundation (10 October 2026):** PRs
+[#88](https://github.com/Mathias-ao/League-of-Friends/pull/88),
+[#83](https://github.com/Mathias-ao/League-of-Friends/pull/83),
+[#89](https://github.com/Mathias-ao/League-of-Friends/pull/89),
+[#93](https://github.com/Mathias-ao/League-of-Friends/pull/93),
+[#94](https://github.com/Mathias-ao/League-of-Friends/pull/94),
+[#95](https://github.com/Mathias-ao/League-of-Friends/pull/95), and
+[#96](https://github.com/Mathias-ao/League-of-Friends/pull/96)
+are on `main`. They add [Recorded Events V1](../architecture/recorded-events-v1-contract.md),
+shared episode delivery, performance instrumentation, an opt-in authenticated
+native worker and a tightly gated Firebase native validation candidate.
+[Native integration evidence](../testing/native-recording-integration-v1.md)
+is local emulator acceptance, **not production upload-to-READY**.
+Ordinary uploads still use fully verified legacy canonical archives. The
+admin/project/Game-allowlisted native route stops at `VALIDATED_NOT_READY`;
+detailed-statistics delivery, native social readers and correction-safe READY
+activation are not qualified. No staging/production deployment, activation,
+historical migration or original-recording deletion was performed.
 
 | Area | Verified implementation / status | Next gate |
 | --- | --- | --- |
@@ -57,14 +66,15 @@ The authenticated replay upload and canonical evidence remain security-sensitive
 - Back up the local emulator (Auth, Firestore, Storage) **before** further test edits; the CLI has previously crashed on Windows after exporting, so verify the output files. Preserve staging and production unchanged.
 - The warm-up Firestore fix is on `main` (PR #85). The revised gzip statistics path verifies stored bytes and original JSON, preserves legacy uncompressed reads and covers both statistics queries and backfills; deployed payload sizes and error handling still require acceptance testing.
 - Test normal multi-account check-in, scheduler delivery, corrections/disputes, repeat-source attribution, duplicate processing, admin authorization and genuine recording timing. The complete replay corpus and semantic review remain distinct from UI smoke checks.
-- Benchmark Replay Lab/worker extraction, canonical size, JSON size, HTTP transfer, browser retrieval and memory. The user observed ~150 seconds for the failed 4v4 pipeline attempts; no phase-specific performance bottleneck is proven. Draft [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) is a baseline proposal, not an optimization result.
+- Real build-185872 benchmarking now isolates exhaustive canonical verification as a major legacy bottleneck. Native local emulator validation measured 14.3s 1v1, 21.7s 2v2, 26.6s 4v4 and 18.2s FFA, **not cloud READY**. See [critical-path profiling](../testing/upload-critical-path-2026-10-10.md) and [native integration acceptance](../testing/native-recording-integration-v1.md). Qualify bounded detail/social consumers, correction-safe READY and cold/warm real cloud timing before native activation; busy 2v2 Chaos remains above the intended processing ceiling.
 - Further work: source-grounded FFA placement/outcome qualification; conservative diplomacy/social interpretation; explicit Reputation/Relationship/Personality/portrait rules. No invented game-state facts or unapproved social awards.
 
 ### Related PR disposition
 
 - [PR #81](https://github.com/Mathias-ao/League-of-Friends/pull/81) — **closed without merge**; historical binary fixture corpus and synthetic test identity mappings were not promoted.
 - [PR #82](https://github.com/Mathias-ao/League-of-Friends/pull/82) — **closed without merge**; superseded by production-facing storage changes in merged [PR #86](https://github.com/Mathias-ao/League-of-Friends/pull/86).
-- [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) — remains a **draft** baseline performance harness; no measured 4v4 optimization demonstrated.
+- [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) — **merged** benchmark foundation; the tested Recorded Events/direct producer/native validation stack #89/#93/#94/#95/#96 also merged with default legacy processing intact.
+- [PRs #91](https://github.com/Mathias-ao/League-of-Friends/pull/91) and [#92](https://github.com/Mathias-ao/League-of-Friends/pull/92) — **closed without merge** as superseded post-hoc packing alternatives; preserve pinned build-185872 fixture commit `2d04ec6adbe871d156c108a4351448efeb08f4e6`.
 - The unrelated Chronicle story-engine drafts remain independent and must pass their own evidence and review gates.
 
 ## Technical reference and working rules
@@ -73,6 +83,6 @@ The authenticated replay upload and canonical evidence remain security-sensitive
 
 For active metric versions and evidence limits, use [Current Statistics](CURRENT-STATS.md) rather than historical September version names. For product identity and social rules, use [Core Identity](CORE-IDENTITY.md); for replay extraction, the [Replay Foundation](../replay-foundation/README.md); for launch boundaries, [Statistics launch-readiness](../testing/statistics-launch-readiness-2026-10-07.md); for the concluded E2E, [the closeout report](../testing/e2e-core-closeout-2026-10-10.md). GitHub `main` is implementation source of truth; historical branches, PR descriptions and chat observations are explicitly lesser evidence.
 
-**Next bounded action:** develop evidence-qualified Player Reputation (Gallantry, Cruelty, Chivalry) and pair Relationships (Rivalry, Hostility, Bond) using versioned neutral social evidence. Keep Event finalisation, ledger checks and real-user flow in a separate acceptance backlog. No staging or production deployment is implied by GitHub merges.
+**Next bounded engineering action:** qualify native detailed-statistics and social consumers, then correction-safe READY activation under explicit feature gates. Preserve source evidence and the existing instant player-facing read models. Player Reputation and Relationships remain a separate, not-yet-authorized product/model workstream. Keep Event finalisation, ledger checks and real-user flow in the acceptance backlog. No staging or production deployment is implied by GitHub merges.
 
 **Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Detailed delivery, social readers and correction qualification still block READY; nothing is deployed or enabled for ordinary users.
