@@ -157,14 +157,14 @@ test('bounded native Battle detail is visible only for a qualified active, undis
      {playerId:game.players[1].playerId,replaySlot:2}],
  };
  const calls:any[]=[];
- repository.activeNativeBattleDetail=async query=>{
+ Object.assign(repository,{activeNativeBattleDetail:async (query:import('../src/domain/league').ActiveNativeDetailRequest)=>{
    calls.push(query);
    return {success:true,delivery:'NATIVE_BOUNDED_V1',state:'READY',artifactSha256:'e'.repeat(64),
      mode:'list',matchId:query.matchId,gameId:query.gameId,statisticsId:'a'.repeat(64),
      replaySlot:query.replaySlot,group:query.group,total:1,offset:0,
      entries:[{reference:'battles/0',id:'battle-one',startedAtMs:60000,endedAtMs:90000}],
      nextOffset:null};
- };
+ }});
  try{
    await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
    await click('Open Battle Ledger');
