@@ -1,0 +1,121 @@
+name: Upload Critical Path Benchmark
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/upload-critical-path-benchmark.yml"
+      - "replay-tools/benchmark_upload_critical_path.py"
+      - "replay-tools/upload_worker.py"
+      - "replay-tools/recorded_events_stream.py"
+      - "replay-tools/statistics_projector.py"
+      - "replay-tools/statistics_direct_shared.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-processing-comparison:
+    name: "Local critical path ${{ matrix.fixture }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        fixture:
+          - 1v1_t90-deak
+          - 1v1_t90-dobb
+          - 1v1_t90-hack
+          - 1v1_t90-resi
+          - 2v2_arabia
+          - 2v2_chaos
+          - 2v2_nomad
+          - 4v4_arabia
+          - FFA_7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read pinned build-185872 source corpus from PR 92
+        uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned parser dependencies
+        run: python -m pip install -r replay-tools/requirements.txt
+      - name: Verify real fixture and independent TownBell metadata
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          name=os.environ["FIXTURE"]
+          root=Path(".fixture-corpus/replay-fixtures/build-185872")
+          replay=root/(name+".aoe2record")
+          townbell=root/"townbell_build-185872"/(name+".json")
+          assert replay.is_file() and replay.stat().st_size>0
+          with townbell.open(encoding="utf-8") as handle:
+              report=json.load(handle)
+          assert report["meta"]["game_build"]==185872
+          assert report["meta"]["save_version"]==68.9
+          print("Verified real current-build pair for", name)
+          PY
+      - name: Existing Python upload worker local path
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          mkdir -p ".replay-lab/upload-profile-$FIXTURE"
+          /usr/bin/time -v -o ".replay-lab/upload-profile-$FIXTURE/existing-resources.txt" \
+            python replay-tools/benchmark_upload_critical_path.py \
+            --mode existing-worker \
+            --replay ".fixture-corpus/replay-fixtures/build-185872/$FIXTURE.aoe2record" \
+            --out ".replay-lab/upload-profile-$FIXTURE/existing.json"
+      - name: Direct Recorded Events and shared-producer local path
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          /usr/bin/time -v -o ".replay-lab/upload-profile-$FIXTURE/direct-resources.txt" \
+            python replay-tools/benchmark_upload_critical_path.py \
+            --mode direct-events-candidate \
+            --replay ".fixture-corpus/replay-fixtures/build-185872/$FIXTURE.aoe2record" \
+            --out ".replay-lab/upload-profile-$FIXTURE/direct.json"
+      - name: Compare staged timings against goal (informational only)
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=Path(".replay-lab/upload-profile-"+os.environ["FIXTURE"])
+          a=json.loads((d/"existing.json").read_text())
+          b=json.loads((d/"direct.json").read_text())
+          assert a["fixture"]==b["fixture"]
+          assert a["benchmarkVersion"]==b["benchmarkVersion"]
+          assert a["inputBytes"]==b["inputBytes"]
+          print(json.dumps({
+              "fixture":a["fixture"],
+              "existingLocalMs":a["totalMs"],
+              "directLocalMs":b["totalMs"],
+              "existingMaxRssKiB":a["maxRssKiB"],
+              "directMaxRssKiB":b["maxRssKiB"],
+              "under20sLocalOnly":b["totalMs"]<20000,
+              "under30sLocalOnly":b["totalMs"]<30000,
+              "caution":"Local pipeline boundaries differ and omit remote upload-to-READY; thresholds not a production SLA"
+          },indent=2))
+          PY
+      - name: Publish small diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-critical-path-${{ matrix.fixture }}
+          path: |
+            .replay-lab/upload-profile-${{ matrix.fixture }}/existing.json
+            .replay-lab/upload-profile-${{ matrix.fixture }}/direct.json
+            .replay-lab/upload-profile-${{ matrix.fixture }}/existing-resources.txt
+            .replay-lab/upload-profile-${{ matrix.fixture }}/direct-resources.txt
+          if-no-files-found: warn
+          retention-days: 14

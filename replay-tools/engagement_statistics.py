@@ -17,6 +17,7 @@ from collections import defaultdict
 import math
 from typing import Any, Iterable
 
+from action_time_windows import ActionTimeWindow
 from skirmish_detector import SKIRMISH_LINK_DISTANCE_TILES
 from unit_classification import (
     UNIT_CLASS_FAMILY_VERSION,
@@ -716,10 +717,12 @@ def project_engagement_statistics(
     skirmish_statistics: dict[str, Any],
     raid_statistics: dict[str, dict[str, Any]],
     episode_sink: dict[str, list[dict[str, Any]]] | None = None,
+    use_time_index: bool = False,
 ) -> dict[str, dict[str, Any]]:
     participants = _participants(manifest)
     initial_objects = list(initial_objects)
     action_events = list(action_events)
+    action_window = ActionTimeWindow(action_events) if use_time_index else None
     classification_by_instance = build_initial_instance_classification(
         initial_objects,
         catalog=catalog,
@@ -741,8 +744,10 @@ def project_engagement_statistics(
             for player_id in skirmish.get("contributingPlayerIds", [])
             if player_id in participants
         }
+        nearby_candidates = (action_window.between(skirmish["startedAtMs"], skirmish["endedAtMs"])
+                             if action_window else action_events)
         skirmish_events = [
-            event for event in action_events
+            event for event in nearby_candidates
             if event.get("actorPlayerId") in contributor_ids
             and event.get("sourceActionName") in BATTLE_SUPPORT_ACTIONS
             and _inside_skirmish_area(event, skirmish)
@@ -759,7 +764,8 @@ def project_engagement_statistics(
         battle = _battle_from_skirmish(
             index=len(battles) + 1,
             skirmish=skirmish,
-            action_events=action_events,
+            action_events=(action_window.between(skirmish["startedAtMs"], skirmish["endedAtMs"])
+                           if action_window else action_events),
             participants=participants,
             zones_by_player=zones_by_player,
             raids=raids,

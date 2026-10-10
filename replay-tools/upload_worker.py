@@ -7,6 +7,7 @@ import json
 import hmac
 import os
 import tempfile
+import time
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -36,11 +37,21 @@ def zip_bundle(directory: Path) -> bytes:
     return output.getvalue()
 
 
-def process_replay(file_name: str, replay_base64: str) -> dict[str, Any]:
+def process_replay(file_name: str, replay_base64: str, *, timing_sink: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Existing worker processing; optionally report safe stage timings.
+
+    Timings contain durations and byte counts only, never names, replay content,
+    identifiers, chat, hashes, or statistics. Default worker output is unchanged.
+    """
+    total_started = time.perf_counter()
+    def elapsed_ms(started: float) -> float:
+        return round((time.perf_counter() - started) * 1000, 3)
+
     safe_name = Path(file_name).name
     if Path(safe_name).suffix.lower() not in {".aoe2record", ".mgz"}:
         raise ValueError("Only .aoe2record or .mgz recordings are accepted.")
 
+    decode_started = time.perf_counter()
     try:
         replay_bytes = base64.b64decode(replay_base64, validate=True)
     except Exception as error:
@@ -49,29 +60,53 @@ def process_replay(file_name: str, replay_base64: str) -> dict[str, Any]:
     if not replay_bytes or len(replay_bytes) > MAX_REPLAY_BYTES:
         raise ValueError("Replay must contain 1 byte to 32 MiB.")
 
+    if timing_sink is not None:
+        timing_sink["base64DecodeMs"] = elapsed_ms(decode_started)
+        timing_sink["sourceBytes"] = len(replay_bytes)
+
     with tempfile.TemporaryDirectory(prefix="aof-upload-worker-") as temp:
         root = Path(temp)
         replay_path = root / safe_name
         bundle_dir = root / "canonical"
+        io_started = time.perf_counter()
         replay_path.write_bytes(replay_bytes)
+        if timing_sink is not None:
+            timing_sink["sourceWriteMs"] = elapsed_ms(io_started)
 
-        adapter = build_payload(replay_path, bundle_dir)
+        extract_started = time.perf_counter()
+        parser_timings: dict[str, Any] | None = {} if timing_sink is not None else None
+        adapter = build_payload(replay_path, bundle_dir, timing_sink=parser_timings)
+        if timing_sink is not None:
+            timing_sink["canonicalExtractionMs"] = elapsed_ms(extract_started)
+            timing_sink["parserStages"] = parser_timings
         if not adapter["payload"]["body"]["bodyParseComplete"]:
             raise ValueError("Replay body extraction is incomplete.")
 
         # build_payload seals and validates the CanonicalReplay bundle once.
         # Do not repeat the full bundle validation before projection.
+        projection_started = time.perf_counter()
         statistics = project_statistics(bundle_dir, validate=False)
+        if timing_sink is not None:
+            timing_sink["statisticsProjectionMs"] = elapsed_ms(projection_started)
         statistics_path = bundle_dir / "statistics.json"
+        serialization_started = time.perf_counter()
         statistics_path.write_text(
             json.dumps(statistics, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n",
             encoding="utf-8",
         )
+        if timing_sink is not None:
+            timing_sink["fullStatisticsJsonWriteMs"] = elapsed_ms(serialization_started)
+            timing_sink["statisticsJsonBytes"] = statistics_path.stat().st_size
 
         extraction = json.loads((bundle_dir / "extraction-manifest.json").read_text(encoding="utf-8"))
+        zip_started = time.perf_counter()
         bundle_bytes = zip_bundle(bundle_dir)
+        if timing_sink is not None:
+            timing_sink["canonicalBundleZipMs"] = elapsed_ms(zip_started)
+            timing_sink["canonicalBundleBytes"] = len(bundle_bytes)
 
-        return {
+        envelope_started = time.perf_counter()
+        result = {
             "sourceHash": adapter["sourceHash"],
             "sourceFileName": adapter["sourceFileName"],
             "parserName": adapter["parserName"],
@@ -87,6 +122,10 @@ def process_replay(file_name: str, replay_base64: str) -> dict[str, Any]:
             "canonicalBundleSha256": sha256_bytes(bundle_bytes),
             "canonicalBundleBytes": len(bundle_bytes),
         }
+        if timing_sink is not None:
+            timing_sink["workerEnvelopeMs"] = elapsed_ms(envelope_started)
+            timing_sink["workerCoreMs"] = elapsed_ms(total_started)
+        return result
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -127,8 +166,18 @@ class Handler(BaseHTTPRequestHandler):
 
         try:
             request = json.loads(self.rfile.read(length))
-            result = process_replay(str(request.get("fileName") or ""), str(request.get("replayBase64") or ""))
+            trace: dict[str, Any] | None = {} if os.environ.get("AOF_REPLAY_WORKER_PERF_TRACE") == "1" else None
+            result = process_replay(
+                str(request.get("fileName") or ""), str(request.get("replayBase64") or ""),
+                timing_sink=trace,
+            )
+            response_started = time.perf_counter()
             self._json(200, result)
+            if trace is not None:
+                trace["httpResponseJsonAndSendMs"] = round((time.perf_counter() - response_started) * 1000, 3)
+                trace["observedWorkerRequestMs"] = round(trace["workerCoreMs"] + trace["httpResponseJsonAndSendMs"], 3)
+                print(json.dumps({"event": "AOF_WORKER_PERFORMANCE_V1", "timings": trace},
+                                 ensure_ascii=True, sort_keys=True), flush=True)
         except (ValueError, RuntimeError, FileExistsError) as error:
             self._json(400, {"error": "replay_rejected", "message": str(error)})
         except Exception:

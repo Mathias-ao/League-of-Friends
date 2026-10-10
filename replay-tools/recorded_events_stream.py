@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import time
 import uuid
 
 from analysis_dataset import ANALYSIS_DATASET_VERSION, ANALYSIS_SCHEMA_VERSION, _compact_action, _compact_initial_object
@@ -268,13 +269,24 @@ def read_records(path: Path, metadata: dict):
         raise ValueError("Uncompressed integrity mismatch")
 
 
-def extract_recorded_events(source: Path, destination: Path) -> dict:
-    """Verified local artifact, create-only. Caller owns remote publication."""
+def extract_recorded_events(
+    source: Path, destination: Path, *,
+    analysis_sink: dict | None = None,
+    stage_timings: dict | None = None,
+) -> dict:
+    """Verified create-only evidence, optionally hydrating analysis on its verifying read.
+
+    The standalone behavior remains unchanged. For immediate replay-free
+    projection, reading/validating the freshly extracted stream can also build
+    the analysis index. The staged file stays private until all validation
+    succeeds. No integrity check is skipped or duplicated.
+    """
     # Decoder imports are confined to extraction; projection works without mgz.
     import parse_replay as parser
     from canonical_run import compatibility, version_bundle
     if destination.exists():
         raise FileExistsError(destination)
+    preflight_started = time.perf_counter()
     parser.preflight_source(source)
     source_hash = sha256(source)
     source_size = source.stat().st_size
@@ -282,6 +294,8 @@ def extract_recorded_events(source: Path, destination: Path) -> dict:
         header = parser.parse_header(handle)
         parser.meta(parser.ExactReader(handle, source_size))
         offset = handle.tell()
+    if stage_timings is not None:
+        stage_timings["sourcePreflightHeaderMs"] = round((time.perf_counter() - preflight_started) * 1000, 3)
     players = parser.extract_players(header, [])
     versions = version_bundle()
     root = Path(__file__).parent
@@ -317,6 +331,7 @@ def extract_recorded_events(source: Path, destination: Path) -> dict:
              "chatContent": "not_retained", "rawBytes": "not_retained"},
          "eventColumns": EVENT_COLUMNS, "objectColumns": OBJECT_COLUMNS}
     destination.parent.mkdir(parents=True, exist_ok=True)
+    extraction_started = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix=".events-stage-", dir=destination.parent) as temporary:
         staged = Path(temporary) / "events.jsonl.gz"
         with staged.open("wb") as file, gzip.GzipFile(fileobj=file, mode="wb", filename="", mtime=0, compresslevel=6) as stream:
@@ -341,14 +356,29 @@ def extract_recorded_events(source: Path, destination: Path) -> dict:
             writer.record(["end", writer.validator.summary()])
         if sha256(source) != source_hash or source.stat().st_size != source_size:
             raise ValueError("Recording changed during extraction")
+        if stage_timings is not None:
+            stage_timings["decoderAndEventWriteMs"] = round((time.perf_counter() - extraction_started) * 1000, 3)
         metadata = {"datasetVersion": VERSION, "format": "jsonl", "compression": "gzip",
                     "sha256": sha256(staged), "bytes": staged.stat().st_size,
                     "uncompressedSha256": writer.digest.hexdigest(), "uncompressedBytes": writer.bytes}
-        for _ in read_records(staged, metadata):
-            pass
+        verify_started = time.perf_counter()
+        if analysis_sink is None:
+            for _ in read_records(staged, metadata):
+                pass
+            verified_analysis = None
+        else:
+            # load_analysis exhausts read_records, including footer and BOTH
+            # compressed/uncompressed integrity hashes, before returning.
+            verified_analysis = load_analysis(staged, metadata)
+        if stage_timings is not None:
+            stage_timings["verifiedEventReadAndOptionalHydrationMs"] = round(
+                (time.perf_counter() - verify_started) * 1000, 3
+            )
         # Same-filesystem atomic create-only publication. Linking a fully verified
         # file exposes neither a partial copy nor an overwrite race.
         os.link(staged, destination)
+        if analysis_sink is not None:
+            analysis_sink.update(verified_analysis)
     return metadata
 
 
@@ -472,10 +502,18 @@ def write_statistics(path: Path, result: dict):
                     yield b","
                 yield from chunks(child)
             yield b"]"
+    # Batch small JSON chunks: identical bytes, fewer Python-level writes and
+    # syscalls. Buffer remains bounded (except one already-bounded scalar).
     with path.open("wb") as file:
+        buffer = bytearray()
         for chunk in chunks(result):
-            file.write(chunk)
-        file.write(b"\n")
+            buffer.extend(chunk)
+            if len(buffer) >= 256 * 1024:
+                file.write(buffer)
+                buffer.clear()
+        buffer.extend(b"\n")
+        if buffer:
+            file.write(buffer)
 
 
 def main():

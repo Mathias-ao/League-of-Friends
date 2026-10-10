@@ -122,6 +122,34 @@ class EventStreamTests(unittest.TestCase):
         with self.assertRaises((ValueError, EOFError)):
             load_analysis(path, metadata)
 
+    def test_fused_verified_read_preserves_full_analysis_and_atomic_publication(self):
+        destination = Path(self.temp.name) / "fused-events.gz"
+        combined: dict = {}
+        stage: dict = {}
+        def read_header(handle):
+            handle.seek(8)
+            return deepcopy(header())
+        with patch.object(parse_replay, "preflight_source"), \
+                patch.object(parse_replay, "parse_header", side_effect=read_header):
+            metadata = extract_recorded_events(
+                self.source, destination, analysis_sink=combined, stage_timings=stage,
+            )
+        self.assertEqual(metadata, self.metadata)
+        self.assertEqual(combined, self.native)
+        self.assertEqual(load_analysis(destination, metadata), self.native)
+        self.assertIn("decoderAndEventWriteMs", stage)
+        self.assertIn("verifiedEventReadAndOptionalHydrationMs", stage)
+
+        failed = Path(self.temp.name) / "fused-failure.gz"
+        sink = {"untouched": True}
+        with patch.object(parse_replay, "preflight_source"), \
+                patch.object(parse_replay, "parse_header", side_effect=read_header), \
+                patch("recorded_events_stream.load_analysis", side_effect=ValueError("corrupt")):
+            with self.assertRaisesRegex(ValueError, "corrupt"):
+                extract_recorded_events(self.source, failed, analysis_sink=sink)
+        self.assertFalse(failed.exists())
+        self.assertEqual(sink, {"untouched": True})
+
     def test_never_replaces_existing_artifact(self):
         before = self.path.read_bytes()
         with self.assertRaises(FileExistsError):

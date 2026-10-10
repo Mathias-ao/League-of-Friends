@@ -29,16 +29,17 @@ GROUPS = (
 
 
 def _fingerprint(value: Any) -> tuple[str, int]:
-    """Canonical content identity, counted once per unique producer episode field."""
-    encoder = json.JSONEncoder(sort_keys=True, ensure_ascii=False,
-                               separators=(",", ":"), allow_nan=False)
-    digest = sha256()
-    length = 0
-    for fragment in encoder.iterencode(value):
-        part = fragment.encode("utf-8")
-        length += len(part)
-        digest.update(part)
-    return digest.hexdigest(), length
+    """Canonical content hash with CPython's fast whole-value JSON encoder.
+
+    Hash semantics and exact byte lengths are identical to the original
+    streaming encoder. Each producer field is bounded by its already-materialized
+    episode evidence; temporary UTF-8 bytes are released after hashing.
+    """
+    encoded = json.dumps(
+        value, sort_keys=True, ensure_ascii=False,
+        separators=(",", ":"), allow_nan=False,
+    ).encode("utf-8")
+    return sha256(encoded).hexdigest(), len(encoded)
 
 
 def to_direct_shared_statistics(full: dict, producer: dict[str, list[dict]]) -> dict:
