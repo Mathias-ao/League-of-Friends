@@ -192,12 +192,12 @@ test('bounded native Battle detail is visible only for a qualified active, undis
 test('native Battle record opens lazily, lists qualified social evidence and never reads a validation candidate',async()=>{
  const ctx=await setup();const {data,root,repository,dom}=ctx;
  const game=data.games[0],calls:any[]=[];
- const artifact='e'.repeat(64);
+ const artifact='e'.repeat(64),reviewRevision='f'.repeat(64);
  Object.assign(repository,{activeNativeBattleRecord:async(query:import('../src/domain/league').ActiveNativeBattleRecordQuery)=>{
    calls.push(query);
    if(query.mode==='overview')return {
      success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',
-     matchId:query.matchId,gameId:query.gameId,statisticsId:'a'.repeat(64),artifactSha256:artifact,mode:'overview',
+     matchId:query.matchId,gameId:query.gameId,statisticsId:'a'.repeat(64),artifactSha256:artifact,reviewRevision,mode:'overview',
      matchFacts:{modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',mapName:'Lombardia',
        observedDurationMs:60000,rules:{lockTeams:false}},
      officialOutcome:{qualification:'OFFICIAL',winnerPlayerIds:[game.players[0].playerId],resultRevision:3},
@@ -208,7 +208,7 @@ test('native Battle record opens lazily, lists qualified social evidence and nev
    if(query.mode==='page')return {
      success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',
      matchId:query.matchId,gameId:query.gameId,statisticsId:'a'.repeat(64),artifactSha256:artifact,
-     mode:'page',section:query.section,total:4,offset:0,
+     mode:'page',section:query.section,reviewRevision,total:4,offset:0,
      entries:[{index:0,id:'neutral-1',category:'DIRECTED_PRESSURE',atMs:4000,pairPlayerIds:[1,2]}],
      nextOffset:null,
    };
@@ -228,6 +228,7 @@ test('native Battle record opens lazily, lists qualified social evidence and nev
    assert.equal(calls[0]?.mode,'overview');
    assert.equal(calls[1]?.mode,'page');
    assert.equal(calls[1]?.expectedArtifactSha256,artifact);
+   assert.equal(calls[1]?.expectedReviewRevision,reviewRevision);
    assert.equal(calls.some(q=>'candidateId' in q),false);
    assert.match(document.body.textContent??'',/Lombardia/);
    assert.match(document.body.textContent??'',/7 observations/);
@@ -245,7 +246,7 @@ test('native Battle record reports unavailable social evidence rather than zero 
    if(query.mode==='overview')return {
      success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',mode:'overview',
      version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',matchId:'m',gameId:'g',
-     statisticsId:'a'.repeat(64),artifactSha256:'b'.repeat(64),
+     statisticsId:'a'.repeat(64),artifactSha256:'b'.repeat(64),reviewRevision:'c'.repeat(64),
      matchFacts:{},officialOutcome:{qualification:'OFFICIAL'},
      social:{status:'UNAVAILABLE',reason:'neutral_source_incomplete'},
      diplomacy:{status:'UNAVAILABLE',reason:'effective_stance_unqualified'},
@@ -253,7 +254,7 @@ test('native Battle record reports unavailable social evidence rather than zero 
    return {success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',mode:'page',
      version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',matchId:'m',gameId:'g',
      statisticsId:'a'.repeat(64),artifactSha256:'b'.repeat(64),
-     total:0,entries:[],nextOffset:null};
+     reviewRevision:'c'.repeat(64),total:0,entries:[],nextOffset:null};
  }});
  try{
    await act(async()=>root.render(React.createElement(NativeBattleRecordViewer,{
