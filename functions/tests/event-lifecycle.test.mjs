@@ -34,15 +34,21 @@ test('calendar midnight follows local Event day across Danish DST transitions',(
  assert.equal(new Date(endOfEventDay(Date.parse('2026-10-08T22:30:00Z'))).toISOString(),'2026-10-09T22:00:00.000Z');
  assert.throws(()=>endOfEventDay(Date.now(),'Invalid/Zone'));
 });
+
 test('automatic pairing is retry-safe and reserves one scoring warm-up per confirmed member',async()=>{
- const {db,now,ids}=fixture(5);await advanceEventWarmups('e',now);
- const first=db.get('events/e').warmupSchedule;assert.equal(first.pairs.length,2);assert.ok(ids.includes(first.unpairedPlayerId));
+ const {db,now,ids}=fixture(5);
+ await advanceEventWarmups('e',now);
+ const first=db.get('events/e').warmupSchedule;
+ assert.equal(first.pairs.length,2);
+ assert.ok(ids.includes(first.unpairedPlayerId));
+ // Verify the Firestore-compatible stored pairing format.
+ assert.deepEqual(   first.pairs,   drawWarmups(ids,first.seed).pairs.map(playerIds=>({     playerIds   })) );
  assert.equal(db.get('events/e').warmupMatchIds.length,2);
- await advanceEventWarmups('e',now+1000);assert.equal(db.get('events/e').warmupSchedule,first);
+ await advanceEventWarmups('e',now+1000);
+ assert.equal(db.get('events/e').warmupSchedule,first);
  assert.equal(db.get('events/e').warmupMatchIds.length,2);
  assert.deepEqual(drawWarmups([...ids].reverse(),first.seed),drawWarmups(ids,first.seed));
- for(const pair of first.pairs)for(const id of pair)assert.ok(db.get('events/e/scoringSlots/WARMUP_'+id));
-});
+ for(const pair of first.pairs)   for(const id of pair.playerIds)     assert.ok(db.get('events/e/scoringSlots/WARMUP_'+id));});
 test('guest acceptance reserves both slots, does not sign up/check in the guest, and expires competing invitations',async()=>{
  const {db,now}=fixture();await advanceEventWarmups('e',now);const unpaired=db.get('events/e').warmupSchedule.unpairedPlayerId;
  const first=await challengeWarmupGuest.run(req({eventId:'e',guestPlayerId:'guest'},unpaired));
