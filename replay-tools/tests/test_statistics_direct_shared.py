@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from hashlib import sha256
 import json
 from pathlib import Path
 import sys
@@ -13,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from analysis_dataset import build_analysis_dataset
 from fixture_support import export_fixture
 from statistics_direct_shared import (
-    VERSION, restore_full_statistics, to_direct_shared_statistics, measure_direct_shape,
+    VERSION, _fingerprint, restore_full_statistics, to_direct_shared_statistics, measure_direct_shape,
 )
 from statistics_projector import project_statistics_from_analysis
 
@@ -28,6 +29,19 @@ class DirectSharedTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.temp.cleanup()
+
+    def test_fast_hash_matches_previous_canonical_streaming_hash(self):
+        values = [
+            [], {}, {"sourceEventIds": ["op-000000123", "ö", "🛡"]},
+            [{"a": [1, 2, 3], "b": {"z": None, "q": 0.125}}],
+            {"nested": [{"ids": [f"op-{i:09}" for i in range(1000)]}]},
+        ]
+        encoder = json.JSONEncoder(
+            sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False,
+        )
+        for value in values:
+            expected = "".join(encoder.iterencode(value)).encode("utf-8")
+            self.assertEqual(_fingerprint(value), (sha256(expected).hexdigest(), len(expected)))
 
     def test_controlled_replay_matches_every_full_statistic(self):
         original = project_statistics_from_analysis(self.analysis)
