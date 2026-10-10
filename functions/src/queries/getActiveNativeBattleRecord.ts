@@ -21,6 +21,8 @@ export async function readActiveNativeBattleRecord(input:{
   request:NativeBattleRecordInput;env:NodeJS.ProcessEnv;
 }){
   const request=input.request;
+  if(input.env.AOF_ACTIVE_NATIVE_SOCIAL_READS!=='1')
+    throw new HttpsError('failed-precondition','Native social record reading is not enabled.');
   const active=await loadActiveNativeEvidence({db:input.db,bucket:input.bucket,
     actor:input.actor,matchId:request?.matchId,gameId:request?.gameId,env:input.env});
   let projected:ReturnType<typeof projectNativeBattleRecord>;
