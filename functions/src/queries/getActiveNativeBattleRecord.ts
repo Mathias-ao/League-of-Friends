@@ -38,6 +38,9 @@ export async function readActiveNativeBattleRecord(input:{
   }catch{
     throw new HttpsError('invalid-argument','Invalid native Battle-record section, cursor or revision.');
   }
+  // A result correction can arrive while the (potentially expensive) neutral
+  // social interpretation is being projected, after the artifact was read.
+  await active.revalidate();
   return {success:true,state:'READY',matchId:request.matchId,gameId:request.gameId,...selected};
 }
 
