@@ -32,7 +32,7 @@ The user's visual checks establish that outputs appeared and updated, **not** in
 
 ### Blocking bugs found, and repository boundaries
 
-| Finding | Local evidence / disposition | `main` as inspected 10 October |
+| Finding | Local evidence / disposition | `main` after E2E consolidation |
 | --- | --- | --- |
 | Warm-up pairing persistence | Firestore rejects nested arrays under `warmupSchedule.pairs`. | **Fixed on `main` by [PR #85](https://github.com/Mathias-ao/League-of-Friends/pull/85)**; schedule now stores `{playerIds:[...]}` objects, with an updated test. |
 | Large replay artifacts | A ~5 MiB 4v4 recording produced an 18.36 MiB `canonical-bundle.zip`; uncompressed `statistics.json` upload returned HTTP 413 in Storage emulator. | Lossless gzipped JSON with compressed/original SHA-256 and shared legacy-compatible readers replaces the uncompressed persistence path. Requires deployed sizing/throughput validation. |
@@ -50,17 +50,17 @@ The authenticated replay upload and canonical evidence remain security-sensitive
 - Benchmark Replay Lab/worker extraction, canonical size, JSON size, HTTP transfer, browser retrieval and memory. The user observed ~150 seconds for the failed 4v4 pipeline attempts; no phase-specific performance bottleneck is proven. Draft [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) is a baseline proposal, not an optimization result.
 - Further work: source-grounded FFA placement/outcome qualification; conservative diplomacy/social interpretation; explicit Reputation/Relationship/Personality/portrait rules. No invented game-state facts or unapproved social awards.
 
-### Open work kept separate from this documentation
+### Related PR disposition
 
-- [PR #81](https://github.com/Mathias-ao/League-of-Friends/pull/81) — draft historical fixture and synthetic identity-mapping helpers, not a real-user acceptance certificate.
-- [PR #82](https://github.com/Mathias-ao/League-of-Friends/pull/82) — draft **demo-only** statistics storage proposal; do not merge or deploy as-is.
-- [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) — draft baseline performance harness; no measured 4v4 optimization demonstrated.
+- [PR #81](https://github.com/Mathias-ao/League-of-Friends/pull/81) — **closed without merge**; historical binary fixture corpus and synthetic test identity mappings were not promoted.
+- [PR #82](https://github.com/Mathias-ao/League-of-Friends/pull/82) — **closed without merge**; superseded by production-facing storage changes in merged [PR #86](https://github.com/Mathias-ao/League-of-Friends/pull/86).
+- [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) — remains a **draft** baseline performance harness; no measured 4v4 optimization demonstrated.
 - The unrelated Chronicle story-engine drafts remain independent and must pass their own evidence and review gates.
 
 ## Technical reference and working rules
 
 **League → Season → Event → Match → Game** is the authoritative hierarchy; the user-facing terms include Battle (Match) and Roundoff. One `.aoe2record` represents one Game. Source hashes, versioned evidence, qualification, provenance, audit history and idempotent correction are non-negotiable. Separately versioned measurement, social interpretation, League Points, Gold and other ledgers must not be conflated.
 
-For active metric versions and evidence limits, use [Current Statistics](CURRENT-STATS.md) rather than historical September version names. For product identity and social rules, use [Core Identity](CORE-IDENTITY.md); for replay extraction, the [Replay Foundation](../replay-foundation/README.md); for launch boundaries, [Statistics launch-readiness](../testing/statistics-launch-readiness-2026-10-07.md); for current local test fixtures, [historical recording E2E protocol in draft PR #81](https://github.com/Mathias-ao/League-of-Friends/blob/test/replay-e2e-t90-fixture-v1/docs/testing/historical-t90-replay-e2e-fixture.md). GitHub `main` is implementation source of truth; historical branches, PR descriptions and chat observations are explicitly lesser evidence.
+For active metric versions and evidence limits, use [Current Statistics](CURRENT-STATS.md) rather than historical September version names. For product identity and social rules, use [Core Identity](CORE-IDENTITY.md); for replay extraction, the [Replay Foundation](../replay-foundation/README.md); for launch boundaries, [Statistics launch-readiness](../testing/statistics-launch-readiness-2026-10-07.md); for the concluded E2E, [the closeout report](../testing/e2e-core-closeout-2026-10-10.md). GitHub `main` is implementation source of truth; historical branches, PR descriptions and chat observations are explicitly lesser evidence.
 
 **Next bounded action:** develop evidence-qualified Player Reputation (Gallantry, Cruelty, Chivalry) and pair Relationships (Rivalry, Hostility, Bond) using versioned neutral social evidence. Keep Event finalisation, ledger checks and real-user flow in a separate acceptance backlog. No staging or production deployment is implied by GitHub merges.
