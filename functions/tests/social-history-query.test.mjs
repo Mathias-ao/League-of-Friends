@@ -88,6 +88,17 @@ test('social history fails closed on compressed bytes, original digest, size and
   await assert.rejects(getSocialHistory.run(request),e=>e.code==='data-loss',corruption);
  }
 });
+test('unqualified native-looking active source is excluded from Chronicle without claiming peacefulness',async()=>{
+ reset();
+ const source=records.get('matches/m/games/g/replaySources/r1');
+ source.statistics.projectionDeliveryVersion='AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL';
+ const r=await getSocialHistory.run(request);
+ assert.equal(r.status,'PARTIAL');assert.equal(r.coverage.excludedGames,1);
+ assert.equal(r.coverage.readableAcceptedGames,0);
+ assert.equal(r.excluded[0].reason,'native_social_history_reader_not_qualified');
+ assert.equal(r.history.contributions.length,0);
+});
+
 test('missing or disputed Game sources are disclosed rather than interpreted as peacefulness',async()=>{
  reset();delete records.get('matches/m/games/g').activeReplayStatisticsId;
  const r=await getSocialHistory.run(request);assert.equal(r.status,'PARTIAL');assert.equal(r.history.contributions.length,0);
