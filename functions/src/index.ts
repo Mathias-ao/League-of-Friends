@@ -59,6 +59,7 @@ export { getMatchDetail } from "./queries/getMatchDetail.js";
 export { getSocialHistory } from "./queries/getSocialHistory.js";
 export { getPlayerChronicle } from "./queries/getPlayerChronicle.js";
 export { getReplayStatistics } from "./queries/getReplayStatistics.js";
+export {getNativeBattleDetailPreview} from "./queries/getNativeBattleDetailPreview.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
