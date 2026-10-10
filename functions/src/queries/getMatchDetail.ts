@@ -17,6 +17,7 @@ import {
   type CivilizationDraftState,
 } from "../engines/civilizationDraftEngine.js";
 import { iso, playerMap, publicPlayer } from "./querySupport.js";
+import {activeNativeStatisticsSource} from "../engines/activeNativeStatisticsSource.js";
 
 interface MatchDetailInput {
   matchId: string;
@@ -130,6 +131,9 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
       ? availableCivilizationsForPlayer(draft, actor.playerId, viewerGamePlayer.team)
       : [];
     const placementSource=game.activeReplayStatisticsId?(await gameSnapshot.ref.collection('replaySources').doc(game.activeReplayStatisticsId).get()).data():null;
+    const nativeSourceActive=!!game.activeReplayStatisticsId&&!!activeNativeStatisticsSource(
+      matchId,gameSnapshot.id,match,game,game.activeReplayStatisticsId,placementSource,
+      process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1');
     const submissionsSnapshot = canSeePendingResultClaims
       ? await gameSnapshot.ref.collection("resultSubmissions").get()
       : null;
@@ -206,6 +210,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
         statisticsId: game.activeReplayStatisticsId ?? null,
         statisticsState: game.replayStatisticsState ?? null,
         statisticsRevision: game.replayStatisticsRevision ?? null,
+        statisticsDelivery:nativeSourceActive?'NATIVE_BOUNDED_V1':'LEGACY',
         placementReason:placementSource?.placementQualification?.reason??null,
       },
       viewerSubmission,
