@@ -423,9 +423,9 @@ def load_analysis(path: Path, metadata: dict) -> dict:
             "coverage": _coverage(header, body)}
 
 
-def project_recorded_events(path: Path, metadata: dict):
+def project_recorded_events(path: Path, metadata: dict, *, direct_shared: bool = False):
     from statistics_projector import project_statistics_from_analysis
-    return project_statistics_from_analysis(load_analysis(path, metadata))
+    return project_statistics_from_analysis(load_analysis(path, metadata), direct_shared=direct_shared)
 
 
 def _json_bound(value, limit):
@@ -484,15 +484,21 @@ def main():
     inputs.add_argument("--replay", type=Path)
     inputs.add_argument("--events", type=Path)
     parser.add_argument("--metadata", type=Path)
+    parser.add_argument("--direct-shared", action="store_true",
+                        help="EXPERIMENT: emit producer-shared engagement evidence instead of full arrays")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if args.replay:
+        if args.direct_shared:
+            parser.error("--direct-shared requires --events and --metadata")
         metadata = extract_recorded_events(args.replay, args.out)
         args.out.with_suffix(args.out.suffix + ".metadata.json").write_bytes(json_bytes(metadata))
     else:
         if not args.metadata:
             parser.error("--metadata required")
-        write_statistics(args.out, project_recorded_events(args.events, read_json(args.metadata)))
+        write_statistics(args.out, project_recorded_events(
+            args.events, read_json(args.metadata), direct_shared=args.direct_shared,
+        ))
 
 
 if __name__ == "__main__":
