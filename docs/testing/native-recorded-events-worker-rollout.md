@@ -36,6 +36,19 @@ python replay-tools/verify_native_package.py \
 
 The second command independently consumes/validates the staged event stream, recomputes full unindexed statistics, losslessly restores the compact artifact and requires exact full-document equality including neutral pair-social evidence.
 
+## Player-facing read-model compatibility prototype
+
+`functions/src/engines/nativeStatisticsReadAdapter.ts` provides a **selective
+in-memory view**, reconstructing the original player's episode-group references
+from producer-unique episode *bodies*, without rehydrating shared action IDs
+and directed interaction detail. A Node regression test compares the resulting
+`projectStatistics` + `augmentSeasonShowcase` output with the original
+full-statistics input for a synthetic Battle. This is intended solely for
+compact player-facing `StatisticsExperience` projection. It must **never** be
+substituted for the complete detailed statistics, social deed input or archival
+audit. Real-fixture read-model parity and the Firebase integration are still
+required before production publication.
+
 ## Preserved safety and intentional difference
 
 The native pipeline validates every retained event in its own strict schema/contract, verifies complete operation framing and chronology and checks both compressed and inflated artifact integrity.
