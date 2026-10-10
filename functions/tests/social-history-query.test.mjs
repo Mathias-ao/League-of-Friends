@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {encodeReplayStatistics} from '../lib/services/replayStatisticsStorage.js';
+import {gzipSync} from 'node:zlib';
+import {statisticsBindingKey} from '../lib/engines/statisticsExperience.js';
+import {ACTIVE_NATIVE_SOURCE_VERSION} from '../lib/engines/activeNativeStatisticsSource.js';
 process.env.GCLOUD_PROJECT='social-query-test';
 const {db}=await import('../lib/config/firebase.js');
 const {getStorage}=await import('firebase-admin/storage');
@@ -110,4 +113,111 @@ test('unknown chronology and duplicate Game sequence cannot invent historical or
  reset();delete records.get('matches/m').completedAt;await assert.rejects(getSocialHistory.run(request),e=>e.code==='failed-precondition');
  reset();records.set('matches/m/games/other',{...records.get('matches/m/games/g')});
  await assert.rejects(getSocialHistory.run(request),e=>e.code==='failed-precondition');
+});
+
+
+function makeNativeSource(){
+ reset();
+ const H='a'.repeat(64),E='b'.repeat(64),proc='c'.repeat(64),revision='native-social-run',artifact='d'.repeat(64);
+ const game=records.get('matches/m/games/g');
+ game.activeReplayStatisticsId=H;game.replayStatisticsState='READY';game.replayStatisticsRevision=1;
+ const provenance={replaySha256:H,recordedEventsSha256:E,recordedEventsVersion:'AOF_RECORDED_EVENTS_V1',
+   parserVersion:'mgz-fast/test',extractionRunId:revision};
+ const original=JSON.parse(bytes.toString('utf8'));
+ original.source={...provenance};
+ original.matchFacts.source={...provenance};
+ original.pairSocialEvidence={modelVersion:'AOF_PAIR_SOCIAL_EVIDENCE_V1',identityNamespace:'CANONICAL_REPLAY_PLAYER_ID',
+   gameScope:{...provenance},playerIds:[1,2],observations:[],incidents:[]};
+ original.participants=[{playerId:1,replaySlot:1,displayName:'Alice'},
+   {playerId:2,replaySlot:2,displayName:'Bob'}];
+ original.statisticsSchemaVersion='1.2.0';
+ original.statisticsProjectionVersion='AOF_RECORDED_EVENTS_STATISTICS_V1';
+ original.sharedEpisodeDelivery={version:'AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL'};
+ const encoded=encodeReplayStatistics(original);
+ bytes=encoded.bytes;
+ const prefix='native-replay-evidence/m/g/'+H+'/';
+ const mapping=[{replaySlot:1,playerId:'a',sourceName:'Alice'},{replaySlot:2,playerId:'b',sourceName:'Bob'}];
+ const source={state:'READY',nativePublicationVersion:ACTIVE_NATIVE_SOURCE_VERSION,
+   sourceHash:H,matchId:'m',gameId:'g',replayStatisticsRevision:1,
+   nativeValidationCandidateId:'f'.repeat(64),processorRevision:proc,artifactRevision:artifact,
+   extraction:{revision},playerMapping:mapping,
+   originalRecording:{path:prefix+'source.aoe2record',generation:'1',
+     permanent:true,sourceDeletionAuthorized:false},
+   recordedEvents:{datasetVersion:'AOF_RECORDED_EVENTS_V1',sha256:E,
+     path:prefix+artifact+'/events.jsonl.gz',generation:'2'},
+   statistics:{...encoded.metadata,projectionDeliveryVersion:'AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL',
+     path:prefix+artifact+'/statistics.direct.json.gz',generation:'3'}};
+ source.experience={version:'AOF_STATISTICS_EXPERIENCE_V3',bindingKey:statisticsBindingKey({
+   sourceHash:H,roster:game.players,mapping,opponents:[],
+ })};
+ records.delete('matches/m/games/g/replaySources/r1');
+ records.set('matches/m/games/g/replaySources/'+H,source);
+ return {game,source,original,H};
+}
+test('social-history reader accepts only qualified native source and preserves accepted official duel and owner Chronicle',async()=>{
+ const {original,H}=makeNativeSource();
+ const priorReads=await getSocialHistory.run(request);
+ assert.equal(priorReads.status,'PARTIAL','new native source remains off by default');
+ assert.equal(priorReads.excluded[0].reason,'native_social_history_reader_not_qualified');
+ const prior=process.env.AOF_ACTIVE_NATIVE_PLAYER_READS,shadow=process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;
+ try{
+  process.env.AOF_ACTIVE_NATIVE_PLAYER_READS='1';process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS='1';
+  const before=JSON.stringify([...records]);
+  const social=await getSocialHistory.run(request);
+  assert.equal(social.status,'AVAILABLE');
+  assert.equal(social.coverage.readableAcceptedGames,1);
+  assert.equal(social.history.pairs[0].tracks.RIVALRY.currentStage,1);
+  assert.equal(social.history.policy.productionScoringEnabled,false);
+  assert.equal(social.chronicle.ownerPlayerId,'a');
+  assert.equal(social.chronicle.pages[0].counterpartPlayerId,'b');
+  assert.equal(social.chronicle.pages[0].entries.length,1);
+  assert.equal(JSON.stringify([...records]),before,'no social award or source writes');
+  assert.equal(original.source.recordedEventsSha256,'b'.repeat(64));
+  assert.equal(records.has('matches/m/games/g/nativeReplayValidations/'+H),false);
+ }finally{
+  if(prior===undefined)delete process.env.AOF_ACTIVE_NATIVE_PLAYER_READS;else process.env.AOF_ACTIVE_NATIVE_PLAYER_READS=prior;
+  if(shadow===undefined)delete process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;else process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS=shadow;
+ }
+});
+test('qualified native social history fails closed on mid-read source rewrite and revised official outcome',async()=>{
+ for(const mutator of [
+  ({source})=>source.replayStatisticsRevision=2,
+  ({game})=>game.canonicalResult.revision=2,
+  ({game})=>game.activeResultDisputeId='open',
+  ({game})=>game.activeReplayStatisticsId='0'.repeat(64),
+ ]){
+  const ctx=makeNativeSource();
+  const prior=process.env.AOF_ACTIVE_NATIVE_PLAYER_READS,shadow=process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;
+  process.env.AOF_ACTIVE_NATIVE_PLAYER_READS='1';process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS='1';
+  try{
+   downloadHook=()=>mutator(ctx);
+   await assert.rejects(getSocialHistory.run(request),e=>e.code==='aborted');
+  }finally{
+   if(prior===undefined)delete process.env.AOF_ACTIVE_NATIVE_PLAYER_READS;else process.env.AOF_ACTIVE_NATIVE_PLAYER_READS=prior;
+   if(shadow===undefined)delete process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;else process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS=shadow;
+  }
+ }
+});
+test('native social history rejects missing neutral evidence and corrupted pinned compressed artifacts',async()=>{
+ for(const corrupt of ['bytes','missing-ledger','wrong-roster','wrong-extraction']){
+  const ctx=makeNativeSource();
+  const prior=process.env.AOF_ACTIVE_NATIVE_PLAYER_READS,shadow=process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;
+  process.env.AOF_ACTIVE_NATIVE_PLAYER_READS='1';process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS='1';
+  try{
+   if(corrupt==='bytes')bytes=Buffer.from('corrupt gzip');
+   else {
+    const raw=structuredClone(ctx.original);
+    if(corrupt==='missing-ledger')delete raw.pairSocialEvidence.observations;
+    if(corrupt==='wrong-roster')raw.pairSocialEvidence.playerIds=[2,1];
+    if(corrupt==='wrong-extraction')raw.source.extractionRunId='stale';
+    const updated=encodeReplayStatistics(raw);
+    bytes=updated.bytes;
+    ctx.source.statistics={...ctx.source.statistics,...updated.metadata};
+   }
+   await assert.rejects(getSocialHistory.run(request),e=>e.code==='data-loss',corrupt);
+  }finally{
+   if(prior===undefined)delete process.env.AOF_ACTIVE_NATIVE_PLAYER_READS;else process.env.AOF_ACTIVE_NATIVE_PLAYER_READS=prior;
+   if(shadow===undefined)delete process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;else process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS=shadow;
+  }
+ }
 });
