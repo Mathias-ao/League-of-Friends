@@ -8,7 +8,7 @@ import { db } from "../config/firebase.js";
 import { collections } from "../domain/collections.js";
 import { callableOptions } from "../config/runtime.js";
 import {currentOfficialGameOutcome} from "../engines/recordingMatchFacts.js";
-import {ACTIVE_NATIVE_SOURCE_VERSION} from "../engines/activeNativeStatisticsSource.js";
+import {NATIVE_SHARED_DELIVERY} from "../engines/activeNativeStatisticsSource.js";
 import {bindingDigest} from "../engines/nativeRecordingIntegration.js";
 
 interface Input {
@@ -42,8 +42,11 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
   if (!sourceSnapshot.exists || sourceSnapshot.data()?.state !== "READY") {
     throw new HttpsError("failed-precondition", "The active replay statistics revision is unavailable.");
   }
-  if(sourceSnapshot.data()?.nativePublicationVersion===ACTIVE_NATIVE_SOURCE_VERSION)
-    throw new HttpsError('failed-precondition','Native Battle records use the authenticated bounded detail reader, not a full legacy JSON response.');
+  const stored=sourceSnapshot.data();
+  if(stored?.nativePublicationVersion!==undefined||
+     stored?.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
+     stored?.statistics?.projectionDeliveryVersion===NATIVE_SHARED_DELIVERY)
+    throw new HttpsError('failed-precondition','Native Battle evidence requires its versioned bounded reader, not a full legacy JSON response.');
   const coherenceToken=bindingDigest({match:matchSnapshot.data(),game:gameSnapshot.data(),source:sourceSnapshot.data()});
   const source = sourceSnapshot.data() as {
     playerMapping?: unknown[];
