@@ -9,7 +9,7 @@ on:
       - "replay-tools/statistics_direct_shared.py"
       - "replay-tools/recorded_events_stream.py"
       - "replay-tools/benchmark_direct_shared_producer.py"
-      - "replay-fixtures/build-185872/**"
+      - ".fixture-corpus/replay-fixtures/build-185872/**"
   workflow_dispatch:
 
 permissions:
@@ -26,6 +26,13 @@ jobs:
     name: "Direct producer ${{ matrix.fixture }}"
     steps:
       - uses: actions/checkout@v4
+      # Read the exact current-build fixture revision from PR #92. Do not
+      # inherit that branch's post-processing implementation or legacy moves.
+      - uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -38,7 +45,7 @@ jobs:
           python - <<'PY'
           import os, json
           from pathlib import Path
-          root=Path("replay-fixtures/build-185872")
+          root=Path(".fixture-corpus/replay-fixtures/build-185872")
           name=os.environ["FIXTURE"]
           recording=root/(name+".aoe2record")
           control=root/"townbell_build-185872"/(name+".json")
@@ -53,7 +60,7 @@ jobs:
           FIXTURE: ${{ matrix.fixture }}
         run: |
           mkdir -p ".replay-lab/direct-producer-$FIXTURE"
-          python replay-tools/recorded_events_stream.py --replay "replay-fixtures/build-185872/$FIXTURE.aoe2record" --out ".replay-lab/direct-producer-$FIXTURE/events.gz"
+          python replay-tools/recorded_events_stream.py --replay ".fixture-corpus/replay-fixtures/build-185872/$FIXTURE.aoe2record" --out ".replay-lab/direct-producer-$FIXTURE/events.gz"
       - name: Full projection and streaming serialization baseline
         env:
           FIXTURE: ${{ matrix.fixture }}
