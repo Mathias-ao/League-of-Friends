@@ -1,6 +1,5 @@
 import {currentOfficialGameOutcome} from './recordingMatchFacts.js';
-import {statisticsBindingKey} from './statisticsExperience.js';
-import {statisticsMetadata} from '../services/statisticsExperienceProjection.js';
+import {statisticsBindingKey,type ProjectionMetadata} from './statisticsExperience.js';
 
 /**
  * Read-side contract ONLY. There is deliberately no producer of this marker:
@@ -62,8 +61,8 @@ export function activeNativeStatisticsSource(
      new Set(mapIds).size!==mapIds.length||
      new Set(slots).size!==slots.length||
      mapIds.some((v:unknown)=>!rosterIds.includes(v)))return null;
-  const meta=statisticsMetadata(matchId,gameId,m,g,s);
-  if(!meta.eligible||s.experience?.bindingKey!==statisticsBindingKey(meta)||
+  const key=statisticsBindingKey({sourceHash:sourceId,roster,mapping,opponents:[]} as ProjectionMetadata);
+  if(s.experience?.bindingKey!==key||
      s.experience?.version!=='AOF_STATISTICS_EXPERIENCE_V3')return null;
   return {source:s,artifact:stats,eventsSha256:events.sha256,extractionRunId:extraction.revision};
 }
