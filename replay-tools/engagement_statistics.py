@@ -715,6 +715,7 @@ def project_engagement_statistics(
     action_events: Iterable[dict[str, Any]],
     skirmish_statistics: dict[str, Any],
     raid_statistics: dict[str, dict[str, Any]],
+    episode_sink: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     participants = _participants(manifest)
     initial_objects = list(initial_objects)
@@ -783,6 +784,18 @@ def project_engagement_statistics(
         defensive = []
         cooperative = []
         reinforcement = []
+
+    # The five original detector-owned episode lists are the unique producer
+    # records. They are captured before any per-player projection is assembled.
+    # No detector rule or social interpretation changes.
+    if episode_sink is not None:
+        episode_sink.update({
+            "skirmishes": skirmishes,
+            "battles": battles,
+            "reinforcements": reinforcement,
+            "defensiveAssists": defensive,
+            "cooperativeAttacks": cooperative,
+        })
 
     results: dict[str, dict[str, Any]] = {}
     for player_id in sorted(participants):
