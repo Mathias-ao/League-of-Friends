@@ -130,8 +130,8 @@ export function selectNativeBattleRecord(
     const counterpart:Record<string,PageSection>={
       ledgerIncident:'ledgerIncidents',ledgerObservation:'ledgerObservations',
       socialIncident:'socialIncidents',socialDecision:'socialDecisions',socialDeed:'socialDeeds'};
-    const index=request.index;
-    if(!indexValid(index))fail('native_record_entry_index_required');
+    if(!indexValid(request.index))fail('native_record_entry_index_required');
+    const index=Number(request.index);
     const rows=pageRows(data,counterpart[section]);
     if(index>=rows.length)fail('native_record_entry_missing');
     value=rows[index];
