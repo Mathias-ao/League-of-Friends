@@ -5,6 +5,7 @@ import {MatchDialog} from './Views';
 import {BattleTimeline,useStatistics} from './StatisticsDashboardLegacy';
 import {BattleStatistics} from './BattleStatistics';
 import {NativeBattleEvidence} from './NativeBattleEvidence';
+import {NativeBattleRecordViewer} from './NativeBattleRecordViewer';
 import {BattleOverlay} from './BattleOverlay';
 import {BattleAccomplishments} from './BattleAccomplishments';
 import type {ViewProps} from './App';
@@ -29,6 +30,10 @@ export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>vo
         <section className="battle-full-timeline" aria-label="Battle timeline"><BattleTimeline game={recorded}/></section>
         {!preview&&recorded.eligible&&!selected?.resultDisputeOpen&&selected?.result&&selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&selected.replay.nativePlayerMapping?.length&&<NativeBattleEvidence
           key={data.match.matchId+':'+selected.gameId+':'+selected.replay.statisticsRevision}
+          repository={repository} matchId={data.match.matchId} gameId={selected.gameId}
+          mapping={selected.replay.nativePlayerMapping} players={selected.players}/> }
+        {!preview&&recorded.eligible&&!selected?.resultDisputeOpen&&selected?.result&&selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&selected.replay.nativePlayerMapping?.length&&<NativeBattleRecordViewer
+          key={'record:'+data.match.matchId+':'+selected.gameId+':'+selected.replay.statisticsRevision}
           repository={repository} matchId={data.match.matchId} gameId={selected.gameId}
           mapping={selected.replay.nativePlayerMapping} players={selected.players}/> }
       </>:<p className="sx-empty">This Game has no processed recording yet. Return to the Field of Battle to upload it.</p>}
