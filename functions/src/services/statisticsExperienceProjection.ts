@@ -1,4 +1,4 @@
-import {createHash} from 'node:crypto';
+import {decodeReplayStatistics} from './replayStatisticsStorage.js';
 import {getStorage} from 'firebase-admin/storage';
 import {Timestamp,type Transaction,type DocumentReference,type Query} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
@@ -33,8 +33,12 @@ async function hydrateProjection(matchId:string,gameId:string,match:any,game:any
   const project=process.env.GCLOUD_PROJECT||process.env.GOOGLE_CLOUD_PROJECT;
   const bucket=process.env.REPLAY_BUCKET||`${project}.appspot.com`;
   const [bytes]=await getStorage().bucket(bucket).file(source.statistics.path).download();
-  if(createHash('sha256').update(bytes).digest('hex')!==source.statistics.sha256)throw new HttpsError('data-loss','Stored statistics failed integrity verification.');
-  const raw=JSON.parse(bytes.toString('utf8'));
+  let raw:any;
+  try {
+    raw=decodeReplayStatistics(bytes,source.statistics);
+  } catch {
+    throw new HttpsError('data-loss','Stored statistics failed integrity verification or JSON decoding.');
+  }
   const experience=augmentSeasonShowcase(raw,projectStatistics(raw,metadata),metadata);
   // Immutable source revision: backfill presentation only, never promote another replay.
   await sourceRef.update({experience});
