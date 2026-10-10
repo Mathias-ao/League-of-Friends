@@ -73,7 +73,7 @@ function testContext(){
  const read=(extra={})=>readActiveNativeBattleDetail({
    db,bucket,actor:extra.actor??actor,env:extra.env??env,request:extra.request??request,
  });
- return {match,game,source,raw,records,request,read,env,actor,
+ return {match,game,source,raw,records,request,read,env,actor,db,
    onDownload:fn=>onDownload=fn, corrupt:()=>bytesDownloaded=Buffer.from('garbage')};
 }
 
@@ -109,6 +109,11 @@ test('qualified active native source is explicit; candidate and legacy cannot im
 test('ordinary ACTIVE league viewer reads only bounded detail of officially active READY source',async()=>{
  const t=testContext();
  const before=structuredClone([...t.records]);
+ const match=await t.db.collection('matches').doc('m').get();
+ const game=await t.db.collection('matches').doc('m').collection('games').doc('g').get();
+ const source=await t.db.collection('matches').doc('m').collection('games').doc('g').collection('replaySources').doc(H).get();
+ assert.equal(match.exists,true);assert.equal(game.exists,true);assert.equal(source.exists,true);
+ assert.ok(activeNativeStatisticsSource('m','g',match.data(),game.data(),H,source.data(),true));
  const first=await t.read();
  assert.equal(first.state,'READY');assert.equal(first.delivery,'NATIVE_BOUNDED_V1');
  assert.equal(first.entries.length,1);assert.equal(first.entries[0].reference,'battles/0');
