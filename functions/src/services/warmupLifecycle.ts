@@ -57,7 +57,7 @@ export async function advanceEventWarmups(eventId:string,nowMs=Date.now()) {
         members.docs.some(m=>m.id===d.id&&m.data().status==='ENTERED')&&players.docs.some(p=>p.id===d.id&&p.data().membershipStatus==='ACTIVE')&&!reserved.has(d.id)).map(d=>d.id);
       const seed=eventId+':'+window.opensAt.toMillis(),draw=drawWarmups(ids,seed);
       const matchIds=draw.pairs.map((pair,i)=>{const id=eventId+'-AUTO-W'+(i+1);writeWarmup(tx,ref,event,pair,id,now,false,league.data()?.currentEmperorPlayerId??null);return id;});
-      tx.update(ref,{warmupSchedule:{modelVersion:WARMUP_LIFECYCLE_VERSION,seed,rosterIds:ids,...draw,status:draw.unpairedPlayerId?'GUEST_PENDING':'PAIRED',generatedAt:now},
+      tx.update(ref,{warmupSchedule:{modelVersion:WARMUP_LIFECYCLE_VERSION,seed,rosterIds:ids,...draw,pairs:draw.pairs.map(pair=>({playerIds:pair})),status:draw.unpairedPlayerId?'GUEST_PENDING':'PAIRED',generatedAt:now},
         warmupMatchIds:[...(event.warmupMatchIds??[]),...matchIds],updatedAt:now});
       return {changed:true};
     }
