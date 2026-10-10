@@ -17,6 +17,7 @@ export interface NativeRecordRequest {
   offset?:number;
   index?:number;
   expectedArtifactSha256?:string;
+  expectedReviewRevision?:string;
 }
 const indexValid=(v:unknown):v is number=>Number.isSafeInteger(v)&&Number(v)>=0;
 const hash=(v:Buffer)=>createHash('sha256').update(v).digest('hex');
@@ -31,7 +32,7 @@ export function projectNativeBattleRecord(raw:unknown,playerMapping:unknown,offi
   const review=projectSocialIncidents({statistics,playerMapping:playerMapping as unknown[],
     officialOutcome,context:{gameId,battleId}});
   const diplomacy=projectRecordingDiplomacyReview(facts);
-  return {statistics,facts,ledger,review,diplomacy,officialOutcome};
+  return {statistics,facts,ledger,review,diplomacy,officialOutcome,playerMapping};
 }
 
 const pageRows=(data:ReturnType<typeof projectNativeBattleRecord>,section:PageSection):Bag[]=>{
@@ -71,8 +72,16 @@ export function selectNativeBattleRecord(
   const expected=request.expectedArtifactSha256;
   if(expected!==undefined&&expected!==artifactSha256)fail('stale_native_record_revision');
   const o=data.officialOutcome as Bag;
+  // An official-result correction can change social interpretation without
+  // changing a single recording byte. Freeze page/fragment navigation to BOTH
+  // the immutable artifact and the current official Game + mapping revision.
+  const reviewRevision=hash(Buffer.from(JSON.stringify({
+    artifactSha256,sourceId,officialOutcome:data.officialOutcome,playerMapping:data.playerMapping,
+  }),'utf8'));
+  if(request.mode!=='overview'&&request.expectedReviewRevision!==reviewRevision)
+    fail('stale_native_social_review_revision');
   const base={version:NATIVE_BATTLE_RECORD_VERSION,delivery:'NATIVE_BOUNDED_V1',
-    artifactSha256,statisticsId:sourceId,mode:request.mode};
+    artifactSha256,reviewRevision,statisticsId:sourceId,mode:request.mode};
   if(request.mode==='overview'){
     const facts=data.facts,review=data.review,ledger=data.ledger;
     const result={...base,
