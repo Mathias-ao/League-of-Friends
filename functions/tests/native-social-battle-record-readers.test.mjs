@@ -70,6 +70,7 @@ test('native record overview is bounded and reports observations, social qualifi
  assert.equal(result.delivery,'NATIVE_BOUNDED_V1');
  assert.equal(result.officialOutcome.qualification,'OFFICIAL');
  assert.equal(result.officialOutcome.resultRevision,1);
+ assert.match(result.reviewRevision,/^[a-f0-9]{64}$/);
  assert.equal(result.social.status,'REVIEW_AVAILABLE');
  assert.equal(result.social.neutralIncidents,42);
  assert.equal(result.social.neutralObservations,233);
@@ -81,14 +82,18 @@ test('native record overview is bounded and reports observations, social qualifi
 
 test('pages expose short reference headers; full social and neutral records remain fragment-retrievable',()=>{
  const f=projection();
- const first=selectNativeBattleRecord(f.data,f.metadata.sha256,S,{mode:'page',section:'ledgerIncidents'});
+ const overview=selectNativeBattleRecord(f.data,f.metadata.sha256,S,{mode:'overview'});
+ const first=selectNativeBattleRecord(f.data,f.metadata.sha256,S,{mode:'page',section:'ledgerIncidents',
+   expectedReviewRevision:overview.reviewRevision});
  assert.equal(first.total,42);assert.equal(first.entries.length,20);
  assert.equal(first.nextOffset,20);
  const second=selectNativeBattleRecord(f.data,f.metadata.sha256,S,{mode:'page',
-   section:'ledgerIncidents',offset:20,expectedArtifactSha256:f.metadata.sha256});
+   section:'ledgerIncidents',offset:20,expectedArtifactSha256:f.metadata.sha256,
+   expectedReviewRevision:overview.reviewRevision});
  assert.equal(second.entries.length,20);assert.equal(second.nextOffset,40);
  const third=selectNativeBattleRecord(f.data,f.metadata.sha256,S,{mode:'page',
-   section:'ledgerIncidents',offset:40,expectedArtifactSha256:f.metadata.sha256});
+   section:'ledgerIncidents',offset:40,expectedArtifactSha256:f.metadata.sha256,
+   expectedReviewRevision:overview.reviewRevision});
  assert.equal(third.entries.length,2);assert.equal(third.nextOffset,null);
  for(const [section,index,expected] of [
    ['ledgerIncident',first.entries[0].index,f.data.ledger.incidents[0]],
@@ -103,7 +108,8 @@ test('pages expose short reference headers; full social and neutral records rema
    const chunks=[];let offset=0,checksum=null,total=0;
    do{
      const part=selectNativeBattleRecord(f.data,f.metadata.sha256,S,
-       {mode:'fragment',section,index,offset,expectedArtifactSha256:f.metadata.sha256});
+       {mode:'fragment',section,index,offset,expectedArtifactSha256:f.metadata.sha256,
+         expectedReviewRevision:overview.reviewRevision});
      const b=Buffer.from(part.chunkBase64,'base64');
      assert.ok(b.length<=32*1024);
      assert.equal(part.offset,offset);
@@ -122,16 +128,17 @@ test('pages expose short reference headers; full social and neutral records rema
 
 test('native selectors reject crossed artifact versions and invalid section/index/offset',()=>{
  const f=projection(),id=f.metadata.sha256;
+ const revision=selectNativeBattleRecord(f.data,id,S,{mode:'overview'}).reviewRevision;
  for(const request of [
    {mode:'page',section:'ledgerIncidents',offset:1},
-   {mode:'page',section:'ledgerIncidents',offset:-1},
-   {mode:'page',section:'ledgerIncidents',offset:100,expectedArtifactSha256:id},
-   {mode:'page',section:'__proto__'},
+   {mode:'page',section:'ledgerIncidents',offset:-1,expectedReviewRevision:revision},
+   {mode:'page',section:'ledgerIncidents',offset:100,expectedArtifactSha256:id,expectedReviewRevision:revision},
+   {mode:'page',section:'__proto__',expectedReviewRevision:revision},
    {mode:'fragment',section:'ledgerIncident',index:0},
-   {mode:'fragment',section:'ledgerIncident',index:100,expectedArtifactSha256:id},
-   {mode:'fragment',section:'matchFacts',offset:-1,expectedArtifactSha256:id},
-   {mode:'fragment',section:'wrong',expectedArtifactSha256:id},
-   {mode:'fragment',section:'socialReview',expectedArtifactSha256:'0'.repeat(64)},
+   {mode:'fragment',section:'ledgerIncident',index:100,expectedArtifactSha256:id,expectedReviewRevision:revision},
+   {mode:'fragment',section:'matchFacts',offset:-1,expectedArtifactSha256:id,expectedReviewRevision:revision},
+   {mode:'fragment',section:'wrong',expectedArtifactSha256:id,expectedReviewRevision:revision},
+   {mode:'fragment',section:'socialReview',expectedArtifactSha256:'0'.repeat(64),expectedReviewRevision:revision},
  ]){
    assert.throws(()=>selectNativeBattleRecord(f.data,id,S,request));
  }
@@ -198,6 +205,7 @@ function activeContext(){
 test('authenticated player reads real FFA Battle record from only qualified active READY source',async()=>{
  const a=activeContext();const unchanged=JSON.stringify([...a.rows]);
  const record=await a.read();
+ assert.match(record.reviewRevision,/^[a-f0-9]{64}$/);
  assert.equal(record.state,'READY');assert.equal(record.statisticsId,S);
  assert.equal(record.social.neutralIncidents,42);
  assert.equal(record.social.status,'REVIEW_AVAILABLE');
@@ -205,7 +213,7 @@ test('authenticated player reads real FFA Battle record from only qualified acti
  assert.equal(a.downloads,1);
  assert.equal(JSON.stringify([...a.rows]),unchanged,'no Game/statistics/reputation mutation');
  const page=await a.read({request:{...a.request,mode:'page',section:'ledgerIncidents',
-   expectedArtifactSha256:record.artifactSha256}});
+   expectedArtifactSha256:record.artifactSha256,expectedReviewRevision:record.reviewRevision}});
  assert.equal(page.entries.length,20);
 });
 test('native record excludes unactivated candidates, unqualified official results and disabled flags',async()=>{
@@ -237,4 +245,21 @@ test('pinned native artifact corruption and source revision mismatch are data lo
  await assert.rejects(a.read(),e=>e.code==='data-loss');
  const b=activeContext();b.f.stored=Buffer.from('corrupt');
  await assert.rejects(b.read(),e=>e.code==='data-loss');
+});
+
+
+test('official result corrections invalidate native review page cursors without changing the statistics artifact hash',()=>{
+ const f=projection(),original=selectNativeBattleRecord(f.data,f.metadata.sha256,S,{mode:'overview'});
+ const changed=projectNativeBattleRecord(f.native,f.mapping,
+   {...official,resultRevision:2,winnerPlayerIds:['p2'],
+     loserPlayerIds:['p1',...official.loserPlayerIds.filter(id=>id!=='p2')]},'m/g','m');
+ const revised=selectNativeBattleRecord(changed,f.metadata.sha256,S,{mode:'overview'});
+ assert.equal(original.artifactSha256,revised.artifactSha256);
+ assert.notEqual(original.reviewRevision,revised.reviewRevision);
+ assert.throws(()=>selectNativeBattleRecord(changed,f.metadata.sha256,S,{mode:'page',
+   section:'ledgerIncidents',expectedArtifactSha256:original.artifactSha256,
+   expectedReviewRevision:original.reviewRevision}),/stale_native_social_review_revision/);
+ assert.throws(()=>selectNativeBattleRecord(changed,f.metadata.sha256,S,{mode:'fragment',
+   section:'matchFacts',expectedArtifactSha256:original.artifactSha256,
+   expectedReviewRevision:original.reviewRevision}),/stale_native_social_review_revision/);
 });
