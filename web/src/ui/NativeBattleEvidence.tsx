@@ -58,7 +58,7 @@ export function NativeBattleEvidence({repository,matchId,gameId,mapping,players}
     if(!reader)return;
     let cancelled=false;
     setPage(null);setError('');setLoading(true);
-    reader({matchId,gameId,mode:'list',replaySlot:slot,group,pageSize:20,offset,
+    repository.activeNativeBattleDetail!({matchId,gameId,mode:'list',replaySlot:slot,group,pageSize:20,offset,
       ...(offset>0&&artifact?{expectedArtifactSha256:artifact}:{})})
       .then(next=>{
         if(cancelled)return;
@@ -84,7 +84,7 @@ export function NativeBattleEvidence({repository,matchId,gameId,mapping,players}
     let nextOffset:number|null=0,contentHash:string|null=null;
     try{
       while(nextOffset!==null){
-        const result=await reader({matchId,gameId,mode:'fragment',replaySlot:slot,group,
+        const result=await repository.activeNativeBattleDetail!({matchId,gameId,mode:'fragment',replaySlot:slot,group,
           reference,field:nextField,offset:nextOffset,expectedArtifactSha256:artifact});
         if(requestId!==generation.current)return;
         if(result.mode!=='fragment'||typeof result.chunkBase64!=='string'||
