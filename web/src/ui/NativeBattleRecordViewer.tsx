@@ -55,9 +55,10 @@ export function NativeBattleRecordViewer({repository,matchId,gameId,players,mapp
     if(!open||!header||!reader)return;
     let live=true;serial.current++;setPage(null);setPageError('');
     repository.activeNativeBattleRecord!({matchId,gameId,mode:'page',section:family,offset,
-      expectedArtifactSha256:header.artifactSha256}).then(next=>{
+      expectedArtifactSha256:header.artifactSha256,expectedReviewRevision:header.reviewRevision}).then(next=>{
       if(!live)return;
-      if(next.mode!=='page'||next.artifactSha256!==header.artifactSha256||!Array.isArray(next.entries))
+      if(next.mode!=='page'||next.artifactSha256!==header.artifactSha256||
+         next.reviewRevision!==header.reviewRevision||!Array.isArray(next.entries))
         throw new Error('The recorded Game revision changed.');
       setPage(next);
     }).catch(e=>{if(live)setPageError(err(e));});
@@ -76,9 +77,11 @@ export function NativeBattleRecordViewer({repository,matchId,gameId,players,mapp
     try{
       for(let loops=0;loops<8192;loops++){
         const part=await repository.activeNativeBattleRecord!({matchId,gameId,mode:'fragment',
-          section,index,offset:at,expectedArtifactSha256:header.artifactSha256});
+          section,index,offset:at,expectedArtifactSha256:header.artifactSha256,
+          expectedReviewRevision:header.reviewRevision});
         if(serial.current!==requestId)return;
         if(part.mode!=='fragment'||part.artifactSha256!==header.artifactSha256||
+           part.reviewRevision!==header.reviewRevision||
            typeof part.chunkBase64!=='string'||typeof part.contentSha256!=='string'||
            typeof part.totalBytes!=='number'||part.offset!==at||
            digest!==null&&digest!==part.contentSha256||total!==null&&total!==part.totalBytes)
