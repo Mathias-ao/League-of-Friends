@@ -42,6 +42,14 @@ export async function readSocialHistory(ownerPlayerId:string){
       const revision=await game.doc.ref.collection('replaySources').doc(game.data.activeReplayStatisticsId).get();
       const source=revision.data();
       if(source?.state!=='READY'||!source.statistics?.path||!source.statistics?.sha256){excluded.push({gameIdentity,reason:'active_artifact_unavailable'});continue;}
+      // Native source lineage now parses in the pure interpreter, but normal
+      // Chronicle/history routing is not yet qualified for native READY. Never
+      // treat unavailable native social evidence as proof of peaceful conduct.
+      if(source.nativePublicationVersion!==undefined||
+         source.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
+         source.statistics?.projectionDeliveryVersion==='AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL'){
+        excluded.push({gameIdentity,reason:'native_social_history_reader_not_qualified'});continue;
+      }
       const [bytes]=await getStorage().bucket(bucket).file(source.statistics.path).download();
       let statistics:any;
       try{statistics=decodeReplayStatistics(bytes,source.statistics);}
