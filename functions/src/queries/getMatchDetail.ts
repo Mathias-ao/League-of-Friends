@@ -211,6 +211,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
         statisticsState: game.replayStatisticsState ?? null,
         statisticsRevision: game.replayStatisticsRevision ?? null,
         statisticsDelivery:nativeSourceActive?'NATIVE_BOUNDED_V1':'LEGACY',
+        nativeSocialRecordAvailable:nativeSourceActive&&process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS==='1',
         nativePlayerMapping:nativeSourceActive?(placementSource?.playerMapping??[]).map((p:any)=>({playerId:p.playerId,replaySlot:p.replaySlot})):null,
         placementReason:placementSource?.placementQualification?.reason??null,
       },
