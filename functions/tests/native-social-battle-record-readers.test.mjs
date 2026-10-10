@@ -194,7 +194,7 @@ function activeContext(){
    assert.equal(path,source.statistics.path);assert.equal(opts.generation,'3');
    downloads++;if(onDownload)onDownload();return [f.stored];}})};
  const request={matchId:'m',gameId:'g',mode:'overview'};
- const env={AOF_ACTIVE_NATIVE_PLAYER_READS:'1'};
+ const env={AOF_ACTIVE_NATIVE_PLAYER_READS:'1',AOF_ACTIVE_NATIVE_SOCIAL_READS:'1'};
  const read=(extra={})=>readActiveNativeBattleRecord({
    db,bucket,actor:extra.actor??actor,request:extra.request??request,env:extra.env??env,
  });
@@ -219,6 +219,7 @@ test('authenticated player reads real FFA Battle record from only qualified acti
 test('native record excludes unactivated candidates, unqualified official results and disabled flags',async()=>{
  const a=activeContext();
  await assert.rejects(a.read({env:{}}),e=>e.code==='failed-precondition');
+ await assert.rejects(a.read({env:{AOF_ACTIVE_NATIVE_PLAYER_READS:'1'}}),e=>e.code==='failed-precondition');
  a.source.state='VALIDATED_NOT_READY';
  await assert.rejects(a.read(),e=>e.code==='failed-precondition');
  a.source.state='READY';
