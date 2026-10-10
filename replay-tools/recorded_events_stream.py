@@ -502,10 +502,18 @@ def write_statistics(path: Path, result: dict):
                     yield b","
                 yield from chunks(child)
             yield b"]"
+    # Batch small JSON chunks: identical bytes, fewer Python-level writes and
+    # syscalls. Buffer remains bounded (except one already-bounded scalar).
     with path.open("wb") as file:
+        buffer = bytearray()
         for chunk in chunks(result):
-            file.write(chunk)
-        file.write(b"\n")
+            buffer.extend(chunk)
+            if len(buffer) >= 256 * 1024:
+                file.write(buffer)
+                buffer.clear()
+        buffer.extend(b"\n")
+        if buffer:
+            file.write(buffer)
 
 
 def main():
