@@ -67,6 +67,7 @@ def project_statistics_from_analysis(
     analysis: dict[str, Any], *, catalog_path: Path | None = None,
     direct_shared: bool = False,
     stage_timings: dict[str, float] | None = None,
+    fast_action_windows: bool = False,
 ) -> dict:
     """Project statistics from compact analysis data without reopening CanonicalReplay."""
     checkpoint = time.perf_counter()
@@ -157,6 +158,7 @@ def project_statistics_from_analysis(
         initial_objects=initial_objects,
         action_events=spatial_action_events,
         controller_seeds=True,
+        use_time_index=fast_action_windows,
     )
     mark_stage("skirmishDetectionMs")
     producer_episodes = {} if direct_shared else None
@@ -169,6 +171,7 @@ def project_statistics_from_analysis(
         skirmish_statistics=skirmish_statistics,
         raid_statistics=raid_statistics,
         episode_sink=producer_episodes,
+        use_time_index=fast_action_windows,
     )
     mark_stage("engagementInferenceMs")
     execution_statistics = project_execution_statistics(
