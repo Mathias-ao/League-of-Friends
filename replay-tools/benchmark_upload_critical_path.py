@@ -74,7 +74,7 @@ def current_worker(path: Path, payload_b64: str) -> dict:
 
 
 def direct_candidate(path: Path, payload_b64: str) -> dict:
-    from recorded_events_stream import extract_recorded_events, load_analysis, write_statistics
+    from recorded_events_stream import extract_recorded_events, write_statistics
     from statistics_projector import project_statistics_from_analysis
     stages: dict[str, Any] = {}
     started = time.perf_counter()
@@ -94,14 +94,15 @@ def direct_candidate(path: Path, payload_b64: str) -> dict:
 
         extraction_started = time.perf_counter()
         stream_path = root / "events.jsonl.gz"
-        metadata = extract_recorded_events(copy, stream_path)
-        stages["directRecordedEventsExtractionAndVerificationMs"] = ms(extraction_started)
+        analysis: dict[str, Any] = {}
+        substeps: dict[str, Any] = {}
+        metadata = extract_recorded_events(
+            copy, stream_path, analysis_sink=analysis, stage_timings=substeps,
+        )
+        stages["directRecordedEventsExtractionVerificationAndHydrationMs"] = ms(extraction_started)
+        stages["recordedEventsSubsteps"] = substeps
         if metadata["datasetVersion"] != "AOF_RECORDED_EVENTS_V1":
             raise ValueError("Unexpected retained evidence contract")
-
-        load_started = time.perf_counter()
-        analysis = load_analysis(stream_path, metadata)
-        stages["verifiedEventReadAndAnalysisHydrationMs"] = ms(load_started)
 
         projection_started = time.perf_counter()
         statistics = project_statistics_from_analysis(analysis, direct_shared=True)
