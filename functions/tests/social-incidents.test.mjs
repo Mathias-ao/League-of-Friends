@@ -179,6 +179,11 @@ const asNative=(legacy)=> {
  return result;
 };
 const withoutSource=({source:_,...rest})=>rest;
+// Qualified offenses carry their own source lineage; strip only provenance
+// fields when checking semantic equality between distinct source formats.
+const withoutSourceLineage=value=>Array.isArray(value)?value.map(withoutSourceLineage):
+ value&&typeof value==='object'?Object.fromEntries(Object.entries(value)
+   .filter(([key])=>key!=='source').map(([key,v])=>[key,withoutSourceLineage(v)])):value;
 
 test('native Recorded Events provenance produces exactly the legacy neutral social interpretation',()=>{
  const old=fixture();
@@ -196,7 +201,7 @@ test('native Recorded Events provenance produces exactly the legacy neutral soci
    qualifiedFacts:qualifiedFacts.map(row=>({...row,source:{...nativeSource}}))});
  assert.equal(oldReview.status,'REVIEW_AVAILABLE');
  assert.equal(nativeReview.status,'REVIEW_AVAILABLE');
- assert.deepEqual(withoutSource(nativeReview),withoutSource(oldReview));
+ assert.deepEqual(withoutSourceLineage(nativeReview),withoutSourceLineage(oldReview));
  assert.deepEqual(nativeReview.source,nativeSource);
  assert.deepEqual(native,before,'native source evidence is immutable');
  assert.equal(nativeReview.policy.productionScoringEnabled,false);
