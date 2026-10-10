@@ -105,8 +105,12 @@ def direct_candidate(path: Path, payload_b64: str) -> dict:
             raise ValueError("Unexpected retained evidence contract")
 
         projection_started = time.perf_counter()
-        statistics = project_statistics_from_analysis(analysis, direct_shared=True)
+        detector_stages: dict[str, float] = {}
+        statistics = project_statistics_from_analysis(
+            analysis, direct_shared=True, stage_timings=detector_stages,
+        )
         stages["directStatisticsProjectionMs"] = ms(projection_started)
+        stages["detectorAndSocialSubsteps"] = detector_stages
         if "sharedEpisodeDelivery" not in statistics or statistics["source"]["replaySha256"] != source_digest(copy):
             raise ValueError("Direct projection provenance or compact output missing")
         del analysis
