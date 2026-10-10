@@ -27,7 +27,7 @@ export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>vo
       {state.error?<div role="alert"><p>{state.error}</p><button onClick={state.retry}>Retry reading statistics</button></div>:!state.dataset?<p role="status">Reading the battle ledger…</p>:recorded?<>
         <BattleStatistics key={recorded.gameId+'/'+recorded.revision+'/'+recorded.sourceHash} game={recorded} preview={preview} provisional={!recorded.eligible||!!selected?.resultDisputeOpen||!selected?.result} viewerId={snapshot.viewer?.playerId} openPlayer={openPlayer}/>
         <section className="battle-full-timeline" aria-label="Battle timeline"><BattleTimeline game={recorded}/></section>
-        {!preview&&selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&selected.replay.nativePlayerMapping?.length&&<NativeBattleEvidence
+        {!preview&&recorded.eligible&&!selected?.resultDisputeOpen&&selected?.result&&selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&selected.replay.nativePlayerMapping?.length&&<NativeBattleEvidence
           key={data.match.matchId+':'+selected.gameId+':'+selected.replay.statisticsRevision}
           repository={repository} matchId={data.match.matchId} gameId={selected.gameId}
           mapping={selected.replay.nativePlayerMapping} players={selected.players}/> }
