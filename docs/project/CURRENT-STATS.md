@@ -6,13 +6,18 @@ The October 8 [branch consolidation](../testing/branch-consolidation-2026-10-08.
 merged the statistics readiness and scoring branches into `main`.
 For Event and E2E workflow state, see [Current State](CURRENT-STATE.md).
 
-**Unmerged native Recorded Events V1:** [direct extraction/projection](../architecture/recorded-events-v1-contract.md)
-preserves the existing statistical models and independently versions source
-provenance/retention coverage. Native social evidence IDs are artifact-scoped;
-this must not create duplicate scored deeds during future publication. Initial
-resource decoding and the legacy missing-elevation correction remain separate
-versioned changes. [Acceptance and remaining milestones](../testing/recorded-events-direct-v1-acceptance.md)
-do not establish deployment or production readiness.
+**Recorded Events V1 is merged, but not activated for normal Games:**
+[direct extraction/projection](../architecture/recorded-events-v1-contract.md),
+producer-shared engagement evidence, a native worker and an admin-only
+`VALIDATED_NOT_READY` Firebase validation candidate are now on `main`
+(PRs #89/#93/#94/#95/#96). Legacy CanonicalReplay/statistics remain the active
+production-facing processing contract. Native source provenance and social
+evidence are separately versioned; artifact-scoped IDs must not produce duplicate
+scored deeds on future promotion. The original recording must be retained because
+native decoded events omit undecoded raw bytes. Initial resource decoding and the
+legacy missing-elevation correction remain separate versioned changes.
+[Acceptance and remaining milestones](../testing/native-recording-integration-v1.md)
+do not establish production deployment or native READY support.
 
 ## Local replay/statistics E2E — 9–10 October 2026
 
