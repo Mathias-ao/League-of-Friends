@@ -48,12 +48,14 @@ test('non-resumable upload verifies exact downloaded bytes and removes corrupt o
   assert.deepEqual(saved,artifact.bytes);
   assert.equal(options.resumable,false);assert.equal(options.metadata.contentType,'application/gzip');
   assert.equal(deleted,false);
-  let rejectedBeforeSave=false;
-  file.save=async()=>{rejectedBeforeSave=false;throw new Error('Unexpected upload');};
-  await assert.rejects(verifiedReplayArtifactSave(file,artifact.bytes,'0'.repeat(64),'application/gzip'),/source integrity/);
-  rejectedBeforeSave=true;
+  let unexpectedSaves=0;
+  file.save=async()=>{unexpectedSaves++;};
+  await assert.rejects(
+    verifiedReplayArtifactSave(file,artifact.bytes,'0'.repeat(64),'application/gzip'),
+    /source integrity/
+  );
+  assert.equal(unexpectedSaves,0);
   file.save=async(bytes,opts)=>{saved=Buffer.from(bytes);options=opts;};
-  assert.equal(rejectedBeforeSave,true);
   file.download=async()=>[Buffer.from('truncated')];
   await assert.rejects(verifiedReplayArtifactSave(file,artifact.bytes,artifact.metadata.sha256,'application/gzip'),/verification failed/);
   assert.equal(deleted,true);
