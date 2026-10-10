@@ -1,0 +1,46 @@
+[
+  {
+    "fixture": "1v1_t90-deak",
+    "completeStatisticsEquivalent": true,
+    "pairSocialEvidenceEquivalent": true,
+    "matchesSource": true,
+    "recordedEventsVerified": true,
+    "originalReplayRetentionRequired": true,
+    "participantCount": 2,
+    "eventsGzipBytes": 1725962,
+    "statisticsGzipBytes": 149812
+  },
+  {
+    "fixture": "2v2_arabia",
+    "completeStatisticsEquivalent": true,
+    "pairSocialEvidenceEquivalent": true,
+    "matchesSource": true,
+    "recordedEventsVerified": true,
+    "originalReplayRetentionRequired": true,
+    "participantCount": 4,
+    "eventsGzipBytes": 2671363,
+    "statisticsGzipBytes": 480227
+  },
+  {
+    "fixture": "4v4_arabia",
+    "completeStatisticsEquivalent": true,
+    "pairSocialEvidenceEquivalent": true,
+    "matchesSource": true,
+    "recordedEventsVerified": true,
+    "originalReplayRetentionRequired": true,
+    "participantCount": 8,
+    "eventsGzipBytes": 2515319,
+    "statisticsGzipBytes": 1994484
+  },
+  {
+    "fixture": "FFA_diplo",
+    "completeStatisticsEquivalent": true,
+    "pairSocialEvidenceEquivalent": true,
+    "matchesSource": true,
+    "recordedEventsVerified": true,
+    "originalReplayRetentionRequired": true,
+    "participantCount": 8,
+    "eventsGzipBytes": 2068220,
+    "statisticsGzipBytes": 423533
+  }
+]
