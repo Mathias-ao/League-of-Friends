@@ -21,9 +21,10 @@ export function nativeSocialInput(raw:unknown,mapping:unknown):Record<string,any
     throw new Error('native_social_input_contract_unavailable');
   const slots=participants.map(p=>rec(p)?.replaySlot);
   if(slots.some((slot,i)=>!Number.isSafeInteger(slot)||slot<1||slot>8||
-       rec(participants[i])?.playerId!==slot||ledger.playerIds[i]!==slot||
-       rec(facts.players[i])?.playerId!==slot)||
+       rec(participants[i])?.playerId!==slot||ledger.playerIds[i]!==slot)||
      new Set(slots).size!==slots.length||
+     facts.players.some(p=>!slots.includes(rec(p)?.playerId))||
+     new Set(facts.players.map(p=>rec(p)?.playerId)).size!==slots.length||
      playerMapping.some(p=>!rec(p)||!slots.includes(p.replaySlot)||
        typeof p.playerId!=='string'||!p.playerId)||
      new Set(playerMapping.map(p=>p.replaySlot)).size!==slots.length||
