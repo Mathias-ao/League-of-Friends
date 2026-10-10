@@ -56,3 +56,5 @@ Pick one bounded outcome, check current code and scope, identify evidence and re
 ## Bootstrap prompt
 
 > Continue Age of Friends from `Mathias-ao/League-of-Friends`. Read `docs/project/CORE-IDENTITY.md`, `docs/project/CURRENT-STATE.md` and `docs/project/CURRENT-STATS.md`. Inspect current `main`, distinguish local emulator results from merged/deployed code, and follow specialist documentation. The bounded task is: [ONE TASK].
+
+**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Detailed delivery, social readers and correction qualification still block READY; nothing is deployed or enabled for ordinary users.

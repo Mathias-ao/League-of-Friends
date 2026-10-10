@@ -14,6 +14,7 @@ import {projectStatistics} from "../../engines/statisticsExperience.js";
 import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
 import {encodeReplayStatistics, verifiedReplayArtifactSave} from "../../services/replayStatisticsStorage.js";
 import {validateRecordingMatchFacts, currentOfficialGameOutcome} from "../../engines/recordingMatchFacts.js";
+import {callNativeWorker,validateNativeRecording} from "../../services/nativeRecordingValidation.js";
 
 const MAX_REPLAY_BYTES = 32 * 1024 * 1024;
 
@@ -22,6 +23,7 @@ interface UploadReplayInput {
   gameId: string;
   fileName: string;
   replayBase64: string;
+  processingMode?: "LEGACY" | "NATIVE_VALIDATION_V1";
 }
 
 interface ReplayBinding {
@@ -230,7 +232,10 @@ export const uploadReplay = onCall<UploadReplayInput>(
     memory: "1GiB",
   },
   async (request) => {
+    const receivedAt=Date.now();
     const actor = await requireLeaguePlayer(request);
+    if(request.data.processingMode!==undefined&&!['LEGACY','NATIVE_VALIDATION_V1'].includes(request.data.processingMode))
+      throw new HttpsError('invalid-argument','Unknown recording processing mode.');
     const matchId = requiredText(request.data.matchId, "matchId", 200);
     const gameId = requiredText(request.data.gameId, "gameId", 200);
     const fileName = requiredText(request.data.fileName, "fileName", 255);
@@ -270,6 +275,10 @@ export const uploadReplay = onCall<UploadReplayInput>(
       ?(await db.collection(collections.events).doc(match.eventId).get()).data():undefined;
     const window=matchPlayWindow(match,event);
     assertMatchPlayOpened({playOpensAt:window.opensAt});
+    if(request.data.processingMode==='NATIVE_VALIDATION_V1'){
+      return validateNativeRecording({db,bucket:getStorage().bucket(bucketName()),matchId,gameId,fileName,bytes,actor,receivedAt,
+        worker:()=>callNativeWorker(workerUrl(),fileName,request.data.replayBase64),resolveMapping:resolvePlayerMapping});
+    }
     if (existingSource.exists && existingSource.data()?.state === "READY") {
       const resolution=game.activeReplayStatisticsId===localSourceHash?await resolveRecordingResult(matchId,gameId):null;
       return {
