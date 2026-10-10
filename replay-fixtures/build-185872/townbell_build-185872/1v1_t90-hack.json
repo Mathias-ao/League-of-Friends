@@ -1,0 +1,9637 @@
+{
+ "schema_version": 2,
+ "meta": {
+  "degraded": null,
+  "duration_ms": 1126242,
+  "save_version": 68.9,
+  "game_build": 185872,
+  "entity_data_version": "2026.07.6",
+  "played_at_unix": 1791304716,
+  "guid": "12538c95-9fd5-7a4b-b366-a56f1636d816",
+  "pov_number": 1,
+  "settings": {
+   "speed_factor": 1.69,
+   "speed_label": "normal",
+   "population_limit": 200,
+   "map_name": "Arabia",
+   "rms_filename": "",
+   "rms_map_id": 9,
+   "rms_mod_id": null,
+   "victory_type_id": 1,
+   "starting_age_id": 0,
+   "ending_age_id": 3,
+   "starting_resources_id": 0,
+   "difficulty_id": 0,
+   "rated": true,
+   "lobby_name": "",
+   "hidden_civs": false,
+   "team_together": true,
+   "lock_teams": true,
+   "treaty_length": 0,
+   "multiplayer": true,
+   "all_technologies": false
+  },
+  "map": {
+   "name": "Arabia",
+   "dimension": 120,
+   "forest_tile_ratio": 0.0505,
+   "water_tile_ratio": 0.0032,
+   "character": {
+    "openness": "open",
+    "water": "present",
+    "forest_ratio": 0.0505,
+    "water_ratio": 0.0032,
+    "tree_count": 2593,
+    "fish_count": 16,
+    "measured": true,
+    "basis": "forest cover 5% of 14,400 tiles, water 0%, 16 fish"
+   },
+   "high_ground_ratio": 0.2428,
+   "terrain": {
+    "dim": 120,
+    "rows": [
+     "3l5w30l4f16l3f4l1f54l",
+     "4l5w28l5f16l3f59l",
+     "5l1w4l2f24l7f15l8f54l",
+     "7l5f1l2f22l4f17l9f53l",
+     "4l1f1l9f43l9f53l",
+     "5l2f7l1f45l5f55l",
+     "6l1f6l1f48l2f28l2f26l",
+     "62l1f28l3f16l1f9l",
+     "89l3f17l3f8l",
+     "91l5f13l2f2l1f6l",
+     "87l1f6l4f10l3f9l",
+     "94l6f9l2f9l",
+     "94l4f22l",
+     "95l1f1l1f22l",
+     "96l3f21l",
+     "96l1f23l",
+     "120l",
+     "120l",
+     "120l",
+     "14l1f105l",
+     "82l2f3l2f31l",
+     "15l3f64l2f4l1f31l",
+     "12l6f64l4f34l",
+     "10l8f64l4f34l",
+     "10l5f41l1f24l3f3l1f32l",
+     "8l1f2l5f42l2w21l5f34l",
+     "11l2f44l3w1l1f20l3f31l2w2l",
+     "57l3w24l2f28l1f1l2w1l1f",
+     "10l1f46l2w2l1f20l1f1l2f1l1f25l2f1l2w2l",
+     "60l2f20l1f1l3f26l2f1l3w1l",
+     "55l7f22l2f28l1f1l2w2l",
+     "55l2f2l3f19l2f1l2f34l",
+     "60l2f22l1f29l4f2l",
+     "59l1f56l3f1l",
+     "119l1f",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "40l1f4l1f74l",
+     "45l1f74l",
+     "37l2f1l6f74l",
+     "41l5f18l2f54l",
+     "5l1f37l4f12l1f1l7f13l1f38l",
+     "3l1w2l1f37l2f1l1f13l7f14l3f35l",
+     "3l1w58l1f3l2f2l1f12l1f36l",
+     "1l5w13l1f46l2f1l2f10l1f2l1f35l",
+     "2l5w2l1f8l2f48l4f9l1f2l2f34l",
+     "5l1w2l1f9l2f61l5f34l",
+     "2l1f4l1f13l1f28l1f30l4f35l",
+     "2l1f4l2f9l1f2l1f27l1f30l6f34l",
+     "9l1f8l1f2l1f27l2f2l2f26l2f37l",
+     "19l1f29l6f2l1f23l2f37l",
+     "48l2f2l2f27l2f37l",
+     "49l1f3l1f1l3f23l2f37l",
+     "50l5f1l1f63l",
+     "50l4f66l",
+     "52l2f66l",
+     "53l2f65l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "120l",
+     "37l1f82l",
+     "36l2f51l2f29l",
+     "26l1f6l2f1l2f51l5f26l",
+     "7l2f19l11f48l7f26l",
+     "1l1f1l6f19l9f1l2f44l11f25l",
+     "2l6f20l5f54l5f3l2f23l",
+     "3l6f21l2f56l3f29l",
+     "3l6f23l1f4l1f50l1f1l3f27l",
+     "2f1l2f85l2f28l",
+     "2l3f115l",
+     "3l2f115l",
+     "120l",
+     "120l",
+     "69l3f48l",
+     "69l2f49l",
+     "66l5f49l",
+     "69l2f28l1f20l",
+     "66l1w1l7f23l2f20l",
+     "68l5f2l2f20l3f20l",
+     "94l6f20l",
+     "67l1f27l5f20l",
+     "70l1f27l2f20l",
+     "98l5f17l",
+     "98l6f1l1f14l",
+     "99l1f1l3f1l1f14l",
+     "101l2f17l",
+     "102l1f17l",
+     "120l",
+     "120l",
+     "120l",
+     "39l1f80l",
+     "32l1f1l2f84l",
+     "7l3f24l5f3l1f77l",
+     "8l2f24l5f1l2f78l",
+     "9l2f23l8f78l",
+     "7l3f27l6f1l1f75l",
+     "8l3f28l4f77l",
+     "6l4f28l3f79l",
+     "4l7f27l1f57l1f23l",
+     "4l7f84l3f22l",
+     "5l2f4l1f83l3f22l",
+     "91l6f1l2f20l",
+     "92l9f19l",
+     "65l2f25l2f1l3f22l",
+     "54l1f10l4f21l1f1l2f26l",
+     "53l1f1l1f9l4f27l1f23l",
+     "44l3f1l6f66l",
+     "40l11f15l3f51l",
+     "37l15f14l2f52l"
+    ]
+   },
+   "resource_counts": {
+    "gold": 36,
+    "stone": 24,
+    "berries": 12,
+    "hunt": 14,
+    "herdables": 14,
+    "relics": 5,
+    "fish": 16,
+    "trees": 2593
+   },
+   "species_counts": {
+    "berries": {
+     "Forage Bush": 12
+    },
+    "hunt": {
+     "Rhea": 10,
+     "Wild Boar": 4
+    },
+    "herdables": {
+     "Goose": 14
+    },
+    "fish": {
+     "Shore Fish": 5
+    }
+   },
+   "resources": {
+    "gold": [
+     [
+      25.5,
+      93.5
+     ],
+     [
+      26.5,
+      93.5
+     ],
+     [
+      26.5,
+      94.5
+     ],
+     [
+      25.5,
+      94.5
+     ],
+     [
+      24.5,
+      94.5
+     ],
+     [
+      25.5,
+      92.5
+     ],
+     [
+      24.5,
+      92.5
+     ],
+     [
+      105.5,
+      50.5
+     ],
+     [
+      104.5,
+      50.5
+     ],
+     [
+      104.5,
+      51.5
+     ],
+     [
+      106.5,
+      50.5
+     ],
+     [
+      106.5,
+      49.5
+     ],
+     [
+      106.5,
+      51.5
+     ],
+     [
+      105.5,
+      49.5
+     ],
+     [
+      25.5,
+      70.5
+     ],
+     [
+      24.5,
+      70.5
+     ],
+     [
+      26.5,
+      70.5
+     ],
+     [
+      25.5,
+      71.5
+     ],
+     [
+      93.5,
+      82.5
+     ],
+     [
+      93.5,
+      81.5
+     ],
+     [
+      94.5,
+      82.5
+     ],
+     [
+      94.5,
+      83.5
+     ],
+     [
+      48.5,
+      63.5
+     ],
+     [
+      49.5,
+      63.5
+     ],
+     [
+      49.5,
+      62.5
+     ],
+     [
+      49.5,
+      64.5
+     ],
+     [
+      115.5,
+      82.5
+     ],
+     [
+      116.5,
+      82.5
+     ],
+     [
+      115.5,
+      81.5
+     ],
+     [
+      116.5,
+      83.5
+     ],
+     [
+      81.5,
+      105.5
+     ],
+     [
+      81.5,
+      104.5
+     ],
+     [
+      80.5,
+      105.5
+     ],
+     [
+      54.5,
+      43.5
+     ],
+     [
+      55.5,
+      43.5
+     ],
+     [
+      55.5,
+      44.5
+     ]
+    ],
+    "stone": [
+     [
+      50.5,
+      79.5
+     ],
+     [
+      51.5,
+      79.5
+     ],
+     [
+      51.5,
+      78.5
+     ],
+     [
+      50.5,
+      80.5
+     ],
+     [
+      49.5,
+      80.5
+     ],
+     [
+      83.5,
+      68.5
+     ],
+     [
+      82.5,
+      68.5
+     ],
+     [
+      84.5,
+      68.5
+     ],
+     [
+      84.5,
+      67.5
+     ],
+     [
+      83.5,
+      69.5
+     ],
+     [
+      29.5,
+      110.5
+     ],
+     [
+      29.5,
+      111.5
+     ],
+     [
+      30.5,
+      111.5
+     ],
+     [
+      28.5,
+      110.5
+     ],
+     [
+      85.5,
+      41.5
+     ],
+     [
+      85.5,
+      40.5
+     ],
+     [
+      84.5,
+      40.5
+     ],
+     [
+      86.5,
+      40.5
+     ],
+     [
+      24.5,
+      44.5
+     ],
+     [
+      25.5,
+      44.5
+     ],
+     [
+      25.5,
+      43.5
+     ],
+     [
+      89.5,
+      14.5
+     ],
+     [
+      90.5,
+      14.5
+     ],
+     [
+      90.5,
+      15.5
+     ]
+    ],
+    "berries": [
+     [
+      44.5,
+      99.5
+     ],
+     [
+      45.5,
+      99.5
+     ],
+     [
+      45.5,
+      100.5
+     ],
+     [
+      43.5,
+      99.5
+     ],
+     [
+      43.5,
+      100.5
+     ],
+     [
+      44.5,
+      98.5
+     ],
+     [
+      108.5,
+      65.5
+     ],
+     [
+      108.5,
+      64.5
+     ],
+     [
+      109.5,
+      64.5
+     ],
+     [
+      107.5,
+      64.5
+     ],
+     [
+      109.5,
+      65.5
+     ],
+     [
+      109.5,
+      66.5
+     ]
+    ],
+    "hunt": [
+     [
+      39.5,
+      67.5
+     ],
+     [
+      39.5,
+      65.5
+     ],
+     [
+      38.5,
+      66.5
+     ],
+     [
+      117.5,
+      48.5
+     ],
+     [
+      116.5,
+      49.5
+     ],
+     [
+      117.5,
+      49.5
+     ],
+     [
+      2.5,
+      102.5
+     ],
+     [
+      3.5,
+      100.5
+     ],
+     [
+      115.5,
+      92.5
+     ],
+     [
+      115.5,
+      90.5
+     ],
+     [
+      55.5,
+      89.5
+     ],
+     [
+      20.5,
+      82.5
+     ],
+     [
+      108.5,
+      45.5
+     ],
+     [
+      100.5,
+      78.5
+     ]
+    ],
+    "herdables": [
+     [
+      36.5,
+      82.5
+     ],
+     [
+      101.5,
+      66.5
+     ],
+     [
+      39.5,
+      81.5
+     ],
+     [
+      99.5,
+      70.5
+     ],
+     [
+      36.5,
+      79.5
+     ],
+     [
+      100.5,
+      70.5
+     ],
+     [
+      50.5,
+      71.5
+     ],
+     [
+      50.5,
+      69.5
+     ],
+     [
+      13.5,
+      92.5
+     ],
+     [
+      15.5,
+      90.5
+     ],
+     [
+      78.5,
+      73.5
+     ],
+     [
+      79.5,
+      72.5
+     ],
+     [
+      114.5,
+      72.5
+     ],
+     [
+      116.5,
+      70.5
+     ]
+    ],
+    "relics": [
+     [
+      63.5,
+      54.5
+     ],
+     [
+      17.5,
+      63.5
+     ],
+     [
+      69.5,
+      95.5
+     ],
+     [
+      102.5,
+      28.5
+     ],
+     [
+      107.5,
+      91.5
+     ]
+    ],
+    "fish": [
+     [
+      57,
+      28
+     ],
+     [
+      59,
+      25
+     ],
+     [
+      66,
+      88
+     ],
+     [
+      117,
+      27
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      58,
+      26
+     ],
+     [
+      8,
+      1
+     ],
+     [
+      4,
+      49
+     ],
+     [
+      116,
+      30
+     ],
+     [
+      1,
+      49
+     ],
+     [
+      66,
+      88
+     ],
+     [
+      8.5,
+      1.5
+     ],
+     [
+      5.5,
+      51.5
+     ],
+     [
+      57.5,
+      28.5
+     ],
+     [
+      116.5,
+      28.5
+     ],
+     [
+      66.5,
+      88.5
+     ]
+    ]
+   }
+  },
+  "players": [
+   {
+    "number": 1,
+    "name": "T90Official",
+    "profile_id": 197930,
+    "civilization": "Lithuanians",
+    "civilization_id": 35,
+    "civ_facts": [],
+    "color_id": 1,
+    "team_id": 2,
+    "rating": 2566,
+    "rank": 70,
+    "winner": true,
+    "resign_time_ms": null,
+    "is_pov": true
+   },
+   {
+    "number": 2,
+    "name": "Hackali",
+    "profile_id": 3899580,
+    "civilization": "Vietnamese",
+    "civilization_id": 31,
+    "civ_facts": [],
+    "color_id": 0,
+    "team_id": 3,
+    "rating": 2246,
+    "rank": 286,
+    "winner": false,
+    "resign_time_ms": 1126242,
+    "is_pov": false
+   }
+  ],
+  "is_1v1": true,
+  "winner_basis": "resign_all",
+  "accounting": {
+   "total_ops": 175438,
+   "op_counts": {
+    "SYNC": 86410,
+    "VIEWLOCK": 86410,
+    "CHAT": 4,
+    "ACTION": 2613,
+    "POSTGAME": 1
+   },
+   "actions_total": 2613,
+   "action_counts": {
+    "GAME": 2,
+    "DE_QUEUE": 134,
+    "BUILD": 82,
+    "MOVE": 1497,
+    "GATHER_POINT": 197,
+    "ORDER": 303,
+    "FOLLOW": 97,
+    "SPECIAL": 82,
+    "UNGARRISON": 45,
+    "RESEARCH": 14,
+    "WALL": 21,
+    "STANCE": 63,
+    "PATROL": 30,
+    "FORMATION": 26,
+    "DELETE": 8,
+    "BACK_TO_WORK": 6,
+    "REPAIR": 2,
+    "STOP": 3,
+    "RESIGN": 1
+   },
+   "actions_with_undecoded_payload": {},
+   "camera_points_total": 86410,
+   "camera_points_kept": 4853,
+   "chat_total": 4,
+   "postgame_present": true
+  }
+ },
+ "catalog": [
+  {
+   "id": "feudal_click",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "feudal_reached",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "castle_click",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "castle_reached",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "imperial_click",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "imperial_reached",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "pop_at_feudal_click",
+   "category": "opening",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "pop_at_castle_click",
+   "category": "opening",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "feudal_efficiency_delta",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": [
+    20,
+    60
+   ],
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "loom_time",
+   "category": "opening",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "loom_before_feudal",
+   "category": "opening",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "opening_strategy",
+   "category": "opening",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_military_unit",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_barracks",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_range",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_stable",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_mill",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_lumber_camp",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_mining_camp",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_dock",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_house",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "houses_before_feudal",
+   "category": "opening",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_scout_command",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_wall",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "wall_tiles_before_castle",
+   "category": "opening",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "second_town_center",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "dark_age_idle_gap",
+   "category": "opening",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "villagers_trained",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "villagers"
+  },
+  {
+   "id": "villagers_at_20min",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "villagers"
+  },
+  {
+   "id": "villager_rate_dark_age",
+   "category": "economy",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "villagers"
+  },
+  {
+   "id": "tc_idle_dark_age",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": [
+    15,
+    45
+   ],
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "tc_utilization_total",
+   "category": "economy",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": [
+    85,
+    65
+   ],
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "villager_rate_per_tc",
+   "category": "economy",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": [
+    2,
+    1.5
+   ],
+   "pov_only": false,
+   "group": "villagers"
+  },
+  {
+   "id": "town_center_count",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "third_town_center",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "wheelbarrow_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "eco_tech"
+  },
+  {
+   "id": "hand_cart_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "eco_tech"
+  },
+  {
+   "id": "horse_collar_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "double_bit_axe_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "wood"
+  },
+  {
+   "id": "gold_mining_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "gold_stone"
+  },
+  {
+   "id": "eco_techs_researched",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "eco_tech"
+  },
+  {
+   "id": "farms_built",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "first_farm",
+   "category": "economy",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "farms_before_horse_collar",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "market_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "market_transactions",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "market_volume",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "market_first_use",
+   "category": "economy",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "market_sells",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "market_buys",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "spend_total",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "spend_food",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "spend_wood",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "spend_gold",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "spend_stone",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "spend_rate",
+   "category": "economy",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "eco_spend_share",
+   "category": "economy",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "eco_military_ratio_15min",
+   "category": "economy",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "spending"
+  },
+  {
+   "id": "fishing_ships_trained",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "naval"
+  },
+  {
+   "id": "eco_buildings_built",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "general"
+  },
+  {
+   "id": "houses_built",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "housing"
+  },
+  {
+   "id": "early_supply_buffer",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "housing"
+  },
+  {
+   "id": "military_units_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "military_spend",
+   "category": "military",
+   "unit": "resources",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "first_military_building",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "production"
+  },
+  {
+   "id": "military_buildings_total",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "production"
+  },
+  {
+   "id": "military_buildings_at_castle",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "production"
+  },
+  {
+   "id": "composition_diversity",
+   "category": "military",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "dominant_unit_class",
+   "category": "military",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "dominant_unit",
+   "category": "military",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "infantry_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "archers_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "cavalry_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "siege_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "monks_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "warships_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "naval"
+  },
+  {
+   "id": "gunpowder_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "trebuchets_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "first_siege",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "siege_workshop"
+  },
+  {
+   "id": "blacksmith_upgrades",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "first_blacksmith_upgrade",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "attack_upgrades_20min",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "armor_upgrades_20min",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "upgrade_lag_dominant_line",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "unit_line_upgrades",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "university_techs",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "university"
+  },
+  {
+   "id": "ballistics_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "university"
+  },
+  {
+   "id": "bloodlines_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "stable"
+  },
+  {
+   "id": "thumb_ring_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "archery"
+  },
+  {
+   "id": "castles_built",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "production"
+  },
+  {
+   "id": "first_castle",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "production"
+  },
+  {
+   "id": "tech_switches",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "army_value_before_first_fight",
+   "category": "military",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "production_intensity_castle_age",
+   "category": "military",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "production"
+  },
+  {
+   "id": "fights_count",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_fight",
+   "category": "combat",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "total_fight_time",
+   "category": "combat",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fight_command_share",
+   "category": "combat",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_in_fights",
+   "category": "combat",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "eco_actions_during_fights",
+   "category": "combat",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "formations_set",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "preferred_formation",
+   "category": "combat",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "stance_changes",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "patrol_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "attack_ground_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "attack_move_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "garrison_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "ungarrison_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "back_to_work_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "deletions",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "stop_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "raids_suffered",
+   "category": "combat",
+   "unit": "count",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "raid_response_time",
+   "category": "combat",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": [
+    5,
+    15
+   ],
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "raids_initiated",
+   "category": "combat",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "micro_intensity",
+   "category": "combat",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "army_matchup",
+   "category": "combat",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "army_matchup_margin",
+   "category": "combat",
+   "unit": "ratio",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "missing_upgrade",
+   "category": "combat",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "missing_upgrade_gain",
+   "category": "combat",
+   "unit": "ratio",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "upgrade_deficit_family",
+   "category": "combat",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fights_on_low_ground",
+   "category": "combat",
+   "unit": "count",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fight_elevation_delta",
+   "category": "combat",
+   "unit": "ratio",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "forward_buildings",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "deepest_forward_building",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "building_spread",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "expansions_claimed",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "map_command_coverage",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "enemy_half_presence",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "scout_coverage_5min",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "scout_commands_5min",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_enemy_base_look",
+   "category": "map_control",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "wall_tiles_total",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "palisade_tiles",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "stone_wall_tiles",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "gates_built",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "towers_built",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "forward_towers",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "wall_segments",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "avg_wall_segment_tiles",
+   "category": "map_control",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "nearest_gold_distance",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "nearest_stone_distance",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "hunt_nearby",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "camera_coverage",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": true,
+   "group": null
+  },
+  {
+   "id": "camera_home_share",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": true,
+   "group": null
+  },
+  {
+   "id": "camera_on_fights",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": true,
+   "group": null
+  },
+  {
+   "id": "camera_entropy",
+   "category": "map_control",
+   "unit": "ratio",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": true,
+   "group": null
+  },
+  {
+   "id": "gold_near_start",
+   "category": "map_control",
+   "unit": "resources",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "stone_near_start",
+   "category": "map_control",
+   "unit": "resources",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "food_objects_near_start",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "mining_camp_distance",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "mill_distance",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "map_character",
+   "category": "map_control",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "map_water",
+   "category": "map_control",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_aggression",
+   "category": "tempo",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "aggression_balance",
+   "category": "tempo",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fights_initiated_share",
+   "category": "tempo",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "longest_inactivity",
+   "category": "tempo",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "median_action_gap",
+   "category": "tempo",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "castle_power_spike_use",
+   "category": "tempo",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "imperial_power_spike_use",
+   "category": "tempo",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "villagers_during_fights",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "defensive_investment",
+   "category": "tempo",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "playstyle",
+   "category": "tempo",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "resign_context",
+   "category": "tempo",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "gg_etiquette",
+   "category": "tempo",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "chat_messages",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "flares_used",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "game_pauses",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "actions_total",
+   "category": "mechanics",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "eapm",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_efficiency",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "peak_apm_minute",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_growth",
+   "category": "mechanics",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "avg_selection_size",
+   "category": "mechanics",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "max_selection_size",
+   "category": "mechanics",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "production_batch_size",
+   "category": "mechanics",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "shift_queue_share",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "gather_points_set",
+   "category": "mechanics",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "gather_points_to_target",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "gather_points_to_resource",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "primary_gather_point_target",
+   "category": "mechanics",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "move_vs_action_discipline",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "actions_in_bursts",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "camera_jumps_per_min",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": true,
+   "group": null
+  },
+  {
+   "id": "offscreen_commands",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": true,
+   "group": null
+  },
+  {
+   "id": "dark_age_apm",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "actions_per_fight",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "command_type_breadth",
+   "category": "mechanics",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_tower",
+   "category": "opening",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "feudal_military_buildings",
+   "category": "opening",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "pre_feudal_wall_tiles",
+   "category": "opening",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "opening_wall_style",
+   "category": "opening",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_sheep_task",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "first_boar_lure",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "first_deer_task",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "first_berry_task",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "boars_taken",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "deer_taken",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "herdables_worked",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "lumber_camps_built",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "wood"
+  },
+  {
+   "id": "mining_camps_built",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "gold_stone"
+  },
+  {
+   "id": "docks_built",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "naval"
+  },
+  {
+   "id": "farms_before_castle",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "villager_rate_feudal",
+   "category": "economy",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "villagers"
+  },
+  {
+   "id": "villager_rate_castle",
+   "category": "economy",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "villagers"
+  },
+  {
+   "id": "eco_rebound_after_raids",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "general"
+  },
+  {
+   "id": "army_value_10min",
+   "category": "military",
+   "unit": "resources",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "army_value_15min",
+   "category": "military",
+   "unit": "resources",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "army_value_20min",
+   "category": "military",
+   "unit": "resources",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "military_added_feudal",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "military_added_castle",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "military_added_imperial",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "trash_units_trained",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "trash_army_share",
+   "category": "military",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "composition"
+  },
+  {
+   "id": "barracks_built",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "production"
+  },
+  {
+   "id": "ranges_built",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "archery"
+  },
+  {
+   "id": "stables_built",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "stable"
+  },
+  {
+   "id": "siege_workshops_built",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "siege_workshop"
+  },
+  {
+   "id": "first_monastery",
+   "category": "military",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "monastery"
+  },
+  {
+   "id": "fights_per_10min",
+   "category": "combat",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fight_location_bias",
+   "category": "combat",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "disengage_moves",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "garrisons_during_raids",
+   "category": "combat",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "town_bell_uses",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "repair_commands",
+   "category": "combat",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "attack_ground_per_siege",
+   "category": "combat",
+   "unit": "ratio",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_raid_suffered",
+   "category": "combat",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_raid_initiated",
+   "category": "combat",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "gold_control_share",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "hunt_control_share",
+   "category": "map_control",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "camps_avg_distance",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "forward_wall_tiles",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "nearest_berries_distance",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fights_feudal",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fights_castle",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "fights_imperial",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "raids_suffered_feudal",
+   "category": "tempo",
+   "unit": "count",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "pressure_minutes",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "reinforce_delay",
+   "category": "tempo",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "age_spend_feudal",
+   "category": "tempo",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "age_spend_castle",
+   "category": "tempo",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "age_spend_imperial",
+   "category": "tempo",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_feudal",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_castle",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_imperial",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_variability",
+   "category": "mechanics",
+   "unit": "ratio",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "camera_pan_share",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": true,
+   "group": null
+  },
+  {
+   "id": "first_command_time",
+   "category": "mechanics",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "feudal_transition_apm",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "heavy_plow_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "crop_rotation_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "food"
+  },
+  {
+   "id": "bow_saw_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "wood"
+  },
+  {
+   "id": "two_man_saw_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "wood"
+  },
+  {
+   "id": "gold_shaft_mining_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "gold_stone"
+  },
+  {
+   "id": "stone_mining_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "gold_stone"
+  },
+  {
+   "id": "guilds_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "banking_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "coinage_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "caravan_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "husbandry_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "stable"
+  },
+  {
+   "id": "town_watch_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "general"
+  },
+  {
+   "id": "forging_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "fletching_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "bodkin_arrow_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "eco_upgrades_by_castle",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "eco_tech"
+  },
+  {
+   "id": "eco_upgrades_total",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "eco_tech"
+  },
+  {
+   "id": "first_market",
+   "category": "economy",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "first_university",
+   "category": "military",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "university"
+  },
+  {
+   "id": "university_tech_count",
+   "category": "military",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "university"
+  },
+  {
+   "id": "blacksmith_count",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "blacksmith"
+  },
+  {
+   "id": "first_siege_workshop",
+   "category": "military",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "siege_workshop"
+  },
+  {
+   "id": "longest_idle_gap",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "idle_gaps_over_30s",
+   "category": "economy",
+   "unit": "count",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "first_five_min_commands",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "general"
+  },
+  {
+   "id": "extra_tc_count",
+   "category": "economy",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "first_extra_tc_time",
+   "category": "economy",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "first_monk_time",
+   "category": "military",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "monastery"
+  },
+  {
+   "id": "first_siege_unit",
+   "category": "military",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "siege_workshop"
+  },
+  {
+   "id": "delete_commands",
+   "category": "mechanics",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "median_selection_size",
+   "category": "mechanics",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "commands_per_fight",
+   "category": "tempo",
+   "unit": "ratio",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "long_lulls",
+   "category": "tempo",
+   "unit": "count",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "tribute_sent_total",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "tribute_received_total",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "tribute_net",
+   "category": "economy",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "first_tribute_sent",
+   "category": "economy",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "trade_units_trained",
+   "category": "economy",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "first_trade_unit",
+   "category": "economy",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "market"
+  },
+  {
+   "id": "first_relic_touch",
+   "category": "map_control",
+   "unit": "duration",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "relic_commands",
+   "category": "map_control",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "first_gate",
+   "category": "map_control",
+   "unit": "duration",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "monastery_techs",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "monastery"
+  },
+  {
+   "id": "techs_feudal_age",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "techs_castle_age",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "techs_imperial_age",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "techs_total",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "ally_fight_participation",
+   "category": "combat",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "flares_sent",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "attack_move_share",
+   "category": "combat",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "formation_types_used",
+   "category": "mechanics",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "apm_peak_minute",
+   "category": "mechanics",
+   "unit": "per_min",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "team_role",
+   "category": "map_control",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "nearest_enemy_distance",
+   "category": "map_control",
+   "unit": "tiles",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "age_spend_dark",
+   "category": "tempo",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "military_added_dark",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "military_spend_feudal_age",
+   "category": "military",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "military_spend_castle_age",
+   "category": "military",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "military_spend_imperial_age",
+   "category": "military",
+   "unit": "resources",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "buildings_dark_age",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "buildings_feudal_age",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "buildings_castle_age",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "buildings_imperial_age",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "villagers_per_tc_spread",
+   "category": "economy",
+   "unit": "count",
+   "direction": -1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "town_centers"
+  },
+  {
+   "id": "production_buildings_used",
+   "category": "military",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": "army_value"
+  },
+  {
+   "id": "research_buildings_used",
+   "category": "tempo",
+   "unit": "count",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "attributed_production_share",
+   "category": "mechanics",
+   "unit": "percent",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "build_order",
+   "category": "opening",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "build_order_adherence",
+   "category": "opening",
+   "unit": "percent",
+   "direction": 1,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  },
+  {
+   "id": "build_order_first_gap",
+   "category": "opening",
+   "unit": "text",
+   "direction": 0,
+   "thresholds": null,
+   "pov_only": false,
+   "group": null
+  }
+ ],
+ "categories": [
+  "opening",
+  "economy",
+  "military",
+  "combat",
+  "map_control",
+  "tempo",
+  "mechanics"
+ ],
+ "players": {
+  "1": {
+   "metrics": {
+    "feudal_click": {
+     "value": 393.8
+    },
+    "feudal_reached": {
+     "value": 523.8
+    },
+    "castle_click": {
+     "value": null
+    },
+    "castle_reached": {
+     "value": null
+    },
+    "imperial_click": {
+     "value": null
+    },
+    "imperial_reached": {
+     "value": null
+    },
+    "pop_at_feudal_click": {
+     "value": 20
+    },
+    "pop_at_castle_click": {
+     "value": null
+    },
+    "feudal_efficiency_delta": {
+     "value": 0
+    },
+    "loom_time": {
+     "value": 305.4
+    },
+    "loom_before_feudal": {
+     "value": "before"
+    },
+    "opening_strategy": {
+     "value": "infantry"
+    },
+    "first_military_unit": {
+     "value": 534.5
+    },
+    "first_barracks": {
+     "value": 423.4
+    },
+    "first_range": {
+     "value": 1103.5
+    },
+    "first_stable": {
+     "value": 533.9
+    },
+    "first_mill": {
+     "value": 253
+    },
+    "first_lumber_camp": {
+     "value": 139.7
+    },
+    "first_mining_camp": {
+     "value": 886
+    },
+    "first_dock": {
+     "value": null
+    },
+    "first_house": {
+     "value": 1.6
+    },
+    "houses_before_feudal": {
+     "value": 3
+    },
+    "first_scout_command": {
+     "value": 3.8
+    },
+    "first_wall": {
+     "value": 574.1
+    },
+    "wall_tiles_before_castle": {
+     "value": 6
+    },
+    "second_town_center": {
+     "value": null
+    },
+    "dark_age_idle_gap": {
+     "value": 8.3
+    },
+    "villagers_trained": {
+     "value": 52
+    },
+    "villagers_at_20min": {
+     "value": null
+    },
+    "villager_rate_dark_age": {
+     "value": 2.44
+    },
+    "tc_idle_dark_age": {
+     "value": 0
+    },
+    "tc_utilization_total": {
+     "value": 100
+    },
+    "villager_rate_per_tc": {
+     "value": 2.77
+    },
+    "town_center_count": {
+     "value": 1
+    },
+    "third_town_center": {
+     "value": null
+    },
+    "wheelbarrow_time": {
+     "value": null
+    },
+    "hand_cart_time": {
+     "value": null
+    },
+    "horse_collar_time": {
+     "value": null
+    },
+    "double_bit_axe_time": {
+     "value": 537.4
+    },
+    "gold_mining_time": {
+     "value": null
+    },
+    "eco_techs_researched": {
+     "value": 2
+    },
+    "farms_built": {
+     "value": 23
+    },
+    "first_farm": {
+     "value": 588
+    },
+    "farms_before_horse_collar": {
+     "value": null
+    },
+    "market_time": {
+     "value": null
+    },
+    "market_transactions": {
+     "value": 0
+    },
+    "market_volume": {
+     "value": 0
+    },
+    "market_first_use": {
+     "value": null
+    },
+    "market_sells": {
+     "value": 0
+    },
+    "market_buys": {
+     "value": 0
+    },
+    "spend_total": {
+     "value": 7577
+    },
+    "spend_food": {
+     "value": 4510
+    },
+    "spend_wood": {
+     "value": 2917
+    },
+    "spend_gold": {
+     "value": 150
+    },
+    "spend_stone": {
+     "value": 0
+    },
+    "spend_rate": {
+     "value": 403.7
+    },
+    "eco_spend_share": {
+     "value": 70.3
+    },
+    "eco_military_ratio_15min": {
+     "value": 3.63
+    },
+    "fishing_ships_trained": {
+     "value": 0
+    },
+    "eco_buildings_built": {
+     "value": 40
+    },
+    "houses_built": {
+     "value": 14
+    },
+    "early_supply_buffer": {
+     "value": 0
+    },
+    "military_units_trained": {
+     "value": 16
+    },
+    "military_spend": {
+     "value": 2247
+    },
+    "first_military_building": {
+     "value": 423.4
+    },
+    "military_buildings_total": {
+     "value": 3
+    },
+    "military_buildings_at_castle": {
+     "value": null
+    },
+    "composition_diversity": {
+     "value": 0.95
+    },
+    "dominant_unit_class": {
+     "value": "light_cavalry"
+    },
+    "dominant_unit": {
+     "value": "Scout Cavalry"
+    },
+    "infantry_trained": {
+     "value": 6
+    },
+    "archers_trained": {
+     "value": 0
+    },
+    "cavalry_trained": {
+     "value": 10
+    },
+    "siege_trained": {
+     "value": 0
+    },
+    "monks_trained": {
+     "value": 0
+    },
+    "warships_trained": {
+     "value": 0
+    },
+    "gunpowder_trained": {
+     "value": 0
+    },
+    "trebuchets_trained": {
+     "value": 0
+    },
+    "first_siege": {
+     "value": null
+    },
+    "blacksmith_upgrades": {
+     "value": 1
+    },
+    "first_blacksmith_upgrade": {
+     "value": 1015.1
+    },
+    "attack_upgrades_20min": {
+     "value": null
+    },
+    "armor_upgrades_20min": {
+     "value": null
+    },
+    "upgrade_lag_dominant_line": {
+     "value": -10.8
+    },
+    "unit_line_upgrades": {
+     "value": 0
+    },
+    "university_techs": {
+     "value": 0
+    },
+    "ballistics_time": {
+     "value": null
+    },
+    "bloodlines_time": {
+     "value": 1063.1
+    },
+    "thumb_ring_time": {
+     "value": null
+    },
+    "castles_built": {
+     "value": 0
+    },
+    "first_castle": {
+     "value": null
+    },
+    "tech_switches": {
+     "value": 1
+    },
+    "army_value_before_first_fight": {
+     "value": 0
+    },
+    "production_intensity_castle_age": {
+     "value": null
+    },
+    "fights_count": {
+     "value": 9
+    },
+    "first_fight": {
+     "value": 532.3
+    },
+    "total_fight_time": {
+     "value": 116.4
+    },
+    "fight_command_share": {
+     "value": 41.4
+    },
+    "apm_in_fights": {
+     "value": 73.4
+    },
+    "eco_actions_during_fights": {
+     "value": 17
+    },
+    "formations_set": {
+     "value": 9
+    },
+    "preferred_formation": {
+     "value": "box"
+    },
+    "stance_changes": {
+     "value": 41
+    },
+    "patrol_commands": {
+     "value": 21
+    },
+    "attack_ground_commands": {
+     "value": 0
+    },
+    "attack_move_commands": {
+     "value": 0
+    },
+    "garrison_commands": {
+     "value": 16
+    },
+    "ungarrison_commands": {
+     "value": 17
+    },
+    "back_to_work_commands": {
+     "value": 2
+    },
+    "deletions": {
+     "value": 2
+    },
+    "stop_commands": {
+     "value": 1
+    },
+    "raids_suffered": {
+     "value": 6
+    },
+    "raid_response_time": {
+     "value": 5.8
+    },
+    "raids_initiated": {
+     "value": 4
+    },
+    "micro_intensity": {
+     "value": 6.7
+    },
+    "army_matchup": {
+     "value": "theirs"
+    },
+    "army_matchup_margin": {
+     "value": -47.4
+    },
+    "missing_upgrade": {
+     "value": "Blast Furnace"
+    },
+    "missing_upgrade_gain": {
+     "value": 27.3
+    },
+    "upgrade_deficit_family": {
+     "value": "melee_attack"
+    },
+    "fights_on_low_ground": {
+     "value": 0
+    },
+    "fight_elevation_delta": {
+     "value": -0.05
+    },
+    "forward_buildings": {
+     "value": 0
+    },
+    "deepest_forward_building": {
+     "value": 14.3
+    },
+    "building_spread": {
+     "value": 8.9
+    },
+    "expansions_claimed": {
+     "value": 0
+    },
+    "map_command_coverage": {
+     "value": 52.1
+    },
+    "enemy_half_presence": {
+     "value": 55.5
+    },
+    "scout_coverage_5min": {
+     "value": 8.3
+    },
+    "scout_commands_5min": {
+     "value": 32
+    },
+    "first_enemy_base_look": {
+     "value": 409.8
+    },
+    "wall_tiles_total": {
+     "value": 6
+    },
+    "palisade_tiles": {
+     "value": 6
+    },
+    "stone_wall_tiles": {
+     "value": 0
+    },
+    "gates_built": {
+     "value": 0
+    },
+    "towers_built": {
+     "value": 0
+    },
+    "forward_towers": {
+     "value": 0
+    },
+    "wall_segments": {
+     "value": 6
+    },
+    "avg_wall_segment_tiles": {
+     "value": 1
+    },
+    "nearest_gold_distance": {
+     "value": 11.4
+    },
+    "nearest_stone_distance": {
+     "value": 15.1
+    },
+    "hunt_nearby": {
+     "value": 0
+    },
+    "camera_coverage": {
+     "value": 45.8
+    },
+    "camera_home_share": {
+     "value": 68.4
+    },
+    "camera_on_fights": {
+     "value": 75.2
+    },
+    "camera_entropy": {
+     "value": 3.35
+    },
+    "gold_near_start": {
+     "value": 5600
+    },
+    "stone_near_start": {
+     "value": 1750
+    },
+    "food_objects_near_start": {
+     "value": 11
+    },
+    "mining_camp_distance": {
+     "value": 3.5
+    },
+    "mill_distance": {
+     "value": 1.6
+    },
+    "map_character": {
+     "value": "open"
+    },
+    "map_water": {
+     "value": "present"
+    },
+    "first_aggression": {
+     "value": 489.6
+    },
+    "aggression_balance": {
+     "value": 49.2
+    },
+    "fights_initiated_share": {
+     "value": 66.7
+    },
+    "longest_inactivity": {
+     "value": 8.3
+    },
+    "median_action_gap": {
+     "value": 0.81
+    },
+    "castle_power_spike_use": {
+     "value": null
+    },
+    "imperial_power_spike_use": {
+     "value": null
+    },
+    "villagers_during_fights": {
+     "value": 9
+    },
+    "defensive_investment": {
+     "value": 12
+    },
+    "playstyle": {
+     "value": "boom"
+    },
+    "resign_context": {
+     "value": "did_not_resign"
+    },
+    "gg_etiquette": {
+     "value": "no_gg"
+    },
+    "chat_messages": {
+     "value": 2
+    },
+    "flares_used": {
+     "value": 0
+    },
+    "game_pauses": {
+     "value": 0
+    },
+    "actions_total": {
+     "value": 1082
+    },
+    "apm": {
+     "value": 57.6
+    },
+    "eapm": {
+     "value": 48.5
+    },
+    "apm_efficiency": {
+     "value": 84.2
+    },
+    "peak_apm_minute": {
+     "value": 77
+    },
+    "apm_growth": {
+     "value": 1.02
+    },
+    "avg_selection_size": {
+     "value": 2.53
+    },
+    "max_selection_size": {
+     "value": 13
+    },
+    "production_batch_size": {
+     "value": 1.01
+    },
+    "shift_queue_share": {
+     "value": 1.5
+    },
+    "gather_points_set": {
+     "value": 73
+    },
+    "gather_points_to_target": {
+     "value": 68.5
+    },
+    "gather_points_to_resource": {
+     "value": 66
+    },
+    "primary_gather_point_target": {
+     "value": "trees"
+    },
+    "move_vs_action_discipline": {
+     "value": 76.8
+    },
+    "actions_in_bursts": {
+     "value": 38.6
+    },
+    "camera_jumps_per_min": {
+     "value": 16.2
+    },
+    "offscreen_commands": {
+     "value": 19.9
+    },
+    "dark_age_apm": {
+     "value": 53.3
+    },
+    "actions_per_fight": {
+     "value": 5.1
+    },
+    "command_type_breadth": {
+     "value": 17
+    },
+    "first_tower": {
+     "value": null
+    },
+    "feudal_military_buildings": {
+     "value": 3
+    },
+    "pre_feudal_wall_tiles": {
+     "value": 0
+    },
+    "opening_wall_style": {
+     "value": "open"
+    },
+    "first_sheep_task": {
+     "value": 12.7
+    },
+    "first_boar_lure": {
+     "value": 219.1
+    },
+    "first_deer_task": {
+     "value": 82.4
+    },
+    "first_berry_task": {
+     "value": 211.8
+    },
+    "boars_taken": {
+     "value": 2
+    },
+    "deer_taken": {
+     "value": 3
+    },
+    "herdables_worked": {
+     "value": 7
+    },
+    "lumber_camps_built": {
+     "value": 1
+    },
+    "mining_camps_built": {
+     "value": 1
+    },
+    "docks_built": {
+     "value": 0
+    },
+    "farms_before_castle": {
+     "value": null
+    },
+    "villager_rate_feudal": {
+     "value": 3.39
+    },
+    "villager_rate_castle": {
+     "value": null
+    },
+    "eco_rebound_after_raids": {
+     "value": 13
+    },
+    "army_value_10min": {
+     "value": 200
+    },
+    "army_value_15min": {
+     "value": 800
+    },
+    "army_value_20min": {
+     "value": null
+    },
+    "military_added_feudal": {
+     "value": 16
+    },
+    "military_added_castle": {
+     "value": null
+    },
+    "military_added_imperial": {
+     "value": null
+    },
+    "trash_units_trained": {
+     "value": 16
+    },
+    "trash_army_share": {
+     "value": 100
+    },
+    "barracks_built": {
+     "value": 1
+    },
+    "ranges_built": {
+     "value": 1
+    },
+    "stables_built": {
+     "value": 1
+    },
+    "siege_workshops_built": {
+     "value": 0
+    },
+    "first_monastery": {
+     "value": null
+    },
+    "fights_per_10min": {
+     "value": 4.79
+    },
+    "fight_location_bias": {
+     "value": 63.9
+    },
+    "disengage_moves": {
+     "value": 17
+    },
+    "garrisons_during_raids": {
+     "value": 0
+    },
+    "town_bell_uses": {
+     "value": 0
+    },
+    "repair_commands": {
+     "value": 2
+    },
+    "attack_ground_per_siege": {
+     "value": null
+    },
+    "first_raid_suffered": {
+     "value": 472.2
+    },
+    "first_raid_initiated": {
+     "value": 489.6
+    },
+    "gold_control_share": {
+     "value": 50
+    },
+    "hunt_control_share": {
+     "value": 50
+    },
+    "camps_avg_distance": {
+     "value": 11.8
+    },
+    "forward_wall_tiles": {
+     "value": 0
+    },
+    "nearest_berries_distance": {
+     "value": 12.1
+    },
+    "fights_feudal": {
+     "value": 9
+    },
+    "fights_castle": {
+     "value": null
+    },
+    "fights_imperial": {
+     "value": null
+    },
+    "raids_suffered_feudal": {
+     "value": 5
+    },
+    "pressure_minutes": {
+     "value": 10
+    },
+    "reinforce_delay": {
+     "value": 41.4
+    },
+    "age_spend_feudal": {
+     "value": 5652
+    },
+    "age_spend_castle": {
+     "value": null
+    },
+    "age_spend_imperial": {
+     "value": null
+    },
+    "apm_feudal": {
+     "value": 60.6
+    },
+    "apm_castle": {
+     "value": null
+    },
+    "apm_imperial": {
+     "value": null
+    },
+    "apm_variability": {
+     "value": 0.19
+    },
+    "camera_pan_share": {
+     "value": 58.1
+    },
+    "first_command_time": {
+     "value": 0.6
+    },
+    "feudal_transition_apm": {
+     "value": 56.8
+    },
+    "heavy_plow_time": {
+     "value": null
+    },
+    "crop_rotation_time": {
+     "value": null
+    },
+    "bow_saw_time": {
+     "value": null
+    },
+    "two_man_saw_time": {
+     "value": null
+    },
+    "gold_shaft_mining_time": {
+     "value": null,
+     "na_reason": "civ"
+    },
+    "stone_mining_time": {
+     "value": null
+    },
+    "guilds_time": {
+     "value": null
+    },
+    "banking_time": {
+     "value": null
+    },
+    "coinage_time": {
+     "value": null
+    },
+    "caravan_time": {
+     "value": null
+    },
+    "husbandry_time": {
+     "value": null
+    },
+    "town_watch_time": {
+     "value": null
+    },
+    "forging_time": {
+     "value": null
+    },
+    "fletching_time": {
+     "value": null
+    },
+    "bodkin_arrow_time": {
+     "value": null
+    },
+    "eco_upgrades_by_castle": {
+     "value": null
+    },
+    "eco_upgrades_total": {
+     "value": 2
+    },
+    "first_market": {
+     "value": null
+    },
+    "first_university": {
+     "value": null
+    },
+    "university_tech_count": {
+     "value": 0
+    },
+    "blacksmith_count": {
+     "value": 1
+    },
+    "first_siege_workshop": {
+     "value": null
+    },
+    "longest_idle_gap": {
+     "value": 8.3
+    },
+    "idle_gaps_over_30s": {
+     "value": 0
+    },
+    "first_five_min_commands": {
+     "value": 266
+    },
+    "extra_tc_count": {
+     "value": 0
+    },
+    "first_extra_tc_time": {
+     "value": null
+    },
+    "first_monk_time": {
+     "value": null
+    },
+    "first_siege_unit": {
+     "value": null
+    },
+    "delete_commands": {
+     "value": 2
+    },
+    "median_selection_size": {
+     "value": 1
+    },
+    "commands_per_fight": {
+     "value": 5.1
+    },
+    "long_lulls": {
+     "value": 0
+    },
+    "tribute_sent_total": {
+     "value": null
+    },
+    "tribute_received_total": {
+     "value": null
+    },
+    "tribute_net": {
+     "value": null
+    },
+    "first_tribute_sent": {
+     "value": null
+    },
+    "trade_units_trained": {
+     "value": 0
+    },
+    "first_trade_unit": {
+     "value": null
+    },
+    "first_relic_touch": {
+     "value": null
+    },
+    "relic_commands": {
+     "value": 0
+    },
+    "first_gate": {
+     "value": null
+    },
+    "monastery_techs": {
+     "value": 0
+    },
+    "techs_feudal_age": {
+     "value": 3
+    },
+    "techs_castle_age": {
+     "value": null
+    },
+    "techs_imperial_age": {
+     "value": null
+    },
+    "techs_total": {
+     "value": 5
+    },
+    "ally_fight_participation": {
+     "value": null
+    },
+    "flares_sent": {
+     "value": 0
+    },
+    "attack_move_share": {
+     "value": 0
+    },
+    "formation_types_used": {
+     "value": 2
+    },
+    "apm_peak_minute": {
+     "value": 77
+    },
+    "team_role": {
+     "value": null
+    },
+    "nearest_enemy_distance": {
+     "value": 66.6
+    },
+    "age_spend_dark": {
+     "value": 1925
+    },
+    "military_added_dark": {
+     "value": 0
+    },
+    "military_spend_feudal_age": {
+     "value": 2072
+    },
+    "military_spend_castle_age": {
+     "value": null
+    },
+    "military_spend_imperial_age": {
+     "value": null
+    },
+    "buildings_dark_age": {
+     "value": 7
+    },
+    "buildings_feudal_age": {
+     "value": 37
+    },
+    "buildings_castle_age": {
+     "value": null
+    },
+    "buildings_imperial_age": {
+     "value": null
+    },
+    "villagers_per_tc_spread": {
+     "value": null
+    },
+    "production_buildings_used": {
+     "value": 2
+    },
+    "research_buildings_used": {
+     "value": 4
+    },
+    "attributed_production_share": {
+     "value": 100
+    },
+    "build_order": {
+     "value": "men_at_arms"
+    },
+    "build_order_adherence": {
+     "value": 100
+    },
+    "build_order_first_gap": {
+     "value": null
+    }
+   },
+   "data_coverage": {},
+   "buildings": {
+    "instances": [
+     {
+      "instance_id": 3646,
+      "kind": "Town Center",
+      "first_ms": 0,
+      "last_ms": 1123200,
+      "villagers": 52,
+      "military": 0,
+      "techs": 2,
+      "shared_units": 0,
+      "position": [
+       37,
+       89
+      ]
+     },
+     {
+      "instance_id": 4658,
+      "kind": "Stable",
+      "first_ms": 578214,
+      "last_ms": 1063075,
+      "villagers": 0,
+      "military": 10,
+      "techs": 1,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4639,
+      "kind": "Barracks",
+      "first_ms": 534534,
+      "last_ms": 1002131,
+      "villagers": 0,
+      "military": 6,
+      "techs": 0,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4589,
+      "kind": "Lumber Camp",
+      "first_ms": 537381,
+      "last_ms": 537381,
+      "villagers": 0,
+      "military": 0,
+      "techs": 1,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4840,
+      "kind": "Blacksmith",
+      "first_ms": 1015131,
+      "last_ms": 1015131,
+      "villagers": 0,
+      "military": 0,
+      "techs": 1,
+      "shared_units": 0,
+      "position": null
+     }
+    ],
+    "attribution": {
+     "exact": 68,
+     "shared": 0,
+     "unattributed": 0
+    }
+   }
+  },
+  "2": {
+   "metrics": {
+    "feudal_click": {
+     "value": 396.6
+    },
+    "feudal_reached": {
+     "value": 526.6
+    },
+    "castle_click": {
+     "value": null
+    },
+    "castle_reached": {
+     "value": null
+    },
+    "imperial_click": {
+     "value": null
+    },
+    "imperial_reached": {
+     "value": null
+    },
+    "pop_at_feudal_click": {
+     "value": 26
+    },
+    "pop_at_castle_click": {
+     "value": null
+    },
+    "feudal_efficiency_delta": {
+     "value": 0
+    },
+    "loom_time": {
+     "value": 346.6
+    },
+    "loom_before_feudal": {
+     "value": "before"
+    },
+    "opening_strategy": {
+     "value": "infantry"
+    },
+    "first_military_unit": {
+     "value": 533.5
+    },
+    "first_barracks": {
+     "value": 461
+    },
+    "first_range": {
+     "value": 789.5
+    },
+    "first_stable": {
+     "value": 552.8
+    },
+    "first_mill": {
+     "value": 325.5
+    },
+    "first_lumber_camp": {
+     "value": 177.6
+    },
+    "first_mining_camp": {
+     "value": 754.5
+    },
+    "first_dock": {
+     "value": null
+    },
+    "first_house": {
+     "value": 3.3
+    },
+    "houses_before_feudal": {
+     "value": 4
+    },
+    "first_scout_command": {
+     "value": 5.4
+    },
+    "first_wall": {
+     "value": 442.3
+    },
+    "wall_tiles_before_castle": {
+     "value": 26
+    },
+    "second_town_center": {
+     "value": null
+    },
+    "dark_age_idle_gap": {
+     "value": 10.3
+    },
+    "villagers_trained": {
+     "value": 47
+    },
+    "villagers_at_20min": {
+     "value": null
+    },
+    "villager_rate_dark_age": {
+     "value": 3.33
+    },
+    "tc_idle_dark_age": {
+     "value": 0
+    },
+    "tc_utilization_total": {
+     "value": 100
+    },
+    "villager_rate_per_tc": {
+     "value": 2.5
+    },
+    "town_center_count": {
+     "value": 1
+    },
+    "third_town_center": {
+     "value": null
+    },
+    "wheelbarrow_time": {
+     "value": 1058
+    },
+    "hand_cart_time": {
+     "value": null
+    },
+    "horse_collar_time": {
+     "value": 563.2
+    },
+    "double_bit_axe_time": {
+     "value": 562.2
+    },
+    "gold_mining_time": {
+     "value": null
+    },
+    "eco_techs_researched": {
+     "value": 6
+    },
+    "farms_built": {
+     "value": 19
+    },
+    "first_farm": {
+     "value": 608.1
+    },
+    "farms_before_horse_collar": {
+     "value": 0
+    },
+    "market_time": {
+     "value": null
+    },
+    "market_transactions": {
+     "value": 0
+    },
+    "market_volume": {
+     "value": 0
+    },
+    "market_first_use": {
+     "value": null
+    },
+    "market_sells": {
+     "value": 0
+    },
+    "market_buys": {
+     "value": 0
+    },
+    "spend_total": {
+     "value": 7862
+    },
+    "spend_food": {
+     "value": 4115
+    },
+    "spend_wood": {
+     "value": 3192
+    },
+    "spend_gold": {
+     "value": 555
+    },
+    "spend_stone": {
+     "value": 0
+    },
+    "spend_rate": {
+     "value": 418.8
+    },
+    "eco_spend_share": {
+     "value": 69.5
+    },
+    "eco_military_ratio_15min": {
+     "value": 3.44
+    },
+    "fishing_ships_trained": {
+     "value": 0
+    },
+    "eco_buildings_built": {
+     "value": 34
+    },
+    "houses_built": {
+     "value": 12
+    },
+    "early_supply_buffer": {
+     "value": 0
+    },
+    "military_units_trained": {
+     "value": 20
+    },
+    "military_spend": {
+     "value": 2397
+    },
+    "first_military_building": {
+     "value": 461
+    },
+    "military_buildings_total": {
+     "value": 3
+    },
+    "military_buildings_at_castle": {
+     "value": null
+    },
+    "composition_diversity": {
+     "value": 1.51
+    },
+    "dominant_unit_class": {
+     "value": "archer"
+    },
+    "dominant_unit": {
+     "value": "Archer"
+    },
+    "infantry_trained": {
+     "value": 7
+    },
+    "archers_trained": {
+     "value": 9
+    },
+    "cavalry_trained": {
+     "value": 4
+    },
+    "siege_trained": {
+     "value": 0
+    },
+    "monks_trained": {
+     "value": 0
+    },
+    "warships_trained": {
+     "value": 0
+    },
+    "gunpowder_trained": {
+     "value": 0
+    },
+    "trebuchets_trained": {
+     "value": 0
+    },
+    "first_siege": {
+     "value": null
+    },
+    "blacksmith_upgrades": {
+     "value": 2
+    },
+    "first_blacksmith_upgrade": {
+     "value": 1065.3
+    },
+    "attack_upgrades_20min": {
+     "value": null
+    },
+    "armor_upgrades_20min": {
+     "value": null
+    },
+    "upgrade_lag_dominant_line": {
+     "value": null
+    },
+    "unit_line_upgrades": {
+     "value": 0
+    },
+    "university_techs": {
+     "value": 0
+    },
+    "ballistics_time": {
+     "value": null
+    },
+    "bloodlines_time": {
+     "value": null
+    },
+    "thumb_ring_time": {
+     "value": null
+    },
+    "castles_built": {
+     "value": 0
+    },
+    "first_castle": {
+     "value": null
+    },
+    "tech_switches": {
+     "value": 1
+    },
+    "army_value_before_first_fight": {
+     "value": 0
+    },
+    "production_intensity_castle_age": {
+     "value": null
+    },
+    "fights_count": {
+     "value": 9
+    },
+    "first_fight": {
+     "value": 532.3
+    },
+    "total_fight_time": {
+     "value": 116.4
+    },
+    "fight_command_share": {
+     "value": 58.6
+    },
+    "apm_in_fights": {
+     "value": 74.7
+    },
+    "eco_actions_during_fights": {
+     "value": 14
+    },
+    "formations_set": {
+     "value": 17
+    },
+    "preferred_formation": {
+     "value": "box"
+    },
+    "stance_changes": {
+     "value": 22
+    },
+    "patrol_commands": {
+     "value": 9
+    },
+    "attack_ground_commands": {
+     "value": 0
+    },
+    "attack_move_commands": {
+     "value": 0
+    },
+    "garrison_commands": {
+     "value": 27
+    },
+    "ungarrison_commands": {
+     "value": 28
+    },
+    "back_to_work_commands": {
+     "value": 4
+    },
+    "deletions": {
+     "value": 6
+    },
+    "stop_commands": {
+     "value": 2
+    },
+    "raids_suffered": {
+     "value": 4
+    },
+    "raid_response_time": {
+     "value": 2.2
+    },
+    "raids_initiated": {
+     "value": 6
+    },
+    "micro_intensity": {
+     "value": 3.3
+    },
+    "army_matchup": {
+     "value": "mine"
+    },
+    "army_matchup_margin": {
+     "value": 47.4
+    },
+    "missing_upgrade": {
+     "value": "Padded Archer Armor"
+    },
+    "missing_upgrade_gain": {
+     "value": 6.1
+    },
+    "upgrade_deficit_family": {
+     "value": "ranged_armor"
+    },
+    "fights_on_low_ground": {
+     "value": 1
+    },
+    "fight_elevation_delta": {
+     "value": 0.05
+    },
+    "forward_buildings": {
+     "value": 0
+    },
+    "deepest_forward_building": {
+     "value": 26.5
+    },
+    "building_spread": {
+     "value": 9.1
+    },
+    "expansions_claimed": {
+     "value": 0
+    },
+    "map_command_coverage": {
+     "value": 44.4
+    },
+    "enemy_half_presence": {
+     "value": 47.9
+    },
+    "scout_coverage_5min": {
+     "value": 13.9
+    },
+    "scout_commands_5min": {
+     "value": 33
+    },
+    "first_enemy_base_look": {
+     "value": 329.6
+    },
+    "wall_tiles_total": {
+     "value": 26
+    },
+    "palisade_tiles": {
+     "value": 26
+    },
+    "stone_wall_tiles": {
+     "value": 0
+    },
+    "gates_built": {
+     "value": 0
+    },
+    "towers_built": {
+     "value": 0
+    },
+    "forward_towers": {
+     "value": 0
+    },
+    "wall_segments": {
+     "value": 15
+    },
+    "avg_wall_segment_tiles": {
+     "value": 1.73
+    },
+    "nearest_gold_distance": {
+     "value": 11.3
+    },
+    "nearest_stone_distance": {
+     "value": 14.6
+    },
+    "hunt_nearby": {
+     "value": 0
+    },
+    "camera_coverage": {
+     "value": null
+    },
+    "camera_home_share": {
+     "value": null
+    },
+    "camera_on_fights": {
+     "value": null
+    },
+    "camera_entropy": {
+     "value": null
+    },
+    "gold_near_start": {
+     "value": 5600
+    },
+    "stone_near_start": {
+     "value": 1750
+    },
+    "food_objects_near_start": {
+     "value": 11
+    },
+    "mining_camp_distance": {
+     "value": 2.5
+    },
+    "mill_distance": {
+     "value": 2.1
+    },
+    "map_character": {
+     "value": "open"
+    },
+    "map_water": {
+     "value": "present"
+    },
+    "first_aggression": {
+     "value": 472.2
+    },
+    "aggression_balance": {
+     "value": 50.8
+    },
+    "fights_initiated_share": {
+     "value": 33.3
+    },
+    "longest_inactivity": {
+     "value": 10.3
+    },
+    "median_action_gap": {
+     "value": 0.4
+    },
+    "castle_power_spike_use": {
+     "value": null
+    },
+    "imperial_power_spike_use": {
+     "value": null
+    },
+    "villagers_during_fights": {
+     "value": 7
+    },
+    "defensive_investment": {
+     "value": 52
+    },
+    "playstyle": {
+     "value": "boom"
+    },
+    "resign_context": {
+     "value": "after_final_fight"
+    },
+    "gg_etiquette": {
+     "value": "no_gg"
+    },
+    "chat_messages": {
+     "value": 2
+    },
+    "flares_used": {
+     "value": 0
+    },
+    "game_pauses": {
+     "value": 2
+    },
+    "actions_total": {
+     "value": 1531
+    },
+    "apm": {
+     "value": 81.6
+    },
+    "eapm": {
+     "value": 51.5
+    },
+    "apm_efficiency": {
+     "value": 63.2
+    },
+    "peak_apm_minute": {
+     "value": 142
+    },
+    "apm_growth": {
+     "value": 0.88
+    },
+    "avg_selection_size": {
+     "value": 1.98
+    },
+    "max_selection_size": {
+     "value": 11
+    },
+    "production_batch_size": {
+     "value": 1
+    },
+    "shift_queue_share": {
+     "value": 0
+    },
+    "gather_points_set": {
+     "value": 124
+    },
+    "gather_points_to_target": {
+     "value": 71.8
+    },
+    "gather_points_to_resource": {
+     "value": 67.4
+    },
+    "primary_gather_point_target": {
+     "value": "building"
+    },
+    "move_vs_action_discipline": {
+     "value": 78.3
+    },
+    "actions_in_bursts": {
+     "value": 59.6
+    },
+    "camera_jumps_per_min": {
+     "value": null
+    },
+    "offscreen_commands": {
+     "value": null
+    },
+    "dark_age_apm": {
+     "value": 87
+    },
+    "actions_per_fight": {
+     "value": 7.2
+    },
+    "command_type_breadth": {
+     "value": 18
+    },
+    "first_tower": {
+     "value": null
+    },
+    "feudal_military_buildings": {
+     "value": 3
+    },
+    "pre_feudal_wall_tiles": {
+     "value": 0
+    },
+    "opening_wall_style": {
+     "value": "partial"
+    },
+    "first_sheep_task": {
+     "value": 8.4
+    },
+    "first_boar_lure": {
+     "value": 133.4
+    },
+    "first_deer_task": {
+     "value": 155.9
+    },
+    "first_berry_task": {
+     "value": 280.4
+    },
+    "boars_taken": {
+     "value": 2
+    },
+    "deer_taken": {
+     "value": 3
+    },
+    "herdables_worked": {
+     "value": 8
+    },
+    "lumber_camps_built": {
+     "value": 1
+    },
+    "mining_camps_built": {
+     "value": 1
+    },
+    "docks_built": {
+     "value": 0
+    },
+    "farms_before_castle": {
+     "value": null
+    },
+    "villager_rate_feudal": {
+     "value": 2.4
+    },
+    "villager_rate_castle": {
+     "value": null
+    },
+    "eco_rebound_after_raids": {
+     "value": 11
+    },
+    "army_value_10min": {
+     "value": 280
+    },
+    "army_value_15min": {
+     "value": 750
+    },
+    "army_value_20min": {
+     "value": null
+    },
+    "military_added_feudal": {
+     "value": 20
+    },
+    "military_added_castle": {
+     "value": null
+    },
+    "military_added_imperial": {
+     "value": null
+    },
+    "trash_units_trained": {
+     "value": 11
+    },
+    "trash_army_share": {
+     "value": 55
+    },
+    "barracks_built": {
+     "value": 1
+    },
+    "ranges_built": {
+     "value": 1
+    },
+    "stables_built": {
+     "value": 1
+    },
+    "siege_workshops_built": {
+     "value": 0
+    },
+    "first_monastery": {
+     "value": null
+    },
+    "fights_per_10min": {
+     "value": 4.79
+    },
+    "fight_location_bias": {
+     "value": 36.1
+    },
+    "disengage_moves": {
+     "value": 16
+    },
+    "garrisons_during_raids": {
+     "value": 7
+    },
+    "town_bell_uses": {
+     "value": 0
+    },
+    "repair_commands": {
+     "value": 0
+    },
+    "attack_ground_per_siege": {
+     "value": null
+    },
+    "first_raid_suffered": {
+     "value": 489.6
+    },
+    "first_raid_initiated": {
+     "value": 472.2
+    },
+    "gold_control_share": {
+     "value": 50
+    },
+    "hunt_control_share": {
+     "value": 50
+    },
+    "camps_avg_distance": {
+     "value": 11.7
+    },
+    "forward_wall_tiles": {
+     "value": 0
+    },
+    "nearest_berries_distance": {
+     "value": 11.4
+    },
+    "fights_feudal": {
+     "value": 9
+    },
+    "fights_castle": {
+     "value": null
+    },
+    "fights_imperial": {
+     "value": null
+    },
+    "raids_suffered_feudal": {
+     "value": 3
+    },
+    "pressure_minutes": {
+     "value": 10
+    },
+    "reinforce_delay": {
+     "value": 18
+    },
+    "age_spend_feudal": {
+     "value": 5671
+    },
+    "age_spend_castle": {
+     "value": null
+    },
+    "age_spend_imperial": {
+     "value": null
+    },
+    "apm_feudal": {
+     "value": 74.3
+    },
+    "apm_castle": {
+     "value": null
+    },
+    "apm_imperial": {
+     "value": null
+    },
+    "apm_variability": {
+     "value": 0.26
+    },
+    "camera_pan_share": {
+     "value": null
+    },
+    "first_command_time": {
+     "value": 0.5
+    },
+    "feudal_transition_apm": {
+     "value": 97.8
+    },
+    "heavy_plow_time": {
+     "value": null
+    },
+    "crop_rotation_time": {
+     "value": null
+    },
+    "bow_saw_time": {
+     "value": null
+    },
+    "two_man_saw_time": {
+     "value": null
+    },
+    "gold_shaft_mining_time": {
+     "value": null,
+     "na_reason": "civ"
+    },
+    "stone_mining_time": {
+     "value": null
+    },
+    "guilds_time": {
+     "value": null
+    },
+    "banking_time": {
+     "value": null
+    },
+    "coinage_time": {
+     "value": null
+    },
+    "caravan_time": {
+     "value": null
+    },
+    "husbandry_time": {
+     "value": null
+    },
+    "town_watch_time": {
+     "value": null
+    },
+    "forging_time": {
+     "value": null
+    },
+    "fletching_time": {
+     "value": 1065.3
+    },
+    "bodkin_arrow_time": {
+     "value": null
+    },
+    "eco_upgrades_by_castle": {
+     "value": null
+    },
+    "eco_upgrades_total": {
+     "value": 6
+    },
+    "first_market": {
+     "value": null
+    },
+    "first_university": {
+     "value": null
+    },
+    "university_tech_count": {
+     "value": 0
+    },
+    "blacksmith_count": {
+     "value": 1
+    },
+    "first_siege_workshop": {
+     "value": null
+    },
+    "longest_idle_gap": {
+     "value": 10.3
+    },
+    "idle_gaps_over_30s": {
+     "value": 0
+    },
+    "first_five_min_commands": {
+     "value": 464
+    },
+    "extra_tc_count": {
+     "value": 0
+    },
+    "first_extra_tc_time": {
+     "value": null
+    },
+    "first_monk_time": {
+     "value": null
+    },
+    "first_siege_unit": {
+     "value": null
+    },
+    "delete_commands": {
+     "value": 6
+    },
+    "median_selection_size": {
+     "value": 1
+    },
+    "commands_per_fight": {
+     "value": 7.2
+    },
+    "long_lulls": {
+     "value": 0
+    },
+    "tribute_sent_total": {
+     "value": null
+    },
+    "tribute_received_total": {
+     "value": null
+    },
+    "tribute_net": {
+     "value": null
+    },
+    "first_tribute_sent": {
+     "value": null
+    },
+    "trade_units_trained": {
+     "value": 0
+    },
+    "first_trade_unit": {
+     "value": null
+    },
+    "first_relic_touch": {
+     "value": null
+    },
+    "relic_commands": {
+     "value": 0
+    },
+    "first_gate": {
+     "value": null
+    },
+    "monastery_techs": {
+     "value": 0
+    },
+    "techs_feudal_age": {
+     "value": 7
+    },
+    "techs_castle_age": {
+     "value": null
+    },
+    "techs_imperial_age": {
+     "value": null
+    },
+    "techs_total": {
+     "value": 9
+    },
+    "ally_fight_participation": {
+     "value": null
+    },
+    "flares_sent": {
+     "value": 0
+    },
+    "attack_move_share": {
+     "value": 0
+    },
+    "formation_types_used": {
+     "value": 1
+    },
+    "apm_peak_minute": {
+     "value": 142
+    },
+    "team_role": {
+     "value": null
+    },
+    "nearest_enemy_distance": {
+     "value": 66.6
+    },
+    "age_spend_dark": {
+     "value": 2191
+    },
+    "military_added_dark": {
+     "value": 0
+    },
+    "military_spend_feudal_age": {
+     "value": 2206
+    },
+    "military_spend_castle_age": {
+     "value": null
+    },
+    "military_spend_imperial_age": {
+     "value": null
+    },
+    "buildings_dark_age": {
+     "value": 7
+    },
+    "buildings_feudal_age": {
+     "value": 31
+    },
+    "buildings_castle_age": {
+     "value": null
+    },
+    "buildings_imperial_age": {
+     "value": null
+    },
+    "villagers_per_tc_spread": {
+     "value": null
+    },
+    "production_buildings_used": {
+     "value": 3
+    },
+    "research_buildings_used": {
+     "value": 4
+    },
+    "attributed_production_share": {
+     "value": 100
+    },
+    "build_order": {
+     "value": "men_at_arms"
+    },
+    "build_order_adherence": {
+     "value": 100
+    },
+    "build_order_first_gap": {
+     "value": null
+    }
+   },
+   "data_coverage": {},
+   "buildings": {
+    "instances": [
+     {
+      "instance_id": 3653,
+      "kind": "Town Center",
+      "first_ms": 0,
+      "last_ms": 1105325,
+      "villagers": 47,
+      "military": 0,
+      "techs": 3,
+      "shared_units": 0,
+      "position": [
+       97,
+       60
+      ]
+     },
+     {
+      "instance_id": 4766,
+      "kind": "Archery Range",
+      "first_ms": 852020,
+      "last_ms": 1067339,
+      "villagers": 0,
+      "military": 9,
+      "techs": 0,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4647,
+      "kind": "Barracks",
+      "first_ms": 533520,
+      "last_ms": 985075,
+      "villagers": 0,
+      "military": 7,
+      "techs": 0,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4663,
+      "kind": "Stable",
+      "first_ms": 598520,
+      "last_ms": 913978,
+      "villagers": 0,
+      "military": 4,
+      "techs": 0,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4626,
+      "kind": "Mill",
+      "first_ms": 563173,
+      "last_ms": 563589,
+      "villagers": 0,
+      "military": 0,
+      "techs": 3,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4931,
+      "kind": "Blacksmith",
+      "first_ms": 1065298,
+      "last_ms": 1065506,
+      "villagers": 0,
+      "military": 0,
+      "techs": 2,
+      "shared_units": 0,
+      "position": null
+     },
+     {
+      "instance_id": 4597,
+      "kind": "Lumber Camp",
+      "first_ms": 562159,
+      "last_ms": 562159,
+      "villagers": 0,
+      "military": 0,
+      "techs": 1,
+      "shared_units": 0,
+      "position": null
+     }
+    ],
+    "attribution": {
+     "exact": 67,
+     "shared": 0,
+     "unattributed": 0
+    }
+   }
+  }
+ },
+ "charts": {
+  "spend": {
+   "1": [
+    {
+     "t": 0,
+     "total": 0,
+     "food": 0,
+     "wood": 0,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 30,
+     "total": 350,
+     "food": 300,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 60,
+     "total": 350,
+     "food": 300,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 90,
+     "total": 400,
+     "food": 350,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 120,
+     "total": 400,
+     "food": 350,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 150,
+     "total": 550,
+     "food": 400,
+     "wood": 150,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 180,
+     "total": 675,
+     "food": 500,
+     "wood": 175,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 210,
+     "total": 725,
+     "food": 550,
+     "wood": 175,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 240,
+     "total": 775,
+     "food": 600,
+     "wood": 175,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 270,
+     "total": 975,
+     "food": 700,
+     "wood": 275,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 300,
+     "total": 975,
+     "food": 700,
+     "wood": 275,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 330,
+     "total": 1125,
+     "food": 800,
+     "wood": 275,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 360,
+     "total": 1125,
+     "food": 800,
+     "wood": 275,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 390,
+     "total": 1125,
+     "food": 800,
+     "wood": 275,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 420,
+     "total": 1675,
+     "food": 1350,
+     "wood": 275,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 450,
+     "total": 1925,
+     "food": 1400,
+     "wood": 475,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 480,
+     "total": 1925,
+     "food": 1400,
+     "wood": 475,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 510,
+     "total": 1925,
+     "food": 1400,
+     "wood": 475,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 540,
+     "total": 2310,
+     "food": 1535,
+     "wood": 725,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 570,
+     "total": 2445,
+     "food": 1620,
+     "wood": 775,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 600,
+     "total": 2718,
+     "food": 1800,
+     "wood": 868,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 630,
+     "total": 3018,
+     "food": 1980,
+     "wood": 988,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 660,
+     "total": 3238,
+     "food": 2115,
+     "wood": 1073,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 690,
+     "total": 3513,
+     "food": 2280,
+     "wood": 1183,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 720,
+     "total": 3623,
+     "food": 2330,
+     "wood": 1243,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 750,
+     "total": 3873,
+     "food": 2530,
+     "wood": 1293,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 780,
+     "total": 4055,
+     "food": 2530,
+     "wood": 1475,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 810,
+     "total": 4545,
+     "food": 2840,
+     "wood": 1655,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 840,
+     "total": 4830,
+     "food": 2920,
+     "wood": 1860,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 870,
+     "total": 5120,
+     "food": 3150,
+     "wood": 1920,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 900,
+     "total": 5382,
+     "food": 3250,
+     "wood": 2082,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 930,
+     "total": 5587,
+     "food": 3430,
+     "wood": 2107,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 960,
+     "total": 5787,
+     "food": 3480,
+     "wood": 2257,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 990,
+     "total": 6067,
+     "food": 3580,
+     "wood": 2437,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 1020,
+     "total": 6467,
+     "food": 3930,
+     "wood": 2487,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 1050,
+     "total": 6817,
+     "food": 4160,
+     "wood": 2607,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 1080,
+     "total": 7242,
+     "food": 4410,
+     "wood": 2682,
+     "gold": 150,
+     "stone": 0
+    },
+    {
+     "t": 1110,
+     "total": 7467,
+     "food": 4460,
+     "wood": 2857,
+     "gold": 150,
+     "stone": 0
+    },
+    {
+     "t": 1140,
+     "total": 7577,
+     "food": 4510,
+     "wood": 2917,
+     "gold": 150,
+     "stone": 0
+    }
+   ],
+   "2": [
+    {
+     "t": 0,
+     "total": 0,
+     "food": 0,
+     "wood": 0,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 30,
+     "total": 250,
+     "food": 200,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 60,
+     "total": 250,
+     "food": 200,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 90,
+     "total": 300,
+     "food": 250,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 120,
+     "total": 300,
+     "food": 250,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 150,
+     "total": 600,
+     "food": 550,
+     "wood": 50,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 180,
+     "total": 700,
+     "food": 550,
+     "wood": 150,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 210,
+     "total": 800,
+     "food": 650,
+     "wood": 150,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 240,
+     "total": 1025,
+     "food": 850,
+     "wood": 175,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 270,
+     "total": 1125,
+     "food": 950,
+     "wood": 175,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 300,
+     "total": 1200,
+     "food": 1000,
+     "wood": 200,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 330,
+     "total": 1350,
+     "food": 1050,
+     "wood": 300,
+     "gold": 0,
+     "stone": 0
+    },
+    {
+     "t": 360,
+     "total": 1450,
+     "food": 1100,
+     "wood": 300,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 390,
+     "total": 1450,
+     "food": 1100,
+     "wood": 300,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 420,
+     "total": 1950,
+     "food": 1600,
+     "wood": 300,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 450,
+     "total": 2004,
+     "food": 1650,
+     "wood": 304,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 480,
+     "total": 2191,
+     "food": 1650,
+     "wood": 491,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 510,
+     "total": 2191,
+     "food": 1650,
+     "wood": 491,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 540,
+     "total": 2301,
+     "food": 1735,
+     "wood": 516,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 570,
+     "total": 3126,
+     "food": 2110,
+     "wood": 966,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 600,
+     "total": 3429,
+     "food": 2355,
+     "wood": 1024,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 630,
+     "total": 3549,
+     "food": 2355,
+     "wood": 1144,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 660,
+     "total": 3744,
+     "food": 2440,
+     "wood": 1254,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 690,
+     "total": 4049,
+     "food": 2540,
+     "wood": 1459,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 720,
+     "total": 4219,
+     "food": 2625,
+     "wood": 1544,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 750,
+     "total": 4319,
+     "food": 2725,
+     "wood": 1544,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 780,
+     "total": 4649,
+     "food": 2955,
+     "wood": 1644,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 810,
+     "total": 4938,
+     "food": 3040,
+     "wood": 1848,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 840,
+     "total": 5160,
+     "food": 3140,
+     "wood": 1970,
+     "gold": 50,
+     "stone": 0
+    },
+    {
+     "t": 870,
+     "total": 5480,
+     "food": 3140,
+     "wood": 2200,
+     "gold": 140,
+     "stone": 0
+    },
+    {
+     "t": 900,
+     "total": 5795,
+     "food": 3240,
+     "wood": 2370,
+     "gold": 185,
+     "stone": 0
+    },
+    {
+     "t": 930,
+     "total": 6120,
+     "food": 3470,
+     "wood": 2420,
+     "gold": 230,
+     "stone": 0
+    },
+    {
+     "t": 960,
+     "total": 6327,
+     "food": 3520,
+     "wood": 2532,
+     "gold": 275,
+     "stone": 0
+    },
+    {
+     "t": 990,
+     "total": 6503,
+     "food": 3640,
+     "wood": 2588,
+     "gold": 275,
+     "stone": 0
+    },
+    {
+     "t": 1020,
+     "total": 6617,
+     "food": 3690,
+     "wood": 2652,
+     "gold": 275,
+     "stone": 0
+    },
+    {
+     "t": 1050,
+     "total": 6907,
+     "food": 3690,
+     "wood": 2852,
+     "gold": 365,
+     "stone": 0
+    },
+    {
+     "t": 1080,
+     "total": 7632,
+     "food": 4065,
+     "wood": 3012,
+     "gold": 555,
+     "stone": 0
+    },
+    {
+     "t": 1110,
+     "total": 7742,
+     "food": 4115,
+     "wood": 3072,
+     "gold": 555,
+     "stone": 0
+    },
+    {
+     "t": 1140,
+     "total": 7862,
+     "food": 4115,
+     "wood": 3192,
+     "gold": 555,
+     "stone": 0
+    }
+   ]
+  },
+  "eco_military": {
+   "1": [
+    {
+     "t": 0,
+     "eco": 0,
+     "military": 0
+    },
+    {
+     "t": 30,
+     "eco": 350,
+     "military": 0
+    },
+    {
+     "t": 60,
+     "eco": 350,
+     "military": 0
+    },
+    {
+     "t": 90,
+     "eco": 400,
+     "military": 0
+    },
+    {
+     "t": 120,
+     "eco": 400,
+     "military": 0
+    },
+    {
+     "t": 150,
+     "eco": 550,
+     "military": 0
+    },
+    {
+     "t": 180,
+     "eco": 675,
+     "military": 0
+    },
+    {
+     "t": 210,
+     "eco": 725,
+     "military": 0
+    },
+    {
+     "t": 240,
+     "eco": 775,
+     "military": 0
+    },
+    {
+     "t": 270,
+     "eco": 975,
+     "military": 0
+    },
+    {
+     "t": 300,
+     "eco": 975,
+     "military": 0
+    },
+    {
+     "t": 330,
+     "eco": 1125,
+     "military": 0
+    },
+    {
+     "t": 360,
+     "eco": 1125,
+     "military": 0
+    },
+    {
+     "t": 390,
+     "eco": 1125,
+     "military": 0
+    },
+    {
+     "t": 420,
+     "eco": 1675,
+     "military": 0
+    },
+    {
+     "t": 450,
+     "eco": 1750,
+     "military": 175
+    },
+    {
+     "t": 480,
+     "eco": 1750,
+     "military": 175
+    },
+    {
+     "t": 510,
+     "eco": 1750,
+     "military": 175
+    },
+    {
+     "t": 540,
+     "eco": 1900,
+     "military": 410
+    },
+    {
+     "t": 570,
+     "eco": 1975,
+     "military": 470
+    },
+    {
+     "t": 600,
+     "eco": 2160,
+     "military": 558
+    },
+    {
+     "t": 630,
+     "eco": 2380,
+     "military": 638
+    },
+    {
+     "t": 660,
+     "eco": 2540,
+     "military": 698
+    },
+    {
+     "t": 690,
+     "eco": 2675,
+     "military": 838
+    },
+    {
+     "t": 720,
+     "eco": 2785,
+     "military": 838
+    },
+    {
+     "t": 750,
+     "eco": 3035,
+     "military": 838
+    },
+    {
+     "t": 780,
+     "eco": 3215,
+     "military": 840
+    },
+    {
+     "t": 810,
+     "eco": 3545,
+     "military": 1000
+    },
+    {
+     "t": 840,
+     "eco": 3750,
+     "military": 1080
+    },
+    {
+     "t": 870,
+     "eco": 3960,
+     "military": 1160
+    },
+    {
+     "t": 900,
+     "eco": 4220,
+     "military": 1162
+    },
+    {
+     "t": 930,
+     "eco": 4345,
+     "military": 1242
+    },
+    {
+     "t": 960,
+     "eco": 4395,
+     "military": 1392
+    },
+    {
+     "t": 990,
+     "eco": 4675,
+     "military": 1392
+    },
+    {
+     "t": 1020,
+     "eco": 4725,
+     "military": 1742
+    },
+    {
+     "t": 1050,
+     "eco": 4995,
+     "military": 1822
+    },
+    {
+     "t": 1080,
+     "eco": 5170,
+     "military": 2072
+    },
+    {
+     "t": 1110,
+     "eco": 5220,
+     "military": 2247
+    },
+    {
+     "t": 1140,
+     "eco": 5330,
+     "military": 2247
+    }
+   ],
+   "2": [
+    {
+     "t": 0,
+     "eco": 0,
+     "military": 0
+    },
+    {
+     "t": 30,
+     "eco": 250,
+     "military": 0
+    },
+    {
+     "t": 60,
+     "eco": 250,
+     "military": 0
+    },
+    {
+     "t": 90,
+     "eco": 300,
+     "military": 0
+    },
+    {
+     "t": 120,
+     "eco": 300,
+     "military": 0
+    },
+    {
+     "t": 150,
+     "eco": 600,
+     "military": 0
+    },
+    {
+     "t": 180,
+     "eco": 700,
+     "military": 0
+    },
+    {
+     "t": 210,
+     "eco": 800,
+     "military": 0
+    },
+    {
+     "t": 240,
+     "eco": 1025,
+     "military": 0
+    },
+    {
+     "t": 270,
+     "eco": 1125,
+     "military": 0
+    },
+    {
+     "t": 300,
+     "eco": 1200,
+     "military": 0
+    },
+    {
+     "t": 330,
+     "eco": 1350,
+     "military": 0
+    },
+    {
+     "t": 360,
+     "eco": 1450,
+     "military": 0
+    },
+    {
+     "t": 390,
+     "eco": 1450,
+     "military": 0
+    },
+    {
+     "t": 420,
+     "eco": 1950,
+     "military": 0
+    },
+    {
+     "t": 450,
+     "eco": 2000,
+     "military": 4
+    },
+    {
+     "t": 480,
+     "eco": 2000,
+     "military": 191
+    },
+    {
+     "t": 510,
+     "eco": 2000,
+     "military": 191
+    },
+    {
+     "t": 540,
+     "eco": 2050,
+     "military": 251
+    },
+    {
+     "t": 570,
+     "eco": 2700,
+     "military": 426
+    },
+    {
+     "t": 600,
+     "eco": 2775,
+     "military": 654
+    },
+    {
+     "t": 630,
+     "eco": 2895,
+     "military": 654
+    },
+    {
+     "t": 660,
+     "eco": 3030,
+     "military": 714
+    },
+    {
+     "t": 690,
+     "eco": 3335,
+     "military": 714
+    },
+    {
+     "t": 720,
+     "eco": 3445,
+     "military": 774
+    },
+    {
+     "t": 750,
+     "eco": 3545,
+     "military": 774
+    },
+    {
+     "t": 780,
+     "eco": 3795,
+     "military": 854
+    },
+    {
+     "t": 810,
+     "eco": 3845,
+     "military": 1093
+    },
+    {
+     "t": 840,
+     "eco": 4065,
+     "military": 1095
+    },
+    {
+     "t": 870,
+     "eco": 4245,
+     "military": 1235
+    },
+    {
+     "t": 900,
+     "eco": 4490,
+     "military": 1305
+    },
+    {
+     "t": 930,
+     "eco": 4665,
+     "military": 1455
+    },
+    {
+     "t": 960,
+     "eco": 4790,
+     "military": 1537
+    },
+    {
+     "t": 990,
+     "eco": 4840,
+     "military": 1663
+    },
+    {
+     "t": 1020,
+     "eco": 4950,
+     "military": 1667
+    },
+    {
+     "t": 1050,
+     "eco": 4950,
+     "military": 1957
+    },
+    {
+     "t": 1080,
+     "eco": 5235,
+     "military": 2397
+    },
+    {
+     "t": 1110,
+     "eco": 5345,
+     "military": 2397
+    },
+    {
+     "t": 1140,
+     "eco": 5465,
+     "military": 2397
+    }
+   ]
+  },
+  "apm": {
+   "1": [
+    {
+     "t": 0,
+     "apm": 73
+    },
+    {
+     "t": 60,
+     "apm": 55
+    },
+    {
+     "t": 120,
+     "apm": 56
+    },
+    {
+     "t": 180,
+     "apm": 49
+    },
+    {
+     "t": 240,
+     "apm": 33
+    },
+    {
+     "t": 300,
+     "apm": 48
+    },
+    {
+     "t": 360,
+     "apm": 64
+    },
+    {
+     "t": 420,
+     "apm": 55
+    },
+    {
+     "t": 480,
+     "apm": 55
+    },
+    {
+     "t": 540,
+     "apm": 77
+    },
+    {
+     "t": 600,
+     "apm": 47
+    },
+    {
+     "t": 660,
+     "apm": 63
+    },
+    {
+     "t": 720,
+     "apm": 48
+    },
+    {
+     "t": 780,
+     "apm": 75
+    },
+    {
+     "t": 840,
+     "apm": 57
+    },
+    {
+     "t": 900,
+     "apm": 56
+    },
+    {
+     "t": 960,
+     "apm": 60
+    },
+    {
+     "t": 1020,
+     "apm": 66
+    },
+    {
+     "t": 1080,
+     "apm": 45
+    }
+   ],
+   "2": [
+    {
+     "t": 0,
+     "apm": 142
+    },
+    {
+     "t": 60,
+     "apm": 113
+    },
+    {
+     "t": 120,
+     "apm": 73
+    },
+    {
+     "t": 180,
+     "apm": 75
+    },
+    {
+     "t": 240,
+     "apm": 61
+    },
+    {
+     "t": 300,
+     "apm": 64
+    },
+    {
+     "t": 360,
+     "apm": 106
+    },
+    {
+     "t": 420,
+     "apm": 101
+    },
+    {
+     "t": 480,
+     "apm": 63
+    },
+    {
+     "t": 540,
+     "apm": 61
+    },
+    {
+     "t": 600,
+     "apm": 74
+    },
+    {
+     "t": 660,
+     "apm": 83
+    },
+    {
+     "t": 720,
+     "apm": 83
+    },
+    {
+     "t": 780,
+     "apm": 67
+    },
+    {
+     "t": 840,
+     "apm": 94
+    },
+    {
+     "t": 900,
+     "apm": 75
+    },
+    {
+     "t": 960,
+     "apm": 83
+    },
+    {
+     "t": 1020,
+     "apm": 63
+    },
+    {
+     "t": 1080,
+     "apm": 50
+    }
+   ]
+  },
+  "composition": {
+   "1": {
+    "infantry": [
+     {
+      "t": 0,
+      "count": 0
+     },
+     {
+      "t": 30,
+      "count": 0
+     },
+     {
+      "t": 60,
+      "count": 0
+     },
+     {
+      "t": 90,
+      "count": 0
+     },
+     {
+      "t": 120,
+      "count": 0
+     },
+     {
+      "t": 150,
+      "count": 0
+     },
+     {
+      "t": 180,
+      "count": 0
+     },
+     {
+      "t": 210,
+      "count": 0
+     },
+     {
+      "t": 240,
+      "count": 0
+     },
+     {
+      "t": 270,
+      "count": 0
+     },
+     {
+      "t": 300,
+      "count": 0
+     },
+     {
+      "t": 330,
+      "count": 0
+     },
+     {
+      "t": 360,
+      "count": 0
+     },
+     {
+      "t": 390,
+      "count": 0
+     },
+     {
+      "t": 420,
+      "count": 0
+     },
+     {
+      "t": 450,
+      "count": 0
+     },
+     {
+      "t": 480,
+      "count": 0
+     },
+     {
+      "t": 510,
+      "count": 1
+     },
+     {
+      "t": 540,
+      "count": 2
+     },
+     {
+      "t": 570,
+      "count": 2
+     },
+     {
+      "t": 600,
+      "count": 2
+     },
+     {
+      "t": 630,
+      "count": 3
+     },
+     {
+      "t": 660,
+      "count": 4
+     },
+     {
+      "t": 690,
+      "count": 4
+     },
+     {
+      "t": 720,
+      "count": 4
+     },
+     {
+      "t": 750,
+      "count": 4
+     },
+     {
+      "t": 780,
+      "count": 4
+     },
+     {
+      "t": 810,
+      "count": 4
+     },
+     {
+      "t": 840,
+      "count": 4
+     },
+     {
+      "t": 870,
+      "count": 4
+     },
+     {
+      "t": 900,
+      "count": 4
+     },
+     {
+      "t": 930,
+      "count": 4
+     },
+     {
+      "t": 960,
+      "count": 4
+     },
+     {
+      "t": 990,
+      "count": 6
+     },
+     {
+      "t": 1020,
+      "count": 6
+     },
+     {
+      "t": 1050,
+      "count": 6
+     },
+     {
+      "t": 1080,
+      "count": 6
+     },
+     {
+      "t": 1110,
+      "count": 6
+     },
+     {
+      "t": 1140,
+      "count": 6
+     }
+    ],
+    "light_cavalry": [
+     {
+      "t": 0,
+      "count": 0
+     },
+     {
+      "t": 30,
+      "count": 0
+     },
+     {
+      "t": 60,
+      "count": 0
+     },
+     {
+      "t": 90,
+      "count": 0
+     },
+     {
+      "t": 120,
+      "count": 0
+     },
+     {
+      "t": 150,
+      "count": 0
+     },
+     {
+      "t": 180,
+      "count": 0
+     },
+     {
+      "t": 210,
+      "count": 0
+     },
+     {
+      "t": 240,
+      "count": 0
+     },
+     {
+      "t": 270,
+      "count": 0
+     },
+     {
+      "t": 300,
+      "count": 0
+     },
+     {
+      "t": 330,
+      "count": 0
+     },
+     {
+      "t": 360,
+      "count": 0
+     },
+     {
+      "t": 390,
+      "count": 0
+     },
+     {
+      "t": 420,
+      "count": 0
+     },
+     {
+      "t": 450,
+      "count": 0
+     },
+     {
+      "t": 480,
+      "count": 0
+     },
+     {
+      "t": 510,
+      "count": 0
+     },
+     {
+      "t": 540,
+      "count": 0
+     },
+     {
+      "t": 570,
+      "count": 1
+     },
+     {
+      "t": 600,
+      "count": 2
+     },
+     {
+      "t": 630,
+      "count": 2
+     },
+     {
+      "t": 660,
+      "count": 3
+     },
+     {
+      "t": 690,
+      "count": 3
+     },
+     {
+      "t": 720,
+      "count": 3
+     },
+     {
+      "t": 750,
+      "count": 3
+     },
+     {
+      "t": 780,
+      "count": 5
+     },
+     {
+      "t": 810,
+      "count": 6
+     },
+     {
+      "t": 840,
+      "count": 7
+     },
+     {
+      "t": 870,
+      "count": 7
+     },
+     {
+      "t": 900,
+      "count": 8
+     },
+     {
+      "t": 930,
+      "count": 8
+     },
+     {
+      "t": 960,
+      "count": 8
+     },
+     {
+      "t": 990,
+      "count": 9
+     },
+     {
+      "t": 1020,
+      "count": 10
+     },
+     {
+      "t": 1050,
+      "count": 10
+     },
+     {
+      "t": 1080,
+      "count": 10
+     },
+     {
+      "t": 1110,
+      "count": 10
+     },
+     {
+      "t": 1140,
+      "count": 10
+     }
+    ]
+   },
+   "2": {
+    "infantry": [
+     {
+      "t": 0,
+      "count": 0
+     },
+     {
+      "t": 30,
+      "count": 0
+     },
+     {
+      "t": 60,
+      "count": 0
+     },
+     {
+      "t": 90,
+      "count": 0
+     },
+     {
+      "t": 120,
+      "count": 0
+     },
+     {
+      "t": 150,
+      "count": 0
+     },
+     {
+      "t": 180,
+      "count": 0
+     },
+     {
+      "t": 210,
+      "count": 0
+     },
+     {
+      "t": 240,
+      "count": 0
+     },
+     {
+      "t": 270,
+      "count": 0
+     },
+     {
+      "t": 300,
+      "count": 0
+     },
+     {
+      "t": 330,
+      "count": 0
+     },
+     {
+      "t": 360,
+      "count": 0
+     },
+     {
+      "t": 390,
+      "count": 0
+     },
+     {
+      "t": 420,
+      "count": 0
+     },
+     {
+      "t": 450,
+      "count": 0
+     },
+     {
+      "t": 480,
+      "count": 0
+     },
+     {
+      "t": 510,
+      "count": 1
+     },
+     {
+      "t": 540,
+      "count": 1
+     },
+     {
+      "t": 570,
+      "count": 2
+     },
+     {
+      "t": 600,
+      "count": 2
+     },
+     {
+      "t": 630,
+      "count": 3
+     },
+     {
+      "t": 660,
+      "count": 3
+     },
+     {
+      "t": 690,
+      "count": 4
+     },
+     {
+      "t": 720,
+      "count": 4
+     },
+     {
+      "t": 750,
+      "count": 4
+     },
+     {
+      "t": 780,
+      "count": 5
+     },
+     {
+      "t": 810,
+      "count": 5
+     },
+     {
+      "t": 840,
+      "count": 5
+     },
+     {
+      "t": 870,
+      "count": 5
+     },
+     {
+      "t": 900,
+      "count": 5
+     },
+     {
+      "t": 930,
+      "count": 5
+     },
+     {
+      "t": 960,
+      "count": 7
+     },
+     {
+      "t": 990,
+      "count": 7
+     },
+     {
+      "t": 1020,
+      "count": 7
+     },
+     {
+      "t": 1050,
+      "count": 7
+     },
+     {
+      "t": 1080,
+      "count": 7
+     },
+     {
+      "t": 1110,
+      "count": 7
+     },
+     {
+      "t": 1140,
+      "count": 7
+     }
+    ],
+    "light_cavalry": [
+     {
+      "t": 0,
+      "count": 0
+     },
+     {
+      "t": 30,
+      "count": 0
+     },
+     {
+      "t": 60,
+      "count": 0
+     },
+     {
+      "t": 90,
+      "count": 0
+     },
+     {
+      "t": 120,
+      "count": 0
+     },
+     {
+      "t": 150,
+      "count": 0
+     },
+     {
+      "t": 180,
+      "count": 0
+     },
+     {
+      "t": 210,
+      "count": 0
+     },
+     {
+      "t": 240,
+      "count": 0
+     },
+     {
+      "t": 270,
+      "count": 0
+     },
+     {
+      "t": 300,
+      "count": 0
+     },
+     {
+      "t": 330,
+      "count": 0
+     },
+     {
+      "t": 360,
+      "count": 0
+     },
+     {
+      "t": 390,
+      "count": 0
+     },
+     {
+      "t": 420,
+      "count": 0
+     },
+     {
+      "t": 450,
+      "count": 0
+     },
+     {
+      "t": 480,
+      "count": 0
+     },
+     {
+      "t": 510,
+      "count": 0
+     },
+     {
+      "t": 540,
+      "count": 0
+     },
+     {
+      "t": 570,
+      "count": 2
+     },
+     {
+      "t": 600,
+      "count": 2
+     },
+     {
+      "t": 630,
+      "count": 2
+     },
+     {
+      "t": 660,
+      "count": 2
+     },
+     {
+      "t": 690,
+      "count": 2
+     },
+     {
+      "t": 720,
+      "count": 2
+     },
+     {
+      "t": 750,
+      "count": 3
+     },
+     {
+      "t": 780,
+      "count": 3
+     },
+     {
+      "t": 810,
+      "count": 3
+     },
+     {
+      "t": 840,
+      "count": 3
+     },
+     {
+      "t": 870,
+      "count": 3
+     },
+     {
+      "t": 900,
+      "count": 4
+     },
+     {
+      "t": 930,
+      "count": 4
+     },
+     {
+      "t": 960,
+      "count": 4
+     },
+     {
+      "t": 990,
+      "count": 4
+     },
+     {
+      "t": 1020,
+      "count": 4
+     },
+     {
+      "t": 1050,
+      "count": 4
+     },
+     {
+      "t": 1080,
+      "count": 4
+     },
+     {
+      "t": 1110,
+      "count": 4
+     },
+     {
+      "t": 1140,
+      "count": 4
+     }
+    ],
+    "archer": [
+     {
+      "t": 0,
+      "count": 0
+     },
+     {
+      "t": 30,
+      "count": 0
+     },
+     {
+      "t": 60,
+      "count": 0
+     },
+     {
+      "t": 90,
+      "count": 0
+     },
+     {
+      "t": 120,
+      "count": 0
+     },
+     {
+      "t": 150,
+      "count": 0
+     },
+     {
+      "t": 180,
+      "count": 0
+     },
+     {
+      "t": 210,
+      "count": 0
+     },
+     {
+      "t": 240,
+      "count": 0
+     },
+     {
+      "t": 270,
+      "count": 0
+     },
+     {
+      "t": 300,
+      "count": 0
+     },
+     {
+      "t": 330,
+      "count": 0
+     },
+     {
+      "t": 360,
+      "count": 0
+     },
+     {
+      "t": 390,
+      "count": 0
+     },
+     {
+      "t": 420,
+      "count": 0
+     },
+     {
+      "t": 450,
+      "count": 0
+     },
+     {
+      "t": 480,
+      "count": 0
+     },
+     {
+      "t": 510,
+      "count": 0
+     },
+     {
+      "t": 540,
+      "count": 0
+     },
+     {
+      "t": 570,
+      "count": 0
+     },
+     {
+      "t": 600,
+      "count": 0
+     },
+     {
+      "t": 630,
+      "count": 0
+     },
+     {
+      "t": 660,
+      "count": 0
+     },
+     {
+      "t": 690,
+      "count": 0
+     },
+     {
+      "t": 720,
+      "count": 0
+     },
+     {
+      "t": 750,
+      "count": 0
+     },
+     {
+      "t": 780,
+      "count": 0
+     },
+     {
+      "t": 810,
+      "count": 0
+     },
+     {
+      "t": 840,
+      "count": 2
+     },
+     {
+      "t": 870,
+      "count": 3
+     },
+     {
+      "t": 900,
+      "count": 4
+     },
+     {
+      "t": 930,
+      "count": 5
+     },
+     {
+      "t": 960,
+      "count": 5
+     },
+     {
+      "t": 990,
+      "count": 5
+     },
+     {
+      "t": 1020,
+      "count": 7
+     },
+     {
+      "t": 1050,
+      "count": 9
+     },
+     {
+      "t": 1080,
+      "count": 9
+     },
+     {
+      "t": 1110,
+      "count": 9
+     },
+     {
+      "t": 1140,
+      "count": 9
+     }
+    ]
+   }
+  },
+  "villagers": {
+   "1": [
+    {
+     "t": 0,
+     "count": 3
+    },
+    {
+     "t": 30,
+     "count": 9
+    },
+    {
+     "t": 60,
+     "count": 9
+    },
+    {
+     "t": 90,
+     "count": 10
+    },
+    {
+     "t": 120,
+     "count": 10
+    },
+    {
+     "t": 150,
+     "count": 11
+    },
+    {
+     "t": 180,
+     "count": 13
+    },
+    {
+     "t": 210,
+     "count": 14
+    },
+    {
+     "t": 240,
+     "count": 15
+    },
+    {
+     "t": 270,
+     "count": 17
+    },
+    {
+     "t": 300,
+     "count": 17
+    },
+    {
+     "t": 330,
+     "count": 19
+    },
+    {
+     "t": 360,
+     "count": 19
+    },
+    {
+     "t": 390,
+     "count": 19
+    },
+    {
+     "t": 420,
+     "count": 20
+    },
+    {
+     "t": 450,
+     "count": 21
+    },
+    {
+     "t": 480,
+     "count": 21
+    },
+    {
+     "t": 510,
+     "count": 21
+    },
+    {
+     "t": 540,
+     "count": 21
+    },
+    {
+     "t": 570,
+     "count": 22
+    },
+    {
+     "t": 600,
+     "count": 24
+    },
+    {
+     "t": 630,
+     "count": 26
+    },
+    {
+     "t": 660,
+     "count": 28
+    },
+    {
+     "t": 690,
+     "count": 29
+    },
+    {
+     "t": 720,
+     "count": 30
+    },
+    {
+     "t": 750,
+     "count": 34
+    },
+    {
+     "t": 780,
+     "count": 34
+    },
+    {
+     "t": 810,
+     "count": 37
+    },
+    {
+     "t": 840,
+     "count": 37
+    },
+    {
+     "t": 870,
+     "count": 40
+    },
+    {
+     "t": 900,
+     "count": 42
+    },
+    {
+     "t": 930,
+     "count": 44
+    },
+    {
+     "t": 960,
+     "count": 45
+    },
+    {
+     "t": 990,
+     "count": 47
+    },
+    {
+     "t": 1020,
+     "count": 48
+    },
+    {
+     "t": 1050,
+     "count": 51
+    },
+    {
+     "t": 1080,
+     "count": 53
+    },
+    {
+     "t": 1110,
+     "count": 54
+    },
+    {
+     "t": 1140,
+     "count": 55
+    }
+   ],
+   "2": [
+    {
+     "t": 0,
+     "count": 3
+    },
+    {
+     "t": 30,
+     "count": 7
+    },
+    {
+     "t": 60,
+     "count": 7
+    },
+    {
+     "t": 90,
+     "count": 8
+    },
+    {
+     "t": 120,
+     "count": 8
+    },
+    {
+     "t": 150,
+     "count": 14
+    },
+    {
+     "t": 180,
+     "count": 14
+    },
+    {
+     "t": 210,
+     "count": 16
+    },
+    {
+     "t": 240,
+     "count": 20
+    },
+    {
+     "t": 270,
+     "count": 22
+    },
+    {
+     "t": 300,
+     "count": 23
+    },
+    {
+     "t": 330,
+     "count": 24
+    },
+    {
+     "t": 360,
+     "count": 25
+    },
+    {
+     "t": 390,
+     "count": 25
+    },
+    {
+     "t": 420,
+     "count": 25
+    },
+    {
+     "t": 450,
+     "count": 26
+    },
+    {
+     "t": 480,
+     "count": 26
+    },
+    {
+     "t": 510,
+     "count": 26
+    },
+    {
+     "t": 540,
+     "count": 27
+    },
+    {
+     "t": 570,
+     "count": 28
+    },
+    {
+     "t": 600,
+     "count": 29
+    },
+    {
+     "t": 630,
+     "count": 29
+    },
+    {
+     "t": 660,
+     "count": 30
+    },
+    {
+     "t": 690,
+     "count": 32
+    },
+    {
+     "t": 720,
+     "count": 33
+    },
+    {
+     "t": 750,
+     "count": 35
+    },
+    {
+     "t": 780,
+     "count": 38
+    },
+    {
+     "t": 810,
+     "count": 39
+    },
+    {
+     "t": 840,
+     "count": 41
+    },
+    {
+     "t": 870,
+     "count": 41
+    },
+    {
+     "t": 900,
+     "count": 43
+    },
+    {
+     "t": 930,
+     "count": 46
+    },
+    {
+     "t": 960,
+     "count": 47
+    },
+    {
+     "t": 990,
+     "count": 48
+    },
+    {
+     "t": 1020,
+     "count": 49
+    },
+    {
+     "t": 1050,
+     "count": 49
+    },
+    {
+     "t": 1080,
+     "count": 49
+    },
+    {
+     "t": 1110,
+     "count": 50
+    },
+    {
+     "t": 1140,
+     "count": 50
+    }
+   ]
+  },
+  "fights": [
+   {
+    "start": 532,
+    "end": 559,
+    "active_s": 14,
+    "confidence": "medium",
+    "x": 82.2,
+    "y": 67.2,
+    "commands": 11,
+    "opener": 1,
+    "elevation": {
+     "1": 2.25,
+     "2": 2.29
+    }
+   },
+   {
+    "start": 680,
+    "end": 697,
+    "active_s": 10,
+    "confidence": "medium",
+    "x": 57.2,
+    "y": 79.4,
+    "commands": 7,
+    "opener": 1,
+    "elevation": {
+     "1": 0,
+     "2": 0
+    }
+   },
+   {
+    "start": 709,
+    "end": 719,
+    "active_s": 5,
+    "confidence": "medium",
+    "x": 83.4,
+    "y": 50.3,
+    "commands": 6,
+    "opener": 2,
+    "elevation": {
+     "1": 0,
+     "2": 0.6
+    }
+   },
+   {
+    "start": 724,
+    "end": 743,
+    "active_s": 18,
+    "confidence": "medium",
+    "x": 41.2,
+    "y": 99.9,
+    "commands": 11,
+    "opener": 1,
+    "elevation": {
+     "1": 0.71,
+     "2": 1.25
+    }
+   },
+   {
+    "start": 817,
+    "end": 828,
+    "active_s": 11,
+    "confidence": "medium",
+    "x": 102.9,
+    "y": 52.9,
+    "commands": 14,
+    "opener": 1,
+    "elevation": {
+     "1": 0,
+     "2": 0.18
+    }
+   },
+   {
+    "start": 933,
+    "end": 938,
+    "active_s": 5,
+    "confidence": "medium",
+    "x": 101.4,
+    "y": 68.5,
+    "commands": 8,
+    "opener": 2,
+    "elevation": {
+     "1": 0,
+     "2": 0
+    }
+   },
+   {
+    "start": 994,
+    "end": 998,
+    "active_s": 4,
+    "confidence": "medium",
+    "x": 101.7,
+    "y": 50.9,
+    "commands": 6,
+    "opener": 2,
+    "elevation": {
+     "1": 1.5,
+     "2": 0.25
+    }
+   },
+   {
+    "start": 1027,
+    "end": 1039,
+    "active_s": 7,
+    "confidence": "medium",
+    "x": 101.8,
+    "y": 64.7,
+    "commands": 13,
+    "opener": 1,
+    "elevation": {
+     "1": 0,
+     "2": 0
+    }
+   },
+   {
+    "start": 1058,
+    "end": 1105,
+    "active_s": 42,
+    "confidence": "high",
+    "x": 48.7,
+    "y": 89.2,
+    "commands": 35,
+    "opener": 1,
+    "elevation": {
+     "1": 0.5,
+     "2": 0.88
+    }
+   }
+  ],
+  "timeline_events": [
+   {
+    "player": 1,
+    "kind": "feudal_click",
+    "t": 393
+   },
+   {
+    "player": 2,
+    "kind": "feudal_click",
+    "t": 396
+   },
+   {
+    "player": 1,
+    "kind": "feudal_reached",
+    "t": 523
+   },
+   {
+    "player": 2,
+    "kind": "feudal_reached",
+    "t": 526
+   }
+  ],
+  "camera_heatmap": {
+   "pov": 1,
+   "cell_size": 7,
+   "dimension": 120,
+   "cells": [
+    {
+     "cx": 2,
+     "cy": 11,
+     "n": 7
+    },
+    {
+     "cx": 2,
+     "cy": 13,
+     "n": 22
+    },
+    {
+     "cx": 2,
+     "cy": 15,
+     "n": 8
+    },
+    {
+     "cx": 3,
+     "cy": 8,
+     "n": 9
+    },
+    {
+     "cx": 3,
+     "cy": 10,
+     "n": 8
+    },
+    {
+     "cx": 3,
+     "cy": 11,
+     "n": 4
+    },
+    {
+     "cx": 3,
+     "cy": 12,
+     "n": 10
+    },
+    {
+     "cx": 3,
+     "cy": 13,
+     "n": 3
+    },
+    {
+     "cx": 3,
+     "cy": 14,
+     "n": 84
+    },
+    {
+     "cx": 3,
+     "cy": 15,
+     "n": 1
+    },
+    {
+     "cx": 4,
+     "cy": 5,
+     "n": 6
+    },
+    {
+     "cx": 4,
+     "cy": 6,
+     "n": 4
+    },
+    {
+     "cx": 4,
+     "cy": 7,
+     "n": 3
+    },
+    {
+     "cx": 4,
+     "cy": 9,
+     "n": 2
+    },
+    {
+     "cx": 4,
+     "cy": 10,
+     "n": 3
+    },
+    {
+     "cx": 4,
+     "cy": 11,
+     "n": 11
+    },
+    {
+     "cx": 4,
+     "cy": 12,
+     "n": 20
+    },
+    {
+     "cx": 4,
+     "cy": 13,
+     "n": 92
+    },
+    {
+     "cx": 4,
+     "cy": 14,
+     "n": 16
+    },
+    {
+     "cx": 4,
+     "cy": 15,
+     "n": 1
+    },
+    {
+     "cx": 5,
+     "cy": 4,
+     "n": 6
+    },
+    {
+     "cx": 5,
+     "cy": 5,
+     "n": 3
+    },
+    {
+     "cx": 5,
+     "cy": 8,
+     "n": 11
+    },
+    {
+     "cx": 5,
+     "cy": 9,
+     "n": 52
+    },
+    {
+     "cx": 5,
+     "cy": 11,
+     "n": 8
+    },
+    {
+     "cx": 5,
+     "cy": 12,
+     "n": 2448
+    },
+    {
+     "cx": 5,
+     "cy": 13,
+     "n": 80
+    },
+    {
+     "cx": 5,
+     "cy": 14,
+     "n": 9
+    },
+    {
+     "cx": 6,
+     "cy": 3,
+     "n": 1
+    },
+    {
+     "cx": 6,
+     "cy": 4,
+     "n": 7
+    },
+    {
+     "cx": 6,
+     "cy": 8,
+     "n": 7
+    },
+    {
+     "cx": 6,
+     "cy": 9,
+     "n": 9
+    },
+    {
+     "cx": 6,
+     "cy": 10,
+     "n": 56
+    },
+    {
+     "cx": 6,
+     "cy": 11,
+     "n": 148
+    },
+    {
+     "cx": 6,
+     "cy": 12,
+     "n": 10
+    },
+    {
+     "cx": 6,
+     "cy": 13,
+     "n": 40
+    },
+    {
+     "cx": 6,
+     "cy": 14,
+     "n": 11
+    },
+    {
+     "cx": 7,
+     "cy": 3,
+     "n": 3
+    },
+    {
+     "cx": 7,
+     "cy": 4,
+     "n": 9
+    },
+    {
+     "cx": 7,
+     "cy": 10,
+     "n": 26
+    },
+    {
+     "cx": 7,
+     "cy": 11,
+     "n": 21
+    },
+    {
+     "cx": 7,
+     "cy": 12,
+     "n": 9
+    },
+    {
+     "cx": 7,
+     "cy": 13,
+     "n": 30
+    },
+    {
+     "cx": 7,
+     "cy": 14,
+     "n": 90
+    },
+    {
+     "cx": 8,
+     "cy": 2,
+     "n": 4
+    },
+    {
+     "cx": 8,
+     "cy": 3,
+     "n": 10
+    },
+    {
+     "cx": 8,
+     "cy": 9,
+     "n": 3
+    },
+    {
+     "cx": 8,
+     "cy": 10,
+     "n": 11
+    },
+    {
+     "cx": 8,
+     "cy": 11,
+     "n": 28
+    },
+    {
+     "cx": 8,
+     "cy": 12,
+     "n": 14
+    },
+    {
+     "cx": 8,
+     "cy": 13,
+     "n": 2
+    },
+    {
+     "cx": 9,
+     "cy": 3,
+     "n": 10
+    },
+    {
+     "cx": 9,
+     "cy": 8,
+     "n": 3
+    },
+    {
+     "cx": 9,
+     "cy": 10,
+     "n": 5
+    },
+    {
+     "cx": 9,
+     "cy": 11,
+     "n": 9
+    },
+    {
+     "cx": 9,
+     "cy": 12,
+     "n": 20
+    },
+    {
+     "cx": 9,
+     "cy": 13,
+     "n": 2
+    },
+    {
+     "cx": 9,
+     "cy": 14,
+     "n": 3
+    },
+    {
+     "cx": 10,
+     "cy": 4,
+     "n": 10
+    },
+    {
+     "cx": 10,
+     "cy": 5,
+     "n": 2
+    },
+    {
+     "cx": 10,
+     "cy": 7,
+     "n": 3
+    },
+    {
+     "cx": 10,
+     "cy": 8,
+     "n": 1
+    },
+    {
+     "cx": 10,
+     "cy": 9,
+     "n": 43
+    },
+    {
+     "cx": 10,
+     "cy": 10,
+     "n": 46
+    },
+    {
+     "cx": 10,
+     "cy": 11,
+     "n": 10
+    },
+    {
+     "cx": 10,
+     "cy": 12,
+     "n": 10
+    },
+    {
+     "cx": 10,
+     "cy": 13,
+     "n": 2
+    },
+    {
+     "cx": 11,
+     "cy": 4,
+     "n": 3
+    },
+    {
+     "cx": 11,
+     "cy": 5,
+     "n": 17
+    },
+    {
+     "cx": 11,
+     "cy": 6,
+     "n": 5
+    },
+    {
+     "cx": 11,
+     "cy": 7,
+     "n": 2
+    },
+    {
+     "cx": 11,
+     "cy": 8,
+     "n": 7
+    },
+    {
+     "cx": 11,
+     "cy": 9,
+     "n": 16
+    },
+    {
+     "cx": 11,
+     "cy": 10,
+     "n": 19
+    },
+    {
+     "cx": 11,
+     "cy": 11,
+     "n": 32
+    },
+    {
+     "cx": 11,
+     "cy": 12,
+     "n": 4
+    },
+    {
+     "cx": 12,
+     "cy": 4,
+     "n": 4
+    },
+    {
+     "cx": 12,
+     "cy": 5,
+     "n": 6
+    },
+    {
+     "cx": 12,
+     "cy": 7,
+     "n": 42
+    },
+    {
+     "cx": 12,
+     "cy": 8,
+     "n": 88
+    },
+    {
+     "cx": 12,
+     "cy": 9,
+     "n": 144
+    },
+    {
+     "cx": 12,
+     "cy": 10,
+     "n": 48
+    },
+    {
+     "cx": 12,
+     "cy": 11,
+     "n": 10
+    },
+    {
+     "cx": 12,
+     "cy": 12,
+     "n": 13
+    },
+    {
+     "cx": 13,
+     "cy": 4,
+     "n": 4
+    },
+    {
+     "cx": 13,
+     "cy": 5,
+     "n": 18
+    },
+    {
+     "cx": 13,
+     "cy": 6,
+     "n": 67
+    },
+    {
+     "cx": 13,
+     "cy": 8,
+     "n": 16
+    },
+    {
+     "cx": 13,
+     "cy": 9,
+     "n": 30
+    },
+    {
+     "cx": 13,
+     "cy": 10,
+     "n": 22
+    },
+    {
+     "cx": 13,
+     "cy": 11,
+     "n": 29
+    },
+    {
+     "cx": 13,
+     "cy": 12,
+     "n": 9
+    },
+    {
+     "cx": 14,
+     "cy": 5,
+     "n": 13
+    },
+    {
+     "cx": 14,
+     "cy": 6,
+     "n": 10
+    },
+    {
+     "cx": 14,
+     "cy": 7,
+     "n": 72
+    },
+    {
+     "cx": 14,
+     "cy": 8,
+     "n": 21
+    },
+    {
+     "cx": 14,
+     "cy": 9,
+     "n": 78
+    },
+    {
+     "cx": 14,
+     "cy": 10,
+     "n": 29
+    },
+    {
+     "cx": 14,
+     "cy": 11,
+     "n": 27
+    },
+    {
+     "cx": 14,
+     "cy": 12,
+     "n": 13
+    },
+    {
+     "cx": 15,
+     "cy": 5,
+     "n": 6
+    },
+    {
+     "cx": 15,
+     "cy": 6,
+     "n": 45
+    },
+    {
+     "cx": 15,
+     "cy": 7,
+     "n": 65
+    },
+    {
+     "cx": 15,
+     "cy": 8,
+     "n": 28
+    },
+    {
+     "cx": 15,
+     "cy": 9,
+     "n": 58
+    },
+    {
+     "cx": 15,
+     "cy": 10,
+     "n": 4
+    },
+    {
+     "cx": 15,
+     "cy": 11,
+     "n": 3
+    },
+    {
+     "cx": 15,
+     "cy": 12,
+     "n": 2
+    },
+    {
+     "cx": 16,
+     "cy": 6,
+     "n": 8
+    },
+    {
+     "cx": 16,
+     "cy": 7,
+     "n": 25
+    },
+    {
+     "cx": 16,
+     "cy": 8,
+     "n": 15
+    },
+    {
+     "cx": 16,
+     "cy": 9,
+     "n": 4
+    },
+    {
+     "cx": 16,
+     "cy": 10,
+     "n": 13
+    }
+   ]
+  },
+  "map_overlay": {
+   "1": {
+    "start": {
+     "x": 37,
+     "y": 89
+    },
+    "buildings": [
+     {
+      "t": 1,
+      "id": 70,
+      "kind": "house",
+      "x": 41,
+      "y": 82,
+      "name": "House"
+     },
+     {
+      "t": 3,
+      "id": 70,
+      "kind": "house",
+      "x": 36,
+      "y": 97,
+      "name": "House"
+     },
+     {
+      "t": 139,
+      "id": 562,
+      "kind": "lumber_camp",
+      "x": 41,
+      "y": 103,
+      "name": "Lumber Camp"
+     },
+     {
+      "t": 179,
+      "id": 70,
+      "kind": "house",
+      "x": 26,
+      "y": 78,
+      "name": "House"
+     },
+     {
+      "t": 253,
+      "id": 68,
+      "kind": "mill",
+      "x": 43,
+      "y": 98,
+      "name": "Mill"
+     },
+     {
+      "t": 423,
+      "id": 12,
+      "kind": "barracks",
+      "x": 48.5,
+      "y": 96.5,
+      "name": "Barracks"
+     },
+     {
+      "t": 447,
+      "id": 70,
+      "kind": "house",
+      "x": 46,
+      "y": 105,
+      "name": "House"
+     },
+     {
+      "t": 533,
+      "id": 101,
+      "kind": "stable",
+      "x": 48.5,
+      "y": 100.5,
+      "name": "Stable"
+     },
+     {
+      "t": 563,
+      "id": 70,
+      "kind": "house",
+      "x": 34,
+      "y": 100,
+      "name": "House"
+     },
+     {
+      "t": 584,
+      "id": 70,
+      "kind": "house",
+      "x": 47,
+      "y": 93,
+      "name": "House"
+     },
+     {
+      "t": 587,
+      "id": 50,
+      "kind": "farm",
+      "x": 33.5,
+      "y": 89.5,
+      "name": "Farm"
+     },
+     {
+      "t": 610,
+      "id": 50,
+      "kind": "farm",
+      "x": 33.5,
+      "y": 92.5,
+      "name": "Farm"
+     },
+     {
+      "t": 614,
+      "id": 50,
+      "kind": "farm",
+      "x": 36.5,
+      "y": 85.5,
+      "name": "Farm"
+     },
+     {
+      "t": 645,
+      "id": 50,
+      "kind": "farm",
+      "x": 36.5,
+      "y": 92.5,
+      "name": "Farm"
+     },
+     {
+      "t": 666,
+      "id": 70,
+      "kind": "house",
+      "x": 45,
+      "y": 91,
+      "name": "House"
+     },
+     {
+      "t": 673,
+      "id": 50,
+      "kind": "farm",
+      "x": 30.5,
+      "y": 89.5,
+      "name": "Farm"
+     },
+     {
+      "t": 716,
+      "id": 50,
+      "kind": "farm",
+      "x": 39.5,
+      "y": 92.5,
+      "name": "Farm"
+     },
+     {
+      "t": 739,
+      "id": 70,
+      "kind": "house",
+      "x": 46,
+      "y": 98,
+      "name": "House"
+     },
+     {
+      "t": 749,
+      "id": 70,
+      "kind": "house",
+      "x": 43,
+      "y": 92,
+      "name": "House"
+     },
+     {
+      "t": 757,
+      "id": 50,
+      "kind": "farm",
+      "x": 40.5,
+      "y": 89.5,
+      "name": "Farm"
+     },
+     {
+      "t": 758,
+      "id": 50,
+      "kind": "farm",
+      "x": 40.5,
+      "y": 86.5,
+      "name": "Farm"
+     },
+     {
+      "t": 770,
+      "id": 50,
+      "kind": "farm",
+      "x": 38.5,
+      "y": 95.5,
+      "name": "Farm"
+     },
+     {
+      "t": 783,
+      "id": 50,
+      "kind": "farm",
+      "x": 40.5,
+      "y": 99.5,
+      "name": "Farm"
+     },
+     {
+      "t": 784,
+      "id": 50,
+      "kind": "farm",
+      "x": 42.5,
+      "y": 95.5,
+      "name": "Farm"
+     },
+     {
+      "t": 786,
+      "id": 50,
+      "kind": "farm",
+      "x": 45.5,
+      "y": 95.5,
+      "name": "Farm"
+     },
+     {
+      "t": 811,
+      "id": 70,
+      "kind": "house",
+      "x": 45,
+      "y": 89,
+      "name": "House"
+     },
+     {
+      "t": 813,
+      "id": 50,
+      "kind": "farm",
+      "x": 30.5,
+      "y": 92.5,
+      "name": "Farm"
+     },
+     {
+      "t": 832,
+      "id": 50,
+      "kind": "farm",
+      "x": 33.5,
+      "y": 83.5,
+      "name": "Farm"
+     },
+     {
+      "t": 834,
+      "id": 50,
+      "kind": "farm",
+      "x": 36.5,
+      "y": 82.5,
+      "name": "Farm"
+     },
+     {
+      "t": 849,
+      "id": 50,
+      "kind": "farm",
+      "x": 43.5,
+      "y": 86.5,
+      "name": "Farm"
+     },
+     {
+      "t": 885,
+      "id": 584,
+      "kind": "mining_camp",
+      "x": 28,
+      "y": 90,
+      "name": "Mining Camp"
+     },
+     {
+      "t": 898,
+      "id": 50,
+      "kind": "farm",
+      "x": 42.5,
+      "y": 92.5,
+      "name": "Farm"
+     },
+     {
+      "t": 909,
+      "id": 70,
+      "kind": "house",
+      "x": 46,
+      "y": 87,
+      "name": "House"
+     },
+     {
+      "t": 931,
+      "id": 103,
+      "kind": "blacksmith",
+      "x": 44.5,
+      "y": 82.5,
+      "name": "Blacksmith"
+     },
+     {
+      "t": 968,
+      "id": 50,
+      "kind": "farm",
+      "x": 37.5,
+      "y": 99.5,
+      "name": "Farm"
+     },
+     {
+      "t": 980,
+      "id": 50,
+      "kind": "farm",
+      "x": 33.5,
+      "y": 86.5,
+      "name": "Farm"
+     },
+     {
+      "t": 989,
+      "id": 50,
+      "kind": "farm",
+      "x": 30.5,
+      "y": 86.5,
+      "name": "Farm"
+     },
+     {
+      "t": 1022,
+      "id": 50,
+      "kind": "farm",
+      "x": 33.5,
+      "y": 95.5,
+      "name": "Farm"
+     },
+     {
+      "t": 1041,
+      "id": 50,
+      "kind": "farm",
+      "x": 30.5,
+      "y": 95.5,
+      "name": "Farm"
+     },
+     {
+      "t": 1052,
+      "id": 70,
+      "kind": "house",
+      "x": 31,
+      "y": 98,
+      "name": "House"
+     },
+     {
+      "t": 1053,
+      "id": 70,
+      "kind": "house",
+      "x": 27,
+      "y": 99,
+      "name": "House"
+     },
+     {
+      "t": 1057,
+      "id": 70,
+      "kind": "house",
+      "x": 45,
+      "y": 103,
+      "name": "House"
+     },
+     {
+      "t": 1103,
+      "id": 87,
+      "kind": "archery_range",
+      "x": 40.5,
+      "y": 79.5,
+      "name": "Archery Range"
+     },
+     {
+      "t": 1121,
+      "id": 50,
+      "kind": "farm",
+      "x": 33.5,
+      "y": 89.5,
+      "name": "Farm"
+     }
+    ],
+    "walls": [
+     {
+      "t": 574,
+      "x1": 46,
+      "y1": 104,
+      "x2": 46,
+      "y2": 104,
+      "palisade": true
+     },
+     {
+      "t": 575,
+      "x1": 47,
+      "y1": 103,
+      "x2": 47,
+      "y2": 103,
+      "palisade": true
+     },
+     {
+      "t": 576,
+      "x1": 48,
+      "y1": 102,
+      "x2": 48,
+      "y2": 102,
+      "palisade": true
+     },
+     {
+      "t": 582,
+      "x1": 47,
+      "y1": 98,
+      "x2": 47,
+      "y2": 98,
+      "palisade": true
+     },
+     {
+      "t": 760,
+      "x1": 34,
+      "y1": 98,
+      "x2": 34,
+      "y2": 98,
+      "palisade": true
+     },
+     {
+      "t": 891,
+      "x1": 47,
+      "y1": 94,
+      "x2": 47,
+      "y2": 94,
+      "palisade": true
+     }
+    ]
+   },
+   "2": {
+    "start": {
+     "x": 97,
+     "y": 60
+    },
+    "buildings": [
+     {
+      "t": 3,
+      "id": 70,
+      "kind": "house",
+      "x": 96,
+      "y": 52,
+      "name": "House"
+     },
+     {
+      "t": 4,
+      "id": 70,
+      "kind": "house",
+      "x": 96,
+      "y": 68,
+      "name": "House"
+     },
+     {
+      "t": 177,
+      "id": 562,
+      "kind": "lumber_camp",
+      "x": 88,
+      "y": 50,
+      "name": "Lumber Camp"
+     },
+     {
+      "t": 229,
+      "id": 70,
+      "kind": "house",
+      "x": 82,
+      "y": 59,
+      "name": "House"
+     },
+     {
+      "t": 275,
+      "id": 70,
+      "kind": "house",
+      "x": 82,
+      "y": 61,
+      "name": "House"
+     },
+     {
+      "t": 325,
+      "id": 68,
+      "kind": "mill",
+      "x": 107,
+      "y": 67,
+      "name": "Mill"
+     },
+     {
+      "t": 461,
+      "id": 12,
+      "kind": "barracks",
+      "x": 82.5,
+      "y": 63.5,
+      "name": "Barracks"
+     },
+     {
+      "t": 552,
+      "id": 101,
+      "kind": "stable",
+      "x": 80.5,
+      "y": 66.5,
+      "name": "Stable"
+     },
+     {
+      "t": 596,
+      "id": 70,
+      "kind": "house",
+      "x": 85,
+      "y": 71,
+      "name": "House"
+     },
+     {
+      "t": 608,
+      "id": 50,
+      "kind": "farm",
+      "x": 97.5,
+      "y": 63.5,
+      "name": "Farm"
+     },
+     {
+      "t": 610,
+      "id": 50,
+      "kind": "farm",
+      "x": 100.5,
+      "y": 60.5,
+      "name": "Farm"
+     },
+     {
+      "t": 634,
+      "id": 50,
+      "kind": "farm",
+      "x": 94.5,
+      "y": 63.5,
+      "name": "Farm"
+     },
+     {
+      "t": 643,
+      "id": 70,
+      "kind": "house",
+      "x": 110,
+      "y": 68,
+      "name": "House"
+     },
+     {
+      "t": 665,
+      "id": 50,
+      "kind": "farm",
+      "x": 100.5,
+      "y": 63.5,
+      "name": "Farm"
+     },
+     {
+      "t": 666,
+      "id": 50,
+      "kind": "farm",
+      "x": 100.5,
+      "y": 57.5,
+      "name": "Farm"
+     },
+     {
+      "t": 677,
+      "id": 70,
+      "kind": "house",
+      "x": 88,
+      "y": 45,
+      "name": "House"
+     },
+     {
+      "t": 685,
+      "id": 50,
+      "kind": "farm",
+      "x": 93.5,
+      "y": 60.5,
+      "name": "Farm"
+     },
+     {
+      "t": 707,
+      "id": 50,
+      "kind": "farm",
+      "x": 93.5,
+      "y": 57.5,
+      "name": "Farm"
+     },
+     {
+      "t": 754,
+      "id": 584,
+      "kind": "mining_camp",
+      "x": 105,
+      "y": 54,
+      "name": "Mining Camp"
+     },
+     {
+      "t": 789,
+      "id": 87,
+      "kind": "archery_range",
+      "x": 91.5,
+      "y": 66.5,
+      "name": "Archery Range"
+     },
+     {
+      "t": 834,
+      "id": 50,
+      "kind": "farm",
+      "x": 96.5,
+      "y": 56.5,
+      "name": "Farm"
+     },
+     {
+      "t": 838,
+      "id": 50,
+      "kind": "farm",
+      "x": 99.5,
+      "y": 54.5,
+      "name": "Farm"
+     },
+     {
+      "t": 840,
+      "id": 50,
+      "kind": "farm",
+      "x": 103.5,
+      "y": 56.5,
+      "name": "Farm"
+     },
+     {
+      "t": 851,
+      "id": 50,
+      "kind": "farm",
+      "x": 90.5,
+      "y": 61.5,
+      "name": "Farm"
+     },
+     {
+      "t": 868,
+      "id": 50,
+      "kind": "farm",
+      "x": 103.5,
+      "y": 59.5,
+      "name": "Farm"
+     },
+     {
+      "t": 891,
+      "id": 50,
+      "kind": "farm",
+      "x": 103.5,
+      "y": 62.5,
+      "name": "Farm"
+     },
+     {
+      "t": 892,
+      "id": 50,
+      "kind": "farm",
+      "x": 103.5,
+      "y": 65.5,
+      "name": "Farm"
+     },
+     {
+      "t": 899,
+      "id": 70,
+      "kind": "house",
+      "x": 104,
+      "y": 67,
+      "name": "House"
+     },
+     {
+      "t": 903,
+      "id": 70,
+      "kind": "house",
+      "x": 101,
+      "y": 69,
+      "name": "House"
+     },
+     {
+      "t": 938,
+      "id": 70,
+      "kind": "house",
+      "x": 103,
+      "y": 65,
+      "name": "House"
+     },
+     {
+      "t": 945,
+      "id": 70,
+      "kind": "house",
+      "x": 88,
+      "y": 48,
+      "name": "House"
+     },
+     {
+      "t": 949,
+      "id": 70,
+      "kind": "house",
+      "x": 88,
+      "y": 52,
+      "name": "House"
+     },
+     {
+      "t": 1013,
+      "id": 50,
+      "kind": "farm",
+      "x": 90.5,
+      "y": 58.5,
+      "name": "Farm"
+     },
+     {
+      "t": 1038,
+      "id": 103,
+      "kind": "blacksmith",
+      "x": 93.5,
+      "y": 53.5,
+      "name": "Blacksmith"
+     },
+     {
+      "t": 1055,
+      "id": 50,
+      "kind": "farm",
+      "x": 90.5,
+      "y": 58.5,
+      "name": "Farm"
+     },
+     {
+      "t": 1109,
+      "id": 50,
+      "kind": "farm",
+      "x": 100.5,
+      "y": 66.5,
+      "name": "Farm"
+     },
+     {
+      "t": 1112,
+      "id": 50,
+      "kind": "farm",
+      "x": 90.5,
+      "y": 55.5,
+      "name": "Farm"
+     },
+     {
+      "t": 1113,
+      "id": 50,
+      "kind": "farm",
+      "x": 99.5,
+      "y": 51.5,
+      "name": "Farm"
+     }
+    ],
+    "walls": [
+     {
+      "t": 442,
+      "x1": 108,
+      "y1": 67,
+      "x2": 108,
+      "y2": 67,
+      "palisade": true
+     },
+     {
+      "t": 443,
+      "x1": 106,
+      "y1": 65,
+      "x2": 106,
+      "y2": 65,
+      "palisade": true
+     },
+     {
+      "t": 463,
+      "x1": 82,
+      "y1": 62,
+      "x2": 82,
+      "y2": 57,
+      "palisade": true
+     },
+     {
+      "t": 577,
+      "x1": 80,
+      "y1": 67,
+      "x2": 82,
+      "y2": 68,
+      "palisade": true
+     },
+     {
+      "t": 598,
+      "x1": 86,
+      "y1": 71,
+      "x2": 86,
+      "y2": 71,
+      "palisade": true
+     },
+     {
+      "t": 802,
+      "x1": 107,
+      "y1": 52,
+      "x2": 107,
+      "y2": 52,
+      "palisade": true
+     },
+     {
+      "t": 803,
+      "x1": 106,
+      "y1": 53,
+      "x2": 106,
+      "y2": 53,
+      "palisade": true
+     },
+     {
+      "t": 814,
+      "x1": 103,
+      "y1": 53,
+      "x2": 103,
+      "y2": 53,
+      "palisade": true
+     },
+     {
+      "t": 947,
+      "x1": 87,
+      "y1": 47,
+      "x2": 87,
+      "y2": 45,
+      "palisade": true
+     },
+     {
+      "t": 950,
+      "x1": 87,
+      "y1": 53,
+      "x2": 86,
+      "y2": 55,
+      "palisade": true
+     },
+     {
+      "t": 987,
+      "x1": 103,
+      "y1": 50,
+      "x2": 103,
+      "y2": 50,
+      "palisade": true
+     },
+     {
+      "t": 988,
+      "x1": 102,
+      "y1": 51,
+      "x2": 102,
+      "y2": 51,
+      "palisade": true
+     },
+     {
+      "t": 989,
+      "x1": 102,
+      "y1": 52,
+      "x2": 102,
+      "y2": 52,
+      "palisade": true
+     },
+     {
+      "t": 991,
+      "x1": 107,
+      "y1": 52,
+      "x2": 107,
+      "y2": 52,
+      "palisade": true
+     },
+     {
+      "t": 992,
+      "x1": 106,
+      "y1": 53,
+      "x2": 106,
+      "y2": 53,
+      "palisade": true
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,73 @@
+name: Build 185872 Statistics Delivery Benchmark
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/build-185872-delivery-benchmark.yml"
+      - "replay-tools/statistics_shared_delivery.py"
+      - "replay-tools/statistics_detail_delivery.py"
+      - "replay-tools/benchmark_statistics_shared_delivery.py"
+      - "replay-fixtures/build-185872/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-replay-sample:
+    name: "Real ${{ matrix.fixture }} statistics"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [1v1_t90-deak, 2v2_chaos, 4v4_arabia, FFA_7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned replay parser
+        run: python -m pip install -r replay-tools/requirements.txt
+      - name: Verify TownBell control and source pair
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          key = os.environ["FIXTURE"]
+          root = Path("replay-fixtures/build-185872")
+          replay = root / (key + ".aoe2record")
+          control = root / "townbell_build-185872" / (key + ".json")
+          assert replay.is_file() and replay.stat().st_size > 0, key
+          obj = json.loads(control.read_text(encoding="utf-8"))
+          assert obj.get("meta", {}).get("game_build") == 185872
+          assert obj["meta"]["save_version"] == 68.9
+          print("paired", replay, replay.stat().st_size, control, "build 185872")
+          PY
+      - name: Direct extract and replay-free full statistics
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          mkdir -p ".replay-lab/delivery-$FIXTURE"
+          python replay-tools/recorded_events_stream.py --replay "replay-fixtures/build-185872/$FIXTURE.aoe2record" --out ".replay-lab/delivery-$FIXTURE/events.jsonl.gz"
+          /usr/bin/time -v -o ".replay-lab/delivery-$FIXTURE/projection-resources.txt" python replay-tools/recorded_events_stream.py --events ".replay-lab/delivery-$FIXTURE/events.jsonl.gz" --metadata ".replay-lab/delivery-$FIXTURE/events.jsonl.gz.metadata.json" --out ".replay-lab/delivery-$FIXTURE/statistics.json"
+          wc -c ".replay-lab/delivery-$FIXTURE/statistics.json"
+      - name: Compare gzip vs episode-level vs shared-evidence storage
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          /usr/bin/time -v -o ".replay-lab/delivery-$FIXTURE/packing-resources.txt" python replay-tools/benchmark_statistics_shared_delivery.py --statistics ".replay-lab/delivery-$FIXTURE/statistics.json" --report ".replay-lab/delivery-$FIXTURE/report.json"
+          cat ".replay-lab/delivery-$FIXTURE/report.json"
+      - name: Upload small measured reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-185872-${{ matrix.fixture }}
+          path: |
+            .replay-lab/delivery-${{ matrix.fixture }}/report.json
+            .replay-lab/delivery-${{ matrix.fixture }}/projection-resources.txt
+            .replay-lab/delivery-${{ matrix.fixture }}/packing-resources.txt
+          if-no-files-found: warn
+          retention-days: 14
