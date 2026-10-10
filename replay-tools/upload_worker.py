@@ -152,7 +152,17 @@ class Handler(BaseHTTPRequestHandler):
             if not hmac.compare_digest(supplied, "Bearer " + expected_token):
                 self._json(401, {"error": "unauthorized"})
                 return
-        if self.path != "/process":
+        native_route = self.path == "/process-native-v1"
+        if native_route:
+            # A separate API, NEVER the default legacy upload. Require both
+            # explicit operator opt-in and an actual authentication secret.
+            if os.environ.get("AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT") != "1":
+                self._json(404, {"error": "not_found"})
+                return
+            if not expected_token:
+                self._json(503, {"error": "native_auth_not_configured"})
+                return
+        elif self.path != "/process":
             self._json(404, {"error": "not_found"})
             return
 
@@ -167,15 +177,25 @@ class Handler(BaseHTTPRequestHandler):
         try:
             request = json.loads(self.rfile.read(length))
             trace: dict[str, Any] | None = {} if os.environ.get("AOF_REPLAY_WORKER_PERF_TRACE") == "1" else None
-            result = process_replay(
-                str(request.get("fileName") or ""), str(request.get("replayBase64") or ""),
-                timing_sink=trace,
-            )
+            if native_route:
+                from native_worker_transport import process_native_replay
+                result = process_native_replay(
+                    str(request.get("fileName") or ""), str(request.get("replayBase64") or ""),
+                    timing_sink=trace,
+                )
+            else:
+                result = process_replay(
+                    str(request.get("fileName") or ""), str(request.get("replayBase64") or ""),
+                    timing_sink=trace,
+                )
             response_started = time.perf_counter()
             self._json(200, result)
             if trace is not None:
                 trace["httpResponseJsonAndSendMs"] = round((time.perf_counter() - response_started) * 1000, 3)
-                trace["observedWorkerRequestMs"] = round(trace["workerCoreMs"] + trace["httpResponseJsonAndSendMs"], 3)
+                if "workerCoreMs" in trace:
+                    trace["observedWorkerRequestMs"] = round(
+                        trace["workerCoreMs"] + trace["httpResponseJsonAndSendMs"], 3
+                    )
                 print(json.dumps({"event": "AOF_WORKER_PERFORMANCE_V1", "timings": trace},
                                  ensure_ascii=True, sort_keys=True), flush=True)
         except (ValueError, RuntimeError, FileExistsError) as error:
