@@ -117,7 +117,7 @@ class MapPresenceV6Tests(unittest.TestCase):
         self.assertIsNone(method)
 
     def test_committed_duel_matches_review_control_scout_command_counts(self):
-        source = Path(__file__).resolve().parents[2] / "replay-fixtures" / "1v1_1.aoe2record"
+        source = Path(__file__).resolve().parents[2] / "replay-fixtures" / "Legacy" / "1v1_1.aoe2record"
         self.assertTrue(source.is_file())
 
         scout_ids = {1: {3084}, 2: {3086}}
