@@ -20,9 +20,18 @@ native worker and a tightly gated Firebase native validation candidate.
 [Native integration evidence](../testing/native-recording-integration-v1.md)
 is local emulator acceptance, **not production upload-to-READY**.
 Ordinary uploads still use fully verified legacy canonical archives. The
-admin/project/Game-allowlisted native route stops at `VALIDATED_NOT_READY`;
-detailed-statistics delivery, native social readers and correction-safe READY
-activation are not qualified. No staging/production deployment, activation,
+admin/project/Game-allowlisted native upload route still stops at
+`VALIDATED_NOT_READY`. Read-side work in
+[#98](https://github.com/Mathias-ao/League-of-Friends/pull/98),
+[#99](https://github.com/Mathias-ao/League-of-Friends/pull/99),
+[#100](https://github.com/Mathias-ao/League-of-Friends/pull/100) and
+[#101](https://github.com/Mathias-ao/League-of-Friends/pull/101)
+adds native social provenance, bounded private/admin detail, authenticated
+active-Game Battle detail, and qualified native Chronicle/Battle-record
+consumers to `main`. These are **read-side code contracts, not proof of a live
+published native READY source or cloud/browser acceptance**. Native READY
+publication, correction-safe atomic activation and rollback, and real deployment
+validation remain blocked. No staging/production deployment, activation,
 historical migration or original-recording deletion was performed.
 
 | Area | Verified implementation / status | Next gate |
@@ -83,6 +92,6 @@ The authenticated replay upload and canonical evidence remain security-sensitive
 
 For active metric versions and evidence limits, use [Current Statistics](CURRENT-STATS.md) rather than historical September version names. For product identity and social rules, use [Core Identity](CORE-IDENTITY.md); for replay extraction, the [Replay Foundation](../replay-foundation/README.md); for launch boundaries, [Statistics launch-readiness](../testing/statistics-launch-readiness-2026-10-07.md); for the concluded E2E, [the closeout report](../testing/e2e-core-closeout-2026-10-10.md). GitHub `main` is implementation source of truth; historical branches, PR descriptions and chat observations are explicitly lesser evidence.
 
-**Next bounded engineering action:** qualify native detailed-statistics and social consumers, then correction-safe READY activation under explicit feature gates. Preserve source evidence and the existing instant player-facing read models. Player Reputation and Relationships remain a separate, not-yet-authorized product/model workstream. Keep Event finalisation, ledger checks and real-user flow in the acceptance backlog. No staging or production deployment is implied by GitHub merges.
+**Next bounded engineering action:** independently design and test **correction-safe native READY activation**, including atomic source pointers, official-result binding/disputes and rollback, then real cloud/browser/capacity acceptance before any operator opt-in. Preserve source evidence and the existing instant player-facing read models. Player Reputation and Relationships remain a separate, not-yet-authorized product/model workstream. Keep Event finalisation, ledger checks and real-user flow in the acceptance backlog. No staging or production deployment is implied by GitHub merges.
 
-**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Detailed delivery, social readers and correction qualification still block READY; nothing is deployed or enabled for ordinary users.
+**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Read-side implementations now exist behind explicit active-source gates (#98–#101), but publisher/correction qualification, browser/cloud performance and deployment acceptance still block native READY; nothing is deployed or enabled for ordinary users.
