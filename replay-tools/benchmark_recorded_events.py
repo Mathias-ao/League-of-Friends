@@ -35,11 +35,10 @@ def firestore_batches(dataset: dict, limit: int = 900 * 1024) -> dict:
         else:
             raise ValueError("Single observation exceeds Firestore chunk limit")
     for kind, rows in (("events", dataset["events"]), ("objects", dataset["initialObjects"]), ("terrain", dataset["terrain"]["tiles"])):
-        for start in range(0, len(rows), 10000):
-            batch(kind, rows[start:start + 10000], start)
+        batch(kind, rows, 0)
     return {"documentCount": len(sizes), "compressedBytes": sum(sizes),
             "maxDocumentPayloadBytes": max(sizes), "targetBytes": limit,
-            "batchPolicy": "10000 rows then bisect to 900 KiB; context separate; no document/index/protocol overhead"}
+            "batchPolicy": "record-aligned bisection to 900 KiB; context separate; no document/index/protocol overhead"}
 
 
 def extend_benchmark(output: Path, python: str, rechecks: int = 2) -> dict:

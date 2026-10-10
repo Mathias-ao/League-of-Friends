@@ -5,13 +5,15 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from jsonschema import Draft202012Validator
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from analysis_dataset import build_analysis_dataset
-from canonical_io import json_bytes, semantic_diff
+from canonical_io import json_bytes, read_json, semantic_diff
 from fixture_support import controlled_body, export_fixture
 from recorded_events import build_recorded_events, decode_dataset, encode_dataset, to_analysis, validate_recorded_events
 from statistics_projector import project_statistics_from_analysis
+from benchmark_recorded_events import firestore_batches
 
 
 class RecordedEventsTests(unittest.TestCase):
@@ -42,6 +44,9 @@ class RecordedEventsTests(unittest.TestCase):
             source_hidden.rename(self.source)
 
     def test_observations_not_duplicate_analysis_or_raw_bytes(self):
+        schema = read_json(Path(__file__).resolve().parents[1] / "schemas/recorded-events-v1.schema.json")
+        Draft202012Validator.check_schema(schema)
+        Draft202012Validator(schema).validate(self.dataset)
         self.assertNotIn("body", self.dataset)
         self.assertNotIn("fundamentals", self.dataset)
         self.assertNotIn(b"Base64", json_bytes(self.dataset))
@@ -78,6 +83,17 @@ class RecordedEventsTests(unittest.TestCase):
                 decode_dataset(stored, {**metadata, field: value})
         with self.assertRaises(ValueError):
             decode_dataset(stored[:-1], metadata)
+
+    def test_measured_firestore_batches_include_header_objects_and_terrain(self):
+        result = firestore_batches(self.dataset)
+        self.assertEqual(result["documentCount"], 4)
+        self.assertGreater(result["compressedBytes"], 0)
+        self.assertLessEqual(result["maxDocumentPayloadBytes"], result["targetBytes"])
+
+    def test_legacy_elevation_gap_is_preserved_without_discarding_retained_terrain(self):
+        self.assertTrue(self.dataset["terrain"]["tiles"])
+        self.assertFalse(self.dataset["legacyCompatibility"]["terrainElevationAvailable"])
+        self.assertEqual(to_analysis(self.dataset)["terrainElevation"]["values"], [])
 
     def test_unknown_framing_is_not_complete_or_empty_evidence(self):
         with tempfile.TemporaryDirectory() as temp:
