@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {encodeReplayStatistics} from '../lib/services/replayStatisticsStorage.js';
 process.env.GCLOUD_PROJECT='social-query-test';
 const {db}=await import('../lib/config/firebase.js');
 const {getStorage}=await import('firebase-admin/storage');
@@ -58,6 +59,34 @@ test('artifact mismatch fails closed; a correction during download aborts cohere
  reset();bytes=Buffer.from('{}');await assert.rejects(getSocialHistory.run(request),e=>e.code==='data-loss');
  reset();downloadHook=()=>{records.get('matches/m/games/g').canonicalResult.revision=2;};
  await assert.rejects(getSocialHistory.run(request),e=>e.code==='aborted');
+});
+
+test('gzip statistics produce the same social history and Chronicle as legacy JSON',async()=>{
+ reset();const legacy=await getSocialHistory.run(request);
+ const legacyChronicle=await getPlayerChronicle.run(request);
+ const artifact=encodeReplayStatistics(JSON.parse(bytes.toString('utf8')));
+ bytes=artifact.bytes;
+ records.get('matches/m/games/g/replaySources/r1').statistics={...artifact.metadata,path:'stats.json.gz'};
+ assert.deepEqual(await getSocialHistory.run(request),legacy);
+ assert.deepEqual(await getPlayerChronicle.run(request),legacyChronicle);
+});
+
+test('social history fails closed on compressed bytes, original digest, size and codec corruption',async()=>{
+ for(const corruption of ['stored','original','length','codec','gzip']){
+  reset();const artifact=encodeReplayStatistics(JSON.parse(bytes.toString('utf8')));
+  bytes=artifact.bytes;
+  const metadata={...artifact.metadata,path:'stats.json.gz'};
+  if(corruption==='stored')bytes=Buffer.from('truncated');
+  if(corruption==='original')metadata.uncompressedSha256='0'.repeat(64);
+  if(corruption==='length')metadata.uncompressedBytes++;
+  if(corruption==='codec')metadata.compression='br';
+  if(corruption==='gzip'){
+   bytes=Buffer.from('invalid gzip');metadata.bytes=bytes.length;
+   metadata.sha256=createHash('sha256').update(bytes).digest('hex');
+  }
+  records.get('matches/m/games/g/replaySources/r1').statistics=metadata;
+  await assert.rejects(getSocialHistory.run(request),e=>e.code==='data-loss',corruption);
+ }
 });
 test('missing or disputed Game sources are disclosed rather than interpreted as peacefulness',async()=>{
  reset();delete records.get('matches/m/games/g').activeReplayStatisticsId;
