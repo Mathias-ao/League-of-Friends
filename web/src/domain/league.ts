@@ -60,6 +60,24 @@ export interface ActiveNativeDetailRequest {
   matchId:string;gameId:string;mode:'list'|'fragment';replaySlot:number;group:string;
   offset?:number;pageSize?:number;reference?:string;field?:string;expectedArtifactSha256?:string;
 }
+export interface ActiveNativeBattleRecordQuery {
+  matchId:string;gameId:string;mode:'overview'|'page'|'fragment';
+  section?:string;offset?:number;index?:number;expectedArtifactSha256?:string;
+}
+export interface ActiveNativeBattleRecordResult {
+  success:true;state:'READY';delivery:'NATIVE_BOUNDED_V1';version:string;
+  matchId:string;gameId:string;statisticsId:string;artifactSha256:string;
+  mode:'overview'|'page'|'fragment';section?:string;
+  source?:Record<string,unknown>;
+  matchFacts?:{modelVersion?:string;observedDurationMs?:number|null;mapName?:string|null;mapId?:number|null;rules?:Record<string,unknown>};
+  officialOutcome?:{qualification?:string;winnerPlayerIds?:string[]|null;loserPlayerIds?:string[]|null;resultRevision?:number|null};
+  social?:{status:string;reason?:string;neutralObservations?:number;neutralIncidents?:number;socialIncidents?:number;decisions?:number;deeds?:number;productionScoringEnabled?:boolean};
+  diplomacy?:{status:string;reason?:string;commandCount?:number;knownPairSegmentCount?:number;unknownPairSegmentCount?:number};
+  total?:number;offset?:number;
+  entries?:Array<{index:number;id:string|null;category:string|null;atMs:number|null;pairPlayerIds:number[]|null;status?:string|null;role?:string|null}>;
+  nextOffset?:number|null;index?:number|null;
+  chunkBase64?:string;totalBytes?:number;contentSha256?:string;complete?:boolean;
+}
 export interface ActiveNativeDetailResult {
   success:true;delivery:'NATIVE_BOUNDED_V1';state:'READY';artifactSha256:string;
   mode:'list'|'fragment';matchId:string;gameId:string;statisticsId:string;
@@ -176,7 +194,7 @@ export interface LeagueRepository {
   enterSeason(seasonId:string):Promise<void>;
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;checkIn(eventId:string):Promise<void>;formEventMatches(eventId:string,options?:{pairingMode:"RANDOM"|"ELO_BALANCED";force:boolean;reason:string}):Promise<void>;
   ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
-  uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;activeNativeBattleDetail?(query:ActiveNativeDetailRequest):Promise<ActiveNativeDetailResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
+  uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;activeNativeBattleDetail?(query:ActiveNativeDetailRequest):Promise<ActiveNativeDetailResult>;activeNativeBattleRecord?(query:ActiveNativeBattleRecordQuery):Promise<ActiveNativeBattleRecordResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
   playerChronicle?():Promise<PlayerChronicleResponse>;
   socialHistory?():Promise<SocialHistoryResponse>;
   event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;
