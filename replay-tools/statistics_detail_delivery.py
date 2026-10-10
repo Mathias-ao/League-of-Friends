@@ -72,12 +72,20 @@ def _write_bundle(statistics: dict, root: Path, block_bytes: int) -> dict:
                 for item in rows:
                     if not isinstance(item, dict):
                         raise ValueError("Unexpected engagement episode")
-                    raw = _json(item)
-                    ref = sha256(raw).hexdigest()
-                    if ref not in records:
-                        offset = spool.tell()
-                        spool.write(raw)
-                        records[ref] = {"offset": offset, "bytes": len(raw)}
+                    # Serialize into disk-backed spool, not a giant JSON
+                    # string/bytes allocation for an exceptionally large episode.
+                    offset = spool.tell()
+                    digest = sha256()
+                    for fragment in _ENCODER.iterencode(item):
+                        part = fragment.encode("utf-8")
+                        digest.update(part)
+                        spool.write(part)
+                    ref = digest.hexdigest()
+                    if ref in records:
+                        spool.seek(offset)
+                        spool.truncate()
+                    else:
+                        records[ref] = {"offset": offset, "bytes": spool.tell() - offset}
                     refs.append({"ref": ref, "preview": _preview(item)})
                 ref_groups[group] = refs
             indices.append({"playerId": original.get("playerId"),
