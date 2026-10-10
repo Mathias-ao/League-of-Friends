@@ -22,19 +22,19 @@ The authoritative [8 October Season Event contract](CORE-IDENTITY.md#season-even
 
 Read [the replay-driven Event flow](../architecture/replay-driven-event-flow-v1.md) for backend and acceptance details; inspect code for what is actually on `main`.
 
-## Local eight-account E2E checkpoint
+## Core E2E status — closed 10 October 2026
 
-**9–10 October 2026:** The user reported successful isolated `demo-aof-e2e` rehearsal through Season/Event signup, manual warm-up generation, main 4v4 drawing, historical replay identity binding, statistics, result points, leaderboard and player profile updates; Glade/Arabia mismatch was handled through admin review; three unplayed warm-ups were cancelled. The only Event closure blocker reported was **the main start time had not arrived**. Therefore **core E2E passed; finalisation is not yet tested**. Historical recordings plus synthetic accounts are not proof of authentic Event timing or identity.
+The user **closed the isolated eight-account synthetic E2E as a successful core workflow rehearsal**, after registration, pairing, replay upload, 4v4 statistics, points, leaderboard, profiles, admin result review and unplayed warm-up cancellation. The historical Games were not genuinely played for this scheduled Event; Event finalisation before the main start was correctly prohibited and **successful closure remains untested**. Exact ledger correctness and Reputation/Relationship progression were not independently audited. [Full closeout and remaining coverage](../testing/e2e-core-closeout-2026-10-10.md).
 
-Local-only fixes were needed for Firestore's prohibition on nested warm-up `pairs` arrays and for large Storage-emulator artifacts (resumable 8 MiB truncation, uncompressed JSON HTTP 413). GitHub `main` does not yet include those fixes. Do not deploy the temporary emulator sign-in shortcut, silently disable SHA-256, or conflate local tests with staging/production acceptance. Keep `age-of-friends-staging` and production `league-of-friends-cc274` unchanged.
+Durable learnings in `main`: the Firestore-safe `warmupSchedule.pairs` fix ([#85](https://github.com/Mathias-ao/League-of-Friends/pull/85)); losslessly compressed replay statistics with stored/original hash verification, legacy uncompressed compatibility, and a common statistics/backfill reader. The emulator-only sign-in override and historical 4v4 simulation are **not** promoted to `main`. The earlier draft [#82](https://github.com/Mathias-ao/League-of-Friends/pull/82) is not a live metadata contract; the performance benchmark [#83](https://github.com/Mathias-ao/League-of-Friends/pull/83) remains an independent proposal.
 
-Open work stays segregated: [PR #81](https://github.com/Mathias-ao/League-of-Friends/pull/81) historical fixtures, [PR #82](https://github.com/Mathias-ao/League-of-Friends/pull/82) **demo-only storage**, [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) benchmark foundation. Neither open/draft status nor user-observed tests authorize merging a code change.
+No production/staging deployment or data import occurred. Never conflate merging source code with migrating simulated Auth, Firestore, points or relationship states. Keep `age-of-friends-staging` and production `league-of-friends-cc274` unchanged without separate approval.
 
 ## Working procedure
 
 Pick one bounded outcome, check current code and scope, identify evidence and regression tests, then record observed outcomes **and their limitations**. Keep source facts separate from inferred statistics, qualification and official scoring. Prefer reversible local tests, documented data backups and focused PRs; obtain separate review before promoting local work to staging or production.
 
-**Next bounded task:** after kickoff, finalise the local Event and verify ledger/idempotency; then convert the warm-up and large-artifact fixes into production-safe, separately tested PRs. Only after the full workflow is sound should recording-size/runtime optimization become the primary workstream.
+**Next bounded task:** evidence-qualified Player Reputation and pair Relationships: review neutral incident provenance, coverage and opportunity gates, select explicit versions for Gallantry/Cruelty/Chivalry and Rivalry/Hostility/Bond, build correction-safe scoring with real-corpus regression, and keep unqualified effects inactive. Event finalisation and real-user/deployed flow remain a separate acceptance backlog.
 
 ## Bootstrap prompt
 

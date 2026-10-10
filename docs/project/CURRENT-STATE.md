@@ -19,7 +19,7 @@ The authoritative **8 October Season Event contract** is in [Core Identity](CORE
 
 ## Local eight-account E2E rehearsal — observed 9–10 October 2026
 
-**Outcome: core functional rehearsal succeeded in the isolated emulator; full release acceptance and Event closure are not claimed.** The user reported the following observed sequence:
+**Outcome: core E2E rehearsal is formally closed as a successful functional smoke test; Event finalisation and release acceptance were not tested.** See [the E2E closeout report](../testing/e2e-core-closeout-2026-10-10.md) for observed outcomes and limitations. The user reported the following observed sequence:
 
 1. Eight simulated accounts signed in separately; all entered one local Season, signed up and RSVP'd to one eight-player BIG_TEAM Event.
 2. Four automatic 1v1 warm-up pairings were created after invoking the lifecycle manually. A Firestore failure storing nested `pairs` arrays was corrected **locally** by persisting objects containing `playerIds`; scheduler/Pub/Sub automatic execution was not tested.
@@ -34,20 +34,20 @@ The user's visual checks establish that outputs appeared and updated, **not** in
 
 | Finding | Local evidence / disposition | `main` as inspected 10 October |
 | --- | --- | --- |
-| Warm-up pairing persistence | Firestore rejects nested arrays under `warmupSchedule.pairs`; local serializer changed them to `{playerIds: [...]}` objects and local test continued. | `functions/src/services/warmupLifecycle.ts` still writes `...draw` with nested `pairs`. **Unmerged defect.** |
-| Large replay artifacts | A ~5 MiB 4v4 recording produced an 18.36 MiB `canonical-bundle.zip`; uncompressed `statistics.json` upload returned HTTP 413 in Storage emulator. | `uploadReplay.ts` saves plain `statistics.json` non-resumably; production-safe size handling is not merged. |
+| Warm-up pairing persistence | Firestore rejects nested arrays under `warmupSchedule.pairs`. | **Fixed on `main` by [PR #85](https://github.com/Mathias-ao/League-of-Friends/pull/85)**; schedule now stores `{playerIds:[...]}` objects, with an updated test. |
+| Large replay artifacts | A ~5 MiB 4v4 recording produced an 18.36 MiB `canonical-bundle.zip`; uncompressed `statistics.json` upload returned HTTP 413 in Storage emulator. | Lossless gzipped JSON with compressed/original SHA-256 and shared legacy-compatible readers replaces the uncompressed persistence path. Requires deployed sizing/throughput validation. |
 | Resumable emulator corruption | Standalone ~18.36 MiB test: non-resumable saved/downloaded correctly; 8 MiB resumable chunks yielded exactly 8 MiB on download. Mandatory SHA-256 correctly rejected the truncated upload. | Do **not** disable evidence integrity checks or promote an unverified workaround. |
-| Local storage workaround | Non-resumable emulator evidence transfer plus losslessly gzipped statistics, storage metadata and decompression reader enabled the user-reported successful 4v4 run; full checksums were retained. | Local changes are **not** represented by `main`. Draft [PR #82](https://github.com/Mathias-ao/League-of-Friends/pull/82) is explicitly demo-only and must not be merged/deployed without separate compatibility review. |
+| Local storage workaround | Non-resumable emulator evidence transfer plus losslessly gzipped statistics, storage metadata and decompression reader enabled the reported 4v4 run; full checksums were retained. | The reviewed storage implementation uses a distinct stable metadata contract and retains historic uncompressed file compatibility. **Synthetic emulator database data are not carried into `main`.** |
 
 The authenticated replay upload and canonical evidence remain security-sensitive. The temporary emulator email/password login shortcut must never be committed or deployed.
 
 ## Outstanding acceptance and next engineering work
 
-- **Close the E2E Event** through the normal Emperor action after scheduled kickoff; verify `COMPLETED`, correct ledger and standings, zero awards for cancelled warm-ups, and refresh/retry idempotency. Until then, record the run as **core E2E passed, finalisation pending**.
+- The E2E rehearsal is **closed** by product decision as a successful core smoke test. Successful Event finalisation, exact point-ledger verification and duplicate protection remain independently untested; retain these as future acceptance tasks rather than fabricating a pass.
 - Back up the local emulator (Auth, Firestore, Storage) **before** further test edits; the CLI has previously crashed on Windows after exporting, so verify the output files. Preserve staging and production unchanged.
-- Isolate, regression-test and code-review the warm-up nested-array fix; then evaluate a production-safe, lossless, versioned storage solution with upload/download SHA-256 verification, legacy reads and realistic payload limits. Do not blindly merge local testing code.
+- The warm-up Firestore fix is on `main` (PR #85). The revised gzip statistics path verifies stored bytes and original JSON, preserves legacy uncompressed reads and covers both statistics queries and backfills; deployed payload sizes and error handling still require acceptance testing.
 - Test normal multi-account check-in, scheduler delivery, corrections/disputes, repeat-source attribution, duplicate processing, admin authorization and genuine recording timing. The complete replay corpus and semantic review remain distinct from UI smoke checks.
-- **After functional closure**, benchmark Replay Lab/worker extraction, canonical size, JSON size, HTTP transfer, browser retrieval and memory. The user observed ~150 seconds for the failed 4v4 pipeline attempts; no phase-specific performance bottleneck is proven. Draft [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) is a baseline proposal, not an optimization result.
+- Benchmark Replay Lab/worker extraction, canonical size, JSON size, HTTP transfer, browser retrieval and memory. The user observed ~150 seconds for the failed 4v4 pipeline attempts; no phase-specific performance bottleneck is proven. Draft [PR #83](https://github.com/Mathias-ao/League-of-Friends/pull/83) is a baseline proposal, not an optimization result.
 - Further work: source-grounded FFA placement/outcome qualification; conservative diplomacy/social interpretation; explicit Reputation/Relationship/Personality/portrait rules. No invented game-state facts or unapproved social awards.
 
 ### Open work kept separate from this documentation
@@ -63,4 +63,4 @@ The authenticated replay upload and canonical evidence remain security-sensitive
 
 For active metric versions and evidence limits, use [Current Statistics](CURRENT-STATS.md) rather than historical September version names. For product identity and social rules, use [Core Identity](CORE-IDENTITY.md); for replay extraction, the [Replay Foundation](../replay-foundation/README.md); for launch boundaries, [Statistics launch-readiness](../testing/statistics-launch-readiness-2026-10-07.md); for current local test fixtures, [historical recording E2E protocol in draft PR #81](https://github.com/Mathias-ao/League-of-Friends/blob/test/replay-e2e-t90-fixture-v1/docs/testing/historical-t90-replay-e2e-fixture.md). GitHub `main` is implementation source of truth; historical branches, PR descriptions and chat observations are explicitly lesser evidence.
 
-**Next bounded action:** finish the isolated Event closure/ledger verification when the scheduled start permits it, then turn local defects into reviewed, tested PRs before considering staging or production deployment.
+**Next bounded action:** develop evidence-qualified Player Reputation (Gallantry, Cruelty, Chivalry) and pair Relationships (Rivalry, Hostility, Bond) using versioned neutral social evidence. Keep Event finalisation, ledger checks and real-user flow in a separate acceptance backlog. No staging or production deployment is implied by GitHub merges.

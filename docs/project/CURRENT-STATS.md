@@ -15,7 +15,7 @@ Event points, leaderboard updates and player-profile updates. A wrong-map Glade 
 was held for Emperor review; its winner was then approved in the local rehearsal,
 and the other three 1v1 warm-ups were cancelled.
 
-This establishes a **core functional E2E smoke result**, not numerical verification
+The core E2E rehearsal is **closed successfully as a functional smoke test**, not numerical verification
 of each metric, proof of real-user identities/play dates, deployed acceptance,
 successful normal check-in or Event finalisation. At the last report, closure was
 correctly blocked solely because the scheduled main Event start was still ahead.
@@ -25,10 +25,12 @@ local Storage-emulator test preserved an 18.36 MiB object using non-resumable
 upload, but an 8 MiB-chunk resumable upload yielded only the first 8 MiB;
 uncompressed large `statistics.json` separately produced HTTP 413. A local-only
 non-resumable/gzip implementation reportedly completed the 4v4 without dropping
-statistics or bypassing SHA-256 checks. **Those changes are not in `main`**;
-[demo-only draft PR #82](https://github.com/Mathias-ao/League-of-Friends/pull/82)
-must not be merged or deployed until its artifact contract, historical readers,
-size limits and integrity behavior are reviewed and tested beyond the emulator.
+statistics or bypassing SHA-256 checks. The production-facing source now writes
+losslessly gzipped statistics with hashes for **stored and original** JSON, bounded
+uncompression and a shared legacy-compatible reader for Battle views and backfill.
+This differs from the local-only metadata format, which is not promoted with the
+synthetic data. Storage emulator anomalies and deployment-scale performance remain
+independent acceptance checks. See [E2E closeout](../testing/e2e-core-closeout-2026-10-10.md).
 
 ## V1 readiness
 
@@ -37,7 +39,7 @@ are candidates for a scope freeze.** Launch-readiness work strengthened eligibil
 coverage, identity binding and correction handling without adding new replay
 detectors, scoring policy or unsupported engine-outcome claims. The isolated
 eight-player rehearsal is encouraging, but a deployed real-user player-flow test,
-a storage scalability fix and semantic footage qualification remain launch gates.
+large-artifact deployed acceptance and semantic footage qualification remain launch gates.
 Production configuration/deployment has not been verified by this review.
 
 AoF should tell friends a reviewable story about their Games. Numerical comparisons
@@ -48,7 +50,7 @@ actually available. Missing evidence is not peacefulness, incompetence or zero e
 | --- | --- | --- |
 | Extraction and durable evidence | Versioned CanonicalReplay, source hashes, validation, compact replay-free analysis; scoped save-68.9/build-185872 compatibility | Qualify future patches, mods and restored-game semantics separately |
 | Battle measurement | Five-category models below, catalog-aware requests/placements and inferred spatial/interaction analysis | Review representative Games against actual footage |
-| Upload and storage | Authenticated upload, worker result validation, participant mapping, verified canonical ZIP/statistics persistence, active revision and compact presentation | Resolve large-artifact emulator failures without weakening integrity, then exercise synchronized worker/bucket/Functions/rules in the deployed player test |
+| Upload and storage | Authenticated upload, worker result validation, participant mapping, verified canonical ZIP/statistics persistence, active revision and compact presentation | Lossless gzip, dual SHA-256, historic uncompressed reads and non-resumable verified uploads exist; exercise realistic large files, payload ceilings and synchronized worker/bucket/Functions/rules in an approved deployment |
 | Battle/Event/Season UI | Shared measurements, evidence inspection, source links, curated highlights, comparison contexts and Season records | Desktop/mobile acceptance and actual upload/correction/dispute flow |
 | Aggregation | Current-source reads; result/opt-out eligibility; duplicate/revision handling; transactional replacement of Season and hidden lifetime read models | Private-league scale only; broader histories need pagination/batching |
 | Social interpretation | Source-qualified incident interpreter and correction-aware shadow history/Chronicle | Official scoring remains disabled; semantic qualification and production activation pending |
@@ -221,9 +223,9 @@ reputation and relationship values are illustrative, not live league achievement
 
 ## Remaining launch gates
 
-1. Review and merge a **production-safe** large-artifact storage fix, including
-   legacy reads, compressed/original SHA-256, realistic payloads, failure cleanup and
-   regression tests. The local workaround and draft PR #82 are not deployment approval.
+1. Validate the merged gzip statistics artifact path with realistic large files,
+   callable/HTTP ceilings, integrity failures and actual Storage configuration;
+   preserve historic uncompressed data. GitHub CI is not a deployment certificate.
 2. Deploy synchronized web/Functions/worker changes only to the approved nonproduction
    environment first; validate the correct auth, Storage bucket, rules and release path.
 3. Finish the full player flow beyond the successful local smoke test: timed check-in,
