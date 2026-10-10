@@ -146,3 +146,43 @@ test('Battle Ledger reads single-Game Season values, preserves unknowns and zero
   assert.equal(document.querySelector('[data-metric="castles"]'),null);
  }finally{await ctx.close();}
 });
+
+
+test('bounded native Battle detail is visible only for a qualified active, undisputed recorded Game',async()=>{
+ const ctx=await setup();const {data,props,root,repository,click}=ctx;
+ const game=data.games[0];game.replay={
+   statisticsState:'READY',statisticsId:'a'.repeat(64),statisticsRevision:2,
+   statisticsDelivery:'NATIVE_BOUNDED_V1',
+   nativePlayerMapping:[{playerId:game.players[0].playerId,replaySlot:1},
+     {playerId:game.players[1].playerId,replaySlot:2}],
+ };
+ const calls:any[]=[];
+ repository.activeNativeBattleDetail=async query=>{
+   calls.push(query);
+   return {success:true,delivery:'NATIVE_BOUNDED_V1',state:'READY',artifactSha256:'e'.repeat(64),
+     mode:'list',matchId:query.matchId,gameId:query.gameId,statisticsId:'a'.repeat(64),
+     replaySlot:query.replaySlot,group:query.group,total:1,offset:0,
+     entries:[{reference:'battles/0',id:'battle-one',startedAtMs:60000,endedAtMs:90000}],
+     nextOffset:null};
+ };
+ try{
+   await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
+   await click('Open Battle Ledger');
+   const panel=document.querySelector('[aria-label="Recorded Events Battle detail"]');
+   assert.ok(panel,'qualified active Game exposes the bounded evidence browser');
+   await act(async()=>{await Promise.resolve();});
+   assert.equal(calls[0]?.matchId,data.match.matchId);
+   assert.equal(calls[0]?.gameId,game.gameId);
+   assert.equal(calls[0]?.mode,'list');
+   assert.equal(calls[0]?.replaySlot,1);
+   assert.match(panel!.textContent!,/battle-one/);
+   assert.equal(calls.some(x=>'candidateId' in x),false,'player reader cannot enumerate validation candidates');
+   game.resultDisputeOpen=true;
+   await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
+   assert.equal(document.querySelector('[aria-label="Recorded Events Battle detail"]'),null);
+   game.resultDisputeOpen=false;
+   game.replay.statisticsDelivery='LEGACY';
+   await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
+   assert.equal(document.querySelector('[aria-label="Recorded Events Battle detail"]'),null);
+ }finally{await ctx.close();}
+});
