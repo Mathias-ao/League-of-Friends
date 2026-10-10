@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fixture: [1v1_t90-deak, 2v2_chaos, 4v4_arabia]
+        fixture: [1v1_t90-deak, 2v2_chaos, 4v4_arabia, FFA_7]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
