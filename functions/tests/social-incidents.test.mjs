@@ -162,3 +162,113 @@ test('disabled shadow policy blocks contribution recomputation without deleting 
  const c=chapter(1);assert.equal(capSocialContributions(c.review.deeds,{enabled:false}).length,0);
  assert.equal(rebuildSocialHistory([c],{enabled:false}).contributions.length,0);
 });
+
+
+const nativeSource={
+ replaySha256:'a'.repeat(64),recordedEventsSha256:'b'.repeat(64),
+ recordedEventsVersion:'AOF_RECORDED_EVENTS_V1',parserVersion:'mgz-fast/test',
+ extractionRunId:'test-verified-extraction-001',
+};
+const asNative=(legacy)=> {
+ const result=structuredClone(legacy);
+ result.source={...nativeSource};
+ result.matchFacts.source={...nativeSource};
+ // Pair-social gameScope deliberately omits extractionRunId in the producer.
+ result.pairSocialEvidence.gameScope=Object.fromEntries(
+   Object.entries(nativeSource).filter(([key])=>key!=='extractionRunId'));
+ return result;
+};
+const withoutSource=({source:_,...rest})=>rest;
+// Qualified offenses carry their own source lineage; strip only provenance
+// fields when checking semantic equality between distinct source formats.
+const withoutSourceLineage=value=>Array.isArray(value)?value.map(withoutSourceLineage):
+ value&&typeof value==='object'?Object.fromEntries(Object.entries(value)
+   .filter(([key])=>key!=='source').map(([key,v])=>[key,withoutSourceLineage(v)])):value;
+
+test('native Recorded Events provenance produces exactly the legacy neutral social interpretation',()=>{
+ const old=fixture();
+ observe(old,'aid',1,10000,'DE_TRIBUTE');
+ observe(old,'attack',1,35000);
+ const qualifiedFacts=[
+   fact('aid','MATERIAL_AID_ORDER',1,2,10000,{materiality:'QUALIFIED',resourceAmounts:{food:100}}),
+   fact('attack','OFFENSIVE_ATTEMPT',1,2,35000,{targetFunction:'ECONOMIC_UNIT'}),
+ ];
+ const native=asNative(old);
+ const before=structuredClone(native);
+ const opts={playerMapping:mapping,context:{gameId:'m/g',battleId:'m'},rules:admitted,officialOutcome:official};
+ const oldReview=projectSocialIncidents({...opts,statistics:old,qualifiedFacts});
+ const nativeReview=projectSocialIncidents({...opts,statistics:native,
+   qualifiedFacts:qualifiedFacts.map(row=>({...row,source:{...nativeSource}}))});
+ assert.equal(oldReview.status,'REVIEW_AVAILABLE');
+ assert.equal(nativeReview.status,'REVIEW_AVAILABLE');
+ assert.deepEqual(withoutSourceLineage(nativeReview),withoutSourceLineage(oldReview));
+ assert.deepEqual(nativeReview.source,nativeSource);
+ assert.deepEqual(native,before,'native source evidence is immutable');
+ assert.equal(nativeReview.policy.productionScoringEnabled,false);
+ assert.ok(nativeReview.deeds.some(deed=>deed.track==='BOND'));
+ assert.ok(nativeReview.deeds.some(deed=>deed.track==='HOSTILITY'));
+});
+
+test('native social provenance rejects cross-revision, mixed-format and incomplete evidence',()=>{
+ const base=asNative(fixture());
+ for (const [label,mutate] of [
+   ['wrong match-facts event hash',s=>s.matchFacts.source.recordedEventsSha256='c'.repeat(64)],
+   ['wrong match-facts extraction',s=>s.matchFacts.source.extractionRunId='other-run'],
+   ['wrong ledger parser version',s=>s.pairSocialEvidence.gameScope.parserVersion='other'],
+   ['wrong ledger source hash',s=>s.pairSocialEvidence.gameScope.recordedEventsSha256='d'.repeat(64)],
+   ['unknown native version',s=>s.source.recordedEventsVersion='V2_UNREVIEWED'],
+   ['malformed event hash',s=>s.source.recordedEventsSha256='short'],
+   ['missing native extraction',s=>delete s.source.extractionRunId],
+   ['missing native version',s=>delete s.source.recordedEventsVersion],
+   ['mixed canonical and native',s=>s.source.canonicalManifestSha256='legacy-manifest'],
+   ['mixed native fact provenance',s=>s.matchFacts.source.canonicalManifestSha256='legacy-manifest'],
+   ['mixed native ledger provenance',s=>s.pairSocialEvidence.gameScope.canonicalManifestSha256='legacy-manifest'],
+   ['no native pair-social ledger',s=>delete s.pairSocialEvidence],
+   ['unknown native pair-social ledger',s=>s.pairSocialEvidence.modelVersion='unsupported'],
+   ['missing native observations',s=>delete s.pairSocialEvidence.observations],
+   ['missing native incidents',s=>delete s.pairSocialEvidence.incidents],
+ ]) {
+   const input=structuredClone(base);
+   mutate(input);
+   const review=projectSocialIncidents(options(input));
+   assert.equal(review.status,'UNAVAILABLE',label);
+   assert.deepEqual(review.deeds,[],label);
+   assert.equal(review.policy.productionScoringEnabled,false,label);
+ }
+});
+
+test('native qualified social facts must bind their complete extraction revision',()=>{
+ const native=asNative(fixture());
+ observe(native,'aid',1,10000,'DE_TRIBUTE');
+ const aid={...fact('aid','MATERIAL_AID_ORDER',1,2,10000,
+   {materiality:'QUALIFIED',resourceAmounts:{food:100}}),source:{...nativeSource}};
+ const opts={...options(native),rules:admitted};
+ assert.ok(projectSocialIncidents({...opts,qualifiedFacts:[aid]}).deeds.some(d=>d.track==='BOND'));
+ for(const mutate of [
+   q=>q.source.recordedEventsSha256='c'.repeat(64),
+   q=>q.source.parserVersion='unknown-decoder',
+   q=>q.source.extractionRunId='other-run',
+   q=>q.source.canonicalManifestSha256='canonical-not-native',
+ ]) {
+   const changed=structuredClone(aid);
+   mutate(changed);
+   const review=projectSocialIncidents({...opts,qualifiedFacts:[changed]});
+   assert.equal(review.status,'UNAVAILABLE');
+   assert.equal(review.deeds.length,0);
+ }
+});
+
+
+test('recorded real eight-player FFA social chronology is invariant under native provenance',()=>{
+ const full=JSON.parse(fs.readFileSync(new URL('./fixtures/social-ffa-diplo.json',import.meta.url)));
+ const native=asNative(full);
+ const context={gameId:'reference-ffa/game',battleId:'reference-ffa'};
+ const before=projectSocialIncidents({statistics:full,context});
+ const after=projectSocialIncidents({statistics:native,context});
+ assert.equal(before.status,'REVIEW_AVAILABLE');
+ assert.equal(after.status,'REVIEW_AVAILABLE');
+ assert.deepEqual(withoutSource(after),withoutSource(before));
+ assert.equal(after.exposure.length,28);
+ assert.equal(after.deeds.length,0);
+ assert.ok(after.incidents.length>0);
+});
