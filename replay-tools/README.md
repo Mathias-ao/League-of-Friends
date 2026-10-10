@@ -1,5 +1,13 @@
 # CanonicalReplay extraction and conformance
 
+**Experimental successor (not wired to production):** [Recorded Events V1 assessment,
+schema and migration gates](../docs/architecture/recorded-events-v1-assessment.md)
+and [four-format measurements](../docs/testing/recorded-events-benchmark-2026-10-10.md).
+`recorded_events.py` converts sealed canonical observations into one compact gzip
+object and projects current statistics without the replay/archive. Current upload
+and canonical retention remain unchanged; initial resource decoding, memory and
+revision/publication gates still apply.
+
 Read [the milestone audit](../docs/architecture/canonical-v1-conformance-milestone.md) for the verified scope and remaining research. This exporter uses `mgz-fast==1.0.0`, CanonicalReplay **1.1.0** and compatibility adapter **V4**. The original 1.0.0 schema remains under `schemas/`; old canonical bundles lack evidence required by the new conformance profile and are not silently upgraded.
 
 ```bash

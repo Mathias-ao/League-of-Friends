@@ -149,6 +149,13 @@ retry work and old revisions. Free tiers and billing currency can dominate small
 usage. No deployed cost/latency measurements or region inference from function
 `europe-west1` are claimed. Real-cloud p50/p95 needs an approved nonproduction run.
 
+Illustrative workload, **not measured billing**: 1,000 Games with five payload
+documents each and ten cold reprojections require 5,000 payload writes and 50,000
+payload reads, plus manifests. The Storage option requires 1,000 object creates
+and 11,000 GETs including one persistence-verification read per object, plus
+Firestore metadata. At this scale either can be affordable; avoid choosing a more
+complex batch architecture solely to avoid permanent object files.
+
 Storage wins here on simplicity and immutable artifact fit, not magical query
 speed. The experiment's gzip JSON adapter inflates and rebuilds tables; it can be
 slower and use more memory than V5. Keep compact UI read models and consider a
