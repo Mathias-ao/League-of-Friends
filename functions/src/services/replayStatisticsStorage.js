@@ -94,6 +94,9 @@ export function decodeReplayStatistics(storedBytes, metadata) {
  * @param {string} contentType
  */
 export async function verifiedReplayArtifactSave(file, bytes, expectedSha256, contentType) {
+  if (!SHA256_HEX.test(expectedSha256) || replayArtifactSha256(bytes) !== expectedSha256) {
+    throw new Error('Replay evidence source integrity verification failed.');
+  }
   await file.save(bytes, {
     resumable: false,
     metadata: {contentType, cacheControl: 'private, no-store'},
