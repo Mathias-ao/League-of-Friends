@@ -1,6 +1,6 @@
 import {projectSocialIncidents} from '../engines/socialIncidentCore.js';
 import {projectRecordingDiplomacyReview} from '../engines/recordingDiplomacyReview.js';
-import { createHash } from "node:crypto";
+import {decodeReplayStatistics} from "../services/replayStatisticsStorage.js";
 import { getStorage } from "firebase-admin/storage";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../auth/authorization.js";
@@ -12,10 +12,6 @@ import {currentOfficialGameOutcome} from "../engines/recordingMatchFacts.js";
 interface Input {
   matchId: string;
   gameId: string;
-}
-
-function sha256(value: Buffer): string {
-  return createHash("sha256").update(value).digest("hex");
 }
 
 function bucketName(): string {
@@ -47,22 +43,19 @@ export const getReplayStatistics = onCall<Input>(callableOptions, async (request
   const source = sourceSnapshot.data() as {
     playerMapping?: unknown[];
     resultQualification?: string;
-    statistics?: { path?: string; sha256?: string };
+    statistics?: { path?: string; sha256?: string; format?: string; compression?: string;
+      bytes?: number; uncompressedSha256?: string; uncompressedBytes?: number };
   };
   const path = source.statistics?.path;
   const expectedHash = source.statistics?.sha256;
   if (!path || !expectedHash) throw new HttpsError("internal", "Statistics artifact metadata is incomplete.");
 
   const [bytes] = await getStorage().bucket(bucketName()).file(path).download();
-  if (sha256(bytes) !== expectedHash) {
-    throw new HttpsError("data-loss", "Stored Battle Statistics failed integrity verification.");
-  }
-
   let statistics: unknown;
   try {
-    statistics = JSON.parse(bytes.toString("utf-8"));
+    statistics = decodeReplayStatistics(bytes, source.statistics!);
   } catch {
-    throw new HttpsError("data-loss", "Stored Battle Statistics are not valid JSON.");
+    throw new HttpsError("data-loss", "Stored Battle Statistics failed integrity verification or JSON decoding.");
   }
 
   const officialOutcome = currentOfficialGameOutcome(gameSnapshot.data(), matchSnapshot.data());
