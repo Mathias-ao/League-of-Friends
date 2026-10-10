@@ -27,7 +27,11 @@ class NativeUploadTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        self.source, _, _ = export_fixture(self.root)
+        fixture_source, _, _ = export_fixture(self.root)
+        # Controlled synthetic source uses a generic filename. The native
+        # upload boundary intentionally accepts only actual replay extensions.
+        self.source = self.root / "controlled.aoe2record"
+        self.source.write_bytes(fixture_source.read_bytes())
 
     def tearDown(self):
         self.tmp.cleanup()
