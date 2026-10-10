@@ -4,7 +4,7 @@ import {requireLeaguePlayer} from '../auth/authorization.js';
 import {db} from '../config/firebase.js';
 import {callableOptions} from '../config/runtime.js';
 import {assertNativeValidationAllowed,bindingDigest,NATIVE_VALIDATION} from '../engines/nativeRecordingIntegration.js';
-import {decodeNativeDetailArtifact,selectNativeBattleDetail,type NativeDetailRequest} from '../engines/nativeStatisticsDetail.js';
+import {decodeNativeDetailArtifact,selectNativeBattleDetail,type NativeDetailRequest,type NativeDetailArtifact} from '../engines/nativeStatisticsDetail.js';
 
 const SHA=/^[0-9a-f]{64}$/;
 const ID=/^[A-Za-z0-9_-]{1,200}$/;
@@ -48,7 +48,7 @@ export async function readNativeDetailPreview(input:{
     c.leagueEffectsPermitted!==false||c.validatedBy!==actor.playerId||
     c.processorRevision!==pinned||c.matchId!==request.matchId||c.gameId!==request.gameId)
     throw precondition('Native validation candidate is not eligible for private detail inspection.');
-  const source=c.sourceHash,rev=c.artifactRevision,metadata=c.statistics as Bag|undefined;
+  const source=c.sourceHash,rev=c.artifactRevision,metadata=c.statistics as (NativeDetailArtifact & {path:string;generation:string})|undefined;
   const prefix='native-replay-evidence/'+request.matchId+'/'+request.gameId+'/'+source+'/'+rev+'/';
   if(!SHA.test(source??'')||!SHA.test(rev??'')||!metadata||
     metadata.path!==prefix+'statistics.direct.json.gz'||
