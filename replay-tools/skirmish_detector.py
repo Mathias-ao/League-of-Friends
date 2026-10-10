@@ -18,6 +18,8 @@ import json
 import math
 from typing import Any, Iterable
 
+from action_time_windows import ActionTimeWindow
+
 SKIRMISH_MODEL_VERSION = "AOF_SKIRMISH_DETECTION_V1"
 SKIRMISH_COMPATIBILITY_BASIS = "AOF_FIGHT_DETECTION_V1_RENAME_ONLY"
 SKIRMISH_LINK_GAP_MS = 20_000
@@ -457,10 +459,12 @@ def detect_skirmishes(
     initial_objects: Iterable[dict[str, Any]],
     action_events: Iterable[dict[str, Any]],
     controller_seeds: bool = False,
+    use_time_index: bool = False,
 ) -> dict[str, Any]:
     participants = _participants(manifest)
     initial_objects = list(initial_objects)
     action_events = list(action_events)
+    action_window = ActionTimeWindow(action_events) if use_time_index else None
     strong = _strong_observations(
         manifest=manifest,
         initial_objects=initial_objects,
@@ -485,7 +489,10 @@ def detect_skirmishes(
         )
 
         support: list[dict[str, Any]] = []
-        for event in action_events:
+        candidates = (action_window.between(first - SKIRMISH_SUPPORT_BEFORE_MS,
+                                             last + SKIRMISH_SUPPORT_AFTER_MS)
+                      if action_window else action_events)
+        for event in candidates:
             actor = event.get("actorPlayerId")
             at_ms = event.get("timestampMs")
             action = event.get("sourceActionName")
@@ -547,7 +554,8 @@ def detect_skirmishes(
         episode["skirmishId"] = f"skirmish-{index}"
         directed_edges, interaction_pairs = _pairwise_edges(
             episode=episode,
-            action_events=action_events,
+            action_events=(action_window.between(episode["startedAtMs"], episode["endedAtMs"])
+                           if action_window else action_events),
             participants=participants,
             controller_ledger=controller_ledger,
         )
