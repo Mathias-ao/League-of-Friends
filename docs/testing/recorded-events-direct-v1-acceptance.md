@@ -5,7 +5,18 @@ Measured locally on 10 October 2026, Windows, Python 3.14.7, pinned
 reads/writes, deployment, merge, production migration or historical deletion.
 Architecture and retention: [native V1 contract](../architecture/recorded-events-v1-contract.md).
 
+Review: [draft PR #90](https://github.com/Mathias-ao/League-of-Friends/pull/90),
+branch `feat/recorded-events-v1-direct`, based on PR #89 (`experiment/recorded-events-v1`),
+which depends on PR #83. PR #88 is independent. The initial preservation commit
+is `42197d7`; this report describes the final source-byte-checked implementation.
+
 ## Acceptance result
+
+**Milestone 1 is implemented; Milestone 2's native extraction, integrity and
+four-format statistical-equivalence criteria pass locally. Overall regression
+sign-off remains conditional:** the separately enabled older real-recording golden
+tests expose inherited baseline mismatches, described below. This is a draft for
+review, not a claim that every regression or the production V1 pipeline is accepted.
 
 | Requirement | Evidence / disposition |
 | --- | --- |
@@ -57,10 +68,10 @@ processes per format; one extraction per format. No concurrent benchmark jobs.
 
 | Recording | Earlier canonical parse + seal | Direct extraction + full readback verification | Median replay-free projection + bounded JSON write | Peak extraction MiB | Maximum projection/write MiB | Earlier PR89 projection/write MiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1v1 | 183.14 | 16.62 | 7.56 | 48.7 | 66.4 | 665.7 |
-| 2v2 | 80.80 | 7.15 | 4.04 | 58.1 | 77.1 | 243.9 |
-| 4v4 | 118.09 | 9.93 | 11.70 | 96.6 | 128.9 | 481.5 |
-| FFA | 115.33 | 9.52 | 10.97 | 75.1 | 134.6 | 324.9 |
+| 1v1 | 183.14 | 16.44 | 7.68 | 50.1 | 66.5 | 665.7 |
+| 2v2 | 80.80 | 7.05 | 4.17 | 58.4 | 77.3 | 243.9 |
+| 4v4 | 118.09 | 10.22 | 12.07 | 94.5 | 128.5 | 481.5 |
+| FFA | 115.33 | 9.93 | 10.97 | 76.8 | 134.6 | 324.9 |
 
 The earlier canonical measurements are the existing PR83/89 baseline, not a new
 simultaneous controlled trial. They show that archive validation dominated that
@@ -71,16 +82,16 @@ representation and trades bounded CPU for substantially lower memory.
 
 The final 4v4 phase measurements distinguish the actual costs:
 
-- Read, inflate, validate and build model inputs: approximately 3.98 seconds.
-- Existing statistical models: approximately 3.48 seconds.
-- Bounded JSON serialization: approximately 3.90 seconds.
-- A full-string/full-byte serialization alternative: approximately 1.05 seconds,
-  but process-tree peak increases from about 129 MiB to 268 MiB.
+- Read, inflate, validate and build model inputs: approximately 4.02 seconds.
+- Existing statistical models: approximately 3.91 seconds.
+- Bounded JSON serialization: approximately 3.96 seconds.
+- A full-string/full-byte serialization alternative: approximately 1.08 seconds,
+  but process-tree peak increases from about 129 MiB to 301 MiB.
 
 The chosen encoder uses the fast JSON implementation on bounded subtrees instead
 of holding a second full statistics string and byte buffer. Full encoded output
 hashes match. A preliminary generic streaming encoder took about 5.4 seconds on
-4v4 serialization; the bounded-subtree version reduced that to 3.9 seconds.
+4v4 serialization; the bounded-subtree version reduced that to about 4 seconds.
 
 ## Why 4v4 statistics are 95 MB
 
@@ -106,9 +117,54 @@ response to profiler timings; those require separate equivalence evidence.
 
 ## Reproduce and regression scope
 
+Final verification of preservation commit `42197d7`:
+
+- Full replay-tools discovery: **293 tests, 289 passed, four opt-in legacy
+  real-recording tests skipped, no failures** (79.137 seconds). Both four-format
+  native and PR89 retained-dataset corpus tests were enabled and passed.
+- Targeted native stream/integrity tests: **12 passed**. These cover chronology,
+  source-byte coverage, deterministic extraction, stable references, corrupt and
+  incomplete inputs, bounded serialization and replay/archive access rejection.
+- Targeted social/episode tests: **47 passed**, including the interrupted
+  `pair_episode_context.py` change. Native provenance uses the new revision fields;
+  the legacy required fields and original error wording are preserved.
+- Canonical artifact Node checks: **two passed**.
+- All four final benchmark comparisons report complete statistical equality with
+  native provenance, including social evidence. Only the explicitly documented
+  provenance and verified duplicate binary tribute input are adapted.
+
+The four skipped legacy tests were subsequently enabled with
+`AOF_REPLAY_FIXTURE_DIR=replay-fixtures` and run to completion: **four failures,
+zero skips, 750.491 seconds**. Across both discovery and this follow-up, all 293
+discovered cases were attempted: 289 passed and four failed. These are distinct
+from the passing four-format native equivalence tests.
+
+| Older test | Observed failure |
+| --- | --- |
+| `test_new_ffa_diplomacy` | Fact semantic hash differs from its golden. |
+| `test_townbell_ffa` | Golden normalizer version is `V1_1`; current/base are `V1_2`. |
+| `test_two_recorder_duel` | First recording's statistics warning list lacks six later model qualifications in the golden. |
+| `test_upstream_duel` | Fact semantic hash and normalizer version differ from the golden. |
+
+[Baseline diagnosis](benchmarks/direct-events-v1-2026-10-10/legacy-regression-diagnosis.json)
+records fresh default-parser runs from PR89 base `4123b54` and this implementation.
+All **five** hash-pinned legacy recording sources produce identical fact counts and
+semantic hashes across those two checkouts. The base already uses normalizer
+`V1_2`; its projector also produces the six additional warning codes, and its full
+FFA statistics equal the cached baseline used for native comparison. The observed
+failures therefore predate this PR. No test assertions, goldens, formulas or
+statistical definitions were changed to conceal them.
+
+The legacy tests stop at their failing assertion, so downstream assertions
+(including the final paired snapshot) are **not newly verified** by that run.
+Clean legacy golden acceptance requires a separately reviewed reconciliation of
+those existing expectations. This report does not approve that semantic baseline
+change or claim the full suite is green.
+
 ```bash
 python replay-tools/benchmark_direct_events.py --replay replay-fixtures/4v4.aoe2record --baseline .replay-lab/events-baseline/4v4 --output .replay-lab/direct-new/4v4
-AOF_DIRECT_EVENTS_BENCHMARK_DIR=.replay-lab/direct-v1-measured AOF_RECORDED_EVENTS_BENCHMARK_DIR=.replay-lab/events-baseline python -m unittest discover -s replay-tools/tests -v
+AOF_DIRECT_EVENTS_BENCHMARK_DIR=.replay-lab/direct-v1-accepted AOF_RECORDED_EVENTS_BENCHMARK_DIR=.replay-lab/events-baseline python -m unittest discover -s replay-tools/tests -v
+AOF_REPLAY_FIXTURE_DIR=replay-fixtures python -m unittest discover -s replay-tools/tests -p test_real_replays.py -v
 ```
 
 `benchmark_direct_events.py` extends PR83's measurements and Windows process-tree

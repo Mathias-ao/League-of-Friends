@@ -9,6 +9,8 @@ Last reviewed: **10 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for b
 **Unmerged event-first V1 work:** the approved successor architecture now has a
 [native event contract and direct extraction/projection implementation](../architecture/recorded-events-v1-contract.md)
 with [local acceptance evidence](../testing/recorded-events-direct-v1-acceptance.md).
+Draft PR #90 has four passing native equivalence cases; overall regression sign-off
+remains conditional on four inherited legacy golden mismatches documented there.
 The current Firebase upload still generates canonical archives. Permanent native
 event publication, bounded frontend retrieval, recalculation jobs and staging
 cutover acceptance remain subsequent milestones; this branch does not change
