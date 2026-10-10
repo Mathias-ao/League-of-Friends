@@ -12,6 +12,7 @@ import type { GamePlayer } from "../../domain/types.js";
 import {augmentSeasonShowcase} from "../../engines/seasonShowcaseProjection.js";
 import {projectStatistics} from "../../engines/statisticsExperience.js";
 import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
+import {encodeReplayStatistics, verifiedReplayArtifactSave} from "../../services/replayStatisticsStorage.js";
 import {validateRecordingMatchFacts, currentOfficialGameOutcome} from "../../engines/recordingMatchFacts.js";
 
 const MAX_REPLAY_BYTES = 32 * 1024 * 1024;
@@ -148,17 +149,13 @@ function bucketName(): string {
 
 async function verifiedSave(path: string, bytes: Buffer, expectedHash: string, contentType: string): Promise<void> {
   const file = getStorage().bucket(bucketName()).file(path);
-  await file.save(bytes, {
-    resumable: false,
-    metadata: {
-      contentType,
-      cacheControl: "private, no-store",
-    },
-  });
-  const [stored] = await file.download();
-  if (sha256(stored) !== expectedHash) {
-    await file.delete({ ignoreNotFound: true });
-    throw new HttpsError("internal", "Replay evidence persistence verification failed.");
+  try {
+    await verifiedReplayArtifactSave(file, bytes, expectedHash, contentType);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Replay evidence persistence verification failed.") {
+      throw new HttpsError("internal", error.message);
+    }
+    throw error;
   }
 }
 
@@ -307,14 +304,13 @@ export const uploadReplay = onCall<UploadReplayInput>(
     const playerMapping = await resolvePlayerMapping(game, worker.sourcePlayers);
     const opponentMapping=game.aiOpponent?worker.sourcePlayers.filter(p=>!playerMapping.some(m=>m.replaySlot===p.replaySlot)).map(p=>({replaySlot:p.replaySlot,sourceName:p.sourceName,opponentId:game.aiOpponent!.opponentId,qualification:"ADMIN_REVIEW_REQUIRED"})):[];
     if(game.aiOpponent&&opponentMapping.length!==1)throw new HttpsError("failed-precondition","AI opponent mapping is ambiguous.");
-    const statisticsBytes = Buffer.from(JSON.stringify(worker.statistics));
-    const statisticsSha256 = sha256(statisticsBytes);
+    const statisticsArtifact = encodeReplayStatistics(worker.statistics);
     const prefix = "replay-evidence/" + matchId + "/" + gameId + "/" + localSourceHash;
     const canonicalPath = prefix + "/canonical-bundle.zip";
-    const statisticsPath = prefix + "/statistics.json";
+    const statisticsPath = prefix + "/statistics.json.gz";
 
     await verifiedSave(canonicalPath, bundleBytes, worker.canonicalBundleSha256, "application/zip");
-    await verifiedSave(statisticsPath, statisticsBytes, statisticsSha256, "application/json");
+    await verifiedSave(statisticsPath, statisticsArtifact.bytes, statisticsArtifact.metadata.sha256, "application/gzip");
 
     const transactionResult = await db.runTransaction(async (transaction) => {
       const [freshGameSnapshot, freshSourceSnapshot] = await Promise.all([
@@ -369,7 +365,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
         },
         statistics: {
           path: statisticsPath,
-          sha256: statisticsSha256,
+          ...statisticsArtifact.metadata,
           schemaVersion: worker.statistics.statisticsSchemaVersion ?? null,
           projectionVersion: worker.statistics.statisticsProjectionVersion ?? null,
         },
