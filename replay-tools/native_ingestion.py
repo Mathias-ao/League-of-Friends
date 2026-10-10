@@ -16,7 +16,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
 import tempfile
 import time
 from typing import Any
@@ -82,6 +81,30 @@ def prepare_native_upload(
     if not 0 < byte_length <= MAX_REPLAY_BYTES:
         raise ValueError("Recording outside allowed size")
     destination.parent.mkdir(parents=True, exist_ok=True)
+    # Exclusive filesystem claim protects cooperating native writers from
+    # replacing another package. No directory is made visible as READY while
+    # evidence is still being generated.
+    claim = destination.parent / ("." + destination.name + ".native-claim")
+    with claim.open("x", encoding="utf-8") as lock:
+        lock.write(CONTRACT + "\\n")
+    try:
+        return _prepare_claimed(
+            replay, destination, byte_length,
+            stage_timings=stage_timings,
+            fast_action_windows=fast_action_windows,
+        )
+    finally:
+        claim.unlink(missing_ok=True)
+
+
+def _prepare_claimed(
+    replay: Path,
+    destination: Path,
+    byte_length: int,
+    *,
+    stage_timings: dict[str, Any] | None,
+    fast_action_windows: bool,
+) -> dict[str, Any]:
     total = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix=".native-stage-", dir=destination.parent) as tmp:
         work = Path(tmp)
@@ -158,6 +181,7 @@ def prepare_native_upload(
             raise ValueError("Original recording changed")
         if destination.exists():
             raise FileExistsError("Native package destination appeared")
+        # Claim above makes this non-clobbering among package producers.
         os.rename(work, destination)
         if stage_timings is not None:
             stage_timings["totalLocalPackageMs"] = _elapsed(total)
