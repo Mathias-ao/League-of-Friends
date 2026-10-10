@@ -22,6 +22,29 @@ const unavailable = reason => ({modelVersion:SOCIAL_INCIDENT_VERSION,status:'UNA
   chronicle:[],incidents:[],decisions:[],deeds:[],exposure:[],shadowContributions:[],
   policy:{productionScoringEnabled:false,engineStateEstablished:false}});
 
+// The two source representations have different, non-interchangeable revision
+// identities. Never treat a Recorded Events SHA as a canonical manifest SHA.
+// The downstream social rules operate on the same qualified neutral evidence.
+const NATIVE_EVENTS_VERSION = 'AOF_RECORDED_EVENTS_V1';
+const SHA256 = /^[a-f0-9]{64}$/;
+const canonicalKeys = ['replaySha256','canonicalManifestSha256'];
+const nativeKeys = ['replaySha256','recordedEventsSha256','recordedEventsVersion','parserVersion'];
+function provenanceKeys(source) {
+  if (!rec(source) || !text(source.replaySha256)) return null;
+  const hasCanonical = Object.hasOwn(source,'canonicalManifestSha256');
+  const hasNative = ['recordedEventsSha256','recordedEventsVersion'].some(k=>Object.hasOwn(source,k));
+  if (hasCanonical === hasNative) return null; // neither known contract or ambiguous mixed formats
+  if (hasCanonical) return text(source.canonicalManifestSha256)?canonicalKeys:null;
+  if (source.recordedEventsVersion!==NATIVE_EVENTS_VERSION ||
+      !SHA256.test(source.replaySha256) || !SHA256.test(source.recordedEventsSha256) ||
+      !text(source.parserVersion) || !text(source.extractionRunId)) return null;
+  return nativeKeys;
+}
+function sourceMatches(candidate,source,keys,requireExtraction) {
+  return !!rec(candidate) && keys.every(key=>candidate[key]===source[key]) &&
+    (!requireExtraction || candidate.extractionRunId===source.extractionRunId);
+}
+
 function validateRules(input) {
   const rule = {...SOCIAL_SHADOW_RULES,...input};
   if (!text(rule.ruleVersion) || !integer(rule.immediateMs) || !integer(rule.associationMs) ||
@@ -43,8 +66,9 @@ export function projectSocialIncidents({statistics, playerMapping=[], officialOu
     if (!facts || facts.modelVersion!=='AOF_RECORDING_MATCH_FACTS_V1' ||
         facts.identityNamespace!=='CANONICAL_REPLAY_PLAYER_ID') return unavailable('recording_facts_missing');
     const source=rec(stats.source), factSource=rec(facts.source), duration=facts.game?.observedDurationMs;
-    if (!source || !text(source.replaySha256) || !text(source.canonicalManifestSha256) ||
-        !factSource || ['replaySha256','canonicalManifestSha256'].some(k=>source[k]!==factSource[k]) ||
+    const keys=provenanceKeys(source),native=keys===nativeKeys;
+    if (!keys || !sourceMatches(factSource,source,keys,native) ||
+        native && Object.hasOwn(factSource,'canonicalManifestSha256') ||
         !integer(duration)) throw Error('social_source_or_interval_invalid');
     const players=rows(facts.players);
     if (players.length<2 || players.length>8 || players.some(p=>!rec(p)||!integer(p.playerId)||p.playerId<1||p.playerId>8) ||
@@ -139,8 +163,13 @@ export function projectSocialIncidents({statistics, playerMapping=[], officialOu
       if(reply){i.role='CONTESTED_WITHDRAWAL';reply.role='CONTESTED_WITHDRAWAL';}
     }
     const ledger=rec(stats.pairSocialEvidence), supportedLedger=ledger?.modelVersion==='AOF_PAIR_SOCIAL_EVIDENCE_V1';
+    // For native sources an absent ledger is unavailable, never evidence of peace.
+    if (native && (!supportedLedger || !Array.isArray(ledger.observations) || !Array.isArray(ledger.incidents)))
+      throw Error('native_social_ledger_missing');
     if (supportedLedger) {
-      if (['replaySha256','canonicalManifestSha256'].some(k=>ledger.gameScope?.[k]!==source[k])) throw Error('social_ledger_source_mismatch');
+      if (!sourceMatches(ledger.gameScope,source,keys,false) ||
+          native && Object.hasOwn(ledger.gameScope,'canonicalManifestSha256'))
+        throw Error('social_ledger_source_mismatch');
       for (const o of rows(ledger.observations)) addEvidence(o);
     }
     const allTargeted=[];
@@ -192,7 +221,8 @@ export function projectSocialIncidents({statistics, playerMapping=[], officialOu
           !integer(f.moment?.atMs)||!integer(f.moment?.operationOrdinal)||f.moment.atMs>duration||
           refs(f.sourceEventIds).some(r=>!evidence.has(r)||evidence.get(r).actorPlayerId!==f.actorPlayerId)||
           !refs(f.sourceEventIds).some(r=>compare(evidence.get(r).moment,f.moment)===0)||
-          f.source?.replaySha256!==source.replaySha256||f.source?.canonicalManifestSha256!==source.canonicalManifestSha256)
+          !sourceMatches(f.source,source,keys,native) ||
+          native && Object.hasOwn(f.source,'canonicalManifestSha256'))
         throw Error('qualified_social_fact_invalid');
       const prior=qualified.find(x=>x.factId===f.factId);
       if(prior&&json(prior)!==json(f))throw Error('conflicting_qualified_social_fact');
