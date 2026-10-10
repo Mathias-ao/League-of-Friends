@@ -18,7 +18,7 @@ const corruption=()=>new HttpsError('data-loss','The active native Battle eviden
 export async function loadActiveNativeEvidence(input:{
   db:any;bucket:any;actor:{playerId:string;authUid:string};
   matchId:string;gameId:string;env:NodeJS.ProcessEnv;
-}):Promise<{statistics:Bag;source:Bag;artifactSha256:string;sourceId:string;officialOutcome:Bag}>{
+}):Promise<{statistics:Bag;source:Bag;artifactSha256:string;sourceId:string;officialOutcome:Bag;revalidate:()=>Promise<void>}>{
   const {db,bucket,actor,matchId,gameId,env}=input;
   if(!ID.test(matchId??'')||!ID.test(gameId??''))
     throw new HttpsError('invalid-argument','Invalid Battle identifiers.');
@@ -62,15 +62,18 @@ export async function loadActiveNativeEvidence(input:{
 
   // Optimistic correction and membership fence. Even a source document rewrite
   // that retains its ID is an invalid read, not a new social interpretation.
-  const after=await Promise.all([matchRef.get(),gameRef.get(),playerRef.get(),linkRef.get()]);
-  if(after.some((snap:any,i:number)=>!snap.exists||bindingDigest(snap.data())!==before[i]))
-    throw abort();
-  if(after[1].data()?.activeReplayStatisticsId!==sourceId)throw abort();
-  const sourceAfter=await sourceRef.get();
-  if(!sourceAfter.exists||bindingDigest(sourceAfter.data())!==sourceToken||
-     !activeNativeStatisticsSource(matchId,gameId,after[0].data(),after[1].data(),
-       sourceId,sourceAfter.data(),true))throw abort();
+  const revalidate=async()=>{
+    const after=await Promise.all([matchRef.get(),gameRef.get(),playerRef.get(),linkRef.get()]);
+    if(after.some((snap:any,i:number)=>!snap.exists||bindingDigest(snap.data())!==before[i]))
+      throw abort();
+    if(after[1].data()?.activeReplayStatisticsId!==sourceId)throw abort();
+    const sourceAfter=await sourceRef.get();
+    if(!sourceAfter.exists||bindingDigest(sourceAfter.data())!==sourceToken||
+       !activeNativeStatisticsSource(matchId,gameId,after[0].data(),after[1].data(),
+         sourceId,sourceAfter.data(),true))throw abort();
+  };
+  await revalidate();
 
   return {statistics:raw,source:eligible.source,artifactSha256:metadata.sha256,sourceId,
-    officialOutcome:currentOfficialGameOutcome(after[1].data(),after[0].data())};
+    officialOutcome:currentOfficialGameOutcome(game.data(),match.data()),revalidate};
 }
