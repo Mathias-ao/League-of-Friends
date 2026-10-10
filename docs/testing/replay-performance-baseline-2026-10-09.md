@@ -2,6 +2,20 @@
 
 Status: **instrumentation added; full replay timing/size baseline not yet measured**. The reported ~150-second 4v4 processing time is an observation to reproduce, not a benchmark result or an established bottleneck.
 
+**10 October follow-up:** the original status above records this draft's first pass.
+The event-first architecture work now reuses this harness on current main. Windows
+measurements add root-process peak working set and a separate sampled process-tree
+working set. The latter is necessary because a Windows virtualenv `python.exe` can
+be a small launcher for the real interpreter. Never report launcher-only memory as
+pipeline peak memory. The tree measure sums current working sets at each ~20 ms
+sample (shared pages can count twice); it is not private memory or a whole worker
+request measurement. Unsupported/unavailable measurements remain null. A Windows
+allocation regression verifies that the interpreter's memory is included.
+
+Recorded Events conversion/compression and replay-free equality measurements live
+in a separate dependent experiment, keeping this harness independent of that schema.
+No scoring, extraction, statistics formula or deployed path is changed here.
+
 ## Scope and invariants
 
 Optimize local extraction, canonical evidence publication, replay-free analysis/statistics, artifact sizes, peak memory, and eventually authenticated large-file upload. No statistics are removed, suppressed, redefined, or rounded differently. CanonicalReplay remains permanent source evidence, and the original recording remains a temporary upload. Do not replace exhaustive production conformance with Replay Lab's fast structural seal.

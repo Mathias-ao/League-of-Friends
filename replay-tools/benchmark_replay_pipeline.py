@@ -42,19 +42,111 @@ def _linux_peak_rss(pid: int) -> int | None:
     return None
 
 
+def _windows_peak_rss(pid: int) -> int | None:
+    if sys.platform != "win32":
+        return None
+    import ctypes
+    from ctypes import wintypes
+    class Counters(ctypes.Structure):
+        _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD)] + [
+            (name, ctypes.c_size_t) for name in ("PeakWorkingSetSize", "WorkingSetSize",
+            "QuotaPeakPagedPoolUsage", "QuotaPagedPoolUsage", "QuotaPeakNonPagedPoolUsage",
+            "QuotaNonPagedPoolUsage", "PagefileUsage", "PeakPagefileUsage")]
+    kernel, psapi = ctypes.WinDLL("kernel32", use_last_error=True), ctypes.WinDLL("psapi", use_last_error=True)
+    kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenProcess.restype = wintypes.HANDLE
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+    handle = kernel.OpenProcess(0x0410, False, pid)
+    if not handle:
+        return None
+    try:
+        counters = Counters()
+        counters.cb = ctypes.sizeof(counters)
+        return int(counters.PeakWorkingSetSize) if psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb) else None
+    finally:
+        kernel.CloseHandle(handle)
+
+
+def _windows_tree_working_set(root_pid: int) -> int | None:
+    """Windows venv python.exe is a launcher; include its actual interpreter.
+
+    Sum current working sets at each sample, not the sum of unrelated peaks.
+    Shared pages may be counted twice; this is not private committed memory.
+    """
+    if sys.platform != "win32":
+        return None
+    import ctypes
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    psapi = ctypes.WinDLL("psapi", use_last_error=True)
+    class Entry(ctypes.Structure):
+        _fields_ = [("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD),
+            ("pid", wintypes.DWORD), ("heap", ctypes.c_size_t), ("module", wintypes.DWORD),
+            ("threads", wintypes.DWORD), ("parent", wintypes.DWORD), ("priority", wintypes.LONG),
+            ("flags", wintypes.DWORD), ("exe", wintypes.WCHAR * 260)]
+    class Counters(ctypes.Structure):
+        _fields_ = [("cb", wintypes.DWORD), ("faults", wintypes.DWORD)] + [
+            (name, ctypes.c_size_t) for name in ("peak", "working", "qpp", "qp", "qnp", "qn", "page", "peakpage")]
+    kernel.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+    kernel.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    kernel.Process32FirstW.argtypes = [wintypes.HANDLE, ctypes.POINTER(Entry)]
+    kernel.Process32NextW.argtypes = [wintypes.HANDLE, ctypes.POINTER(Entry)]
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenProcess.restype = wintypes.HANDLE
+    psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+    snapshot = kernel.CreateToolhelp32Snapshot(2, 0)
+    if snapshot == ctypes.c_void_p(-1).value:
+        return None
+    parents = {}
+    try:
+        entry = Entry()
+        entry.dwSize = ctypes.sizeof(entry)
+        more = kernel.Process32FirstW(snapshot, ctypes.byref(entry))
+        while more:
+            parents[int(entry.pid)] = int(entry.parent)
+            more = kernel.Process32NextW(snapshot, ctypes.byref(entry))
+    finally:
+        kernel.CloseHandle(snapshot)
+    descendants = {root_pid}
+    while True:
+        expanded = descendants | {pid for pid, parent in parents.items() if parent in descendants}
+        if expanded == descendants:
+            break
+        descendants = expanded
+    total, observed = 0, False
+    for pid in descendants:
+        handle = kernel.OpenProcess(0x0410, False, pid)
+        if handle:
+            try:
+                counters = Counters()
+                counters.cb = ctypes.sizeof(counters)
+                if psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+                    total += int(counters.working)
+                    observed = True
+            finally:
+                kernel.CloseHandle(handle)
+    return total if observed else None
+
+
 def run_stage(name: str, command: list[str]) -> dict[str, Any]:
     start = time.perf_counter()
     child = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, text=True)
     max_rss: int | None = None
+    max_tree: int | None = None
     stopped = threading.Event()
 
     def sample_memory() -> None:
-        nonlocal max_rss
+        nonlocal max_rss, max_tree
         while not stopped.is_set():
-            observed = _linux_peak_rss(child.pid)
+            observed = _windows_peak_rss(child.pid) if sys.platform == "win32" else _linux_peak_rss(child.pid)
             if observed is not None:
                 max_rss = max(observed, max_rss or 0)
+            tree = _windows_tree_working_set(child.pid)
+            if tree is not None:
+                max_tree = max(tree, max_tree or 0)
             stopped.wait(0.02)
 
     sampler = threading.Thread(target=sample_memory, daemon=True)
@@ -67,7 +159,8 @@ def run_stage(name: str, command: list[str]) -> dict[str, Any]:
     ms = round((time.perf_counter() - start) * 1000, 3)
     if child.returncode:
         raise RuntimeError(f"{name} failed (exit {child.returncode}):\n{(stderr or stdout)[-8000:]}")
-    return {"stage": name, "wallMs": ms, "peakChildRssBytes": max_rss}
+    return {"stage": name, "wallMs": ms, "peakChildRssBytes": max_rss,
+            "peakWindowsProcessTreeWorkingSetBytes": max_tree}
 
 
 def artifact_sizes(folder: Path) -> dict[str, int]:
@@ -165,7 +258,8 @@ def benchmark(replay: Path, output: Path, python: str, seal_mode: str,
         "statisticsSha256": expected_stats_hash,
         "limitations": [
             "Timings include Python CLI startup and local disk I/O; exclude browser transfer, HTTP worker transfer, Firebase persistence and concurrent uploads.",
-            "Memory is each child process's Linux /proc VmHWM sampled at 20 ms; null on unsupported platforms.",
+            "Memory is each child's Linux VmHWM or Windows PeakWorkingSetSize sampled at 20 ms; not process-tree or simultaneous whole-pipeline memory; null when unavailable.",
+            "Windows process-tree working set separately includes venv launcher descendants; sampled current working sets, shared pages may be counted twice. Root-only memory may describe only the launcher.",
             "Full seal verifies canonical evidence; fast seal is development-only and is not a substitute for full conformance.",
             "Compare statistics across code revisions using existing semantic goldens; extraction provenance changes between independent runs.",
         ],

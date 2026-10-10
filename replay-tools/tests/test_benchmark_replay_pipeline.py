@@ -10,6 +10,11 @@ from benchmark_replay_pipeline import artifact_sizes, categorized_bytes, run_sta
 
 
 class BenchmarkHelpersTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "win32", "Windows working-set instrumentation")
+    def test_windows_memory_includes_venv_interpreter_descendant(self):
+        result = run_stage("memory", [sys.executable, "-c", "import time; data=bytearray(32*1024*1024); time.sleep(.3)"])
+        self.assertGreater(result["peakWindowsProcessTreeWorkingSetBytes"], 32 * 1024 * 1024)
+
     def test_file_hash_and_sizes(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
