@@ -4,6 +4,7 @@ import {Timestamp,type Transaction,type DocumentReference,type Query} from 'fire
 import {HttpsError} from 'firebase-functions/v2/https';
 import {db} from '../config/firebase.js';
 import {currentOfficialGameOutcome} from "../engines/recordingMatchFacts.js";
+import {activeNativeStatisticsSource,NATIVE_SHARED_DELIVERY} from '../engines/activeNativeStatisticsSource.js';
 import {EXPERIENCE_VERSION,StatisticsExperience,statisticsBindingKey,projectStatistics,type GameStatistics,type ProjectionMetadata,type StatisticsScope,type StatisticsDataset} from '../engines/statisticsExperience.js';
 import {SEASON_SHOWCASE_VERSION,augmentSeasonShowcase} from '../engines/seasonShowcaseProjection.js';
 
@@ -73,6 +74,16 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
       const sourceRef=gameSnapshot.ref.collection('replaySources').doc(sourceId),sourceSnapshot=await read(sourceRef);
       if(!sourceSnapshot.exists||sourceSnapshot.data().state!=='READY'){unavailableGames++;continue;}
       let source=sourceSnapshot.data();checkpoint(sourceRef,source,'source');
+      // Native validation/storage by itself is never a public statistics source.
+      // All Battle/Event/Season/player read models obey the same active/official
+      // native source gate as the bounded authenticated Battle-detail reader.
+      const nativeLooking=source.nativePublicationVersion!==undefined||
+        source.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
+        source.statistics?.projectionDeliveryVersion===NATIVE_SHARED_DELIVERY;
+      if(nativeLooking&&!activeNativeStatisticsSource(matchSnapshot.id,gameSnapshot.id,
+          match,game,sourceId,source,process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1')){
+        unavailableGames++;continue;
+      }
       const expectedBinding=statisticsBindingKey(statisticsMetadata(matchSnapshot.id,gameSnapshot.id,match,game,source));
       if(hydrate&&(source.experience?.version!==EXPERIENCE_VERSION||source.experience?.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION||source.experience?.bindingKey!==expectedBinding)){await hydrateProjection(matchSnapshot.id,gameSnapshot.id,match,game,sourceRef,source);source=(await sourceRef.get()).data();}
       if(source?.experience?.version!==EXPERIENCE_VERSION||source.experience?.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION||source.experience?.bindingKey!==expectedBinding){unavailableGames++;continue;}
