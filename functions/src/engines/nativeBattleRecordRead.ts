@@ -46,10 +46,10 @@ const pageRows=(data:ReturnType<typeof projectNativeBattleRecord>,section:PageSe
 const detailRow=(row:Bag,section:PageSection,index:number):Bag=>{
   const moment=rec(row.startedAt)||rec(row.moment)||rec(row.at);
   const playerPair=Array.isArray(row.pairPlayerIds)?row.pairPlayerIds.slice(0,2):null;
-  return {index,id:typeof row.incidentId==='string'?row.incidentId:
-    typeof row.decisionId==='string'?row.decisionId:typeof row.deedId==='string'?row.deedId:
-    typeof row.sourceEventId==='string'?row.sourceEventId:null,
-    category:row.family??row.kind??row.role??row.status??null,
+  const label=(value:unknown)=>typeof value==='string'?value.slice(0,160):null;
+  return {index,id:label(row.incidentId)??label(row.decisionId)??label(row.deedId)??
+    label(row.sourceEventId),
+    category:label(row.family)??label(row.kind)??label(row.role)??label(row.status),
     atMs:indexValid(moment?.atMs)?moment!.atMs:null,
     pairPlayerIds:playerPair,
     ...(section==='socialIncidents'?{role:row.role??null}:{}),
