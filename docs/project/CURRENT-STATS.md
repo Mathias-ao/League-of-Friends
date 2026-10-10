@@ -19,6 +19,24 @@ legacy missing-elevation correction remain separate versioned changes.
 [Acceptance and remaining milestones](../testing/native-recording-integration-v1.md)
 do not establish production deployment or native READY support.
 
+**Native detailed and social read consumers merged 10 October 2026:** PRs
+[#98](https://github.com/Mathias-ao/League-of-Friends/pull/98) through
+[#101](https://github.com/Mathias-ao/League-of-Friends/pull/101) add
+explicit native provenance qualification in the neutral social interpreter,
+bounded producer-shared Battle episode fragments, an authenticated reader for
+**officially active READY** native sources, and native Battle-record/Chronicle
+consumption. The new Battle record uses a small overview, paginated incidents
+and 32-KiB SHA-verified fragments; social pages also bind an
+**official-result/mapping review revision** so replay-identical corrections
+cannot mix interpretations. Normal Battle/Event/Season/player scalar
+StatisticsExperience still follows its active READY source binding; private
+`VALIDATED_NOT_READY` candidates cannot substitute for the active source.
+See [native social/Battle-record reader acceptance](../testing/native-social-battle-record-readers-v1.md).
+This is code and CI verification, **not** a completed native READY release or
+real-player/cloud acceptance. Both `AOF_ACTIVE_NATIVE_PLAYER_READS` and
+`AOF_ACTIVE_NATIVE_SOCIAL_READS` are off by default; publisher/rollback and
+source-correction qualification remain separate.
+
 ## Local replay/statistics E2E — 9–10 October 2026
 
 The user reported a successful isolated `demo-aof-e2e` run with eight independently

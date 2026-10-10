@@ -6,6 +6,9 @@ import {collections} from '../domain/collections.js';
 import {projectSocialIncidents,rebuildSocialHistory} from '../engines/socialIncidentCore.js';
 import {projectPlayerChronicle} from '../engines/playerChronicleCore.js';
 import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
+import {activeNativeStatisticsSource,NATIVE_SHARED_DELIVERY} from '../engines/activeNativeStatisticsSource.js';
+import {decodeNativeDetailArtifact,type NativeDetailArtifact} from '../engines/nativeStatisticsDetail.js';
+import {nativeSocialInput} from '../engines/nativeSocialInput.js';
 
 /** Rebuild the current verified social read model for one Chronicle owner.
  * Pure read path: no social awards, relationship state, or statistics are mutated.
@@ -16,6 +19,12 @@ export async function readSocialHistory(ownerPlayerId:string){
   const matchToken=(v:any)=>JSON.stringify({status:v?.status,dispute:v?.activeResultDisputeId??null,firstCompletedAt:v?.firstCompletedAt??null,completedAt:v?.completedAt??null});
   const gameToken=(v:any)=>JSON.stringify({status:v?.status,dispute:v?.activeResultDisputeId??null,statisticsId:v?.activeReplayStatisticsId??null,
     result:v?.canonicalResult??null,players:v?.players??null,number:v?.gameNumber});
+  const sourceToken=(v:any)=>JSON.stringify({state:v?.state,sourceHash:v?.sourceHash,mapping:v?.playerMapping,
+    statistics:v?.statistics,recordedEvents:v?.recordedEvents,originalRecording:v?.originalRecording,
+    extraction:v?.extraction,nativePublicationVersion:v?.nativePublicationVersion,
+    processorRevision:v?.processorRevision,nativeValidationCandidateId:v?.nativeValidationCandidateId,
+    replayStatisticsRevision:v?.replayStatisticsRevision,artifactRevision:v?.artifactRevision,
+    experienceVersion:v?.experience?.version,experienceBinding:v?.experience?.bindingKey});
   const checkpoints:any[]=matches.docs.map(doc=>({ref:doc.ref,token:matchToken(doc.data()),type:'MATCH'}));
   const ordered=matches.docs.filter(doc=>doc.data().opponentKind!=='AI').map(doc=>({doc,data:doc.data(),at:(doc.data().firstCompletedAt??doc.data().completedAt)?.toMillis?.()}));
   if(ordered.some(m=>!Number.isSafeInteger(m.at)))throw new HttpsError('failed-precondition','Accepted Battle chronology is missing; social stages cannot be ordered.');
@@ -39,21 +48,41 @@ export async function readSocialHistory(ownerPlayerId:string){
       const official=currentOfficialGameOutcome(game.data,match.data);
       if(official.qualification!=='OFFICIAL'){excluded.push({gameIdentity,reason:'official_result_ineligible'});continue;}
       if(!game.data.activeReplayStatisticsId){excluded.push({gameIdentity,reason:'replay_statistics_missing'});continue;}
-      const revision=await game.doc.ref.collection('replaySources').doc(game.data.activeReplayStatisticsId).get();
-      const source=revision.data();
-      if(source?.state!=='READY'||!source.statistics?.path||!source.statistics?.sha256){excluded.push({gameIdentity,reason:'active_artifact_unavailable'});continue;}
-      // Native source lineage now parses in the pure interpreter, but normal
-      // Chronicle/history routing is not yet qualified for native READY. Never
-      // treat unavailable native social evidence as proof of peaceful conduct.
-      if(source.nativePublicationVersion!==undefined||
-         source.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
-         source.statistics?.projectionDeliveryVersion==='AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL'){
+      const sourceRef=game.doc.ref.collection('replaySources').doc(game.data.activeReplayStatisticsId);
+      const revision=await sourceRef.get(),source=revision.data();
+      if(source?.state!=='READY'||!source.statistics?.path||!source.statistics?.sha256){
+        excluded.push({gameIdentity,reason:'active_artifact_unavailable'});continue;
+      }
+      checkpoints.push({ref:sourceRef,token:sourceToken(source),type:'SOURCE'});
+      const nativeLooking=source.nativePublicationVersion!==undefined||
+        source.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
+        source.statistics?.projectionDeliveryVersion===NATIVE_SHARED_DELIVERY;
+      const native=nativeLooking?activeNativeStatisticsSource(match.doc.id,game.doc.id,
+        match.data,game.data,game.data.activeReplayStatisticsId,source,
+        process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1'&&
+        process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS==='1'):null;
+      if(nativeLooking&&!native){
         excluded.push({gameIdentity,reason:'native_social_history_reader_not_qualified'});continue;
       }
-      const [bytes]=await getStorage().bucket(bucket).file(source.statistics.path).download();
       let statistics:any;
-      try{statistics=decodeReplayStatistics(bytes,source.statistics);}
-      catch{throw new HttpsError('data-loss','A social source failed statistics decoding or integrity verification.');}
+      if(native){
+        let bytes:Buffer;
+        try{
+          [bytes]=await getStorage().bucket(bucket).file(native.artifact.path,
+            {generation:String(native.artifact.generation)}).download();
+          const verified=decodeNativeDetailArtifact(bytes,native.artifact as NativeDetailArtifact,{
+            sourceHash:game.data.activeReplayStatisticsId,eventsSha256:native.eventsSha256,
+            extractionRunId:native.extractionRunId,
+          });
+          statistics=nativeSocialInput(verified,source.playerMapping);
+        }catch{
+          throw new HttpsError('data-loss','Active native social evidence failed source, integrity or roster validation.');
+        }
+      }else{
+        const [bytes]=await getStorage().bucket(bucket).file(source.statistics.path).download();
+        try{statistics=decodeReplayStatistics(bytes,source.statistics);}
+        catch{throw new HttpsError('data-loss','A social source failed statistics decoding or integrity verification.');}
+      }
       const review=projectSocialIncidents({statistics,playerMapping:source.playerMapping??[],officialOutcome:official,
         context:{gameId:gameIdentity,battleId:match.doc.id}});
       if(review.status!=='REVIEW_AVAILABLE'){excluded.push({gameIdentity,reason:review.reason});continue;}
@@ -65,7 +94,7 @@ export async function readSocialHistory(ownerPlayerId:string){
   // Optimistic read consistency: do not mix a correction/dispute with earlier artifacts.
   for(let index=0;index<checkpoints.length;index+=50){
     const batch=checkpoints.slice(index,index+50),fresh=await db.getAll(...batch.map(c=>c.ref));
-    for(let n=0;n<batch.length;n++)if(!fresh[n].exists||batch[n].token!==(batch[n].type==='MATCH'?matchToken(fresh[n].data()):gameToken(fresh[n].data())))
+    for(let n=0;n<batch.length;n++)if(!fresh[n].exists||batch[n].token!==(batch[n].type==='MATCH'?matchToken(fresh[n].data()):batch[n].type==='SOURCE'?sourceToken(fresh[n].data()):gameToken(fresh[n].data())))
       throw new HttpsError('aborted','Accepted social inputs changed during the read; retry to get a coherent revision.');
   }
   const history=rebuildSocialHistory(chapters);

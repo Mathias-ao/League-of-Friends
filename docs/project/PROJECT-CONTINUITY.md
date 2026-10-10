@@ -34,6 +34,25 @@ or production deployment, historical source cleanup or original replay deletion
 occurred. Post-hoc alternatives #91/#92 were closed without merge; benchmark
 fixtures referenced by pinned commit must be retained.
 
+**Subsequent read-side integration, not activation (10 October):**
+[#98](https://github.com/Mathias-ao/League-of-Friends/pull/98)
+(native social provenance),
+[#99](https://github.com/Mathias-ao/League-of-Friends/pull/99)
+(bounded native Battle detail),
+[#100](https://github.com/Mathias-ao/League-of-Friends/pull/100)
+(active Game/player statistics consumers) and
+[#101](https://github.com/Mathias-ao/League-of-Friends/pull/101)
+(native Chronicle and Battle-record consumers) are merged. Both
+`AOF_ACTIVE_NATIVE_PLAYER_READS` and `AOF_ACTIVE_NATIVE_SOCIAL_READS`
+remain disabled by default, and no native READY publisher exists. The
+record view pages neutral/shadow incidents, returns complete source sections
+through SHA-verified 32-KiB fragments, and uses an official-outcome/mapping
+review revision in addition to artifact SHA. Current official Game revisions,
+disputes, immutable source generations and League identity are rechecked;
+`VALIDATED_NOT_READY` remains invisible to ordinary readers. Real browser,
+cloud capacity and correction/rollback **release acceptance is still missing**.
+See [native read-side acceptance](../testing/native-social-battle-record-readers-v1.md).
+
 ## Season Event guidance
 
 The authoritative [8 October Season Event contract](CORE-IDENTITY.md#season-event-contract) supersedes older proposals:
@@ -57,10 +76,10 @@ No production/staging deployment or data import occurred. Never conflate merging
 
 Pick one bounded outcome, check current code and scope, identify evidence and regression tests, then record observed outcomes **and their limitations**. Keep source facts separate from inferred statistics, qualification and official scoring. Prefer reversible local tests, documented data backups and focused PRs; obtain separate review before promoting local work to staging or production.
 
-**Next bounded task:** qualify native detailed-statistics delivery and native-provenance social consumers without expanding gigantic full-statistics JSON. Then separately test correction-safe READY activation with original replay retention, official-result authority, rollback and real cloud timings. Player Reputation/Relationships rules, Event finalisation and real-user flow remain distinct future workstreams.
+**Next bounded task:** specify and validate the separate **native READY publisher/activation transaction** with official-result authority, source/roster bindings, disputes, correction-safe rollback and immutable original replay retention. Then perform real build-185872 browser/cloud performance, concurrency and full-presentation acceptance before enabling native uploads. Do not interpret merged read-only consumers as publication readiness. Player Reputation/Relationships rules, Event finalisation and real-user flow remain distinct future workstreams.
 
 ## Bootstrap prompt
 
 > Continue Age of Friends from `Mathias-ao/League-of-Friends`. Read `docs/project/CORE-IDENTITY.md`, `docs/project/CURRENT-STATE.md` and `docs/project/CURRENT-STATS.md`. Inspect current `main`, distinguish local emulator results from merged/deployed code, and follow specialist documentation. The bounded task is: [ONE TASK].
 
-**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Detailed delivery, social readers and correction qualification still block READY; nothing is deployed or enabled for ordinary users.
+**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Read-only detail/social reader integration is now merged and gated; atomic correction-safe publication/rollback and real full-stack acceptance still block READY. Nothing is deployed or enabled for ordinary users.

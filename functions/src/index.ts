@@ -60,6 +60,7 @@ export { getSocialHistory } from "./queries/getSocialHistory.js";
 export { getPlayerChronicle } from "./queries/getPlayerChronicle.js";
 export { getReplayStatistics } from "./queries/getReplayStatistics.js";
 export {getActiveNativeBattleDetail} from "./queries/getActiveNativeBattleDetail.js";
+export {getActiveNativeBattleRecord} from './queries/getActiveNativeBattleRecord.js';
 export {getNativeBattleDetailPreview} from "./queries/getNativeBattleDetailPreview.js";
 
 export const backendHealth = onCall(callableOptions, async (request) => {

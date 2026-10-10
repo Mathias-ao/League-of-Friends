@@ -5,6 +5,7 @@ import {JSDOM} from 'jsdom';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 import {BattleDetails} from '../src/ui/BattleDetails';
 import {BattleStatistics} from '../src/ui/BattleStatistics';
+import {NativeBattleRecordViewer} from '../src/ui/NativeBattleRecordViewer';
 
 async function setup(){
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});
@@ -152,7 +153,7 @@ test('bounded native Battle detail is visible only for a qualified active, undis
  const ctx=await setup();const {data,props,root,repository,click}=ctx;
  const game=data.games[0];game.replay={
    statisticsState:'READY',statisticsId:'a'.repeat(64),statisticsRevision:2,
-   statisticsDelivery:'NATIVE_BOUNDED_V1',
+   statisticsDelivery:'NATIVE_BOUNDED_V1',nativeSocialRecordAvailable:true,
    nativePlayerMapping:[{playerId:game.players[0].playerId,replaySlot:1},
      {playerId:game.players[1].playerId,replaySlot:2}],
  };
@@ -170,6 +171,7 @@ test('bounded native Battle detail is visible only for a qualified active, undis
    await click('Open Battle Ledger');
    const panel=document.querySelector('[aria-label="Recorded Events Battle detail"]');
    assert.ok(panel,'qualified active Game exposes the bounded evidence browser');
+   assert.ok(document.querySelector('.native-record'),'separately enabled active social record is visible');
    await act(async()=>{await Promise.resolve();});
    assert.equal(calls[0]?.matchId,data.match.matchId);
    assert.equal(calls[0]?.gameId,game.gameId);
@@ -180,9 +182,93 @@ test('bounded native Battle detail is visible only for a qualified active, undis
    game.resultDisputeOpen=true;
    await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
    assert.equal(document.querySelector('[aria-label="Recorded Events Battle detail"]'),null);
+   assert.equal(document.querySelector('.native-record'),null,'disputed social record is unavailable');
    game.resultDisputeOpen=false;
    game.replay.statisticsDelivery='LEGACY';
    await act(async()=>root.render(React.createElement(BattleDetails,{...props,preview:false,data})));
    assert.equal(document.querySelector('[aria-label="Recorded Events Battle detail"]'),null);
+ }finally{await ctx.close();}
+});
+
+
+test('native Battle record opens lazily, lists qualified social evidence and never reads a validation candidate',async()=>{
+ const ctx=await setup();const {data,root,repository,dom}=ctx;
+ const game=data.games[0],calls:any[]=[];
+ const artifact='e'.repeat(64),reviewRevision='f'.repeat(64);
+ Object.assign(repository,{activeNativeBattleRecord:async(query:import('../src/domain/league').ActiveNativeBattleRecordQuery)=>{
+   calls.push(query);
+   if(query.mode==='overview')return {
+     success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',
+     matchId:query.matchId,gameId:query.gameId,statisticsId:'a'.repeat(64),artifactSha256:artifact,reviewRevision,mode:'overview',
+     matchFacts:{modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',mapName:'Lombardia',
+       observedDurationMs:60000,rules:{lockTeams:false}},
+     officialOutcome:{qualification:'OFFICIAL',winnerPlayerIds:[game.players[0].playerId],resultRevision:3},
+     social:{status:'REVIEW_AVAILABLE',neutralObservations:7,neutralIncidents:4,
+       socialIncidents:2,decisions:2,deeds:0,productionScoringEnabled:false},
+     diplomacy:{status:'REVIEW_AVAILABLE',commandCount:3,unknownPairSegmentCount:1},
+   };
+   if(query.mode==='page')return {
+     success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',
+     matchId:query.matchId,gameId:query.gameId,statisticsId:'a'.repeat(64),artifactSha256:artifact,
+     mode:'page',section:query.section,reviewRevision,total:4,offset:0,
+     entries:[{index:0,id:'neutral-1',category:'DIRECTED_PRESSURE',atMs:4000,pairPlayerIds:[1,2]}],
+     nextOffset:null,
+   };
+   throw new Error('Unexpected full-record fragment read');
+ }});
+ try{
+   await act(async()=>root.render(React.createElement(NativeBattleRecordViewer,{
+     repository,matchId:'m',gameId:'g',players:game.players,
+     mapping:game.players.map((p,i)=>({playerId:p.playerId,replaySlot:i+1})),
+   })));
+   assert.equal(calls.length,0,'closed native record causes no new evidence download');
+   await act(async()=>{
+     const details=document.querySelector('.native-record') as HTMLDetailsElement;
+     details.open=true;details.dispatchEvent(new dom.window.Event('toggle'));
+   });
+   await act(async()=>{await Promise.resolve();});
+   assert.equal(calls[0]?.mode,'overview');
+   assert.equal(calls[1]?.mode,'page');
+   assert.equal(calls[1]?.expectedArtifactSha256,artifact);
+   assert.equal(calls[1]?.expectedReviewRevision,reviewRevision);
+   assert.equal(calls.some(q=>'candidateId' in q),false);
+   assert.match(document.body.textContent??'',/Lombardia/);
+   assert.match(document.body.textContent??'',/7 observations/);
+   assert.match(document.body.textContent??'',/4 neutral incidents/);
+   assert.match(document.body.textContent??'',/shadow decisions/);
+   assert.match(document.body.textContent??'',/Orders do not prove effective alliances/);
+   assert.match(document.body.textContent??'',/neutral-1/);
+   assert.match(document.body.textContent??'',/result revision 3/);
+   assert.equal(document.querySelector('.native-record .br-source')?.textContent?.includes(artifact),true);
+ }finally{await ctx.close();}
+});
+test('native Battle record reports unavailable social evidence rather than zero deeds',async()=>{
+ const ctx=await setup();const {data,root,repository,dom}=ctx;
+ Object.assign(repository,{activeNativeBattleRecord:async(query:import('../src/domain/league').ActiveNativeBattleRecordQuery)=>{
+   if(query.mode==='overview')return {
+     success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',mode:'overview',
+     version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',matchId:'m',gameId:'g',
+     statisticsId:'a'.repeat(64),artifactSha256:'b'.repeat(64),reviewRevision:'c'.repeat(64),
+     matchFacts:{},officialOutcome:{qualification:'OFFICIAL'},
+     social:{status:'UNAVAILABLE',reason:'neutral_source_incomplete'},
+     diplomacy:{status:'UNAVAILABLE',reason:'effective_stance_unqualified'},
+   };
+   return {success:true,state:'READY',delivery:'NATIVE_BOUNDED_V1',mode:'page',
+     version:'AOF_NATIVE_BATTLE_RECORD_READER_V1',matchId:'m',gameId:'g',
+     statisticsId:'a'.repeat(64),artifactSha256:'b'.repeat(64),
+     reviewRevision:'c'.repeat(64),total:0,entries:[],nextOffset:null};
+ }});
+ try{
+   await act(async()=>root.render(React.createElement(NativeBattleRecordViewer,{
+     repository,matchId:'m',gameId:'g',players:data.games[0].players,mapping:[],
+   })));
+   await act(async()=>{
+     const details=document.querySelector('.native-record') as HTMLDetailsElement;
+     details.open=true;details.dispatchEvent(new dom.window.Event('toggle'));
+   });
+   await act(async()=>{await Promise.resolve();});
+   assert.match(document.body.textContent??'',/Social review unavailable/);
+   assert.match(document.body.textContent??'',/No zero-conduct conclusion/);
+   assert.equal(document.body.textContent?.includes('0 shadow deeds'),false);
  }finally{await ctx.close();}
 });
