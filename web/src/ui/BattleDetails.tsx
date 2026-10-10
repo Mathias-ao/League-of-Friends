@@ -32,7 +32,7 @@ export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>vo
           key={data.match.matchId+':'+selected.gameId+':'+selected.replay.statisticsRevision}
           repository={repository} matchId={data.match.matchId} gameId={selected.gameId}
           mapping={selected.replay.nativePlayerMapping} players={selected.players}/> }
-        {!preview&&recorded.eligible&&!selected?.resultDisputeOpen&&selected?.result&&selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&selected.replay.nativePlayerMapping?.length&&<NativeBattleRecordViewer
+        {!preview&&recorded.eligible&&!selected?.resultDisputeOpen&&selected?.result&&selected?.replay?.nativeSocialRecordAvailable===true&&selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&selected.replay.nativePlayerMapping?.length&&<NativeBattleRecordViewer
           key={'record:'+data.match.matchId+':'+selected.gameId+':'+selected.replay.statisticsRevision}
           repository={repository} matchId={data.match.matchId} gameId={selected.gameId}
           mapping={selected.replay.nativePlayerMapping} players={selected.players}/> }
