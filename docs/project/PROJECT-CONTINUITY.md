@@ -11,6 +11,23 @@ Last updated: **10 October 2026**. This file is the entrypoint for continuing th
 
 The latest explicit product decision governs direction; Core Identity governs durable principles; **GitHub `main` governs merged implementation**. Specialist contracts govern their own technical details. Draft branches, local emulator experiments and past chats do **not** establish deployed behavior.
 
+## Event-first V1 implementation branch — not deployed
+
+The user approved Firebase plus one Cloud Storage Recorded Events object per
+extraction revision. [Milestones 1–2](../architecture/recorded-events-v1-contract.md)
+implement the native contract, direct extraction and replay-free projection,
+building on PRs #83/#89. [Acceptance evidence](../testing/recorded-events-direct-v1-acceptance.md)
+records statistical equivalence and measured costs. Draft PR #90 preserves the
+implementation on `feat/recorded-events-v1-direct`, based on PR #89. All four native
+equivalence cases pass; 289 regression cases pass and four separately enabled
+legacy golden cases fail on inherited mismatches. See the report before claiming
+full acceptance; goldens were not changed. PR #88 remains the separate gzip
+social-history reader fix. The latest requested scope stops after Milestones 1–2.
+Permanent storage, bounded website reads and independent projection revisions
+remain future work. No merge/deployment or historical cleanup is implied; do not
+feed native provenance into legacy result/social readers until their compatibility
+and publication tests are implemented.
+
 ## Season Event guidance
 
 The authoritative [8 October Season Event contract](CORE-IDENTITY.md#season-event-contract) supersedes older proposals:
