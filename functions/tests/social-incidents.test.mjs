@@ -252,3 +252,18 @@ test('native qualified social facts must bind their complete extraction revision
    assert.equal(review.deeds.length,0);
  }
 });
+
+
+test('recorded real eight-player FFA social chronology is invariant under native provenance',()=>{
+ const full=JSON.parse(fs.readFileSync(new URL('./fixtures/social-ffa-diplo.json',import.meta.url)));
+ const native=asNative(full);
+ const context={gameId:'reference-ffa/game',battleId:'reference-ffa'};
+ const before=projectSocialIncidents({statistics:full,context});
+ const after=projectSocialIncidents({statistics:native,context});
+ assert.equal(before.status,'REVIEW_AVAILABLE');
+ assert.equal(after.status,'REVIEW_AVAILABLE');
+ assert.deepEqual(withoutSource(after),withoutSource(before));
+ assert.equal(after.exposure.length,28);
+ assert.equal(after.deeds.length,0);
+ assert.ok(after.incidents.length>0);
+});
