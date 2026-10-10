@@ -62,11 +62,11 @@ export interface ActiveNativeDetailRequest {
 }
 export interface ActiveNativeBattleRecordQuery {
   matchId:string;gameId:string;mode:'overview'|'page'|'fragment';
-  section?:string;offset?:number;index?:number;expectedArtifactSha256?:string;
+  section?:string;offset?:number;index?:number;expectedArtifactSha256?:string;expectedReviewRevision?:string;
 }
 export interface ActiveNativeBattleRecordResult {
   success:true;state:'READY';delivery:'NATIVE_BOUNDED_V1';version:string;
-  matchId:string;gameId:string;statisticsId:string;artifactSha256:string;
+  matchId:string;gameId:string;statisticsId:string;artifactSha256:string;reviewRevision:string;
   mode:'overview'|'page'|'fragment';section?:string;
   source?:Record<string,unknown>;
   matchFacts?:{modelVersion?:string;observedDurationMs?:number|null;mapName?:string|null;mapId?:number|null;rules?:Record<string,unknown>};
