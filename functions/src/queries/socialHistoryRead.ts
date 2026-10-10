@@ -1,4 +1,4 @@
-import {createHash} from 'node:crypto';
+import {decodeReplayStatistics} from '../services/replayStatisticsStorage.js';
 import {getStorage} from 'firebase-admin/storage';
 import {HttpsError} from 'firebase-functions/v2/https';
 import {db} from '../config/firebase.js';
@@ -43,9 +43,9 @@ export async function readSocialHistory(ownerPlayerId:string){
       const source=revision.data();
       if(source?.state!=='READY'||!source.statistics?.path||!source.statistics?.sha256){excluded.push({gameIdentity,reason:'active_artifact_unavailable'});continue;}
       const [bytes]=await getStorage().bucket(bucket).file(source.statistics.path).download();
-      if(createHash('sha256').update(bytes).digest('hex')!==source.statistics.sha256)
-        throw new HttpsError('data-loss','A social source failed artifact integrity verification.');
-      let statistics:any;try{statistics=JSON.parse(bytes.toString('utf8'));}catch{throw new HttpsError('data-loss','A social source is invalid JSON.');}
+      let statistics:any;
+      try{statistics=decodeReplayStatistics(bytes,source.statistics);}
+      catch{throw new HttpsError('data-loss','A social source failed statistics decoding or integrity verification.');}
       const review=projectSocialIncidents({statistics,playerMapping:source.playerMapping??[],officialOutcome:official,
         context:{gameId:gameIdentity,battleId:match.doc.id}});
       if(review.status!=='REVIEW_AVAILABLE'){excluded.push({gameIdentity,reason:review.reason});continue;}
