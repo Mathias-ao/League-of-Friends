@@ -59,6 +59,15 @@ class DirectSharedTests(unittest.TestCase):
         on_disk_equivalent = json.loads(json.dumps(direct, sort_keys=True))
         self.assertEqual(restore_full_statistics(on_disk_equivalent), original)
 
+    def test_indexed_skirmish_and_engagement_paths_preserve_complete_statistics(self):
+        original = project_statistics_from_analysis(self.analysis)
+        indexed = project_statistics_from_analysis(self.analysis, fast_action_windows=True)
+        self.assertEqual(indexed, original)
+        packed = project_statistics_from_analysis(
+            self.analysis, direct_shared=True, fast_action_windows=True,
+        )
+        self.assertEqual(restore_full_statistics(json.loads(json.dumps(packed))), original)
+
     def test_interns_related_battle_and_skirmish_evidence_without_losing_player_facts(self):
         huge = [f"op-{i:07}" for i in range(300)]
         skirmish = {"skirmishId": "s1", "sourceEventIds": huge,
