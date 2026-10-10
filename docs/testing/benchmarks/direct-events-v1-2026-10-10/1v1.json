@@ -1,0 +1,120 @@
+{
+  "allStatisticsEqualWithNativeProvenance": true,
+  "artifact": {
+    "bytes": 2496922,
+    "compression": "gzip",
+    "datasetVersion": "AOF_RECORDED_EVENTS_V1",
+    "format": "jsonl",
+    "sha256": "57afab283dd1199ba2487ef3e83b462656151a8fa33d189295c3d58e92f1236f",
+    "uncompressedBytes": 50460651,
+    "uncompressedSha256": "871b744eb237677caf6eb329249e710bf8674a38668adab8570b6839fb2c0d6c"
+  },
+  "benchmarkVersion": "AOF_DIRECT_EVENTS_BENCHMARK_V1",
+  "limitations": [
+    "Local warm-cache measurements; no cloud latency/cost or concurrent-worker test.",
+    "Three projection/serialization runs, one extraction per recording.",
+    "Windows sampled process-tree working set; shared pages may be counted twice.",
+    "Source provenance, coverage retention messages and revision-scoped social IDs intentionally differ."
+  ],
+  "participantEngagementEvidenceJsonBytes": 6048670,
+  "phaseTimings": {
+    "project": {
+      "loadMs": 6577.8222999942955,
+      "projectMs": 528.8429999927757,
+      "serializeMs": 0.00100000761449337
+    },
+    "serialize": {
+      "loadMs": 6454.657399997814,
+      "projectMs": 537.7105999941705,
+      "serializeMs": 297.62560001108795
+    },
+    "serialize_full": {
+      "loadMs": 6681.6777999920305,
+      "projectMs": 560.9589000086999,
+      "serializeMs": 83.18069999222644
+    }
+  },
+  "sectionJsonBytes": {
+    "commandEvidence": 25875,
+    "coverage": 1641,
+    "eligibilityRegistryVersion": 31,
+    "entityCatalogVersion": 25,
+    "formulaVersion": 34,
+    "matchFacts": 7130,
+    "pairSocialEvidence": 325536,
+    "participants": 6277919,
+    "recorderCamera": 82,
+    "scope": 296,
+    "source": 312,
+    "statisticsProjectionVersion": 35,
+    "statisticsSchemaSha256": 66,
+    "statisticsSchemaVersion": 7,
+    "townBellEligibility": 445,
+    "warnings": 2747
+  },
+  "source": {
+    "bytes": 5224881,
+    "file": "1v1.aoe2record",
+    "sha256": "ffcef31b311bf3ec094b47cdef2b449294dec9c51613c53d94c23f7cd481bb8f"
+  },
+  "stages": [
+    {
+      "peakChildRssBytes": 4247552,
+      "peakWindowsProcessTreeWorkingSetBytes": 52547584,
+      "stage": "direct_extract_verify",
+      "wallMs": 16435.739
+    },
+    {
+      "peakChildRssBytes": 4247552,
+      "peakWindowsProcessTreeWorkingSetBytes": 57892864,
+      "stage": "load",
+      "wallMs": 6704.408
+    },
+    {
+      "peakChildRssBytes": 4247552,
+      "peakWindowsProcessTreeWorkingSetBytes": 68616192,
+      "stage": "project",
+      "wallMs": 7436.675
+    },
+    {
+      "peakChildRssBytes": 4243456,
+      "peakWindowsProcessTreeWorkingSetBytes": 79405056,
+      "stage": "serialize_full",
+      "wallMs": 7655.849
+    },
+    {
+      "peakChildRssBytes": 4247552,
+      "peakWindowsProcessTreeWorkingSetBytes": 69685248,
+      "stage": "serialize",
+      "wallMs": 7679.389
+    },
+    {
+      "peakChildRssBytes": 4247552,
+      "peakWindowsProcessTreeWorkingSetBytes": 69722112,
+      "stage": "serialize",
+      "wallMs": 7880.613
+    },
+    {
+      "peakChildRssBytes": 4247552,
+      "peakWindowsProcessTreeWorkingSetBytes": 69595136,
+      "stage": "serialize",
+      "wallMs": 7625.777
+    }
+  ],
+  "statisticalInputsEqual": true,
+  "statisticsBytes": 6642494,
+  "statisticsGzipBytes": 299601,
+  "statisticsSha256": "37844ea27ceff377f973bb51559be2ccc85e3b3192068c8a6bedb41c222800b4",
+  "verifiedDuplicateBinaryTributeTargetsOmitted": 0,
+  "extraction": {
+    "decoderCodeSha256": "3ff9f2e99b5ac33f4596d364f7cf851c277215b52abba3ef138e554cbcc69e54",
+    "extractorCodeSha256": "b02cf79c6b66e64fc555d22a6a788da2976f51ab72ec8848e537970eb81706d6",
+    "normalizerVersion": "AOF_CANONICAL_NORMALIZER_V1_2",
+    "parserVersion": "mgz-fast/1.0.0",
+    "revision": "9d75bae6-7631-5edf-8a7c-5504e8f97fb7"
+  },
+  "runtime": {
+    "python": "3.14.7",
+    "platform": "Windows"
+  }
+}

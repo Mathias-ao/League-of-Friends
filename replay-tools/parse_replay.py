@@ -144,17 +144,17 @@ def preflight_source(path: Path, *, max_source_bytes: int = MAX_SOURCE_BYTES,
             raise ValueError("Incomplete or trailing compressed header data")
 
 
-def json_safe(value: Any) -> Any:
+def json_safe(value: Any, *, retain_binary: bool = True) -> Any:
     if isinstance(value, float) and not math.isfinite(value):
         return {"nonFiniteFloat": str(value)}
     if value is None or isinstance(value, (str, bool, int, float)):
         return value
     if isinstance(value, bytes):
-        return {"bytesBase64": base64.b64encode(value).decode("ascii")}
+        return {"bytesBase64": base64.b64encode(value).decode("ascii")} if retain_binary else {}
     if isinstance(value, (list, tuple)):
-        return [json_safe(item) for item in value]
+        return [json_safe(item, retain_binary=retain_binary) for item in value]
     if isinstance(value, dict):
-        return {str(key): json_safe(child) for key, child in value.items()}
+        return {str(key): json_safe(child, retain_binary=retain_binary) for key, child in value.items()}
     if hasattr(value, "hexdigest"):
         return {"digestAlgorithm": value.name, "digestHex": value.hexdigest()}
     if hasattr(value, "name"):
@@ -289,14 +289,14 @@ def action_entity(action_name: str, action_data: dict[str, Any]) -> dict[str, An
     return None
 
 
-def action_decode(action_name: str, raw_operation: bytes) -> tuple[dict[str, Any], int | None, str | None]:
+def action_decode(action_name: str, raw_operation: bytes, *, retain_raw: bool = True) -> tuple[dict[str, Any], int | None, str | None]:
     if action_name == "ERROR":
         code = recovered_action_code(raw_operation)
         return ({
             "status": "unknown_action",
             "knownByteCount": None,
             "unknownByteCount": None,
-            "unknownBytesBase64": base64.b64encode(raw_operation).decode("ascii"),
+            "unknownBytesBase64": base64.b64encode(raw_operation).decode("ascii") if retain_raw else None,
             "parserWarningCodes": ["MGZ_FAST_ACTION_DECODE_ERROR"],
         }, code, None)
 
@@ -306,7 +306,7 @@ def action_decode(action_name: str, raw_operation: bytes) -> tuple[dict[str, Any
         "status": "partial",
         "knownByteCount": None,
         "unknownByteCount": None,
-        "unknownBytesBase64": base64.b64encode(raw_operation).decode("ascii"),
+        "unknownBytesBase64": base64.b64encode(raw_operation).decode("ascii") if retain_raw else None,
         "parserWarningCodes": ["UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"],
     }, None, action_name)
 
@@ -320,9 +320,10 @@ def canonical_action_event(
     action_type: Any,
     action_data: dict[str, Any],
     raw_operation: bytes,
+    retain_raw: bool = True,
 ) -> dict[str, Any]:
     action_name = enum_name(action_type) or "ERROR"
-    decode, recovered_code, recovered_name = action_decode(action_name, raw_operation)
+    decode, recovered_code, recovered_name = action_decode(action_name, raw_operation, retain_raw=retain_raw)
     source_code = integer(getattr(action_type, "value", None))
     if action_name == "ERROR":
         source_code = recovered_code
@@ -341,9 +342,10 @@ def canonical_action_event(
     if action_name == "GAME" and target_player is not None and action_data.get("diplomacy_mode") is not None:
         event_type = "command.diplomacy_change"
 
-    payload = json_safe(action_data)
-    payload["_rawOperationBase64"] = base64.b64encode(raw_operation).decode("ascii")
-    payload["_rawLayout"] = json_safe(command_layout(raw_operation, action_name))
+    payload = json_safe(action_data, retain_binary=retain_raw)
+    if retain_raw:
+        payload["_rawOperationBase64"] = base64.b64encode(raw_operation).decode("ascii")
+    payload["_rawLayout"] = json_safe(command_layout(raw_operation, action_name), retain_binary=retain_raw)
     return {
         "eventId": f"op-{ordinal:09d}",
         "layer": "parser_fact",
@@ -430,8 +432,11 @@ def parse_body(
     *,
     body_offset: int | None = None,
     pov_player_id: int | None = None,
+    retain_raw: bool = True,
+    collect_summary: bool = True,
 ) -> dict[str, Any]:
-    projector = CompactProjector({player["replaySlot"] for player in players})
+    projector = CompactProjector({player["replaySlot"] for player in players}) if collect_summary else None
+    sync_count = 0
     elapsed_ms = 0
     with path.open("rb") as handle:
         eof = os.fstat(handle.fileno()).st_size
@@ -446,7 +451,7 @@ def parse_body(
                 action_type, data = payload
                 event = canonical_action_event(ordinal=ordinal, elapsed_ms=elapsed_ms,
                     op_start=begin, op_end=end, action_type=action_type,
-                    action_data=data, raw_operation=raw)
+                    action_data=data, raw_operation=raw, retain_raw=retain_raw)
             else:
                 fields: dict[str, Any] = {}
                 actor, pos, classification = None, None, "A"
@@ -454,21 +459,22 @@ def parse_body(
                               "POSTGAME": "postgame.block", "START": "match.start", "SAVE": "save.chapter",
                               "UNKNOWN": "operation.unknown"}[op_name]
                 if op_name == "SYNC":
+                    sync_count += 1
                     increment, checksum, data = payload
                     elapsed_ms += int(increment)
-                    fields = {"incrementMs": int(increment), "checksum": checksum, "data": json_safe(data)}
+                    fields = {"incrementMs": int(increment), "checksum": checksum, "data": json_safe(data, retain_binary=retain_raw)}
                 elif op_name == "VIEWLOCK":
                     pos = position(*payload)
                     actor, classification = pov_player_id, "A+E"
                 elif op_name == "CHAT":
                     fields = {"text": payload.decode("utf-8", errors="replace").strip("\x00"),
-                              "rawBase64": base64.b64encode(payload).decode("ascii")}
+                              **({"rawBase64": base64.b64encode(payload).decode("ascii")} if retain_raw else {})}
                     try:
                         fields["structuredChat"] = json.loads(fields["text"])
                     except (ValueError, TypeError):
                         pass
                 elif op_name == "POSTGAME":
-                    fields = {"decoded": json_safe(payload)}
+                    fields = {"decoded": json_safe(payload, retain_binary=retain_raw)}
                 else:
                     fields = {"rawOperationCode": int.from_bytes(raw[:4], "little") if len(raw) >= 4 else None}
                 if error:
@@ -477,7 +483,8 @@ def parse_body(
                     warnings.append(message)
                     structured_warnings.append(structured_warning("BODY_OPERATION_PARSE_FAILED", message,
                         severity="error", operation_ordinal=ordinal, affected_fields=["factStore", "match.durationMs"]))
-                fields["_rawOperationBase64"] = base64.b64encode(raw).decode("ascii")
+                if retain_raw:
+                    fields["_rawOperationBase64"] = base64.b64encode(raw).decode("ascii")
                 # Only an increment-only sync frame has fully accounted bytes here.
                 status = "failed" if error else "complete" if op_name == "SYNC" and len(raw) == 8 else "partial"
                 event = generic_body_event(ordinal=ordinal, elapsed_ms=elapsed_ms, op_start=begin, op_end=end,
@@ -485,15 +492,16 @@ def parse_body(
                     actor_player_id=actor, pos=pos, evidence_classification=classification, decode_status=status)
                 event["decode"].update(knownByteCount=len(raw) if status == "complete" else None,
                     unknownByteCount=0 if status == "complete" else None,
-                    unknownBytesBase64=None if status == "complete" else base64.b64encode(raw).decode("ascii"),
+                    unknownBytesBase64=base64.b64encode(raw).decode("ascii") if retain_raw and status != "complete" else None,
                     parserWarningCodes=[] if status == "complete" else ["FRAMING_FAILED" if error else "UPSTREAM_BYTE_COVERAGE_UNINSTRUMENTED"])
                 event["evidence"]["methodVersion"] = EXPORTER_VERSION
                 event["evidence"]["confidence"] = "low" if error else "high"
             if fact_writer is not None:
                 fact_writer.write(event)
-            projector.consume(event)
-    body = projector.finish()
-    if not body["totalSyncOperations"]:
+            if projector is not None:
+                projector.consume(event)
+    body = projector.finish() if projector is not None else {}
+    if not sync_count:
         warnings.append("Replay contained no SYNC operations; no duration qualification.")
         structured_warnings.append(structured_warning("NO_SYNC_OPERATIONS",
             "Observed sync duration is zero; full game duration is unavailable.", affected_fields=["match.durationMs"]))

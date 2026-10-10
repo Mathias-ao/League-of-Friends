@@ -44,9 +44,11 @@ def project_pair_episode_context(
     if pair_evidence.get("identityNamespace") != "CANONICAL_REPLAY_PLAYER_ID":
         raise ValueError("Explicit replay identity namespace required")
     revision = pair_evidence.get("gameScope") or {}
-    required = ("replaySha256", "canonicalManifestSha256", "canonicalSchemaVersion", "parserVersion")
+    required = ("replaySha256", "recordedEventsSha256", "recordedEventsVersion", "parserVersion") if "recordedEventsVersion" in revision else (
+        "replaySha256", "canonicalManifestSha256", "canonicalSchemaVersion", "parserVersion")
     if not all(isinstance(revision.get(key), str) and revision[key] for key in required):
-        raise ValueError("Canonical revision provenance required")
+        raise ValueError("Recorded events revision provenance required" if "recordedEventsVersion" in revision
+                         else "Canonical revision provenance required")
     players = set(pair_evidence.get("playerIds") or [])
     lookup = {}
     for event in action_events:

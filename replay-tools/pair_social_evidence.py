@@ -52,13 +52,12 @@ def project_pair_social_evidence(
     Missing families stay unavailable. Positive observations do not establish
     completeness, non-contact, non-cooperation or an opportunity to assist.
     """
-    revision = {
-        key: source.get(key) for key in (
-            "replaySha256", "canonicalManifestSha256", "canonicalSchemaVersion", "parserVersion",
-        )
-    }
+    revision_keys = ("replaySha256", "recordedEventsSha256", "recordedEventsVersion", "parserVersion") if "recordedEventsVersion" in source else (
+        "replaySha256", "canonicalManifestSha256", "canonicalSchemaVersion", "parserVersion")
+    revision = {key: source.get(key) for key in revision_keys}
     if not all(isinstance(revision[key], str) and revision[key] for key in revision):
-        raise ValueError("Pair social evidence requires canonical source revision provenance")
+        raise ValueError("Pair social evidence requires recorded events source revision provenance" if "recordedEventsVersion" in source
+                         else "Pair social evidence requires canonical source revision provenance")
     participants = {row["playerId"]: row for row in manifest.get("participants", [])}
     if len(participants) != len(manifest.get("participants", [])):
         raise ValueError("Duplicate replay player identity")

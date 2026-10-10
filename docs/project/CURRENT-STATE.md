@@ -6,6 +6,16 @@ Last reviewed: **10 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for b
 
 ## Current product and implementation
 
+**Unmerged event-first V1 work:** the approved successor architecture now has a
+[native event contract and direct extraction/projection implementation](../architecture/recorded-events-v1-contract.md)
+with [local acceptance evidence](../testing/recorded-events-direct-v1-acceptance.md).
+Draft PR #90 has four passing native equivalence cases; overall regression sign-off
+remains conditional on four inherited legacy golden mismatches documented there.
+The current Firebase upload still generates canonical archives. Permanent native
+event publication, bounded frontend retrieval, recalculation jobs and staging
+cutover acceptance remain subsequent milestones; this branch does not change
+official results, points or any deployed environment.
+
 | Area | Verified implementation / status | Next gate |
 | --- | --- | --- |
 | League identity | Steam OpenID and Firebase admission, audited Emperor's Favor enrollment and retained verified Steam-name history on `main`; local emulator uses eight synthetic, independently authenticated accounts and a **local-only** login override. | Real multi-account identity and admission acceptance in the chosen nonproduction environment. |

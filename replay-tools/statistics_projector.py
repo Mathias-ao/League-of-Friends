@@ -238,14 +238,18 @@ def project_statistics_from_analysis(
         {"code": "MILITARY_PRODUCTION_IS_QUEUE_DERIVED", "message": "Military V5 counts positive decoded military queue amounts and placement/research commands, using promoted DE producer-building type where needed. It does not assert completed units/buildings, surviving army, kills, deaths or damage."},
     ]
     source = analysis["source"]
+    event_native = "recordedEventsVersion" in source
+    projection_schema = STATISTICS_SCHEMA
+    if event_native:
+        projection_schema = STATISTICS_SCHEMA.with_name("recorded-events-statistics-v1.schema.json")
     result = {
-        "statisticsSchemaVersion": STATISTICS_SCHEMA_VERSION,
-        "statisticsSchemaSha256": sha256(STATISTICS_SCHEMA),
-        "statisticsProjectionVersion": PROJECTION_VERSION,
+        "statisticsSchemaVersion": "1.2.0" if event_native else STATISTICS_SCHEMA_VERSION,
+        "statisticsSchemaSha256": sha256(projection_schema),
+        "statisticsProjectionVersion": "AOF_RECORDED_EVENTS_STATISTICS_V1" if event_native else PROJECTION_VERSION,
         "formulaVersion": FORMULA_VERSION,
         "eligibilityRegistryVersion": registry["registryVersion"],
         "entityCatalogVersion": catalog["schemaVersion"],
-        "source": {
+        "source": dict(source) if event_native else {
             "replaySha256": source["replaySha256"],
             "canonicalManifestSha256": source["canonicalManifestSha256"],
             "extractionRunId": source["extractionRunId"],
@@ -294,6 +298,9 @@ def project_statistics_from_analysis(
         execution_statistics=execution_statistics, action_events=spatial_action_events,
     )
     schema = read_json(STATISTICS_SCHEMA)
+    if event_native:
+        # The small overlay retains every existing statistics section/constraint.
+        schema["properties"].update(read_json(projection_schema)["properties"])
     errors = sorted(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(result),
                     key=lambda error: list(error.absolute_path))
     if errors:

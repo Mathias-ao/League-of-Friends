@@ -1,0 +1,225 @@
+{
+  "baseline": {
+    "benchmarkVersion": "AOF_REPLAY_PERFORMANCE_BASELINE_V1",
+    "source": {
+      "file": "1v1.aoe2record",
+      "sha256": "ffcef31b311bf3ec094b47cdef2b449294dec9c51613c53d94c23f7cd481bb8f",
+      "bytes": 5224881
+    },
+    "execution": {
+      "sealMode": "full",
+      "archiveIncluded": true,
+      "reprojectionChecks": 2,
+      "platform": "Windows-11-10.0.26300-SP0",
+      "python": "Python 3.14.7, Windows local replay virtualenv (host path omitted)",
+      "repoCommit": "c915a9a90572063093743d1fd23d022ea42ee536"
+    },
+    "timings": {
+      "stages": [
+        {
+          "stage": "parse_and_seal",
+          "wallMs": 183137.125,
+          "peakChildRssBytes": null
+        },
+        {
+          "stage": "analysis_dataset",
+          "wallMs": 7775.571,
+          "peakChildRssBytes": null
+        },
+        {
+          "stage": "statistics_projection",
+          "wallMs": 1909.418,
+          "peakChildRssBytes": null
+        },
+        {
+          "stage": "reprojection_1",
+          "wallMs": 1816.121,
+          "peakChildRssBytes": null
+        },
+        {
+          "stage": "reprojection_2",
+          "wallMs": 1739.898,
+          "peakChildRssBytes": null
+        },
+        {
+          "stage": "archive_bundle",
+          "wallMs": 650.327,
+          "peakChildRssBytes": null
+        }
+      ],
+      "sumStageWallMs": 197028.46,
+      "parserDetail": {
+        "sourcePreflightHeaderMs": 72.46,
+        "replayDecodeCanonicalWriteMs": 16418.61,
+        "canonicalSealMs": 166104.521,
+        "canonicalSealMode": "full",
+        "canonicalVerificationMs": 166104.521,
+        "parserTotalMs": 182595.672
+      }
+    },
+    "sizes": {
+      "totals": {
+        "sourceReplay": 5224881,
+        "adapter": 217930,
+        "analysisCache": 33637324,
+        "statistics": 6643992,
+        "canonicalFiles": 15719616,
+        "canonicalArchive": 5758632
+      },
+      "canonicalCategories": {
+        "factsGzip": 8117447,
+        "terrainGzip": 234539,
+        "initialObjectsGzip": 150844,
+        "headerGzip": 551100,
+        "otherCanonical": 6665686
+      },
+      "canonicalFiles": {
+        "canonical-replay.json": 14655,
+        "coverage-report.json": 2889,
+        "decoded-header.json.gz": 52272,
+        "extraction-manifest.json": 2348,
+        "facts-00000.jsonl.gz": 212888,
+        "facts-00001.jsonl.gz": 228732,
+        "facts-00002.jsonl.gz": 223469,
+        "facts-00003.jsonl.gz": 193116,
+        "facts-00004.jsonl.gz": 196019,
+        "facts-00005.jsonl.gz": 196603,
+        "facts-00006.jsonl.gz": 194481,
+        "facts-00007.jsonl.gz": 184853,
+        "facts-00008.jsonl.gz": 200512,
+        "facts-00009.jsonl.gz": 189161,
+        "facts-00010.jsonl.gz": 194093,
+        "facts-00011.jsonl.gz": 198258,
+        "facts-00012.jsonl.gz": 208159,
+        "facts-00013.jsonl.gz": 190402,
+        "facts-00014.jsonl.gz": 196419,
+        "facts-00015.jsonl.gz": 192895,
+        "facts-00016.jsonl.gz": 195110,
+        "facts-00017.jsonl.gz": 191738,
+        "facts-00018.jsonl.gz": 197198,
+        "facts-00019.jsonl.gz": 195591,
+        "facts-00020.jsonl.gz": 201461,
+        "facts-00021.jsonl.gz": 196419,
+        "facts-00022.jsonl.gz": 193974,
+        "facts-00023.jsonl.gz": 195263,
+        "facts-00024.jsonl.gz": 188994,
+        "facts-00025.jsonl.gz": 192012,
+        "facts-00026.jsonl.gz": 192542,
+        "facts-00027.jsonl.gz": 196154,
+        "facts-00028.jsonl.gz": 200985,
+        "facts-00029.jsonl.gz": 194649,
+        "facts-00030.jsonl.gz": 196912,
+        "facts-00031.jsonl.gz": 191138,
+        "facts-00032.jsonl.gz": 195332,
+        "facts-00033.jsonl.gz": 196925,
+        "facts-00034.jsonl.gz": 193892,
+        "facts-00035.jsonl.gz": 194649,
+        "facts-00036.jsonl.gz": 202126,
+        "facts-00037.jsonl.gz": 185347,
+        "facts-00038.jsonl.gz": 199161,
+        "facts-00039.jsonl.gz": 196348,
+        "facts-00040.jsonl.gz": 201359,
+        "facts-00041.jsonl.gz": 32108,
+        "field-claims.json": 1802,
+        "header-prefix.bin.gz": 498828,
+        "initial-objects-00000.jsonl.gz": 150844,
+        "statistics.json": 6643992,
+        "terrain-00000.jsonl.gz": 126854,
+        "terrain-00001.jsonl.gz": 107685
+      }
+    },
+    "reprojectionByteIdentical": true,
+    "statisticsSha256": "3008468b29a1c1d3750e368cc97a8c1181f72722a1315edc14a0d5571af58d20",
+    "limitations": [
+      "Timings include Python CLI startup and local disk I/O; exclude browser transfer, HTTP worker transfer, Firebase persistence and concurrent uploads.",
+      "Memory is each child process's Linux /proc VmHWM sampled at 20 ms; null on unsupported platforms.",
+      "Full seal verifies canonical evidence; fast seal is development-only and is not a substitute for full conformance.",
+      "Compare statistics across code revisions using existing semantic goldens; extraction provenance changes between independent runs."
+    ]
+  },
+  "recordedEvents": {
+    "analysisV5GzipBytes": 1745643,
+    "artifact": {
+      "bytes": 1782694,
+      "compression": "gzip",
+      "format": "json",
+      "sha256": "fe08cb6eb9e558c0837419f781d67e292caa7741a505f395a961e7db0f8076c9",
+      "uncompressedBytes": 61977747,
+      "uncompressedSha256": "190b05ffcfa79d73edb01dfab73115f192ea39548ac066e1de7362299313975b"
+    },
+    "baselineVersion": "AOF_REPLAY_PERFORMANCE_BASELINE_V1",
+    "experimentVersion": "AOF_RECORDED_EVENTS_BENCHMARK_V1",
+    "firestore": {
+      "batchPolicy": "record-aligned bisection to 900 KiB; context separate; no document/index/protocol overhead",
+      "compressedBytes": 1781181,
+      "documentCount": 5,
+      "maxDocumentPayloadBytes": 876876,
+      "targetBytes": 921600
+    },
+    "limitations": [
+      "Local CLI, no cloud reads/writes or measured network latency.",
+      "Converter still scans a canonical bundle; no direct event-first extractor speedup claimed.",
+      "Current projection semantics preserved, including legacy missing elevation input.",
+      "Full original/raw evidence is intentionally absent; new decoder discoveries may require verified reupload."
+    ],
+    "localDecodeValidateMs": 3870.403,
+    "projectionRuns": 3,
+    "source": {
+      "bytes": 5224881,
+      "file": "1v1.aoe2record",
+      "sha256": "ffcef31b311bf3ec094b47cdef2b449294dec9c51613c53d94c23f7cd481bb8f"
+    },
+    "statisticsByteIdentical": true,
+    "statisticsGzipBytes": 300571,
+    "statisticsSha256": "3008468b29a1c1d3750e368cc97a8c1181f72722a1315edc14a0d5571af58d20",
+    "timings": [
+      {
+        "peakChildRssBytes": 4268032,
+        "peakWindowsProcessTreeWorkingSetBytes": 676511744,
+        "stage": "recorded_events_from_canonical",
+        "wallMs": 15809.433
+      },
+      {
+        "peakChildRssBytes": 4255744,
+        "peakWindowsProcessTreeWorkingSetBytes": 698023936,
+        "stage": "recorded_events_projection_1",
+        "wallMs": 9196.519
+      },
+      {
+        "peakChildRssBytes": 4255744,
+        "peakWindowsProcessTreeWorkingSetBytes": 637935616,
+        "stage": "recorded_events_projection_2",
+        "wallMs": 9382.698
+      },
+      {
+        "peakChildRssBytes": 4255744,
+        "peakWindowsProcessTreeWorkingSetBytes": 660152320,
+        "stage": "recorded_events_projection_3",
+        "wallMs": 9257.993
+      }
+    ],
+    "wireByteArithmetic": {
+      "archiveBase64Bytes": 7678176,
+      "recordedEventsBinaryBytes": 1782694,
+      "sourceBase64Bytes": 6966508
+    }
+  },
+  "extractorVersions": {
+    "canonicalSchemaVersion": "1.1.0",
+    "compatibilityRegistrySha256": "9198c10ae148d18f07c5e817c3d08e98e11f6aa70b58b474a9c4534a0014d007",
+    "decoderCodeSha256": "3ff9f2e99b5ac33f4596d364f7cf851c277215b52abba3ef138e554cbcc69e54",
+    "decoderDistribution": "mgz-fast",
+    "decoderVersion": "1.0.0",
+    "entityDataVersion": "RAW_AOE2_IDS_V1",
+    "exporterCodeSha256": "800fd8c25c7edaab34d51d7fed014834d8dcb098e8d514b84683258d0dba5fef",
+    "exporterVersion": "AOF_CANONICAL_EXTRACTOR_V1",
+    "schemaSha256": "8b34d318221e389b4b2495b774fcd973d9c2a203d959feec6a67a555bdee2847"
+  },
+  "measurementNotes": [
+    "Exploratory developer-workstation run; no CPU isolation, cold-cache control or cloud traffic.",
+    "One full extraction per format; three projection processes per evidence representation. Some original baseline work overlapped light development/tests.",
+    "The final Recorded Events extension sweep ran sequentially; no competing replay benchmark.",
+    "Source/decoder hashes establish inputs. Git HEAD alone does not capture uncommitted experimental code during initial runs.",
+    "Root-only Windows working sets describe the venv launcher; use peakWindowsProcessTreeWorkingSetBytes. Missing tree fields are unavailable."
+  ]
+}

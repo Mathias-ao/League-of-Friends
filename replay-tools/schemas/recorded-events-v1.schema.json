@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://age-of-friends.invalid/schemas/recorded-events-v1-experimental",
+  "title": "Recorded Events V1 experimental",
+  "description": "One row per source operation. Array index is original ordinal; op-NNNNNNNNN is the stable local event ID. Runtime validation additionally checks sync clock, counts, framing, identities and forbidden raw-byte keys.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "datasetVersion", "layer", "source", "extraction", "context", "recordingHeader", "eventColumns", "events", "objectColumns", "initialObjects", "terrain", "completeness", "legacyCompatibility"],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "datasetVersion": {"const": "AOF_RECORDED_EVENTS_V1_EXPERIMENTAL"},
+    "layer": {"const": "decoded_observations"},
+    "source": {"type": "object", "required": ["sha256", "bytes"], "additionalProperties": false, "properties": {
+      "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "bytes": {"type": "integer", "minimum": 1}
+    }},
+    "extraction": {"type": "object", "required": ["revision", "parserVersion", "retentionVersion", "canonicalRunState", "converterSha256", "upstreamVersions"], "properties": {
+      "revision": {"type": "string", "minLength": 1}, "parserVersion": {"type": "string"},
+      "retentionVersion": {"const": "AOF_RECORDED_EVENTS_V1_EXPERIMENTAL"},
+      "canonicalRunState": {"enum": ["verified_local", "sealed_local_fast"]},
+      "converterSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "upstreamVersions": {"type": "object"}
+    }},
+    "context": {"type": "object", "required": ["schemaVersion", "source", "participants", "teams", "initialDiplomacy", "match", "initialState"], "description": "Legacy-compatible decoded Game settings, participants, raw lobby affiliations, map identity and start anchors. No league player IDs or inferred effective alliances."},
+    "recordingHeader": {"type": "object", "description": "Qualified field allowlist in match_facts.HEADER_KEYS, with edition-specific candidates preserved."},
+    "eventColumns": {"const": ["timestampMs", "sourceOperation", "eventType", "sourceActionCode", "sourceActionName", "actorPlayerId", "targetPlayerId", "objectInstanceIds", "targetInstanceId", "entity", "position", "endPosition", "payload", "decodeStatus", "warningCodes", "sequence", "layoutObservations"]},
+    "events": {"type": "array", "items": {"$ref": "#/$defs/event"}},
+    "objectColumns": {"const": ["ownerPlayerId", "objectId", "classId", "instanceId", "objectBlockIndex", "position", "entity"]},
+    "initialObjects": {"type": "array", "items": {"type": "array", "minItems": 7, "maxItems": 7, "prefixItems": [
+      {"$ref": "#/$defs/id"}, {"$ref": "#/$defs/id"}, {"$ref": "#/$defs/id"}, {"$ref": "#/$defs/id"}, {"$ref": "#/$defs/id"}, {"$ref": "#/$defs/position"}, {"$ref": "#/$defs/entity"}
+    ]}},
+    "terrain": {"type": "object", "required": ["width", "height", "columns", "tiles"], "additionalProperties": false, "properties": {
+      "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1},
+      "columns": {"const": ["terrainRaw", "elevation"]},
+      "tiles": {"type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/id"}}}
+    }},
+    "completeness": {"type": "object", "required": ["operationCount", "initialObjectCount", "framing", "observedUntilMs", "restoreTimeRaw", "initialObjects", "initialPlayerResources", "chatContent", "rawBytes", "semanticCompleteness"], "properties": {
+      "operationCount": {"type": "integer", "minimum": 0}, "initialObjectCount": {"type": "integer", "minimum": 0},
+      "framing": {"enum": ["complete", "partial"]}, "observedUntilMs": {"type": "integer", "minimum": 0},
+      "initialObjects": {"const": "partial_parser_object_search"}, "initialPlayerResources": {"const": "unavailable_parser_skips_values"},
+      "chatContent": {"const": "not_retained"}, "rawBytes": {"const": "not_retained"}, "semanticCompleteness": {"const": "not_established"}
+    }},
+    "legacyCompatibility": {"type": "object", "required": ["canonicalManifestSha256", "canonicalSchemaVersion", "canonicalVersions", "recordingHeaderSource", "coverage", "terrainElevationAvailable"], "description": "Small historical provenance/qualification envelope solely for byte-identical V5 adapter output. References do not promise historical artifact retention; old raw-retention messages are not RED policy."}
+  },
+  "$defs": {
+    "id": {"type": ["integer", "null"]},
+    "entity": {"type": ["object", "null"], "description": "Decoded raw namespace/ID and original qualification; no catalog inference."},
+    "position": {"type": ["object", "null"], "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "z": {"type": ["number", "null"]}, "tileX": {"$ref": "#/$defs/id"}, "tileY": {"$ref": "#/$defs/id"}}},
+    "event": {"type": "array", "minItems": 17, "maxItems": 17, "prefixItems": [
+      {"type": "integer", "minimum": 0},
+      {"enum": ["ACTION", "SYNC", "VIEWLOCK", "CHAT", "POSTGAME", "START", "SAVE", "UNKNOWN"]},
+      {"type": "string"}, {"$ref": "#/$defs/id"}, {"type": ["string", "null"]},
+      {"$ref": "#/$defs/id"}, {"$ref": "#/$defs/id"}, {"type": "array", "items": {"type": "integer"}},
+      {"$ref": "#/$defs/id"}, {"$ref": "#/$defs/entity"}, {"$ref": "#/$defs/position"}, {"$ref": "#/$defs/position"},
+      {"type": "object"}, {"enum": ["complete", "partial", "failed", "unknown_action"]},
+      {"type": "array", "items": {"type": "string"}}, {"$ref": "#/$defs/id"}, {"type": "object"}
+    ]}
+  }
+}

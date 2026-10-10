@@ -6,6 +6,14 @@ The October 8 [branch consolidation](../testing/branch-consolidation-2026-10-08.
 merged the statistics readiness and scoring branches into `main`.
 For Event and E2E workflow state, see [Current State](CURRENT-STATE.md).
 
+**Unmerged native Recorded Events V1:** [direct extraction/projection](../architecture/recorded-events-v1-contract.md)
+preserves the existing statistical models and independently versions source
+provenance/retention coverage. Native social evidence IDs are artifact-scoped;
+this must not create duplicate scored deeds during future publication. Initial
+resource decoding and the legacy missing-elevation correction remain separate
+versioned changes. [Acceptance and remaining milestones](../testing/recorded-events-direct-v1-acceptance.md)
+do not establish deployment or production readiness.
+
 ## Local replay/statistics E2E — 9–10 October 2026
 
 The user reported a successful isolated `demo-aof-e2e` run with eight independently

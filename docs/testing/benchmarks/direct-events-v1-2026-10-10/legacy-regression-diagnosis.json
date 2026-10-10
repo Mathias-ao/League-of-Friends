@@ -1,0 +1,96 @@
+{
+  "baseCommit": "4123b54503301a0259568a33cf12b8f339f9657f",
+  "implementationCommit": "42197d75db59f1788be1a655d5e0ff29a3d3dfca",
+  "method": "Fresh legacy-default parse_body from each checkout; SHA-256 over canonical json_bytes for every fact, without canonical sealing. Source files are the hash-pinned legacy fixtures. No golden changes.",
+  "fixtures": [
+    {
+      "id": "townbell-ffa-save68",
+      "facts": 454120,
+      "factsSha256": "32fca70aa730fe23ee45538a7c2a29161277310de05164706ab1a779d25a2acc",
+      "baseFactsEqual": true,
+      "goldenFacts": {
+        "recordCount": 454120,
+        "semanticSha256": "32fca70aa730fe23ee45538a7c2a29161277310de05164706ab1a779d25a2acc"
+      },
+      "sourceSha256": "2dd7a9a63f1b1b74f7e43dc1de1e70417089bb7f3ff667424591dea7db1e9ec9"
+    },
+    {
+      "id": "upstream-duel-save66.6",
+      "facts": 328072,
+      "factsSha256": "5a9c3b0b7f612c60712d94b727392f9ff6839f6ea3d513ca9a382de6c799323f",
+      "baseFactsEqual": true,
+      "goldenFacts": {
+        "recordCount": 328072,
+        "semanticSha256": "e8220d3da620b14599804e511c5ce757efea2f89acfd5400e7c6b760eb378f40"
+      },
+      "sourceSha256": "dc1a630ea33b197703f70fab0386b476d02b5bdd43916ec012f971ef580d3985"
+    },
+    {
+      "id": "user-ffa-diplo-save68.9",
+      "facts": 171025,
+      "factsSha256": "2f5bcc3526e5f98860e1fde0c10e9dad5d8ef671e31e7db5415b0fb3d881cf3a",
+      "baseFactsEqual": true,
+      "goldenFacts": {
+        "recordCount": 171025,
+        "semanticSha256": "baa0974696489270528ef3946e43859b11c3cb7bfc8e8f685d6d86958f448ad3"
+      },
+      "sourceSha256": "ab947d934bbd4fa4e2531f4f8a5014f9b923038a34aa7332d7260eb78fb3fab5"
+    },
+    {
+      "id": "user-duel-pov-1",
+      "facts": 348012,
+      "factsSha256": "70b049cb0ae8ec3d250080e181e8b100193addb689293aeff8e6916d0682bd3a",
+      "baseFactsEqual": true,
+      "goldenFacts": null,
+      "sourceSha256": "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181"
+    },
+    {
+      "id": "user-duel-pov-2",
+      "facts": 348013,
+      "factsSha256": "03a845e6fc3ef46ca1f4f2d7d1461a2a6cb608204b8abf5314ea037f6e4f260a",
+      "baseFactsEqual": true,
+      "goldenFacts": null,
+      "sourceSha256": "bcb0872742d2e6c2da1ed9844aed373e533adafe6b097765bcca3a9dd30e8836"
+    }
+  ],
+  "baseFfaStatisticsEqualCachedBaseline": true,
+  "baseWarningCodes": [
+    "PARTIAL_DECODE",
+    "HEADER_SEMANTICS_UNQUALIFIED",
+    "RELATION_STATE_UNQUALIFIED",
+    "NO_SOURCE_DELETION",
+    "OBSERVED_INTERVAL_ONLY",
+    "REQUESTS_NOT_OUTCOMES",
+    "ENTITY_LABELS_UNQUALIFIED",
+    "RECORDER_CAMERA_ONLY",
+    "RAIDS_ARE_INFERRED",
+    "ENGAGEMENTS_ARE_INFERRED",
+    "MAP_PRESENCE_IS_INFERRED",
+    "RESOURCE_COMMITMENT_IS_ESTIMATED",
+    "ECONOMY_OUTCOMES_ARE_RECONSTRUCTED",
+    "MILITARY_PRODUCTION_IS_QUEUE_DERIVED"
+  ],
+  "baseNormalizerVersion": "AOF_CANONICAL_NORMALIZER_V1_2",
+  "testRun": {
+    "tests": 4,
+    "failures": 4,
+    "skips": 0,
+    "seconds": 750.491,
+    "failuresByTest": {
+      "test_new_ffa_diplomacy": [
+        "/stores/facts/semanticSha256"
+      ],
+      "test_townbell_ffa": [
+        "/versions/normalizerVersion"
+      ],
+      "test_two_recorder_duel": [
+        "/warningCodes"
+      ],
+      "test_upstream_duel": [
+        "/stores/facts/semanticSha256",
+        "/versions/normalizerVersion"
+      ]
+    }
+  },
+  "limitation": "Legacy tests stop at the failing assertion; later assertions, including the final paired snapshot, were not newly verified. Goldens remain unchanged."
+}
