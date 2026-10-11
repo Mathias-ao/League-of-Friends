@@ -89,7 +89,7 @@ function fixture(){
    [recordedEvents.path,events],
    [statistics.path,gzip],
  ]);
- let onDownload=null,downloads=0;
+ let onDownload=null,downloads=0,beforeTransaction=null;
  const storage={file:(path,opts)=>({download:async()=>{
    assert.equal(opts.generation,'7','only the pinned immutable Storage generation is read');
    const bytes=objects.get(path);assert.ok(bytes,'unknown Storage path: '+path);
@@ -103,6 +103,7 @@ function fixture(){
  const db={
    collection:part=>({doc:id=>reference(part+'/'+id)}),
    async runTransaction(callback){
+     if(beforeTransaction){const mutate=beforeTransaction;beforeTransaction=null;mutate();}
      const changes=[],tx={
        get:async ref=>snapshot(ref.path),
        create:(ref,value)=>changes.push(['create',ref.path,value]),
@@ -132,7 +133,7 @@ function fixture(){
    candidateId,candidatePath:candidatesPath,
    publicationPath:'matches/m/games/g/nativeReplayPublications/'+candidateId,
    sourcePath:'matches/m/games/g/replaySources/'+sourceHash,
-   onDownload:fn=>onDownload=fn,
+   onDownload:fn=>onDownload=fn,onTransaction:fn=>beforeTransaction=fn,
    get downloads(){return downloads},
  };
 }
@@ -360,4 +361,72 @@ test('open result dispute remains open while an emergency rollback restores only
  assert.equal(restored.activeResultDisputeId,'dispute1');
  assert.equal(t.match.activeResultDisputeId,'dispute1');
  assert.equal(restored.activeReplayStatisticsId,null);
+});
+
+
+test('idempotent READY retries requalify the active source instead of trusting publication history alone',async()=>{
+ const scenarios=[
+  t=>{t.rows.get(t.sourcePath).state='REVOKED';},
+  t=>{t.rows.get(t.sourcePath).nativePublicationVersion='UNKNOWN_VERSION';},
+  t=>{t.rows.get(t.sourcePath).playerMapping[0].playerId='other';},
+  t=>{t.rows.get(t.sourcePath).statistics.uncompressedSha256='0'.repeat(64);},
+  t=>{delete t.rows.get(t.sourcePath).experience.seasonShowcaseVersion;},
+  t=>{t.rows.get(t.publicationPath).claimGuidHex='invalid-claim-key';},
+  t=>{t.game.activeResultDisputeId='open';},
+  t=>{t.game.canonicalResult.winningPlayerIds=['p2'];},
+ ];
+ for(const mutate of scenarios){
+  const t=fixture();await t.run();mutate(t);
+  await assert.rejects(t.run(),e=>['failed-precondition','aborted'].includes(e.code));
+  assert.equal(t.rows.get('matches/m/games/g').replayStatisticsRevision,1,
+    'a failed retry never advances the Game revision');
+ }
+});
+
+test('idempotent native publication checks current Game/permission atomically after the first snapshot',async()=>{
+ const t=fixture();await t.run();
+ t.onTransaction(()=>{t.rows.get('matches/m/games/g').activeResultDisputeId='opened-during-retry';});
+ await assert.rejects(t.run(),e=>['failed-precondition','aborted'].includes(e.code));
+ assert.equal(t.rows.get('matches/m/games/g').replayStatisticsRevision,1);
+ const actorChanged=fixture();await actorChanged.run();
+ actorChanged.onTransaction(()=>{actorChanged.rows.get('players/admin').membershipStatus='SUSPENDED';});
+ await assert.rejects(actorChanged.run(),e=>['failed-precondition','aborted'].includes(e.code));
+});
+
+test('published GUID claims cannot be reattributed to another Battle before retry or rollback',async()=>{
+ const t=fixture();await t.run();
+ const journal=t.rows.get(t.publicationPath),key='recordingGameClaims/'+journal.claimGuidHex;
+ assert.equal(journal.claimCreated,true);
+ t.rows.get(key).matchId='different-battle';
+ await assert.rejects(t.run(),e=>e.code==='failed-precondition');
+ const rollback={...t.request,operation:'ROLLBACK',expectedActiveSourceHash:t.sourceHash,
+   expectedStatisticsRevision:1,
+   reason:'Refuse to remove a claim transferred to another Battle after publication.'};
+ await assert.rejects(t.run({request:rollback}),e=>e.code==='failed-precondition');
+ assert.equal(t.rows.get('matches/m/games/g').activeReplayStatisticsId,t.sourceHash);
+ assert.equal(t.rows.get(key).matchId,'different-battle');
+});
+
+test('a pre-existing same-Battle GUID claim is immutable across native publish, retries and rollback',async()=>{
+ const t=fixture(),claimKey='recordingGameClaims/'+
+   Buffer.from(t.candidate.matchFacts.game.guid).toString('hex');
+ const old={matchId:'m',gameId:'g',sourceHash:'1'.repeat(64),
+   createdBy:'legacy-recording-outcome',evidenceToken:'before-native'};
+ t.rows.set(claimKey,structuredClone(old));
+ await t.run();
+ const journal=t.rows.get(t.publicationPath);
+ assert.equal(journal.claimCreated,false);
+ assert.equal(typeof journal.previousClaimFingerprint,'string');
+ assert.deepEqual(t.rows.get(claimKey),old,'publication leaves a same-Game prior claim intact');
+ assert.equal((await t.run()).alreadyPublished,true);
+ const bad=structuredClone(old);bad.evidenceToken='changed-after-approval';
+ t.rows.set(claimKey,bad);
+ await assert.rejects(t.run(),e=>e.code==='failed-precondition');
+ const rollback={...t.request,operation:'ROLLBACK',expectedActiveSourceHash:t.sourceHash,
+   expectedStatisticsRevision:1,
+   reason:'Retain the audited previous GUID claim when reversing the native trial.'};
+ await assert.rejects(t.run({request:rollback}),e=>e.code==='failed-precondition');
+ t.rows.set(claimKey,structuredClone(old));
+ assert.equal((await t.run({request:rollback})).state,'ROLLED_BACK');
+ assert.deepEqual(t.rows.get(claimKey),old,'rollback must never remove an older same-Game claim');
 });
