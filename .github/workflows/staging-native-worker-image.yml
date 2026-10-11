@@ -1,0 +1,53 @@
+name: Staging native worker image safety
+
+on:
+  pull_request:
+    paths:
+      - "replay-tools/**"
+      - ".github/workflows/staging-native-worker-image.yml"
+  push:
+    branches: [main]
+    paths:
+      - "replay-tools/**"
+      - ".github/workflows/staging-native-worker-image.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned worker dependencies and verify hosted authorization
+        run: |
+          python -m pip install -r replay-tools/requirements.txt
+          python -m unittest discover -s replay-tools/tests -p 'test_hosted_worker_auth.py' -v
+      - name: Build the proposed staging worker image (NEVER deploy)
+        run: docker build -f replay-tools/Dockerfile.staging -t aof-staging-native-worker:ci replay-tools
+      - name: Verify isolated hosted-mode container refuses missing secrets
+        run: |
+          docker run -d --name aof-staging-worker-ci --read-only --tmpfs /tmp:rw,nosuid,nodev \
+            -p 127.0.0.1:18767:8080 \
+            -e K_SERVICE=aof-worker-test \
+            -e AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT=1 \
+            aof-staging-native-worker:ci
+          for attempt in $(seq 1 30); do
+            if curl -sSf http://127.0.0.1:18767/health >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -sSf http://127.0.0.1:18767/health >/dev/null
+          for route in process process-native-v1; do
+            http="$(curl -s -o /dev/null -w '%{http_code}' \
+              -H 'content-type: application/json' -d '{}' \
+              http://127.0.0.1:18767/$route)"
+            test "$http" = 503 || { echo "FAIL: hosted worker without secret returned $http" >&2; exit 1; }
+          done
+          echo "PASS: nonroot worker container keeps both POST routes closed without secret"
+      - name: Cleanup ephemeral test container
+        if: always()
+        run: docker rm -f aof-staging-worker-ci || true
