@@ -50,13 +50,13 @@ class HostedWorkerAuthTests(TestCase):
             for path in ("/process", "/process-native-v1"):
                 self.assertEqual(self.call(path)[0], 401)
                 self.assertEqual(self.call(path, "incorrect")[0], 401)
-                self.assertEqual(self.call(path, "strict-test-token")[0], 413)
+                self.assertEqual(self.call(path, "strict-test-token")[0], 400)  # accepted auth, invalid file
 
     def test_local_legacy_behavior_unchanged(self):
         with patch.dict(os.environ, {"AOF_REPLAY_WORKER_AUTH_TOKEN": "",
                                     "AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT": ""},
                         clear=True):
-            self.assertEqual(self.call("/process")[0], 413)
+            self.assertEqual(self.call("/process")[0], 400)  # local anonymous legacy path remains
             self.assertEqual(self.call("/process-native-v1")[0], 404)
 
 
