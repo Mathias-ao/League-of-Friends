@@ -1,6 +1,6 @@
 # Age of Friends — Project Continuity
 
-Last updated: **10 October 2026**. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
+Last updated: **11 October 2026**. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
 
 ## Read order and authority
 
@@ -44,14 +44,29 @@ fixtures referenced by pinned commit must be retained.
 [#101](https://github.com/Mathias-ao/League-of-Friends/pull/101)
 (native Chronicle and Battle-record consumers) are merged. Both
 `AOF_ACTIVE_NATIVE_PLAYER_READS` and `AOF_ACTIVE_NATIVE_SOCIAL_READS`
-remain disabled by default, and no native READY publisher exists. The
-record view pages neutral/shadow incidents, returns complete source sections
+remain disabled by default, and no **automatic native READY publisher**
+exists. The record view pages neutral/shadow incidents, returns complete source sections
 through SHA-verified 32-KiB fragments, and uses an official-outcome/mapping
 review revision in addition to artifact SHA. Current official Game revisions,
 disputes, immutable source generations and League identity are rechecked;
 `VALIDATED_NOT_READY` remains invisible to ordinary readers. Real browser,
 cloud capacity and correction/rollback **release acceptance is still missing**.
 See [native read-side acceptance](../testing/native-social-battle-record-readers-v1.md).
+
+**Experimental controlled publication/rollback (#102, 11 October):**
+The new [atomic native READY publication acceptance contract](../testing/native-ready-atomic-publication-v1.md)
+documents an explicit, staged/demo-only, administrator-reviewed transaction for
+already COMPLETED Games with independently accepted (not recording-bound)
+official results. It rechecks pinned source/events/statistics and roster,
+publishes a new READY source and Game pointer atomically with an immutable
+audit/rollback journal, and supports independently gated emergency rollback
+without discarding the original or the native artifact. It prevents
+recording-bound source replacement, already claimed Game GUIDs, stale
+corrections and reused candidates. **This is not a general upload-to-READY
+workflow**; normal native uploads still end at VALIDATED_NOT_READY, and flags
+are not enabled or deployed. The next release gate is a reviewed correction/
+result-binding change for accepted recording-bound results, plus true emulator,
+cloud and browser-to-READY timing and ledger-reconciliation acceptance.
 
 ## Season Event guidance
 
@@ -76,10 +91,10 @@ No production/staging deployment or data import occurred. Never conflate merging
 
 Pick one bounded outcome, check current code and scope, identify evidence and regression tests, then record observed outcomes **and their limitations**. Keep source facts separate from inferred statistics, qualification and official scoring. Prefer reversible local tests, documented data backups and focused PRs; obtain separate review before promoting local work to staging or production.
 
-**Next bounded task:** specify and validate the separate **native READY publisher/activation transaction** with official-result authority, source/roster bindings, disputes, correction-safe rollback and immutable original replay retention. Then perform real build-185872 browser/cloud performance, concurrency and full-presentation acceptance before enabling native uploads. Do not interpret merged read-only consumers as publication readiness. Player Reputation/Relationships rules, Event finalisation and real-user flow remain distinct future workstreams.
+**Next bounded task:** build a carefully reviewed **recording-bound result-correction and native source-rebind protocol** that preserves canonical result/claim authority, disputed results, previous sources and inverse ledger reconciliation. The limited manually reviewed publisher and rollback are in #102; they do not cover source-bound corrections or auto-ready uploads. Then require real Firebase emulator transaction/trigger testing, cloud/browser capacity and true upload-to-READY measurements before any operator activation. Player Reputation/Relationships rules, Event finalisation and real-user flow remain distinct future workstreams.
 
 ## Bootstrap prompt
 
 > Continue Age of Friends from `Mathias-ao/League-of-Friends`. Read `docs/project/CORE-IDENTITY.md`, `docs/project/CURRENT-STATE.md` and `docs/project/CURRENT-STATS.md`. Inspect current `main`, distinguish local emulator results from merged/deployed code, and follow specialist documentation. The bounded task is: [ONE TASK].
 
-**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Read-only detail/social reader integration is now merged and gated; atomic correction-safe publication/rollback and real full-stack acceptance still block READY. Nothing is deployed or enabled for ordinary users.
+**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Read-only detail/social integration (#98–#101) and a disabled, manually reviewed limited publication/rollback implementation (#102) are available. Source-bound result corrections, fully automated READY and real full-stack acceptance still block normal native READY. Nothing is deployed or enabled for ordinary users.
