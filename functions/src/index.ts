@@ -39,6 +39,7 @@ export { adminIngestReplayStats } from "./commands/statistics/ingestReplayStats.
 export { uploadReplay } from "./commands/statistics/uploadReplay.js";
 export {adminPublishNativeReady} from "./commands/statistics/publishNativeReady.js";
 export {adminGetNativeReadyReview} from "./queries/adminGetNativeReadyReview.js";
+export {adminGetStagingE2eReadiness} from "./queries/adminGetStagingE2eReadiness.js";
 export { adminProcessReplayDerivedStats } from "./commands/statistics/processReplayDerivedStats.js";
 export { adminProcessReplayAnalysis } from "./commands/statistics/processReplayAnalysis.js";
 export { adminRebuildReplayPlayerStatistics } from "./commands/statistics/rebuildReplayPlayerStatistics.js";
