@@ -67,7 +67,9 @@ function checkedCandidate(c:Bag|undefined,request:NativeReadyPublicationRequest,
   if(!c||c.contract!==NATIVE_VALIDATION||c.matchId!==request.matchId||
      c.gameId!==request.gameId||source!==request.sourceHash||
      c.processorRevision!==processor||!SHA.test(rev??'')||
-     c.validatedBy===undefined||c.active!==(request.operation==='PUBLISH'?false:c.state==='PUBLISHED_READY')||c.leagueEffectsPermitted!==false||
+     c.validatedBy===undefined||!((c.state==='VALIDATED_NOT_READY'&&c.active===false)||
+       (c.state==='PUBLISHED_READY'&&c.active===true)||(c.state==='ROLLED_BACK'&&c.active===false))||
+     c.leagueEffectsPermitted!==false||
      !SHA.test(c.bindingToken??'')||c.provenance?.sourceIdentity!==source||
      c.provenance?.projectionRevision!==request.expectedArtifactSha256||
      c.provenance?.extractionRevision!==c.extraction?.revision||
