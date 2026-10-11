@@ -147,6 +147,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         expected_token = os.environ.get("AOF_REPLAY_WORKER_AUTH_TOKEN")
+        # A Cloud Run service can expose /process as well as /process-native-v1.
+        # No hosted route may accidentally become anonymous if a secret is
+        # absent during deployment. Local emulator behavior remains unchanged.
+        if os.environ.get("K_SERVICE") and not expected_token:
+            self._json(503, {"error": "worker_auth_not_configured"})
+            return
         if expected_token:
             supplied = self.headers.get("authorization", "")
             if not hmac.compare_digest(supplied, "Bearer " + expected_token):

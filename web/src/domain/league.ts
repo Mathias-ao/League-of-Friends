@@ -55,6 +55,36 @@ export interface CivilizationDraftRecord {
 export interface ReplayPlayerMapping {replaySlot:number;sourceName:string;playerId:string;}
 export interface ReplayUploadResult {success:boolean;alreadyProcessed:boolean;matchId:string;gameId:string;statisticsId:string;sourceHash:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;replayStatisticsRevision?:number;}
 export interface ReplayStatisticsResult {success:boolean;matchId:string;gameId:string;statisticsId:string;playerMapping:ReplayPlayerMapping[];resultQualification:string;statistics:any;diplomacyReview?:any;officialOutcome?:any;socialIncidents?:any;}
+
+/** A deliberately opt-in nonproduction browser E2E administrative surface. */
+export interface NativeValidationCandidateResult {
+  success:true;state:'VALIDATED_NOT_READY';activated:false;candidateId:string;sourceHash:string;
+  matchId:string;gameId:string;readyBlockers:string[];alreadyProcessed:boolean;
+}
+export interface NativeE2eEnvironmentStatus {
+  contract:'AOF_STAGING_E2E_PREFLIGHT_V1';project:string;matchId:string;gameId:string;
+  expectedCommit:string;flags:Record<string,boolean>;blockers:string[];
+  configReady:boolean;rollbackReady:boolean;caveat:string;
+}
+export interface NativeE2eReview {
+  contract:'AOF_NATIVE_E2E_REVIEW_V1';matchId:string;gameId:string;candidateId:string;
+  candidateState:'VALIDATED_NOT_READY'|'PUBLISHED_READY'|'ROLLED_BACK';
+  sourceHash:string;statisticsSha256:string;originalSha256:string|null;originalBytes:number;
+  recordedEventsSha256:string|null;
+  sourcePlayers:{playerId:string;replaySlot:number;sourceName:string}[];
+  matchFormat:string|null;matchStatus:string|null;gameStatus:string|null;
+  expectedActiveSourceHash:string|null;expectedStatisticsRevision:number;
+  expectedResultRevision:number|null;officialQualification:string;officialReason:string|null;
+  officialSource:string|null;officialOutcomeType:string|null;
+  officialWinnerPlayerIds:string[]|null;candidatePublishEligible:boolean;nativeSourceIsActive:boolean;
+}
+export interface NativeE2ePublishRequest {
+  operation:'PUBLISH'|'ROLLBACK';matchId:string;gameId:string;candidateId:string;
+  sourceHash:string;expectedArtifactSha256:string;expectedActiveSourceHash:string|null;
+  expectedStatisticsRevision:number;expectedResultRevision:number;reason:string;
+}
+export interface NativeE2ePublicationResult {success:true;state:'READY'|'ROLLED_BACK';sourceHash:string;replayStatisticsRevision:number;alreadyPublished?:boolean;alreadyRolledBack?:boolean;}
+
 /** Native source detail is a separate, byte-bounded player-facing read contract. */
 export interface ActiveNativeDetailRequest {
   matchId:string;gameId:string;mode:'list'|'fragment';replaySlot:number;group:string;
@@ -86,7 +116,11 @@ export interface ActiveNativeDetailResult {
   nextOffset:number|null;reference?:string;field?:string;
   chunkBase64?:string;contentSha256?:string;totalBytes?:number;complete?:boolean;
 }
-export interface GameRecord {activeResultDisputeId?:string|null;outcomeQualification?:{state:string;reason?:string|null};timingReviewRequests?:{submissionId:string;submittedBy:PlayerRecord;outcome:Record<string,unknown>|null}[];gameId:string;gameNumber:number;status:string;players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{placementReason?:string|null;rawStatsState?:string|null;analysisState?:string|null;statisticsId?:string|null;statisticsState?:string|null;statisticsRevision?:number|null;statisticsDelivery?:'LEGACY'|'NATIVE_BOUNDED_V1';nativeSocialRecordAvailable?:boolean;nativePlayerMapping?:Array<{playerId:string;replaySlot:number}>|null};}
+export interface PendingGameResultClaim {
+  submissionId:string;submittedBy:PlayerRecord;
+  status:string;outcome:{type?:string;winnerTeam?:number|null;winnerPlayerId?:string|null;winnerPlayerIds?:string[]}|null;
+}
+export interface GameRecord {activeResultDisputeId?:string|null;outcomeQualification?:{state:string;reason?:string|null};timingReviewRequests?:{submissionId:string;submittedBy:PlayerRecord;outcome:Record<string,unknown>|null}[];gameId:string;gameNumber:number;status:string;viewerSubmission?:PendingGameResultClaim|null;confirmationRequests?:PendingGameResultClaim[];players:(PlayerRecord&{team?:number|null;slot?:number;civilization?:string|null})[];draftRequired?:boolean;draft?:CivilizationDraftRecord|null;result:{revision:number;winningPlayerIds:string[]}|null;resultDisputeOpen:boolean;replay?:{placementReason?:string|null;rawStatsState?:string|null;analysisState?:string|null;statisticsId?:string|null;statisticsState?:string|null;statisticsRevision?:number|null;statisticsDelivery?:'LEGACY'|'NATIVE_BOUNDED_V1';nativeSocialRecordAvailable?:boolean;nativePlayerMapping?:Array<{playerId:string;replaySlot:number}>|null};}
 export interface MatchDetail {match:MatchRecord;games:GameRecord[];viewer:{playerId:string;isParticipant:boolean};}
 export interface EventDetail {pairingPlan?:{planId:string;status:string;pairingMode:string;sittingOutPlayerIds:string[];matches:{format:string;participants:(PlayerRecord&{team:number|null})[]}[]}|null;warmup?:{configured:boolean;schedule:{status:string;unpairedPlayerId:string|null}|null;aiDifficulty:string|null;map:string|null;guestAcceptanceDeadlineAt:string|null;eligibleGuests:PlayerRecord[];replacementGuests?:PlayerRecord[];challenges:{challengeId:string;status:string;challengerName?:string;guestName?:string;challengerPlayerId:string;guestPlayerId:string;deadlineAt:string|null}[];isGuest:boolean};finalisation?:{notices?:{matchId:string;message:string}[];canFinalise:boolean;blockers:{kind:string;matchId?:string;message:string}[];revision:number;finalisedAt:string|null}|null;roundoff?:EventRoundoff;event:EventRecord;viewer:{playerId:string;role?:'PLAYER'|'ADMIN';rsvp:string;signupState:string;attendanceStatus:string};signup:{confirmedCount:number;waitingListCount:number;rosterVisible:boolean;confirmed:(PlayerRecord&{attendanceStatus?:string})[]|null};matches:MatchRecord[];}
 export interface Competition {matchesPlayed:number;matchesWon:number;matchesLost:number;}
@@ -194,6 +228,12 @@ export interface LeagueRepository {
   enterSeason(seasonId:string):Promise<void>;
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;checkIn(eventId:string):Promise<void>;formEventMatches(eventId:string,options?:{pairingMode:"RANDOM"|"ELO_BALANCED";force:boolean;reason:string}):Promise<void>;
   ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
+  stagingNativeValidate?(matchId:string,gameId:string,file:File):Promise<NativeValidationCandidateResult>;
+  stagingNativeStatus?(matchId:string,gameId:string,expectedCommit:string):Promise<NativeE2eEnvironmentStatus>;
+  stagingNativeReview?(matchId:string,gameId:string,candidateId:string):Promise<NativeE2eReview>;
+  stagingNativePublish?(request:NativeE2ePublishRequest):Promise<NativeE2ePublicationResult>;
+  stagingSubmitGameResult?(matchId:string,gameId:string,outcome:{winnerTeam?:number;winnerPlayerId?:string;winnerPlayerIds?:string[]}):Promise<{submissionId:string}>;
+  stagingConfirmGameResult?(matchId:string,gameId:string,submissionId:string):Promise<void>;
   uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;activeNativeBattleDetail?(query:ActiveNativeDetailRequest):Promise<ActiveNativeDetailResult>;activeNativeBattleRecord?(query:ActiveNativeBattleRecordQuery):Promise<ActiveNativeBattleRecordResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
   playerChronicle?():Promise<PlayerChronicleResponse>;
   socialHistory?():Promise<SocialHistoryResponse>;
