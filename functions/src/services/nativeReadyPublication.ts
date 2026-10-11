@@ -1,5 +1,8 @@
 import {Timestamp} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
+import {NATIVE_READY_CORRECTION_VERSION,readCorrectionAuthority,prepareNativeCorrection,commitNativeCorrection} from './nativeReadyCorrection.js';
+import type {GameOutcome} from '../domain/types.js';
+import {verifyEvents} from '../engines/nativeRecordingIntegration.js';
 import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
 import {statisticsMetadata} from './statisticsExperienceProjection.js';
 import {projectStatistics,statisticsBindingKey,EXPERIENCE_VERSION} from '../engines/statisticsExperience.js';
@@ -9,7 +12,7 @@ import {decodeNativeDetailArtifact,type NativeDetailArtifact} from '../engines/n
 import {nativeSocialInput} from '../engines/nativeSocialInput.js';
 import {projectSocialIncidents} from '../engines/socialIncidentCore.js';
 import {activeNativeStatisticsSource,ACTIVE_NATIVE_SOURCE_VERSION} from '../engines/activeNativeStatisticsSource.js';
-import {assertNativeValidationAllowed,bindingDigest,digest,NATIVE_VALIDATION,NATIVE_DELIVERY} from '../engines/nativeRecordingIntegration.js';
+import {assertNativeValidationAllowed,bindingDigest,digest,NATIVE_VALIDATION,NATIVE_DELIVERY,NATIVE_PACKAGE} from '../engines/nativeRecordingIntegration.js';
 
 const SHA=/^[a-f0-9]{64}$/;
 const ID=/^[A-Za-z0-9_-]{1,200}$/;
@@ -23,7 +26,8 @@ const snap=(value:unknown):string=>bindingDigest(value);
 const revision=(v:unknown):v is number=>Number.isSafeInteger(v)&&Number(v)>=0;
 
 export interface NativeReadyPublicationRequest {
-  operation:'PUBLISH'|'ROLLBACK';
+  operation:'PUBLISH'|'ROLLBACK'|'CORRECT_REBIND_V1';
+  correction?:{disputeId:string;resolution:'CORRECT';outcome:GameOutcome};
   matchId:string;
   gameId:string;
   candidateId:string;
@@ -47,8 +51,15 @@ export function assertNativePublicationAllowed(env:NodeJS.ProcessEnv,actor:Nativ
      !revision(request.expectedStatisticsRevision)||request.expectedStatisticsRevision>1_000_000||
      !revision(request.expectedResultRevision)||request.expectedResultRevision<1||
      typeof request.reason!=='string'||request.reason.trim().length<20||request.reason.length>1000||
-     !['PUBLISH','ROLLBACK'].includes(request.operation))
+     !['PUBLISH','ROLLBACK','CORRECT_REBIND_V1'].includes(request.operation))
     throw invalid('Provide a pinned candidate, source hashes, official result/replay revisions and a reviewed reason of 20–1000 characters.');
+  if(request.operation==='CORRECT_REBIND_V1'&&(!request.correction||
+     !ID.test(request.correction.disputeId??'')||request.correction.resolution!=='CORRECT'||
+     !object(request.correction.outcome)||!SHA.test(request.expectedActiveSourceHash??'')||
+     request.expectedResultRevision>=Number.MAX_SAFE_INTEGER||
+     env.AOF_NATIVE_READY_CORRECTION!=='reviewed-v1'))
+    throw fail('Native correction requires a separately reviewed flag, exact dispute, prior source and normalized outcome.');
+  if(request.operation!=='CORRECT_REBIND_V1'&&request.correction!==undefined)throw invalid('Correction review requires CORRECT_REBIND_V1.');
   // Emergency rollback must work even when validation or the player/social
   // readers have been disabled following an incident. It still requires
   // staging/demo, admin, pinned processor and a distinct rollback approval.
@@ -209,7 +220,7 @@ export async function executeNativeReadyPublication(input:{
        link.data()?.playerId!==actor.playerId)
       throw fail('The Game, candidate or administrator authority is missing.');
     checkedCandidate(c,request,processor);
-    if(request.operation==='PUBLISH'&&c.validatedBy!==actor.playerId)
+    if(request.operation!=='ROLLBACK'&&c.validatedBy!==actor.playerId)
       throw fail('Only the administrator who validated this candidate may publish it.');
     const roster=game.players??[];
     if(!Array.isArray(roster)||roster.length<2||roster.length>8)throw fail('Game roster unavailable.');
@@ -218,9 +229,13 @@ export async function executeNativeReadyPublication(input:{
       throw fail('Game roster is incomplete or duplicated.');
     const players=await Promise.all(ids.map((id:string)=>get(db.collection('players').doc(id))));
     if(players.some((doc:any)=>!doc.exists))throw fail('Game player identity has been removed.');
-    const fingerprint=snap({match,game,candidate:c,publication,source,
+    const correction=request.operation==='CORRECT_REBIND_V1'
+      ?await readCorrectionAuthority(db,gameRef,matchRef,request,c,get):null;
+    const validationToken=snap({game,match,players:players.map((x:any)=>x.data()),admin:admin.data(),link:link.data()});
+    const fingerprint=snap({match,game,candidate:c,publication,source,correction:correction?.data??null,
       players:players.map((x:any)=>x.data()),admin:admin.data(),link:link.data()});
-    return {match,game,c,publication,source,sourceExists:ss.exists,publicationExists:ps.exists,fingerprint};
+    return {match,game,c,publication,source,sourceExists:ss.exists,publicationExists:ps.exists,fingerprint,correction,validationToken,
+      rosterPlayers:players.map((p:any)=>p.data())};
   };
   const start=await authority();
   if(request.operation==='ROLLBACK')return rollbackNativePublication({db,actor,request,publicationRef,candidateRef,gameRef,
@@ -242,7 +257,7 @@ export async function executeNativeReadyPublication(input:{
          fresh.game.replayStatisticsRevision!==journal.publishedStatisticsRevision||
          journal.previousActiveSourceId!==request.expectedActiveSourceHash||
          journal.previousStatisticsRevision!==request.expectedStatisticsRevision||
-         journal.officialResultRevision!==request.expectedResultRevision||
+         journal.officialResultRevision!==request.expectedResultRevision+(request.operation==='CORRECT_REBIND_V1'?1:0)||
          journal.resultBinding!==snap({canonicalResult:fresh.game.canonicalResult,
            recordingResultBinding:fresh.game.recordingResultBinding??null})||
          fresh.c.state!=='PUBLISHED_READY'||fresh.c.active!==true||
@@ -257,14 +272,31 @@ export async function executeNativeReadyPublication(input:{
          !activeNativeStatisticsSource(request.matchId,request.gameId,fresh.match,
            fresh.game,request.sourceHash,active,true))
         throw fail('Existing native publication is no longer a qualified active READY source.');
+      if(request.operation==='CORRECT_REBIND_V1'){
+        const d=fresh.correction.data,review=journal.correction;
+        if(review?.version!==NATIVE_READY_CORRECTION_VERSION||review.requestToken!==snap({request,actor:{playerId:actor.playerId,authUid:actor.authUid}})||
+           d.dispute?.status!=='RESOLVED_CORRECTED'||d.dispute.nativePublicationCandidateId!==request.candidateId||
+           d.dispute.correctedToRevision!==journal.officialResultRevision||
+           d.newJob?.matchId!==request.matchId||d.newJob?.gameId!==request.gameId||
+           d.newJob?.resultRevision!==journal.officialResultRevision||d.newJob?.correctionCaseId!==request.correction!.disputeId||
+           d.newJob?.previousRevision!==request.expectedResultRevision||
+           snap(d.gameHistory)!==review.gameHistoryFingerprint||snap(d.matchHistory)!==review.matchHistoryFingerprint||
+           snap(currentOfficialGameOutcome(fresh.game,fresh.match))!==snap(currentOfficialGameOutcome(
+             {...fresh.game,canonicalResult:fresh.match.canonicalResult},fresh.match))||
+           fresh.match.canonicalResult?.sourceGameId!==request.gameId||
+           fresh.game.recordingResultBinding?.resolverVersion!==NATIVE_READY_CORRECTION_VERSION||
+           active.experience?.revision!==fresh.game.replayStatisticsRevision||
+           ['originalRecording','recordedEvents','extraction','processorRevision','artifactRevision'].some(key=>snap(active[key])!==snap(fresh.c[key])))
+          throw fail('Correction retry no longer matches its immutable history, dispute and processing revision.');
+      }else if(journal.correction)throw fail('A correction publication requires its exact correction retry contract.');
       const claimRef=db.collection('recordingGameClaims').doc(journal.claimGuidHex);
       const claim=await tx.get(claimRef);
       if(!claim.exists||claim.data()?.matchId!==request.matchId||
          claim.data()?.gameId!==request.gameId||
-         journal.claimCreated&&(
+         (journal.claimCreated||journal.claimRebound)&&(
            claim.data()?.sourceHash!==request.sourceHash||
            claim.data()?.nativePublicationCandidateId!==request.candidateId)||
-         !journal.claimCreated&&journal.previousClaimFingerprint!==undefined&&
+         !journal.claimCreated&&!journal.claimRebound&&journal.previousClaimFingerprint!==undefined&&
            snap(claim.data())!==journal.previousClaimFingerprint)
         throw fail('Global recorded-Game GUID claim no longer matches the active publication.');
       if(journal.previousActiveSourceId){
@@ -274,12 +306,16 @@ export async function executeNativeReadyPublication(input:{
           throw fail('The prior immutable source is no longer a safe rollback target.');
       }
       return {success:true,alreadyPublished:true,state:'READY',sourceHash:request.sourceHash,
-        replayStatisticsRevision:fresh.game.replayStatisticsRevision};
+        replayStatisticsRevision:fresh.game.replayStatisticsRevision,
+        ...(request.operation==='CORRECT_REBIND_V1'?{resultRevision:journal.officialResultRevision}: {})};
     });
   }
   if(start.c.state!=='VALIDATED_NOT_READY'||start.sourceExists)
     throw fail('Only a previously unpublished validated candidate with a new source identity may be activated.');
-  const official=checkedOfficial(start.game,start.match,request);
+  const correction=request.operation==='CORRECT_REBIND_V1'?prepareNativeCorrection(start,request,actor):null;
+  const effectiveGame=correction?.game??start.game,effectiveMatch=correction?.match??start.match;
+  const official=correction?currentOfficialGameOutcome(effectiveGame,effectiveMatch):checkedOfficial(start.game,start.match,request);
+  const officialRevision=correction?.revision??request.expectedResultRevision;
   if(start.game.aiOpponent||start.match.opponentKind==='AI')throw fail('Native AI Game publication is not qualified.');
   let previousSourceFingerprint:string|null=null;
   if(start.game.activeReplayStatisticsId!==null&&start.game.activeReplayStatisticsId!==undefined){
@@ -293,10 +329,25 @@ export async function executeNativeReadyPublication(input:{
 
   // Generation-pinned source, full native events and statistics must still
   // exist. A prior successful validation is not a substitute for this read.
-  await Promise.all([
+  const [,eventBytes]=await Promise.all([
     readImmutable(bucket,start.c.originalRecording,32*1024*1024),
     readImmutable(bucket,start.c.recordedEvents,48*1024*1024),
   ]);
+  if(correction){
+    const metadata=start.c.recordedEvents;
+    if(start.c.artifactRevision!==snap([NATIVE_PACKAGE,metadata.sha256,start.c.statistics.sha256]))
+      throw fail('Correction candidate artifact revision does not match the immutable evidence.');
+    if(!revision(metadata.uncompressedBytes)||metadata.uncompressedBytes<1||metadata.uncompressedBytes>512*1024*1024||
+       !SHA.test(metadata.uncompressedSha256??'')||metadata.compression!=='gzip')throw fail('Correction requires decoded event integrity metadata.');
+    try{
+      const verified=await verifyEvents(eventBytes,metadata,request.sourceHash,start.c.originalRecording.bytes);
+      if(snap(verified.header.extraction)!==snap(start.c.extraction)||
+         snap(verified.footer)!==snap(start.c.completeness)||
+         snap(verified.header.context?.participants?.map((p:Bag)=>({replaySlot:p.playerId,sourceName:p.name})))!==
+         snap(start.c.playerMapping.map((p:Bag)=>({replaySlot:p.replaySlot,sourceName:p.sourceName}))))
+        throw new Error('Event mapping/extraction/completeness mismatch');
+    }catch{throw new HttpsError('data-loss','Correction event chronology, decoded integrity or mapping is inconsistent.');}
+  }
   const bytes=await readImmutable(bucket,start.c.statistics,48*1024*1024);
   let raw:Bag;
   try{
@@ -315,8 +366,8 @@ export async function executeNativeReadyPublication(input:{
     throw fail('The native social interpretation is not qualified: '+String(projected.reason??'unavailable'));
 
   const nextRevision=request.expectedStatisticsRevision+1;
-  const metadata=statisticsMetadata(request.matchId,request.gameId,start.match,
-    {...start.game,replayStatisticsRevision:nextRevision,activeReplayStatisticsId:request.sourceHash,
+  const metadata=statisticsMetadata(request.matchId,request.gameId,effectiveMatch,
+    {...effectiveGame,replayStatisticsRevision:nextRevision,activeReplayStatisticsId:request.sourceHash,
       replayStatisticsState:'READY'},{sourceHash:request.sourceHash,playerMapping:start.c.playerMapping});
   if(!metadata.eligible)throw fail('The current Game is not eligible for official native statistics.');
   const inputStats=nativeStatisticsExperienceInput(raw);
@@ -328,14 +379,14 @@ export async function executeNativeReadyPublication(input:{
      experience.players.length!==start.c.playerMapping.length||
      experience.players.some((p:Bag)=>!start.c.playerMapping.some((m:Bag)=>m.playerId===p.playerId)))
     throw fail('Native Season and player read-model bindings could not be qualified.');
-  const source=publicationSource(start.c,request,start.game,start.match,experience,
+  const source=publicationSource(start.c,{...request,expectedResultRevision:officialRevision},effectiveGame,effectiveMatch,experience,
     request.candidateId,official,nextRevision,actor);
   if(Buffer.byteLength(JSON.stringify(source),'utf8')>850_000)
     throw fail('Qualified native READY source exceeds the bounded Firestore document budget.');
-  const approvedGame={...start.game,
+  const approvedGame={...effectiveGame,
     activeReplayStatisticsId:request.sourceHash,replayStatisticsRevision:nextRevision,
     replayStatisticsState:'READY'};
-  if(!activeNativeStatisticsSource(request.matchId,request.gameId,start.match,approvedGame,
+  if(!activeNativeStatisticsSource(request.matchId,request.gameId,effectiveMatch,approvedGame,
     request.sourceHash,source,true))
     throw fail('The proposed native source would fail normal authenticated Game reader qualification.');
 
@@ -357,7 +408,8 @@ export async function executeNativeReadyPublication(input:{
     if(fresh.fingerprint!==start.fingerprint||
        snap(claimNow.data()??null)!==claimToken||
        fresh.publicationExists||fresh.sourceExists)throw abort();
-    checkedOfficial(fresh.game,fresh.match,request);
+    if(correction)prepareNativeCorrection(fresh,request,actor);
+    else checkedOfficial(fresh.game,fresh.match,request);
     const former=fresh.game.activeReplayStatisticsId;
     if(former){
       const prior=await tx.get(gameRef.collection('replaySources').doc(former));
@@ -372,8 +424,8 @@ export async function executeNativeReadyPublication(input:{
       version:NATIVE_READY_PUBLICATION_VERSION,state:'ACTIVE',
       matchId:request.matchId,gameId:request.gameId,candidateId:request.candidateId,
       sourceHash:request.sourceHash,artifactSha256:request.expectedArtifactSha256,
-      originalSourceRetained:true,officialResultRevision:request.expectedResultRevision,
-      resultBinding:snap({canonicalResult:fresh.game.canonicalResult,recordingResultBinding:fresh.game.recordingResultBinding??null}),
+      originalSourceRetained:true,officialResultRevision:officialRevision,
+      resultBinding:snap({canonicalResult:effectiveGame.canonicalResult,recordingResultBinding:effectiveGame.recordingResultBinding??null}),
       previousActiveSourceId:request.expectedActiveSourceHash,
       previousSourceFingerprint,
       previousStatisticsState:fresh.game.replayStatisticsState??null,
@@ -381,13 +433,27 @@ export async function executeNativeReadyPublication(input:{
       previousReplay:fresh.game.replay??null,
       publishedStatisticsRevision:publishedRevision,
       claimCreated:!claimNow.exists,claimGuidHex:claimRef.id,
+      ...(correction?{claimRebound:claimNow.exists}:{}),
       previousClaimFingerprint:claimNow.exists?snap(claimNow.data()):null,
+      ...(correction?{correction:{version:NATIVE_READY_CORRECTION_VERSION,requestToken:correction.requestToken,
+        disputeId:request.correction!.disputeId,priorResultRevision:request.expectedResultRevision,
+        outcome:correction.outcome,priorBinding:fresh.game.recordingResultBinding,
+        oldGuid:fresh.correction.data.oldGuid,newGuid:fresh.correction.data.newGuid,
+        previousOldClaim:fresh.correction.data.oldClaim,previousNewClaim:fresh.correction.data.newClaim,
+        gameHistoryFingerprint:snap({revision:request.expectedResultRevision,replacedByRevision:correction.revision,
+          correctionCaseId:request.correction!.disputeId,archivedAt:correction.now,canonicalResult:fresh.game.canonicalResult,
+          recordingResultBinding:fresh.game.recordingResultBinding,activeReplayStatisticsId:request.expectedActiveSourceHash}),
+        matchHistoryFingerprint:snap({revision:request.expectedResultRevision,replacedByRevision:correction.revision,
+          correctionCaseId:request.correction!.disputeId,archivedAt:correction.now,canonicalResult:fresh.match.canonicalResult})}}:{}),
       reviewedBy:actor.playerId,reason:request.reason.trim(),publishedAt:now,
     };
+    if(correction)commitNativeCorrection(tx,fresh,request,correction,actor,matchRef,gameRef);
     tx.create(sourceRef,source);
     tx.create(publicationRef,journal);
     tx.update(candidateRef,{state:'PUBLISHED_READY',active:true,
       publishedSourceId:request.sourceHash,publishedAt:now});
+    if(correction&&claimNow.exists)tx.update(claimRef,{sourceHash:request.sourceHash,
+      nativePublicationCandidateId:request.candidateId,correctedAt:now});
     if(!claimNow.exists)tx.create(claimRef,{matchId:request.matchId,gameId:request.gameId,
       sourceHash:request.sourceHash,createdAt:now,nativePublicationCandidateId:request.candidateId});
     tx.update(gameRef,{
@@ -399,17 +465,19 @@ export async function executeNativeReadyPublication(input:{
     });
     const auditRef=db.collection('adminAudit').doc(request.candidateId+'-NATIVE_READY');
     tx.create(auditRef,{actorUid:actor.authUid,actorPlayerId:actor.playerId,
-      action:'NATIVE_READY_SOURCE_PUBLISHED',targetType:'GAME',
+      action:correction?'NATIVE_READY_RESULT_CORRECTED':'NATIVE_READY_SOURCE_PUBLISHED',targetType:'GAME',
       targetId:request.matchId+'/'+request.gameId,reason:request.reason.trim(),
-      before:{statisticsId:request.expectedActiveSourceHash,statisticsRevision:request.expectedStatisticsRevision},
+      before:{statisticsId:request.expectedActiveSourceHash,statisticsRevision:request.expectedStatisticsRevision,
+        ...(correction?{canonicalResult:fresh.game.canonicalResult,recordingResultBinding:fresh.game.recordingResultBinding}: {})},
       after:{statisticsId:request.sourceHash,statisticsRevision:publishedRevision,
-        candidateId:request.candidateId,officialRevision:request.expectedResultRevision},
+        candidateId:request.candidateId,officialRevision,
+        ...(correction?{canonicalResult:effectiveGame.canonicalResult,recordingResultBinding:correction.binding,disputeId:request.correction!.disputeId}: {})},
       createdAt:now});
     return {revision:publishedRevision};
   });
   return {success:true,alreadyPublished:false,state:'READY',activated:true,
     sourceHash:request.sourceHash,replayStatisticsRevision:txResult.revision,
-    candidateId:request.candidateId};
+    candidateId:request.candidateId,...(correction?{resultRevision:correction.revision}: {})};
 }
 
 async function rollbackNativePublication(input:{
@@ -419,6 +487,7 @@ async function rollbackNativePublication(input:{
   const {db,actor,request,publicationRef,candidateRef,gameRef,sourceRef,authority}=input;
   const start=await authority();
   const publication=start.publication;
+  if(publication?.correction)throw fail('Corrected native results require a new correction protocol, never emergency source rollback.');
   if(!start.publicationExists||!publication||publication.version!==NATIVE_READY_PUBLICATION_VERSION||
      publication.sourceHash!==request.sourceHash||publication.candidateId!==request.candidateId||
      publication.artifactSha256!==request.expectedArtifactSha256)

@@ -1,12 +1,12 @@
 # Native READY experimental atomic publication and rollback V1
 
-Status: **implemented behind disabled-by-default operator gates; staging/demo only; no staging or production deployment has been authorized or performed**. This code does not switch ordinary uploads to native, resolve a Game winner, score social relationships, approve a result correction or automatically activate a native validation candidate.
+Status: **implemented behind disabled-by-default operator gates; staging/demo only; no staging or production deployment has been authorized or performed**. Ordinary uploads remain unchanged. PUBLISH/ROLLBACK do not resolve winners or approve corrections; the separately gated CORRECT_REBIND_V1 extension below handles only its reviewed dispute scope. No operation scores social relationships or automatically activates uploads.
 
 ## Purpose and contract
 
 The legacy CanonicalReplay source remains the default published Game statistics. Native Recorded Events ingestion continues to stop at `VALIDATED_NOT_READY`. The new `adminPublishNativeReady` callable is a **manual, audited, administrator-reviewed** bridge for a pre-existing qualified Game, not a general native upload-to-READY release.
 
-Two operations exist: `PUBLISH` and `ROLLBACK`. Both require a pinned candidate ID, source SHA-256, compact-statistics SHA-256, current official Game result revision, current replay-statistics revision, expected active source pointer (null is permitted), and a detailed administrator reason. A candidate can publish only once. An atomic rollback is available after successful publication, but republishing that same candidate after rollback is deliberately blocked.
+The independent-result operations are `PUBLISH` and `ROLLBACK` (the separately versioned correction extension is documented below). Both require a pinned candidate ID, source SHA-256, compact-statistics SHA-256, current official Game result revision, current replay-statistics revision, expected active source pointer (null is permitted), and a detailed administrator reason. A candidate can publish only once. An atomic rollback is available after successful publication, but republishing that same candidate after rollback is deliberately blocked.
 
 ### Independent permission gates
 
@@ -65,3 +65,7 @@ CI tests exercise an actual preflight parser/read-model projection from a stored
 **Not yet qualified for live enablement:** a result-confirming native upload-to-READY pipeline for Games without an independently accepted official result; the full reviewed dispute/result-rebinding transaction for replacing a recording-bound outcome; true transaction/concurrent emulator and cloud tests of triggers, scoring reconciliation and rollback after cache updates; full real 185872-build cloud/browser detail/social parity, load and the 20-second upload-to-READY goal; staging deployment and production release acceptance. No user source-retention or rollback governance changes are authorized by this PR.
 
 The historical `VALIDATED_NOT_READY` candidate blockers remain meaningful as production-release gates even when an exceptional manual staging/demo publication is reviewed. A source should not be described as production-ready merely because this experimental transaction can commit in a controlled environment.
+
+## Recording-bound correction extension (#106)
+
+The separately gated `CORRECT_REBIND_V1` operation now reuses this publisher for one disputed, accepted legacy recording-bound human Game. It commits the corrected official result, source binding, native READY source, GUID transition, history, audit and revisioned job together. Ordinary `PUBLISH` restrictions and independent emergency rollback remain unchanged; correction journals cannot use source-only rollback. See [the correction contract and acceptance evidence](native-ready-correction-v1.md). This is code under review, not deployment or normal-user activation.

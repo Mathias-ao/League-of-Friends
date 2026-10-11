@@ -48,7 +48,7 @@ export function artifactBytes(value:Bag,format:string):Buffer {
 
 /** Recheck byte integrity and chronology while streaming; do not expand the event history.
  * The authenticated worker remains the decoded-observation schema authority. */
-async function verifyEvents(bytes:Buffer,metadata:Bag,sourceHash:string,sourceBytes:number) {
+export async function verifyEvents(bytes:Buffer,metadata:Bag,sourceHash:string,sourceBytes:number) {
   let header:Bag|undefined,footer:Bag|undefined,objects=0,tiles=0,operations=0,clock=0,phase=0,total=0,pending='';
   const hash=createHash('sha256'),decoder=new TextDecoder('utf-8',{fatal:true});
   const counts:Bag={},statuses:Bag={};
