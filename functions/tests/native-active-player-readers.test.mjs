@@ -57,8 +57,11 @@ function testContext(){
    ['players/outsider',{membershipStatus:'ACTIVE',role:'PLAYER'}],
    ['authLinks/uid',{playerId:'outsider'}],
  ]);
- let onDownload=null,bytesDownloaded=bytes;
- const reference=path=>({get:async()=>({exists:records.has(path),data:()=>structuredClone(records.get(path))}),
+ let onDownload=null,onGet=null,bytesDownloaded=bytes;
+ const reference=path=>({get:async()=>{
+   if(onGet)onGet(path);
+   return {exists:records.has(path),data:()=>structuredClone(records.get(path))};
+ },
    collection:key=>({doc:id=>reference(path+'/'+key+'/'+id)})});
  const db={collection:name=>({doc:id=>reference(name+'/'+id)})};
  const bucket={file:(path,options)=>({
