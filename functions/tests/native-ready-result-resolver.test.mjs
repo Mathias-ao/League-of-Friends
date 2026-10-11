@@ -30,7 +30,7 @@ const fixture=(native=true)=>{
        get:r=>r.get(),
        update:(r,payload)=>{changes.push({path:r.path,payload});},
      });
-     for(const {path,payload} of changes)docs.set(path,{...docs.get(path),...payload});
+     for(const {path,payload} of changes)Object.assign(docs.get(path),payload);
      writes+=changes.length;
      return result;
    },
