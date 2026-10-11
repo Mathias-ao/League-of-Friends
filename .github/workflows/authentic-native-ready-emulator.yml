@@ -1,0 +1,112 @@
+name: Authentic 185872 reviewed READY emulator
+
+on:
+  pull_request:
+    paths:
+      - "functions/tests/native-ready-authentic-emulator.mjs"
+      - ".github/workflows/authentic-native-ready-emulator.yml"
+      - "replay-tools/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  genuine-185872-1v1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: "true"
+      FIREBASE_CLI_DISABLE_USAGE_REPORTING: "true"
+      FUNCTIONS_EMULATOR: "true"
+      AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: "1"
+      AOF_REPLAY_WORKER_AUTH_TOKEN: "ephemeral-demo-native-worker-only-185872"
+      REPLAY_WORKER_AUTH_TOKEN: "ephemeral-demo-native-worker-only-185872"
+      REPLAY_WORKER_URL: "http://127.0.0.1:18765"
+      AOF_REPLAY_WORKER_PORT: "18765"
+      REPLAY_BUCKET: "demo-aof-authentic-ready.appspot.com"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch previously authorized build-185872 fixture corpus
+        uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing pinned replay decoder and backend
+        run: |
+          python -m pip install -r replay-tools/requirements.txt
+          npm --prefix functions ci
+          npm --prefix functions run build
+      - name: Independently check source build and prepare private fixture bindings
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path('.fixture-corpus/replay-fixtures/build-185872')
+          source=root/'1v1_t90-deak.aoe2record'
+          with (root/'townbell_build-185872/1v1_t90-deak.json').open(encoding='utf8') as fh:
+              independent=json.load(fh)
+          assert independent['meta']['game_build']==185872
+          assert independent['meta']['save_version']==68.9
+          assert source.is_file() and 0<source.stat().st_size<32*1024*1024
+          print('Independent TownBell build-185872 identity and file presence verified (no names printed)')
+          PY
+          mkdir -p "$RUNNER_TEMP/native-fixture-probe"
+          python replay-tools/native_ingestion.py \
+            --replay .fixture-corpus/replay-fixtures/build-185872/1v1_t90-deak.aoe2record \
+            --out "$RUNNER_TEMP/native-fixture-probe/package" \
+            --report "$RUNNER_TEMP/native-fixture-probe/timings.json" >/dev/null
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          probe=json.loads((root/'native-fixture-probe/package/manifest.json').read_text(encoding='utf8'))
+          players=probe['sourcePlayers']
+          assert len(players)==2 and len({p['replaySlot'] for p in players})==2
+          source=Path('.fixture-corpus/replay-fixtures/build-185872/1v1_t90-deak.aoe2record').resolve()
+          payload={'path':str(source),'gameBuild':185872,'format':'1v1',
+                   'players':players,'reviewedOfficialWinnerReplaySlot':players[0]['replaySlot']}
+          target=root/'authentic-185872-1v1.json'
+          target.write_text(json.dumps(payload),encoding='utf8')
+          with Path(os.environ['GITHUB_ENV']).open('a',encoding='utf8') as fh:
+              fh.write('AOF_NATIVE_READY_REAL_FIXTURE='+str(target)+'\n')
+          print('Real source slot mapping derived without exposing player names; synthetic test outcome independently selected')
+          PY
+      - name: Pin real native worker revision and start authenticated local HTTP worker
+        run: |
+          echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')" >> "$GITHUB_ENV"
+          nohup python replay-tools/upload_worker.py > "$RUNNER_TEMP/native-worker.log" 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent "http://127.0.0.1:18765/health" >/dev/null; then
+              echo "Local authenticated worker started"; exit 0
+            fi
+            sleep 1
+          done
+          echo "Native worker did not start" >&2
+          exit 1
+      - name: Genuine 185872 upload, reviewed READY, bounded reads and rollback
+        run: >
+          npx --yes firebase-tools@14 emulators:exec
+          --project demo-aof-authentic-ready
+          --only firestore,storage
+          "node functions/tests/native-ready-authentic-emulator.mjs"
+      - name: Retain limited acceptance evidence, never recording or names
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authentic-185872-reviewed-ready-report
+          path: |
+            .replay-lab/authentic-185872-ready/report.json
+          if-no-files-found: ignore
+          retention-days: 14
