@@ -49,6 +49,19 @@ export function assertNativePublicationAllowed(env:NodeJS.ProcessEnv,actor:Nativ
      typeof request.reason!=='string'||request.reason.trim().length<20||request.reason.length>1000||
      !['PUBLISH','ROLLBACK'].includes(request.operation))
     throw invalid('Provide a pinned candidate, source hashes, official result/replay revisions and a reviewed reason of 20–1000 characters.');
+  // Emergency rollback must work even when validation or the player/social
+  // readers have been disabled following an incident. It still requires
+  // staging/demo, admin, pinned processor and a distinct rollback approval.
+  if(request.operation==='ROLLBACK'){
+    const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
+    if(actor.role!=='ADMIN'||!project||project!==env.AOF_NATIVE_REPLAY_PROJECT||
+       !(project==='age-of-friends-staging'||!!env.FUNCTIONS_EMULATOR&&project.startsWith('demo-'))||
+       !SHA.test(env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION??'')||
+       env.AOF_NATIVE_READY_ROLLBACK!=='reviewed-v1'||
+       !(env.AOF_NATIVE_READY_GAME_ALLOWLIST??'').split(',').map(x=>x.trim()).includes(request.matchId+'/'+request.gameId))
+      throw fail('Emergency native rollback requires a distinct staged admin, processor and Game approval.');
+    return env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION!;
+  }
   let processor:string;
   try{processor=assertNativeValidationAllowed(env,actor.role,request.matchId,request.gameId);}
   catch{throw fail('Native publication is restricted to the configured staging/demo administrator and allowlisted Game.');}
@@ -182,7 +195,8 @@ export async function executeNativeReadyPublication(input:{
        link.data()?.playerId!==actor.playerId)
       throw fail('The Game, candidate or administrator authority is missing.');
     checkedCandidate(c,request,processor);
-    if(c.validatedBy!==actor.playerId)throw fail('Only the administrator who validated this candidate may publish or roll it back.');
+    if(request.operation==='PUBLISH'&&c.validatedBy!==actor.playerId)
+      throw fail('Only the administrator who validated this candidate may publish it.');
     const roster=game.players??[];
     if(!Array.isArray(roster)||roster.length<2||roster.length>8)throw fail('Game roster unavailable.');
     const ids=roster.map((p:Bag)=>p.playerId);
@@ -275,7 +289,8 @@ export async function executeNativeReadyPublication(input:{
   const claimToken=snap(claim.data()??null);
   const txResult=await db.runTransaction(async(tx:any)=>{
     const now=Timestamp.now();
-    const fresh=await authority(tx);
+    let fresh:any;
+    try{fresh=await authority(tx);}catch{throw abort();}
     const claimNow=await tx.get(claimRef);
     if(fresh.fingerprint!==start.fingerprint||
        snap(claimNow.data()??null)!==claimToken||
@@ -373,7 +388,8 @@ async function rollbackNativePublication(input:{
   const rollbackRevision=request.expectedStatisticsRevision+1;
   const result=await db.runTransaction(async(tx:any)=>{
     const now=Timestamp.now();
-    const fresh=await authority(tx);
+    let fresh:any;
+    try{fresh=await authority(tx);}catch{throw abort();}
     const freshClaim=await tx.get(claimRef);
     if(fresh.fingerprint!==start.fingerprint||snap(freshClaim.data()??null)!==claimToken)
       throw abort();
@@ -411,10 +427,20 @@ async function rollbackNativePublication(input:{
 }
 
 function checkedOfficialForRollback(game:Bag,match:Bag,request:NativeReadyPublicationRequest){
-  const official=currentOfficialGameOutcome(game,match);
-  if(official.qualification!=='OFFICIAL'||official.resultRevision!==request.expectedResultRevision||
-     game.status!=='COMPLETED'||match.status!=='COMPLETED'||
-     game.activeResultDisputeId||match.activeResultDisputeId||
+  const dispute=game.activeResultDisputeId??null;
+  const disputed=!!dispute||!!match.activeResultDisputeId;
+  // A formally opened dispute freezes downstream scoring. Restoring the old
+  // evidence pointer during that dispute is safe and MUST NOT resolve it.
+  if(disputed){
+    if(!dispute||dispute!==match.activeResultDisputeId||
+       game.status!=='DISPUTED'||match.status!=='DISPUTED')
+      throw fail('Rollback dispute authority or status is inconsistent.');
+  }else{
+    const official=currentOfficialGameOutcome(game,match);
+    if(official.qualification!=='OFFICIAL'||game.status!=='COMPLETED'||match.status!=='COMPLETED')
+      throw fail('The official Game result is no longer eligible for native rollback.');
+  }
+  if(game.canonicalResult?.revision!==request.expectedResultRevision||
      game.recordingResultBinding||game.canonicalResult?.source==='RECORDING_VERIFIED')
-    throw fail('Official result or source binding is no longer eligible for native rollback.');
+    throw fail('The original accepted result changed or requires a separate recording rebind.');
 }
