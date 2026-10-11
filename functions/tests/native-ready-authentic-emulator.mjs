@@ -133,8 +133,10 @@ assert.equal(winners.length,isTeamResult?caseSpec.teamSize:1);
 // Previously the harness directly wrote canonicalResult; this deliberately
 // runs the actual two distinct Firebase auth-bound callable result commands.
 // Historical fixture teams/outcome remain explicitly SYNTHETIC TEST AUTHORITY.
-const claimOutcome=isTeamResult?{winnerTeam:winningTeam}:
-  {winnerPlayerId:roster[winner].playerId};
+// Actual participant result contract: 1v1 is a team-of-one result, while
+// FFA alone accepts winnerPlayerId. Deliberately avoid an invented 1v1 player-win.
+const claimOutcome=fixture.format==='FFA'?{winnerPlayerId:roster[winner].playerId}:
+  {winnerTeam:winningTeam};
 const submitted=await submitGameResult.run({
   data:{matchId,gameId,...claimOutcome},auth:{uid:viewer.authUid}});
 assert.equal(submitted.success,true);
