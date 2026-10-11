@@ -218,7 +218,9 @@ test('rollback restores the prior Game source, increments the revision and retai
 test('when swapping a legacy READY source, rollback restores exactly that immutable legacy pointer',async()=>{
  const t=fixture(),old='1'.repeat(64);
  t.rows.set('matches/m/games/g/replaySources/'+old,
-   {state:'READY',sourceHash:old,statistics:{path:'old/immutable.json.gz',sha256:'2'.repeat(64)}});
+   {state:'READY',matchId:'m',gameId:'g',sourceHash:old,
+     playerMapping:[{playerId:'p1',replaySlot:1},{playerId:'p2',replaySlot:2}],
+     statistics:{path:'old/immutable.json.gz',sha256:'2'.repeat(64)}});
  t.game.activeReplayStatisticsId=old;t.game.replayStatisticsState='READY';t.game.replayStatisticsRevision=7;
  t.request.expectedActiveSourceHash=old;t.request.expectedStatisticsRevision=7;
  await t.run();
@@ -229,6 +231,22 @@ test('when swapping a legacy READY source, rollback restores exactly that immuta
  assert.equal(r.replayStatisticsRevision,9);
  assert.equal(t.rows.get('matches/m/games/g').activeReplayStatisticsId,old);
  assert.equal(t.rows.get('matches/m/games/g/replaySources/'+old).state,'READY');
+});
+
+test('published native Game cannot roll back onto a predecessor whose immutable statistics identity changed',async()=>{
+ const t=fixture(),old='1'.repeat(64);
+ t.rows.set('matches/m/games/g/replaySources/'+old,
+   {state:'READY',matchId:'m',gameId:'g',sourceHash:old,
+     playerMapping:[{playerId:'p1',replaySlot:1},{playerId:'p2',replaySlot:2}],
+     statistics:{path:'old/immutable.json.gz',sha256:'2'.repeat(64)}});
+ t.game.activeReplayStatisticsId=old;t.game.replayStatisticsState='READY';t.game.replayStatisticsRevision=7;
+ t.request.expectedActiveSourceHash=old;t.request.expectedStatisticsRevision=7;
+ await t.run();
+ t.rows.get('matches/m/games/g/replaySources/'+old).statistics.sha256='0'.repeat(64);
+ const rollback={...t.request,operation:'ROLLBACK',expectedActiveSourceHash:t.sourceHash,
+   expectedStatisticsRevision:8,reason:'Rollback needs the original immutable previous source verified.'};
+ await assert.rejects(t.run({request:rollback}),e=>e.code==='failed-precondition');
+ assert.equal(t.rows.get('matches/m/games/g').activeReplayStatisticsId,t.sourceHash);
 });
 
 test('all source-switch/replay mismatch, accepted binding, dispute and result corrections fail closed',async()=>{
