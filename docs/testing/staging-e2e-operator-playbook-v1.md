@@ -23,6 +23,22 @@ This playbook supersedes the *order* of the manual tests in [manual E2E readines
 
 The UI flag is **not security**. Native operations still require the backend's explicit `GCLOUD_PROJECT=age-of-friends-staging`, `AOF_NATIVE_REPLAY_PROJECT`, `AOF_NATIVE_REPLAY_INTEGRATION=validate-v1`, source-worker token and processor SHA, `AOF_NATIVE_REPLAY_GAME_ALLOWLIST`, `AOF_NATIVE_READY_PUBLICATION=reviewed-v1`, separate `AOF_NATIVE_READY_GAME_ALLOWLIST`, `AOF_ACTIVE_NATIVE_PLAYER_READS=1`, `AOF_ACTIVE_NATIVE_SOCIAL_READS=1`, and separately enabled `AOF_NATIVE_READY_ROLLBACK=reviewed-v1` for recovery. **Do not set these until specifically approved**. Never commit service-account credentials, private tokens, identities, live replay data, or Firebase release secrets.
 
+## Locked staging website build — zero production fallback
+
+Use the [staging-only web template](../../web/.env.staging.example). Make a **private** `web/.env.staging.local` with approved staging public Firebase API key, staging web App ID, auth domain `age-of-friends-staging.firebaseapp.com`, exact 40-character reviewed Git SHA and `VITE_USE_EMULATORS=false`. The committed generic `web/.env.example` has a production/default project ID for historical reasons and must **not** be used to build staging.
+
+```sh
+# Prior to separately approved native UI activation, keep VITE_AOF_STAGING_E2E=false:
+node scripts/verify-staging-web-env.mjs web/.env.staging.local
+# This intentionally refuses an enabled manual UI without explicitly selecting
+# the manual E2E audit mode; either command is OFFLINE, not deployment authorization.
+node scripts/verify-staging-web-env.mjs web/.env.staging.local --for-manual-e2e
+# After independent deployment and flag approvals, build only from the reviewed SHA:
+npm run build --prefix web -- --mode staging
+```
+
+**Never infer authorization from a green config audit.** The `--for-manual-e2e` command checks only that the browser opt-in is explicitly configured. A separate written staging deploy and exact-Game native flag approval must exist. No production Firebase alias, preview fallback, local Auth emulator, direct canonicalResult write or unreviewed source replacement is permissible. Use a full deployment rollback plan and verify the emitted website bundle actually targets staging before hosting publication.
+
 ## Staging human journey — one controlled Battle
 
 1. **Before:** ADMIN records known approved Match/Game ID, exactly mapped historical source names to permitted Game players, original hash, build provenance (185872 sample if using old fixture), announced settings and actual play window. Snapshot current active source pointer (initially absent), result/statistics revisions, Season leaderboard/Gold ledger, player profiles/Chronicle, and permitted operations.
