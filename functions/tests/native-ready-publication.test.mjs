@@ -282,17 +282,17 @@ test('mutable authority and result changes during immutable Storage read abort p
 });
 
 test('rollback refuses result changes, inconsistent disputes, tampered source or stale cursor',async()=>{
- for(const mutate of [
-   t=>{t.game.canonicalResult.revision=3;},
+ for(const [caseNo,mutate] of [
+   t=>{t.rows.get('matches/m/games/g').canonicalResult.revision=3;},
    t=>{t.rows.get('matches/m/games/g').activeResultDisputeId='opened';},
    t=>{t.rows.get(t.sourcePath).nativeValidationCandidateId='wrong';},
    t=>{t.game.activeReplayStatisticsId='1'.repeat(64);},
    t=>{t.rows.get(t.publicationPath).state='REVOKED';},
- ]){
+ ].entries()){
    const t=fixture();await t.run();mutate(t);
    const rollback={...t.request,operation:'ROLLBACK',expectedActiveSourceHash:t.sourceHash,
      expectedStatisticsRevision:1,reason:'Rollback reviewed native Game after source/correction condition changed.'};
-   await assert.rejects(t.run({request:rollback}));
+   await assert.rejects(t.run({request:rollback}),undefined,'rollback must reject modified authority case '+caseNo);
    assert.equal(t.rows.get(t.publicationPath).state==='ROLLED_BACK',false);
  }
 });
