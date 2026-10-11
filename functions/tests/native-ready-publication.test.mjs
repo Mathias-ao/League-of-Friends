@@ -4,6 +4,7 @@ import {gzipSync} from 'node:zlib';
 import {digest,bindingDigest,NATIVE_VALIDATION,NATIVE_DELIVERY} from '../lib/engines/nativeRecordingIntegration.js';
 import {executeNativeReadyPublication,assertNativePublicationAllowed,
   NATIVE_READY_PUBLICATION_VERSION} from '../lib/services/nativeReadyPublication.js';
+import {currentOfficialGameOutcome} from '../lib/engines/recordingMatchFacts.js';
 
 const SHA='a'.repeat(64),REVISION='synthetic-native-extraction';
 const env={GCLOUD_PROJECT:'demo-native-publication-test',FUNCTIONS_EMULATOR:'true',
@@ -156,6 +157,8 @@ test('native READY publication requires separate operator/role/project/Game/proc
 
 test('verified native publication atomically switches qualified source and preserves official result/old evidence',async()=>{
  const t=fixture(),before=structuredClone([...t.rows]);
+ assert.equal(currentOfficialGameOutcome(t.game,t.match).qualification,'OFFICIAL',
+   JSON.stringify(currentOfficialGameOutcome(t.game,t.match)));
  const r=await t.run();
  assert.equal(r.state,'READY');assert.equal(r.activated,true);
  assert.equal(r.replayStatisticsRevision,1);
