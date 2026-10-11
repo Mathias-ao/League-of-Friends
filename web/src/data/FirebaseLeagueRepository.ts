@@ -3,6 +3,7 @@ import {getAuth,browserLocalPersistence,setPersistence,signInWithCustomToken,sig
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
 import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse,type NativeValidationCandidateResult,type NativeE2eReview,type NativeE2ePublishRequest,type NativeE2ePublicationResult,type NativeE2eEnvironmentStatus} from '../domain/league';
+import {assertRecordingUploadFile} from '../domain/recordingUploadPolicy';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -133,9 +134,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     return this.sendReplay<NativeValidationCandidateResult>(matchId,gameId,file,'NATIVE_VALIDATION_V1');
   }
   private async sendReplay<T>(matchId:string,gameId:string,file:File,processingMode:'LEGACY'|'NATIVE_VALIDATION_V1'):Promise<T>{
-    const accepted=processingMode==='NATIVE_VALIDATION_V1'?/\\.aoe2record$/i:/\\.(aoe2record|mgz)$/i;
-    if(file.size<=0||file.size>32*1024*1024||!accepted.test(file.name))
-      throw new Error('Choose a supported non-empty recording smaller than 32 MiB.');
+    assertRecordingUploadFile(file.name,file.size,processingMode);
     const bytes=new Uint8Array(await file.arrayBuffer());
     let binary='';
     const chunk=0x8000;
