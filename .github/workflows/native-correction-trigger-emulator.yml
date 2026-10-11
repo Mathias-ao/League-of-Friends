@@ -1,0 +1,55 @@
+name: Native correction trigger emulator
+
+on:
+  pull_request:
+    paths:
+      - "functions/**"
+      - ".github/workflows/native-correction-trigger-emulator.yml"
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+      - ".github/workflows/native-correction-trigger-emulator.yml"
+  workflow_dispatch:
+
+jobs:
+  trigger-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      CI: "true"
+      FIREBASE_CLI_DISABLE_USAGE_REPORTING: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Set up Java for Firestore emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install backend dependencies
+        run: npm --prefix functions install
+      - name: Build backend Functions
+        run: npm --prefix functions run build
+      - name: Check actual Functions trigger delivery and revisions
+        run: >
+          npx --yes firebase-tools@14 emulators:exec
+          --project demo-aof-native-trigger
+          --only firestore,storage,functions
+          "node functions/tests/native-ready-trigger-emulator.mjs"
+      - name: Retain local emulator logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-trigger-emulator-logs
+          path: |
+            firebase-debug.log
+            firestore-debug.log
+            ui-debug.log
+          if-no-files-found: ignore
