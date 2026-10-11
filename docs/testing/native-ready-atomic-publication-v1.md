@@ -28,6 +28,30 @@ The global canonical Game GUID claim is checked in the same authority domain as 
 
 After preflight verification, a single Firestore transaction rechecks the administrator/auth link, Match, Game, roster players, candidate, source-collision state and GUID claim. If any input changed during verification, the transaction aborts. It then creates the native READY replaySources document **once**, creates a permanent publication journal, atomically switches `Game.activeReplayStatisticsId` and increments `replayStatisticsRevision`, marks the candidate published, records the unique Game GUID claim if necessary and creates an audit entry. It never changes the canonical result, result history, source bytes or original replay. Regular existing current-source triggers/readers may subsequently rebuild their authoritative derived totals; no new points/relationship rule is invoked by this callable.
 
+### Retry and global-claim invariants
+
+A publication retry does not rely on a previously observed journal or blindly report `READY`.
+It re-reads the **current** Game, Match, ADMIN membership/Auth link, candidate,
+source, journal, claim and any previous legacy source inside a read-only Firestore
+transaction. It requires the active source to pass the complete current
+`AOF_ACTIVE_NATIVE_STATISTICS_V1` reader contract, including official result,
+source/schema, roster, statistics hash, match-facts and Season showcase binding.
+A dispute, changed official winner, replaced source, revoked administrator,
+altered immutable predecessor or transferred GUID claim fails closed; retries
+never increment the revision, create a new publication or mutate scoring.
+
+If the GUID was already claimed by this same Battle before native publication,
+the journal records an immutable fingerprint. Neither a retry nor rollback
+accepts that historical claim changing while the native source is active.
+If the publisher created the claim, rollback requires it still to belong to
+the exact Match/Game, native source SHA and candidate **both before and inside**
+the transaction; a claim transferred to another Battle is never deleted.
+
+These hardening checks are separate from full Firebase emulator/concurrent
+transaction acceptance. Existing rollback journals created before claim
+fingerprinting continue to require consistent claim ownership but cannot
+retroactively prove a prior claim's exact contents.
+
 ### Rollback
 
 Rollback requires the published source and exact official-result binding still to match the journal. The previous immutable legacy source must still exist, or the initial no-source pointer is restored. The rollback transaction **increments** the replay-statistics revision again, restores the old active pointer and Game replay state, marks the journal and candidate rolled back and records an audit; it retains the published source and permanent original recording for forensic review. A later correction or source change blocks stale rollback. A formally opened dispute may remain open during rollback if the same dispute ID and `DISPUTED` status are present on Match and Game: rollback does not close the dispute or allow scoring through it.
