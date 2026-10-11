@@ -23,6 +23,18 @@ This playbook supersedes the *order* of the manual tests in [manual E2E readines
 
 The UI flag is **not security**. Native operations still require the backend's explicit `GCLOUD_PROJECT=age-of-friends-staging`, `AOF_NATIVE_REPLAY_PROJECT`, `AOF_NATIVE_REPLAY_INTEGRATION=validate-v1`, source-worker token and processor SHA, `AOF_NATIVE_REPLAY_GAME_ALLOWLIST`, `AOF_NATIVE_READY_PUBLICATION=reviewed-v1`, separate `AOF_NATIVE_READY_GAME_ALLOWLIST`, `AOF_ACTIVE_NATIVE_PLAYER_READS=1`, `AOF_ACTIVE_NATIVE_SOCIAL_READS=1`, and separately enabled `AOF_NATIVE_READY_ROLLBACK=reviewed-v1` for recovery. **Do not set these until specifically approved**. Never commit service-account credentials, private tokens, identities, live replay data, or Firebase release secrets.
 
+## Native worker image — reviewed staging candidate, no deployment
+
+The [staging-only Dockerfile](../../replay-tools/Dockerfile.staging) packages the existing worker and Python dependencies as an unprivileged image. Build/test from the **`replay-tools/` context**, never the repository root:
+
+```sh
+docker build -f replay-tools/Dockerfile.staging -t aof-staging-native-worker:test replay-tools
+```
+
+The [staging native worker CI](../../.github/workflows/staging-native-worker-image.yml) builds this image locally, runs a hosted-mode container with a read-only filesystem and temporary scratch space, and proves that **both** `/process` (legacy) and `/process-native-v1` refuse POST when `K_SERVICE` is present but the private bearer token is missing. Local emulator worker behavior remains backward compatible. The base image and resulting deployment image digest must be frozen, reviewed and recorded at actual release time; a green Docker build does not deploy to Cloud Run.
+
+**Security/network decision still required before deploying:** the existing Functions worker transport supplies an application bearer token, **not** a Google Cloud Run IAM identity token. Do not enable anonymous Cloud Run invocation casually. The staging operator must review a restricted ingress/IAM or explicitly risk-approved HTTPS ingress design compatible with this protocol, store `AOF_REPLAY_WORKER_AUTH_TOKEN` in approved secret storage, and configure the native endpoint flag separately. Functions must be configured with a matching server-side token (never `VITE_*`), an HTTPS `REPLAY_WORKER_URL`, pinned processor revision and appropriate 240-second worker timeout. Health route contains only service presence, no source. No live Cloud Run or Firebase resource changes are authorized by this Dockerfile or CI.
+
 ## Locked staging website build — zero production fallback
 
 Use the [staging-only web template](../../web/.env.staging.example). Make a **private** `web/.env.staging.local` with approved staging public Firebase API key, staging web App ID, auth domain `age-of-friends-staging.firebaseapp.com`, exact 40-character reviewed Git SHA and `VITE_USE_EMULATORS=false`. The committed generic `web/.env.example` has a production/default project ID for historical reasons and must **not** be used to build staging.
