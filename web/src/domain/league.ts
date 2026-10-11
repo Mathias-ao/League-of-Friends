@@ -61,6 +61,11 @@ export interface NativeValidationCandidateResult {
   success:true;state:'VALIDATED_NOT_READY';activated:false;candidateId:string;sourceHash:string;
   matchId:string;gameId:string;readyBlockers:string[];alreadyProcessed:boolean;
 }
+export interface NativeE2eEnvironmentStatus {
+  contract:'AOF_STAGING_E2E_PREFLIGHT_V1';project:string;matchId:string;gameId:string;
+  expectedCommit:string;flags:Record<string,boolean>;blockers:string[];
+  configReady:boolean;caveat:string;
+}
 export interface NativeE2eReview {
   contract:'AOF_NATIVE_E2E_REVIEW_V1';matchId:string;gameId:string;candidateId:string;
   candidateState:'VALIDATED_NOT_READY'|'PUBLISHED_READY'|'ROLLED_BACK';
@@ -224,6 +229,7 @@ export interface LeagueRepository {
   rsvp(eventId:string,value:'YES'|'NO'):Promise<void>;checkIn(eventId:string):Promise<void>;formEventMatches(eventId:string,options?:{pairingMode:"RANDOM"|"ELO_BALANCED";force:boolean;reason:string}):Promise<void>;
   ensureCivilizationDraft(matchId:string,gameId:string):Promise<void>;pickCivilization(matchId:string,gameId:string,civilization:string):Promise<void>;resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean):Promise<void>;watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void):()=>void;
   stagingNativeValidate?(matchId:string,gameId:string,file:File):Promise<NativeValidationCandidateResult>;
+  stagingNativeStatus?(matchId:string,gameId:string,expectedCommit:string):Promise<NativeE2eEnvironmentStatus>;
   stagingNativeReview?(matchId:string,gameId:string,candidateId:string):Promise<NativeE2eReview>;
   stagingNativePublish?(request:NativeE2ePublishRequest):Promise<NativeE2ePublicationResult>;
   stagingSubmitGameResult?(matchId:string,gameId:string,outcome:{winnerTeam?:number;winnerPlayerId?:string;winnerPlayerIds?:string[]}):Promise<{submissionId:string}>;
