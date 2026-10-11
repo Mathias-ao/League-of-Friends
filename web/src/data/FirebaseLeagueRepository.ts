@@ -2,7 +2,7 @@ import {initializeApp} from 'firebase/app';
 import {getAuth,browserLocalPersistence,setPersistence,signInWithCustomToken,signInWithEmailAndPassword,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
-import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse} from '../domain/league';
+import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse,type NativeValidationCandidateResult,type NativeE2eReview,type NativeE2ePublishRequest,type NativeE2ePublicationResult} from '../domain/league';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -100,13 +100,48 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async ensureCivilizationDraft(matchId:string,gameId:string){await this.call('ensureCivilizationDraft',{matchId,gameId});}
   async pickCivilization(matchId:string,gameId:string,civilization:string){await this.call('makeCivilizationDraftPick',{matchId,gameId,civilization});}
   async resetCivilizationDraft(matchId:string,gameId:string,reason:string,rerollOrder:boolean){await this.call('adminResetCivilizationDraft',{requestId:crypto.randomUUID(),matchId,gameId,reason,rerollOrder});}
-  async uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>{
+  private stagingE2eAllowed(){
+    const project=import.meta.env.VITE_FIREBASE_PROJECT_ID;
+    const demo=import.meta.env.VITE_USE_EMULATORS==='true'&&project==='demo-aof-e2e';
+    const cloud=import.meta.env.VITE_USE_EMULATORS!=='true'&&project==='age-of-friends-staging';
+    if(import.meta.env.VITE_AOF_STAGING_E2E!=='true'||!(demo||cloud))
+      throw new Error('Staging E2E controls are disabled for this Firebase project.');
+  }
+  stagingNativeReview(matchId:string,gameId:string,candidateId:string):Promise<NativeE2eReview>{
+    this.stagingE2eAllowed();
+    return this.call<NativeE2eReview>('adminGetNativeReadyReview',{matchId,gameId,candidateId});
+  }
+  stagingNativePublish(request:NativeE2ePublishRequest):Promise<NativeE2ePublicationResult>{
+    this.stagingE2eAllowed();
+    return this.call<NativeE2ePublicationResult>('adminPublishNativeReady',request);
+  }
+  async stagingSubmitGameResult(matchId:string,gameId:string,outcome:{winnerTeam?:number;winnerPlayerId?:string;winnerPlayerIds?:string[]}){
+    this.stagingE2eAllowed();
+    return this.call<{submissionId:string}>('submitGameResult',{matchId,gameId,...outcome});
+  }
+  async stagingConfirmGameResult(matchId:string,gameId:string,submissionId:string){
+    this.stagingE2eAllowed();
+    await this.call('respondToGameResult',{matchId,gameId,submissionId,response:'CONFIRM'});
+  }
+  stagingNativeValidate(matchId:string,gameId:string,file:File):Promise<NativeValidationCandidateResult>{
+    this.stagingE2eAllowed();
+    return this.sendReplay<NativeValidationCandidateResult>(matchId,gameId,file,'NATIVE_VALIDATION_V1');
+  }
+  private async sendReplay<T>(matchId:string,gameId:string,file:File,processingMode:'LEGACY'|'NATIVE_VALIDATION_V1'):Promise<T>{
+    if(file.size<=0||file.size>32*1024*1024||!/\\.aoe2record$/i.test(file.name))
+      throw new Error('Choose a non-empty .aoe2record smaller than 32 MiB.');
     const bytes=new Uint8Array(await file.arrayBuffer());
     let binary='';
     const chunk=0x8000;
     for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
     const replayBase64=btoa(binary);
-    return (await httpsCallable<unknown,ReplayUploadResult>(this.functions,'uploadReplay',{timeout:300000})({matchId,gameId,fileName:file.name,replayBase64})).data;
+    return (await httpsCallable<unknown,T>(this.functions,'uploadReplay',{timeout:300000})({
+      matchId,gameId,fileName:file.name,replayBase64,processingMode
+    })).data;
+  }
+  async uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>{
+    // The ordinary player-facing upload remains LEGACY regardless of a staged review flag.
+    return this.sendReplay<ReplayUploadResult>(matchId,gameId,file,'LEGACY');
   }
   playerChronicle(){return this.call<PlayerChronicleResponse>('getPlayerChronicle');}
   socialHistory(){return this.call<SocialHistoryResponse>('getSocialHistory');}
