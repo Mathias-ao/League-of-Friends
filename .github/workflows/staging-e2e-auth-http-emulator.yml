@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "functions/**"
+      - "scripts/verify-staging-web-env.mjs"
+      - "web/.env.staging.example"
       - ".github/workflows/staging-e2e-auth-http-emulator.yml"
   push:
     branches: [main]
@@ -32,6 +34,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: Verify staging website project and opt-in refusal without deployment
+        run: |
+          node --check scripts/verify-staging-web-env.mjs
+          node scripts/verify-staging-web-env.mjs --self-test
       - name: Install and build Functions
         run: |
           npm ci --prefix functions --no-audit --no-fund
