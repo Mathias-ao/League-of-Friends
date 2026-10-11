@@ -145,6 +145,20 @@ function checkedMapping(mapping:Bag[],roster:Bag[],raw:Bag){
     throw fail('Approved Game roster no longer matches the native recording mapping.');
 }
 
+/** Pin the legacy rollback target without treating its mutable read-model
+ * cache (experience) as source identity. The stored artifact itself is never
+ * changed or deleted by native publication. */
+function legacySourceFingerprint(value:Bag|undefined,matchId:string,gameId:string,sourceId:string):string{
+  if(!value||value.state!=='READY'||value.nativePublicationVersion!==undefined||
+     value.sourceHash!==sourceId||value.matchId!==matchId||value.gameId!==gameId||
+     !object(value.statistics)||!SHA.test(value.statistics.sha256??'')||
+     typeof value.statistics.path!=='string'||!value.statistics.path)
+    throw fail('The predecessor is not a qualified immutable legacy READY source.');
+  return snap({sourceHash:value.sourceHash,matchId:value.matchId,gameId:value.gameId,
+    statistics:value.statistics,canonical:value.canonical??null,
+    playerMapping:value.playerMapping??null});
+}
+
 function publicationSource(c:Bag,request:NativeReadyPublicationRequest,game:Bag,match:Bag,experience:Bag,
   publicationId:string,official:Bag,revisionNumber:number,actor:NativeReadyActor):Bag{
   return {
@@ -231,11 +245,13 @@ export async function executeNativeReadyPublication(input:{
     throw fail('Only a previously unpublished validated candidate with a new source identity may be activated.');
   const official=checkedOfficial(start.game,start.match,request);
   if(start.game.aiOpponent||start.match.opponentKind==='AI')throw fail('Native AI Game publication is not qualified.');
+  let previousSourceFingerprint:string|null=null;
   if(start.game.activeReplayStatisticsId!==null&&start.game.activeReplayStatisticsId!==undefined){
     const oldRef=gameRef.collection('replaySources').doc(start.game.activeReplayStatisticsId);
     const oldSource=await oldRef.get();
-    if(!oldSource.exists||oldSource.data()?.state!=='READY'||oldSource.data()?.nativePublicationVersion)
-      throw fail('Only an immutable legacy READY predecessor may be replaced by native publication.');
+    if(!oldSource.exists)throw fail('Previous legacy source is missing.');
+    previousSourceFingerprint=legacySourceFingerprint(oldSource.data(),
+      request.matchId,request.gameId,start.game.activeReplayStatisticsId);
   }
   checkedMapping(start.c.playerMapping,start.game.players,{participants:start.c.playerMapping.map((m:Bag)=>({replaySlot:m.replaySlot}))});
 
@@ -307,8 +323,11 @@ export async function executeNativeReadyPublication(input:{
     const former=fresh.game.activeReplayStatisticsId;
     if(former){
       const prior=await tx.get(gameRef.collection('replaySources').doc(former));
-      if(!prior.exists||prior.data()?.state!=='READY'||prior.data()?.nativePublicationVersion)
-        throw abort();
+      if(!prior.exists)throw abort();
+      try{
+        if(legacySourceFingerprint(prior.data(),request.matchId,request.gameId,former)!==previousSourceFingerprint)
+          throw abort();
+      }catch{throw abort();}
     }
     const publishedRevision=nextRevision;
     const journal={
@@ -318,6 +337,7 @@ export async function executeNativeReadyPublication(input:{
       originalSourceRetained:true,officialResultRevision:request.expectedResultRevision,
       resultBinding:snap({canonicalResult:fresh.game.canonicalResult,recordingResultBinding:fresh.game.recordingResultBinding??null}),
       previousActiveSourceId:request.expectedActiveSourceHash,
+      previousSourceFingerprint,
       previousStatisticsState:fresh.game.replayStatisticsState??null,
       previousStatisticsRevision:request.expectedStatisticsRevision,
       previousReplay:fresh.game.replay??null,
@@ -388,8 +408,9 @@ async function rollbackNativePublication(input:{
   checkedOfficialForRollback(start.game,start.match,request);
   if(publication.previousActiveSourceId){
     const prior=await gameRef.collection('replaySources').doc(publication.previousActiveSourceId).get();
-    if(!prior.exists||prior.data()?.state!=='READY'||prior.data()?.nativePublicationVersion)
-      throw fail('The previous legacy recording source is unavailable for rollback.');
+    if(!prior.exists||legacySourceFingerprint(prior.data(),request.matchId,request.gameId,
+        publication.previousActiveSourceId)!==publication.previousSourceFingerprint)
+      throw fail('The previous legacy recording source changed or is unavailable for rollback.');
   }
   const claimRef=db.collection('recordingGameClaims').doc(publication.claimGuidHex);
   const claim=await claimRef.get();
@@ -411,7 +432,11 @@ async function rollbackNativePublication(input:{
        fresh.publication?.state!=='ACTIVE')throw abort();
     if(publication.previousActiveSourceId){
       const former=await tx.get(gameRef.collection('replaySources').doc(publication.previousActiveSourceId));
-      if(!former.exists||former.data()?.state!=='READY'||former.data()?.nativePublicationVersion)throw abort();
+      if(!former.exists)throw abort();
+      try{
+        if(legacySourceFingerprint(former.data(),request.matchId,request.gameId,
+          publication.previousActiveSourceId)!==publication.previousSourceFingerprint)throw abort();
+      }catch{throw abort();}
     }
     tx.update(gameRef,{
       activeReplayStatisticsId:publication.previousActiveSourceId??null,
