@@ -19,7 +19,7 @@ export const NATIVE_PUBLICATION_VERSION='AOF_NATIVE_READY_PUBLICATION_V1_EXPERIM
  * so disabling publication never prevents a controlled emergency reversal. */
 export function assertNativePublicationAllowed(
   env:NodeJS.ProcessEnv,actorRole:string,matchId:string,gameId:string,
-  action:'publish'|'rollback',
+  action:'review'|'publish'|'rollback',
 ):string {
   const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
   if(actorRole!=='ADMIN'||!ID.test(matchId)||!ID.test(gameId)||
@@ -28,7 +28,10 @@ export function assertNativePublicationAllowed(
      !(env.AOF_NATIVE_REPLAY_GAME_ALLOWLIST??'').split(',').map(s=>s.trim()).includes(matchId+'/'+gameId)||
      !SHA.test(env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION??''))
     throw fail('Native publication is not permitted for this administrator, project, Game or processor.');
-  if(action==='publish'){
+  if(action==='review'){
+    if(env.AOF_NATIVE_READY_REVIEW!=='inspect-v1')
+      throw fail('Native READY review is not enabled.');
+  }else if(action==='publish'){
     if(env.AOF_NATIVE_READY_PUBLICATION!=='reviewed-v1'||
        env.AOF_ACTIVE_NATIVE_PLAYER_READS!=='1'||
        env.AOF_ACTIVE_NATIVE_SOCIAL_READS!=='1')
