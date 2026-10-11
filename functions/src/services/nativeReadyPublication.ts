@@ -294,6 +294,8 @@ export async function executeNativeReadyPublication(input:{
     throw fail('Native Season and player read-model bindings could not be qualified.');
   const source=publicationSource(start.c,request,start.game,start.match,experience,
     request.candidateId,official,nextRevision,actor);
+  if(Buffer.byteLength(JSON.stringify(source),'utf8')>850_000)
+    throw fail('Qualified native READY source exceeds the bounded Firestore document budget.');
   const approvedGame={...start.game,
     activeReplayStatisticsId:request.sourceHash,replayStatisticsRevision:nextRevision,
     replayStatisticsState:'READY'};
