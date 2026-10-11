@@ -72,7 +72,46 @@ Use real writable absolute private paths appropriate to the operator's OS (Windo
 7. Exercise negative checks (unauthorized role, disabled read flag after restart, outdated source hash or revision, dispute and stale auth) without modifying the private source. Capture UI plus server logs/audit. Record worker, handler, manual-publication, native-reader, payload and browser times separately.
 8. Use audited **ROLLBACK** only for a source-only publication with an unchanged independently accepted result. If it is a `CORRECT_REBIND_V1` result correction, normal rollback is intentionally forbidden; use its specific reviewed correction resolution protocol. Reverify GUID claim, source pointers, Season eligibility and permanent source retention.
 
-**Known blocker for a genuinely browser-driven native admin E2E:** the current website has no native validation/review/PUBLISH/ROLLBACK controls or candidate metadata retrieval UI. An authenticated, bounded, staging/demo-only operator harness or UI must be implemented and reviewed **before** calling B ready. The already merged CI scripts call lower-level helpers inside local emulators and are **not** a substitute for browser-to-HTTPS acceptance.
+**Native operator bridge now proposed in this readiness PR:** `scripts/native-ready-emulator-operator.mjs` supports **inspect / validate / publish / rollback**, using the existing Admin-checked callable handlers and exact local `demo-aof-e2e` Auth/Firestore/Storage emulator IDs. It verifies a source SHA, current result and statistics revisions and pinned native artifact/candidate before calling existing backend logic; it never writes `canonicalResult` directly and cannot run against staging or production. The actual Game result must first be independently accepted through **real** participant result submission/confirmation (or a separately reviewed correct administrative authority), not silently synthesized by this bridge. The browser still does not expose native administrative controls, so session B is explicitly **operator-assisted**; this CLI uses callable handlers in-process, **not HTTP/browser Auth transport**, and cannot certify deployed staging. Live browser read surfaces are a separate *manual test checkpoint*, not already accepted.
+
+### Demo-emulator-only native administrator helper
+
+This helper is for a **single already-approved test Game** whose identity, independent result authority, names, replay bytes and rollback have been reviewed. Build Functions first. Start the *same* demo Auth, Firestore, Storage and Functions emulators with explicit `--project demo-aof-e2e`, the local native worker, and **only exact Game allowlists**, pinned processor revision and review flags required for the selected stage. These environment variables must be set for the Functions-emulator process **as well as** for the helper when testing the website's readers. A CLI process flag does **not** magically configure already-running Functions workers.
+
+Create a private JSON manifest outside Git and keep candidate/source revision values pinned between steps:
+
+```json
+{
+  "matchId": "REVIEWED_TEST_MATCH_ID",
+  "gameId": "REVIEWED_TEST_GAME_ID",
+  "adminAuthUid": "EXISTING_LOCAL_EMULATOR_ADMIN_AUTH_UID",
+  "recordingPath": "/ABSOLUTE/PRIVATE/REAL_SOURCE.aoe2record",
+  "sourceSha256": "64_LOWERCASE_HEX_CHARACTERS",
+  "candidateId": "64_LOWERCASE_HEX_FROM_VALIDATE",
+  "statisticsSha256": "64_LOWERCASE_HEX_FROM_VALIDATE",
+  "expectedActiveSourceHash": null,
+  "expectedStatisticsRevision": 0,
+  "expectedResultRevision": 1,
+  "reason": "Independent locally accepted official result and pinned evidence reviewed."
+}
+```
+
+The placeholders are **never** accepted as valid values. The operator commands run *only* with `GCLOUD_PROJECT=demo-aof-e2e`, `AOF_NATIVE_REPLAY_PROJECT=demo-aof-e2e`, `FUNCTIONS_EMULATOR=true`, loopback Auth/Firestore/Storage hosts, `REPLAY_BUCKET=demo-aof-e2e.appspot.com`, an actual `AOF_NATIVE_REPLAY_PROCESSOR_REVISION`, and explicit operator flags/allowlists. Never place these config values into the public frontend Vite environment.
+
+```sh
+node scripts/native-ready-emulator-operator.mjs --self-test
+# Before an official result: validate the original with exact SHA and reviewed Game allowlist.
+node scripts/native-ready-emulator-operator.mjs validate /PRIVATE/native-operator.json
+# Inspect the unpublished candidate; independently accept a Game result via legitimate participants.
+node scripts/native-ready-emulator-operator.mjs inspect /PRIVATE/native-operator.json
+# After acceptance: set candidate/statistics hashes and exact current revisions.
+node scripts/native-ready-emulator-operator.mjs publish /PRIVATE/native-operator.json
+# After browser evidence checks: set expectedActiveSourceHash and current
+# expectedStatisticsRevision (usually 1) in the reviewed private manifest.
+node scripts/native-ready-emulator-operator.mjs rollback /PRIVATE/native-operator.json
+```
+
+**Do not** call `publish` until the separate Game result has been independently accepted; do not call `rollback` on a corrected-result `CORRECT_REBIND_V1` publication. Each mutation is rejected on stale expected source/result/revisions. The operator tool deliberately does not set flag values itself, create synthetic Auth accounts, accept results for players, perform browser sign-in or certify cloud transport. Run dry-run/self-tests in CI; real manual Game IDs, Auth accounts and file paths remain private and must be checked on-site.
 
 ## During-run evidence log (one row per checkpoint)
 
@@ -96,8 +135,8 @@ For sensitive values use private operator storage, not PR comments or public Act
 
 **GO for a future local legacy-browser rehearsal only when:** verified local stack, real app mode, accounts, source/result provenance, demo data backup, expected ledgers, access checks, browser and rollback rehearsal, and all attestation gates are complete. Those details cannot be certified solely by GitHub CI.
 
-**NO-GO for cloud/staging or native browser E2E currently:** no authorized staging deployment, no demonstrated staging configuration/secret/rules version or cold/warm browser acceptance, no reviewed native operator bridge/UI and scoped flag-activation authorization. Never use production as a substitute. No user-facing READY activation is authorized.
+**NO-GO for cloud/staging or native browser E2E currently:** no authorized staging deployment, no demonstrated staging configuration/secret/rules version or cold/warm browser acceptance, no native administrative **browser** UI (local assisted operator CLI is available), no scoped staging flag-activation authorization. Never use production as a substitute. No user-facing READY activation is authorized.
 
-**Milestone 3 after this readiness package:** (P0) implement/review staging/demo-only authenticated native operator route and automated browser smoke without any default activation; (P0) verify actual staging deployment and real result-authority/browser joins under separate authorization; (P1) cold/warm/repeated upload profiling, particularly 2v2/4v4/FFA (local validation alone exceeded the desired <20s end-to-READY target); (P1) real-file correction/rebind and full scoring/event finalisation ledger checks; (P1) qualify current Chronicle/social read meaning, leaving draft Story Engine PRs #61/#62 outside the release path unless separately reconciled and reviewed; (P2) design then test autonomous native READY and separately authorize any ordinary-user rollout.
+**Milestone 3 after this readiness package:** (P0) review/use the demo-only native operator bridge, then qualify actual authenticated browser read and result-confirmation flow without any default activation; (P0) verify actual staging deployment and real result-authority/browser joins under separate authorization; (P1) cold/warm/repeated upload profiling, particularly 2v2/4v4/FFA (local validation alone exceeded the desired <20s end-to-READY target); (P1) real-file correction/rebind and full scoring/event finalisation ledger checks; (P1) qualify current Chronicle/social read meaning, leaving draft Story Engine PRs #61/#62 outside the release path unless separately reconciled and reviewed; (P2) design then test autonomous native READY and separately authorize any ordinary-user rollout.
 
 **Completion criterion:** declare the manual session scheduled only after there are **zero unresolved P0 prerequisites** for its chosen scope. A passing local back-end suite or a merged PR is neither deployment nor activation.
