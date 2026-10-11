@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-import type {LeagueRepository,MatchDetail,NativeE2eReview,NativeE2ePublishRequest} from '../domain/league';
+import type {LeagueRepository,MatchDetail,NativeE2eReview,NativeE2ePublishRequest,NativeE2eEnvironmentStatus} from '../domain/league';
 
 /** The frontend flag controls display, not authorization. Server-side gates
  * independently enforce project, active ADMIN, worker revision and exact Game. */
@@ -89,8 +89,31 @@ function NativeReview({repository,data,game,onUpdated}:{
   const [officialApproved,setOfficialApproved]=useState(false);
   const [rollbackWord,setRollbackWord]=useState('');
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[note,setNote]=useState('');
+  const [environment,setEnvironment]=useState<NativeE2eEnvironmentStatus|null>(null);
+  const [environmentError,setEnvironmentError]=useState('');
+  const [environmentChecking,setEnvironmentChecking]=useState(false);
+  const expectedCommit=import.meta.env?.VITE_AOF_COMMIT_SHA??'';
+  const environmentMatches=environment?.contract==='AOF_STAGING_E2E_PREFLIGHT_V1'&&
+    environment.expectedCommit===expectedCommit;
+  const canStart=environmentMatches&&environment?.configReady===true;
+  const canEmergencyRollback=environmentMatches&&environment?.rollbackReady===true;
   const matchId=data.match.matchId,gameId=game.gameId;
   useEffect(()=>{setCandidateId('');setReview(null);setFile(null);setReason('');setMappingApproved(false);setOfficialApproved(false);setRollbackWord('');},[matchId,gameId]);
+  async function refreshEnvironment(){
+    setEnvironmentChecking(true);setEnvironmentError('');setEnvironment(null);
+    if(!/^[a-f0-9]{40}$/.test(expectedCommit)||!repository.stagingNativeStatus){
+      setEnvironmentError('NO-GO: This staging website has no reviewed Git commit configured.');
+      setEnvironmentChecking(false);return;
+    }
+    try{
+      const result=await repository.stagingNativeStatus(matchId,gameId,expectedCommit);
+      if(result.contract!=='AOF_STAGING_E2E_PREFLIGHT_V1')
+        throw new Error('Unsupported or stale staging health response.');
+      setEnvironment(result);
+    }catch(e){setEnvironmentError(errorText(e));}
+    finally{setEnvironmentChecking(false);}
+  }
+  useEffect(()=>{void refreshEnvironment();},[matchId,gameId]);
   async function task(run:()=>Promise<void>){
     setBusy(true);setError('');setNote('');
     try{await run();}catch(e){setError(errorText(e));}
@@ -115,6 +138,10 @@ function NativeReview({repository,data,game,onUpdated}:{
   }
   async function publish(operation:'PUBLISH'|'ROLLBACK'){
     if(!review)throw new Error('Review the pinned source first.');
+    if(operation==='PUBLISH'&&!canStart)
+      throw new Error('NO-GO: matching staging build, worker and all native flags are not verified.');
+    if(operation==='ROLLBACK'&&!canEmergencyRollback)
+      throw new Error('NO-GO: the separately gated emergency rollback is not approved.');
     const isPublish=operation==='PUBLISH';
     if(isPublish&&!review.candidatePublishEligible)throw new Error('Independent result or candidate is not currently eligible.');
     if(!isPublish&&!review.nativeSourceIsActive)throw new Error('Candidate is no longer the active native source.');
@@ -144,18 +171,32 @@ function NativeReview({repository,data,game,onUpdated}:{
       Native validation only creates an unpublished candidate. READY publication requires independently
       accepted result authority and all backend staging gates.</p>
     <div className="stack">
+      <section className="stack" aria-label="Staging release and flags preflight">
+        <strong>Authenticated staging environment preflight</strong>
+        <p>Client commit {expectedCommit||'UNPINNED'} · backend status {environmentChecking?'checking':
+          !environmentMatches?'NO-GO':environment?.configReady?'CONFIG CHECK PASSED':'NO-GO'}.
+          A configuration check does not certify login, backups, worker connectivity or a successful browser E2E.</p>
+        {environmentMatches&&!environment?.configReady&&<p role="alert">
+          Missing release gates: {environment!.blockers.join(', ')}.
+          Emergency source rollback {environment!.rollbackReady?'remains separately allowed':'is also unavailable'}.
+        </p>}
+        {environmentError&&<p role="alert">{environmentError}</p>}
+        <button disabled={environmentChecking||busy} onClick={()=>void refreshEnvironment()}>
+          Recheck deployed commit and scoped Game flags
+        </button>
+      </section>
       <label>Genuine source .aoe2record (not part of the normal player upload)
         <input type="file" accept=".aoe2record" onChange={e=>setFile(e.target.files?.[0]??null)}/>
       </label>
       <button disabled={busy||!file||file.size===0||file.size>32*1024*1024||
-        !repository.stagingNativeValidate||!!game.result}
+        !repository.stagingNativeValidate||!!game.result||!canStart}
         onClick={()=>void task(validate)}>Validate only — never publish READY</button>
       {!!game.result&&<p>Game result already accepted. Do not validate a different source without the reviewed correction protocol.</p>}
       <label>Exact SHA-256 candidate ID from validation (paste after reopening this Battle)
         <input value={candidateId} onChange={e=>{setCandidateId(e.target.value.trim().toLowerCase());resetReview();}}
           maxLength={64} placeholder="64 hexadecimal characters"/>
       </label>
-      <button disabled={busy||!SHA.test(candidateId)||!repository.stagingNativeReview}
+      <button disabled={busy||!SHA.test(candidateId)||!repository.stagingNativeReview||!(canStart||canEmergencyRollback)}
         onClick={()=>void task(()=>readReview(candidateId))}>Load current admin review snapshot</button>
       {review&&<section className="stack" aria-label="Reviewed native candidate">
         <p>Candidate: <strong>{review.candidateState}</strong>. Source: <code>{review.sourceHash}</code></p>
@@ -182,13 +223,13 @@ function NativeReview({repository,data,game,onUpdated}:{
         <label><input type="checkbox" checked={officialApproved}
           onChange={e=>setOfficialApproved(e.target.checked)}/>
           I independently checked the accepted result and current source/revision; I did not infer the winner from the replay.</label>
-        {displayedEligible&&<button className="primary" disabled={busy||!canReview||!repository.stagingNativePublish}
+        {displayedEligible&&<button className="primary" disabled={busy||!canReview||!repository.stagingNativePublish||!canStart}
           onClick={()=>void task(()=>publish('PUBLISH'))}>Audited manual PUBLISH to READY</button>}
         {review.nativeSourceIsActive&&<div className="stack">
           <p>Emergency source-only rollback does not undo an independently accepted result;
             do not use for a corrected-result rebind.</p>
           <label>Type ROLLBACK<input value={rollbackWord} onChange={e=>setRollbackWord(e.target.value)}/></label>
-          <button disabled={busy||!canReview||rollbackWord!=='ROLLBACK'||!repository.stagingNativePublish}
+          <button disabled={busy||!canReview||rollbackWord!=='ROLLBACK'||!repository.stagingNativePublish||!canEmergencyRollback}
             onClick={()=>void task(()=>publish('ROLLBACK'))}>Audited ROLLBACK of native source</button>
         </div>}
         {!displayedEligible&&!review.nativeSourceIsActive&&<p role="status">
