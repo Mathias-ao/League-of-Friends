@@ -50,11 +50,15 @@ restores the previous legacy source or empty pointer with a new revision,
 retaining the original and published native evidence. Rollback has a separate
 emergency operator gate and can leave an open result dispute unresolved.
 **This is not automatic publication of `VALIDATED_NOT_READY` uploads**.
-Source-bound official result correction/rebinding, true emulator concurrency
-and distributed ledger-reconciliation, production-grade cloud acceptance and
-the <20-second upload-to-READY goal remain unqualified. See
+Source-bound correction and synthetic Firebase emulator trigger verification are now in merged #107/#108; authentic cloud/browser ledger-reconciliation, production-grade acceptance and the <20-second upload-to-READY goal remain unqualified. See
 [the constrained publisher and rollback contract](../testing/native-ready-atomic-publication-v1.md).
 Neither staged nor production environments were deployed or activated.
+
+## Native acceptance update — 11 October 2026 (supersedes historical #102 blockers)
+
+PR #107 merged a narrowly reviewed `CORRECT_REBIND_V1` disputed recording-bound official-result correction with transactional result/reprocessing revisions and immutable audit. PR #108 verified automatic **Firebase Functions emulator** job-trigger delivery with synthetic evidence. PRs #109/#110 merged genuine build-185872 1v1, 2v2, 4v4 and FFA tests of actual native validation to **manually reviewed** READY, bounded authenticated Battle/neutral social-read contracts, retries, source-only rollback, immutable source retention and claim release. These are **not** normal upload-to-READY or real cloud/browser releases.
+
+The browser still uploads with the **legacy** mode; there is not yet a complete native admin browser workflow. Native read-side flags remain off by default. Candidate validation timings in a single hosted emulator matrix were 10.94s/25.87s/32.54s/27.28s for 1v1/2v2/4v4/FFA, before manual READY, so the <20s real-cloud total cannot be claimed. The official result is a separate authority, not inferred from a replay or fixture winner slot; the accepted team/FFA outcomes in these tests were synthetic. Full Event/Season ledger, true browser/Chronicle, correction against authentic source, cloud latency and activation remain distinct gates. See [current manual E2E readiness](../testing/manual-e2e-readiness-2026-10-11.md).
 
 ## Local replay/statistics E2E — 9–10 October 2026
 
