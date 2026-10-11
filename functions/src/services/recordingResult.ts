@@ -3,24 +3,31 @@ import {HttpsError} from 'firebase-functions/v2/https';
 import {db} from '../config/firebase.js';
 import {deriveRecordingOutcome} from '../engines/recordingOutcome.js';
 import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
+import {ACTIVE_NATIVE_SOURCE_VERSION} from '../engines/activeNativeStatisticsSource.js';
 import {applyCanonicalGameResult,assertResultShape} from '../commands/results/resultSupport.js';
 import {writeAdminAudit} from './audit.js';
 
 /** Outcome resolution has its own retryable stage. Statistics remain usable as
  * evidence while unsupported outcomes wait for a source-bound Emperor review. */
-export async function resolveRecordingResult(matchId:string,gameId:string,review?:{sourceHash:string;outcome:any;reason:string;actorUid:string;actorPlayerId:string;playedWithinWindow:boolean}) {
-  return db.runTransaction(async tx=>{
-    const matchRef=db.collection('matches').doc(matchId),gameRef=matchRef.collection('games').doc(gameId);
+export async function resolveRecordingResult(matchId:string,gameId:string,review?:{sourceHash:string;outcome:any;reason:string;actorUid:string;actorPlayerId:string;playedWithinWindow:boolean},firestore:typeof db=db) {
+  return firestore.runTransaction(async tx=>{
+    const matchRef=firestore.collection('matches').doc(matchId),gameRef=matchRef.collection('games').doc(gameId);
     const [ms,gs]=await Promise.all([tx.get(matchRef),tx.get(gameRef)]),match=ms.data(),game=gs.data();
     if(!match||!game||!game.activeReplayStatisticsId)return {state:'NO_RECORDING'};
     const ref=gameRef.collection('replaySources').doc(game.activeReplayStatisticsId),source=(await tx.get(ref)).data();
     if(!source||source.state!=='READY'||source.sourceHash!==game.activeReplayStatisticsId||source.matchId!==matchId||source.gameId!==gameId)return {state:'NO_RECORDING'};
     if(review&&review.sourceHash!==source.sourceHash)throw new HttpsError('aborted','The active recording changed. Review it again.');
-    // Native READY publication never runs replay-winner inference or changes an
-    // independently accepted result. It only switches the reviewed statistics
-    // source under the separate official-result transaction fence.
-    if(source.nativePublicationVersion==='AOF_ACTIVE_NATIVE_STATISTICS_V1')
-      return {state:'RESULT_ALREADY_RESOLVED'};
+    // The manually published native source has *already* bound an accepted
+    // Game result. Source/active-Game triggers are at-least-once and must never
+    // feed it back through the legacy recording-winner inference or rewrite
+    // outcomeQualification into a contradictory pending review.
+    if(source.nativePublicationVersion===ACTIVE_NATIVE_SOURCE_VERSION){
+      if(review)throw new HttpsError('failed-precondition',
+        'Native READY results require a canonical correction dispute; replay review cannot rebind them.');
+      return currentOfficialGameOutcome(game,match).qualification==='OFFICIAL'
+        ?{state:'RESULT_ALREADY_RESOLVED'}
+        :{state:'NATIVE_OFFICIAL_RESULT_UNAVAILABLE'};
+    }
     if(match.opponentKind==='AI')return {state:'LEGACY_AI_REVIEW'};
     const qualification=deriveRecordingOutcome(match,game,source);
     const late=source.timingQualification==='ADMIN_REVIEW_REQUIRED';
@@ -41,11 +48,11 @@ export async function resolveRecordingResult(matchId:string,gameId:string,review
     const outcome=review?.outcome??qualification.outcome!;
     const guid=source.matchFacts?.game?.guid;
     // One recorded Game may have several perspectives, but cannot score in two Battles.
-    const claimRef=typeof guid==='string'&&guid?db.collection('recordingGameClaims').doc(Buffer.from(guid).toString('hex').slice(0,1000)):null;
+    const claimRef=typeof guid==='string'&&guid?firestore.collection('recordingGameClaims').doc(Buffer.from(guid).toString('hex').slice(0,1000)):null;
     const claim=claimRef?await tx.get(claimRef):null;
     let reclaimed=false;
     if(claim?.exists&&(claim.data()?.matchId!==matchId||claim.data()?.gameId!==gameId)) {
-      const previousMatchRef=db.collection('matches').doc(claim.data()!.matchId),previousGameRef=previousMatchRef.collection('games').doc(claim.data()!.gameId);
+      const previousMatchRef=firestore.collection('matches').doc(claim.data()!.matchId),previousGameRef=previousMatchRef.collection('games').doc(claim.data()!.gameId);
       const [previousMatch,previousGame]=await Promise.all([tx.get(previousMatchRef),tx.get(previousGameRef)]),oldMatch=previousMatch.data(),oldGame=previousGame.data();
       const previousSource=typeof oldGame?.activeReplayStatisticsId==='string'?(await tx.get(previousGameRef.collection('replaySources').doc(oldGame.activeReplayStatisticsId))).data():null;
       // A wrong-Battle upload may be reused only after the original attribution
