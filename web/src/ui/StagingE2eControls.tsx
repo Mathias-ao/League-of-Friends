@@ -3,7 +3,7 @@ import type {LeagueRepository,MatchDetail,NativeE2eReview,NativeE2ePublishReques
 
 /** The frontend flag controls display, not authorization. Server-side gates
  * independently enforce project, active ADMIN, worker revision and exact Game. */
-export function stagingE2eUiEnabled(env:Record<string,string|boolean|undefined>=import.meta.env){
+export function stagingE2eUiEnabled(env:Record<string,string|boolean|undefined>=import.meta.env??{}){
   const project=env.VITE_FIREBASE_PROJECT_ID;
   return env.VITE_AOF_STAGING_E2E==='true'&&(
     (project==='age-of-friends-staging'&&env.VITE_USE_EMULATORS!=='true')||
