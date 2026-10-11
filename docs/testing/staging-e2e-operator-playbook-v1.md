@@ -12,11 +12,14 @@ This playbook supersedes the *order* of the manual tests in [manual E2E readines
 | Environment | Confirm **`age-of-friends-staging`**, hosting origin, Functions region, Auth domain, separate Firestore/Storage buckets, and isolated data. Production `league-of-friends-cc274` and repository's misspelled default are forbidden. |
 | Approval | Obtain *new, explicit* authorization for the synchronized Firebase staging deploy, independently for scoped **native validation/publication/player/social/rollback flags** and their exact allowlisted Game. Normal player upload must remain legacy. |
 | Snapshot/recovery | Export **and verify** staging Auth, Firestore and Storage baseline; record immutable original locations/generations, rollback authority, staging-only cleanup procedure, required API quotas and cost envelope. Never delete the original `.aoe2record`. |
+| Exact release identity | Set **`AOF_DEPLOY_GIT_SHA`** in the independently approved staging Functions release and **`VITE_AOF_COMMIT_SHA`** in its matching website build to the same reviewed exact 40-character source commit. ADMIN reads `adminGetStagingE2eReadiness` for the selected exact Match/Game and requires `configReady=true`; this is a declaration/status check, not cryptographic attestation or proof of cloud connectivity. |
 | Worker and client | Worker URL authenticates with its private token (never Vite), origin/Steam redirect and callback are staging allowlisted, processor revision is pinned to deployed image and a 64-hex SHA, cold/warm invocation verified. Web and Functions are from the *same reviewed commit*. |
 | People / Game | Distinct real browser sessions for ADMIN and at least two active independent Game participants, separate Firebase/Steam-linked AoF accounts, approved Game source-name bindings, correct draft/map/play window, independently adjudicated official winner/team (not simply replay result). |
 | Release-mode verification | Browser `VITE_FIREBASE_PROJECT_ID=age-of-friends-staging`, `VITE_USE_EMULATORS=false`, `VITE_AOF_STAGING_E2E=true` **only after approved staging UI activation**; no preview data; backend exposes `adminGetNativeReadyReview` but still refuses unauthorized calls. |
 | Tooling | [Offline preflight](../../scripts/manual-e2e-preflight.mjs) manifest passes *after operator has verified actual facts*, exact expected scoreboard and point/gold ledger prepared; staging health/Cloud Run telemetry and browser evidence capture ready. |
 | Smoke | Before the manual session, an isolated admin review `not-found`/denied-request test and an unauthenticated/PLAYER deny test must pass; confirm worker failures cannot result in active READY or score. This is actual staging smoke, not automated by a self-test. |
+
+**New read-only operator visibility:** The staging-native review panel displays an authenticated **NO-GO** when the deployed source commit does not match the website, the source/READY Game allowlist differs, the native worker URL is not authenticated HTTPS, the processor revision is not pinned, the bucket is not the staging bucket, or the required native read/publish/rollback flags are not explicitly enabled. A successful configuration status is **necessary but not sufficient**: human verification of Auth sessions, exact content, cloud worker response, rules, backup export and deployment approval is still mandatory. The callable never contacts the worker or emits secret values. Emergency source-only rollback has an independently evaluated status, and must remain possible if ordinary publication/player/social read flags are turned off.
 
 The UI flag is **not security**. Native operations still require the backend's explicit `GCLOUD_PROJECT=age-of-friends-staging`, `AOF_NATIVE_REPLAY_PROJECT`, `AOF_NATIVE_REPLAY_INTEGRATION=validate-v1`, source-worker token and processor SHA, `AOF_NATIVE_REPLAY_GAME_ALLOWLIST`, `AOF_NATIVE_READY_PUBLICATION=reviewed-v1`, separate `AOF_NATIVE_READY_GAME_ALLOWLIST`, `AOF_ACTIVE_NATIVE_PLAYER_READS=1`, `AOF_ACTIVE_NATIVE_SOCIAL_READS=1`, and separately enabled `AOF_NATIVE_READY_ROLLBACK=reviewed-v1` for recovery. **Do not set these until specifically approved**. Never commit service-account credentials, private tokens, identities, live replay data, or Firebase release secrets.
 
@@ -44,10 +47,19 @@ The UI flag is **not security**. Native operations still require the backend's e
 | --- | --- |
 | #110 authentic four-format regression | Merged; emulator-only passes |
 | #111 readiness/GO-NO-GO package | Open, exact-head preparation CI passed |
-| #112 staging browser admin/independent result controls | Draft code; pending review and full CI |
+| #112 staging browser admin/independent result controls | Draft code; four-format genuine emulator suite passed with actual two-person result callables; further exact-head CI required after latest preflight additions |
 | Explicit staging deploy authorization | **Not given** |
 | Scoped staging native/read/rollback flag authorization | **Not given** |
 | Real staged cloud/browser upload-to-READY | **Not tested** |
 | Ordinary automatic player native READY | **Not implemented or activated** |
+
+## Before authorizing the staging deploy
+
+1. Freeze the exact reviewed `main` SHA after both PRs have been separately approved and merged. Back up and verify the isolated staging baseline.
+2. Approve **the staging environment and resource scope explicitly**, including the hosted website, individual Functions, Storage/Firestore rules, indexed data and a separately authenticated Cloud Run replay worker. The staging project is `age-of-friends-staging`, never the repository's default Firebase alias.
+3. Independently approve **native flags and exact test Match/Game IDs** only after the worker, return/rollback and original retention are verified. Keep all other Games and all production resources unchanged. Record a separate emergency rollback authorization and operational owner.
+4. Pin both website and Functions Git SHA values and processor revision, then verify the read-only ADMIN status response and actual worker/cloud/network connectivity. Never take the response alone as an E2E pass.
+5. Prepare a staging-specific Auth domain and Steam callback, plus separate real authenticated ADMIN/Player A/Player B sessions; reproduce none of the emulator shortcuts in staging.
+6. Execute a protected, single-Game smoke with the already reviewed real recording and independent result; only after it passes should the user be invited to perform the full manual E2E.
 
 No one should request the user's E2E session until the checklist is backed by real staging evidence, not just green compilation and emulator tests.
