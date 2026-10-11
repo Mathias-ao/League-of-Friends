@@ -12,11 +12,23 @@ permissions:
   contents: read
 
 jobs:
-  genuine-185872-1v1:
+  genuine-185872-multiformat:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - {fixture: 1v1_t90-deak, format: 1v1, expectedPlayers: 2}
+          - {fixture: 2v2_arabia, format: 2v2, expectedPlayers: 4}
+          - {fixture: 4v4_arabia, format: 4v4, expectedPlayers: 8}
+          - {fixture: FFA_7, format: FFA, expectedPlayers: 0}
     env:
       CI: "true"
+      REAL_FIXTURE_ID: ${{ matrix.fixture }}
+      REAL_FIXTURE_FORMAT: ${{ matrix.format }}
+      REAL_EXPECTED_PLAYERS: ${{ matrix.expectedPlayers }}
       FIREBASE_CLI_DISABLE_USAGE_REPORTING: "true"
       FUNCTIONS_EMULATOR: "true"
       AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: "1"
@@ -54,8 +66,8 @@ jobs:
           import json,os
           from pathlib import Path
           root=Path('.fixture-corpus/replay-fixtures/build-185872')
-          source=root/'1v1_t90-deak.aoe2record'
-          with (root/'townbell_build-185872/1v1_t90-deak.json').open(encoding='utf8') as fh:
+          source=root/(os.environ['REAL_FIXTURE_ID']+'.aoe2record')
+          with (root/'townbell_build-185872'/(os.environ['REAL_FIXTURE_ID']+'.json')).open(encoding='utf8') as fh:
               independent=json.load(fh)
           assert independent['meta']['game_build']==185872
           assert independent['meta']['save_version']==68.9
@@ -64,7 +76,7 @@ jobs:
           PY
           mkdir -p "$RUNNER_TEMP/native-fixture-probe"
           python replay-tools/native_ingestion.py \
-            --replay .fixture-corpus/replay-fixtures/build-185872/1v1_t90-deak.aoe2record \
+            --replay ".fixture-corpus/replay-fixtures/build-185872/$REAL_FIXTURE_ID.aoe2record" \
             --out "$RUNNER_TEMP/native-fixture-probe/package" \
             --report "$RUNNER_TEMP/native-fixture-probe/timings.json" >/dev/null
           python - <<'PY'
@@ -73,11 +85,14 @@ jobs:
           root=Path(os.environ['RUNNER_TEMP'])
           probe=json.loads((root/'native-fixture-probe/package/manifest.json').read_text(encoding='utf8'))
           players=probe['sourcePlayers']
-          assert len(players)==2 and len({p['replaySlot'] for p in players})==2
-          source=Path('.fixture-corpus/replay-fixtures/build-185872/1v1_t90-deak.aoe2record').resolve()
-          payload={'path':str(source),'gameBuild':185872,'format':'1v1',
+          expected=int(os.environ['REAL_EXPECTED_PLAYERS'])
+          assert (len(players)==expected if expected else 3<=len(players)<=8)
+          assert len({p['replaySlot'] for p in players})==len(players)
+          source=Path('.fixture-corpus/replay-fixtures/build-185872')/(os.environ['REAL_FIXTURE_ID']+'.aoe2record')
+          source=source.resolve()
+          payload={'path':str(source),'gameBuild':185872,'format':os.environ['REAL_FIXTURE_FORMAT'],
                    'players':players,'reviewedOfficialWinnerReplaySlot':players[0]['replaySlot']}
-          target=root/'authentic-185872-1v1.json'
+          target=root/('authentic-185872-'+os.environ['REAL_FIXTURE_ID']+'.json')
           target.write_text(json.dumps(payload),encoding='utf8')
           with Path(os.environ['GITHUB_ENV']).open('a',encoding='utf8') as fh:
               fh.write('AOF_NATIVE_READY_REAL_FIXTURE='+str(target)+'\n')
@@ -105,7 +120,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: authentic-185872-reviewed-ready-report
+          name: authentic-185872-reviewed-ready-\${{ matrix.fixture }}
           path: |
             .replay-lab/authentic-185872-ready/report.json
           if-no-files-found: ignore
