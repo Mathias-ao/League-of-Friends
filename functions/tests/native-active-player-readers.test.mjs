@@ -57,8 +57,11 @@ function testContext(){
    ['players/outsider',{membershipStatus:'ACTIVE',role:'PLAYER'}],
    ['authLinks/uid',{playerId:'outsider'}],
  ]);
- let onDownload=null,bytesDownloaded=bytes;
- const reference=path=>({get:async()=>({exists:records.has(path),data:()=>structuredClone(records.get(path))}),
+ let onDownload=null,onGet=null,bytesDownloaded=bytes;
+ const reference=path=>({get:async()=>{
+   if(onGet)onGet(path);
+   return {exists:records.has(path),data:()=>structuredClone(records.get(path))};
+ },
    collection:key=>({doc:id=>reference(path+'/'+key+'/'+id)})});
  const db={collection:name=>({doc:id=>reference(name+'/'+id)})};
  const bucket={file:(path,options)=>({
@@ -74,7 +77,8 @@ function testContext(){
    db,bucket,actor:extra.actor??actor,env:extra.env??env,request:extra.request??request,
  });
  return {match,game,source,raw,records,request,read,env,actor,db,
-   onDownload:fn=>onDownload=fn, corrupt:()=>bytesDownloaded=Buffer.from('garbage')};
+   onDownload:fn=>onDownload=fn,onGet:fn=>onGet=fn,
+   corrupt:()=>bytesDownloaded=Buffer.from('garbage')};
 }
 
 test('qualified active native source is explicit; candidate and legacy cannot impersonate it',()=>{
@@ -168,6 +172,17 @@ test('invalid decompression/hash, source revision and player attribution never b
  const invalid=testContext();
  await assert.rejects(invalid.read({request:{...invalid.request,offset:1}}),
    e=>e.code==='invalid-argument');
+});
+
+test('episode selection rechecks the official Game before returning bounded detail',async()=>{
+ const t=testContext();
+ let gameReads=0;
+ t.onGet(path=>{
+   if(path==='matches/m/games/g'&&++gameReads===3)
+     t.game.canonicalResult.revision=2; // correction after initial download fence
+ });
+ await assert.rejects(t.read(),e=>e.code==='aborted');
+ assert.equal(gameReads,3,'selection must be followed by a second correction fence');
 });
 
 test('active native read keeps the same response contract when original candidate documents do not exist',async()=>{

@@ -25,6 +25,9 @@ export async function readActiveNativeBattleDetail(input:{
   let selection:Record<string,any>;
   try{selection=selectNativeBattleDetail(eligible.statistics,eligible.artifactSha256,request);}
   catch{throw new HttpsError('invalid-argument','Invalid native episode selection or revision cursor.');}
+  // Selecting/serializing a large source field can outlast the initial Storage
+  // fence. Fail closed if the official result, source, roster or access changed.
+  await eligible.revalidate();
   return {success:true,delivery:'NATIVE_BOUNDED_V1',state:'READY',
     matchId:request.matchId,gameId:request.gameId,statisticsId:eligible.sourceId,
     ...selection};
