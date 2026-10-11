@@ -7,7 +7,8 @@ import {executeNativeReadyPublication,type NativeReadyPublicationRequest} from '
 
 /** Explicit admin review workflow, disabled by default and never production.
  * The source is published by the transaction only after pinned evidence checks.
- * This callable does not rewrite Game winners, League points or social scores.
+ * CORRECT_REBIND_V1 alone can correct a disputed recording-bound official result;
+ * it reuses canonical acceptance/jobs and never writes points or social scores.
  */
 export const adminPublishNativeReady=onCall<NativeReadyPublicationRequest>(
   {...callableOptions,memory:'1GiB',timeoutSeconds:120},async request=>{

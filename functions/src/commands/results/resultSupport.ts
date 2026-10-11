@@ -102,10 +102,11 @@ export function queueResultProcessingJob(
     previousRevision: number | null;
     correctionCaseId: string | null;
     affectsPowerRating?:boolean;
+    jobRef?: DocumentReference;
   },
 ): void {
   const now = Timestamp.now();
-  const processingJobRef = db.collection(collections.processingJobs)
+  const processingJobRef = input.jobRef ?? db.collection(collections.processingJobs)
     .doc(resultProcessingJobId(input.matchId, input.revision));
 
   transaction.set(
@@ -142,6 +143,20 @@ export function queueResultProcessingJob(
   );
 }
 
+export function previewCanonicalGameResult(input: {
+  match: MatchForResult & {format: MatchFormat; participants: MatchParticipant[]};
+  outcome: GameOutcome; revision: number; source: CanonicalGameResult['source'];
+  submissionId: string|null; submittedBy: string|null; confirmedBy: string|null;
+}): CanonicalGameResult {
+  let outcome;
+  try {outcome=normalizeOutcome(input.match.format,input.match.participants,input.outcome,input.match.gameConfigSnapshot);}
+  catch(error) {rethrowResultValidation(error);}
+  return {...outcome, revision:input.revision,
+    winningPlayerIds:winningPlayerIds(outcome,input.match.participants),
+    losingPlayerIds:losingPlayerIds(outcome,input.match.participants),source:input.source,
+    submissionId:input.submissionId,submittedBy:input.submittedBy,confirmedBy:input.confirmedBy};
+}
+
 export function applyCanonicalGameResult(
   transaction: Transaction,
   input: {
@@ -158,24 +173,14 @@ export function applyCanonicalGameResult(
     revision?: number;
     previousRevision?: number | null;
     correctionCaseId?: string | null;
+    acceptedAt?: Timestamp;
+    processingJobRef?: DocumentReference;
   },
 ): { canonicalResult: CanonicalGameResult; matchCompleted: boolean } {
-  const now = Timestamp.now();
+  const now = input.acceptedAt ?? Timestamp.now();
   const revision = input.revision ?? 1;
   const firstCompletedAt = input.match.firstCompletedAt ?? input.match.completedAt ?? now;
-  let outcome;
-  try {outcome=normalizeOutcome(input.match.format,input.match.participants,input.outcome,input.match.gameConfigSnapshot);}
-  catch(error) {rethrowResultValidation(error);}
-  const canonicalResult: CanonicalGameResult = {
-    ...outcome,
-    revision,
-    winningPlayerIds: winningPlayerIds(outcome, input.match.participants),
-    losingPlayerIds: losingPlayerIds(outcome, input.match.participants),
-    source: input.source,
-    submissionId: input.submissionId,
-    submittedBy: input.submittedBy,
-    confirmedBy: input.confirmedBy,
-  };
+  const canonicalResult = previewCanonicalGameResult({...input,revision});
 
   transaction.update(input.gameRef, {
     status: "COMPLETED",
@@ -216,6 +221,7 @@ export function applyCanonicalGameResult(
       previousRevision: input.previousRevision ?? null,
       correctionCaseId: input.correctionCaseId ?? null,
       affectsPowerRating:input.match.context?.affectsPowerRating,
+      jobRef:input.processingJobRef,
     });
   } else {
     transaction.update(input.matchRef, {

@@ -1,0 +1,19 @@
+{
+  "environment": "fresh demo-aof-native-correction Firestore/Storage emulators",
+  "fixture": "synthetic native publication + replay-driven legacy result corpus; not real recording extraction",
+  "concurrentCalls": [
+    "aborted",
+    "committed/qualified"
+  ],
+  "atomicResultRevision": 2,
+  "atomicStatisticsRevision": 8,
+  "revocationRaceRejected": true,
+  "exactRetryIdempotent": true,
+  "immutableArtifactsRetained": true,
+  "oldClaimReleased": true,
+  "newClaimOwned": true,
+  "rewardsReconciledOnce": true,
+  "staleJobAndNativeResolverNoDuplicateAwards": true,
+  "totalCorrectionAndLedgerTestMs": 6878,
+  "limitation": "Invokes real transaction/processor functions; automatic Functions trigger delivery and real cloud/browser acceptance not exercised."
+}
