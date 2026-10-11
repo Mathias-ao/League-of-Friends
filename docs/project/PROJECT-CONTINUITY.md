@@ -11,6 +11,12 @@ Last updated: **11 October 2026**. This file is the entrypoint for continuing th
 
 The latest explicit product decision governs direction; Core Identity governs durable principles; **GitHub `main` governs merged implementation**. Specialist contracts govern their own technical details. Draft branches, local emulator experiments and past chats do **not** establish deployed behavior.
 
+## Latest project checkpoint — 11 October 2026 (current over historical passages)
+
+`main` contains PRs #105, #107, #108, #109, #110 through commit `c993c7ad5410ba99caa032610ae4818826c6cc6d`, including reviewed native READY/rebind, synthetic real Functions-trigger correction acceptance and genuine build-185872 four-format local emulator acceptance. **These are merged tests and code, not Firebase deployments or user-facing native READY activation.** Native validation still ends `VALIDATED_NOT_READY`; only a separately gated explicit admin review can publish READY. The website's normal Upload recording remains legacy; full native admin browser controls, real staging/cloud browser acceptance and real <20s upload-to-READY are open.
+
+The earlier instructions below calling recording-bound correction “the next task” are historical and **superseded** by #107/#108. Next priority is the [manual E2E readiness and GO/NO-GO package](../testing/manual-e2e-readiness-2026-10-11.md): isolate/demo accounts and backup, independent accepted result, native operator bridge/UI, real browser and ledger/Chronicle evidence, no automatic activation. PRs #61/#62 Story Engine drafts remain separate and not merge-ready. Staging deployment and any operator/native read flag activation each require a new explicit user decision.
+
 ## Recorded Events / native validation now merged — not deployed
 
 On 10 October 2026, the integrated sequence of PRs #88, #83, #89, #93,
@@ -91,10 +97,8 @@ No production/staging deployment or data import occurred. Never conflate merging
 
 Pick one bounded outcome, check current code and scope, identify evidence and regression tests, then record observed outcomes **and their limitations**. Keep source facts separate from inferred statistics, qualification and official scoring. Prefer reversible local tests, documented data backups and focused PRs; obtain separate review before promoting local work to staging or production.
 
-**Next bounded task:** build a carefully reviewed **recording-bound result-correction and native source-rebind protocol** that preserves canonical result/claim authority, disputed results, previous sources and inverse ledger reconciliation. The limited manually reviewed publisher and rollback are in #102; they do not cover source-bound corrections or auto-ready uploads. Then require real Firebase emulator transaction/trigger testing, cloud/browser capacity and true upload-to-READY measurements before any operator activation. Player Reputation/Relationships rules, Event finalisation and real-user flow remain distinct future workstreams.
-
-## Bootstrap prompt
+**Next bounded task:** close the manual player-facing E2E **readiness gates**, not additional blanket backend features. The merge/CI boundary is green; the browser native-operator route and staging-specific deployment approval are still missing. Follow [the readiness package](../testing/manual-e2e-readiness-2026-10-11.md).\n\n## Bootstrap prompt
 
 > Continue Age of Friends from `Mathias-ao/League-of-Friends`. Read `docs/project/CORE-IDENTITY.md`, `docs/project/CURRENT-STATE.md` and `docs/project/CURRENT-STATS.md`. Inspect current `main`, distinguish local emulator results from merged/deployed code, and follow specialist documentation. The bounded task is: [ONE TASK].
 
-**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Read-only detail/social integration (#98–#101) and a disabled, manually reviewed limited publication/rollback implementation (#102) are available. Source-bound result corrections, fully automated READY and real full-stack acceptance still block normal native READY. Nothing is deployed or enabled for ordinary users.
+**Native release boundary:** A normal `uploadReplay` browser call still uses legacy processing. The gated native experiment needs separate validation, independently accepted official result, manual audited READY and source-specific reader flags. Nothing is deployed or enabled by a merge. Never silently use production/staging as a demo.\n
