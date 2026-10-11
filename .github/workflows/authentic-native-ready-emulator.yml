@@ -6,6 +6,7 @@ on:
       - "functions/tests/native-ready-authentic-emulator.mjs"
       - ".github/workflows/authentic-native-ready-emulator.yml"
       - "replay-tools/**"
+      - "docs/testing/native-ready-authentic-185872-multiformat-v2.md"
   workflow_dispatch:
 
 permissions:
