@@ -372,8 +372,8 @@ test('idempotent READY retries requalify the active source instead of trusting p
   t=>{t.rows.get(t.sourcePath).statistics.uncompressedSha256='0'.repeat(64);},
   t=>{delete t.rows.get(t.sourcePath).experience.seasonShowcaseVersion;},
   t=>{t.rows.get(t.publicationPath).claimGuidHex='invalid-claim-key';},
-  t=>{t.game.activeResultDisputeId='open';},
-  t=>{t.game.canonicalResult.winningPlayerIds=['p2'];},
+  t=>{t.rows.get('matches/m/games/g').activeResultDisputeId='open';},
+  t=>{t.rows.get('matches/m/games/g').canonicalResult.winningPlayerIds=['p2'];},
  ];
  for(const mutate of scenarios){
   const t=fixture();await t.run();mutate(t);
