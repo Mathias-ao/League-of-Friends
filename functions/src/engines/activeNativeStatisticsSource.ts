@@ -2,10 +2,10 @@ import {currentOfficialGameOutcome} from './recordingMatchFacts.js';
 import {statisticsBindingKey} from './statisticsExperience.js';
 
 /**
- * Read-side contract ONLY. There is deliberately no producer of this marker:
- * validation candidates are NOT READY and cannot become player-facing sources.
- * A separate correction-safe atomic activation implementation and release
- * approval are required before any native source can satisfy this contract.
+ * Explicit publication marker. Only the separately gated and audited
+ * adminPublishNativeReady transaction (#102) may create a native READY
+ * replaySources document; VALIDATED_NOT_READY candidates cannot.
+ * The operator flags are off by default; merging is not deployment.
  */
 export const ACTIVE_NATIVE_SOURCE_VERSION='AOF_ACTIVE_NATIVE_STATISTICS_V1';
 export const NATIVE_SHARED_DELIVERY='AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL';
