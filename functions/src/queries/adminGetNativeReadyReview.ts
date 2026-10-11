@@ -17,8 +17,9 @@ export function assertNativeE2eReviewAllowed(env:NodeJS.ProcessEnv,role:string,m
      !(project==='age-of-friends-staging'||(env.FUNCTIONS_EMULATOR==='true'&&project.startsWith('demo-'))))
     throw fail('Native review is for an authenticated staging or local-demo administrator only.');
   if(!(env.AOF_NATIVE_READY_GAME_ALLOWLIST??'').split(',').map(v=>v.trim()).includes(matchId+'/'+gameId)||
-     env.AOF_NATIVE_READY_PUBLICATION!=='reviewed-v1')
-    throw fail('Native review requires explicitly approved publication and an exact Game allowlist.');
+     (env.AOF_NATIVE_READY_PUBLICATION!=='reviewed-v1'&&
+       env.AOF_NATIVE_READY_ROLLBACK!=='reviewed-v1'))
+    throw fail('Native review requires an exact Game allowlist and reviewed publication or emergency rollback approval.');
   return project;
 }
 
