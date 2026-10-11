@@ -12,6 +12,7 @@ import {Timestamp} from 'firebase-admin/firestore';
 import {db} from '../lib/config/firebase.js';
 import {uploadReplay} from '../lib/commands/statistics/uploadReplay.js';
 import {executeNativeReadyPublication} from '../lib/services/nativeReadyPublication.js';
+import {adminGetNativeReadyReview} from '../lib/queries/adminGetNativeReadyReview.js';
 import {readActiveNativeBattleDetail} from '../lib/queries/getActiveNativeBattleDetail.js';
 import {readActiveNativeBattleRecord} from '../lib/queries/getActiveNativeBattleRecord.js';
 import {currentOfficialGameOutcome} from '../lib/engines/recordingMatchFacts.js';
@@ -142,6 +143,22 @@ process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS='1';
 process.env.AOF_NATIVE_READY_GAME_ALLOWLIST=matchId+'/'+gameId;
 process.env.AOF_NATIVE_READY_ROLLBACK='reviewed-v1';
 const env={...process.env};
+// Exercise the actual authenticated read-only staging/demo admin callable
+// with this genuine recording, rather than only its isolated projector.
+const nativeReviewRequest={matchId,gameId,candidateId:validated.candidateId};
+const browserReview=await adminGetNativeReadyReview.run({
+  data:nativeReviewRequest,auth:{uid:actor.authUid}});
+assert.equal(browserReview.contract,'AOF_NATIVE_E2E_REVIEW_V1');
+assert.equal(browserReview.candidateState,'VALIDATED_NOT_READY');
+assert.equal(browserReview.candidatePublishEligible,true);
+assert.equal(browserReview.expectedResultRevision,1);
+assert.equal(browserReview.expectedStatisticsRevision,0);
+assert.equal(browserReview.sourceHash,sourceHash);
+assert.equal(browserReview.statisticsSha256,candidate.statistics.sha256);
+assert.equal(browserReview.sourcePlayers.length,actualCount);
+await assert.rejects(
+  ()=>adminGetNativeReadyReview.run({data:nativeReviewRequest,auth:{uid:viewer.authUid}}),
+  /permission|administrator|ADMIN/i,'A normal player cannot inspect unpublished native candidates');
 const reviewedRequest={operation:'PUBLISH',matchId,gameId,candidateId:validated.candidateId,
   sourceHash,expectedArtifactSha256:candidate.statistics.sha256,
   expectedActiveSourceHash:null,expectedStatisticsRevision:0,expectedResultRevision:1,
@@ -159,6 +176,10 @@ assert.ok(activeNativeStatisticsSource(matchId,gameId,activeMatch,activeGame,sou
 assert.equal(activeGame.activeReplayStatisticsId,sourceHash);
 assert.equal(currentOfficialGameOutcome(activeGame,activeMatch).qualification,'OFFICIAL');
 assert.equal((await candidateRef.get()).data()?.state,'PUBLISHED_READY');
+const afterPublish=await adminGetNativeReadyReview.run({data:nativeReviewRequest,auth:{uid:actor.authUid}});
+assert.equal(afterPublish.candidateState,'PUBLISHED_READY');
+assert.equal(afterPublish.nativeSourceIsActive,true);
+assert.equal(afterPublish.candidatePublishEligible,false);
 const reread=()=>({db,bucket,actor:viewer,env});
 const detailStarted=Date.now();
 const detail=await readActiveNativeBattleDetail({...reread(),request:{
@@ -223,6 +244,9 @@ const rolled=await executeNativeReadyPublication({db,bucket,actor,env,request:{
   reason:'Isolated genuine-recording acceptance complete; restore the unpublished source pointer.'}});
 const rollbackMs=Date.now()-rollbackStarted;
 assert.equal(rolled.state,'ROLLED_BACK');
+const afterRollback=await adminGetNativeReadyReview.run({data:nativeReviewRequest,auth:{uid:actor.authUid}});
+assert.equal(afterRollback.candidateState,'ROLLED_BACK');
+assert.equal(afterRollback.nativeSourceIsActive,false);
 assert.equal(rolled.replayStatisticsRevision,2);
 assert.equal((await gameRef.get()).data().activeReplayStatisticsId,null);
 assert.equal((await candidateRef.get()).data().state,'ROLLED_BACK');
