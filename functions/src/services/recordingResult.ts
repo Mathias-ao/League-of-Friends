@@ -16,6 +16,11 @@ export async function resolveRecordingResult(matchId:string,gameId:string,review
     const ref=gameRef.collection('replaySources').doc(game.activeReplayStatisticsId),source=(await tx.get(ref)).data();
     if(!source||source.state!=='READY'||source.sourceHash!==game.activeReplayStatisticsId||source.matchId!==matchId||source.gameId!==gameId)return {state:'NO_RECORDING'};
     if(review&&review.sourceHash!==source.sourceHash)throw new HttpsError('aborted','The active recording changed. Review it again.');
+    // Native READY publication never runs replay-winner inference or changes an
+    // independently accepted result. It only switches the reviewed statistics
+    // source under the separate official-result transaction fence.
+    if(source.nativePublicationVersion==='AOF_ACTIVE_NATIVE_STATISTICS_V1')
+      return {state:'RESULT_ALREADY_RESOLVED'};
     if(match.opponentKind==='AI')return {state:'LEGACY_AI_REVIEW'};
     const qualification=deriveRecordingOutcome(match,game,source);
     const late=source.timingQualification==='ADMIN_REVIEW_REQUIRED';
