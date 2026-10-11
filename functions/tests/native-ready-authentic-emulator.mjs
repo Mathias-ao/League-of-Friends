@@ -8,9 +8,10 @@ import assert from 'node:assert/strict';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,isAbsolute,extname,basename} from 'node:path';
 import {getStorage} from 'firebase-admin/storage';
-import {Timestamp} from 'firebase-admin/firestore';
 import {db} from '../lib/config/firebase.js';
 import {uploadReplay} from '../lib/commands/statistics/uploadReplay.js';
+import {submitGameResult} from '../lib/commands/results/submitGameResult.js';
+import {respondToGameResult} from '../lib/commands/results/respondToGameResult.js';
 import {executeNativeReadyPublication} from '../lib/services/nativeReadyPublication.js';
 import {adminGetNativeReadyReview} from '../lib/queries/adminGetNativeReadyReview.js';
 import {readActiveNativeBattleDetail} from '../lib/queries/getActiveNativeBattleDetail.js';
@@ -66,7 +67,6 @@ const viewer={playerId:matchId+'-player-1',authUid:matchId+'-viewer-uid'};
 const matchRef=db.collection('matches').doc(matchId),gameRef=matchRef.collection('games').doc(gameId);
 assert.equal((await matchRef.get()).exists,false,'Use a fresh isolated emulator database');
 const bucket=getStorage().bucket(bucketName);
-const now=Timestamp.now();
 // Synthetic source-independent teams exercise the official reviewed-result
 // contract. FFA never promotes an inferred historical final placement.
 const roster=fixture.players.map((p,index)=>({
@@ -80,6 +80,11 @@ for(let i=0;i<roster.length;i++)
   await db.collection('players').doc(roster[i].playerId).create({
     role:'PLAYER',membershipStatus:'ACTIVE',steamName:fixture.players[i].sourceName,synthetic:true});
 await db.collection('authLinks').doc(viewer.authUid).create({playerId:viewer.playerId});
+// A different independently authenticated opposing participant must confirm.
+const confirmerPlayerId=roster[caseSpec.teamSize].playerId;
+const confirmerAuthUid=matchId+'-independent-confirmer-uid';
+assert.notEqual(confirmerPlayerId,viewer.playerId);
+await db.collection('authLinks').doc(confirmerAuthUid).create({playerId:confirmerPlayerId});
 await matchRef.create({status:'ACTIVE',opponentKind:'HUMAN',format:caseSpec.format,
   participants:roster,seriesRule:{maxGames:1,gamesRequiredToWin:1},
   context:{affectsSeasonStats:false,affectsLifetimeStats:true}});
@@ -125,15 +130,43 @@ const winners=roster.filter(p=>!isTeamResult||p.team===winningTeam).filter((p,i)
   isTeamResult||p.playerId===roster[winner].playerId).map(p=>p.playerId);
 const losingIds=roster.map(p=>p.playerId).filter(id=>!winners.includes(id));
 assert.equal(winners.length,isTeamResult?caseSpec.teamSize:1);
-const gameResult={source:'PLAYER_CONFIRMED',type:isTeamResult?'TEAM_WIN':'PLAYER_WIN',
-  winnerPlayerId:isTeamResult?null:roster[winner].playerId,
-  winnerTeam:isTeamResult?winningTeam:null,revision:1,
-  winningPlayerIds:winners,losingPlayerIds:losingIds};
-await gameRef.update({status:'COMPLETED',canonicalResult:gameResult,completedAt:now});
-await matchRef.update({status:'COMPLETED',canonicalResult:{...gameResult,sourceGameId:gameId},
-  completedAt:now,firstCompletedAt:now});
+// Previously the harness directly wrote canonicalResult; this deliberately
+// runs the actual two distinct Firebase auth-bound callable result commands.
+// Historical fixture teams/outcome remain explicitly SYNTHETIC TEST AUTHORITY.
+const claimOutcome=isTeamResult?{winnerTeam:winningTeam}:
+  {winnerPlayerId:roster[winner].playerId};
+const submitted=await submitGameResult.run({
+  data:{matchId,gameId,...claimOutcome},auth:{uid:viewer.authUid}});
+assert.equal(submitted.success,true);
+assert.equal(submitted.status,'PENDING_CONFIRMATION');
+assert.equal(submitted.alreadySubmitted,false);
+assert.equal((await gameRef.get()).data().canonicalResult,undefined,
+  'A lone submitter can never establish the official result');
+assert.equal((await db.collection('processingJobs').get()).empty,true,
+  'Submitting a claim cannot queue official scoring');
+await assert.rejects(()=>respondToGameResult.run({
+  data:{matchId,gameId,submissionId:submitted.submissionId,response:'CONFIRM'},
+  auth:{uid:viewer.authUid}}),/cannot confirm their own|failed-precondition/i,
+  'Self-confirmation must fail before an official result is created');
+const independentlyConfirmed=await respondToGameResult.run({
+  data:{matchId,gameId,submissionId:submitted.submissionId,response:'CONFIRM'},
+  auth:{uid:confirmerAuthUid}});
+assert.equal(independentlyConfirmed.success,true);
+assert.equal(independentlyConfirmed.response,'CONFIRM');
+assert.equal(independentlyConfirmed.matchCompleted,true);
+assert.equal(independentlyConfirmed.canonicalResult.source,'PLAYER_CONFIRMED');
+assert.equal(independentlyConfirmed.canonicalResult.revision,1);
+assert.deepEqual([...independentlyConfirmed.canonicalResult.winningPlayerIds].sort(),
+  [...winners].sort());
+assert.deepEqual([...independentlyConfirmed.canonicalResult.losingPlayerIds].sort(),
+  [...losingIds].sort());
 const acceptedGame=(await gameRef.get()).data(),acceptedMatch=(await matchRef.get()).data();
 assert.equal(currentOfficialGameOutcome(acceptedGame,acceptedMatch).qualification,'OFFICIAL');
+const officialJobsBeforeReady=await db.collection('processingJobs').get();
+assert.equal(officialJobsBeforeReady.size,1,
+  'Exactly one official scoring job is created by independent result acceptance');
+const originalOfficialJobId=officialJobsBeforeReady.docs[0].id;
+assert.equal(officialJobsBeforeReady.docs[0].data().type,'MATCH_RESULT_ACCEPTED');
 
 // The existing manual publisher is separately gated and refuses automatic
 // promotions. We use only a local demo Game allowlist, not a live project flag.
@@ -256,8 +289,11 @@ await assert.rejects(readActiveNativeBattleRecord({...reread(),request:{
   matchId,gameId,mode:'overview'}}),error=>error?.code==='failed-precondition');
 assert.equal((await claimRef.get()).exists,false,
   'Publisher-created GUID attribution must be released after rollback');
-assert.equal((await db.collection('processingJobs').get()).empty,true,
-  'Manual source switching must not invent an official scoring job');
+const jobsAfterSourceRollback=await db.collection('processingJobs').get();
+assert.equal(jobsAfterSourceRollback.size,1,
+  'Native source publication/rollback must not create or duplicate result jobs');
+assert.equal(jobsAfterSourceRollback.docs[0].id,originalOfficialJobId,
+  'The original independently accepted result job must retain its identity');
 for(const artifact of [candidate.originalRecording,candidate.recordedEvents,candidate.statistics]){
   const [stored]=await bucket.file(artifact.path,{generation:String(artifact.generation)}).download();
   assert.equal(digest(stored),artifact.sha256);
@@ -266,7 +302,8 @@ for(const artifact of [candidate.originalRecording,candidate.recordedEvents,cand
 const report={test:'authentic-185872-reviewed-ready-local-v2',environment:project,fixtureFormat:fixture.format,recordedHumanSlots:actualCount,
   fixtureBuildDeclared:fixture.gameBuild,sourceSha256:sourceHash,sourceBytes:original.length,
   originalRetained:true,eventsSha256:candidate.recordedEvents.sha256,
-  statisticsSha256:candidate.statistics.sha256,reviewedOutcomeSource:'synthetic_independent_fixture',
+  statisticsSha256:candidate.statistics.sha256,reviewedOutcomeSource:'synthetic_fixture_through_real_two_person_result_callables',
+  independentOfficialResultCallables:true,officialResultProcessingJobPreserved:true,
   validationState:'VALIDATED_NOT_READY',reviewedPublicationState:'READY',
   finalState:'ROLLED_BACK',nativeReaderAndSocialOverview:true,verifiedSocialFragment:true,rollbackRetainsSource:true,
   timingsMs:{handlerReceivedToValidation:validated.timings?.totalServerReceivedToValidationMs??null,
