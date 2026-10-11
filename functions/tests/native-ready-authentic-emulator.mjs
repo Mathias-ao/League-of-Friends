@@ -1,5 +1,5 @@
 /**
- * Opt-in authentic AoE2 DE 185872 single-Game evidence acceptance.
+ * Opt-in authentic AoE2 DE 185872 1v1, 2v2, 4v4 and FFA evidence acceptance.
  * Local Firebase Firestore/Storage and an authenticated loopback native worker
  * ONLY. Original recordings, private fixture names and tokens never enter Git.
  * No automatic READY activation, production writes or cloud deployment.
@@ -36,14 +36,23 @@ const fixturePath=process.env.AOF_NATIVE_READY_REAL_FIXTURE;
 assert.ok(fixturePath&&isAbsolute(fixturePath),'Provide an absolute private fixture manifest path');
 const fixture=JSON.parse(await readFile(fixturePath,'utf8'));
 assert.equal(fixture.gameBuild,185872);
-assert.equal(fixture.format,'1v1','First bounded milestone is an authentic 1v1 recording');
+const caseSpec={
+  '1v1':{format:'ONE_V_ONE',count:2,teamSize:1},
+  '2v2':{format:'TWO_V_TWO',count:4,teamSize:2},
+  '4v4':{format:'FOUR_V_FOUR',count:8,teamSize:4},
+  FFA:{format:'FFA',count:null,teamSize:1},
+}[fixture.format];
+assert.ok(caseSpec,'Only approved 1v1/2v2/4v4/FFA fixtures are supported');
+const actualCount=fixture.players?.length;
+if(caseSpec.count!==null)assert.equal(actualCount,caseSpec.count,'Fixture roster differs from declared match format');
+else assert.ok(actualCount>=3&&actualCount<=8,'FFA requires 3–8 independent human players');
 assert.ok(typeof fixture.path==='string'&&isAbsolute(fixture.path)&&
   extname(fixture.path).toLowerCase()==='.aoe2record','Use an absolute real .aoe2record path');
-assert.ok(Array.isArray(fixture.players)&&fixture.players.length===2);
+assert.ok(Array.isArray(fixture.players)&&fixture.players.length===actualCount);
 assert.ok(fixture.players.every(p=>Number.isInteger(p.replaySlot)&&p.replaySlot>0&&p.replaySlot<=8&&
   typeof p.sourceName==='string'&&p.sourceName.trim().length>0));
-assert.equal(new Set(fixture.players.map(p=>p.replaySlot)).size,2);
-assert.equal(new Set(fixture.players.map(p=>p.sourceName.normalize('NFKC').trim().toLowerCase())).size,2);
+assert.equal(new Set(fixture.players.map(p=>p.replaySlot)).size,actualCount);
+assert.equal(new Set(fixture.players.map(p=>p.sourceName.normalize('NFKC').trim().toLowerCase())).size,actualCount);
 assert.ok(fixture.players.some(p=>p.replaySlot===fixture.reviewedOfficialWinnerReplaySlot),
   'Winner must be an independently reviewed manifest decision, never inferred from the recording');
 const original=await readFile(fixture.path);
@@ -57,7 +66,12 @@ const matchRef=db.collection('matches').doc(matchId),gameRef=matchRef.collection
 assert.equal((await matchRef.get()).exists,false,'Use a fresh isolated emulator database');
 const bucket=getStorage().bucket(bucketName);
 const now=Timestamp.now();
-const roster=fixture.players.map((p,index)=>({playerId:matchId+'-player-'+(index+1),team:index+1}));
+// Synthetic source-independent teams exercise the official reviewed-result
+// contract. FFA never promotes an inferred historical final placement.
+const roster=fixture.players.map((p,index)=>({
+  playerId:matchId+'-player-'+(index+1),
+  team:Math.floor(index/caseSpec.teamSize)+1,
+}));
 const slotName=s=>s.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
 await db.collection('players').doc(actor.playerId).create({role:'ADMIN',membershipStatus:'ACTIVE',synthetic:true});
 await db.collection('authLinks').doc(actor.authUid).create({playerId:actor.playerId});
@@ -65,7 +79,7 @@ for(let i=0;i<roster.length;i++)
   await db.collection('players').doc(roster[i].playerId).create({
     role:'PLAYER',membershipStatus:'ACTIVE',steamName:fixture.players[i].sourceName,synthetic:true});
 await db.collection('authLinks').doc(viewer.authUid).create({playerId:viewer.playerId});
-await matchRef.create({status:'ACTIVE',opponentKind:'HUMAN',format:'ONE_V_ONE',
+await matchRef.create({status:'ACTIVE',opponentKind:'HUMAN',format:caseSpec.format,
   participants:roster,seriesRule:{maxGames:1,gamesRequiredToWin:1},
   context:{affectsSeasonStats:false,affectsLifetimeStats:true}});
 await gameRef.create({status:'READY',gameNumber:1,players:roster,
@@ -105,9 +119,15 @@ assert.equal((await claimRef.get()).exists,false,'The real Game GUID must not al
 // This independently reviewed winner is test authority only. Do not copy or
 // assert that this historical match was played by these synthetic league users.
 const winner=fixture.players.findIndex(p=>p.replaySlot===fixture.reviewedOfficialWinnerReplaySlot);
-const gameResult={source:'PLAYER_CONFIRMED',type:'PLAYER_WIN',winnerPlayerId:roster[winner].playerId,
-  winnerTeam:null,revision:1,
-  winningPlayerIds:[roster[winner].playerId],losingPlayerIds:[roster[1-winner].playerId]};
+const isTeamResult=caseSpec.teamSize>1,winningTeam=roster[winner].team;
+const winners=roster.filter(p=>!isTeamResult||p.team===winningTeam).filter((p,i)=>
+  isTeamResult||p.playerId===roster[winner].playerId).map(p=>p.playerId);
+const losingIds=roster.map(p=>p.playerId).filter(id=>!winners.includes(id));
+assert.equal(winners.length,isTeamResult?caseSpec.teamSize:1);
+const gameResult={source:'PLAYER_CONFIRMED',type:isTeamResult?'TEAM_WIN':'PLAYER_WIN',
+  winnerPlayerId:isTeamResult?null:roster[winner].playerId,
+  winnerTeam:isTeamResult?winningTeam:null,revision:1,
+  winningPlayerIds:winners,losingPlayerIds:losingIds};
 await gameRef.update({status:'COMPLETED',canonicalResult:gameResult,completedAt:now});
 await matchRef.update({status:'COMPLETED',canonicalResult:{...gameResult,sourceGameId:gameId},
   completedAt:now,firstCompletedAt:now});
@@ -219,7 +239,7 @@ for(const artifact of [candidate.originalRecording,candidate.recordedEvents,cand
   assert.equal(digest(stored),artifact.sha256);
 }
 
-const report={test:'authentic-185872-reviewed-ready-local-v1',environment:project,
+const report={test:'authentic-185872-reviewed-ready-local-v2',environment:project,fixtureFormat:fixture.format,recordedHumanSlots:actualCount,
   fixtureBuildDeclared:fixture.gameBuild,sourceSha256:sourceHash,sourceBytes:original.length,
   originalRetained:true,eventsSha256:candidate.recordedEvents.sha256,
   statisticsSha256:candidate.statistics.sha256,reviewedOutcomeSource:'synthetic_independent_fixture',
@@ -228,7 +248,7 @@ const report={test:'authentic-185872-reviewed-ready-local-v1',environment:projec
   timingsMs:{handlerReceivedToValidation:validated.timings?.totalServerReceivedToValidationMs??null,
     reviewedPublication:publicationMs,readBattleDetail:detailMs,readBattleRecord:recordMs,
     sourceRollback:rollbackMs},
-  notMeasured:'Live callable/network overhead, real browser, actual cloud worker cold starts, autonomous upload-to-READY, total cloud received-to-READY SLA, multi-format acceptance'};
+  notMeasured:'Live callable/network overhead, real browser, actual cloud worker cold starts, autonomous upload-to-READY, total cloud received-to-READY SLA, independently certified FFA placement'};
 const root=resolve('.replay-lab/authentic-185872-ready');
 await mkdir(root,{recursive:true});
 await writeFile(resolve(root,'report.json'),JSON.stringify(report,null,2)+'\n');
