@@ -1,0 +1,38 @@
+name: Manual E2E readiness contract
+
+on:
+  pull_request:
+    paths:
+      - "scripts/manual-e2e-preflight.mjs"
+      - "docs/testing/manual-e2e-readiness-2026-10-11.md"
+      - "docs/project/CURRENT-STATE.md"
+      - "docs/project/CURRENT-STATS.md"
+      - "docs/project/PROJECT-CONTINUITY.md"
+      - ".github/workflows/manual-e2e-readiness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/manual-e2e-preflight.mjs"
+      - ".github/workflows/manual-e2e-readiness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  non-mutating-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify project refusal and native/staging separate approvals
+        run: node scripts/manual-e2e-preflight.mjs --self-test
+      - name: Verify complete but unset private attestation template
+        run: |
+          node scripts/manual-e2e-preflight.mjs --template emulator native-assisted > "$RUNNER_TEMP/template.json"
+          if node scripts/manual-e2e-preflight.mjs "$RUNNER_TEMP/template.json"; then
+            echo "ERROR: an unverified readiness template must never pass" >&2
+            exit 1
+          fi
+          echo "PASS: incomplete manual readiness manifest correctly refused"
