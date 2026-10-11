@@ -286,7 +286,7 @@ test('rollback refuses result changes, inconsistent disputes, tampered source or
    t=>{t.rows.get('matches/m/games/g').canonicalResult.revision=3;},
    t=>{t.rows.get('matches/m/games/g').activeResultDisputeId='opened';},
    t=>{t.rows.get(t.sourcePath).nativeValidationCandidateId='wrong';},
-   t=>{t.game.activeReplayStatisticsId='1'.repeat(64);},
+   t=>{t.rows.get('matches/m/games/g').activeReplayStatisticsId='1'.repeat(64);},
    t=>{t.rows.get(t.publicationPath).state='REVOKED';},
  ].entries()){
    const t=fixture();await t.run();mutate(t);
