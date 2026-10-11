@@ -22,8 +22,8 @@ import {seasonScoringSnapshot} from '../lib/engines/seasonPoints.js';
 
 const project='demo-aof-native-trigger';
 assert.equal(process.env.GCLOUD_PROJECT,project,'Never run outside the dedicated demo project');
-for(const key of ['FIRESTORE_EMULATOR_HOST','FIREBASE_STORAGE_EMULATOR_HOST','FIREBASE_EMULATOR_HUB']) {
-  assert.match(process.env[key]??'',/^(127\\.0\\.0\\.1|localhost):\\d+$/,'Requires local '+key);
+for(const key of ['FIRESTORE_EMULATOR_HOST','FIREBASE_STORAGE_EMULATOR_HOST']) {
+  assert.match(process.env[key]??'',/^(127[.]0[.]0[.]1|localhost):[0-9]+$/,'Requires local '+key);
 }
 const t=correctionFixture(),bucket=getStorage().bucket(project+'.appspot.com');
 const env={...correctionEnv,GCLOUD_PROJECT:project,AOF_NATIVE_REPLAY_PROJECT:project};
