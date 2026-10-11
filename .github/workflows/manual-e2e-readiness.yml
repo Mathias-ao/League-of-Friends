@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/manual-e2e-preflight.mjs"
+      - "scripts/native-ready-emulator-operator.mjs"
       - "docs/testing/manual-e2e-readiness-2026-10-11.md"
       - "docs/project/CURRENT-STATE.md"
       - "docs/project/CURRENT-STATS.md"
@@ -28,6 +29,10 @@ jobs:
           node-version: "22"
       - name: Verify project refusal and native/staging separate approvals
         run: node scripts/manual-e2e-preflight.mjs --self-test
+      - name: Check demo-only native operator contract and syntax
+        run: |
+          node --check scripts/native-ready-emulator-operator.mjs
+          node scripts/native-ready-emulator-operator.mjs --self-test
       - name: Verify complete but unset private attestation template
         run: |
           node scripts/manual-e2e-preflight.mjs --template emulator native-assisted > "$RUNNER_TEMP/template.json"
