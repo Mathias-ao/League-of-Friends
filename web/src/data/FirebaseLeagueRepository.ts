@@ -133,8 +133,9 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     return this.sendReplay<NativeValidationCandidateResult>(matchId,gameId,file,'NATIVE_VALIDATION_V1');
   }
   private async sendReplay<T>(matchId:string,gameId:string,file:File,processingMode:'LEGACY'|'NATIVE_VALIDATION_V1'):Promise<T>{
-    if(file.size<=0||file.size>32*1024*1024||!/\\.aoe2record$/i.test(file.name))
-      throw new Error('Choose a non-empty .aoe2record smaller than 32 MiB.');
+    const accepted=processingMode==='NATIVE_VALIDATION_V1'?/\\.aoe2record$/i:/\\.(aoe2record|mgz)$/i;
+    if(file.size<=0||file.size>32*1024*1024||!accepted.test(file.name))
+      throw new Error('Choose a supported non-empty recording smaller than 32 MiB.');
     const bytes=new Uint8Array(await file.arrayBuffer());
     let binary='';
     const chunk=0x8000;
