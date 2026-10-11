@@ -50,6 +50,8 @@ export function stagedNativeEnvironmentStatus(env:NodeJS.ProcessEnv,matchId:stri
     contract:'AOF_STAGING_E2E_PREFLIGHT_V1' as const,
     project,matchId,gameId,expectedCommit,
     flags,blockers,configReady:blockers.length===0,
+    rollbackReady:flags.nativeEmergencyRollback&&flags.publicationGameAllowlisted&&
+      flags.workerProcessorPinned&&flags.projectExplicit,
     caveat:'Read-only environment values only; backup, Auth, actual worker HTTPS, browser, deployment and scoped authorization must be separately verified.',
   };
 }
