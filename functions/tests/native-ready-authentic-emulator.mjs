@@ -155,6 +155,39 @@ const recordMs=Date.now()-recordStarted;
 assert.equal(record.success,true);
 assert.equal(record.state,'READY');
 assert.equal(record.officialOutcome?.qualification,'OFFICIAL');
+const socialPage=await readActiveNativeBattleRecord({...reread(),request:{
+  matchId,gameId,mode:'page',section:'ledgerIncidents',offset:0,
+  expectedArtifactSha256:record.artifactSha256,
+  expectedReviewRevision:record.reviewRevision}});
+assert.ok((socialPage.entries??[]).length<=20,'Native social pages must be bounded');
+let fragmentOffset=0,fragmentComplete=false,fragmentHash=null;
+const matchFactsParts=[];
+for(let i=0;i<8;i++){
+  const chunk=await readActiveNativeBattleRecord({...reread(),request:{
+    matchId,gameId,mode:'fragment',section:'matchFacts',offset:fragmentOffset,
+    expectedArtifactSha256:record.artifactSha256,
+    expectedReviewRevision:record.reviewRevision}});
+  assert.equal(chunk.totalBytes<=256*1024,true,'No enormous inline social review object');
+  const bytes=Buffer.from(chunk.chunkBase64,'base64');
+  assert.ok(bytes.length<=32*1024&&bytes.length>0,'Each native record transfer remains bounded');
+  matchFactsParts.push(bytes);
+  fragmentHash=chunk.contentSha256;
+  if(chunk.complete){fragmentComplete=true;break;}
+  assert.ok(chunk.nextOffset>fragmentOffset,'Fragment offsets must progress');
+  fragmentOffset=chunk.nextOffset;
+}
+assert.equal(fragmentComplete,true,'The bounded match-facts review must be reconstructible');
+const reviewedBytes=Buffer.concat(matchFactsParts);
+assert.equal(digest(reviewedBytes),fragmentHash,'Verified transfer JSON sha256');
+assert.equal(JSON.parse(reviewedBytes.toString('utf8')).modelVersion,candidate.matchFacts.modelVersion);
+if(detail.entries?.length){
+  const fragment=await readActiveNativeBattleDetail({...reread(),request:{
+    matchId,gameId,mode:'fragment',replaySlot:fixture.players[0].replaySlot,
+    group:'battles',reference:detail.entries[0].reference,offset:0,
+    expectedArtifactSha256:detail.artifactSha256}});
+  assert.equal(fragment.mode,'fragment');
+  assert.ok(Buffer.from(fragment.chunkBase64,'base64').length<=32*1024);
+}
 await assert.rejects(readActiveNativeBattleDetail({...reread(),env:{
   ...env,AOF_ACTIVE_NATIVE_PLAYER_READS:''},request:{
   matchId,gameId,mode:'list',replaySlot:fixture.players[0].replaySlot,group:'battles'}}),
@@ -191,7 +224,7 @@ const report={test:'authentic-185872-reviewed-ready-local-v1',environment:projec
   originalRetained:true,eventsSha256:candidate.recordedEvents.sha256,
   statisticsSha256:candidate.statistics.sha256,reviewedOutcomeSource:'synthetic_independent_fixture',
   validationState:'VALIDATED_NOT_READY',reviewedPublicationState:'READY',
-  finalState:'ROLLED_BACK',nativeReaderAndSocialOverview:true,rollbackRetainsSource:true,
+  finalState:'ROLLED_BACK',nativeReaderAndSocialOverview:true,verifiedSocialFragment:true,rollbackRetainsSource:true,
   timingsMs:{handlerReceivedToValidation:validated.timings?.totalServerReceivedToValidationMs??null,
     reviewedPublication:publicationMs,readBattleDetail:detailMs,readBattleRecord:recordMs,
     sourceRollback:rollbackMs},
