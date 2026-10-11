@@ -12,7 +12,7 @@ const env={GCLOUD_PROJECT:'demo-native-publication-test',FUNCTIONS_EMULATOR:'tru
   AOF_NATIVE_REPLAY_INTEGRATION:'validate-v1',REPLAY_WORKER_AUTH_TOKEN:'test-only',
   AOF_NATIVE_REPLAY_GAME_ALLOWLIST:'m/g',AOF_NATIVE_READY_GAME_ALLOWLIST:'m/g',
   AOF_NATIVE_REPLAY_PROCESSOR_REVISION:'c'.repeat(64),
-  AOF_NATIVE_READY_PUBLICATION:'reviewed-v1',
+  AOF_NATIVE_READY_PUBLICATION:'reviewed-v1',AOF_NATIVE_READY_ROLLBACK:'reviewed-v1',
   AOF_ACTIVE_NATIVE_PLAYER_READS:'1',AOF_ACTIVE_NATIVE_SOCIAL_READS:'1'};
 const actor={role:'ADMIN',playerId:'admin',authUid:'uid'};
 const record=scope=>({replaySha256:scope.sourceHash,recordedEventsSha256:scope.eventsHash,
@@ -271,7 +271,7 @@ test('mutable authority and result changes during immutable Storage read abort p
    t=>{t.game.canonicalResult.revision=3;},
    t=>{t.rows.get('players/admin').membershipStatus='SUSPENDED';},
    t=>{t.candidate.statistics.sha256='0'.repeat(64);},
-   t=>{t.game.activeReplayStatisticsId='1'.repeat(64);},
+   t=>{t.rows.get('matches/m/games/g').activeReplayStatisticsId='1'.repeat(64);},
    t=>{t.rows.get('players/p2').steamName='Changed since review';},
  ]){
    const t=fixture();let changed=false;
@@ -281,10 +281,10 @@ test('mutable authority and result changes during immutable Storage read abort p
  }
 });
 
-test('rollback refuses result changes, active disputes, tampered source or stale cursor',async()=>{
+test('rollback refuses result changes, inconsistent disputes, tampered source or stale cursor',async()=>{
  for(const mutate of [
    t=>{t.game.canonicalResult.revision=3;},
-   t=>{t.game.activeResultDisputeId='opened';},
+   t=>{t.rows.get('matches/m/games/g').activeResultDisputeId='opened';},
    t=>{t.rows.get(t.sourcePath).nativeValidationCandidateId='wrong';},
    t=>{t.game.activeReplayStatisticsId='1'.repeat(64);},
    t=>{t.rows.get(t.publicationPath).state='REVOKED';},
@@ -295,4 +295,51 @@ test('rollback refuses result changes, active disputes, tampered source or stale
    await assert.rejects(t.run({request:rollback}));
    assert.equal(t.rows.get(t.publicationPath).state==='ROLLED_BACK',false);
  }
+});
+
+
+test('emergency rollback remains usable when native reads and validation are deliberately disabled',async()=>{
+ const t=fixture();await t.run();
+ const rollback={...t.request,operation:'ROLLBACK',
+   expectedActiveSourceHash:t.sourceHash,expectedStatisticsRevision:1,
+   reason:'Emergency rollback during an incident with disabled native readers.'};
+ const emergency={...env,AOF_ACTIVE_NATIVE_PLAYER_READS:'',AOF_ACTIVE_NATIVE_SOCIAL_READS:'',
+   AOF_NATIVE_REPLAY_INTEGRATION:'',AOF_NATIVE_READY_PUBLICATION:''};
+ await assert.rejects(t.run({request:rollback,env:{...emergency,AOF_NATIVE_READY_ROLLBACK:''}}),
+   e=>e.code==='failed-precondition');
+ const r=await t.run({request:rollback,env:emergency});
+ assert.equal(r.state,'ROLLED_BACK');
+ assert.equal(t.rows.get('matches/m/games/g').replayStatisticsRevision,2);
+});
+
+test('another active administrator can safely roll back a published candidate with an independent audit',async()=>{
+ const t=fixture();await t.run();
+ t.rows.set('players/recovery-admin',{role:'ADMIN',membershipStatus:'ACTIVE'});
+ t.rows.set('authLinks/recovery-uid',{playerId:'recovery-admin'});
+ const recovery={role:'ADMIN',playerId:'recovery-admin',authUid:'recovery-uid'};
+ const rollback={...t.request,operation:'ROLLBACK',
+   expectedActiveSourceHash:t.sourceHash,expectedStatisticsRevision:1,
+   reason:'Independent administrator restores legacy source after reviewed issue.'};
+ const r=await t.run({request:rollback,actor:recovery});
+ assert.equal(r.state,'ROLLED_BACK');
+ const audit=t.rows.get(t.candidateId+'-NATIVE_ROLLBACK'); // path verified separately
+ assert.ok([...t.rows.values()].some(x=>x?.action==='NATIVE_READY_SOURCE_ROLLED_BACK'&&
+   x.actorPlayerId==='recovery-admin'));
+});
+
+test('open result dispute remains open while an emergency rollback restores only the evidence pointer',async()=>{
+ const t=fixture();await t.run();
+ const game=t.rows.get('matches/m/games/g');
+ game.status='DISPUTED';t.match.status='DISPUTED';
+ game.activeResultDisputeId='dispute1';t.match.activeResultDisputeId='dispute1';
+ const rollback={...t.request,operation:'ROLLBACK',expectedActiveSourceHash:t.sourceHash,
+   expectedStatisticsRevision:1,
+   reason:'Restore previous replay evidence while preserving the open official result dispute.'};
+ const r=await t.run({request:rollback});
+ assert.equal(r.state,'ROLLED_BACK');
+ const restored=t.rows.get('matches/m/games/g');
+ assert.equal(restored.status,'DISPUTED');
+ assert.equal(restored.activeResultDisputeId,'dispute1');
+ assert.equal(t.match.activeResultDisputeId,'dispute1');
+ assert.equal(restored.activeReplayStatisticsId,null);
 });
