@@ -1,6 +1,6 @@
 # Age of Friends — Current State
 
-Last reviewed: **10 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
+Last reviewed: **11 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
 
 **Keep three states distinct:** `main` is the merged source implementation; `demo-aof-e2e` is an isolated, user-operated local Firebase emulator with temporary code adjustments; staging (`age-of-friends-staging`) and production (`league-of-friends-cc274`) are separate environments. An observed emulator success does **not** mean a fix was merged, deployed or accepted with real users.
 
@@ -29,9 +29,18 @@ admin/project/Game-allowlisted native upload route still stops at
 adds native social provenance, bounded private/admin detail, authenticated
 active-Game Battle detail, and qualified native Chronicle/Battle-record
 consumers to `main`. These are **read-side code contracts, not proof of a live
-published native READY source or cloud/browser acceptance**. Native READY
-publication, correction-safe atomic activation and rollback, and real deployment
-validation remain blocked. No staging/production deployment, activation,
+published native READY source or cloud/browser acceptance**.
+[#102](https://github.com/Mathias-ao/League-of-Friends/pull/102)
+adds a distinct **manually reviewed, disabled-by-default staging/demo-only**
+native READY publication and rollback transaction for Games with an
+independently confirmed, undisputed official result. It verifies the original,
+events and compact statistics before atomically writing the active source,
+revision, evidence-claim, candidate state, audit and rollback journal.
+It deliberately **refuses recording-bound result replacement**, for which a
+dedicated corrected-result/source rebinding workflow remains necessary.
+This code is not a native upload-to-READY product release, and real
+cloud/emulator concurrency, correction-ledger rollback and browser acceptance
+remain separate gates. No staging/production deployment, operator activation,
 historical migration or original-recording deletion was performed.
 
 | Area | Verified implementation / status | Next gate |
@@ -92,6 +101,6 @@ The authenticated replay upload and canonical evidence remain security-sensitive
 
 For active metric versions and evidence limits, use [Current Statistics](CURRENT-STATS.md) rather than historical September version names. For product identity and social rules, use [Core Identity](CORE-IDENTITY.md); for replay extraction, the [Replay Foundation](../replay-foundation/README.md); for launch boundaries, [Statistics launch-readiness](../testing/statistics-launch-readiness-2026-10-07.md); for the concluded E2E, [the closeout report](../testing/e2e-core-closeout-2026-10-10.md). GitHub `main` is implementation source of truth; historical branches, PR descriptions and chat observations are explicitly lesser evidence.
 
-**Next bounded engineering action:** independently design and test **correction-safe native READY activation**, including atomic source pointers, official-result binding/disputes and rollback, then real cloud/browser/capacity acceptance before any operator opt-in. Preserve source evidence and the existing instant player-facing read models. Player Reputation and Relationships remain a separate, not-yet-authorized product/model workstream. Keep Event finalisation, ledger checks and real-user flow in the acceptance backlog. No staging or production deployment is implied by GitHub merges.
+**Next bounded engineering action:** close the remaining **recording-bound official-result correction/rebind** gap and qualify the #102 controlled publisher/rollback on actual Firebase emulators, then real cloud/browser/concurrency and upload-to-READY acceptance before any operator opt-in. Preserve source evidence and the existing instant player-facing read models. Player Reputation and Relationships remain a separate, not-yet-authorized product/model workstream. Keep Event finalisation, ledger checks and real-user flow in the acceptance backlog. No staging or production deployment is implied by GitHub merges.
 
-**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Read-side implementations now exist behind explicit active-source gates (#98–#101), but publisher/correction qualification, browser/cloud performance and deployment acceptance still block native READY; nothing is deployed or enabled for ordinary users.
+**Native upload integration experiment:** [validation acceptance](../testing/native-recording-integration-v1.md) records the feature-flagged upload-handler integration, immutable original/events/statistics storage and build-185872 emulator evidence. It publishes only VALIDATED_NOT_READY candidates. Read-side implementations (#98–#101) and a **manual, limited, stage-gated** publication/rollback implementation (#102) exist. A general recording-bound correction/rebind workflow, cold-cloud processing, live upload-to-READY performance and deployment acceptance still block normal native READY; nothing is deployed or enabled for ordinary users.
