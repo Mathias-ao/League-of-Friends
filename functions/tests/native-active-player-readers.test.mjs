@@ -77,7 +77,8 @@ function testContext(){
    db,bucket,actor:extra.actor??actor,env:extra.env??env,request:extra.request??request,
  });
  return {match,game,source,raw,records,request,read,env,actor,db,
-   onDownload:fn=>onDownload=fn, corrupt:()=>bytesDownloaded=Buffer.from('garbage')};
+   onDownload:fn=>onDownload=fn,onGet:fn=>onGet=fn,
+   corrupt:()=>bytesDownloaded=Buffer.from('garbage')};
 }
 
 test('qualified active native source is explicit; candidate and legacy cannot impersonate it',()=>{
