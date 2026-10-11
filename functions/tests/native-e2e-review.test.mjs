@@ -13,6 +13,12 @@ test('read-only review requires exact staging/demo project, role and Game allowl
     {AOF_NATIVE_READY_GAME_ALLOWLIST:'other/g'}]){
     assert.throws(()=>assertNativeE2eReviewAllowed({...env,...patch},'ADMIN',matchId,gameId,candidateId));
   }
+  assert.equal(assertNativeE2eReviewAllowed({...env,AOF_NATIVE_READY_PUBLICATION:'0',
+    AOF_NATIVE_READY_ROLLBACK:'reviewed-v1'},'ADMIN',matchId,gameId,candidateId),
+    'age-of-friends-staging','Recovery review stays available after publication is disabled');
+  assert.throws(()=>assertNativeE2eReviewAllowed({...env,
+    AOF_NATIVE_READY_PUBLICATION:'0',AOF_NATIVE_READY_ROLLBACK:'0'},
+    'ADMIN',matchId,gameId,candidateId));
   assert.throws(()=>assertNativeE2eReviewAllowed(env,'PLAYER',matchId,gameId,candidateId));
   assert.throws(()=>assertNativeE2eReviewAllowed(env,'ADMIN','../../m',gameId,candidateId));
   assert.throws(()=>assertNativeE2eReviewAllowed(env,'ADMIN',matchId,gameId,'invalid'));
