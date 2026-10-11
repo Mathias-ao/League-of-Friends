@@ -120,7 +120,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: authentic-185872-reviewed-ready-\${{ matrix.fixture }}
+          name: authentic-185872-reviewed-ready-${{ matrix.fixture }}
           path: |
             .replay-lab/authentic-185872-ready/report.json
           if-no-files-found: ignore
