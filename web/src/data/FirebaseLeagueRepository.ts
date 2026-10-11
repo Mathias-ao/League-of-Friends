@@ -2,7 +2,7 @@ import {initializeApp} from 'firebase/app';
 import {getAuth,browserLocalPersistence,setPersistence,signInWithCustomToken,signInWithEmailAndPassword,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
-import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse,type NativeValidationCandidateResult,type NativeE2eReview,type NativeE2ePublishRequest,type NativeE2ePublicationResult} from '../domain/league';
+import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse,type NativeValidationCandidateResult,type NativeE2eReview,type NativeE2ePublishRequest,type NativeE2ePublicationResult,type NativeE2eEnvironmentStatus} from '../domain/league';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -106,6 +106,11 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     const cloud=import.meta.env.VITE_USE_EMULATORS!=='true'&&project==='age-of-friends-staging';
     if(import.meta.env.VITE_AOF_STAGING_E2E!=='true'||!(demo||cloud))
       throw new Error('Staging E2E controls are disabled for this Firebase project.');
+  }
+  stagingNativeStatus(matchId:string,gameId:string,expectedCommit:string):Promise<NativeE2eEnvironmentStatus>{
+    this.stagingE2eAllowed();
+    return this.call<NativeE2eEnvironmentStatus>('adminGetStagingE2eReadiness',
+      {matchId,gameId,expectedCommit});
   }
   stagingNativeReview(matchId:string,gameId:string,candidateId:string):Promise<NativeE2eReview>{
     this.stagingE2eAllowed();
