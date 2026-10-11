@@ -64,7 +64,7 @@ export interface NativeValidationCandidateResult {
 export interface NativeE2eEnvironmentStatus {
   contract:'AOF_STAGING_E2E_PREFLIGHT_V1';project:string;matchId:string;gameId:string;
   expectedCommit:string;flags:Record<string,boolean>;blockers:string[];
-  configReady:boolean;caveat:string;
+  configReady:boolean;rollbackReady:boolean;caveat:string;
 }
 export interface NativeE2eReview {
   contract:'AOF_NATIVE_E2E_REVIEW_V1';matchId:string;gameId:string;candidateId:string;
