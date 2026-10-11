@@ -226,20 +226,56 @@ export async function executeNativeReadyPublication(input:{
   if(request.operation==='ROLLBACK')return rollbackNativePublication({db,actor,request,publicationRef,candidateRef,gameRef,
     matchRef,sourceRef,authority});
   if(start.publicationExists){
-    if(start.publication?.state==='ACTIVE'&&start.game.activeReplayStatisticsId===request.sourceHash&&
-       start.publication.publishedStatisticsRevision===start.game.replayStatisticsRevision&&
-       start.publication.previousActiveSourceId===request.expectedActiveSourceHash&&
-       start.publication.previousStatisticsRevision===request.expectedStatisticsRevision&&
-       start.publication.officialResultRevision===request.expectedResultRevision&&
-       start.publication.resultBinding===snap({canonicalResult:start.game.canonicalResult,
-         recordingResultBinding:start.game.recordingResultBinding??null})&&
-       currentOfficialGameOutcome(start.game,start.match).qualification==='OFFICIAL'&&
-       start.source?.nativeValidationCandidateId===request.candidateId&&
-       start.source?.statistics?.sha256===request.expectedArtifactSha256&&
-       start.c.state==='PUBLISHED_READY')
+    // A retry is a read-only transaction: it must observe ONE coherent
+    // publication, current Game/result and global GUID claim. A stale early
+    // snapshot must never return an invented READY success after correction.
+    return db.runTransaction(async(tx:any)=>{
+      let fresh:any;
+      try{fresh=await authority(tx);}catch{throw abort();}
+      const journal=fresh.publication,active=fresh.source;
+      if(!fresh.publicationExists||!fresh.sourceExists||journal?.state!=='ACTIVE'||
+         journal.version!==NATIVE_READY_PUBLICATION_VERSION||
+         journal.sourceHash!==request.sourceHash||
+         journal.candidateId!==request.candidateId||
+         journal.artifactSha256!==request.expectedArtifactSha256||
+         fresh.game.activeReplayStatisticsId!==request.sourceHash||
+         fresh.game.replayStatisticsRevision!==journal.publishedStatisticsRevision||
+         journal.previousActiveSourceId!==request.expectedActiveSourceHash||
+         journal.previousStatisticsRevision!==request.expectedStatisticsRevision||
+         journal.officialResultRevision!==request.expectedResultRevision||
+         journal.resultBinding!==snap({canonicalResult:fresh.game.canonicalResult,
+           recordingResultBinding:fresh.game.recordingResultBinding??null})||
+         fresh.c.state!=='PUBLISHED_READY'||fresh.c.active!==true||
+         fresh.c.validatedBy!==actor.playerId||
+         active?.nativeValidationCandidateId!==request.candidateId||
+         active?.statistics?.sha256!==request.expectedArtifactSha256||
+         active?.publication?.publicationId!==request.candidateId||
+         snap(active.matchFacts)!==snap(fresh.c.matchFacts)||
+         snap(active.playerMapping)!==snap(fresh.c.playerMapping)||
+         snap(active.statistics)!==snap(fresh.c.statistics)||
+         active.experience?.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION||
+         !activeNativeStatisticsSource(request.matchId,request.gameId,fresh.match,
+           fresh.game,request.sourceHash,active,true))
+        throw fail('Existing native publication is no longer a qualified active READY source.');
+      const claimRef=db.collection('recordingGameClaims').doc(journal.claimGuidHex);
+      const claim=await tx.get(claimRef);
+      if(!claim.exists||claim.data()?.matchId!==request.matchId||
+         claim.data()?.gameId!==request.gameId||
+         journal.claimCreated&&(
+           claim.data()?.sourceHash!==request.sourceHash||
+           claim.data()?.nativePublicationCandidateId!==request.candidateId)||
+         !journal.claimCreated&&journal.previousClaimFingerprint!==undefined&&
+           snap(claim.data())!==journal.previousClaimFingerprint)
+        throw fail('Global recorded-Game GUID claim no longer matches the active publication.');
+      if(journal.previousActiveSourceId){
+        const former=await tx.get(gameRef.collection('replaySources').doc(journal.previousActiveSourceId));
+        if(!former.exists||legacySourceFingerprint(former.data(),request.matchId,request.gameId,
+          journal.previousActiveSourceId)!==journal.previousSourceFingerprint)
+          throw fail('The prior immutable source is no longer a safe rollback target.');
+      }
       return {success:true,alreadyPublished:true,state:'READY',sourceHash:request.sourceHash,
-        replayStatisticsRevision:start.game.replayStatisticsRevision};
-    throw fail('This native candidate already has a publication history; do not republish after rollback.');
+        replayStatisticsRevision:fresh.game.replayStatisticsRevision};
+    });
   }
   if(start.c.state!=='VALIDATED_NOT_READY'||start.sourceExists)
     throw fail('Only a previously unpublished validated candidate with a new source identity may be activated.');
@@ -345,6 +381,7 @@ export async function executeNativeReadyPublication(input:{
       previousReplay:fresh.game.replay??null,
       publishedStatisticsRevision:publishedRevision,
       claimCreated:!claimNow.exists,claimGuidHex:claimRef.id,
+      previousClaimFingerprint:claimNow.exists?snap(claimNow.data()):null,
       reviewedBy:actor.playerId,reason:request.reason.trim(),publishedAt:now,
     };
     tx.create(sourceRef,source);
@@ -416,9 +453,13 @@ async function rollbackNativePublication(input:{
   }
   const claimRef=db.collection('recordingGameClaims').doc(publication.claimGuidHex);
   const claim=await claimRef.get();
-  if(publication.claimCreated&&(!claim.exists||
-     claim.data()?.nativePublicationCandidateId!==request.candidateId))
-    throw fail('The native recording claim changed and requires an audited correction.');
+  if(!claim.exists||claim.data()?.matchId!==request.matchId||
+     claim.data()?.gameId!==request.gameId||
+     publication.claimCreated&&(claim.data()?.sourceHash!==request.sourceHash||
+       claim.data()?.nativePublicationCandidateId!==request.candidateId)||
+     !publication.claimCreated&&publication.previousClaimFingerprint!==undefined&&
+       snap(claim.data())!==publication.previousClaimFingerprint)
+    throw fail('The native recording claim changed ownership or revision and requires an audited correction.');
   const claimToken=snap(claim.data()??null);
   const rollbackRevision=request.expectedStatisticsRevision+1;
   const result=await db.runTransaction(async(tx:any)=>{
@@ -426,7 +467,14 @@ async function rollbackNativePublication(input:{
     let fresh:any;
     try{fresh=await authority(tx);}catch{throw abort();}
     const freshClaim=await tx.get(claimRef);
-    if(fresh.fingerprint!==start.fingerprint||snap(freshClaim.data()??null)!==claimToken)
+    if(fresh.fingerprint!==start.fingerprint||snap(freshClaim.data()??null)!==claimToken||
+       !freshClaim.exists||freshClaim.data()?.matchId!==request.matchId||
+       freshClaim.data()?.gameId!==request.gameId||
+       publication.claimCreated&&(
+         freshClaim.data()?.sourceHash!==request.sourceHash||
+         freshClaim.data()?.nativePublicationCandidateId!==request.candidateId)||
+       !publication.claimCreated&&publication.previousClaimFingerprint!==undefined&&
+         snap(freshClaim.data())!==publication.previousClaimFingerprint)
       throw abort();
     checkedOfficialForRollback(fresh.game,fresh.match,request);
     if(fresh.game.activeReplayStatisticsId!==request.sourceHash||
