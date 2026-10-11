@@ -1,6 +1,6 @@
 # Age of Friends — Current Statistics
 
-Last reviewed: **10 October 2026**. Current merged implementation and user-observed
+Last reviewed: **11 October 2026**. Current merged implementation and user-observed
 local rehearsal are distinguished below; neither is evidence of production launch.
 The October 8 [branch consolidation](../testing/branch-consolidation-2026-10-08.md)
 merged the statistics readiness and scoring branches into `main`.
@@ -36,6 +36,25 @@ This is code and CI verification, **not** a completed native READY release or
 real-player/cloud acceptance. Both `AOF_ACTIVE_NATIVE_PLAYER_READS` and
 `AOF_ACTIVE_NATIVE_SOCIAL_READS` are off by default; publisher/rollback and
 source-correction qualification remain separate.
+
+**Experimental manually reviewed READY publication (11 October 2026):**
+[#102](https://github.com/Mathias-ao/League-of-Friends/pull/102)
+implements a separate, explicit administrator-only native publication/rollback
+transaction, restricted to staging or demo emulators and disabled by default.
+It requires a pre-existing **independently accepted official result** that is
+not recording-source-bound; it checks the pinned original/Recorded Events/
+compact-statistics evidence, mapping, unique recorded-Game GUID claim, source
+revision and official result, then atomically changes only the current
+statistics source/revision and audit/journal/candidate records. A rollback
+restores the previous legacy source or empty pointer with a new revision,
+retaining the original and published native evidence. Rollback has a separate
+emergency operator gate and can leave an open result dispute unresolved.
+**This is not automatic publication of `VALIDATED_NOT_READY` uploads**.
+Source-bound official result correction/rebinding, true emulator concurrency
+and distributed ledger-reconciliation, production-grade cloud acceptance and
+the <20-second upload-to-READY goal remain unqualified. See
+[the constrained publisher and rollback contract](../testing/native-ready-atomic-publication-v1.md).
+Neither staged nor production environments were deployed or activated.
 
 ## Local replay/statistics E2E — 9–10 October 2026
 
