@@ -17,7 +17,7 @@ export function stagedNativeEnvironmentStatus(env:NodeJS.ProcessEnv,matchId:stri
     (env.FUNCTIONS_EMULATOR==='true'&&project.startsWith('demo-'));
   if(!isolated)throw new HttpsError('failed-precondition','This is not an approved staging or emulator project.');
   const allow=(key:string)=>(env[key]??'').split(',').map(v=>v.trim()).includes(matchId+'/'+gameId);
-  const flags={
+  const flags:Record<string,boolean>={
     nativeValidation:env.AOF_NATIVE_REPLAY_INTEGRATION==='validate-v1',
     nativePublish:env.AOF_NATIVE_READY_PUBLICATION==='reviewed-v1',
     nativePlayerReads:env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1',
