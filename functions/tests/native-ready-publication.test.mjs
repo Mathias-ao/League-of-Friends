@@ -37,7 +37,7 @@ function fixture(){
    players:[{playerId:1,replaySlot:1,lobbyTeamIdRaw:2},
      {playerId:2,replaySlot:2,lobbyTeamIdRaw:3}],
    rules:{lockTeams:{value:true}},diplomacy:{commandTimelines:{}},
-   result:{qualification:'UNRESOLVED',winnerPlayerIds:null,loserPlayerIds:null}};
+   result:{qualification:'UNRESOLVED',winningPlayerIds:null,loserPlayerIds:null}};
  const raw={statisticsSchemaVersion:'1.2.0',
    statisticsProjectionVersion:'AOF_RECORDED_EVENTS_STATISTICS_V1',
    source:{...provenance,extractionRunId:REVISION},matchFacts:facts,
@@ -74,7 +74,7 @@ function fixture(){
    context:{affectsSeasonStats:true,affectsLifetimeStats:true}};
  const game={status:'COMPLETED',players:[{playerId:'p1',team:1},{playerId:'p2',team:2}],
    canonicalResult:{source:'PLAYER_CONFIRMED',type:'PLAYER_WIN',
-     winnerPlayerIds:['p1'],losingPlayerIds:['p2'],revision:1},
+     winningPlayerIds:['p1'],losingPlayerIds:['p2'],revision:1},
    activeReplayStatisticsId:null,replayStatisticsState:'UNAVAILABLE',replayStatisticsRevision:0,
    replay:{status:'NONE'}};
  const candidatesPath='matches/m/games/g/nativeReplayValidations/'+candidateId;
