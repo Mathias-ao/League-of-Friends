@@ -246,7 +246,8 @@ export async function executeNativeReadyPublication(input:{
       replayStatisticsState:'READY'},{sourceHash:request.sourceHash,playerMapping:start.c.playerMapping});
   if(!metadata.eligible)throw fail('The current Game is not eligible for official native statistics.');
   const inputStats=nativeStatisticsExperienceInput(raw);
-  const experience=augmentSeasonShowcase(inputStats,projectStatistics(inputStats,metadata),metadata);
+  const experience=augmentSeasonShowcase(inputStats,projectStatistics(inputStats,metadata),metadata) as
+    ReturnType<typeof augmentSeasonShowcase>&{seasonShowcaseVersion?:string};
   if(experience.version!==EXPERIENCE_VERSION||
      experience.seasonShowcaseVersion!==SEASON_SHOWCASE_VERSION||
      experience.bindingKey!==statisticsBindingKey(metadata)||
