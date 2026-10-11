@@ -37,6 +37,8 @@ jobs:
         run: npm --prefix functions install
       - name: Build backend Functions
         run: npm --prefix functions run build
+      - name: Syntax-check private-fixture 185872 acceptance runner (no recording in CI)
+        run: node --check functions/tests/native-ready-authentic-emulator.mjs
       - name: Check actual Functions trigger delivery and revisions
         run: >
           npx --yes firebase-tools@14 emulators:exec
