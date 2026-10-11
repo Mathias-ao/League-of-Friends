@@ -1,6 +1,6 @@
 # Authentic AoE2 DE build-185872 — local reviewed-READY acceptance (V1)
 
-**Status: opt-in runner proposed for review; not executed against an authentic private recording in CI.** This milestone is code/test preparation, not a completed real-recording acceptance certificate. It requires a genuine build-185872 source, an authenticated local native worker and local-only Firestore/Storage emulators. Do not commit or upload source replays, fixture manifests, Steam names, secrets or generated reports.
+**Status: genuine build-185872 1v1 locally exercised and passed in isolated GitHub Actions Firebase emulators on 11 October 2026.** The run uses an existing authorized, pinned regression recording, not a new private upload or a live AoF Game. One local real-recording path passed; cloud/browser release qualification remains open. This milestone is code/test preparation, not a completed real-recording acceptance certificate. It requires a genuine build-185872 source, an authenticated local native worker and local-only Firestore/Storage emulators. Do not commit or upload source replays, fixture manifests, Steam names, secrets or generated reports.
 
 ## Exact scope
 
@@ -55,11 +55,33 @@ npx --yes firebase-tools@14 emulators:exec \
 
 The script refuses a live/non-demo Firebase project, remote Firestore/Storage, a non-loopback worker, a different Storage bucket, a missing pinned processor revision, or a reused Match. Output is local `.replay-lab/authentic-185872-ready/report.json`; the original recording and manifest remain in private operator storage. The test runner never configures deployed Firebase environment flags. Use a fresh isolated emulator between attempts.
 
-CI can `node --check` this script without the private recording, but **a green CI result is not evidence that the authentic test executed**.
+The fast native-trigger CI checks runner syntax; it is **not** a real-recording test. A separate new workflow, `.github/workflows/authentic-native-ready-emulator.yml`, checks out the existing approved build-185872 fixture corpus at commit `2d04ec6adbe871d156c108a4351448efeb08f4e6`, checks the independent TownBell `game_build=185872` and `save_version=68.9` metadata, derives replay-slot names from a private local native package in the CI runner, then starts the pinned authenticated loopback worker and real Firestore/Storage emulators. CI reports contain no original recording bytes, player display names, worker token, or giant statistics.
+
+## Verified real-recording CI acceptance — 11 October 2026
+
+[Authentic 185872 reviewed READY emulator CI run 38126212351](https://github.com/Mathias-ao/League-of-Friends/actions/runs/38126212351) **passed** on PR #109 commit `f7009d82559957d22b7e799c87deae8dc99feaab`. Source is `replay-fixtures/build-185872/1v1_t90-deak.aoe2record` from the previously authorized pinned fixture corpus, with independent TownBell build metadata; `3,781,255` source bytes. This is a real recording bound to **synthetic local League players and a deliberately chosen, independently supplied test winner**, not proof of any actual historical AoF result. The same separate real-file lane and standard Backend/Player Website/native-trigger workflows passed on this branch.
+
+Observed values from the run's machine-readable report:
+
+| Stage / invariant | Result |
+| --- | --- |
+| Actual native upload handler and authenticated local worker | VALIDATED_NOT_READY; stored original/events/stats verified |
+| Local reviewed manual `PUBLISH` | READY; native source passes ordinary active-source predicate |
+| Member-bounded Battle detail, social-record overview/page/fragment | Passed; fragment SHA-256 reconstruction verified |
+| Publisher exact retry, disabled-reader refusal | Passed |
+| Separate audited `ROLLBACK` | ROLLED_BACK; pointer cleared, GUID claim released, all original/derived evidence retained |
+| Server received → validation candidate | 10,887 ms |
+| Reviewed manual publication transaction and preflight | 163 ms |
+| One bounded detail read / one Battle-record overview | 81 ms / 97 ms |
+| Source-only rollback | 78 ms |
+
+The trace also reported an authenticated worker response of 10,093 ms and local processor work of ~10.0 s. These timings are **one hosted CI/emulator run**, not p50/p95, external-callable/network latency, real Firebase cloud throughput, browser response, or an automatically accepted official result. The separate native correction-trigger emulator (#108) exercises production Functions `onDocumentCreated` automatically with a **synthetic** recording; this genuine 185872 lane starts only Firestore/Storage emulators and does not claim real-file automatic Functions trigger coverage.
+
+Evidence is in the linked CI logs and its 14-day-retained small acceptance artifact, named `authentic-185872-reviewed-ready-report`. Never upload the full replay or temporary source-name fixture as an Actions artifact.
 
 ## Acceptance record and remaining gates
 
-The report must be attached to the engineering review **only after a real run**, with potentially identifying hashes handled under project evidence policy. Capture the exact worker revision, game-build provenance, original bytes, decoded/source verification, READY and rollback states, read-payload bounds and timing by stage. Any failed publication/read/rollback is a test finding, not permission to relax source or official-result gates.
+For any additional private fixture, the report must be attached to the engineering review **only after its own real run**, with potentially identifying hashes handled under project evidence policy. Capture the exact worker revision, game-build provenance, original bytes, decoded/source verification, READY and rollback states, read-payload bounds and timing by stage. Any failed publication/read/rollback is a test finding, not permission to relax source or official-result gates.
 
 The historical local authentic-recording validation benchmark already recorded 14.279 s (1v1), 21.662 s (2v2), 26.609 s (4v4), and 18.209 s (FFA) **only to VALIDATED_NOT_READY**. This new local test measures explicit manual publication and bounded readers, not true automatic server-received-to-READY.
 
