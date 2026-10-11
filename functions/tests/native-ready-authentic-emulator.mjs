@@ -58,7 +58,7 @@ assert.equal((await matchRef.get()).exists,false,'Use a fresh isolated emulator 
 const bucket=getStorage().bucket(bucketName);
 const now=Timestamp.now();
 const roster=fixture.players.map((p,index)=>({playerId:matchId+'-player-'+(index+1),team:index+1}));
-const slotName=s=>s.normalize('NFKC').trim().replace(/\\s+/g,' ').toLocaleLowerCase('en-US');
+const slotName=s=>s.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
 await db.collection('players').doc(actor.playerId).create({role:'ADMIN',membershipStatus:'ACTIVE',synthetic:true});
 await db.collection('authLinks').doc(actor.authUid).create({playerId:actor.playerId});
 for(let i=0;i<roster.length;i++)
@@ -78,7 +78,6 @@ await gameRef.create({status:'READY',gameNumber:1,players:roster,
 process.env.AOF_NATIVE_REPLAY_INTEGRATION='validate-v1';
 process.env.AOF_NATIVE_REPLAY_PROJECT=project;
 process.env.AOF_NATIVE_REPLAY_GAME_ALLOWLIST=matchId+'/'+gameId;
-const acceptedReceivedAt=Date.now();
 const validated=await uploadReplay.run({
   data:{matchId,gameId,fileName:basename(fixture.path),
     replayBase64:original.toString('base64'),processingMode:'NATIVE_VALIDATION_V1'},
@@ -99,6 +98,9 @@ for(const artifact of [candidate.originalRecording,candidate.recordedEvents,cand
 }
 assert.equal(candidate.originalRecording.permanent,true);
 assert.equal(candidate.originalRecording.sourceDeletionAuthorized,false);
+const claimId=Buffer.from(candidate.matchFacts.game.guid,'utf8').toString('hex');
+const claimRef=db.collection('recordingGameClaims').doc(claimId);
+assert.equal((await claimRef.get()).exists,false,'The real Game GUID must not already be attributed');
 
 // This independently reviewed winner is test authority only. Do not copy or
 // assert that this historical match was played by these synthetic league users.
@@ -175,7 +177,7 @@ assert.equal((await gameRef.collection('replaySources').doc(sourceHash).get()).e
   'Rollback must retain the immutable published evidence');
 await assert.rejects(readActiveNativeBattleRecord({...reread(),request:{
   matchId,gameId,mode:'overview'}}),error=>error?.code==='failed-precondition');
-assert.equal((await db.collection('recordingGameClaims').get()).empty,true,
+assert.equal((await claimRef.get()).exists,false,
   'Publisher-created GUID attribution must be released after rollback');
 assert.equal((await db.collection('processingJobs').get()).empty,true,
   'Manual source switching must not invent an official scoring job');
@@ -196,6 +198,6 @@ const report={test:'authentic-185872-reviewed-ready-local-v1',environment:projec
   notMeasured:'Live callable/network overhead, real browser, actual cloud worker cold starts, autonomous upload-to-READY, total cloud received-to-READY SLA, multi-format acceptance'};
 const root=resolve('.replay-lab/authentic-185872-ready');
 await mkdir(root,{recursive:true});
-await writeFile(resolve(root,'report.json'),JSON.stringify(report,null,2)+'\\n');
+await writeFile(resolve(root,'report.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({status:'PASS',...report}));
 await db.terminate();
