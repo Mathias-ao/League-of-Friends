@@ -32,7 +32,7 @@ export const NATIVE_GATES=[
   'independentAcceptedResultBeforePublication',
   'publicationAndReadFlagsExplicitlyScoped',
   'manualPublishAndRollbackInvocationReady',
-  'nativeReaderBrowserIntegrationVerifiedOrListedAsBlocker',
+  'nativeViewerBrowserCheckpointPlanReady',
 ];
 export const STAGING_GATES=[
   'specificStagingDeploymentSeparatelyAuthorized',
