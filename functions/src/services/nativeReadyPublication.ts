@@ -214,6 +214,14 @@ export async function executeNativeReadyPublication(input:{
   if(start.publicationExists){
     if(start.publication?.state==='ACTIVE'&&start.game.activeReplayStatisticsId===request.sourceHash&&
        start.publication.publishedStatisticsRevision===start.game.replayStatisticsRevision&&
+       start.publication.previousActiveSourceId===request.expectedActiveSourceHash&&
+       start.publication.previousStatisticsRevision===request.expectedStatisticsRevision&&
+       start.publication.officialResultRevision===request.expectedResultRevision&&
+       start.publication.resultBinding===snap({canonicalResult:start.game.canonicalResult,
+         recordingResultBinding:start.game.recordingResultBinding??null})&&
+       currentOfficialGameOutcome(start.game,start.match).qualification==='OFFICIAL'&&
+       start.source?.nativeValidationCandidateId===request.candidateId&&
+       start.source?.statistics?.sha256===request.expectedArtifactSha256&&
        start.c.state==='PUBLISHED_READY')
       return {success:true,alreadyPublished:true,state:'READY',sourceHash:request.sourceHash,
         replayStatisticsRevision:start.game.replayStatisticsRevision};
@@ -358,7 +366,11 @@ async function rollbackNativePublication(input:{
     throw fail('No matching audited native publication exists for this rollback.');
   if(publication.state==='ROLLED_BACK'){
     if(start.game.activeReplayStatisticsId===publication.previousActiveSourceId&&
-       start.game.replayStatisticsRevision===publication.rolledBackStatisticsRevision)
+       start.game.replayStatisticsRevision===publication.rolledBackStatisticsRevision&&
+       publication.officialResultRevision===request.expectedResultRevision&&
+       publication.resultBinding===snap({canonicalResult:start.game.canonicalResult,
+         recordingResultBinding:start.game.recordingResultBinding??null})&&
+       start.c.state==='ROLLED_BACK')
       return {success:true,alreadyRolledBack:true,state:'ROLLED_BACK',
         sourceHash:request.sourceHash,replayStatisticsRevision:start.game.replayStatisticsRevision};
     throw fail('Rollback already occurred, but the Game has since changed.');
