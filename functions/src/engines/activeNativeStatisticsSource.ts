@@ -2,10 +2,10 @@ import {currentOfficialGameOutcome} from './recordingMatchFacts.js';
 import {statisticsBindingKey} from './statisticsExperience.js';
 
 /**
- * Explicit publication marker. Only the separately gated, audited
- * adminNativeReadyPublication transaction may create an active native READY
+ * Explicit publication marker. Only the separately gated and audited
+ * adminPublishNativeReady transaction (#102) may create a native READY
  * replaySources document; VALIDATED_NOT_READY candidates cannot.
- * No deployment or operator activation is implied by this code.
+ * The operator flags are off by default; merging is not deployment.
  */
 export const ACTIVE_NATIVE_SOURCE_VERSION='AOF_ACTIVE_NATIVE_STATISTICS_V1';
 export const NATIVE_SHARED_DELIVERY='AOF_DIRECT_SHARED_EPISODES_V1_EXPERIMENTAL';
