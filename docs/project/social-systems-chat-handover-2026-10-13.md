@@ -1,5 +1,8 @@
 # Age of Friends — New Chat Handover (Social Relationship Design)
 
+> **Continuation update (13 October 2026):** Read the [approved Relationship V1 baseline](../architecture/relationship-v1-approved-baseline-2026-10-13.md) alongside [SOC-001–057](../architecture/social-relationship-decisions-001-057.md). The newer baseline records approved **SOC-058–088**, **REL-V1-EVID-01–06** and **REL-V1-CAL-01–17**; **SOC-089 is deferred**. The “SOC-058 pending” and “next decision” text below is retained as the **earlier handover snapshot**, not current status. This remains **design only**: no numeric rules, implementation or activation approved.
+
+
 Captured 13 October 2026. Continuity source: [AOF-SOC-001–057 approved decision register](../architecture/social-relationship-decisions-001-057.md). Design only; no production/staging activation. SOC-058 is **pending**.
 
 ## Copy into a new ChatGPT chat
