@@ -1,0 +1,216 @@
+{
+  "chronicleFacts": [
+    {
+      "archiveId": "chronicle-fact-6f9c8b78d07ee227276ed45f87084ea24bae736c07e97c1573cc21ae769ee484",
+      "battleId": "M1",
+      "battleOrder": 1,
+      "battleOutcomeInferred": false,
+      "chapterRevision": 1,
+      "chronologyCoverage": "QUALIFIED",
+      "endedAt": {
+        "atMs": 1000,
+        "operationOrdinal": 1
+      },
+      "eventId": "E1",
+      "evidenceBlockers": [],
+      "factsOnly": true,
+      "gameId": "G1",
+      "gameNumber": 1,
+      "historicalOrderVerifiedByBridge": false,
+      "independence": "SOURCE_EPISODE",
+      "matchId": "M1",
+      "narrativePublished": false,
+      "pairLeaguePlayerIds": [
+        "Alice",
+        "Bob"
+      ],
+      "playerFeelingKnown": false,
+      "playerMappingRevision": "binding-1",
+      "relationshipReviewIds": [
+        "relationship-review-ffca53e6a5241faa1956c6fa2cf6f0146f088c609f290cc1547255d29cc32442"
+      ],
+      "reputationReviewIds": [
+        "reputation-review-dc5392a851ad4e850db52bca98358610429fdb3789de8f732a8921584fb787df",
+        "reputation-review-7af0b8386d6d5d3c7e4acdb4963c1daae6d7b18e8be3d530b49b540525f8eaaf"
+      ],
+      "resultRevision": 1,
+      "seasonId": "S1",
+      "sourceDeedId": "deed-1",
+      "sourceEpisodeId": "rel-episode-ca0ef80099f96ab611bacb40877a6e1020983ea56f4a01e06b2f7050e6180376",
+      "sourceEventIds": [
+        "attack-a"
+      ],
+      "sourceEvidenceKinds": [
+        "DIRECTED_PRESSURE",
+        "TARGETED_COMMAND"
+      ],
+      "sourceIncidentIds": [
+        "inc-1"
+      ],
+      "sourceRevision": {
+        "canonicalManifestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "canonicalSchemaVersion": "1.1.0",
+        "parserVersion": "fixture",
+        "replaySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "startedAt": {
+        "atMs": 1000,
+        "operationOrdinal": 1
+      }
+    }
+  ],
+  "chronicleOpportunityCount": 0,
+  "coverage": {
+    "absenceQualified": false,
+    "blockingReasons": [],
+    "eventEligibilityAuthenticated": false,
+    "historyOrderAuthenticated": false,
+    "historyOrderInputComplete": true,
+    "officialResultsAuthenticated": false,
+    "playerMappingAuthenticated": false,
+    "sourceAcceptanceAuthenticated": false
+  },
+  "modelVersion": "AOF_STATISTICS_SOCIAL_BRIDGE_V1",
+  "notice": "SYNTHETIC CONTROLLED FIXTURE \u2014 NOT A REAL PLAYER/GAME",
+  "policy": {
+    "chroniclePublicationEnabled": false,
+    "judgmentSubmissionEnabled": false,
+    "readOnly": true,
+    "relationshipScoringEnabled": false,
+    "reputationScoringEnabled": false,
+    "scoresOrStagesGenerated": false,
+    "sourceCandidatesOnly": true,
+    "warRoomEffectsEnabled": false
+  },
+  "relationshipReview": [
+    {
+      "battleId": "M1",
+      "battleOrder": 1,
+      "chapterRevision": 1,
+      "directionalEffectQualified": false,
+      "eventId": "E1",
+      "evidenceBlockers": [],
+      "fromLeaguePlayerId": "Alice",
+      "gameId": "G1",
+      "gameNumber": 1,
+      "matchId": "M1",
+      "meaningfulnessQualified": false,
+      "ordinaryStrengthening": null,
+      "ordinaryWeakening": null,
+      "playerMappingRevision": "binding-1",
+      "reciprocityCreditQualified": false,
+      "resultRevision": 1,
+      "reviewId": "relationship-review-ffca53e6a5241faa1956c6fa2cf6f0146f088c609f290cc1547255d29cc32442",
+      "reviewStatus": "SOURCE_CANDIDATE_ONLY",
+      "seasonId": "S1",
+      "sourceDeedId": "deed-1",
+      "sourceEpisodeId": "rel-episode-ca0ef80099f96ab611bacb40877a6e1020983ea56f4a01e06b2f7050e6180376",
+      "sourceEventIds": [
+        "attack-a"
+      ],
+      "sourceEvidenceKinds": [
+        "DIRECTED_PRESSURE",
+        "TARGETED_COMMAND"
+      ],
+      "sourceIncidentIds": [
+        "inc-1"
+      ],
+      "sourceRevision": {
+        "canonicalManifestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "canonicalSchemaVersion": "1.1.0",
+        "parserVersion": "fixture",
+        "replaySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "stage": null,
+      "toLeaguePlayerId": "Bob",
+      "trackForIndependentQualification": "RIVALRY"
+    }
+  ],
+  "reputationReview": [
+    {
+      "actorLeaguePlayerId": "Alice",
+      "battleId": "M1",
+      "battleOrder": 1,
+      "chapterRevision": 1,
+      "counterpartLeaguePlayerId": "Bob",
+      "eventId": "E1",
+      "evidenceBlockers": [],
+      "gameId": "G1",
+      "gameNumber": 1,
+      "matchId": "M1",
+      "missingQualifications": [
+        "DIRECTIONAL_CONTEXT_QUALIFIED",
+        "MEANINGFUL_PUNISHING_CONDUCT",
+        "SUSTAINED_DISADVANTAGE_AT_EPISODE_ENTRY"
+      ],
+      "playerMappingRevision": "binding-1",
+      "points": null,
+      "reputationEffectQualified": false,
+      "resultRevision": 1,
+      "reviewId": "reputation-review-dc5392a851ad4e850db52bca98358610429fdb3789de8f732a8921584fb787df",
+      "reviewStatus": "UNQUALIFIED_CIRCUMSTANCE_REVIEW",
+      "seasonId": "S1",
+      "sourceDeedId": "deed-1",
+      "sourceEpisodeId": "rel-episode-ca0ef80099f96ab611bacb40877a6e1020983ea56f4a01e06b2f7050e6180376",
+      "sourceEventIds": [
+        "attack-a"
+      ],
+      "sourceEvidenceKinds": [
+        "DIRECTED_PRESSURE"
+      ],
+      "sourceIncidentIds": [
+        "inc-1"
+      ],
+      "sourceRevision": {
+        "canonicalManifestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "canonicalSchemaVersion": "1.1.0",
+        "parserVersion": "fixture",
+        "replaySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "trackForIndependentQualification": "CRUELTY"
+    },
+    {
+      "actorLeaguePlayerId": "Alice",
+      "battleId": "M1",
+      "battleOrder": 1,
+      "chapterRevision": 1,
+      "counterpartLeaguePlayerId": "Bob",
+      "eventId": "E1",
+      "evidenceBlockers": [],
+      "gameId": "G1",
+      "gameNumber": 1,
+      "matchId": "M1",
+      "missingQualifications": [
+        "COMPARABLE_OR_STRONGER_OPPONENT_AT_EPISODE_ENTRY",
+        "MEANINGFUL_EFFORT",
+        "TARGETED_OFFENSIVE_ACTION_SEMANTICS"
+      ],
+      "playerMappingRevision": "binding-1",
+      "points": null,
+      "reputationEffectQualified": false,
+      "resultRevision": 1,
+      "reviewId": "reputation-review-7af0b8386d6d5d3c7e4acdb4963c1daae6d7b18e8be3d530b49b540525f8eaaf",
+      "reviewStatus": "UNQUALIFIED_CIRCUMSTANCE_REVIEW",
+      "seasonId": "S1",
+      "sourceDeedId": "deed-1",
+      "sourceEpisodeId": "rel-episode-ca0ef80099f96ab611bacb40877a6e1020983ea56f4a01e06b2f7050e6180376",
+      "sourceEventIds": [
+        "attack-a"
+      ],
+      "sourceEvidenceKinds": [
+        "TARGETED_COMMAND"
+      ],
+      "sourceIncidentIds": [
+        "inc-1"
+      ],
+      "sourceRevision": {
+        "canonicalManifestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "canonicalSchemaVersion": "1.1.0",
+        "parserVersion": "fixture",
+        "replaySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "trackForIndependentQualification": "GALLANTRY"
+    }
+  ],
+  "sourceChapterCount": 1
+}
