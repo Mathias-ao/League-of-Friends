@@ -79,5 +79,23 @@ class SocialThreeFamilyPreviewTests(unittest.TestCase):
         self.assertTrue(all(c["actorReplayPlayerId"] == 1 for c in result["candidateClaims"]))
 
 
+    def test_offline_e2e_gzip_artifact_and_no_scoring(self):
+        import gzip
+        import json
+        import tempfile
+        from pathlib import Path
+        from run_social_three_family_e2e import main
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "statistics.json.gz"
+            output = Path(tmp) / "social-preview.json"
+            with gzip.open(source, "wt", encoding="utf-8") as stream:
+                json.dump(fixture(native=True), stream)
+            self.assertEqual(main([str(source), "--output", str(output)]), 0)
+            data = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(len(data["candidateClaims"]), 3)
+            self.assertFalse(data["policy"]["productionScoringEnabled"])
+            self.assertEqual(data["status"], "PRIVATE_EVIDENCE_REVIEW_ONLY")
+
+
 if __name__ == "__main__":
     unittest.main()
