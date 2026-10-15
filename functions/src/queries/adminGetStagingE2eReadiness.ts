@@ -45,11 +45,21 @@ export function stagedNativeEnvironmentStatus(env:NodeJS.ProcessEnv,matchId:stri
   flags.stagingBucketExplicit=project===projectStaging?
     (bucket===project+'.appspot.com'||bucket===project+'.firebasestorage.app'):
     bucket===project+'.appspot.com';
+  // Validation-only can be tested before READY publication/read/rollback is approved.
+  // This read-only status is NOT an authorization token: the callable still enforces
+  // ADMIN, exact Game, processor pin and current project/worker configuration.
+  const validationChecks=[
+    'nativeValidation','validationGameAllowlisted','workerProcessorPinned',
+    'workerAuthenticated','projectExplicit','deployedCommitMatches',
+    'workerTransportConfigured','stagingBucketExplicit',
+  ];
+  const validationBlockers=validationChecks.filter(key=>!flags[key]);
   const blockers=Object.entries(flags).filter(([,enabled])=>!enabled).map(([key])=>key);
   return {
     contract:'AOF_STAGING_E2E_PREFLIGHT_V1' as const,
     project,matchId,gameId,expectedCommit,
     flags,blockers,configReady:blockers.length===0,
+    validationReady:validationBlockers.length===0,validationBlockers,
     rollbackReady:flags.nativeEmergencyRollback&&flags.publicationGameAllowlisted&&
       flags.workerProcessorPinned&&flags.projectExplicit,
     caveat:'Read-only environment values only; backup, Auth, actual worker HTTPS, browser, deployment and scoped authorization must be separately verified.',

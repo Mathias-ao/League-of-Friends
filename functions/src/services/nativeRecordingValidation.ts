@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import {GoogleAuth} from 'google-auth-library';
 import {Timestamp,type Firestore} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
 import {assertNativeValidationAllowed,bindingDigest,digest,NATIVE_VALIDATION,READY_BLOCKERS,
@@ -11,15 +12,36 @@ type Bag=Record<string,any>;
 const fail=(message:string)=>new HttpsError('failed-precondition',message);
 const changed=()=>new HttpsError('aborted','Native validation inputs or lease changed; retry.');
 
-/** Native HTTP contract is explicit and bounded; legacy /process is never retried here. */
-export async function callNativeWorker(url:string,fileName:string,replayBase64:string):Promise<Bag>{
-  const parsed=new URL(url),loopback=['127.0.0.1','localhost'].includes(parsed.hostname);
+/** Only internal tests supply transport dependencies; request payloads cannot choose a token provider. */
+interface NativeWorkerTransport {
+  fetcher?:typeof fetch;
+  getIdToken?:(audience:string)=>Promise<string>;
+}
+
+/** Native HTTP contract is explicit and bounded; legacy /process is never retried here.
+ * A private Cloud Run service requires an IAM identity token in addition to its app bearer secret.
+ * The IAM token is sent in X-Serverless-Authorization so Cloud Run does not consume the app bearer.
+ */
+export async function callNativeWorker(
+  url:string,fileName:string,replayBase64:string,transport:NativeWorkerTransport={},
+):Promise<Bag>{
+  const target=url.replace(/\/+$/,'');
+  const parsed=new URL(target),loopback=['127.0.0.1','localhost'].includes(parsed.hostname);
   if(parsed.username||parsed.password||(!loopback&&parsed.protocol!=='https:')||
     (loopback&&!process.env.FUNCTIONS_EMULATOR)||!process.env.REPLAY_WORKER_AUTH_TOKEN)
     throw fail('Native worker requires authenticated HTTPS or an emulator loopback endpoint.');
-  const response=await fetch(url.replace(/\/+$/,'')+'/process-native-v1',{method:'POST',redirect:'error',
-    headers:{'content-type':'application/json',authorization:'Bearer '+process.env.REPLAY_WORKER_AUTH_TOKEN},
-    body:JSON.stringify({fileName,replayBase64}),signal:AbortSignal.timeout(240_000)});
+  const headers:Record<string,string>={
+    'content-type':'application/json',authorization:'Bearer '+process.env.REPLAY_WORKER_AUTH_TOKEN,
+  };
+  if(!process.env.FUNCTIONS_EMULATOR){
+    const identity=transport.getIdToken
+      ?await transport.getIdToken(target)
+      :await (await new GoogleAuth().getIdTokenClient(target)).idTokenProvider.fetchIdToken(target);
+    if(!identity)throw fail('Native Cloud Run identity token was not available.');
+    headers['X-Serverless-Authorization']='Bearer '+identity;
+  }
+  const response=await (transport.fetcher??fetch)(target+'/process-native-v1',{method:'POST',redirect:'error',
+    headers,body:JSON.stringify({fileName,replayBase64}),signal:AbortSignal.timeout(240_000)});
   if(!response.ok){await response.body?.cancel();throw fail('Native worker rejected the recording; legacy was not invoked.');}
   if(!response.body)throw fail('Missing native worker response.');
   const reader=response.body.getReader(),chunks:Buffer[]=[];let total=0;
