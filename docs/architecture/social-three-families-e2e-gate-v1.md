@@ -20,9 +20,9 @@
 5. Corrected Game or disputed Battle: old revision is excluded from current history; any existing submitted player judgment has separate correction and privacy rules.
 6. Chronicle outcome: ordinary Battle is one line, including correct team/FFA wording; no extra narrative from mere detected commands. A source-linked qualified *credited* social movement can add at most one curated highlighted sentence, once authenticated and authorized.
 
-## Main and active E2E branch coordination
+## Main consolidation and E2E coordination — 15 October 2026
 
-The proposal is based on `main` SHA `ea417d7ad09a57cbb4eec2dda262fbe80a3c29c3` (14 October review). Leave `feat/staging-e2e-native-browser-v1` untouched while the operator runs the E2E test. After tests and explicit acceptance, promote the inactive evidence pieces via GitHub PR; only then separately rebase/cherry-pick into the testing branch or incorporate the changes into a fresh coordinated staging run. **Merging is not a deployment or flag activation.**
+This review branch now includes the consolidated `main` snapshot `8e8fb386a7fcb3ad9909fa68796bf72b0b6d8e52` through a non-conflicting merge, retaining this proposal as **add-only, inert modules and tests**. The former staging recording E2E was explicitly stopped as incomplete: see `docs/testing/staging-manual-e2e-closeout-2026-10-15.md`. No successful live upload-to-READY or deployed social-system interaction may be inferred. A future coordinated E2E must independently verify the authenticated active-source/read path and candidate family results. **Merging these inactive files is neither deployment nor feature activation.**
 
 ## Release blockers
 
