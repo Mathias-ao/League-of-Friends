@@ -1,6 +1,8 @@
 # Manual E2E readiness — single source of truth (11 October 2026)
 
-**Disposition: PREPARATION IN PROGRESS — NO-GO for an unassisted native browser/cloud test.** Code merged through PR #110 qualifies the *isolated* build-185872 native upload-handler → validated candidate → manually reviewed READY → bounded native readers → rollback path for real 1v1/2v2/4v4/FFA files. It does **not** mean that the website can drive this pathway unassisted, that ordinary uploads automatically publish READY, or that the deployed Firebase staging environment has the code.
+**15 October 2026 update: the manual staging recording E2E was stopped by user direction.** Source and CI gains were consolidated, but a real cloud recording upload did not pass. Read the [explicit closeout](staging-manual-e2e-closeout-2026-10-15.md). Do not treat the 11 October preparation instructions below as a standing request to restart the test or deploy to staging; the accepted `main` source does not attest the deployed site.
+
+**Historical 11 October status:** **Disposition: PREPARATION IN PROGRESS — NO-GO for an unassisted native browser/cloud test.** Code merged through PR #110 qualifies the *isolated* build-185872 native upload-handler → validated candidate → manually reviewed READY → bounded native readers → rollback path for real 1v1/2v2/4v4/FFA files. It does **not** mean that the website can drive this pathway unassisted, that ordinary uploads automatically publish READY, or that the deployed Firebase staging environment has the code.
 
 This plan keeps the **three milestones** separate: **(1) consolidation** (merge #110 and update stale authority docs), **(2) a complete single-Battle manual rehearsal**, and **(3) operational qualification for later player activation**. Use *this* page to prepare and execute a user-operated E2E; stop and record a NO-GO rather than improvising administrative production mutations.
 
