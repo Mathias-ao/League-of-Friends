@@ -1,4 +1,5 @@
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
+import {defineSecret} from 'firebase-functions/params';
 import {requireAdmin} from '../auth/authorization.js';
 import {callableOptions} from '../config/runtime.js';
 
@@ -6,6 +7,7 @@ const ID=/^[A-Za-z0-9_-]{1,200}$/;
 const REV=/^[a-f0-9]{64}$/;
 const SHA=/^[a-f0-9]{40}$/;
 const projectStaging='age-of-friends-staging';
+const replayWorkerAuthToken=defineSecret('REPLAY_WORKER_AUTH_TOKEN');
 
 /** Read-only staging/demo preflight. This never tests external connectivity,
  * checks account fixtures, or authorizes a flag by returning a green result. */
@@ -67,7 +69,7 @@ export function stagedNativeEnvironmentStatus(env:NodeJS.ProcessEnv,matchId:stri
 }
 
 export const adminGetStagingE2eReadiness=onCall<{matchId:string;gameId:string;expectedCommit:string}>(
-  {...callableOptions,timeoutSeconds:30},async request=>{
+  {...callableOptions,timeoutSeconds:30,secrets:[replayWorkerAuthToken]},async request=>{
     const actor=await requireAdmin(request);
     if(actor.role!=='ADMIN')throw new HttpsError('permission-denied','Administrator required.');
     const {matchId,gameId,expectedCommit}=request.data??({} as any);
