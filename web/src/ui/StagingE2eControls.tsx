@@ -181,7 +181,7 @@ function NativeReview({repository,data,game,onUpdated}:{
           A configuration check does not certify login, backups, worker connectivity or a successful browser E2E.</p>
         {environmentMatches&&!canValidate&&<p role="alert">
           Validation blockers: {(environment?.validationBlockers??[]).join(', ')||'unavailable'}.
-        </p>
+        </p>}
         {environmentMatches&&!environment?.configReady&&<p role="alert">
           Missing release gates: {environment!.blockers.join(', ')}.
           Emergency source rollback {environment!.rollbackReady?'remains separately allowed':'is also unavailable'}.
