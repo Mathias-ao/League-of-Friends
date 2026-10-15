@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {stagedNativeEnvironmentStatus} from '../lib/queries/adminGetStagingE2eReadiness.js';
 
 const staging='age-of-friends-staging',sha='a'.repeat(40);
@@ -85,4 +86,12 @@ test('no production, wrong project, unpinned commit or unapproved demo project',
     REPLAY_WORKER_URL:'http://127.0.0.1:18765'
   },'m','g',sha);
   assert.equal(demo.configReady,true);
+});
+
+test('deployed staging readiness callable binds the private worker token',()=>{
+  // This is a deployment binding check, distinct from the pure env snapshot tests.
+  // Without it a live Gen2 callable will always report workerAuthenticated=false.
+  const source=readFileSync(new URL('../src/queries/adminGetStagingE2eReadiness.ts',import.meta.url),'utf8');
+  assert.match(source,/defineSecret\(['"]REPLAY_WORKER_AUTH_TOKEN['"]\)/);
+  assert.match(source,/secrets:\s*\[replayWorkerAuthToken\]/);
 });
