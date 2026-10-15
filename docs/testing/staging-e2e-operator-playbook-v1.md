@@ -51,6 +51,12 @@ npm run build --prefix web -- --mode staging
 
 **Never infer authorization from a green config audit.** The `--for-manual-e2e` command checks only that the browser opt-in is explicitly configured. A separate written staging deploy and exact-Game native flag approval must exist. No production Firebase alias, preview fallback, local Auth emulator, direct canonicalResult write or unreviewed source replacement is permissible. Use a full deployment rollback plan and verify the emitted website bundle actually targets staging before hosting publication.
 
+## Milestone A fast-recording validation, without READY publication
+
+The staging preflight exposes **two independent configuration states**: `validationReady` covers the separately enabled native validator, exact approved Game, processor pin, private worker configuration, release commit and staging Storage; `configReady` still requires **all** READY publication, reader and rollback gates. A staging ADMIN can choose **Validate only** when validation readiness is satisfied even while publication/read/rollback flags remain off. Its response must remain `VALIDATED_NOT_READY`; source and derived artifacts are immutable and the original recording must remain retained. The UI no longer attempts the separately gated READY review after validation-only success when publication flags are off.
+
+This is a **code capability, not permission to turn flags on**. The staging E2E browser panel remains hidden with `VITE_AOF_STAGING_E2E=false` until separately approved. Enabling the `/process-native-v1` worker route and `AOF_NATIVE_REPLAY_INTEGRATION=validate-v1` is an opt-in exact-Game operation, not part of the default Milestone A deployment. The worker itself does not publish READY, and neither preflight state verifies actual Cloud Run calls, backups or independent result authority. Ordinary player Upload recording still calls the legacy route and may hit the known 240-second timeout until a fully qualified native READY transition is separately approved.
+
 ## Staging human journey — one controlled Battle
 
 1. **Before:** ADMIN records known approved Match/Game ID, exactly mapped historical source names to permitted Game players, original hash, build provenance (185872 sample if using old fixture), announced settings and actual play window. Snapshot current active source pointer (initially absent), result/statistics revisions, Season leaderboard/Gold ledger, player profiles/Chronicle, and permitted operations.
