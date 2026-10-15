@@ -96,6 +96,7 @@ function NativeReview({repository,data,game,onUpdated}:{
   const environmentMatches=environment?.contract==='AOF_STAGING_E2E_PREFLIGHT_V1'&&
     environment.expectedCommit===expectedCommit;
   const canStart=environmentMatches&&environment?.configReady===true;
+  const canValidate=environmentMatches&&environment?.validationReady===true;
   const canEmergencyRollback=environmentMatches&&environment?.rollbackReady===true;
   const matchId=data.match.matchId,gameId=game.gameId;
   useEffect(()=>{setCandidateId('');setReview(null);setFile(null);setReason('');setMappingApproved(false);setOfficialApproved(false);setRollbackWord('');},[matchId,gameId]);
@@ -133,8 +134,9 @@ function NativeReview({repository,data,game,onUpdated}:{
     if(response.state!=='VALIDATED_NOT_READY'||response.activated!==false||!SHA.test(response.candidateId))
       throw new Error('Native validation failed to preserve unpublished candidate status.');
     resetReview();setCandidateId(response.candidateId);
-    setNote('VALIDATED_NOT_READY: no READY source or awards. Result must be independently confirmed before publication.');
-    await readReview(response.candidateId);
+    setNote('VALIDATED_NOT_READY: original retained; no READY source or awards. The candidate can be reviewed for publication only after separate READY approval.');
+    // Validation-only needs neither READY publication flags nor admin READY review.
+    if(canStart)await readReview(response.candidateId);
   }
   async function publish(operation:'PUBLISH'|'ROLLBACK'){
     if(!review)throw new Error('Review the pinned source first.');
@@ -173,9 +175,13 @@ function NativeReview({repository,data,game,onUpdated}:{
     <div className="stack">
       <section className="stack" aria-label="Staging release and flags preflight">
         <strong>Authenticated staging environment preflight</strong>
-        <p>Client commit {expectedCommit||'UNPINNED'} · backend status {environmentChecking?'checking':
-          !environmentMatches?'NO-GO':environment?.configReady?'CONFIG CHECK PASSED':'NO-GO'}.
+        <p>Client commit {expectedCommit||'UNPINNED'} · validation-only {environmentChecking?'checking':
+          canValidate?'CONFIG CHECK PASSED':'NO-GO'} · READY publication {
+          environmentChecking?'checking':canStart?'CONFIG CHECK PASSED':'NO-GO'}.
           A configuration check does not certify login, backups, worker connectivity or a successful browser E2E.</p>
+        {environmentMatches&&!canValidate&&<p role="alert">
+          Validation blockers: {(environment?.validationBlockers??[]).join(', ')||'unavailable'}.
+        </p>
         {environmentMatches&&!environment?.configReady&&<p role="alert">
           Missing release gates: {environment!.blockers.join(', ')}.
           Emergency source rollback {environment!.rollbackReady?'remains separately allowed':'is also unavailable'}.
@@ -189,7 +195,7 @@ function NativeReview({repository,data,game,onUpdated}:{
         <input type="file" accept=".aoe2record" onChange={e=>setFile(e.target.files?.[0]??null)}/>
       </label>
       <button disabled={busy||!file||file.size===0||file.size>32*1024*1024||
-        !repository.stagingNativeValidate||!!game.result||!canStart}
+        !repository.stagingNativeValidate||!!game.result||!canValidate}
         onClick={()=>void task(validate)}>Validate only — never publish READY</button>
       {!!game.result&&<p>Game result already accepted. Do not validate a different source without the reviewed correction protocol.</p>}
       <label>Exact SHA-256 candidate ID from validation (paste after reopening this Battle)
