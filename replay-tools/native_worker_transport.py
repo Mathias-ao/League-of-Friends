@@ -24,7 +24,15 @@ def native_processor_revision() -> str:
     paths = (list(root.glob('*.py')) + list(root.glob('*.json'))
              + list((root / 'schemas').glob('*.json')) + list((root / 'entity-catalog').glob('*.json')))
     inputs = [(p.relative_to(root).as_posix(), p) for p in paths]
-    matrix = root.parent / 'docs/replay-foundation/townbell-capability-matrix.csv'
+    # The staging image intentionally builds only from replay-tools/. Keep the
+    # pinned reference bytes inside that build context rather than depending on
+    # the repository's docs/ directory, which is absent in Cloud Run.
+    matrix = root / 'processor-data' / 'townbell-capability-matrix.csv'
+    if not matrix.is_file():
+        raise FileNotFoundError('Pinned native processor capability matrix is missing from the worker image.')
+    source_matrix = root.parent / 'docs/replay-foundation/townbell-capability-matrix.csv'
+    if source_matrix.is_file() and source_matrix.read_bytes() != matrix.read_bytes():
+        raise ValueError('Pinned worker matrix differs from the reviewed reference matrix.')
     inputs.append(('docs/replay-foundation/townbell-capability-matrix.csv', matrix))
     code = code_digest(inputs)
     return hashlib.sha256((code + version_bundle()['decoderCodeSha256']).encode('ascii')).hexdigest()
