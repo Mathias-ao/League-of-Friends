@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {stagedNativeEnvironmentStatus} from '../lib/queries/adminGetStagingE2eReadiness.js';
 
 const staging='age-of-friends-staging',sha='a'.repeat(40);
@@ -22,6 +23,8 @@ test('staging read-only status ties every configured gate and deployed SHA to ex
   const pass=stagedNativeEnvironmentStatus(env,'m','g',sha);
   assert.equal(pass.project,staging);
   assert.equal(pass.configReady,true);
+  assert.equal(pass.validationReady,true);
+  assert.deepEqual(pass.validationBlockers,[]);
   assert.equal(pass.rollbackReady,true);
   assert.deepEqual(pass.blockers,[]);
   assert.ok(!JSON.stringify(pass).includes('private-fake-unit-test-token'));
@@ -39,10 +42,37 @@ test('read-only staging status does not misrepresent rollback availability',()=>
     AOF_NATIVE_REPLAY_INTEGRATION:'0',AOF_ACTIVE_NATIVE_PLAYER_READS:'0',AOF_ACTIVE_NATIVE_SOCIAL_READS:'0'};
   const result=stagedNativeEnvironmentStatus(emergency,'m','g',sha);
   assert.equal(result.configReady,false);
+  assert.equal(result.validationReady,false);
+  assert.ok(result.validationBlockers.includes('nativeValidation'));
   assert.equal(result.rollbackReady,true);
   assert.ok(result.blockers.includes('nativePublish'));
   assert.equal(stagedNativeEnvironmentStatus({...emergency,
     AOF_NATIVE_READY_ROLLBACK:'0'},'m','g',sha).rollbackReady,false);
+});
+test('validation-only readiness does not require READY publication, readers or rollback',()=>{
+  const validation={...env,
+    AOF_NATIVE_READY_PUBLICATION:'0',
+    AOF_ACTIVE_NATIVE_PLAYER_READS:'0',
+    AOF_ACTIVE_NATIVE_SOCIAL_READS:'0',
+    AOF_NATIVE_READY_ROLLBACK:'0',
+    AOF_NATIVE_READY_GAME_ALLOWLIST:''};
+  const status=stagedNativeEnvironmentStatus(validation,'m','g',sha);
+  assert.equal(status.validationReady,true);
+  assert.deepEqual(status.validationBlockers,[]);
+  assert.equal(status.configReady,false);
+  assert.equal(status.rollbackReady,false);
+  for(const patch of [
+    {AOF_NATIVE_REPLAY_INTEGRATION:'0'},
+    {AOF_NATIVE_REPLAY_GAME_ALLOWLIST:'other/g'},
+    {AOF_NATIVE_REPLAY_PROCESSOR_REVISION:'unversioned'},
+    {REPLAY_WORKER_AUTH_TOKEN:''},
+    {REPLAY_WORKER_URL:'http://127.0.0.1:8090'},
+    {AOF_DEPLOY_GIT_SHA:'b'.repeat(40)},
+  ]){
+    const blocked=stagedNativeEnvironmentStatus({...validation,...patch},'m','g',sha);
+    assert.equal(blocked.validationReady,false);
+    assert.ok(blocked.validationBlockers.length>0);
+  }
 });
 test('no production, wrong project, unpinned commit or unapproved demo project',()=>{
   for(const project of ['league-of-friends-cc274','league-of-freinds','unrelated-project']){
@@ -56,4 +86,12 @@ test('no production, wrong project, unpinned commit or unapproved demo project',
     REPLAY_WORKER_URL:'http://127.0.0.1:18765'
   },'m','g',sha);
   assert.equal(demo.configReady,true);
+});
+
+test('deployed staging readiness callable binds the private worker token',()=>{
+  // This is a deployment binding check, distinct from the pure env snapshot tests.
+  // Without it a live Gen2 callable will always report workerAuthenticated=false.
+  const source=readFileSync(new URL('../src/queries/adminGetStagingE2eReadiness.ts',import.meta.url),'utf8');
+  assert.match(source,/defineSecret\(['"]REPLAY_WORKER_AUTH_TOKEN['"]\)/);
+  assert.match(source,/secrets:\s*\[replayWorkerAuthToken\]/);
 });

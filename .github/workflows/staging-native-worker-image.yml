@@ -29,6 +29,16 @@ jobs:
           python -m unittest discover -s replay-tools/tests -p 'test_hosted_worker_auth.py' -v
       - name: Build the proposed staging worker image (NEVER deploy)
         run: docker build -f replay-tools/Dockerfile.staging -t aof-staging-native-worker:ci replay-tools
+      - name: Verify pinned native processor revision inside the minimal image
+        run: |
+          revision="$(docker run --rm --read-only --tmpfs /tmp:rw,nosuid,nodev \
+            --entrypoint python aof-staging-native-worker:ci \
+            -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')"
+          [[ "$revision" =~ ^[a-f0-9]{64}$ ]] || {
+            echo "FAIL: native worker revision unavailable inside the image" >&2
+            exit 1
+          }
+          echo "PASS: minimal worker image contains the pinned native processor inputs"
       - name: Verify isolated hosted-mode container refuses missing secrets
         run: |
           docker run -d --name aof-staging-worker-ci --read-only --tmpfs /tmp:rw,nosuid,nodev \

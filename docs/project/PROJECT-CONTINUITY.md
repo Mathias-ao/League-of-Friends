@@ -1,6 +1,6 @@
 # Age of Friends — Project Continuity
 
-Last updated: **11 October 2026**. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
+Last updated: **15 October 2026**. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
 
 ## Read order and authority
 
@@ -10,6 +10,18 @@ Last updated: **11 October 2026**. This file is the entrypoint for continuing th
 4. Inspect current GitHub `main` code and the specialist docs linked from these pages before changing behavior.
 
 The latest explicit product decision governs direction; Core Identity governs durable principles; **GitHub `main` governs merged implementation**. Specialist contracts govern their own technical details. Draft branches, local emulator experiments and past chats do **not** establish deployed behavior.
+
+## Latest project checkpoint — 15 October 2026 (current over historical passages)
+
+**Product decision: stop the 15 October manual staging E2E as incomplete.** The recording upload stalled after a legacy private Cloud Run worker returned two **504 / 240s** timeouts; further Cloud debugging and upload tests were explicitly called off. Preserve the successes and limits in the [staging E2E closeout](../testing/staging-manual-e2e-closeout-2026-10-15.md).
+
+`main` now includes [#111](https://github.com/Mathias-ao/League-of-Friends/pull/111), [#112](https://github.com/Mathias-ao/League-of-Friends/pull/112), [#116](https://github.com/Mathias-ao/League-of-Friends/pull/116), [#115](https://github.com/Mathias-ao/League-of-Friends/pull/115) and [#117](https://github.com/Mathias-ao/League-of-Friends/pull/117). Source checkpoint after the final fix: `7bf69f1d897ccb53c8859b98172171f45ef6851a`. **All nine exact-head CI checks for #117 passed**. Recorded Events V1 native worker, private dual-credential transport, validation-only preflight, source-retaining candidate and Docker processor-revision packaging are available as code; the normal browser Upload recording remains **legacy**. The real staging upload, synchronized latest-code deploy, official-result/READY publication and social/Chronicle end-to-end behavior are **not accepted**.
+
+A limited contingency Cloud Run worker and `uploadReplay` deployment occurred on staging from a preceding branch, **not** from the newly consolidated `main`. Do not infer the current staging site, rules, Functions or authenticated UI are aligned with this GitHub SHA. This consolidation did **not** deploy Firebase or modify staging/production. No more manual E2E or Cloud Run troubleshooting is authorized by this document. Do not turn on native validation/READY/read/social/rollback flags or delete any existing original recordings.
+
+The social design register [#113](https://github.com/Mathias-ao/League-of-Friends/pull/113) and three-family read-only prototype [#114](https://github.com/Mathias-ao/League-of-Friends/pull/114) remain separate drafts. Their pending source qualification and approval gates are not bypassed by the earlier successful replay statistics CI.
+
+**Next bounded work:** continue reviewed feature/product development from `main`, respecting existing measurement/evidence boundaries. A live staging recording E2E must be proposed and authorized anew rather than silently resumed.
 
 ## Latest project checkpoint — 11 October 2026 (current over historical passages)
 

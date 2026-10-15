@@ -52,6 +52,15 @@ class HostedWorkerAuthTests(TestCase):
                 self.assertEqual(self.call(path, "incorrect")[0], 401)
                 self.assertEqual(self.call(path, "strict-test-token")[0], 400)  # accepted auth, invalid file
 
+    def test_native_processor_revision_pins_packaged_reference(self):
+        from native_worker_transport import native_processor_revision
+        root = Path(__file__).resolve().parents[1]
+        source = root.parent / "docs/replay-foundation/townbell-capability-matrix.csv"
+        packaged = root / "processor-data/townbell-capability-matrix.csv"
+        self.assertTrue(source.is_file())
+        self.assertEqual(source.read_bytes(), packaged.read_bytes())
+        self.assertRegex(native_processor_revision(), r"^[a-f0-9]{64}$")
+
     def test_local_legacy_behavior_unchanged(self):
         with patch.dict(os.environ, {"AOF_REPLAY_WORKER_AUTH_TOKEN": "",
                                     "AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT": ""},

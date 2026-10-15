@@ -4,6 +4,8 @@ import {assertMatchPlayOpened,matchPlayWindow} from "../../services/eventTiming.
 import { createHash } from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import { GoogleAuth } from "google-auth-library";
+import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
@@ -17,6 +19,7 @@ import {validateRecordingMatchFacts, currentOfficialGameOutcome} from "../../eng
 import {callNativeWorker,validateNativeRecording} from "../../services/nativeRecordingValidation.js";
 
 const MAX_REPLAY_BYTES = 32 * 1024 * 1024;
+const replayWorkerAuthToken = defineSecret("REPLAY_WORKER_AUTH_TOKEN");
 
 interface UploadReplayInput {
   matchId: string;
@@ -105,6 +108,9 @@ function workerUrl(): string {
   if (!value) throw new HttpsError("failed-precondition", "Replay worker is not configured.");
   const parsed = new URL(value);
   const loopback = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
+  if (!loopback && parsed.protocol !== "https:") {
+    throw new HttpsError("failed-precondition", "Remote replay worker must use HTTPS.");
+   }
   if (!process.env.FUNCTIONS_EMULATOR && loopback) {
     throw new HttpsError("failed-precondition", "Loopback replay worker is only allowed in the Functions emulator.");
   }
@@ -115,11 +121,17 @@ function workerUrl(): string {
 }
 
 async function callWorker(fileName: string, replayBase64: string): Promise<WorkerResult> {
+  const target = workerUrl();
   const headers: Record<string, string> = {"content-type": "application/json"};
   if (process.env.REPLAY_WORKER_AUTH_TOKEN) {
     headers.authorization = "Bearer " + process.env.REPLAY_WORKER_AUTH_TOKEN;
   }
-  const response = await fetch(workerUrl() + "/process", {
+  if (!process.env.FUNCTIONS_EMULATOR) {
+    const client = await new GoogleAuth().getIdTokenClient(target);
+    const token = await client.idTokenProvider.fetchIdToken(target);
+    headers["X-Serverless-Authorization"] = `Bearer ${token}`;
+  }
+  const response = await fetch(target + "/process", {
     method: "POST",
     headers,
     body: JSON.stringify({ fileName, replayBase64 }),
@@ -230,6 +242,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
     region: "europe-west1",
     timeoutSeconds: 300,
     memory: "1GiB",
+    secrets: [replayWorkerAuthToken],
   },
   async (request) => {
     const receivedAt=Date.now();
