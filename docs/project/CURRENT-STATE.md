@@ -1,8 +1,20 @@
 # Age of Friends — Current State
 
-Last reviewed: **11 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
+Last reviewed: **15 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
 
 **Keep three states distinct:** `main` is the merged source implementation; `demo-aof-e2e` is an isolated, user-operated local Firebase emulator with temporary code adjustments; staging (`age-of-friends-staging`) and production (`league-of-friends-cc274`) are separate environments. An observed emulator success does **not** mean a fix was merged, deployed or accepted with real users.
+
+## Latest checkpoint — 15 October 2026 (supersedes the active E2E plan below)
+
+**The user closed the current manual staging E2E as incomplete rather than extending Cloud Run contingency testing.** See the [15 October staging recording E2E closeout](../testing/staging-manual-e2e-closeout-2026-10-15.md) for pass/fail evidence, the frozen source boundary and remaining acceptance gaps. This is a **product decision to stop the test**, not a certification of live recording ingestion.
+
+- **Merged into `main` and kept:** PRs [#111](https://github.com/Mathias-ao/League-of-Friends/pull/111), [#112](https://github.com/Mathias-ao/League-of-Friends/pull/112), [#116](https://github.com/Mathias-ao/League-of-Friends/pull/116), [#115](https://github.com/Mathias-ao/League-of-Friends/pull/115) and [#117](https://github.com/Mathias-ao/League-of-Friends/pull/117). Final recording fix code merge: `7bf69f1d897ccb53c8859b98172171f45ef6851a`. PR #117's **nine** exact-head CI workflows all passed, including the authentic four-format native worker, Three-Battle Statistics Validation and staging Docker smoke.
+- **Native functionality in source:** dual-credential private Cloud Run worker transport; authentic Recorded Events V1 fast validation; independent staging `validationReady` and `configReady` preflight/UI; pinned processor provenance packaged in the Docker context; correctly secret-bound admin readiness. Native validation still yields `VALIDATED_NOT_READY`. **Ordinary Upload recording is legacy, not native**, and automated READY/player publication remains off by default.
+- **Actual staging evidence:** a contingency private worker plus the `uploadReplay` Function were deployed from the earlier `018943f` branch; two legacy Cloud Run requests returned HTTP **504 after 240 seconds**. Nothing provided proves that the newly consolidated `main` image, full website/Functions/rules or exact Game validation-only controls were deployed to staging, or that a genuine live recording upload succeeded.
+- **Stop boundary:** no additional live upload, cloud deployment, new manual E2E, native flag activation, data cleanup or production change as part of this closeout. Successful official results, precise ledger/Gold reconciliation, staging social/Chronicle propagation, automatic Event finalisation and full upload-to-READY remain **unverified**.
+- **Separate social work:** [PR #113](https://github.com/Mathias-ao/League-of-Friends/pull/113) preserves draft approved social design decisions; [PR #114](https://github.com/Mathias-ao/League-of-Friends/pull/114) is a draft read-only three-family prototype with substantial source qualification still pending. Neither is a production-scored Relationship/Reputation activation nor included in this checkpoint.
+
+The older 11 October preparations and next steps below are **historical**. Do not interpret them as standing instructions to restart the closed manual E2E.
 
 ## Current milestone status — 11 October 2026 (supersedes older native gap notes below)
 
