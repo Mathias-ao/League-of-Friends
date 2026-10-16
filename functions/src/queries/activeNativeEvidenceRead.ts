@@ -17,7 +17,7 @@ const corruption=()=>new HttpsError('data-loss','The active native Battle eviden
  */
 export async function loadActiveNativeEvidence(input:{
   db:any;bucket:any;actor:{playerId:string;authUid:string};
-  matchId:string;gameId:string;env:NodeJS.ProcessEnv;
+  matchId:string;gameId:string;env:NodeJS.ProcessEnv;allowPending?:boolean;
 }):Promise<{statistics:Bag;source:Bag;artifactSha256:string;sourceId:string;officialOutcome:Bag;revalidate:()=>Promise<void>}>{
   const {db,bucket,actor,matchId,gameId,env}=input;
   if(!ID.test(matchId??'')||!ID.test(gameId??''))
@@ -39,7 +39,7 @@ export async function loadActiveNativeEvidence(input:{
   const sourceRef=gameRef.collection('replaySources').doc(sourceId);
   const src=await sourceRef.get();
   const eligible=activeNativeStatisticsSource(matchId,gameId,match.data(),game.data(),
-    sourceId,src.data(),true);
+    sourceId,src.data(),true,input.allowPending===true);
   if(!src.exists||!eligible)throw fail();
 
   const metadata=eligible.artifact as NativeDetailArtifact&{path:string;generation:string};
@@ -70,7 +70,7 @@ export async function loadActiveNativeEvidence(input:{
     const sourceAfter=await sourceRef.get();
     if(!sourceAfter.exists||bindingDigest(sourceAfter.data())!==sourceToken||
        !activeNativeStatisticsSource(matchId,gameId,after[0].data(),after[1].data(),
-         sourceId,sourceAfter.data(),true))throw abort();
+         sourceId,sourceAfter.data(),true,input.allowPending===true))throw abort();
   };
   await revalidate();
 

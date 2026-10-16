@@ -1,6 +1,8 @@
 # Age of Friends — Three Military Social Families V1 (fixed-alignment adoption)
 
-**Status: V1 design adopted for the read-only local prototype; not production-authorized.** 14 October 2026. No activation, scoring numbers, Firebase writes, staged feature flag, or player-facing publication. Preserve the approved Relationship V1 direction/reciprocity/Event rules and the core identity. The provided local module is `AOF_FIXED_ALIGNMENT_MILITARY_FAMILIES_V1_DRAFT`.
+**Status: V1 design adopted; read-only prototype merged in PR #114, not production-authorized.** 14 October 2026. No activation, scoring numbers, Firebase writes, staged feature flag, or player-facing publication. Preserve the approved Relationship V1 direction/reciprocity/Event rules and the core identity. The provided local module is `AOF_FIXED_ALIGNMENT_MILITARY_FAMILIES_V1_DRAFT`.
+
+The [newer approved Relationship baseline](relationship-v1-approved-baseline-2026-10-13.md) governs interpretation policy. These three military families remain evidence groupings; fixed-alignment V1 does not exhaust the approved Relationship policy.
 
 ## The single seam
 

@@ -20,7 +20,7 @@ export async function readActiveNativeBattleDetail(input:{
   const {request}=input;
   const eligible=await loadActiveNativeEvidence({
     db:input.db,bucket:input.bucket,actor:input.actor,
-    matchId:request?.matchId,gameId:request?.gameId,env:input.env,
+    matchId:request?.matchId,gameId:request?.gameId,env:input.env,allowPending:true,
   });
   let selection:Record<string,any>;
   try{selection=selectNativeBattleDetail(eligible.statistics,eligible.artifactSha256,request);}

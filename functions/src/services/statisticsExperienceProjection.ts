@@ -81,7 +81,7 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
         source.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
         source.statistics?.projectionDeliveryVersion===NATIVE_SHARED_DELIVERY;
       if(nativeLooking&&!activeNativeStatisticsSource(matchSnapshot.id,gameSnapshot.id,
-          match,game,sourceId,source,process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1')){
+          match,game,sourceId,source,process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1',true)){
         unavailableGames++;continue;
       }
       const expectedBinding=statisticsBindingKey(statisticsMetadata(matchSnapshot.id,gameSnapshot.id,match,game,source));

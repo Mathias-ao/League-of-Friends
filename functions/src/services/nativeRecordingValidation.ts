@@ -1,3 +1,5 @@
+import {assertNativePlayerUploadAllowed,NATIVE_PLAYER_UPLOAD} from '../engines/nativePlayerUpload.js';
+import {readNativePlayerAuthority} from './nativePlayerRecording.js';
 import {randomUUID} from 'node:crypto';
 import {GoogleAuth} from 'google-auth-library';
 import {Timestamp,type Firestore} from 'firebase-admin/firestore';
@@ -54,19 +56,22 @@ export async function callNativeWorker(
 /** Uses real Firebase interfaces; the injectable worker is also used by emulator tests.
  * Candidate documents are NOT replaySources and can never activate legacy readers/triggers. */
 export async function validateNativeRecording(input:{
+  ordinary?:boolean;
   db:Firestore;bucket:any;matchId:string;gameId:string;fileName:string;bytes:Buffer;
   actor:{playerId:string;authUid:string;role:string};receivedAt:number;
   worker:()=>Promise<Bag>;
   resolveMapping:(game:any,players:Array<{replaySlot:number;sourceName:string}>)=>Promise<any[]>;
 }){
   const {db,bucket,matchId,gameId,actor,bytes}=input;
-  const processorRevision=assertNativeValidationAllowed(process.env,actor.role,matchId,gameId);
+  const readyBlockers=input.ordinary?['NATIVE_PLAYER_PUBLICATION_PENDING']:READY_BLOCKERS;
+  const processorRevision=input.ordinary?assertNativePlayerUploadAllowed(process.env,matchId,gameId):assertNativeValidationAllowed(process.env,actor.role,matchId,gameId);
   if(!/^[A-Za-z0-9_-]{1,200}$/.test(matchId)||!/^[A-Za-z0-9_-]{1,200}$/.test(gameId))throw fail('Invalid native Game path.');
   if(!bytes.length||bytes.length>32*1024*1024)throw fail('Native recording exceeds input limit.');
   const sourceHash=digest(bytes),owner=randomUUID(),matchRef=db.collection('matches').doc(matchId),gameRef=matchRef.collection('games').doc(gameId);
   const trace:Bag={readyPublicationMs:null,totalServerReceivedToReadyMs:null};
   const started=Date.now();
   const authority=async(tx?:any)=>{
+    if(input.ordinary)return readNativePlayerAuthority({db,matchId,gameId,actor,sourceHash,tx});
     const read=(ref:any)=>tx?tx.get(ref):ref.get();
     const [ms,gs,admin,link]=await Promise.all([read(matchRef),read(gameRef),read(db.collection('players').doc(actor.playerId)),
       read(db.collection('authLinks').doc(actor.authUid))]);
@@ -86,7 +91,7 @@ export async function validateNativeRecording(input:{
     return {game,match,token:bindingDigest({game,match,players:players.map(p=>p.data()),admin:admin.data(),link:link.data()})};
   };
   const initial=await authority();
-  const jobId=bindingDigest([NATIVE_VALIDATION,sourceHash,processorRevision,initial.token]);
+  const jobId=bindingDigest([input.ordinary?NATIVE_PLAYER_UPLOAD:NATIVE_VALIDATION,sourceHash,processorRevision,initial.token]);
   const jobRef=gameRef.collection('nativeReplayValidationJobs').doc(jobId);
   const claim=await db.runTransaction(async tx=>{
     const fresh=await authority(tx),job=await tx.get(jobRef);
@@ -126,11 +131,11 @@ export async function validateNativeRecording(input:{
     if(experience.bindingKey!==statisticsBindingKey(metadata)||experience.players.length!==playerMapping.length||
       experience.players.some(p=>!playerMapping.some(m=>m.playerId===p.playerId)))throw fail('Native read-model binding mismatch.');
     trace.readModelCreationMs=Date.now()-t;
-    const candidateId=bindingDigest([verified.revision,initial.token,processorRevision]);
+    const candidateId=bindingDigest([verified.revision,initial.token,processorRevision,...(input.ordinary?[NATIVE_PLAYER_UPLOAD]:[])]);
     const candidateRef=gameRef.collection('nativeReplayValidations').doc(candidateId);
     const cleanArtifact=(raw:Bag,stored:Bag)=>({format:raw.format,compression:raw.compression,
       uncompressedSha256:raw.uncompressedSha256,uncompressedBytes:raw.uncompressedBytes,...stored});
-    const candidate={contract:NATIVE_VALIDATION,state:'VALIDATED_NOT_READY',readyBlockers:READY_BLOCKERS,
+    const candidate={...(input.ordinary?{ordinaryUploadVersion:NATIVE_PLAYER_UPLOAD}:{}),contract:NATIVE_VALIDATION,state:'VALIDATED_NOT_READY',readyBlockers,
       matchId,gameId,sourceHash,processorRevision,bindingToken:initial.token,extraction:verified.extraction,
       artifactRevision:verified.revision,originalRecording:{...original,permanent:true,sourceDeletionAuthorized:false},
       recordedEvents:{...cleanArtifact(worker.recordedEvents,recordedEvents),datasetVersion:'AOF_RECORDED_EVENTS_V1'},
@@ -142,7 +147,7 @@ export async function validateNativeRecording(input:{
     if(Buffer.byteLength(JSON.stringify(candidate))>850_000)throw fail('Native validation document exceeds bounded Firestore size.');
     t=Date.now();
     const response={success:true,state:'VALIDATED_NOT_READY',activated:false,alreadyProcessed:false,matchId,gameId,
-      candidateId,sourceHash,readyBlockers:READY_BLOCKERS,playerMapping};
+      candidateId,sourceHash,readyBlockers,playerMapping};
     await db.runTransaction(async tx=>{
       const fresh=await authority(tx),job=await tx.get(jobRef),prior=await tx.get(candidateRef);
       if(fresh.token!==initial.token||job.data()?.owner!==owner||job.data()?.state!=='PROCESSING'||

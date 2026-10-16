@@ -1,3 +1,5 @@
+import {publishNativePlayerRecording} from '../../services/nativePlayerRecording.js';
+import {assertNativePlayerUploadAllowed,NATIVE_PLAYER_UPLOAD} from '../../engines/nativePlayerUpload.js';
 import {resolveRecordingResult} from "../../services/recordingResult.js";
 import {refreshSteamProfile} from "../../services/steamProfile.js";
 import {assertMatchPlayOpened,matchPlayWindow} from "../../services/eventTiming.js";
@@ -26,7 +28,7 @@ interface UploadReplayInput {
   gameId: string;
   fileName: string;
   replayBase64: string;
-  processingMode?: "LEGACY" | "NATIVE_VALIDATION_V1";
+  processingMode?: "AUTO" | "LEGACY" | "NATIVE_UPLOAD_V1" | "NATIVE_VALIDATION_V1";
 }
 
 interface ReplayBinding {
@@ -247,7 +249,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
   async (request) => {
     const receivedAt=Date.now();
     const actor = await requireLeaguePlayer(request);
-    if(request.data.processingMode!==undefined&&!['LEGACY','NATIVE_VALIDATION_V1'].includes(request.data.processingMode))
+    if(request.data.processingMode!==undefined&&!['AUTO','LEGACY','NATIVE_UPLOAD_V1','NATIVE_VALIDATION_V1'].includes(request.data.processingMode))
       throw new HttpsError('invalid-argument','Unknown recording processing mode.');
     const matchId = requiredText(request.data.matchId, "matchId", 200);
     const gameId = requiredText(request.data.gameId, "gameId", 200);
@@ -291,6 +293,20 @@ export const uploadReplay = onCall<UploadReplayInput>(
     if(request.data.processingMode==='NATIVE_VALIDATION_V1'){
       return validateNativeRecording({db,bucket:getStorage().bucket(bucketName()),matchId,gameId,fileName,bytes,actor,receivedAt,
         worker:()=>callNativeWorker(workerUrl(),fileName,request.data.replayBase64),resolveMapping:resolvePlayerMapping});
+    }
+    const ordinaryNative=request.data.processingMode==='NATIVE_UPLOAD_V1'||
+      request.data.processingMode==='AUTO'&&process.env.AOF_NATIVE_PLAYER_UPLOAD==='recorded-events-v1'&&/\.aoe2record$/i.test(fileName)&&
+      !game.aiOpponent&&match.opponentKind!=='AI'&&
+      (process.env.AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST??'').split(',').map(s=>s.trim()).includes(matchId+'/'+gameId);
+    // Already published legacy/operator sources remain valid idempotent uploads;
+    // AUTO never converts them or repeats extraction.
+    if(ordinaryNative&&!(existingSource.data()?.state==="READY"&&existingSource.data()?.ordinaryUploadVersion!==NATIVE_PLAYER_UPLOAD)){
+      assertNativePlayerUploadAllowed(process.env,matchId,gameId);
+      const input={db,bucket:getStorage().bucket(bucketName()),matchId,gameId,sourceHash:localSourceHash,actor,env:process.env};
+      if(existingSource.exists)return publishNativePlayerRecording(input);
+      const candidate=await validateNativeRecording({db,bucket:input.bucket,matchId,gameId,fileName,bytes,actor,receivedAt,ordinary:true,
+        worker:()=>callNativeWorker(workerUrl(),fileName,request.data.replayBase64),resolveMapping:resolvePlayerMapping});
+      return publishNativePlayerRecording({...input,candidateId:candidate.candidateId});
     }
     if (existingSource.exists && existingSource.data()?.state === "READY") {
       const resolution=game.activeReplayStatisticsId===localSourceHash?await resolveRecordingResult(matchId,gameId):null;

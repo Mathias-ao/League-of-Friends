@@ -1,0 +1,77 @@
+name: Ordinary native player upload acceptance
+on:
+  pull_request:
+    paths:
+      - 'functions/**'
+      - 'replay-tools/**'
+      - 'web/src/data/FirebaseLeagueRepository.ts'
+      - 'web/src/ui/BattleDetails.tsx'
+      - '.github/workflows/native-player-upload.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ordinary-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    env:
+      CI: 'true'
+      FIREBASE_CLI_DISABLE_USAGE_REPORTING: 'true'
+      FUNCTIONS_EMULATOR: 'true'
+      REPLAY_BUCKET: demo-aof-native-player.appspot.com
+      REPLAY_WORKER_URL: http://127.0.0.1:18765
+      REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-native-player-test
+      AOF_REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-native-player-test
+      AOF_REPLAY_WORKER_PORT: '18765'
+      AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install existing dependencies and build
+        run: |
+          pip install -r replay-tools/requirements.txt
+          npm ci --prefix functions
+          npm run build --prefix functions
+      - name: Prepare pinned authentic recordings and independent TownBell expectations
+        run: |
+          mkdir -p "$RUNNER_TEMP/native-player-corpus"
+          for fixture in 1v1_t90-deak 2v2_arabia 4v4_arabia FFA_7; do
+            cp ".fixture-corpus/replay-fixtures/build-185872/$fixture.aoe2record" "$RUNNER_TEMP/native-player-corpus/"
+            cp ".fixture-corpus/replay-fixtures/build-185872/townbell_build-185872/$fixture.json" "$RUNNER_TEMP/native-player-corpus/"
+          done
+          echo "AOF_NATIVE_CORPUS=$RUNNER_TEMP/native-player-corpus" >> "$GITHUB_ENV"
+          echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')" >> "$GITHUB_ENV"
+      - name: Ordinary participant upload to READY and existing result lifecycle
+        run: |
+          python replay-tools/upload_worker.py > "$RUNNER_TEMP/native-player-worker.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          npx --yes firebase-tools@14 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/native-player-upload-emulator.mjs"
+      - name: Independently verify complete statistical and match-facts equivalence
+        run: |
+          for fixture in 1v1_t90-deak 2v2_arabia 4v4_arabia FFA_7; do
+            python replay-tools/verify_native_package.py --source "$AOF_NATIVE_CORPUS/$fixture.aoe2record" --package ".replay-lab/native-player/$fixture" --report ".replay-lab/native-player/$fixture-equivalence.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ordinary-native-player-acceptance
+          path: |
+            .replay-lab/native-player/report.json
+            .replay-lab/native-player/*-equivalence.json
+          if-no-files-found: ignore
+          retention-days: 14

@@ -133,7 +133,7 @@ export const getMatchDetail = onCall<MatchDetailInput>(callableOptions, async (r
     const placementSource=game.activeReplayStatisticsId?(await gameSnapshot.ref.collection('replaySources').doc(game.activeReplayStatisticsId).get()).data():null;
     const nativeSourceActive=!!game.activeReplayStatisticsId&&!!activeNativeStatisticsSource(
       matchId,gameSnapshot.id,match,game,game.activeReplayStatisticsId,placementSource,
-      process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1');
+      process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1',true);
     const submissionsSnapshot = canSeePendingResultClaims
       ? await gameSnapshot.ref.collection("resultSubmissions").get()
       : null;

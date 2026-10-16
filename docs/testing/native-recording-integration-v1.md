@@ -2,6 +2,8 @@
 
 10 October 2026. Experimental branch based on PR #95 (which depends on #94/#93/#89). Nothing deployed, merged or enabled for ordinary users.
 
+**Historical validation-only acceptance:** retained unchanged below. Native statistical equivalence was already established here. For the subsequent ordinary participant upload-to-READY lifecycle, see [native-player-upload-v1.md](native-player-upload-v1.md).
+
 ## Outcome and acceptance boundary
 
 The actual `uploadReplay` handler can retain an original recording, call the authenticated native worker without a canonical ZIP, verify and retain immutable event/statistics artifacts, resolve league player mappings and atomically publish a bounded preview candidate. It deliberately ends at `VALIDATED_NOT_READY`, never READY. The complete upload-to-READY objective is **not yet satisfied**; this is reviewable validation infrastructure, not authorization for a READY staging rollout.

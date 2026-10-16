@@ -1,3 +1,4 @@
+import {activeNativeStatisticsSource} from '../engines/activeNativeStatisticsSource.js';
 import {Timestamp} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
 import {applyCanonicalGameResult,assertResultShape,isSingleGameMatch,previewCanonicalGameResult,
@@ -58,9 +59,10 @@ export function prepareNativeCorrection(start:Bag,r:NativeReadyPublicationReques
   const accepted=currentOfficialGameOutcome(oldGame,oldMatch);
   const matchAccepted=currentOfficialGameOutcome({...oldGame,canonicalResult:match.canonicalResult},oldMatch);
   if(accepted.qualification!=='OFFICIAL'||token(accepted)!==token(matchAccepted))fail('Accepted Game and Match outcomes disagree.');
+  const nativePredecessor=old?.nativePublicationVersion!==undefined||old?.recordedEvents||old?.statistics?.projectionDeliveryVersion;
   if(old?.state!=='READY'||old.sourceHash!==r.expectedActiveSourceHash||old.matchId!==r.matchId||old.gameId!==r.gameId||
-     old.nativePublicationVersion!==undefined||old.recordedEvents||old.statistics?.projectionDeliveryVersion)
-    fail('Only an immutable legacy predecessor in this Game may be corrected.');
+     nativePredecessor&&!activeNativeStatisticsSource(r.matchId,r.gameId,oldMatch,oldGame,r.expectedActiveSourceHash!,old,true))
+    fail('Only a qualified immutable legacy or published native predecessor in this Game may be corrected.');
   const own=(claim:Bag)=>claim?.matchId===r.matchId&&claim?.gameId===r.gameId&&claim?.sourceHash===r.expectedActiveSourceHash;
   if(!own(d.oldClaim)||d.newGuid===d.oldGuid&&!own(d.newClaim)||d.newGuid!==d.oldGuid&&d.newClaim)
     fail('GUID ownership is missing, changed or already claimed; correction cannot reclaim another Battle.');
