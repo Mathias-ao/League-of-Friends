@@ -1,0 +1,57 @@
+{
+  "environment": "local Firestore/Storage emulators; real uploadReplay.run and authenticated native worker; no external callable HTTP/browser",
+  "fixtures": [
+    {
+      "fixture": "1v1_t90-deak",
+      "expectedOutcome": "ACCEPTED",
+      "ready": true,
+      "retentionVerified": true,
+      "independentOutcomeVerified": true,
+      "boundedReader": true,
+      "pendingExclusion": true,
+      "retryIdempotent": true,
+      "serverReceivedToReadyAndResolutionMs": 20442
+    },
+    {
+      "fixture": "2v2_arabia",
+      "expectedOutcome": "PENDING_ADMIN_REVIEW",
+      "ready": true,
+      "retentionVerified": true,
+      "independentOutcomeVerified": true,
+      "boundedReader": true,
+      "pendingExclusion": true,
+      "retryIdempotent": true,
+      "serverReceivedToReadyAndResolutionMs": 22776
+    },
+    {
+      "fixture": "4v4_arabia",
+      "expectedOutcome": "ACCEPTED",
+      "ready": true,
+      "retentionVerified": true,
+      "independentOutcomeVerified": true,
+      "boundedReader": true,
+      "pendingExclusion": true,
+      "retryIdempotent": true,
+      "serverReceivedToReadyAndResolutionMs": 31774
+    },
+    {
+      "fixture": "FFA_7",
+      "expectedOutcome": "PENDING_ADMIN_REVIEW",
+      "ready": true,
+      "retentionVerified": true,
+      "independentOutcomeVerified": true,
+      "boundedReader": true,
+      "pendingExclusion": true,
+      "retryIdempotent": true,
+      "serverReceivedToReadyAndResolutionMs": 27310
+    }
+  ],
+  "faults": {
+    "concurrentOrdinaryRequests": true,
+    "workerFailureRetainsOriginal": true,
+    "failedJobRetries": true,
+    "crossGameGuidConflict": true,
+    "staleAuthority": true,
+    "corruptArtifact": true
+  }
+}

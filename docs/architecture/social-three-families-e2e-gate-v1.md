@@ -1,13 +1,13 @@
 # Fixed-alignment social evidence — E2E integration gate
 
-**Status: read-only, inactive candidate-only PR.** This does not change the active Chronicle, Reputation, Relationship, Firebase, scoring, game/result processing, War Room, or staging browser. It exists to test the replay-evidence side before active read-path integration.
+**Status: merged in PR #114; read-only, inactive candidate-only implementation.** This does not change the active Chronicle, Reputation, Relationship, Firebase, scoring, game/result processing, War Room, or staging browser. It exists to test the replay-evidence side before active read-path integration.
 
 ## Source chain for the E2E rehearsal
 
 `Recordings -> canonical / Recorded Events -> existing statistics -> pairSocialEvidence + episodeContext -> read-only family preview -> candidate-only output`.
 
 - Reuse the existing *raid and engagement* detectors. Do not introduce new attack semantics, an independent parser, or automatic personal Hostility.
-- The new `social_three_families_preview.py` is a deliberately small **source-admission check** over the already shipped Pair Social Evidence V1. It is separate from the richer unmerged three-family design draft and does not qualify substantive deeds, league identity, results, credit or historical order.
+- The new `social_three_families_preview.py` is a deliberately small **source-admission check** over the already shipped Pair Social Evidence V1. It is separate from the richer merged inactive three-family design prototype and does not qualify substantive deeds, league identity, results, credit or historical order.
 - Run `python -m unittest discover -s replay-tools/tests -p test_social_three_families_preview.py -v` as an early CI smoke. The final test reuses `test_pair_social_evidence.ledger(raid_actions())` and therefore exercises existing Raid V3, Skirmish and Engagement V4 fixture processing end-to-end.
 - The complete local family, Chronicle and directional-ledger prototype also ships in the proposal, but it is **not** wired into production readers.
 

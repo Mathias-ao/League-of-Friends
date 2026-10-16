@@ -1,6 +1,8 @@
 # Age of Friends — Statistics ↔ Reputation / Relationship / Chronicle V1 bridge
 
-**Status: local read-only implementation, not merged or player-facing.** Audited against GitHub `main` at `ea417d7ad09a57cbb4eec2dda262fbe80a3c29c3` and the approved design baseline in draft documentation PR #113 (14 October 2026). The old production scorer / Reputation engine / War Room / Chronicle are unchanged.
+**Status: merged inactive read-only prototype (PR #114), not player-facing integration.** Audited against GitHub `main` at `ea417d7ad09a57cbb4eec2dda262fbe80a3c29c3` and the approved design baseline in draft documentation PR #113 (14 October 2026). The old production scorer / Reputation engine / War Room / Chronicle are unchanged.
+
+For the current approved social policy, use [Relationship V1 approved baseline](relationship-v1-approved-baseline-2026-10-13.md), including SOC-058–088 and the EVID/CAL decisions. The three military families are evidence families, not the complete Relationship policy. Ordinary native upload does not authenticate or activate this prototype.
 
 ## Purpose
 

@@ -1,8 +1,20 @@
 # Age of Friends — Current State
 
-Last reviewed: **15 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
+Last reviewed: **16 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
 
 **Keep three states distinct:** `main` is the merged source implementation; `demo-aof-e2e` is an isolated, user-operated local Firebase emulator with temporary code adjustments; staging (`age-of-friends-staging`) and production (`league-of-friends-cc274`) are separate environments. An observed emulator success does **not** mean a fix was merged, deployed or accepted with real users.
+
+## Ordinary native upload implementation — 16 October 2026 (supersedes older status)
+
+The ordinary native recording lifecycle is implemented on the feature branch described in [ordinary native upload acceptance](../testing/native-player-upload-v1.md). That document records the exact code commit, PR and validation evidence. **Implementation, merge, deployment and activation are distinct.** Nothing from this work deploys Firebase, changes live flags, or resumes the stopped staging E2E.
+
+- Recorded Events V1 already reproduces the complete legacy statistical projection, including matchFacts and pair-social evidence, for the tested authentic corpus: [equivalence evidence](../testing/benchmarks/native-recording-integration-v1/equivalence.json). No new parser, statistics formula, detector or competing winner evaluator is needed.
+- The ordinary website sends AUTO. Server-owned, default-off native rollout gates select the existing fast worker; explicit LEGACY and omitted-mode clients retain compatibility. Verified native evidence can become READY before its result is known. The existing deriveRecordingOutcome/resolveRecordingResult path accepts supported outcomes; unsupported outcomes remain source-bound pending review.
+- Publication preserves the original and pinned artifact generations, exact mapping, GUID ownership, transactional authority/revision fences and result corrections. Native pending evidence is provisional; it cannot contribute to accepted-result aggregates. The existing bounded readers and read-only history are reused.
+- PR #114 was merged at f5924f2bad249beb9e940f3f38417c0382d2f0ea. Its bridge, directional ledger, three military families and Chronicle modules remain **inactive prototypes**, not authenticated progression.
+- The approved [Relationship V1 baseline](../architecture/relationship-v1-approved-baseline-2026-10-13.md), copied unchanged from PR #113 at 3d71a5bbe710ffde97a1d96549a1f6ad7287dc3c, supersedes “SOC-058 pending.” SOC-058–088, REL-V1-EVID-01–06 and REL-V1-CAL-01–17 are approved design; SOC-089 is deferred. The [001–057 register](../architecture/social-relationship-decisions-001-057.md) remains an earlier historical record. No numeric calibration or social scoring is introduced here.
+
+**Next bounded task:** review the ordinary-upload PR and its exact-head CI/acceptance evidence. Follow the acceptance document for remaining limits. Any staging release needs a separately scoped decision; never resume the closed 15 October manual test implicitly.
 
 ## Latest checkpoint — 15 October 2026 (supersedes the active E2E plan below)
 
@@ -12,7 +24,7 @@ Last reviewed: **15 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for b
 - **Native functionality in source:** dual-credential private Cloud Run worker transport; authentic Recorded Events V1 fast validation; independent staging `validationReady` and `configReady` preflight/UI; pinned processor provenance packaged in the Docker context; correctly secret-bound admin readiness. Native validation still yields `VALIDATED_NOT_READY`. **Ordinary Upload recording is legacy, not native**, and automated READY/player publication remains off by default.
 - **Actual staging evidence:** a contingency private worker plus the `uploadReplay` Function were deployed from the earlier `018943f` branch; two legacy Cloud Run requests returned HTTP **504 after 240 seconds**. Nothing provided proves that the newly consolidated `main` image, full website/Functions/rules or exact Game validation-only controls were deployed to staging, or that a genuine live recording upload succeeded.
 - **Stop boundary:** no additional live upload, cloud deployment, new manual E2E, native flag activation, data cleanup or production change as part of this closeout. Successful official results, precise ledger/Gold reconciliation, staging social/Chronicle propagation, automatic Event finalisation and full upload-to-READY remain **unverified**.
-- **Separate social work:** [PR #113](https://github.com/Mathias-ao/League-of-Friends/pull/113) preserves draft approved social design decisions; [PR #114](https://github.com/Mathias-ao/League-of-Friends/pull/114) is a draft read-only three-family prototype with substantial source qualification still pending. Neither is a production-scored Relationship/Reputation activation nor included in this checkpoint.
+- **Separate social work:** [PR #113](https://github.com/Mathias-ao/League-of-Friends/pull/113) preserves draft approved social design decisions; [PR #114](https://github.com/Mathias-ao/League-of-Friends/pull/114) is now a merged, inactive read-only three-family prototype with source qualification still pending. Neither constitutes live Relationship/Reputation progression.
 
 The older 11 October preparations and next steps below are **historical**. Do not interpret them as standing instructions to restart the closed manual E2E.
 

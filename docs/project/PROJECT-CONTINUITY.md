@@ -2,6 +2,18 @@
 
 Last updated: **15 October 2026**. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
 
+## Ordinary native upload implementation — 16 October 2026 (supersedes older status)
+
+The ordinary native recording lifecycle is implemented on the feature branch described in [ordinary native upload acceptance](../testing/native-player-upload-v1.md). That document records the exact code commit, PR and validation evidence. **Implementation, merge, deployment and activation are distinct.** Nothing from this work deploys Firebase, changes live flags, or resumes the stopped staging E2E.
+
+- Recorded Events V1 already reproduces the complete legacy statistical projection, including matchFacts and pair-social evidence, for the tested authentic corpus: [equivalence evidence](../testing/benchmarks/native-recording-integration-v1/equivalence.json). No new parser, statistics formula, detector or competing winner evaluator is needed.
+- The ordinary website sends AUTO. Server-owned, default-off native rollout gates select the existing fast worker; explicit LEGACY and omitted-mode clients retain compatibility. Verified native evidence can become READY before its result is known. The existing deriveRecordingOutcome/resolveRecordingResult path accepts supported outcomes; unsupported outcomes remain source-bound pending review.
+- Publication preserves the original and pinned artifact generations, exact mapping, GUID ownership, transactional authority/revision fences and result corrections. Native pending evidence is provisional; it cannot contribute to accepted-result aggregates. The existing bounded readers and read-only history are reused.
+- PR #114 was merged at f5924f2bad249beb9e940f3f38417c0382d2f0ea. Its bridge, directional ledger, three military families and Chronicle modules remain **inactive prototypes**, not authenticated progression.
+- The approved [Relationship V1 baseline](../architecture/relationship-v1-approved-baseline-2026-10-13.md), copied unchanged from PR #113 at 3d71a5bbe710ffde97a1d96549a1f6ad7287dc3c, supersedes “SOC-058 pending.” SOC-058–088, REL-V1-EVID-01–06 and REL-V1-CAL-01–17 are approved design; SOC-089 is deferred. The [001–057 register](../architecture/social-relationship-decisions-001-057.md) remains an earlier historical record. No numeric calibration or social scoring is introduced here.
+
+**Next bounded task:** review the ordinary-upload PR and its exact-head CI/acceptance evidence. Follow the acceptance document for remaining limits. Any staging release needs a separately scoped decision; never resume the closed 15 October manual test implicitly.
+
 ## Read order and authority
 
 1. Read [CORE-IDENTITY.md](CORE-IDENTITY.md) for agreed product rules and design invariants.
@@ -19,7 +31,7 @@ The latest explicit product decision governs direction; Core Identity governs du
 
 A limited contingency Cloud Run worker and `uploadReplay` deployment occurred on staging from a preceding branch, **not** from the newly consolidated `main`. Do not infer the current staging site, rules, Functions or authenticated UI are aligned with this GitHub SHA. This consolidation did **not** deploy Firebase or modify staging/production. No more manual E2E or Cloud Run troubleshooting is authorized by this document. Do not turn on native validation/READY/read/social/rollback flags or delete any existing original recordings.
 
-The social design register [#113](https://github.com/Mathias-ao/League-of-Friends/pull/113) and three-family read-only prototype [#114](https://github.com/Mathias-ao/League-of-Friends/pull/114) remain separate drafts. Their pending source qualification and approval gates are not bypassed by the earlier successful replay statistics CI.
+The social design register/baseline in [#113](https://github.com/Mathias-ao/League-of-Friends/pull/113) is approved design on a draft documentation PR. The three-family read-only prototype [#114](https://github.com/Mathias-ao/League-of-Friends/pull/114) is merged but inactive. Their pending source qualification and approval gates are not bypassed by the earlier successful replay statistics CI.
 
 **Next bounded work:** continue reviewed feature/product development from `main`, respecting existing measurement/evidence boundaries. A live staging recording E2E must be proposed and authorized anew rather than silently resumed.
 

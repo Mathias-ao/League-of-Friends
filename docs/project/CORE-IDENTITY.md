@@ -38,7 +38,7 @@ Do not infer that an idea is implemented merely because it is described here. Ch
 - League Points, War Room Points, relationship state, Reputation and Gold are separate accounting/interpretation systems.
 - A Match is one competitive encounter and may contain one or more Games.
 - One `.aoe2record` represents one Game.
-- The original replay file is a temporary upload, not a permanent system artifact.
+- Recorded Events V1 retains the original replay alongside immutable decoded evidence; V1 cannot recreate all original binary observations. No original deletion is authorized by successful extraction or projection.
 - Canonical evidence is retained permanently. Derived results and interpretations must be reproducible from that evidence.
 - Event configuration must be snapshotted so historical results remain reproducible.
 - Raw replay facts, deterministic reconstructions, inferred analysis, and league interpretation must remain separate.
@@ -106,6 +106,8 @@ Each system updates as its required evidence is validated. Statistics and Achiev
 - Treat later-event details not yet represented in repository configuration as design decisions awaiting formal persistence, not implemented state.
 
 ## 5. Social and identity systems
+
+**Current approved detail:** [Relationship V1 approved baseline](../architecture/relationship-v1-approved-baseline-2026-10-13.md) supersedes earlier social snapshots where explicitly stated. SOC-058–088, REL-V1-EVID-01–06 and REL-V1-CAL-01–17 are approved design; SOC-089 is deferred. Exceptional Treachery additionally requires the victim's explicit binding “betrayed” judgment. These approvals do not activate the merged read-only prototypes or supply numerical progression rules.
 
 ### Steam and league identity
 
