@@ -1,6 +1,6 @@
 # Social Evidence V1a — authenticated read-only seam
 
-16 October 2026. Implemented on `feat/social-evidence-v1a`, based on verified main
+16 October 2026. PR [#120](https://github.com/Mathias-ao/League-of-Friends/pull/120), implementation `3fe64f532e38dcfc09c90164067cbce641f24f0d` (tree-identical to local `0d4b535`). Implemented on `feat/social-evidence-v1a`, based on verified main
 `4798d358d5f40715198f03a874c153d2c06a72e3` (PR #119 merged). This document narrows
 the [statistics bridge](statistics-social-bridge-v1.md) and [three-family design](fixed-alignment-military-social-families-v1.md)
 to read-only evidence. The [approved Relationship baseline](relationship-v1-approved-baseline-2026-10-13.md)
@@ -105,7 +105,7 @@ remain required; V1a tests current-authority filtering after their state changes
 
 These are handler + real worker + Firestore/Storage emulator tests, not browser,
 live cloud, deployed security-rules or substantive-social-qualification acceptance.
-Exact implementation SHA, PR and final CI evidence are recorded in the PR handover.
+[Local acceptance report](../testing/benchmarks/social-evidence-v1a/acceptance.json): 376 backend tests; 467 Python tests with 13 opt-in skips; all four authentic emulator cases and canonical/native 1v1 parity passed. Exact-head CI links/status are recorded in PR #120; pending CI is not a pass.
 Next bounded task: independently review V1a's source/authority and privacy boundary;
 keep rollout off. Implement a V1b predicate only when its existing retained evidence
 can independently prove every applicable approved requirement.

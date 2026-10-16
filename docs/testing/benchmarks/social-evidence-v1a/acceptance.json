@@ -1,0 +1,41 @@
+{
+  "implementationSha": "3fe64f532e38dcfc09c90164067cbce641f24f0d",
+  "environment": "local authenticated handler + real worker + Firestore/Storage emulators; no browser/cloud",
+  "backendTests": 376,
+  "pythonTests": 467,
+  "pythonOptInSkips": 13,
+  "canonicalNative1v1SemanticParity": true,
+  "existingOrdinaryUploadLifecyclePassed": true,
+  "fixtures": [
+    {
+      "socialEvidenceFixture": "1v1_t90-deak",
+      "sourceFacts": true,
+      "authenticatedCurrentRead": true,
+      "pendingQualification": true,
+      "correctionFence": true
+    },
+    {
+      "socialEvidenceFixture": "2v2_arabia",
+      "sourceFacts": true,
+      "authenticatedCurrentRead": true,
+      "pendingQualification": true,
+      "correctionFence": true
+    },
+    {
+      "socialEvidenceFixture": "4v4_arabia",
+      "sourceFacts": true,
+      "authenticatedCurrentRead": true,
+      "pendingQualification": true,
+      "correctionFence": true
+    },
+    {
+      "socialEvidenceFixture": "FFA_7",
+      "sourceFacts": true,
+      "authenticatedCurrentRead": true,
+      "pendingQualification": true,
+      "correctionFence": true
+    }
+  ],
+  "substantiveEvaluatorComplete": false,
+  "qualifiedSocialProgression": false
+}
