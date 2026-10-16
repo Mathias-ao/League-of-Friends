@@ -133,7 +133,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     this.stagingE2eAllowed();
     return this.sendReplay<NativeValidationCandidateResult>(matchId,gameId,file,'NATIVE_VALIDATION_V1');
   }
-  private async sendReplay<T>(matchId:string,gameId:string,file:File,processingMode:'LEGACY'|'NATIVE_VALIDATION_V1'):Promise<T>{
+  private async sendReplay<T>(matchId:string,gameId:string,file:File,processingMode:'AUTO'|'LEGACY'|'NATIVE_VALIDATION_V1'):Promise<T>{
     assertRecordingUploadFile(file.name,file.size,processingMode);
     const bytes=new Uint8Array(await file.arrayBuffer());
     let binary='';
@@ -145,8 +145,8 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     })).data;
   }
   async uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>{
-    // The ordinary player-facing upload remains LEGACY regardless of a staged review flag.
-    return this.sendReplay<ReplayUploadResult>(matchId,gameId,file,'LEGACY');
+    // Server-owned rollout selects native ingestion; explicit LEGACY remains compatible.
+    return this.sendReplay<ReplayUploadResult>(matchId,gameId,file,'AUTO');
   }
   playerChronicle(){return this.call<PlayerChronicleResponse>('getPlayerChronicle');}
   socialHistory(){return this.call<SocialHistoryResponse>('getSocialHistory');}

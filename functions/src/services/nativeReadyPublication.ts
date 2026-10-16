@@ -49,7 +49,7 @@ export function assertNativePublicationAllowed(env:NodeJS.ProcessEnv,actor:Nativ
      !SHA.test(request.expectedArtifactSha256??'')||
      request.expectedActiveSourceHash!==null&&!SHA.test(request.expectedActiveSourceHash??'')||
      !revision(request.expectedStatisticsRevision)||request.expectedStatisticsRevision>1_000_000||
-     !revision(request.expectedResultRevision)||request.expectedResultRevision<1||
+     !revision(request.expectedResultRevision)||request.expectedResultRevision<(request.operation==='ROLLBACK'?0:1)||
      typeof request.reason!=='string'||request.reason.trim().length<20||request.reason.length>1000||
      !['PUBLISH','ROLLBACK','CORRECT_REBIND_V1'].includes(request.operation))
     throw invalid('Provide a pinned candidate, source hashes, official result/replay revisions and a reviewed reason of 20–1000 characters.');
@@ -84,7 +84,7 @@ export function assertNativePublicationAllowed(env:NodeJS.ProcessEnv,actor:Nativ
   return processor;
 }
 
-function checkedCandidate(c:Bag|undefined,request:NativeReadyPublicationRequest,processor:string){
+export function checkedCandidate(c:Bag|undefined,request:NativeReadyPublicationRequest,processor:string){
   const base='native-replay-evidence/'+request.matchId+'/'+request.gameId+'/'+request.sourceHash+'/';
   const rev=c?.artifactRevision;
   const source=c?.sourceHash;
@@ -135,7 +135,7 @@ function checkedOfficial(game:Bag,match:Bag,request:NativeReadyPublicationReques
   return result;
 }
 
-async function readImmutable(bucket:any,entry:Bag,maxBytes:number):Promise<Buffer>{
+export async function readImmutable(bucket:any,entry:Bag,maxBytes:number):Promise<Buffer>{
   if(!revision(entry.bytes)||entry.bytes<1||entry.bytes>maxBytes)throw fail('Native artifact exceeds publication limits.');
   let bytes:Buffer;
   try{[bytes]=await bucket.file(entry.path,{generation:String(entry.generation)}).download();}
@@ -145,7 +145,7 @@ async function readImmutable(bucket:any,entry:Bag,maxBytes:number):Promise<Buffe
   return bytes;
 }
 
-function checkedMapping(mapping:Bag[],roster:Bag[],raw:Bag){
+export function checkedMapping(mapping:Bag[],roster:Bag[],raw:Bag){
   const ids=roster.map(p=>p.playerId),slots=raw.participants?.map((p:Bag)=>p.replaySlot);
   if(ids.length<2||ids.length>8||new Set(ids).size!==ids.length||
      !Array.isArray(slots)||slots.length!==ids.length||
@@ -200,6 +200,10 @@ export async function executeNativeReadyPublication(input:{
 }):Promise<Bag>{
   const {db,bucket,actor,request,env}=input;
   const processor=assertNativePublicationAllowed(env,actor,request);
+  if(request.operation==='ROLLBACK'&&request.expectedResultRevision===0){
+    const {rollbackPendingNativePlayerRecording}=await import('./nativePlayerRecording.js');
+    return rollbackPendingNativePlayerRecording(input);
+  }
   const matchRef=db.collection('matches').doc(request.matchId);
   const gameRef=matchRef.collection('games').doc(request.gameId);
   const candidateRef=gameRef.collection('nativeReplayValidations').doc(request.candidateId);
@@ -322,8 +326,8 @@ export async function executeNativeReadyPublication(input:{
     const oldRef=gameRef.collection('replaySources').doc(start.game.activeReplayStatisticsId);
     const oldSource=await oldRef.get();
     if(!oldSource.exists)throw fail('Previous legacy source is missing.');
-    previousSourceFingerprint=legacySourceFingerprint(oldSource.data(),
-      request.matchId,request.gameId,start.game.activeReplayStatisticsId);
+    previousSourceFingerprint=correction&&oldSource.data()?.nativePublicationVersion===ACTIVE_NATIVE_SOURCE_VERSION
+      ?snap(oldSource.data()):legacySourceFingerprint(oldSource.data(),request.matchId,request.gameId,start.game.activeReplayStatisticsId);
   }
   checkedMapping(start.c.playerMapping,start.game.players,{participants:start.c.playerMapping.map((m:Bag)=>({replaySlot:m.replaySlot}))});
 
@@ -415,7 +419,8 @@ export async function executeNativeReadyPublication(input:{
       const prior=await tx.get(gameRef.collection('replaySources').doc(former));
       if(!prior.exists)throw abort();
       try{
-        if(legacySourceFingerprint(prior.data(),request.matchId,request.gameId,former)!==previousSourceFingerprint)
+        if((correction&&prior.data()?.nativePublicationVersion===ACTIVE_NATIVE_SOURCE_VERSION?snap(prior.data()):
+          legacySourceFingerprint(prior.data(),request.matchId,request.gameId,former))!==previousSourceFingerprint)
           throw abort();
       }catch{throw abort();}
     }

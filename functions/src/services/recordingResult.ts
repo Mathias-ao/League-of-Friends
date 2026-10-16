@@ -3,7 +3,8 @@ import {HttpsError} from 'firebase-functions/v2/https';
 import {db} from '../config/firebase.js';
 import {deriveRecordingOutcome} from '../engines/recordingOutcome.js';
 import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
-import {ACTIVE_NATIVE_SOURCE_VERSION} from '../engines/activeNativeStatisticsSource.js';
+import {NATIVE_PLAYER_UPLOAD} from '../engines/nativePlayerUpload.js';
+import {activeNativeStatisticsSource,ACTIVE_NATIVE_SOURCE_VERSION} from '../engines/activeNativeStatisticsSource.js';
 import {applyCanonicalGameResult,assertResultShape} from '../commands/results/resultSupport.js';
 import {writeAdminAudit} from './audit.js';
 
@@ -21,13 +22,15 @@ export async function resolveRecordingResult(matchId:string,gameId:string,review
     // Game result. Source/active-Game triggers are at-least-once and must never
     // feed it back through the legacy recording-winner inference or rewrite
     // outcomeQualification into a contradictory pending review.
-    if(source.nativePublicationVersion===ACTIVE_NATIVE_SOURCE_VERSION){
+    if(source.nativePublicationVersion===ACTIVE_NATIVE_SOURCE_VERSION&&source.ordinaryUploadVersion!==NATIVE_PLAYER_UPLOAD){
       if(review)throw new HttpsError('failed-precondition',
         'Native READY results require a canonical correction dispute; replay review cannot rebind them.');
       return currentOfficialGameOutcome(game,match).qualification==='OFFICIAL'
         ?{state:'RESULT_ALREADY_RESOLVED'}
         :{state:'NATIVE_OFFICIAL_RESULT_UNAVAILABLE'};
     }
+    if(source.ordinaryUploadVersion===NATIVE_PLAYER_UPLOAD&&!activeNativeStatisticsSource(matchId,gameId,match,game,source.sourceHash,source,true,true))
+      throw new HttpsError('failed-precondition','Native recording is no longer a qualified current source.');
     if(match.opponentKind==='AI')return {state:'LEGACY_AI_REVIEW'};
     const qualification=deriveRecordingOutcome(match,game,source);
     const late=source.timingQualification==='ADMIN_REVIEW_REQUIRED';

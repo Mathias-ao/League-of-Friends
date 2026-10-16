@@ -1,9 +1,11 @@
+import {NATIVE_PLAYER_UPLOAD} from './nativePlayerUpload.js';
 import {currentOfficialGameOutcome} from './recordingMatchFacts.js';
 import {statisticsBindingKey} from './statisticsExperience.js';
 
 /**
  * Explicit publication marker. Only the separately gated and audited
- * adminPublishNativeReady transaction (#102) may create a native READY
+ * adminPublishNativeReady transaction (#102), or the separately gated ordinary
+ * participant publisher, may create a native READY
  * replaySources document; VALIDATED_NOT_READY candidates cannot.
  * The operator flags are off by default; merging is not deployment.
  */
@@ -17,20 +19,22 @@ const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.
 /** Never infer publication from a validation candidate, Storage object, or flag. */
 export function activeNativeStatisticsSource(
   matchId:string,gameId:string,match:unknown,game:unknown,sourceId:string,source:unknown,
-  enabled:boolean,
+  enabled:boolean,allowPending=false,
 ):{source:Bag;artifact:Bag;eventsSha256:string;extractionRunId:string}|null {
   const m=object(match),g=object(game),s=object(source);
   if(!enabled||!id(matchId)||!id(gameId)||!SHA.test(sourceId)||
      !m||!g||!s||s.nativePublicationVersion!==ACTIVE_NATIVE_SOURCE_VERSION||
      s.state!=='READY'||s.matchId!==matchId||s.gameId!==gameId||
      g.activeReplayStatisticsId!==sourceId||g.replayStatisticsState!=='READY'||
-     s.sourceHash!==sourceId||m.status!=='COMPLETED'||g.status!=='COMPLETED'||
+     s.sourceHash!==sourceId||['CANCELLED','VOID','PROPOSED','DISPUTED'].includes(m.status)||
      m.opponentKind==='AI'||g.aiOpponent||
      !!m.activeResultDisputeId||!!g.activeResultDisputeId||
      !Number.isSafeInteger(g.replayStatisticsRevision)||g.replayStatisticsRevision<1||
      s.replayStatisticsRevision!==g.replayStatisticsRevision) return null;
   const official=currentOfficialGameOutcome(g,m);
-  if(official.qualification!=='OFFICIAL')return null;
+  const ordinary=s.ordinaryUploadVersion===NATIVE_PLAYER_UPLOAD;
+  if(official.qualification!=='OFFICIAL'&&!(allowPending&&ordinary&&!g.canonicalResult&&['READY','AWAITING_CONFIRMATION'].includes(g.status)))return null;
+  if(!ordinary&&(m.status!=='COMPLETED'||g.status!=='COMPLETED'))return null;
   const stats=object(s.statistics),events=object(s.recordedEvents);
   const original=object(s.originalRecording),extraction=object(s.extraction);
   if(!stats||!events||!original||!extraction||
