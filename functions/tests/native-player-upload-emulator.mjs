@@ -1,3 +1,4 @@
+import {socialEvidenceAcceptance} from './social-evidence-v1a-emulator.mjs';
 /** Ordinary upload acceptance. Real local worker + Firebase emulators only.
  * Fixture metadata and expected winners come from the pinned independent TownBell reports.
  * No real identities or recordings are committed in the resulting report. */
@@ -77,6 +78,7 @@ for(const [name,format,expected] of cases){
   for(const a of [source.originalRecording,source.recordedEvents,source.statistics]){
     const [bytes]=await bucket.file(a.path,{generation:a.generation}).download();assert.equal(digest(bytes),a.sha256);
   }
+  if(process.env.AOF_SOCIAL_EVIDENCE_V1A_READS==='1')await socialEvidenceAcceptance({db,bucket,actor,matchId,gameId,name});
   const candidate=(await gr.collection('nativeReplayValidations').doc(source.nativeValidationCandidateId).get()).data();
   const directory=resolve(out,name);await mkdir(directory,{recursive:true});
   for(const [field,file] of [['recordedEvents','events.jsonl.gz'],['statistics','statistics.direct.json.gz']]){

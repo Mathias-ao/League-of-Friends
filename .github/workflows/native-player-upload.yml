@@ -24,6 +24,8 @@ jobs:
       AOF_REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-native-player-test
       AOF_REPLAY_WORKER_PORT: '18765'
       AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
+      AOF_SOCIAL_EVIDENCE_V1A_ENDPOINT: '1'
+      AOF_SOCIAL_EVIDENCE_V1A_READS: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -55,6 +57,8 @@ jobs:
           done
           echo "AOF_NATIVE_CORPUS=$RUNNER_TEMP/native-player-corpus" >> "$GITHUB_ENV"
           echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')" >> "$GITHUB_ENV"
+      - name: Prepare authentic canonical social compatibility fixture
+        run: python replay-tools/tests/prepare_social_canonical_fixture.py "$AOF_NATIVE_CORPUS/1v1_t90-deak.aoe2record" .replay-lab/social-canonical.json.gz
       - name: Ordinary participant upload to READY and existing result lifecycle
         run: |
           python replay-tools/upload_worker.py > "$RUNNER_TEMP/native-player-worker.log" 2>&1 &

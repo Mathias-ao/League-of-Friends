@@ -158,6 +158,10 @@ class Handler(BaseHTTPRequestHandler):
             if not hmac.compare_digest(supplied, "Bearer " + expected_token):
                 self._json(401, {"error": "unauthorized"})
                 return
+        social_route = self.path == "/social-evidence-v1a"
+        if social_route and (os.environ.get("AOF_SOCIAL_EVIDENCE_V1A_ENDPOINT") != "1" or not expected_token):
+            self._json(404, {"error": "not_found"})
+            return
         native_route = self.path == "/process-native-v1"
         if native_route:
             # A separate API, NEVER the default legacy upload. Require both
@@ -168,7 +172,7 @@ class Handler(BaseHTTPRequestHandler):
             if not expected_token:
                 self._json(503, {"error": "native_auth_not_configured"})
                 return
-        elif self.path != "/process":
+        elif not social_route and self.path != "/process":
             self._json(404, {"error": "not_found"})
             return
 
@@ -183,7 +187,11 @@ class Handler(BaseHTTPRequestHandler):
         try:
             request = json.loads(self.rfile.read(length))
             trace: dict[str, Any] | None = {} if os.environ.get("AOF_REPLAY_WORKER_PERF_TRACE") == "1" else None
-            if native_route:
+            if social_route:
+                from social_evidence_v1a import project_social_evidence
+                result = project_social_evidence(statistics=request.get("statistics"),
+                    league_context=request.get("leagueContext"), offset=request.get("offset", 0))
+            elif native_route:
                 from native_worker_transport import process_native_replay
                 result = process_native_replay(
                     str(request.get("fileName") or ""), str(request.get("replayBase64") or ""),
