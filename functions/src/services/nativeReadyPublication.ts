@@ -305,8 +305,9 @@ export async function executeNativeReadyPublication(input:{
         throw fail('Global recorded-Game GUID claim no longer matches the active publication.');
       if(journal.previousActiveSourceId){
         const former=await tx.get(gameRef.collection('replaySources').doc(journal.previousActiveSourceId));
-        if(!former.exists||legacySourceFingerprint(former.data(),request.matchId,request.gameId,
-          journal.previousActiveSourceId)!==journal.previousSourceFingerprint)
+        if(!former.exists||(journal.correction&&former.data()?.nativePublicationVersion===ACTIVE_NATIVE_SOURCE_VERSION
+          ?snap(former.data()):legacySourceFingerprint(former.data(),request.matchId,request.gameId,
+            journal.previousActiveSourceId))!==journal.previousSourceFingerprint)
           throw fail('The prior immutable source is no longer a safe rollback target.');
       }
       return {success:true,alreadyPublished:true,state:'READY',sourceHash:request.sourceHash,

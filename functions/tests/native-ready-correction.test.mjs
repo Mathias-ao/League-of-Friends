@@ -55,7 +55,7 @@ test('same GUID alternate recording keeps ownership and updates the bound source
  assert.equal(state(t),before);
 });
 
-test('reviewed correction preserves and fences a previously native source, not only a legacy predecessor',async()=>{
+for(const sameGuid of [false,true])test(`reviewed correction preserves and fences a native predecessor (same GUID: ${sameGuid})`,async()=>{
  const makeNative=t=>{
    const old=t.rows.get(t.oldSourcePath),c=t.candidate;
    Object.assign(old,{nativePublicationVersion:'AOF_ACTIVE_NATIVE_STATISTICS_V1',ordinaryUploadVersion:'AOF_NATIVE_PLAYER_UPLOAD_V1',
@@ -66,11 +66,18 @@ test('reviewed correction preserves and fences a previously native source, not o
    old.originalRecording.sha256=t.oldHash;
    return old;
  };
- const t=correctionFixture(),before=structuredClone(makeNative(t));
+ const t=correctionFixture({sameGuid}),before=structuredClone(makeNative(t));
  const result=await t.run();
  assert.equal(result.state,'READY');assert.equal(result.resultRevision,2);
  assert.deepEqual(t.rows.get(t.oldSourcePath),before,'previous source remains retained');
- const race=correctionFixture();makeNative(race);
+ const published=state(t);
+ assert.equal((await t.run()).alreadyPublished,true,'native predecessor correction retry succeeds');
+ assert.equal(state(t),published,'retry is read-only');
+ t.rows.get(t.oldSourcePath).statistics.sha256='8'.repeat(64);
+ const altered=state(t);
+ await assert.rejects(t.run(),/prior immutable source/);
+ assert.equal(state(t),altered,'changed predecessor retry writes nothing');
+ const race=correctionFixture({sameGuid});makeNative(race);
  race.onTransaction(()=>{race.rows.get(race.oldSourcePath).statistics.sha256='8'.repeat(64);});
  await assert.rejects(race.run());
 });
