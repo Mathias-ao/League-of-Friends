@@ -113,8 +113,8 @@ export async function readSocialHistory(ownerPlayerId:string){
         const eventRef=db.collection(collections.events).doc(data.eventId);
         const seasonRef=db.collection(collections.seasons).doc(data.seasonId);
         const [event,season]=await Promise.all([eventRef.get(),seasonRef.get()]);
-        checkpoints.push({ref:eventRef,token:eventToken(event.data()),type:'EVENT'},
-          {ref:seasonRef,token:seasonToken(season.data()),type:'SEASON'});
+        checkpoints.push({ref:eventRef,exists:event.exists,token:eventToken(event.data()),type:'EVENT'},
+          {ref:seasonRef,exists:season.exists,token:seasonToken(season.data()),type:'SEASON'});
         eventBlock=linkedEventStatus(event.data(),season.data(),data,match.doc.id);
       }
     }
@@ -245,7 +245,7 @@ export async function readSocialHistory(ownerPlayerId:string){
       const digest=item.type==='MATCH'?matchToken(current):item.type==='SOURCE'?sourceToken(current):
         item.type==='GAME'?gameToken(current):item.type==='EVENT'?eventToken(current):
         item.type==='GUID'?token(current):seasonToken(current);
-      if(!fresh[n]?.exists||item.token!==digest)
+      if((item.exists!==undefined?fresh[n]?.exists!==item.exists:!fresh[n]?.exists)||item.token!==digest)
         throw new HttpsError('aborted','Accepted Chronicle authority changed during the read; retry.');
     }
   }
