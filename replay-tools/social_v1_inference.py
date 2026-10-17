@@ -187,7 +187,7 @@ def _normalize_bindings(snapshot, bindings, config):
     return bindings
 
 
-def _has_linked_detector(deed, context, kinds, frm=None, to=None):
+def _has_linked_detector(deed, context, kinds, own_events, frm=None, to=None):
     lookup = {(x["kind"], x["sourceDetectorId"]): x for x in context["engagementContexts"]}
     for link in deed["linkedEngagementDetectors"]:
         x = lookup.get((link["kind"], link["sourceDetectorId"]))
@@ -196,25 +196,26 @@ def _has_linked_detector(deed, context, kinds, frm=None, to=None):
         if frm is not None and (x.get("fromReplayPlayerId") != frm
                                or x.get("toReplayPlayerId") != to):
             continue
-        if set(x["sourceEventIds"]).intersection(deed["sourceEventIds"]):
+        if set(x["sourceEventIds"]).intersection(own_events):
             return True
     return False
 
 
-def _base_family(deed, context, family, actor, target):
-    directions = {(d["fromReplayPlayerId"], d["toReplayPlayerId"])
-                  for d in deed["directionalActors"]}
-    facets = set(deed["facetKinds"])
-    directed = (actor, target) in directions
+def _base_family(deed, context, family, actor, target, directional_facets):
+    # #124's flattened facetKinds cannot establish *which* participant acted.
+    # The original source deed retains each facet's exact actor and event refs.
+    facets = {f["kind"] for f in directional_facets}
+    own_events = {x for f in directional_facets for x in f["sourceEventIds"]}
+    directed = bool(own_events)
     contest = directed and ("TARGETED_COMMAND" in facets or
                             "DEFENSIVE_PARTICIPATION" in facets) and (
         "LOCAL_COMMAND_OVERLAP" in facets or
-        _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"}))
+        _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"}, own_events))
     pressure = directed and ("ECONOMY_PRESSURE" in facets or
                             ("TARGETED_COMMAND" in facets and
                              _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"})))
     help_ = directed and "DEFENSIVE_PARTICIPATION" in facets and _has_linked_detector(
-        deed, context, {"DEFENSIVE_ASSIST", "REINFORCEMENT"}, actor, target)
+        deed, context, {"DEFENSIVE_ASSIST", "REINFORCEMENT"}, own_events, actor, target)
     if family == "PAIR_CONTEST":
         return contest
     if family in ("DIRECTED_HELP", "NOTEWORTHY_DIRECTED_PROTECTION", "RECONCILIATORY_HELP"):
@@ -224,13 +225,14 @@ def _base_family(deed, context, family, actor, target):
     return pressure
 
 
-def _qualify(deed, context, family, actor, target, index, rule):
+def _qualify(deed, context, family, actor, target, index, rule, directional_facets):
     """Conservative three-way qualification with explicit refusal of future leakage."""
-    reasons, support, before, counter = [], set(deed["sourceEventIds"]), set(), set()
-    if not _base_family(deed, context, family, actor, target):
+    reasons, support, before, counter = [], {
+        x for f in directional_facets for x in f["sourceEventIds"]}, set(), set()
+    if not _base_family(deed, context, family, actor, target, directional_facets):
         return "NOT_QUALIFIED", ["FAMILY_DIRECTION_OR_CONTEXT_NOT_SUPPORTED"], support, before, counter
     required = MANDATORY[family]
-    independent = set(deed["sourceEventIds"])
+    independent = set(support)
     qualified = {}
     for kind in required:
         pool = index.get((kind, actor, target), [])
@@ -287,7 +289,7 @@ def _qualify(deed, context, family, actor, target, index, rule):
     return "QUALIFIED", ["BOUNDED_ORDINARY_INFERENCE_NOT_EXECUTION_PROOF"], support, before, counter
 
 
-def qualify_social_v1(*, snapshot, context, replay_bindings, incident_lineages,
+def qualify_social_v1(*, snapshot, context, pair_deeds, replay_bindings, incident_lineages,
                       measurements, calibration, historical_order):
     """Return canonical Inference/Claim DTOs and inactive #139 input wrappers.
 
@@ -316,6 +318,17 @@ def qualify_social_v1(*, snapshot, context, replay_bindings, incident_lineages,
     source_events = _source_events(context)
     index = _fact_index(measurements, authority=snapshot["authorityRevision"],
                         bindings=bindings, source_events=source_events)
+    _require(isinstance(pair_deeds, list), "PAIR_SOURCE_DEEDS_REQUIRED")
+    source_deeds = {}
+    for raw in pair_deeds:
+        _require(isinstance(raw, dict) and isinstance(raw.get("deedId"), str)
+                 and isinstance(raw.get("sourceEventIds"), list)
+                 and isinstance(raw.get("facets"), list), "BAD_SOURCE_DEED")
+        did = raw["deedId"]
+        if did in source_deeds:
+            _require(raw == source_deeds[did], "CONFLICTING_DUPLICATE_SOURCE_DEED")
+            continue
+        source_deeds[did] = raw
     seen = set()
     results, effects, witnesses = [], [], []
     for deed in sorted(context["deedContexts"], key=lambda x: (
@@ -325,6 +338,22 @@ def qualify_social_v1(*, snapshot, context, replay_bindings, incident_lineages,
         seen.add(did)
         if did not in incident_lineages:
             continue  # unbound neutral evidence; never fabricate incident lineage
+        original = source_deeds.get(did)
+        _require(original is not None and
+                 set(original["sourceEventIds"]) == set(deed["sourceEventIds"])
+                 and sorted({f.get("kind") for f in original["facets"]}) == deed["facetKinds"],
+                 "SOURCE_DEED_CONTEXT_MISMATCH")
+        facet_events = {}
+        for f in original["facets"]:
+            _require(isinstance(f, dict) and isinstance(f.get("kind"), str)
+                     and type(f.get("fromPlayerId")) is int and
+                     type(f.get("toPlayerId")) is int
+                     and isinstance(f.get("sourceEventIds"), list) and f["sourceEventIds"]
+                     and set(f["sourceEventIds"]).issubset(set(deed["sourceEventIds"])),
+                     "DIRECTIONAL_FACET_PROVENANCE_REQUIRED")
+            facet_events.setdefault((f["fromPlayerId"], f["toPlayerId"]), []).append(f)
+        _require(set(facet_events) == {(d["fromReplayPlayerId"], d["toReplayPlayerId"])
+                    for d in deed["directionalActors"]}, "DIRECTIONAL_FACET_MAPPING_MISMATCH")
         lineage = incident_lineages[did]
         _require(isinstance(lineage, dict) and set(lineage) == {
             "incidentId", "overlapGroupId", "state", "lineage"},
@@ -337,8 +366,7 @@ def qualify_social_v1(*, snapshot, context, replay_bindings, incident_lineages,
         if lineage["state"] != "CURRENT" or lineage["lineage"] == "PENDING":
             continue
         _require(0 <= deed["firstAtMs"] <= deed["lastAtMs"], "BAD_DEED_ORDER")
-        directions = sorted({(d["fromReplayPlayerId"], d["toReplayPlayerId"])
-                             for d in deed["directionalActors"]})
+        directions = sorted(facet_events)
         for actor, target in directions:
             if actor not in bindings["players"] or target not in bindings["players"] or actor == target:
                 continue
@@ -348,7 +376,8 @@ def qualify_social_v1(*, snapshot, context, replay_bindings, incident_lineages,
                 if not rule:
                     continue
                 decision, reasons, sr, br, cr = _qualify(
-                    deed, context, family, actor, target, index, rule)
+                    deed, context, family, actor, target, index, rule,
+                    facet_events[(actor, target)])
                 start = _pos(historical_order, deed["firstAtMs"])
                 revision = _hash([VERSION, snapshot["authorityRevision"],
                     context["sourceContextRevision"], did, lineage, deed,
@@ -386,8 +415,12 @@ def qualify_social_v1(*, snapshot, context, replay_bindings, incident_lineages,
                                   and decision == "QUALIFIED" and
                                   family in ("PAIR_CONTEST", "DIRECTED_HELP",
                                              "DISTINCT_RUPTURE_ANTAGONISM"))
-                wref = _ref("SOURCE_DEED", did, snapshot["authorityRevision"],
-                            snapshot["sourceHash"])
+                # Actor-specific SOURCE_EVENT, never a shared pair-deed as proof that both
+                # participants independently acted in both directions.
+                own_event_ids = sorted({e for f in facet_events[(actor, target)]
+                                        for e in f["sourceEventIds"]})
+                wref = _ref("SOURCE_EVENT", own_event_ids[0],
+                            snapshot["authorityRevision"], snapshot["sourceHash"])
                 claim = {"claimId": claim_id,
                     "claimRevision": _hash([claim_id, revision, decision, reasons,
                                             calibration["version"], calibration["policy"]]),
