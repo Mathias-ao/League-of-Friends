@@ -1,0 +1,33 @@
+# AoF V1 Worker 1 — military and territorial evidence context
+
+**Issue:** #124 · **Module:** `replay-tools/social_v1_context.py` · **Version:** `AOF_SOCIAL_V1_CONTEXT_V1` · **Shared consumer:** `AOF_SOCIAL_V1_SHARED_1` (#122 / PR #135).
+
+This is a pure, **inert contextual projection** from an already-produced complete canonical or Recorded Events statistics record. It does not parse replays, recompute Raid V3 / Skirmish V2 / Engagement V4, change Map Presence V8 or Forward Eco V2, modify V1a, map league identities, authenticate active sources, add incidents, qualify claims or publish scores. No new backend route, feature flag, event processor or database is installed. The integration lead must retain the SHARED_1 authenticated `SourceSnapshot`, scope/digest fencing, source authority, binding and correction requirements before using observations in an admitted inference.
+
+## Input / output
+
+`project_social_v1_context(statistics=full_statistics, territory_policy=None, max_placements=4000)`.
+
+Inputs must include `source`, `scope.observedUntilMs`, `pairSocialEvidence` V1, `matchFacts.players` with lobby team groups and `rules.lockTeams`, and `participants` with Map Presence V8 if spatial context is available. The projector fails on missing or mismatched source revision, conflicting placement identity, deed references that do not resolve to retained observations, source-event clock bounds outside the original deed, or ambiguous roster. Unavailable Map Presence does **not** become zero activity. The module never promotes its own caller to authenticated authority.
+
+Returns `sourceContextRevision`, `sourceRevision`, `deedContexts`, `engagementContexts`, `placementContexts`, `goldInfluenceContexts`, version, and explicit `trust`, `territoryPolicy` and `limitations`. Existing source-deed IDs are preserved; engagement detector IDs remain source-local references, not new social incident IDs. Exact source-event overlap can link an engagement to a deed but cannot imply a second independent contribution. Context IDs and historical durable incident lineage remain the SHARED_1/integration lead's responsibility. Corrections change revision and must be fenced at the server; an old projection is never self-authoritative.
+
+## Geography and approval
+
+Map Presence V8's inherited Enemy Progress / forward thresholds are **not modified**. A separate proposed territorial preview compares a placement to **all** initial TC anchors and keeps each counterpart's distance, relation, ambiguity and coverage. The initial-geometry assumptions are explicit: locked lobby assignments can establish fixed teammates/opponents; dynamic diplomacy is unknown. Missing TC anchors, unresolved diplomacy, overlapping friendly/enemy home areas, multiple plausible enemy homes and unconfigured policy return `ambiguous`/`PENDING` rather than manufacturing a target. A placement near an ally's TC is never enemy territory of that ally.
+
+`territory_policy` is **fully explicit**, with `friendlyMaxDistanceTiles`, `enemyMaxDistanceTiles`, and `ambiguityMarginTiles`. These are required together; no numerical defaults exist. They are **PROPOSED_PREVIEW** inputs for adversarial tests and diagnostics, **never** owner-approved thresholds or official conditions. `approvedForClaims=false` unconditionally. TERR-01 (zone semantics) and TERR-02 (specific enemy-home rule) still require owner approval and calibration before an integrator could use this context for scoring. The per-opponent geometric preview is not a certified ownership map, nor time-varying battlefield control.
+
+## Military and semantic limits
+
+The original Pair Social Evidence `facets` carry economy pressure, targeted commands, local command overlap, source-aware assistance, cooperation and exact source lineage; existing Episode Context V1 carries pressure-response, defensive support and return-pressure associations. `engagementContexts` deduplicates Skirmish/technical Battle, Great Battle flag, co-attack, defensive-assist and reinforcement source records; the official league Battle is **not** any `battle-*` encounter. Shared targets do not become Bond; proximity does not prove rescue; orders do not prove damage. No opponent preference or selective fixation claim is made without actual comparable opportunity coverage. Raw command frequency, selected object counts and battle promotion do not become exceptional conduct.
+
+**Special Forward Castle:** genuine Castle raw ID 82 is kept distinct from Krepost ID 1251. A recorded BUILD supports placement only. The output is always `PENDING` for the strict special achievement, even with favorable proposed geometric context: unique Castle instance identity, independently supported operational completion, and the *same completed instance's own queue* within five minutes after completion are not generally established by current statistics. A queue within five minutes of placement is only a conservative sufficient time witness **with separately qualified unique-instance/operational semantics**. Do not infer completion from BUILD or an unrelated Castle queue, and do not invent a NOT_QUALIFIED result from absent incomplete command evidence.
+
+**Gold:** `goldInfluenceContexts` retain Map Presence V8/V4's infrastructure-influence estimates, changed leader and contributing source placements. Control share is not mined gold, possession, extraction, depletion, building survival or a verified enemy takeover.
+
+## Coverage and test status
+
+Tests in `replay-tools/tests/test_social_v1_context.py` cover deterministic/idempotent outputs, actual existing detector chain, canonical/native envelope semantic parity, team/FFA/multi-enemy ambiguities, ally home, missing TC anchors, source revision/correction invalidation, duplicate BUILD reuse, Castle/Krepost pending states, gold source links, technical Great Battle nesting and explicit budget failures. `OptionalRealReplayRegression` uses the SHA-pinned `upstream-duel-save66.6` authentic replay fixture under existing `AOF_REPLAY_FIXTURE_DIR`. Missing original bytes yield an explicit unittest SKIP rather than a claim of corpus acceptance. The broader authentic 1v1/2v2/4v4/FFA source evidence acceptance is already documented in Social Evidence V1a; this PR does not establish a new genuine Castle success or execution witness.
+
+**Integration:** only the integration owner should attach these diagnostics to an authenticated existing social read path, select bounded context, supply trusted approval packs and convert them to validated SHARED_1 source/measurement references. Do not persist, expose public claims or activate until independently accepted under #132. No observer or live E2E resumed.
