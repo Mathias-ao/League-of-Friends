@@ -127,3 +127,29 @@ test('unknown family or bad policy cannot mint units, contradictory claim IDs ar
  const d=ch(1,{battle:'m2',game:'g2',battleOrder:2}),b=fx(d,rel('BOND'),2),duplicate=structuredClone(b);
  duplicate.row.claim.claimId='claim-X';const bad=structuredClone(b);bad.row.claim.claimId='claim-X';bad.row.claim.historicalPosition.recordingAtMs=999;
  assert.throws(()=>run([c,d],[duplicate,bad]),/CONFLICTING_CLAIM_ID/);});
+
+
+test('identical simultaneous ordinals for independent deeds pend only the affected direction',()=>{
+ const c=ch(1),a=fx(c,rel('RIVALRY'),1,{at:10}),b=fx(c,rel('RIVALRY'),2,{at:10});
+ b.row.claim.historicalPosition.operationOrdinal=a.row.claim.historicalPosition.operationOrdinal;
+ const separate=fx(c,rep('GALLANTRY'),3);
+ const r=run([c],[a,b,separate]);
+ assert.equal(get(r,rel('RIVALRY')).currentStage,null);
+ assert.ok(get(r,rel('RIVALRY')).pendingReasons.includes('AMBIGUOUS_SAME_MOMENT'));
+ assert.equal(get(r,rep('GALLANTRY')).stage,1);
+});
+test('all issued SHARED_1 Receipts satisfy Sol canonical JSON Schema',async()=>{
+ const [{readFileSync},{default:Ajv2020}]=await Promise.all([import('node:fs'),import('ajv/dist/2020.js')]);
+ const schema=JSON.parse(readFileSync(new URL('../../contracts/social-v1/shared.schema.json',import.meta.url),'utf8'));
+ const validate=new Ajv2020({strict:false,allErrors:true}).compile(schema);
+ const c=ch(1),d=ch(1,{battle:'m2',game:'g2',battleOrder:2}),e=ch(2);
+ const inputs=[fx(c,rel('BOND'),1,{strength:'large',reciprocity:true}),fx(d,rel('BOND'),2,{reciprocity:true}),
+   fx(e,rel('BOND','b','a'),3,{reciprocity:true}),fx(c,rel('HOSTILITY'),4,{strength:'large'})];
+ const r=run([c,d,e],inputs,{treachery:[treachery(c,1)]});
+ assert.ok(r.receipts.some(x=>x.kind==='MOVEMENT'&&x.state==='CAPPED'));
+ assert.ok(r.receipts.some(x=>x.kind==='RECIPROCITY'));
+ assert.ok(r.receipts.some(x=>x.kind==='EXCEPTIONAL_STAGE'));
+ for(const receipt of r.receipts)
+   assert.ok(validate({contract:'AOF_SOCIAL_V1_SHARED_1',recordType:'Receipt',value:receipt}),
+     JSON.stringify({kind:receipt.kind,errors:validate.errors}));
+});
