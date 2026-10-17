@@ -1,8 +1,20 @@
 # Age of Friends — Project Continuity
 
-Last updated: **15 October 2026**. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
+Last updated: **17 October 2026**. New social launch checkpoint below supersedes older implementation-status snapshots. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
 
-## Social Evidence V1a — 16 October 2026
+## Current organizer checkpoint — 17 October 2026
+
+`main` was independently verified at `25f120412df5ed0118b9557cdf822ab175108242`. PR #119 ordinary native integration and PR #120 authenticated Social Evidence V1a have **merged**; #120's 12 workflows and 27 individual checks passed. No staging/production deployment, social score or feature activation is inferred.
+
+**Start new organizer work with [Social V1 Launch Roadmap](SOCIAL-V1-LAUNCH-ROADMAP-2026-10-17.md) and [Organiser 2 Handover](ORGANISER-2-HANDOVER-2026-10-17.md).** Six complete read-only research reports are preserved under `docs/research/social-v1-2026-10-17-*.md`. They clarify merged evidence versus missing actual execution proof, current statistical and territorial limitations, the five Personality calculation candidates, six independent earned social tracks, and source-linked Chronicle reporting.
+
+Owner-confirmed launch target is **five functional Personality sliders, Gallantry/Cruelty/Chivalry Reputation, directional Rivalry/Hostility/Bond Relationships, and factual Chronicle with selective authenticated reporting**. Proposed 65/35 weights, Battle minimums, stage budgets/thresholds, new territorial semantics and any relaxed qualification are **not approved**. Existing SOC-001–088/REL-V1 qualitative policy remains binding; SOC-089 deferred. The report's replay gRPC observer is promising but **not tested**. The Codex empirical corpus had 610 pending deeds and 892 pending track claims with no executed substantive qualifications. Do not equate candidate military/social statistics with earned credits.
+
+**Next parallel delegations:** Sol Work read-only final integration/PR milestone plan; Codex offline current-build observer validation for tribute receipt, attributed kills and construction completion. No new broad audit, deployment, activated social read gates or resumption of the stopped 15 October staging E2E. Any league-wide pending-evidence visibility or production reporting authorization requires a fresh owner decision.
+
+**All checkpoint sections below recount their historical dates; older claims that #120 is open/draft or that #119 AUTO upload is unmerged are obsolete.**
+
+## Social Evidence V1a — 16 October 2026 (historical pre-merge snapshot)
 
 Main was verified at `4798d358d5f40715198f03a874c153d2c06a72e3`: PR #119's ordinary Recorded Events V1 upload integration is **merged**, not merely branch work. Deployment/activation is not inferred.
 
