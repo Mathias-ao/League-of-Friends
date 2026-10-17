@@ -153,3 +153,110 @@ test('all issued SHARED_1 Receipts satisfy Sol canonical JSON Schema',async()=>{
    assert.ok(validate({contract:'AOF_SOCIAL_V1_SHARED_1',recordType:'Receipt',value:receipt}),
      JSON.stringify({kind:receipt.kind,errors:validate.errors}));
 });
+
+
+test('reused Game ID across distinct Matches keeps both active at equal revisions',()=>{
+ const a=ch(1,{battle:'match-A',game:'game-1'});
+ const b={...ch(2,{battle:'match-B',game:'game-1',source:B}),gameGuid:h('distinct-guid-B')};
+ const x=fx(a,rel('BOND'),201),y=fx(b,rel('BOND'),202);
+ const r=run([a,b],[x,y]);
+ assert.deepEqual(receipts(r,'MOVEMENT').map(v=>v.allocatedUnits),[2,2]);
+ assert.deepEqual(r.audit,[]);
+ assert.deepEqual(run([b,a],[y,x]),r);
+});
+
+test('unequal Match-scoped revisions and strict lookup never shadow the other Battle',()=>{
+ const a=ch(1,{battle:'match-A',game:'game-1'});
+ const b={...ch(2,{battle:'match-B',game:'game-1',revision:4,source:B}),gameGuid:h('guid-B')};
+ const bond=fx(a,rel('BOND'),211),hostility=fx(b,rel('HOSTILITY'),212);
+ const strict=treachery(b,213);
+ const first=run([a,b],[bond,hostility],{treachery:[strict]});
+ assert.equal(receipts(first,'MOVEMENT').length,2);
+ assert.equal(receipts(first,'EXCEPTIONAL_STAGE').length,1);
+ assert.equal(get(first,rel('BOND')).stage,1);
+ assert.equal(get(first,rel('HOSTILITY')).stage,3);
+ const withdrawn={...b,revision:5,sourceAuthority:h('new-source'),state:'WITHDRAWN'};
+ const next=run([a,b,withdrawn],[bond,hostility],{treachery:[strict]});
+ assert.equal(receipts(next,'MOVEMENT').length,1);
+ assert.equal(receipts(next,'EXCEPTIONAL_STAGE').length,0);
+ assert.equal(get(next,rel('BOND')).stage,1);
+ assert.equal(get(next,rel('HOSTILITY')),undefined);
+});
+
+test('same GUID across different Match/Game composites is rejected even if local Game ID matches',()=>{
+ const a=ch(1,{battle:'match-A',game:'game-1'});
+ const b=ch(2,{battle:'match-B',game:'game-1',revision:2,source:B});
+ assert.throws(()=>run([a,b],[fx(a,rep('GALLANTRY'),221)]),/DUPLICATE_POV_GAME/);
+});
+
+test('revision change of one Match does not misresolve claim from another sharing Game ID',()=>{
+ const a=ch(1,{battle:'match-A',game:'game-1'});
+ const b={...ch(2,{battle:'match-B',game:'game-1',source:B}),gameGuid:h('other-source-guid')};
+ const x=fx(a,rep('CHIVALRY'),231),y=fx(b,rep('CHIVALRY'),232);
+ const revised={...b,revision:2,sourceAuthority:h('revision-source')};
+ const r=run([a,b,revised],[x,y]);
+ assert.equal(receipts(r,'MOVEMENT').length,1);
+ assert.equal(receipts(r,'MOVEMENT')[0].incidentId,x.row.claim.incidentId);
+ assert.deepEqual(r.audit,[{claimId:y.row.claim.claimId,reason:'INACTIVE_SOURCE'}]);
+});
+
+test('partial chronology protects earlier verified prefix and unrelated subjects',()=>{
+ const a=ch(1),b=ch(2),c=ch(3);
+ const early=fx(a,rel('HOSTILITY'),241),unknown=fx(b,rel('HOSTILITY'),242),
+       late=fx(c,rel('HOSTILITY'),243),separate=fx(c,rep('GALLANTRY'),244);
+ unknown.row.claim.historicalPosition.order='PARTIAL';
+ const r=run([a,b,c],[early,unknown,late,separate]);
+ const s=get(r,rel('HOSTILITY'));
+ assert.equal(s.status,'PENDING');assert.equal(s.currentStage,null);
+ assert.equal(s.lastVerifiedHistoricalStage,1);assert.equal(s.stage,1);assert.equal(s.peak,1);
+ assert.deepEqual(receipts(r,'MOVEMENT').filter(x=>x.subject.system==='RELATIONSHIP').map(x=>x.incidentId),
+ [early.row.claim.incidentId]);
+ assert.equal(get(r,rep('GALLANTRY')).stage,1);
+});
+
+test('unfinished qualified cooling before Treachery is preserved and exceptional jump pends',()=>{
+ const cs=[1,2,3,4].map(n=>ch(n));
+ const rise=fx(cs[0],rel('HOSTILITY'),251,{strength:'large'});
+ const cool=fx(cs[1],rel('HOSTILITY'),252,{effect:'WEAKEN',strength:'large'});
+ const later=fx(cs[3],rel('HOSTILITY'),253);
+ const r=run(cs,[rise,cool,later,fx(cs[3],rep('CHIVALRY'),254)],{treachery:[treachery(cs[2],255)]});
+ const s=get(r,rel('HOSTILITY'));
+ assert.equal(s.status,'PENDING');assert.equal(s.currentStage,null);assert.ok(s.downBank>0);
+ assert.equal(s.stage,s.lastVerifiedHistoricalStage);
+ assert.ok(s.pendingReasons.includes('TREACHERY_PREEXCEPTION_WEAKENING_UNCONFIGURED'));
+ assert.equal(receipts(r,'EXCEPTIONAL_STAGE').length,0);
+ assert.equal(get(r,rep('CHIVALRY')).stage,1);
+ assert.equal(r.consumption.length,1);
+});
+
+test('simultaneous ordinary Hostility and Treachery pend only their dependent direction',()=>{
+ const c=ch(1),ordinary=fx(c,rel('HOSTILITY'),261,{at:3}),other=fx(c,rep('CRUELTY'),262);
+ ordinary.row.claim.historicalPosition.operationOrdinal=100;
+ const r=run([c],[ordinary,other],{treachery:[treachery(c,263)]});
+ const s=get(r,rel('HOSTILITY'));
+ assert.equal(s.status,'PENDING');
+ assert.ok(s.pendingReasons.includes('AMBIGUOUS_SAME_MOMENT'));
+ assert.equal(s.lastVerifiedHistoricalStage,0);
+ assert.equal(receipts(r,'EXCEPTIONAL_STAGE').length,0);
+ assert.equal(get(r,rep('CRUELTY')).stage,1);
+});
+
+test('Rivalry same-moment weakening and binding skill acknowledgment cannot force regression',()=>{
+ const cs=[1,2,3,4].map(n=>ch(n));
+ const ee=[fx(cs[0],rel('RIVALRY'),271,{strength:'large',reciprocity:true}),
+ fx(cs[1],rel('RIVALRY','b','a'),272,{reciprocity:true}),
+ fx(cs[1],rel('RIVALRY'),273),
+ fx(cs[2],rel('RIVALRY'),274,{effect:'WEAKEN',strength:'large'})];
+ assert.equal(get(run(cs,ee),rel('RIVALRY')).stage,3);
+ const late=fx(cs[3],rel('RIVALRY'),275,{effect:'WEAKEN',at:1});
+ const ack={battleId:cs[3].battleId,gameId:cs[3].gameId,eventId:cs[3].eventId,
+ sourceAuthority:A,fromPlayerId:'b',toPlayerId:'a',
+ acknowledgedSuperiorPlayerId:'a',qualification:'QUALIFIED',
+ explicitStructuredJudgmentRef:{kind:'JUDGMENT',id:'ack',revision:'v1',digest:h('ack')},
+ historicalPosition:{...late.row.claim.historicalPosition}};
+ const r=run(cs,[...ee,late],{acknowledgments:[ack]});
+ const s=get(r,rel('RIVALRY'));
+ assert.equal(s.status,'PENDING');assert.equal(s.currentStage,null);
+ assert.ok(s.pendingReasons.includes('AMBIGUOUS_SAME_MOMENT'));
+ assert.equal(s.lastVerifiedHistoricalStage,3);
+});
