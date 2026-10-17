@@ -213,7 +213,7 @@ def _base_family(deed, context, family, actor, target, directional_facets):
         _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"}, own_events))
     pressure = directed and ("ECONOMY_PRESSURE" in facets or
                             ("TARGETED_COMMAND" in facets and
-                             _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"})))
+                             _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"}, own_events)))
     help_ = directed and bool({"DEFENSIVE_PARTICIPATION", "REINFORCEMENT_COMMANDS"} & facets) and _has_linked_detector(
         deed, context, {"DEFENSIVE_ASSIST", "REINFORCEMENT"}, own_events, actor, target)
     if family == "PAIR_CONTEST":
