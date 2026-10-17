@@ -372,3 +372,27 @@ test('current Game roster, Match membership and active source hash fence factual
  const source=await getPlayerChronicle.run(request);
  assert.equal(source.coverage.readableAcceptedGames,0);
 });
+
+test('partially verified multi-Game Battle keeps one scene and unresolved result without inventing a series winner',async()=>{
+ reset();
+ const g=records.get('matches/m/games/g'),src=records.get('matches/m/games/g/replaySources/r1');
+ records.set('matches/m/games/g2',{...g,gameNumber:2,status:'AWAITING_CONFIRMATION',
+  canonicalResult:undefined,activeReplayStatisticsId:'r2'});
+ records.set('matches/m/games/g2/replaySources/r2',{...src});
+ const page=await getPlayerChronicle.run(request);
+ assert.equal(page.coverage.readableAcceptedGames,2);
+ assert.equal(page.coverage.unresolvedOutcomeGames,1);
+ assert.equal(page.chronicle.pages[0].entries.length,1);
+ assert.equal(page.chronicle.pages[0].entries[0].resultStatus,'UNRESOLVED');
+ assert.equal(page.chronicle.pages[0].entries[0].sceneId.length,64);
+});
+
+test('missing Event authority is incomplete history, not a false Chronicle entry',async()=>{
+ reset();
+ records.get('matches/m').eventId='e';records.get('matches/m').seasonId='s';
+ const r=await getPlayerChronicle.run(request);
+ assert.equal(r.status,'PARTIAL');
+ assert.equal(r.coverage.readableAcceptedGames,0);
+ assert.equal(r.coverage.excludedGames,1);
+ assert.equal(r.chronicle.pages.length,0);
+});
