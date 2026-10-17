@@ -378,6 +378,20 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                  "SOURCE_DEED_CONTEXT_MISMATCH")
         facet_events = {}
         for f in original["facets"]:
+            # Shared offensive participation records group contributions, not a
+            # directed helper or competitive target pair. Retain as neutral
+            # context; do not invent actor/target or reject the whole Game.
+            if isinstance(f, dict) and f.get("kind") == "SHARED_OPPONENT_PARTICIPATION":
+                contributions = f.get("contributions")
+                _require(isinstance(contributions, list) and len(contributions) >= 2
+                         and all(isinstance(c, dict)
+                                 and type(c.get("contributorPlayerId")) is int
+                                 and isinstance(c.get("sourceEventIds"), list)
+                                 and c["sourceEventIds"]
+                                 and set(c["sourceEventIds"]).issubset(set(deed["sourceEventIds"]))
+                                 for c in contributions),
+                         "INVALID_SHARED_TARGET_CONTEXT")
+                continue
             _require(isinstance(f, dict) and isinstance(f.get("kind"), str)
                      and type(f.get("fromPlayerId")) is int and
                      type(f.get("toPlayerId")) is int
