@@ -1,6 +1,6 @@
 # AoF V1 — Exceptional Social Events: six-family candidate catalogue
 
-**Status:** DESIGN PROPOSAL for owner review; not approved, not an implemented detector, not scoring, not live. **Work order:** [#130](https://github.com/Mathias-ao/League-of-Friends/issues/130). **Reference main:** c9c124f80fff9ebabbdec44bc69dc6e7d180ea1e (17 October 2026). **Coordination:** #122 policy; #124 context; #125 Chronicle; #126 inference; #127 evaluator; #128 invitations; #129 honours; #131 storylets. No production modifications or deployments.
+**Revision:** 1.1 (Organiser 2 review). **Status:** DESIGN PROPOSAL / PREVIEW ONLY; not approved, not an implemented detector, not scoring, not live. **The revised V1 Cruelty and Hostility pathways and exact positive/negative predicates are in the [inference-first review companion](exceptional-social-events-v1-inference-review-2026-10-17.md). This v1.1 companion supersedes the original launch-readiness assessments and retains strict future variants.** **Work order:** [#130](https://github.com/Mathias-ao/League-of-Friends/issues/130). **Reference main:** c9c124f80fff9ebabbdec44bc69dc6e7d180ea1e (17 October 2026). **Coordination:** #122 policy; #124 context; #125 Chronicle; #126 inference; #127 evaluator; #128 invitations; #129 honours; #131 storylets. No production modifications or deployments.
 
 ## 1. Product intention, hard boundaries and shortlist
 
@@ -9,10 +9,10 @@ These are **exceptional historical recognitions**, not six new scoring tracks. T
 | Track | Recommended event | Memory hook / what is truly new | Evidence-readiness at audited baseline | Launch classification |
 | --- | --- | --- | --- | --- |
 | Gallantry | **Against the Tide** | A personally initiated substantial offensive challenge in an unfavourable, known pre-Battle competitive matchup | Rating/history + directed raids/contests exist; offense admission needs #122/#126 | Conditional candidate; feasible with conservative inference |
-| Cruelty | **The Iron Harvest** | Fresh punishing pressure **after** an opponent's separately established disadvantage, not weakness manufactured retrospectively by the same incident | Directed pressure exists; historical in-Game weakness witness absent | Catalogue-ready; **do not auto-publish** until pre-entry weakness is qualified |
+| Cruelty | **The Iron Harvest — Returning to the Fields (V1 variant)** | Repeat, independent pair-economic pressure across distinct league Battles and renewed current-Battle economic episodes; **not proof of weakness** | Raid V3, episode source lineage and pair Battle history are useful candidates; qualification needs #126 + owner rule | **Default-off inference proposal**; original weakened-opponent strict subtype held — see v1.1 companion |
 | Chivalry | **The Shield at the Gate** | Helper-specific defensive intervention during an attributable threat to another player's home | Engagement V4 and pair episode context exist; recipient benefit is inferred, not proven rescue | Conditional candidate; conservative inference gate |
 | Rivalry | **The Reckoning** | A real two-sided rematch following a documented series and a verifiable reversal | Accepted pair results and pair encounters available; each participant's conduct must qualify independently | Strongest initial implementation prospect |
-| Hostility | **The Broken Truce** | Actor initiates a qualified effective alliance rupture and distinct directed aggression; **no king-loss exception** | Effective unlocked diplomacy / post-rupture conduct qualification incomplete | Catalogue-ready; **do not auto-publish** without effective-state and distinct-antagonism gates |
+| Hostility | **Old Wounds Reopened (V1 variant)**; **The Broken Truce (strict preserved)** | Earlier meaningful A→B help followed in separate opposed Battle by independently renewed A→B economic antagonism; **not a broken effective truce** | Directed assistance and raids provide candidates; #126 and new distinct-Hostility owner predicate needed | **Default-off inference proposal**; effective-rupture Broken Truce still held — see v1.1 companion |
 | Bond | **Stand Together** | Beneficiary-specific help is returned in another independent Battle; mutuality is earned action by action | Fixed-team assistance evidence exists, but materiality/FFA attribution conditional | Conditional candidate; conservative inference gate |
 
 **Rarity is qualitative, not a hidden percentile.** All six require a conjunctive rare situation (qualified current deed + historical context + source authority + policy). We do not invent numeric ratios, rating gaps, Battle-count minimums, interaction frequency, materiality weights or rate limits. Corpus calibration and the owner's explicit rule approval determine any numbers. A category may be in the catalogue yet **unavailable** for automated recognition where its required witnesses cannot be established. It is better to launch with fewer awarded exceptional recognitions than manufacture six.
@@ -51,9 +51,9 @@ The examples below are **hypothetical placeholders**, not assertions about actua
 
 **Alternatives rejected for V1:** **The Outnumbered Charge** (requires actual force-count state at entry, not rating), **The Crown Defied** (an upset win is a result/achievement, not Gallantry by itself). Both may be later honours after stronger proof.
 
-### E-CRU-01 — The Iron Harvest (Cruelty)
+### E-CRU-01 — The Iron Harvest (Cruelty) — strict future subtype (original design)
 
-**Promise.** A directs substantial renewed pressure at B **after B is already shown to be materially disadvantaged**. The unusual order of events is the story: an established weakness preceded a separately independent assault. Not a moral judgment of A.
+**The original strict subtype below is preserved, not the V1 interpretation; see the linked v1.1 companion for Returning to the Fields.** A directs substantial renewed pressure at B **after B is already shown to be materially disadvantaged**. The unusual order of events is the story: an established weakness preceded a separately independent assault. Not a moral judgment of A.
 
 **Eligibility / historical rarity.** A current independent directed economic-pressure or military-pressure episode against B; independently qualified, **sustained pre-existing** B disadvantage at that new episode's entry; relevant material target attribution and causal non-overlap. Context should show why this was punishing pressure, not simply an evenly contested raid. Prior pair encounters may enrich the Chronicle but cannot substitute for evidence of the disadvantage. A's initial episode that created weakness does not retroactively become Iron Harvest.
 
@@ -111,9 +111,9 @@ The examples below are **hypothetical placeholders**, not assertions about actua
 
 **Alternatives:** **The Unbroken Duel** (marathon rematches risk rewarding fixture repetition without distinction); **The Grudge Match** (implies Hostility from ordinary competition and player emotions). *The Reckoning* protects competitive drama without inventing resentment.
 
-### E-HOS-01 — The Broken Truce (Hostility)
+### E-HOS-01 — The Broken Truce (Hostility) — strict future subtype (original design)
 
-**Promise.** A real cooperative phase ends at A's independently initiated effective rupture, followed by A's separately qualified directed antagonism toward former ally B. A meaningful breach *without* the confirmed king-loss / victim-betrayed Treachery exception.
+**The strict effective-rupture candidate below is preserved, not the V1 alternative; see the linked v1.1 companion for E-HOS-02 Old Wounds Reopened.** A real cooperative phase ends at A's independently initiated effective rupture, followed by A's separately qualified directed antagonism toward former ally B. A meaningful breach *without* the confirmed king-loss / victim-betrayed Treachery exception.
 
 **Eligibility / historical rarity.** Complete, qualified prior **mutual effective** alliance at incident entry, relevant historical cooperative fact (or previously established supported Bond), an unambiguous **effective** rupture initiated by A rather than response to B, and independently admitted A→B meaningful antagonistic conduct *after* the rupture. Merely declaring Enemy or attacking an ordinary scheduled opponent does not qualify. No "unprovoked" or trust/motive claim. Strict objective Treachery candidate is higher priority and must not be preempted by a duplicate historic accolade for the same king-loss rupture.
 
@@ -175,14 +175,14 @@ For one incident with a potential Treachery and Broken Truce: keep the underlyin
 | P-04 | **Owner-directed; formal policy amendment #122 pending** | Admit bounded multi-facet inferred conduct for ordinary V1 social progression instead of independently proven execution in all cases | Candidate-only until #122 acceptance and #126 validation |
 | P-05 | **Proposed; owner approval required** | Authorize the **six event labels**, historical gates and editorial semantics independently of numerical progression | Document-only labels |
 | P-06 | **Proposed; owner approval required** | Against the Tide's approved pre-Battle competitive comparator, eligible rating gap/context and evidence breadth | No event without comparability |
-| P-07 | **Evidence blocked + owner rule needed** | Iron Harvest's contemporaneous weakness and substantive continued pressure; forbid proxy Elo/latest margin | No automatic Cruelty exceptional |
+| P-07 | **V1 proposal / owner approval needed** | Returning to the Fields requires prior distinct-Battle pair-economic pressure + two independently qualified current incidents, not inferred weakness; strict original subtype remains unavailable | PREVIEW only, see v1.1 companion C1–C5/N-C1–N-C8 |
 | P-08 | **Owner + qualifier acceptance required** | Shield's degree of defensible beneficiary-specific protective assistance; distinguish activity from rescue | Inferred candidate / carefully limited prose |
 | P-09 | **Owner + historical-rule acceptance required** | Reckoning's reversal predicate: genuine 1v1 result reversal vs approved pair-specific alternative | Allow fact-only rematch chapters |
-| P-10 | **Effective-state/Hostility predicate not ready** | Broken Truce requires verified effective diplomacy, distinct antagonism beyond routine warfare and specific suppression against Treachery | Hold; no Hostility from declaration alone |
+| P-10 | **New V1 distinct Hostility predicate, unapproved** | Old Wounds Reopened requires independent prior A→B help and later separate opposed Battle with A→B economic p + renewed antagonism q; Broken Truce still requires effective rupture | PREVIEW only; see v1.1 companion H1–H6/N-H1–N-H8 |
 | P-11 | **Owner + qualifier acceptance required** | Stand Together's pair-directed reciprocal-help materiality, independent Battles and FFA evidence equivalence | Never derive reciprocity from recipient status |
 | P-12 | **Owner numeric rule approval required** | Track materiality, historical rarity thresholds, strengthening/weakening sizes, budgets, fatigue windows, stages and category launch calibration | No constants, awards or stage writes |
 | P-13 | **Approved #128 scope / implementation pending** | Existing four judgment families and no-survey boundary; question precedence and one-per-player-per-Battle limit | No bespoke new prompt family |
-| P-14 | **Proposed for #129/#131 review** | Names, emblems, whether any event has lasting title/trophy, literary scene grammar and phrase rotations | No automatic unlock or new writer contract |
+| P-14 | **#129/#131 editorial coordination** | Reserve The Shield at the Gate for rare E-CHI-01; rename #129 separate defensive collectible. #131 uses versioned event ID and grounded fact/inference/story slots only | No duplicate collectible title, automatic unlock or new writer contract |
 | P-15 | **Approved architecture; E2E pending** | Active source, result, roster revisions, correction-safe chronology, source-bound audit and no fabricated facts | Fail affected claim closed |
 
 Do not treat exploratory *social-incident-policy-v1-proposal.md* family thresholds or Worker-4 "minimum Battles" examples as adopted SOC/REL calibration. In particular no automatically adopted sixty-percent target-focus rule and no universal time-based cooling.
@@ -194,7 +194,7 @@ Do not treat exploratory *social-incident-policy-v1-proposal.md* family threshol
 **Incremental order:**
 1. Owner chooses six labels, blocked-family policy, and recognition-versus-progression semantics; #122 ratifies V1 inference. Add corpus review of six positives and adversarial negatives.
 2. Reuse existing source deed/episode anchor and historical snapshots. Implement *The Reckoning*, then *Against the Tide*, *The Shield at the Gate* and *Stand Together* only for admitted inference tiers whose source evidence passes #126; expose failures as unavailable.
-3. Keep *The Iron Harvest* and *The Broken Truce* as registered dormant definitions until their specific pre-entry-state and effective-diplomacy/distinct-antagonism gaps close. Do not silently replace them with easier moral labels.
+3. Preview **E-CRU-01 Returning to the Fields** and **E-HOS-02 Old Wounds Reopened** as narrowly source-linked inferred V1 variants using the companion's positive/negative predicates. Their admission, historical rarity and Hostility distinctness still require #122 owner selection, #126 authentic-source tests, and zero unauthorized score writes. Keep the strict weakened-opponent Iron Harvest and effective-rupture Broken Truce dormant; never water them down to ordinary warfare.
 4. Integrate deterministic Chronicle-only recognition rendering after #125/#131 interface freeze. Ordinary progression is applied only by #127 under approved rule version; #128 chooses at most one invitation; #129 independently approves any associated honour.
 5. Review a genuine league corpus, corrected/rebound source and multi-user acceptance under #132 before enabling any official recognition.
 
