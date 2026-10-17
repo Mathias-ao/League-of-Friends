@@ -355,3 +355,20 @@ test('ordinary native READY upload contributes factual Chronicle before accepted
   if(social===undefined)delete process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;else process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS=social;
  }
 });
+
+test('current Game roster, Match membership and active source hash fence factual attribution',async()=>{
+ reset();
+ records.get('matches/m/games/g/replaySources/r1').playerMapping=[{replaySlot:1,playerId:'a'},{replaySlot:2,playerId:'c'}];
+ const wrong=await getPlayerChronicle.run(request);
+ assert.equal(wrong.coverage.readableAcceptedGames,0);
+ assert.equal(wrong.coverage.excludedGames,1);
+ assert.equal(wrong.chronicle.pages.length,0);
+ reset();
+ records.get('matches/m').participants=[{playerId:'a'},{playerId:'c'}];
+ const mismatched=await getPlayerChronicle.run(request);
+ assert.equal(mismatched.coverage.readableAcceptedGames,0);
+ reset();
+ records.get('matches/m/games/g/replaySources/r1').sourceHash='wrong-hash';
+ const source=await getPlayerChronicle.run(request);
+ assert.equal(source.coverage.readableAcceptedGames,0);
+});
