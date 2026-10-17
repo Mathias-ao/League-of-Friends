@@ -214,7 +214,7 @@ def _base_family(deed, context, family, actor, target, directional_facets):
     pressure = directed and ("ECONOMY_PRESSURE" in facets or
                             ("TARGETED_COMMAND" in facets and
                              _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"})))
-    help_ = directed and "DEFENSIVE_PARTICIPATION" in facets and _has_linked_detector(
+    help_ = directed and bool({"DEFENSIVE_PARTICIPATION", "REINFORCEMENT_COMMANDS"} & facets) and _has_linked_detector(
         deed, context, {"DEFENSIVE_ASSIST", "REINFORCEMENT"}, own_events, actor, target)
     if family == "PAIR_CONTEST":
         return contest
@@ -429,9 +429,15 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, replay_bindings, inciden
                 # Actor-specific SOURCE_EVENT, never a shared pair-deed as proof that both
                 # participants independently acted in both directions.
                 own_event_ids = sorted({e for f in facet_events[(actor, target)]
+                                        if f["kind"] in {"TARGETED_COMMAND", "ECONOMY_PRESSURE",
+                                            "DEFENSIVE_PARTICIPATION", "REINFORCEMENT_COMMANDS"}
                                         for e in f["sourceEventIds"]})
-                wref = _ref("SOURCE_EVENT", own_event_ids[0],
+                # A LOCAL_COMMAND_OVERLAP can contain the opponent's action; only
+                # actor-owned targeted/offense/support event refs qualify.
+                recip_eligible = recip_eligible and bool(own_event_ids)
+                wref = (_ref("SOURCE_EVENT", own_event_ids[0],
                             snapshot["authorityRevision"], snapshot["sourceHash"])
+                        if own_event_ids else None)
                 claim = {"claimId": claim_id,
                     "claimRevision": _hash([claim_id, revision, decision, reasons,
                                             calibration["version"], calibration["policy"]]),
