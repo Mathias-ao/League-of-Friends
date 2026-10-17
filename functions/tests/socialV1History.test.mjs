@@ -236,7 +236,7 @@ test('simultaneous ordinary Hostility and Treachery pend only their dependent di
  const s=get(r,rel('HOSTILITY'));
  assert.equal(s.status,'PENDING');
  assert.ok(s.pendingReasons.includes('AMBIGUOUS_SAME_MOMENT'));
- assert.equal(s.lastVerifiedHistoricalStage,0);
+ assert.equal(s.lastVerifiedHistoricalStage,null);
  assert.equal(receipts(r,'EXCEPTIONAL_STAGE').length,0);
  assert.equal(get(r,rep('CRUELTY')).stage,1);
 });
@@ -259,4 +259,12 @@ test('Rivalry same-moment weakening and binding skill acknowledgment cannot forc
  assert.equal(s.status,'PENDING');assert.equal(s.currentStage,null);
  assert.ok(s.pendingReasons.includes('AMBIGUOUS_SAME_MOMENT'));
  assert.equal(s.lastVerifiedHistoricalStage,3);
+});
+
+test('a weakening-only claim cannot fabricate ordinary strengthening reciprocity',()=>{
+ const c=ch(1),a=fx(c,rel('BOND'),281,{strength:'large',reciprocity:true});
+ const weakening=fx(c,rel('BOND','b','a'),282,{effect:'WEAKEN',reciprocity:true});
+ const r=run([c],[a,weakening]);
+ assert.equal(get(r,rel('BOND')).stage,2);
+ assert.equal(get(r,rel('BOND','b','a')).reciprocityEvents,0);
 });
