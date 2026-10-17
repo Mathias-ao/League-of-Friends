@@ -57,7 +57,7 @@ for(const [name,format,expected] of cases){
     gameConfigSnapshot:config,seasonId,eventId,context:{affectsSeasonStats:true,affectsLifetimeStats:true,affectsLeaguePoints:true,affectsGold:true},
     scoringSnapshot:seasonScoringSnapshot({act:'MAIN',diplomacyEnabled:false,placementPolicy:'NONE',emperorPlayerId:null}),goldRewardSnapshot:{matchCompletion:1,matchWin:2}});
   await db.doc('seasons/'+seasonId).set({status:'ACTIVE'});
-  await db.doc('events/'+eventId).set({status:'ACTIVE',seasonId});
+  await db.doc('events/'+eventId).set({status:'ACTIVE',seasonId,officialMatchIds:[matchId],warmupMatchIds:[]});
   for(const p of roster)await db.doc('events/'+eventId+'/scoringSlots/MAIN_'+p.playerId).set({matchId,playerId:p.playerId,seasonId,act:'MAIN'});
   await gr.create({status:'READY',gameNumber:1,players:roster,replayStatisticsRevision:0,activeReplayStatisticsId:null,
     replayParticipantBindings:players.map((p,i)=>({sourceNameNormalized:p.name.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US'),playerId:roster[i].playerId}))});

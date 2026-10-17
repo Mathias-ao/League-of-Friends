@@ -56,6 +56,23 @@ Game-local evidence. Registered league guests/helpers need no scoring slot or
 Season enrollment. Unknown roster identities, ambiguous mappings and AI evidence
 cannot become player social candidates.
 
+17 October acceptance corrections: Event Battle admission requires reciprocal
+membership in the current Event's `officialMatchIds` or `warmupMatchIds`, the
+existing Event/Match Season check, and eligible current authority states. Missing,
+malformed, ambiguous or absent membership fails closed with membership reason codes.
+Cancelled or replaced Matches cannot regain admission merely by retaining a list
+entry. Non-scoring warmups and registered helpers use the same membership rule;
+points, scoring slots and main-Event/Season enrollment are not admission conditions.
+These documents remain covered by the existing final transaction and cursor token.
+
+`history.factualHistoryEligible` starts false and becomes true only after the
+active READY recording artifact passes the existing integrity, revision, mapping
+and provenance checks. Planned Game metadata, unverified sources and disputed or
+withdrawn authority cannot establish accepted factual history. A verified active
+recording with an unresolved official result still supplies gameplay facts while
+its result revision and winners remain unresolved; no DTO or Chronicle change is
+needed.
+
 ## Trust states and V1b dependencies
 
 The Python bridge now permits `resultRevision=null` only with explicit
@@ -102,6 +119,11 @@ and compares all returned local fact/candidate semantics with native, excluding
 source-specific identities. The alternate canonical fixture is emulator seeding,
 not a new production migration path. Existing upload/correction/rollback tests
 remain required; V1a tests current-authority filtering after their state changes.
+
+The eligibility regressions use explicit official/warmup membership lists, cover
+unlisted Matches, valid official and non-scoring/guest warmups, retained cancelled
+replacement entries, planned Games without READY evidence, verified pending
+results, and Event membership/status changes during reads and between pages.
 
 These are handler + real worker + Firestore/Storage emulator tests, not browser,
 live cloud, deployed security-rules or substantive-social-qualification acceptance.
