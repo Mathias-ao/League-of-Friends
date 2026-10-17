@@ -228,7 +228,7 @@ class QualificationTests(unittest.TestCase):
         a["context"]["engagementContexts"] = []
         a["context"]["deedContexts"][0]["linkedEngagementDetectors"] = []
         self.assertFalse(admitted(a, "PAIR_CONTEST"))
-        b = case(kind="co-target", contest=True)
+        b = case(kind="co-target", contest=True, people=(1, 2, 3))
         self.assertFalse(admitted(b, "PAIR_CONTEST"))
 
     def test_ffa_qualified_direction_only_with_own_explicit_support(self):
@@ -428,7 +428,13 @@ class QualificationTests(unittest.TestCase):
         b["pair_observations"][1]["moment"]["atMs"] = 11000
         b["pair_observations"][1]["moment"]["operationOrdinal"] = 10
         altered = decisions(b)
-        self.assertTrue(all(e["claim"]["decision"] == "PENDING" for e in altered["effects"]))
+        self.assertFalse(any(e["claim"]["decision"] == "QUALIFIED"
+                             for e in altered["effects"]))
+        contested = [e["claim"] for e in altered["effects"]
+                     if e["claim"]["subject"]["track"] == "RIVALRY"
+                     and e["claim"]["effect"] == "STRENGTHEN"]
+        self.assertEqual(len(contested), 1)
+        self.assertEqual(contested[0]["decision"], "PENDING")
 
     def test_explicit_v1_v2_contracts_never_mint_castle_objective_proof(self):
         b = case(kind="contest", contest=True)
