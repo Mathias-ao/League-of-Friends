@@ -68,7 +68,6 @@ export interface HistoricalProjection {
   currentStage: number | null; lastVerifiedHistoricalStage: number | null;
   status: 'VERIFIED' | 'PENDING'; pendingReasons: string[];
   transitions: Array<{kind: 'UP' | 'DOWN' | 'EXCEPTIONAL_UP'; stage: number; at: number[]}>;
-  quarantinedPreExceptionWeakening: number;
   reciprocityEvents: number | null;
 }
 export interface HistoricalResult {
