@@ -161,6 +161,7 @@ export interface PlayerChronicleProjection {
 export interface PlayerChronicleBookEntry {
   entryId:string;battleId:string;eventId:string|null;seasonId:string|null;playedAtMs:number|null;
   rubric:string;title:string;paragraphs:string[];
+  sceneId?:string;resultStatus?:'OFFICIAL'|'UNRESOLVED';chronologyStatus?:'QUALIFIED'|'UNRESOLVED';
 }
 export interface PlayerChronicleBookPage {pairId:string;counterpartPlayerId:string;entries:PlayerChronicleBookEntry[];}
 export interface PlayerChronicleBookProjection {
@@ -170,7 +171,7 @@ export interface PlayerChronicleBookProjection {
 }
 export interface PlayerChronicleResponse {
   success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleBookProjection;names:Record<string,string>;
-  coverage:{completedBattles:number;readableAcceptedGames:number;excludedGames:number;opportunityCompleteness:boolean};
+  coverage:{completedBattles:number;scannedBattles?:number;readableAcceptedGames:number;excludedGames:number;unresolvedOutcomeGames?:number;chronologyPendingBattles?:number;opportunityCompleteness:boolean};
 }
 export interface SocialHistoryResponse {
   success:true;status:'AVAILABLE'|'PARTIAL';chronicle:PlayerChronicleProjection;names:Record<string,string>;
