@@ -114,7 +114,7 @@ def validate_inference_configuration(config):
     return config
 
 
-def _fact_index(facts, *, authority, bindings, source_events):
+def _fact_index(facts, *, authority, bindings, source_events, observations):
     """Validate typed provenance/clock, not factual authenticity of an external model."""
     index = {}
     for f in facts:
@@ -138,8 +138,12 @@ def _fact_index(facts, *, authority, bindings, source_events):
                  "UNBOUND_MEASUREMENT_PAIR")
         ids = f["sourceEventIds"]
         _require(isinstance(ids, list) and ids and len(ids) == len(set(ids))
-                 and all(isinstance(x, str) and x and x in source_events for x in ids),
+                 and all(isinstance(x, str) and x and x in source_events
+                         and x in observations for x in ids),
                  "UNVERIFIABLE_MEASUREMENT_EVENTS")
+        _require(all(f["windowStartMs"] <= observations[e]["atMs"] <=
+                     f["windowEndMs"] for e in ids),
+                 "SOURCE_EVENTS_OUTSIDE_MEASUREMENT_WINDOW")
         k = (f["kind"], f["fromReplayPlayerId"], f["toReplayPlayerId"])
         if f in index.get(k, []):
             continue
@@ -300,7 +304,7 @@ def _qualify(deed, context, family, actor, target, index, rule, directional_face
     return "QUALIFIED", ["BOUNDED_ORDINARY_INFERENCE_NOT_EXECUTION_PROOF"], support, before, counter
 
 
-def qualify_social_v1(*, snapshot, context, pair_deeds, replay_bindings, incident_lineages,
+def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, replay_bindings, incident_lineages,
                       measurements, calibration, historical_order):
     """Return canonical Inference/Claim DTOs and inactive #139 input wrappers.
 
@@ -327,8 +331,23 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, replay_bindings, inciden
     _require(isinstance(incident_lineages, dict), "INCIDENT_LINEAGES_REQUIRED")
     bindings = _normalize_bindings(snapshot, replay_bindings, calibration)
     source_events = _source_events(context)
+    _require(isinstance(pair_observations, list), "ORIGINAL_SOURCE_OBSERVATIONS_REQUIRED")
+    original_events = {}
+    for event in pair_observations:
+        _require(isinstance(event, dict) and isinstance(event.get("sourceEventId"), str)
+                 and isinstance(event.get("moment"), dict)
+                 and type(event["moment"].get("atMs")) is int
+                 and event["moment"]["atMs"] >= 0
+                 and type(event.get("actorPlayerId")) is int
+                 and event["actorPlayerId"] in bindings["players"],
+                 "INVALID_RECORDED_EVENT_ANCHOR")
+        e = {"atMs": event["moment"]["atMs"], "actor": event["actorPlayerId"]}
+        prior = original_events.get(event["sourceEventId"])
+        _require(prior is None or prior == e, "CONFLICTING_RECORDED_EVENT_ID")
+        original_events[event["sourceEventId"]] = e
     index = _fact_index(measurements, authority=snapshot["authorityRevision"],
-                        bindings=bindings, source_events=source_events)
+                        bindings=bindings, source_events=source_events,
+                        observations=original_events)
     _require(isinstance(pair_deeds, list), "PAIR_SOURCE_DEEDS_REQUIRED")
     source_deeds = {}
     for raw in pair_deeds:
@@ -350,6 +369,9 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, replay_bindings, inciden
         if did not in incident_lineages:
             continue  # unbound neutral evidence; never fabricate incident lineage
         original = source_deeds.get(did)
+        _require(all(ref in original_events and
+                     deed["firstAtMs"] <= original_events[ref]["atMs"] <= deed["lastAtMs"]
+                     for ref in deed["sourceEventIds"]), "DEED_EVENTS_NOT_IN_ORIGINAL_CLOCK")
         _require(original is not None and
                  set(original["sourceEventIds"]) == set(deed["sourceEventIds"])
                  and sorted({f.get("kind") for f in original["facets"]}) == deed["facetKinds"],
