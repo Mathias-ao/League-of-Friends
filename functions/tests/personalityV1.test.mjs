@@ -37,7 +37,7 @@ const game=(i=1,mod={})=>{
   const original={
     battleId:'battle-'+i,matchId:'battle-'+i,gameId:'game-'+i,gameNumber:1,playerId:'playerA',
     replaySlot:1,sourceHash:hex(i+100),sourceAuthority:hex(i+200),mappingDigest:hex(i+300),
-    authorityRevision:1,sourceStatus:'READY',outcome:'OFFICIAL',admitted:true,
+    authorityRevision:1,sourceStatus:'READY',outcome:'OFFICIAL',admitted:true,episodeChronologyComplete:true,
     playedAtMs:i*10000,context:baseContext(),statistics:baseStats(),
   };
   return {...original,...mod};
@@ -164,6 +164,8 @@ test('Guerrilla/Frontline requires attributed military commands; overlapping det
     {baseOwnerPlayerId:null,startedAtMs:100000,endedAtMs:120000,contributionSourceEventIdsByPlayer:{1:['raid1']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}}
   ];});
   assert.equal(measurePersonalityGame(overlap,c).features.GUERRILLA_FRONTLINE.fraction,null);
+  assert.equal(measurePersonalityGame({...game(),episodeChronologyComplete:false},c)
+    .features.GUERRILLA_FRONTLINE.fraction,null);
 });
 test('Specialist family opportunity, unknown queues and diversifying positive requests',()=>{
   const c=config(),broad=tweak(game(),p=>{p.military.composition.infantry=5;p.military.composition.archers=5;});
@@ -174,9 +176,16 @@ test('Specialist family opportunity, unknown queues and diversifying positive re
   const oneFamily={...c,availableMilitaryFamilies:{LAND_STANDARD:['infantry']}};
   assert.equal(measurePersonalityGame(game(),oneFamily).features.SPECIALIST_IMPROVISER.fraction,null);
 });
+test('truncated map sector and expansion-zone evidence never becomes observed zero',()=>{
+  const c=config();
+  const sectors=tweak(game(),p=>{p.mapPresence.buildingSectors.classifiedPlacementCount=10;});
+  assert.equal(measurePersonalityGame(sectors,c).features.CAUTIOUS_BOLD.fraction,null);
+  const zones=tweak(game(),p=>{p.mapPresence.expansionZones.eligibleRemoteBuildingCount=10;});
+  assert.equal(measurePersonalityGame(zones,c).features.COMPACT_EXPANSIVE.fraction,null);
+});
 test('repeated BUILD clicks cannot fabricate remote sites; missing initial TC blocks positional claims',()=>{
   const x=tweak(game(),p=>{p.mapPresence.expansionZones.eligibleRemoteBuildingCount=100;});
-  assert.equal(measurePersonalityGame(x,config()).features.COMPACT_EXPANSIVE.fraction,1/3);
+  assert.equal(measurePersonalityGame(x,config()).features.COMPACT_EXPANSIVE.fraction,null);
   const noAnchor=tweak(game(),p=>{p.mapPresence.homeAnchor.method=null;});
   assert.equal(measurePersonalityGame(noAnchor,config()).features.COMPACT_EXPANSIVE.fraction,null);
   assert.equal(measurePersonalityGame(noAnchor,config()).features.CAUTIOUS_BOLD.fraction,null);
