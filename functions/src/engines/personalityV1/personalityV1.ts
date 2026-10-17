@@ -27,7 +27,15 @@ const id = (v: unknown): string | null => typeof v === 'string' && v.length > 0 
 const digest = (v: unknown): string => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const mean = (v: number[]): number => v.reduce((s, x) => s + x, 0) / v.length;
 const median = (values:number[]):number => {const a=[...values].sort((x,y)=>x-y), m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;};
-const hasModel = (v:unknown):boolean => typeof v==='string' && v.startsWith('AOF_');
+/** A changed upstream formula requires explicit review and a new Personality feature version. */
+const sourceVersion = (actual:unknown, expected:string):boolean => actual === expected;
+const MODELS = {
+  economy:'AOF_RESOURCE_COMMITMENT_V1',
+  military:'AOF_MILITARY_STATISTICS_V5',
+  map:'AOF_MAP_PRESENCE_V8',
+  engagement:'AOF_ENGAGEMENT_STATISTICS_V4',
+  raid:'AOF_RAID_DETECTION_V3',
+} as const;
 
 export type Format = 'ONE_V_ONE' | 'TEAM' | 'FFA';
 export type MapFamily = 'LAND' | 'WATER' | 'HYBRID';
@@ -174,7 +182,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   // or a fabricated 20-minute economy denominator.
   result.BOOMER_AGGRESSOR = total !== null && mil !== null &&
     coverage.unpricedRequestCommands === 0 && spend.unpricedMilitaryCommandAmount === 0 &&
-    hasModel(commitment.modelVersion) && hasModel(military.modelVersion)
+    sourceVersion(commitment.modelVersion,MODELS.economy) &&
+    sourceVersion(military.modelVersion,MODELS.military)
     ? feature('BOOMER_AGGRESSOR','RECORDED_COMMITMENT',mil,total,[],
         [String(commitment.modelVersion ?? ''),String(military.modelVersion ?? '')])
     : missing('BOOMER_AGGRESSOR','RECORDED_COMMITMENT','FULL_GAME_COST_COVERAGE_UNAVAILABLE');
@@ -190,7 +199,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     (!['home','forward','midMap'].includes(x.sector) || !id(x.sourceEventId)));
   result.CAUTIOUS_BOLD = config && strategic.length && !unknown &&
     obj(mp.homeAnchor).method === 'initial_town_center' &&
-    num(sectors.classifiedPlacementCount) !== null && hasModel(mp.modelVersion)
+    num(sectors.classifiedPlacementCount) !== null && sourceVersion(mp.modelVersion,MODELS.map)
     ? feature('CAUTIOUS_BOLD','PLACEMENT_POSTURE',
         unique.filter(x => x.sector === 'forward').length,unique.length,ids(unique),
         [String(mp.modelVersion ?? '')])
@@ -203,10 +212,11 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const battleRows = list(obj(engagements.engagementEvidence).battles);
   const slot = String(p.playerId);
   const candidates: {kind:'ECONOMY'|'CONTESTED'; sources:string[]}[] = [];
-  if ((c.format !== 'FFA' || c.dynamicDiplomacyQualified) && hasModel(engagements.engagementModelVersion)) {
+  if ((c.format !== 'FFA' || c.dynamicDiplomacyQualified) && sourceVersion(engagements.engagementModelVersion,MODELS.engagement)) {
     for (const row of raidRows) {
       const sourceIds = Array.isArray(row.sourceEventIds) ? row.sourceEventIds.filter((v:unknown):v is string=>!!id(v)) : [];
-      if (row.attackerPlayerId === p.playerId && num(row.victimPlayerId) !== null &&
+      if (sourceVersion(row.modelVersion,MODELS.raid) && row.attackerPlayerId === p.playerId &&
+          num(row.victimPlayerId) !== null &&
           sourceIds.length && num(row.startedAtMs) !== null && row.startedAtMs <= c.observedUntilMs &&
           (num(row.endedAtMs) === null || row.endedAtMs <= c.observedUntilMs)) candidates.push({kind:'ECONOMY',sources:sourceIds});
     }
@@ -230,7 +240,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     episodes.push(row);
   }
   result.GUERRILLA_FRONTLINE = config && game.episodeChronologyComplete === true &&
-    !overlapAmbiguous && hasModel(engagements.engagementModelVersion) &&
+    !overlapAmbiguous && sourceVersion(engagements.engagementModelVersion,MODELS.engagement) &&
     (c.format !== 'FFA' || c.dynamicDiplomacyQualified) &&
     episodes.length >= config.minimumIndependentCommandEpisodes
     ? feature('GUERRILLA_FRONTLINE','COMMAND_POSTURE',
@@ -251,7 +261,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const entropyFraction = entropy === null ? null : Math.max(0, Math.min(1, entropy));
   // No unknown/unclassified positive queues or artificial zero-sample specialization.
   result.SPECIALIST_IMPROVISER = allowed.length > 1 && entropyFraction !== null &&
-    totalRequests === included && num(requests.unknownAmountCommands) === 0 && hasModel(military.modelVersion)
+    totalRequests === included && num(requests.unknownAmountCommands) === 0 && sourceVersion(military.modelVersion,MODELS.military)
     ? feature('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION',entropyFraction,1,[],
         [String(military.modelVersion ?? '')])
     : missing('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION','CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE');
@@ -259,7 +269,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   // E: site-normalized distinct remote expansion *placement* clusters, not raw clicks.
   const zones = obj(mp.expansionZones), remote = num(zones.eligibleRemoteBuildingCount),
     home = num(zones.eligibleBuildingPlacementsInsideHomeRadius), sites = num(zones.count);
-  const supported = zones.status === 'ok' && hasModel(mp.modelVersion) &&
+  const supported = zones.status === 'ok' && sourceVersion(mp.modelVersion,MODELS.map) &&
     obj(mp.homeAnchor).method === 'initial_town_center' &&
     remote !== null && home !== null && sites !== null && sites <= remote &&
     list(zones.zones).length === sites &&
