@@ -1,5 +1,7 @@
 # Age of Friends — Relationship V1 approved design baseline
 
+> **V1 implementation amendment:** The owner has since directed ordinary inference-first progression and rare source-linked reporting. See the [precise ordinary-evidence amendment](social-v1-inference-amendment.md) and [SHARED_1 contract](../../contracts/social-v1/README.md). These supersede the ordinary execution-proof and reporting-scope restrictions identified there; this historical approval record remains preserved. Detailed predicates/calibration are not approved by the method decision. Strict Treachery, special Forward Castle proof, independent stage-3+ reciprocity, privacy and source corrections remain binding.
+
 **Approved design, not implemented or activated.** Consolidated 13 October 2026. This is a compact continuation of [AOF-SOC-001–057](social-relationship-decisions-001-057.md), not a replacement for its detailed rules or a numeric scoring specification. It captures subsequent **AOF-SOC-058–088**, **REL-V1-EVID-01–06**, and **REL-V1-CAL-01–17** approvals. The older register/handover's “SOC-058 pending” reflects its earlier snapshot; **SOC-089 remains deferred**. Nothing here authorizes code, staging, Firebase, E2E, flags, deployment or merging.
 
 **Product promise:** *Play the game. Build your history. Let Age of Friends remember.*

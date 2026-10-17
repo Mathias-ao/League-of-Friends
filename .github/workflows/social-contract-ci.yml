@@ -1,0 +1,43 @@
+name: Social Contract CI
+
+on:
+  pull_request:
+    paths:
+      - "contracts/social-v1/**"
+      - "functions/src/domain/socialV1.ts"
+      - "functions/tests/socialV1Contract.test.mjs"
+      - "functions/package*.json"
+      - "replay-tools/social_v1_contract.py"
+      - "replay-tools/tests/test_social_v1_contract.py"
+      - "replay-tools/requirements.txt"
+      - ".github/workflows/social-contract-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "contracts/social-v1/**"
+      - "functions/src/domain/socialV1.ts"
+      - "functions/tests/socialV1Contract.test.mjs"
+      - "functions/package*.json"
+      - "replay-tools/social_v1_contract.py"
+      - "replay-tools/tests/test_social_v1_contract.py"
+      - "replay-tools/requirements.txt"
+      - ".github/workflows/social-contract-ci.yml"
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r replay-tools/requirements.txt
+      - run: npm ci --prefix functions
+      - run: npm run build --prefix functions
+      - run: python -m unittest discover -s replay-tools/tests -p test_social_v1_contract.py -v
+      - run: node --test functions/tests/socialV1Contract.test.mjs
+        env:
+          AOF_SOCIAL_CONFORMANCE_PYTHON: python
