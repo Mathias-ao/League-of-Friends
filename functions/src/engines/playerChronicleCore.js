@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {buildPriorNarrativeContext,writeBattleNarrative} from './playerChronicleNarrative.js';
 
 /** Deterministic player Chronicle projection from the source-qualified social shadow read model.
@@ -105,8 +106,14 @@ function composeEntry(group,first,ownerName,counterpartName,history,ownerPlayerI
   const sourceEventIds=unique(ordered.flatMap(beat=>rows(beat.sourceEventIds)));
   const marks=contributionMarks(history,group.battleId,ownerPlayerId,counterpartPlayerId);
   const narrative=writeBattleNarrative({group:{...group,beats:ordered},first,ownerName,counterpartName,context,names});
+  // Match === league Battle; content/revisions/Game count never change scene identity.
+  const sceneId=createHash('sha256').update(JSON.stringify(['AOF_SOCIAL_V1_SHARED_1','SCENE',group.battleId,ownerPlayerId,counterpartPlayerId])).digest('hex');
   return {
-    entryId:PLAYER_CHRONICLE_ENTRY_ID_VERSION+':'+ownerPlayerId+':'+counterpartPlayerId+':'+group.battleId+':'+(sourceBeatIds.join(',')||'exposure'),
+    entryId:PLAYER_CHRONICLE_ENTRY_ID_VERSION+':'+sceneId,
+    sceneId,
+    resultStatus:group.resultStatus,
+    chronologyStatus:group.chronologyQualified?'QUALIFIED':'UNRESOLVED',
+    sourceLineage:group.sourceLineage,
     battleId:group.battleId,
     eventId:group.eventId,
     seasonId:group.seasonId,
@@ -152,18 +159,24 @@ export function projectPlayerChronicle({ownerPlayerId,chapters=[],history=null,n
       const exposure=exposureForLeaguePair(raw,chapter,participants,ownerPlayerId);if(!exposure)continue;
       const page=ensurePage(exposure.counterpartPlayerId);
       if(!page.firstExposure||exposure.chapterOrder<page.firstExposure.chapterOrder)page.firstExposure=exposure;
-      const group=page.groups.get(exposure.battleId)??{battleId:exposure.battleId,eventId:exposure.eventId,seasonId:exposure.seasonId,playedAtMs:exposure.playedAtMs,order:exposure.chapterOrder,beats:[],firstExposure:exposure};
+      const group=page.groups.get(exposure.battleId)??{battleId:exposure.battleId,eventId:exposure.eventId,seasonId:exposure.seasonId,playedAtMs:exposure.playedAtMs,order:exposure.chapterOrder,beats:[],firstExposure:exposure,resultStatus:'OFFICIAL',chronologyQualified:true,sourceLineage:[]};
       if(exposure.chapterOrder<group.order){group.order=exposure.chapterOrder;group.firstExposure=exposure;}
       if(group.playedAtMs==null&&exposure.playedAtMs!=null)group.playedAtMs=exposure.playedAtMs;
+      if(chapter.resultStatus==='UNRESOLVED')group.resultStatus='UNRESOLVED';
+      if(chapter.chronologyQualified===false)group.chronologyQualified=false;
+      if(chapter.sourceRevision)group.sourceLineage.push({gameIdentity:chapter.gameIdentity,sourceRevision:chapter.sourceRevision});
       page.groups.set(exposure.battleId,group);
     }
     for(const raw of rows(chapter.review.chronicle)){
       const beat=beatForLeaguePair(raw,chapter,participants,ownerPlayerId);if(!beat)continue;
       const page=ensurePage(beat.counterpartPlayerId);
-      const group=page.groups.get(beat.battleId)??{battleId:beat.battleId,eventId:beat.eventId,seasonId:beat.seasonId,playedAtMs:beat.playedAtMs,order:beat.chapterOrder,beats:[],firstExposure:null};
+      const group=page.groups.get(beat.battleId)??{battleId:beat.battleId,eventId:beat.eventId,seasonId:beat.seasonId,playedAtMs:beat.playedAtMs,order:beat.chapterOrder,beats:[],firstExposure:null,resultStatus:'OFFICIAL',chronologyQualified:true,sourceLineage:[]};
       group.beats.push(beat);
       if(beat.chapterOrder<group.order)group.order=beat.chapterOrder;
       if(group.playedAtMs==null&&beat.playedAtMs!=null)group.playedAtMs=beat.playedAtMs;
+      if(chapter.resultStatus==='UNRESOLVED')group.resultStatus='UNRESOLVED';
+      if(chapter.chronologyQualified===false)group.chronologyQualified=false;
+      if(chapter.sourceRevision&&!group.sourceLineage.some(x=>x.gameIdentity===chapter.gameIdentity))group.sourceLineage.push({gameIdentity:chapter.gameIdentity,sourceRevision:chapter.sourceRevision});
       page.groups.set(beat.battleId,group);
     }
   }
@@ -177,10 +190,10 @@ export function projectPlayerChronicle({ownerPlayerId,chapters=[],history=null,n
     const entries=[],priorGroups=[];
     for(let index=0;index<groups.length;index++){
       const group=groups[index];
-      const context=buildPriorNarrativeContext({group,priorGroups,history,ownerPlayerId,counterpartPlayerId,orderByGame});
-      const entry=composeEntry(group,index===0,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId,context,names);
+      const context=group.chronologyQualified?buildPriorNarrativeContext({group,priorGroups:priorGroups.filter(g=>g.chronologyQualified),history,ownerPlayerId,counterpartPlayerId,orderByGame}):null;
+      const entry=composeEntry(group,index===0&&group.chronologyQualified,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId,context,names);
       if(index===0||entry.sourceBeatIds.length>0||entry.relationshipMarks.length>0||entry.reputationMarks.length>0)entries.push(entry);
-      priorGroups.push(group);
+      if(group.chronologyQualified)priorGroups.push(group);
     }
     pages.push({
       pairId:pairKey(ownerPlayerId,counterpartPlayerId),
