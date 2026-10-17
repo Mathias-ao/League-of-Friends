@@ -164,6 +164,15 @@ export async function readSocialHistory(ownerPlayerId:string){
       // Historical legacy IDs are scoped to the active source, not upload time.
       const sourceKey=(source.sourceHash??sourceId);
       const guid=source.matchFacts?.game?.guid;
+      if(native&&typeof guid==='string'&&guid.length>0){
+        const claimRef=db.collection('recordingGameClaims').doc(Buffer.from(guid,'utf8').toString('hex'));
+        const claim=await claimRef.get();
+        if(!claim.exists||claim.data()?.matchId!==match.doc.id||
+           claim.data()?.gameId!==game.doc.id||claim.data()?.sourceHash!==sourceId){
+          excluded.push({gameIdentity,reason:'native_Game_GUID_claim_unverified'});continue;
+        }
+        checkpoints.push({ref:claimRef,token:token(claim.data()),type:'GUID'});
+      }
       if(duplicateSources.has(sourceKey)||typeof guid==='string'&&guid.length>0&&duplicateGuids.has(guid)){
         excluded.push({gameIdentity,reason:'duplicate_recording_evidence'});continue;
       }
@@ -204,7 +213,7 @@ export async function readSocialHistory(ownerPlayerId:string){
         playedAtMs:match.at,eventId:data.eventId??null,seasonId:data.seasonId??null,
         chronologyQualified:match.at!==null,order,revision:official.resultRevision,
         resultStatus:official.qualification==='OFFICIAL'?'OFFICIAL':'UNRESOLVED',
-        accepted:true,review});
+        sourceRevision:sourceId,accepted:true,review});
     }
     if(admittedInMatch&&match.at===null)chronologyPending++;
   }
@@ -215,7 +224,8 @@ export async function readSocialHistory(ownerPlayerId:string){
     for(let n=0;n<batch.length;n++){
       const item=batch[n],current=fresh[n]?.data();
       const digest=item.type==='MATCH'?matchToken(current):item.type==='SOURCE'?sourceToken(current):
-        item.type==='GAME'?gameToken(current):item.type==='EVENT'?eventToken(current):seasonToken(current);
+        item.type==='GAME'?gameToken(current):item.type==='EVENT'?eventToken(current):
+        item.type==='GUID'?token(current):seasonToken(current);
       if(!fresh[n]?.exists||item.token!==digest)
         throw new HttpsError('aborted','Accepted Chronicle authority changed during the read; retry.');
     }
