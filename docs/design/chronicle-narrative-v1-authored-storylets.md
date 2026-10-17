@@ -247,3 +247,36 @@ Human editorial gate: reviewers see ten consecutive same-pair chapters as one pa
 **Owner decisions needed before a code PR:** (a) approve the court-annalist register and word budgets; (b) approve selected lead-ins after native-speaker copy edit; (c) approve how eligible exceptional family names arrive from #130 (none presumed live); (d) agree a minimal contract with #125 for accepted/pending results, stable chronology and re-rendering after correction; (e) agree whether testimony is exclusively an inset owned by #128 (recommended); (f) accept C1 corpus freezing + explicit reviewed future version bumps. No new numeric social progression, rarity thresholds or territories are specified here.
 
 **Acceptance definition:** a reader recognises the real pair's actual history and meaningful reversals, not a story-generator’s tricks. The Chronicle remains true when the source is weak, eloquent when its history is rich, and exceptional only when the event has earned it.
+
+
+## 10. Organiser 2 review response and first isolated C1 implementation (17 October 2026)
+
+**Review status:** Organiser 2 recommended, but did not formally approve, the restrained annalist voice and low-cost C1 direction. See [draft design PR #134](https://github.com/Mathias-ao/League-of-Friends/pull/134). This section records the requested fact-grammar tightening and subsequent narrow implementation. It does not grant launch activation or alter earlier draft candidate predicates.
+
+**Worker 5 interface acknowledgment:** Issue [#125](https://github.com/Mathias-ao/League-of-Friends/issues/125) explicitly supplied the stable read-only scene seam at factual draft [PR #136](https://github.com/Mathias-ao/League-of-Friends/pull/136): one pair × Battle, qualified ordered beats, deterministic SHA-256 scene ID and stable entry ID, result status (OFFICIAL or UNRESOLVED), chronology qualification, internal-only source lineage. A #131 consumer-side agreement was posted to #125. Source admission, correction, ordering, result qualification, paging and privacy remain exclusively #125's responsibilities; #128 still owns testimony. **#136 remains draft/unmerged at this checkpoint**.
+
+**Scope delivered:** [stacked draft PR #140](https://github.com/Mathias-ao/League-of-Friends/pull/140), based exactly on #136's branch, changes only (1) new pure playerChronicleStorylets.js, (2) a narrow call in playerChronicleNarrative.js, and (3) one focused test file. No changes to playerChronicleCore.js, source/query/pagination, prompt selector, privacy DTO, scores or stage rules. No deployment or runtime AI. #134 remains docs-only.
+
+**Extra truth/guard adjustments prompted by review:**
+- No “the same opponent drew both” or implied joint plan: only an admitted same-engagement, common-opponent participant fact is written, with explicit separation from coordination.
+- Defensive prose and titles depend on admitted DEFENSIVE_PARTICIPATION. **Reinforcement commands** instead receive an orders-specific sentence/title bank; they cannot acquire the title “a familiar defence” or claim reinforcement arrival.
+- Accepted official-duel storylets require the existing ACCEPTED_DUEL_CONTEST beat. A scene with an UNRESOLVED result is not upgraded into C1 duel wording by the composer.
+- Ally declaration and effective alliance remain separate; the exceptional Treachery beat and its dedicated king-loss semantics **do not enter C1 variation**.
+- A material-aid order with no positive supported resource quantity falls back to the existing conservative writer; any aid wording says **order**, not receipt.
+- Post-withdrawal offence remains an **attempt**, not a kill, accomplished damage, effective alliance breach, motive or successful attack.
+- No claim is invented to satisfy repetition targets. C1 only selects a variant after at least **two earlier distinct qualified Battles** in the same qualified family and direction where applicable; the original safe writer remains authoritative elsewhere. The standing epigraph, player perspective and source eligibility are not touched.
+- Repeated certainty disclaimers remain a possible editorial weakness and are deliberately not “solved” by dropping uncertainty. Later copy editing should make these clauses more graceful while retaining the same proof ceiling.
+
+**Complete prose measurement from actual GitHub Backend CI, commit 1850524d (not the earlier preliminary opening-only simulation):**
+
+| Fixture | Entries | Distinct complete paragraphs | Distinct titles | Distinct 5-word openings | Adjacent exact paragraph / title / 5-word opening repeats | Maximum reuse of one full paragraph |
+|---|---:|---:|---:|---:|---:|---:|
+| Same pair, 100 successive accepted duels | 100 | **34** | 6 | 9 | **0 / 0 / 0** | 4 |
+| Same pair, 100 qualified directed defensive episodes | 100 | **34** | 6 | 10 | **0 / 0 / 0** | 4 |
+| Same pair, 120 mixed duel/support/aid/common-opponent/withdrawal/reinforcement episodes | 120 | **114** | 28 | 38 | **0 / 0 / 0** | 2 |
+
+Each metric is computed over the **complete projected paragraph text**, not only the opening selector. All three scenarios pass whole-paragraph dedup checks. The 10-consecutive-Battle fixture covers opposed 1v1 context, locked teammate/4v4-style context, open-diplomacy/FFA context, reverse-directed assistance, changed evidence and a late corrected source, without a new social invitation. Correction tests assert stable entry IDs, byte-identical earlier unaffected scenes after appending a future Battle, and properly recomposed later context after earlier-source correction. Multiple Games within one Battle remain one independent incident for repetition.
+
+**Exact validation:** GitHub Actions Backend CI on [PR #140](https://github.com/Mathias-ao/League-of-Friends/pull/140), commit 1850524d: type-check and build successful; **395/395 backend Node tests passed**, zero failed. This includes the new composer suite and existing Chronicle regressions. The figures come from an actual CI log, but the inputs are controlled fixtures; this is **not** a claim of production long-history coverage, editorial acceptance or release verification. In 100 near-identical Battles, reuse is inevitable and C1 openly reports it instead of adding synthetic heroism.
+
+**Next review gate:** approve the actual prose banks with the owner, await #136 branch merge and preserve stacking/merge order, then use #132's independent multi-user, source/correction, access-control and release-gate acceptance before any activation. Do not present approval of the literary direction as approval of all six exceptional classifications, player testimony semantics, numerical progression, or this implementation's release.
