@@ -2,6 +2,16 @@
 
 Last updated: **15 October 2026**. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
 
+## Social Evidence V1a — 16 October 2026
+
+Main was verified at `4798d358d5f40715198f03a874c153d2c06a72e3`: PR #119's ordinary Recorded Events V1 upload integration is **merged**, not merely branch work. Deployment/activation is not inferred.
+
+[PR #120](https://github.com/Mathias-ao/League-of-Friends/pull/120), implementation `3fe64f532e38dcfc09c90164067cbce641f24f0d`, on `feat/social-evidence-v1a` adds an on-demand, authenticated read-only adapter over retained verified statistics and the merged Python bridge/ledger/family prototypes. See [the versioned V1a contract and acceptance boundaries](../architecture/social-evidence-v1a.md). It preserves real pending results, source-local identities, independent factual history and separate pending deed/track qualifications. Source, mapping, Event and access changes are fenced transactionally. No new upload artifact or history store is introduced.
+
+This is feature-branch implementation awaiting independent review, not merged/deployed/activated social functionality. All substantive qualifications remain pending; approved design is not executable proof. PR #114 remains merged inactive groundwork, and the newer approved Relationship baseline still governs. No Reputation, Relationship stages, reciprocity, Gold, War Room or Chronicle highlights are enabled. The stopped staging E2E remains stopped.
+
+Next bounded task: review the V1a PR's exact source/authority and privacy boundaries and CI. Do not begin progression or broaden into a deployment milestone.
+
 ## Ordinary native upload implementation — 16 October 2026 (supersedes older status)
 
 The ordinary native recording lifecycle is implemented on the feature branch described in [ordinary native upload acceptance](../testing/native-player-upload-v1.md). That document records the exact code commit, PR and validation evidence. **Implementation, merge, deployment and activation are distinct.** Nothing from this work deploys Firebase, changes live flags, or resumes the stopped staging E2E.

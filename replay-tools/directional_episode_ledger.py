@@ -117,9 +117,13 @@ def _league_context(context: dict, source_players: list[int]) -> tuple[dict, dic
         raise ValueError("Verified Event eligibility requires a source reference")
     if context.get("eventBattleEligibility") == "ELIGIBLE" and not _text(context.get("eventId")):
         raise ValueError("Eligible Event Battle must identify its Event")
-    for key in ("chapterRevision", "resultRevision", "gameNumber"):
+    for key in ("chapterRevision", "gameNumber"):
         if not _nonnegative(context.get(key)) or context[key] < 1:
             raise ValueError("Invalid league revision or Game order: " + key)
+    result_revision = context.get("resultRevision")
+    if not (_nonnegative(result_revision) and result_revision >= 1):
+        if not (result_revision is None and context.get("officialOutcomeQualification") == "UNRESOLVED"):
+            raise ValueError("Invalid official result revision")
     if context.get("battleOrder") is not None and not _nonnegative(context["battleOrder"]):
         raise ValueError("Invalid Battle chronology")
     mapping: dict[int, str] = {}
@@ -140,7 +144,7 @@ def _league_context(context: dict, source_players: list[int]) -> tuple[dict, dic
     # eligibility declaration is independent of whether this Battle earns points.
     snapshot = {k: deepcopy(context.get(k)) for k in (
         "matchId", "battleId", "gameId", "eventId", "seasonId", "chapterRevision",
-        "resultRevision", "gameNumber", "battleOrder", "playerMappingRevision",
+        "resultRevision", "officialOutcomeQualification", "gameNumber", "battleOrder", "playerMappingRevision",
         "eventBattleEligibility", "eventEligibilitySourceRef",
     )}
     snapshot["playerMapping"] = [{"replayPlayerId": k, "leaguePlayerId": mapping[k]} for k in sorted(mapping)]

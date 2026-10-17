@@ -27,6 +27,11 @@ interface NativeWorkerTransport {
 export async function callNativeWorker(
   url:string,fileName:string,replayBase64:string,transport:NativeWorkerTransport={},
 ):Promise<Bag>{
+  return callVerifiedWorker(url,'/process-native-v1',{fileName,replayBase64},transport);
+}
+
+/** Shared authenticated transport; route is server-selected, never a client URL. */
+export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'/social-evidence-v1a',payload:Bag,transport:NativeWorkerTransport={}):Promise<Bag>{
   const target=url.replace(/\/+$/,'');
   const parsed=new URL(target),loopback=['127.0.0.1','localhost'].includes(parsed.hostname);
   if(parsed.username||parsed.password||(!loopback&&parsed.protocol!=='https:')||
@@ -42,13 +47,13 @@ export async function callNativeWorker(
     if(!identity)throw fail('Native Cloud Run identity token was not available.');
     headers['X-Serverless-Authorization']='Bearer '+identity;
   }
-  const response=await (transport.fetcher??fetch)(target+'/process-native-v1',{method:'POST',redirect:'error',
-    headers,body:JSON.stringify({fileName,replayBase64}),signal:AbortSignal.timeout(240_000)});
+  const response=await (transport.fetcher??fetch)(target+route,{method:'POST',redirect:'error',
+    headers,body:JSON.stringify(payload),signal:AbortSignal.timeout(240_000)});
   if(!response.ok){await response.body?.cancel();throw fail('Native worker rejected the recording; legacy was not invoked.');}
   if(!response.body)throw fail('Missing native worker response.');
   const reader=response.body.getReader(),chunks:Buffer[]=[];let total=0;
   try{while(true){const next=await reader.read();if(next.done)break;total+=next.value.length;
-    if(total>70*1024*1024)throw fail('Native response exceeds transport limit.');chunks.push(Buffer.from(next.value));}}
+    if(total>(route==='/social-evidence-v1a'?1:70)*1024*1024)throw fail('Worker response exceeds transport limit.');chunks.push(Buffer.from(next.value));}}
   finally{await reader.cancel();}
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }

@@ -1,3 +1,4 @@
+import {socialEvidenceAcceptance} from './social-evidence-v1a-emulator.mjs';
 /** Ordinary upload acceptance. Real local worker + Firebase emulators only.
  * Fixture metadata and expected winners come from the pinned independent TownBell reports.
  * No real identities or recordings are committed in the resulting report. */
@@ -56,7 +57,7 @@ for(const [name,format,expected] of cases){
     gameConfigSnapshot:config,seasonId,eventId,context:{affectsSeasonStats:true,affectsLifetimeStats:true,affectsLeaguePoints:true,affectsGold:true},
     scoringSnapshot:seasonScoringSnapshot({act:'MAIN',diplomacyEnabled:false,placementPolicy:'NONE',emperorPlayerId:null}),goldRewardSnapshot:{matchCompletion:1,matchWin:2}});
   await db.doc('seasons/'+seasonId).set({status:'ACTIVE'});
-  await db.doc('events/'+eventId).set({status:'ACTIVE',seasonId});
+  await db.doc('events/'+eventId).set({status:'ACTIVE',seasonId,officialMatchIds:[matchId],warmupMatchIds:[]});
   for(const p of roster)await db.doc('events/'+eventId+'/scoringSlots/MAIN_'+p.playerId).set({matchId,playerId:p.playerId,seasonId,act:'MAIN'});
   await gr.create({status:'READY',gameNumber:1,players:roster,replayStatisticsRevision:0,activeReplayStatisticsId:null,
     replayParticipantBindings:players.map((p,i)=>({sourceNameNormalized:p.name.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US'),playerId:roster[i].playerId}))});
@@ -77,6 +78,7 @@ for(const [name,format,expected] of cases){
   for(const a of [source.originalRecording,source.recordedEvents,source.statistics]){
     const [bytes]=await bucket.file(a.path,{generation:a.generation}).download();assert.equal(digest(bytes),a.sha256);
   }
+  if(process.env.AOF_SOCIAL_EVIDENCE_V1A_READS==='1')await socialEvidenceAcceptance({db,bucket,actor,matchId,gameId,name});
   const candidate=(await gr.collection('nativeReplayValidations').doc(source.nativeValidationCandidateId).get()).data();
   const directory=resolve(out,name);await mkdir(directory,{recursive:true});
   for(const [field,file] of [['recordedEvents','events.jsonl.gz'],['statistics','statistics.direct.json.gz']]){

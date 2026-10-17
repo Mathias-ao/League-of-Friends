@@ -95,3 +95,5 @@ export {adminVerifyAIWarmup,disputeAIWarmup} from './commands/events/verifyAIWar
 export {qualifyFFAPlacementsOnGame,qualifyFFAPlacementsOnSource,qualifyFFAPlacementsOnMatch} from './triggers/ffaPlacements.js';
 export {adminAssignUnpairedWarmup,adminReplaceWarmupOpponent,adminResolveUnpairedWarmup} from './commands/events/warmupChallenges.js';
 export {adminRejectAIWarmup} from './commands/events/verifyAIWarmup.js';
+
+export {getSocialEvidenceV1a} from "./queries/getSocialEvidenceV1a.js";
