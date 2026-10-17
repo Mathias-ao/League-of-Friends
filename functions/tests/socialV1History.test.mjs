@@ -142,7 +142,7 @@ test('all issued SHARED_1 Receipts satisfy Sol canonical JSON Schema',async()=>{
  const [{readFileSync},{default:Ajv2020}]=await Promise.all([import('node:fs'),import('ajv/dist/2020.js')]);
  const schema=JSON.parse(readFileSync(new URL('../../contracts/social-v1/shared.schema.json',import.meta.url),'utf8'));
  const validate=new Ajv2020({strict:false,allErrors:true}).compile(schema);
- const c=ch(1),d=ch(1,{battle:'m2',game:'g2',battleOrder:2}),e=ch(2);
+ const c=ch(1),d=ch(1,{battle:'m2',game:'g2',battleOrder:2}),e=ch(2,{game:'g3'});
  const inputs=[fx(c,rel('BOND'),1,{strength:'large',reciprocity:true}),fx(d,rel('BOND'),2,{reciprocity:true}),
    fx(e,rel('BOND','b','a'),3,{reciprocity:true}),fx(c,rel('HOSTILITY'),4,{strength:'large'})];
  const r=run([c,d,e],inputs,{treachery:[treachery(c,1)]});
