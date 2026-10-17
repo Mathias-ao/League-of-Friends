@@ -349,8 +349,9 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
     }
     result.push({battleId:parts[0].battleId,playerId:parts[0].playerId,
       playedAtMs:Math.min(...parts.map(x => x.playedAtMs)),contextKey,
-      sourceRevision:digest(parts.map(x => [x.gameId,x.sourceHash,x.sourceAuthority,x.mappingDigest,
-        x.authorityRevision,x.sourceStatus,x.outcome,x.admitted])),
+      sourceRevision:digest(parts.map(x => [x.gameId,x.gameNumber,x.playedAtMs,x.context,
+        x.sourceHash,x.sourceAuthority,x.mappingDigest,x.authorityRevision,
+        x.sourceStatus,x.outcome,x.admitted])),
       gameIds:parts.map(x => x.gameId),features});
   }
   return result.sort((a,b)=>a.playedAtMs-b.playedAtMs||a.battleId.localeCompare(b.battleId));
@@ -407,6 +408,6 @@ export function projectPersonalityPreview(playerId: string,games: AuthorizedGame
     configurationVersion:config?.configurationVersion??null,
     policyStatus:config?.status??'UNCONFIGURED',publication:'PRIVATE_PREVIEW_ONLY',
     playerId,projectionRevision:digest([PERSONALITY_FEATURE_VERSION,config??null,
-      battles.map(x=>[x.battleId,x.sourceRevision,x.features])]),
+      battles.map(x=>[x.battleId,x.playedAtMs,x.contextKey,x.sourceRevision,x.features])]),
     battles,sliders};
 }
