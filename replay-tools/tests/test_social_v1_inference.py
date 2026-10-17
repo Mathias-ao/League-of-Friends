@@ -98,19 +98,19 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
     observed_by_id = {e["sourceEventId"]: e for e in observations}
     for measurement in facts:
         event_id = measurement["sourceEventIds"][0]
-        event = {"sourceEventId": event_id,
+        source_observation = {"sourceEventId": event_id,
                  "actorPlayerId": measurement["fromReplayPlayerId"],
                  "moment": {"atMs": measurement["measuredAtMs"],
                             "operationOrdinal": 100 + len(observations)},
                  "commandType": "DERIVED_METRIC_SOURCE"}
         if event_id in observed_by_id:
             existing = observed_by_id[event_id]
-            if (existing["actorPlayerId"] != event["actorPlayerId"] or
-                    existing["moment"]["atMs"] != event["moment"]["atMs"]):
+            if (existing["actorPlayerId"] != source_observation["actorPlayerId"] or
+                    existing["moment"]["atMs"] != source_observation["moment"]["atMs"]):
                 raise ValueError("INVALID_SYNTHETIC_SOURCE_EVENT_REUSE")
         else:
-            observations.append(event)
-            observed_by_id[event_id] = event
+            observations.append(source_observation)
+            observed_by_id[event_id] = source_observation
     military = {}
     extra_ids = [f["sourceEventIds"][0] for f in facts]
     if extra_ids:
@@ -420,6 +420,11 @@ class QualificationTests(unittest.TestCase):
         self.assertTrue(all(e["claim"]["historicalPosition"]["order"] == "PARTIAL"
                             for e in altered["effects"]))
         b = case(kind="contest", contest=True)
+        # Both events are now actor-owned TARGETED_COMMAND facets, not merely a
+        # local opponent-overlap event, and claim the same source ordinal.
+        b["pair_deeds"][0]["facets"].append({
+            "kind": "TARGETED_COMMAND", "fromPlayerId": 1, "toPlayerId": 2,
+            "sourceEventIds": ["cmd2"]})
         b["pair_observations"][1]["moment"]["atMs"] = 11000
         b["pair_observations"][1]["moment"]["operationOrdinal"] = 10
         altered = decisions(b)
