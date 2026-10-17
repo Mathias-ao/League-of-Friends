@@ -109,6 +109,10 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const ownProof=[prev.reciprocityProof,e.own?e:null].filter(Boolean).sort((a,b)=>cmp(a.at,b.at))[0]??null;
  byGroup.set(e.group,{...winner,reciprocityProof:ownProof});}
  const movements=[...byGroup.values()];
+ // Two independent effects at an identical canonical moment/ordinal have unresolved order.
+ for(let i=0;i<movements.length;i++)for(let j=0;j<i;j++)
+  if(key(movements[i].subject)===key(movements[j].subject)&&cmp(movements[i].at,movements[j].at)===0&&
+     movements[i].group!==movements[j].group)pend(movements[i].subject,'AMBIGUOUS_SAME_MOMENT');
  for(const row of treachery){const s={system:'RELATIONSHIP',track:'HOSTILITY',fromPlayerId:row.victimPlayerId,toPlayerId:row.responsiblePlayerId};
  const ch=source(row);if(!ch)continue;const at=position(ch,row.historicalPosition);if(!at){pend(s,'TREACHERY_ORDER_UNKNOWN');continue;}
  const required=['effectiveMutualAlliance','unilateralRupture','orderedHostility','kingLoss','responsibility','associatedIncident','eligibleModeAndIdentity'];
