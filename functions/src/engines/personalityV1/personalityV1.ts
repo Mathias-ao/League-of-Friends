@@ -63,6 +63,8 @@ export interface AuthorizedGame {
   sourceStatus: 'READY' | 'WITHDRAWN';
   outcome: 'OFFICIAL' | 'PENDING' | 'DISPUTED';
   admitted: boolean;
+  /** True only when the complete eligible engagement/raid episode arrays were read from the retained artifact. */
+  episodeChronologyComplete: boolean;
   playedAtMs: number;
   context: GameContext;
   /** The already-qualified participant row from Canonical Statistics V1. */
@@ -183,7 +185,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const placed = list(sectors.evidence), classified = placed.filter(x =>
     strategic.includes(x.buildingId) && ['home','forward'].includes(x.sector) && id(x.sourceEventId));
   const unique = [...new Map(classified.map(x => [x.sourceEventId,x])).values()];
-  const unknown = placed.some(x => strategic.includes(x.buildingId) &&
+  const unknown = placed.length !== sectors.classifiedPlacementCount ||
+    placed.some(x => strategic.includes(x.buildingId) &&
     (!['home','forward','midMap'].includes(x.sector) || !id(x.sourceEventId)));
   result.CAUTIOUS_BOLD = config && strategic.length && !unknown &&
     obj(mp.homeAnchor).method === 'initial_town_center' &&
@@ -226,7 +229,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     for (const x of row.sources) seen.add(x);
     episodes.push(row);
   }
-  result.GUERRILLA_FRONTLINE = config && !overlapAmbiguous && hasModel(engagements.engagementModelVersion) &&
+  result.GUERRILLA_FRONTLINE = config && game.episodeChronologyComplete === true &&
+    !overlapAmbiguous && hasModel(engagements.engagementModelVersion) &&
     (c.format !== 'FFA' || c.dynamicDiplomacyQualified) &&
     episodes.length >= config.minimumIndependentCommandEpisodes
     ? feature('GUERRILLA_FRONTLINE','COMMAND_POSTURE',
@@ -258,7 +262,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const supported = zones.status === 'ok' && hasModel(mp.modelVersion) &&
     obj(mp.homeAnchor).method === 'initial_town_center' &&
     remote !== null && home !== null && sites !== null && sites <= remote &&
-    list(zones.zones).length === sites;
+    list(zones.zones).length === sites &&
+    list(zones.zones).reduce((sum,z) => sum+list(z.buildings).length,0) === remote;
   result.COMPACT_EXPANSIVE = supported ?
     feature('COMPACT_EXPANSIVE','EXPANSION_PLACEMENT',sites!,sites!+home!,
       list(zones.zones).flatMap(z => ids(list(z.buildings))),[String(mp.modelVersion ?? '')])
