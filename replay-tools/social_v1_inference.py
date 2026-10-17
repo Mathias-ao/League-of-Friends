@@ -106,7 +106,7 @@ def validate_inference_configuration(config):
                  and isinstance(rule["significanceBandId"], str) and rule["significanceBandId"],
                  "RULE_AND_BAND_IDS_REQUIRED")
         _require(type(rule["minIndependentSourceEvents"]) is int
-                 and rule["minIndependentSourceEvents"] >= 2, "BAD_INDEPENDENT_EVENT_REQUIREMENT")
+                 and rule["minIndependentSourceEvents"] > 0, "BAD_INDEPENDENT_EVENT_REQUIREMENT")
         minimums = rule["measurementMinimums"]
         _require(isinstance(minimums, dict) and set(minimums) == set(MANDATORY[family]),
                  "MEASUREMENT_THRESHOLD_MISSING")
@@ -234,6 +234,7 @@ def _qualify(deed, context, family, actor, target, index, rule, directional_face
     required = MANDATORY[family]
     independent = set(support)
     qualified = {}
+    assigned_witnesses = set()
     for kind in required:
         pool = index.get((kind, actor, target), [])
         admitted = []
@@ -264,6 +265,16 @@ def _qualify(deed, context, family, actor, target, index, rule, directional_face
             reasons.append("MISSING_OR_UNQUALIFIED_" + kind)
         else:
             selected = sorted(admitted, key=lambda x: (x["measuredAtMs"], x["sourceEventIds"]))[0]
+            # Two semantic labels on one event are not independent corroboration.
+            if set(selected["sourceEventIds"]) & assigned_witnesses:
+                reasons.append("CORRELATED_MEASUREMENT_WITNESSES")
+                counter.update(selected["sourceEventIds"])
+                continue
+            if kind in PREENTRY and set(selected["sourceEventIds"]) & set(support):
+                reasons.append("PREENTRY_WITNESS_REUSES_EPISODE_COMMAND")
+                counter.update(selected["sourceEventIds"])
+                continue
+            assigned_witnesses.update(selected["sourceEventIds"])
             qualified[kind] = selected
             if kind in PREENTRY:
                 before.update(selected["sourceEventIds"])
