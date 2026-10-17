@@ -233,6 +233,27 @@ class QualificationTests(unittest.TestCase):
         self.assertFalse(admitted(b, "NOTEWORTHY_DIRECTED_PROTECTION"))
         self.assertFalse(admitted(b, "PAIR_CONTEST"))
 
+    def test_genuine_undirected_shared_opponent_facet_remains_neutral(self):
+        # #124's real co-target facet contains two contributor records, not
+        # a fromPlayerId/toPlayerId helper pair. Neither direction is credited.
+        b = case(kind="co-target", people=(1, 2, 3))
+        b["pair_deeds"][0]["sourceEventIds"] = ["cmd1", "cmd2"]
+        b["pair_deeds"][0]["facets"] = [{
+            "kind": "SHARED_OPPONENT_PARTICIPATION", "targetPlayerId": 3,
+            "contributions": [
+                {"contributorPlayerId": 1, "sourceEventIds": ["cmd1"]},
+                {"contributorPlayerId": 2, "sourceEventIds": ["cmd2"]}],
+            "coordinationIntent": "UNAVAILABLE"}]
+        b["pair_observations"].append({
+            "sourceEventId": "cmd2", "actorPlayerId": 2,
+            "moment": {"atMs": 11050, "operationOrdinal": 11},
+            "commandType": "ORDER"})
+        b["context"]["deedContexts"][0]["sourceEventIds"] = ["cmd1", "cmd2"]
+        b["context"]["deedContexts"][0]["directionalActors"] = []
+        r = decisions(b)
+        self.assertEqual(r["effects"], [])
+        self.assertEqual(r["actorWitnesses"], [])
+
     def test_preentry_context_does_not_take_late_weakness_or_victory_as_prior(self):
         f = metric("PREENTRY_VULNERABILITY", "post-loss", 12500)
         b = case(facts=[f, metric("MEANINGFUL_OFFENSIVE_COMMITMENT", "commit", 13000)])
