@@ -312,6 +312,8 @@ function RelationshipPage({owner,counterpart,page,official,snapshot,partial,fres
           <h4>{entry.title}</h4>
           {entry.paragraphs.map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph}</p>)}
           <footer className="chronicle-entry-signature"><span>{battleLabel(entry,snapshot)}</span><time>{compactDate(entry.playedAtMs)}</time></footer>
+          {entry.resultStatus==='UNRESOLVED'&&<p className="chronicle-coverage-note">Official result unresolved. The Chronicle records only verified evidence; no winner is claimed.</p>}
+          {entry.chronologyStatus==='UNRESOLVED'&&<p className="chronicle-coverage-note">Battle order is not yet verified. Earlier or later encounters are not inferred.</p>}
         </article>
       </li>)}</ol>
     </div>:<div className="chronicle-empty-leaf"><BookOpen size={28}/><h3>This leaf remains unwritten.</h3><p>No qualified social event has yet earned an entry between {owner.steamName} and {counterpart.steamName}. The bookmark remains because every league relationship has a place in the book.</p></div>}
