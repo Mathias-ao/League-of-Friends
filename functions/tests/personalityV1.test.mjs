@@ -1,0 +1,200 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {PERSONALITY_FEATURE_VERSION,PERSONALITY_AXES,
+  measurePersonalityGame,buildPersonalityBattles,projectPersonalityPreview}
+  from '../lib/engines/personalityV1/personalityV1.js';
+
+const hex = n => n.toString(16).padStart(64,'0');
+const axisNames=Object.keys(PERSONALITY_AXES);
+const baseContext=()=>({format:'ONE_V_ONE',mapFamily:'LAND',startFamily:'STANDARD',mapId:'9',
+  durationFamily:'ORDINARY',civilization:'FRANKS',civilizationOpportunityKey:'LAND_STANDARD',
+  observedUntilMs:2400000,durationMs:2400000,dynamicDiplomacyQualified:false});
+const baseStats=()=>({
+  playerId:1,replaySlot:1,
+  economy:{resourceCommitment:{modelVersion:'AOF_RESOURCE_COMMITMENT_V1',
+    resourcesCommitted:{total:1000},coverage:{unpricedRequestCommands:0}}},
+  military:{modelVersion:'AOF_MILITARY_STATISTICS_V5',
+    militarySpend:{resources:300,unpricedMilitaryCommandAmount:0},
+    militaryUnitsTrained:{positiveQueueAmount:10,unknownAmountCommands:0},
+    composition:{infantry:10,archers:0,cavalry:0,siege:0,monks:0,warships:0,navalSupport:0,otherLandMilitary:0,specialMilitary:0},
+    engagements:{engagementModelVersion:'AOF_ENGAGEMENT_STATISTICS_V4',
+      raidEvidence:{initiatedEpisodes:[
+        {raidId:'r1',attackerPlayerId:1,victimPlayerId:2,startedAtMs:900000,sourceEventIds:['raid1']},
+        {raidId:'r2',attackerPlayerId:1,victimPlayerId:2,startedAtMs:1200000,sourceEventIds:['raid2']}
+      ]},
+      engagementEvidence:{battles:[]}}},
+  mapPresence:{modelVersion:'AOF_MAP_PRESENCE_V8',homeAnchor:{method:'initial_town_center'},
+    buildingSectors:{classifiedPlacementCount:2,evidence:[
+      {buildingId:80,sector:'home',sourceEventId:'h'},
+      {buildingId:80,sector:'forward',sourceEventId:'f'}]},
+    expansionZones:{status:'ok',count:1,eligibleRemoteBuildingCount:2,
+      eligibleBuildingPlacementsInsideHomeRadius:2,
+      zones:[{zoneId:'expansion-1',buildings:[
+        {sourceEventId:'camp1'},{sourceEventId:'camp2'}]}]}}
+});
+const game=(i=1,mod={})=>{
+  const original={
+    battleId:'battle-'+i,matchId:'battle-'+i,gameId:'game-'+i,gameNumber:1,playerId:'playerA',
+    replaySlot:1,sourceHash:hex(i+100),sourceAuthority:hex(i+200),mappingDigest:hex(i+300),
+    authorityRevision:1,sourceStatus:'READY',outcome:'OFFICIAL',admitted:true,
+    playedAtMs:i*10000,context:baseContext(),statistics:baseStats(),
+  };
+  return {...original,...mod};
+};
+const key=c=>[c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,c.civilizationOpportunityKey].join('|');
+const config=(context=baseContext())=>({
+  configurationVersion:'PERSONALITY_CANDIDATE_TEST_ONLY',status:'PROPOSED',
+  minimumIndependentBattles:2,recentBattleCount:2,careerWeight:.5,
+  strategicBuildingIds:[80],availableMilitaryFamilies:{LAND_STANDARD:['infantry','archers','cavalry']},
+  anchors:{[key(context)]:Object.fromEntries(axisNames.map(a=>[a,{lower:0,upper:1,comparisonGroup:'standard-land'}]))},
+  minimumIndependentCommandEpisodes:2
+});
+const slider=(p,a)=>p.sliders.find(x=>x.axis===a);
+const tweak=(g,f)=>{
+  const x=structuredClone(g);f(x.statistics,x.context);return x;
+};
+
+test('all five axes derive truthful ratios from reviewed projection-field shapes',()=>{
+  const c=config(),f=measurePersonalityGame(game(),c).features;
+  assert.deepEqual(axisNames.sort(),Object.keys(f).sort());
+  assert.equal(f.BOOMER_AGGRESSOR.fraction,.3);
+  assert.equal(f.CAUTIOUS_BOLD.fraction,.5);
+  assert.equal(f.GUERRILLA_FRONTLINE.fraction,0);
+  assert.equal(f.SPECIALIST_IMPROVISER.fraction,0);
+  assert.equal(f.COMPACT_EXPANSIVE.fraction,1/3);
+  assert.equal(f.GUERRILLA_FRONTLINE.semantic,'COMMAND_POSTURE');
+  assert.equal(f.CAUTIOUS_BOLD.evidenceIds.length,2);
+});
+test('qualified zero, absent opportunity and missing calibration are not a neutral 50',()=>{
+  const no=projectPersonalityPreview('playerA',[game()],null);
+  assert.equal(no.policyStatus,'UNCONFIGURED');
+  assert.equal(no.sliders.length,5);
+  for(const s of no.sliders){assert.equal(s.value,null);assert.equal(s.status,'DEVELOPING');}
+  const c=config(),withoutMoney=tweak(game(),p=>{p.economy.resourceCommitment.coverage.unpricedRequestCommands=1;});
+  const p=projectPersonalityPreview('playerA',[withoutMoney,game(2)],c);
+  assert.equal(slider(p,'BOOMER_AGGRESSOR').value,null);
+  assert.equal(slider(p,'BOOMER_AGGRESSOR').independentBattles,1);
+  assert.equal(measurePersonalityGame(game(),c).features.SPECIALIST_IMPROVISER.fraction,0);
+});
+test('two independent Battles produce proposed private preview with no official publication',()=>{
+  const p=projectPersonalityPreview('playerA',[game(),game(2)],config());
+  assert.equal(p.publication,'PRIVATE_PREVIEW_ONLY');
+  assert.equal(p.policyStatus,'PROPOSED');
+  assert.equal(p.battles.length,2);
+  for(const axis of axisNames)assert.equal(slider(p,axis).status,'READY');
+  assert.equal(slider(p,'CAUTIOUS_BOLD').value,50);
+  assert.equal(slider(p,'GUERRILLA_FRONTLINE').value,0);
+  assert.match(p.projectionRevision,/^[0-9a-f]{64}$/);
+});
+test('no duplicated POVs, retries or minor revision changes give an extra Battle',()=>{
+  const x=game(),dupe=structuredClone(x);
+  const b=buildPersonalityBattles([x,x,dupe],config());
+  assert.equal(b.length,1);
+  const corrected=tweak(game(),p=>{p.military.militarySpend.resources=700;});
+  corrected.authorityRevision=2;corrected.sourceHash=hex(999);
+  const latest=projectPersonalityPreview('playerA',[x,corrected,game(2)],config());
+  assert.equal(latest.battles.length,2);
+  assert.equal(slider(latest,'BOOMER_AGGRESSOR').value,50);
+  assert.notEqual(latest.projectionRevision,projectPersonalityPreview('playerA',[x,game(2)],config()).projectionRevision);
+  assert.throws(()=>buildPersonalityBattles([x,{...x,sourceHash:hex(998)}],config()),/CONFLICTING_AUTHORITY/);
+});
+test('late source withdrawal, result dispute and slot rebind remove previous input',()=>{
+  const x=game(),later={...x,authorityRevision:2,sourceStatus:'WITHDRAWN'};
+  const p=projectPersonalityPreview('playerA',[x,later,game(2)],config());
+  assert.equal(slider(p,'COMPACT_EXPANSIVE').value,null);
+  assert.equal(slider(p,'COMPACT_EXPANSIVE').independentBattles,1);
+  const disputed=measurePersonalityGame({...game(),outcome:'DISPUTED'},config());
+  assert.equal(disputed.features.BOOMER_AGGRESSOR.fraction,null);
+  const moved=measurePersonalityGame({...game(),statistics:{...baseStats(),replaySlot:2}},config());
+  assert.equal(moved.eligible,false);
+  assert.throws(()=>measurePersonalityGame({...game(),matchId:'another'},config()),/UNTRUSTED_BATTLE/);
+});
+test('multi-Game league Battle remains one independent opportunity, and incomplete Game withholds it',()=>{
+  const x=game(),second={...game(),gameId:'second',gameNumber:2,
+    sourceHash:hex(777),sourceAuthority:hex(778)};
+  const b=buildPersonalityBattles([x,second,game(2)],config());
+  assert.equal(b.length,2);assert.equal(b[0].gameIds.length,2);
+  const incomplete=tweak(second,p=>{p.mapPresence.expansionZones.status='no_starting_town_center_anchor';});
+  const p=projectPersonalityPreview('playerA',[x,incomplete,game(2)],config());
+  assert.equal(slider(p,'COMPACT_EXPANSIVE').value,null);
+  assert.equal(slider(p,'BOOMER_AGGRESSOR').independentBattles,2);
+  assert.throws(()=>buildPersonalityBattles([x,{...second,gameNumber:1}],config()),/DUPLICATE_GAME_NUMBER/);
+});
+test('incompatible contexts and anomalous starts remain context limited or Developing',()=>{
+  const different=game(2,{context:{...baseContext(),format:'TEAM',mapId:'11'}});
+  const c=config();c.anchors[key(different.context)]=Object.fromEntries(axisNames.map(a=>[
+    a,{lower:0,upper:1,comparisonGroup:'team'}]));
+  const p=projectPersonalityPreview('playerA',[game(),different],c);
+  for(const s of p.sliders){assert.equal(s.status,'CONTEXT_LIMITED');assert.equal(s.value,null);}
+  const nomad=game(2,{context:{...baseContext(),startFamily:'NOMAD'}});
+  const n=projectPersonalityPreview('playerA',[game(),nomad],config());
+  assert.equal(slider(n,'BOOMER_AGGRESSOR').independentBattles,1);
+  assert.equal(slider(n,'BOOMER_AGGRESSOR').status,'DEVELOPING');
+});
+test('short Game duration uses distinct context and missing complete cost coverage is not observed zero',()=>{
+  const short=game(2,{context:{...baseContext(),durationMs:360000,observedUntilMs:360000,
+    durationFamily:'SHORT'}});
+  const x=measurePersonalityGame(short,config());
+  assert.equal(x.eligible,true);
+  const preview=projectPersonalityPreview('playerA',[game(),short],config());
+  assert.equal(slider(preview,'BOOMER_AGGRESSOR').value,null);
+  const cost=tweak(game(),p=>{p.military.militarySpend.unpricedMilitaryCommandAmount=1;});
+  assert.equal(measurePersonalityGame(cost,config()).features.BOOMER_AGGRESSOR.fraction,null);
+});
+test('FFA dynamic diplomacy uncertainty blocks command posture but not automatic economic axes',()=>{
+  const f=game(2,{context:{...baseContext(),format:'FFA',dynamicDiplomacyQualified:false}});
+  const features=measurePersonalityGame(f,config()).features;
+  assert.equal(features.GUERRILLA_FRONTLINE.fraction,null);
+  assert.equal(features.COMPACT_EXPANSIVE.fraction,1/3);
+  const qualified={...f,context:{...f.context,dynamicDiplomacyQualified:true}};
+  assert.equal(measurePersonalityGame(qualified,config()).features.GUERRILLA_FRONTLINE.fraction,0);
+});
+test('Guerrilla/Frontline requires attributed military commands; overlapping detector sources never stack',()=>{
+  const c=config();
+  const empty=tweak(game(),p=>{p.military.engagements.raidEvidence.initiatedEpisodes=[{
+    attackerPlayerId:1,victimPlayerId:2,sourceEventIds:[],startedAtMs:10}];});
+  assert.equal(measurePersonalityGame(empty,c).features.GUERRILLA_FRONTLINE.fraction,null);
+  const frontal=tweak(game(),p=>{p.military.engagements.engagementEvidence.battles=[
+    {baseOwnerPlayerId:null,contributionSourceEventIdsByPlayer:{1:['b1']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}},
+    {baseOwnerPlayerId:null,contributionSourceEventIdsByPlayer:{1:['b2']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}}
+  ];p.military.engagements.raidEvidence.initiatedEpisodes=[];});
+  assert.equal(measurePersonalityGame(frontal,c).features.GUERRILLA_FRONTLINE.fraction,1);
+  const overlap=tweak(game(),p=>{p.military.engagements.engagementEvidence.battles=[
+    {baseOwnerPlayerId:null,contributionSourceEventIdsByPlayer:{1:['raid1']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}}
+  ];});
+  assert.equal(measurePersonalityGame(overlap,c).features.GUERRILLA_FRONTLINE.fraction,null);
+});
+test('Specialist family opportunity, unknown queues and diversifying positive requests',()=>{
+  const c=config(),broad=tweak(game(),p=>{p.military.composition.infantry=5;p.military.composition.archers=5;});
+  const f=measurePersonalityGame(broad,c).features.SPECIALIST_IMPROVISER;
+  assert.ok(f.fraction>0.6 && f.fraction<0.7);
+  const unknown=tweak(game(),p=>{p.military.militaryUnitsTrained.unknownAmountCommands=1;});
+  assert.equal(measurePersonalityGame(unknown,c).features.SPECIALIST_IMPROVISER.fraction,null);
+  const oneFamily={...c,availableMilitaryFamilies:{LAND_STANDARD:['infantry']}};
+  assert.equal(measurePersonalityGame(game(),oneFamily).features.SPECIALIST_IMPROVISER.fraction,null);
+});
+test('repeated BUILD clicks cannot fabricate remote sites; missing initial TC blocks positional claims',()=>{
+  const x=tweak(game(),p=>{p.mapPresence.expansionZones.eligibleRemoteBuildingCount=100;});
+  assert.equal(measurePersonalityGame(x,config()).features.COMPACT_EXPANSIVE.fraction,1/3);
+  const noAnchor=tweak(game(),p=>{p.mapPresence.homeAnchor.method=null;});
+  assert.equal(measurePersonalityGame(noAnchor,config()).features.COMPACT_EXPANSIVE.fraction,null);
+  assert.equal(measurePersonalityGame(noAnchor,config()).features.CAUTIOUS_BOLD.fraction,null);
+});
+test('context calibration must be explicit, frozen, in-range; invalid unapproved constants rejected',()=>{
+  const c=config();c.anchors[key(baseContext())].CAUTIOUS_BOLD={lower:.2,upper:.8,comparisonGroup:'test'};
+  assert.equal(slider(projectPersonalityPreview('playerA',[game(),game(2)],c),'CAUTIOUS_BOLD').value,50);
+  c.anchors[key(baseContext())].CAUTIOUS_BOLD={lower:.9,upper:.2,comparisonGroup:'test'};
+  assert.throws(()=>projectPersonalityPreview('playerA',[game()],c),/CALIBRATION_ANCHOR_INVALID/);
+});
+test('saved authentic corpus identifies independent 1v1 and FFA; formats are calibration cases, not fabricated scores',()=>{
+  const path=new URL('../../replay-tools/tests/goldens/statistics-corpus-v1.json',import.meta.url);
+  const corpus=JSON.parse(readFileSync(path,'utf8'));
+  const ids=corpus.reports.map(r=>r.id);
+  assert.ok(ids.some(x=>x.includes('duel')));
+  assert.ok(ids.some(x=>x.includes('ffa')));
+  assert.ok(corpus.reports.every(r=>r.sourceSha256.length===64));
+  // Metadata-only corpus lacks league Battle ID, authoritative mapping and eligible result.
+  // It is forbidden to manufacture the missing fields to assert a REAL personality score.
+  assert.equal(PERSONALITY_FEATURE_VERSION,'AOF_PERSONALITY_FEATURES_V1');
+});
