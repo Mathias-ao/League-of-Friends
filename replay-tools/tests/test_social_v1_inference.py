@@ -1,6 +1,9 @@
 """Synthetic #126 acceptance, never proof of an authentic replay's social conduct."""
 from copy import deepcopy
 from pathlib import Path
+import json
+import shutil
+import subprocess
 import sys
 import unittest
 
@@ -69,24 +72,45 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
         "help": ("DEFENSIVE_PARTICIPATION",),
         "co-target": ("SHARED_OPPONENT_PARTICIPATION",),
     }[kind]
-    source_events = ["cmd1", "cmd2"] if len(facets) > 1 else ["cmd1"]
+    source_events = ["cmd1", "cmd2"] if len(facets) > 1 or kind == "co-target" else ["cmd1"]
+    source_facets = ([{"kind": "SHARED_OPPONENT_PARTICIPATION",
+                       "targetPlayerId": next(p for p in people if p not in (actor, target)),
+                       "contributions": [
+                           {"contributorPlayerId": actor, "sourceEventIds": ["cmd1"]},
+                           {"contributorPlayerId": target, "sourceEventIds": ["cmd2"]}],
+                       "coordinationIntent": "UNAVAILABLE"}]
+                     if kind == "co-target" else
+                     [{"kind": facet, "fromPlayerId": actor, "toPlayerId": target,
+                       "sourceEventIds": [source_events[i % len(source_events)]]}
+                      for i, facet in enumerate(facets)])
     row = {"deedId": "deed-X", "pairPlayerIds": sorted([actor, target]),
            "incidentIds": ["original-X"], "sourceEventIds": source_events,
            "startedAt": {"atMs": 10000, "operationOrdinal": 10},
            "endedAt": {"atMs": 14000, "operationOrdinal": 20},
-           "facets": [{"kind": facet, "fromPlayerId": actor, "toPlayerId": target,
-                       "sourceEventIds": [source_events[i % len(source_events)]]}
-                      for i, facet in enumerate(facets)]}
-    observations = [{"sourceEventId": ident, "actorPlayerId": actor,
+           "facets": source_facets}
+    observations = [{"sourceEventId": ident,
+                     "actorPlayerId": target if kind == "co-target" and i == 1 else actor,
                      "moment": {"atMs": 11000 + 100 * i,
                                 "operationOrdinal": 10 + i}, "commandType": "ORDER"}
                     for i, ident in enumerate(source_events)]
+    # A physically identical source event may corroborate two proposed labels,
+    # but must never become contradictory observations or two independent deeds.
+    observed_by_id = {e["sourceEventId"]: e for e in observations}
     for measurement in facts:
-        observations.append({"sourceEventId": measurement["sourceEventIds"][0],
-                             "actorPlayerId": measurement["fromReplayPlayerId"],
-                             "moment": {"atMs": measurement["measuredAtMs"],
-                                        "operationOrdinal": 100 + len(observations)},
-                             "commandType": "DERIVED_METRIC_SOURCE"})
+        event_id = measurement["sourceEventIds"][0]
+        event = {"sourceEventId": event_id,
+                 "actorPlayerId": measurement["fromReplayPlayerId"],
+                 "moment": {"atMs": measurement["measuredAtMs"],
+                            "operationOrdinal": 100 + len(observations)},
+                 "commandType": "DERIVED_METRIC_SOURCE"}
+        if event_id in observed_by_id:
+            existing = observed_by_id[event_id]
+            if (existing["actorPlayerId"] != event["actorPlayerId"] or
+                    existing["moment"]["atMs"] != event["moment"]["atMs"]):
+                raise ValueError("INVALID_SYNTHETIC_SOURCE_EVENT_REUSE")
+        else:
+            observations.append(event)
+            observed_by_id[event_id] = event
     military = {}
     extra_ids = [f["sourceEventIds"][0] for f in facts]
     if extra_ids:
@@ -351,10 +375,18 @@ class QualificationTests(unittest.TestCase):
             decisions(b)
 
     def test_correlated_metric_event_cannot_prove_two_independent_dimensions(self):
-        b = case(facts=[metric("PREENTRY_VULNERABILITY", "one", 5000),
-                        metric("MEANINGFUL_OFFENSIVE_COMMITMENT", "one", 12000)])
-        with self.assertRaisesRegex(ValueError, "CONFLICTING_RECORDED_EVENT_ID"):
-            decisions(b)
+        # Both interpret the *same physically consistent original event*. The
+        # neutral validator should pass; the qualifier must reject false
+        # independence between meaningful help and reconciliation.
+        b = case(kind="help", facts=[
+            metric("MEANINGFUL_DIRECTED_HELP", "one", 12000),
+            metric("RECONCILIATION_CONTEXT", "one", 12000)])
+        r = decisions(b)
+        q = [v for v in r["inferences"] if v["familyId"] == "RECONCILIATORY_HELP"][0]
+        self.assertEqual(q["decision"], "NOT_QUALIFIED")
+        self.assertIn("CORRELATED_MEASUREMENT_WITNESSES", q["reasonCodes"])
+        self.assertFalse(any(e["claim"]["decision"] == "QUALIFIED" and
+            e["claim"]["subject"]["track"] == "HOSTILITY" for e in r["effects"]))
 
     def test_snapshot_roster_identity_requires_server_proven_replay_binding(self):
         b = case(kind="contest", contest=True)
