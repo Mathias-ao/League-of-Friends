@@ -81,6 +81,12 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
                      "moment": {"atMs": 11000 + 100 * i,
                                 "operationOrdinal": 10 + i}, "commandType": "ORDER"}
                     for i, ident in enumerate(source_events)]
+    for measurement in facts:
+        observations.append({"sourceEventId": measurement["sourceEventIds"][0],
+                             "actorPlayerId": measurement["fromReplayPlayerId"],
+                             "moment": {"atMs": measurement["measuredAtMs"],
+                                        "operationOrdinal": 100 + len(observations)},
+                             "commandType": "DERIVED_METRIC_SOURCE"})
     military = {}
     extra_ids = [f["sourceEventIds"][0] for f in facts]
     if extra_ids:
@@ -120,7 +126,8 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
     context = project_social_v1_context(statistics=stats)
     snap = snapshot(people, battle=battle, event=event)
     return {"snapshot": snap, "context": context,
-            "pair_deeds": [row], "measurements": list(facts),
+            "pair_deeds": [row], "pair_observations": observations,
+            "measurements": list(facts),
             "incident_lineages": {"deed-X": {"incidentId": "stable-lineage-X",
                                             "overlapGroupId": "overlap-X",
                                             "lineage": "SOURCE_ANCHORED",
@@ -312,6 +319,21 @@ class QualificationTests(unittest.TestCase):
         b = case(kind="contest", contest=True)
         b["calibration"] = config([])
         self.assertEqual(decisions(b)["effects"], [])
+
+    def test_corroborator_event_cannot_be_backdated_to_prior_window(self):
+        b = case(facts=[metric("PREENTRY_VULNERABILITY", "vuln", 5000),
+                        metric("MEANINGFUL_OFFENSIVE_COMMITMENT", "commit", 12000)])
+        for event in b["pair_observations"]:
+            if event["sourceEventId"] == "vuln":
+                event["moment"]["atMs"] = 16000
+        with self.assertRaisesRegex(ValueError, "SOURCE_EVENTS_OUTSIDE_MEASUREMENT_WINDOW"):
+            decisions(b)
+
+    def test_correlated_metric_event_cannot_prove_two_independent_dimensions(self):
+        b = case(facts=[metric("PREENTRY_VULNERABILITY", "one", 5000),
+                        metric("MEANINGFUL_OFFENSIVE_COMMITMENT", "one", 12000)])
+        with self.assertRaisesRegex(ValueError, "CONFLICTING_RECORDED_EVENT_ID"):
+            decisions(b)
 
     def test_snapshot_roster_identity_requires_server_proven_replay_binding(self):
         b = case(kind="contest", contest=True)
