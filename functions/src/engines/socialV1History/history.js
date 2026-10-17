@@ -121,10 +121,6 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const ownProof=[prev.reciprocityProof,e.own?e:null].filter(Boolean).sort((a,b)=>cmp(a.at,b.at))[0]??null;
  byGroup.set(e.group,{...winner,reciprocityProof:ownProof});}
  const movements=[...byGroup.values()];
- // Two independent effects at an identical canonical moment/ordinal have unresolved order.
- for(let i=0;i<movements.length;i++)for(let j=0;j<i;j++)
-  if(key(movements[i].subject)===key(movements[j].subject)&&cmp(movements[i].at,movements[j].at)===0&&
-     movements[i].group!==movements[j].group)pend(movements[i].subject,'AMBIGUOUS_SAME_MOMENT');
  for(const row of treachery){const s={system:'RELATIONSHIP',track:'HOSTILITY',fromPlayerId:row.victimPlayerId,toPlayerId:row.responsiblePlayerId};
  const ch=source(row);if(!ch)continue;const at=position(ch,row.historicalPosition);if(!at){pend(s,'TREACHERY_ORDER_UNKNOWN',unknownAt(ch));continue;}
  const required=['effectiveMutualAlliance','unilateralRupture','orderedHostility','kingLoss','responsibility','associatedIncident','eligibleModeAndIdentity'];
@@ -158,7 +154,25 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  for(const e of movements.sort((a,b)=>cmp(a.at,b.at))){const k=budgetKey(e),budget=e.subject.system==='REPUTATION'
  ?cfg.budgets.reputationBattle[e.subject.track]:cfg.budgets.relationshipEvent[e.subject.track];
  const used=spent.get(k)??0;e.budgetKey=k;e.allocated=Math.max(0,Math.min(e.units,budget[e.claim.effect]-used));spent.set(k,used+e.allocated);}
- const rank={RECIP:0,MOVE:1,TREACHERY:2,ACK:3};const timeline=[...movements,...extras]
+// Own-episode movement and reciprocity are atomic, not an invented tie.
+ // Otherwise, kind/lexical sorting never resolves consequential same-instant order.
+ const timelineItems=[...movements,...extras];
+ function dependent(a,b){
+  if(a.kind==='RECIP'&&b.kind==='MOVE'&&a.claim.claimId===b.claim.claimId)return false;
+  if(b.kind==='RECIP'&&a.kind==='MOVE'&&a.claim.claimId===b.claim.claimId)return false;
+  if(key(a.subject)===key(b.subject))return true;
+  const x=a.subject,y=b.subject;
+  if(x.system!=='RELATIONSHIP'||y.system!=='RELATIONSHIP'||x.track!==y.track||pair(x)!==pair(y))return false;
+  return a.kind==='RECIP'||b.kind==='RECIP'||(x.track==='RIVALRY'&&(a.kind==='ACK'||b.kind==='ACK'));
+ }
+ for(let i=0;i<timelineItems.length;i++)for(let j=0;j<i;j++){
+  const a=timelineItems[i],b=timelineItems[j];
+  if(cmp(a.at,b.at)===0&&dependent(a,b)){
+   pend(a.subject,'AMBIGUOUS_SAME_MOMENT',a.at);
+   pend(b.subject,'AMBIGUOUS_SAME_MOMENT',b.at);
+  }
+ }
+ const rank={RECIP:0,MOVE:1,TREACHERY:2,ACK:3};const timeline=timelineItems
  .sort((a,b)=>cmp(a.at,b.at)||rank[a.kind]-rank[b.kind]||encode(a).localeCompare(encode(b)));
  for(const e of timeline){const s=state(e.subject);if(blocked(e.subject,e.at))continue;
  const t=cfg.stages[e.subject.system][e.subject.track];
@@ -174,7 +188,12 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const other=states.get(dir);if(other&&!blocked(other.subject,e.at))cross(other,cfg.stages.RELATIONSHIP.RIVALRY,credits,e.at,ack);}
  }else if(e.kind==='TREACHERY'){
  const after=s.stage<3?3:Math.min(cfg.treachery.maximumStage,s.stage+1);
- if(after>s.stage){s.quarantinedPreExceptionWeakening+=s.downBank;s.downBank=0;s.stage=after;
+ if(after>s.stage&&s.downBank>0){
+  // Earlier qualified cooling cannot be silently erased or carried into the
+  // exceptional stage without approved semantics. Preserve historical prefix.
+  pend(e.subject,'TREACHERY_PREEXCEPTION_WEAKENING_UNCONFIGURED',e.at);continue;
+ }
+ if(after>s.stage){s.stage=after;
  s.peak=Math.max(s.peak,after);s.transitions.push({kind:'EXCEPTIONAL_UP',stage:after,at:e.at});}
  if(publishable){const synthetic={claim:{claimRevision:e.row.incidentRevision,incidentId:e.row.incidentId,
  subject:e.subject,effect:'STRENGTHEN',historicalPosition:e.row.historicalPosition}};
