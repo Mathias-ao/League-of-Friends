@@ -20,8 +20,8 @@ const baseStats=()=>({
     composition:{infantry:10,archers:0,cavalry:0,siege:0,monks:0,warships:0,navalSupport:0,otherLandMilitary:0,specialMilitary:0},
     engagements:{engagementModelVersion:'AOF_ENGAGEMENT_STATISTICS_V4',
       raidEvidence:{initiatedEpisodes:[
-        {raidId:'r1',attackerPlayerId:1,victimPlayerId:2,startedAtMs:900000,sourceEventIds:['raid1']},
-        {raidId:'r2',attackerPlayerId:1,victimPlayerId:2,startedAtMs:1200000,sourceEventIds:['raid2']}
+        {raidId:'r1',modelVersion:'AOF_RAID_DETECTION_V3',attackerPlayerId:1,victimPlayerId:2,startedAtMs:900000,sourceEventIds:['raid1']},
+        {raidId:'r2',modelVersion:'AOF_RAID_DETECTION_V3',attackerPlayerId:1,victimPlayerId:2,startedAtMs:1200000,sourceEventIds:['raid2']}
       ]},
       engagementEvidence:{battles:[]}}},
   mapPresence:{modelVersion:'AOF_MAP_PRESENCE_V8',homeAnchor:{method:'initial_town_center'},
@@ -210,10 +210,21 @@ test('duplicate same recording across separate league Battles cannot manufacture
 });
 test('out-of-recording inferred command episode is not counted as military posture',()=>{
   const invalid=tweak(game(),p=>{
-    p.military.engagements.raidEvidence.initiatedEpisodes=[{attackerPlayerId:1,victimPlayerId:2,
+    p.military.engagements.raidEvidence.initiatedEpisodes=[{modelVersion:'AOF_RAID_DETECTION_V3',attackerPlayerId:1,victimPlayerId:2,
       startedAtMs:3000000,sourceEventIds:['future']}];
   });
   assert.equal(measurePersonalityGame(invalid,config()).features.GUERRILLA_FRONTLINE.fraction,null);
+});
+test('upstream formula changes invalidate rather than silently recalibrate historical personality',()=>{
+  const c=config();
+  const changed=tweak(game(),p=>{p.mapPresence.modelVersion='AOF_MAP_PRESENCE_V9';});
+  const f=measurePersonalityGame(changed,c).features;
+  assert.equal(f.CAUTIOUS_BOLD.fraction,null);
+  assert.equal(f.COMPACT_EXPANSIVE.fraction,null);
+  assert.equal(f.BOOMER_AGGRESSOR.fraction,.3);
+  const changedMilitary=tweak(game(),p=>{p.military.modelVersion='AOF_MILITARY_STATISTICS_V6';});
+  assert.equal(measurePersonalityGame(changedMilitary,c).features.BOOMER_AGGRESSOR.fraction,null);
+  assert.equal(measurePersonalityGame(changedMilitary,c).features.SPECIALIST_IMPROVISER.fraction,null);
 });
 test('context calibration must be explicit, frozen, in-range; invalid unapproved constants rejected',()=>{
   const c=config();c.anchors[key(baseContext())].CAUTIOUS_BOLD={lower:.2,upper:.8,comparisonGroup:'test'};
