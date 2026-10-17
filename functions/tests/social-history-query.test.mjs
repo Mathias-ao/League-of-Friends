@@ -333,3 +333,25 @@ test('two Games in one Battle remain one scene; duplicate recorded source is not
  assert.equal(duplicate.coverage.excludedGames,1);
  assert.equal(duplicate.chronicle.pages[0].entries[0].entryId,firstId);
 });
+
+test('ordinary native READY upload contributes factual Chronicle before accepted Game result or Match finalisation',async()=>{
+ const {game,source}=makeNativeSource();
+ const match=records.get('matches/m');
+ match.status='ACTIVE';delete match.completedAt;
+ game.status='AWAITING_CONFIRMATION';delete game.canonicalResult;
+ source.ordinaryUploadVersion='AOF_NATIVE_PLAYER_UPLOAD_V1';
+ const player=process.env.AOF_ACTIVE_NATIVE_PLAYER_READS,social=process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;
+ try{
+  process.env.AOF_ACTIVE_NATIVE_PLAYER_READS='1';process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS='1';
+  const r=await getPlayerChronicle.run(request);
+  assert.equal(r.coverage.readableAcceptedGames,1);
+  assert.equal(r.coverage.unresolvedOutcomeGames,1);
+  assert.equal(r.chronicle.pages[0].entries[0].resultStatus,'UNRESOLVED');
+  assert.doesNotMatch(r.chronicle.pages[0].entries[0].paragraphs.join(' '),/accepted result|official duel|winner|betrayed|saved|rescued/i);
+  const shadow=await getSocialHistory.run(request);
+  assert.equal(shadow.history.contributions.length,0,'pending game is not an official social score');
+ }finally{
+  if(player===undefined)delete process.env.AOF_ACTIVE_NATIVE_PLAYER_READS;else process.env.AOF_ACTIVE_NATIVE_PLAYER_READS=player;
+  if(social===undefined)delete process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;else process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS=social;
+ }
+});
