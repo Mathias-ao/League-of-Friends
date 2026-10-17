@@ -258,22 +258,11 @@ class QualificationTests(unittest.TestCase):
         self.assertFalse(admitted(b, "PAIR_CONTEST"))
 
     def test_genuine_undirected_shared_opponent_facet_remains_neutral(self):
-        # #124's real co-target facet contains two contributor records, not
-        # a fromPlayerId/toPlayerId helper pair. Neither direction is credited.
+        # Two actual distinct contributor source events; pair participation
+        # never becomes either directional Relationship Claim or own witness.
         b = case(kind="co-target", people=(1, 2, 3))
-        b["pair_deeds"][0]["sourceEventIds"] = ["cmd1", "cmd2"]
-        b["pair_deeds"][0]["facets"] = [{
-            "kind": "SHARED_OPPONENT_PARTICIPATION", "targetPlayerId": 3,
-            "contributions": [
-                {"contributorPlayerId": 1, "sourceEventIds": ["cmd1"]},
-                {"contributorPlayerId": 2, "sourceEventIds": ["cmd2"]}],
-            "coordinationIntent": "UNAVAILABLE"}]
-        b["pair_observations"].append({
-            "sourceEventId": "cmd2", "actorPlayerId": 2,
-            "moment": {"atMs": 11050, "operationOrdinal": 11},
-            "commandType": "ORDER"})
-        b["context"]["deedContexts"][0]["sourceEventIds"] = ["cmd1", "cmd2"]
-        b["context"]["deedContexts"][0]["directionalActors"] = []
+        self.assertEqual({e["actorPlayerId"] for e in b["pair_observations"]}, {1, 2})
+        self.assertEqual(b["context"]["deedContexts"][0]["directionalActors"], [])
         r = decisions(b)
         self.assertEqual(r["effects"], [])
         self.assertEqual(r["actorWitnesses"], [])
@@ -393,6 +382,139 @@ class QualificationTests(unittest.TestCase):
         b["replay_bindings"]["players"][2] = "p1"
         with self.assertRaisesRegex(ValueError, "AMBIGUOUS_REPLAY_BINDINGS"):
             decisions(b)
+
+
+    def test_directional_source_event_actor_spoof_is_refused_without_muting_real_actor(self):
+        b = case(kind="contest", contest=True)
+        b["pair_deeds"][0]["facets"].append({
+            "kind": "TARGETED_COMMAND", "fromPlayerId": 2, "toPlayerId": 1,
+            "sourceEventIds": ["cmd1"]})
+        # #124 neutral context detects both *claimed* directions, but original
+        # actor of cmd1 is p1. Strict directional qualification is #126's job.
+        b["context"]["deedContexts"][0]["directionalActors"].append(
+            {"fromReplayPlayerId": 2, "toReplayPlayerId": 1})
+        r = decisions(b)
+        self.assertTrue(any(x["fromReplayPlayerId"] == 2
+                            for x in r["rejectedActorDirections"]))
+        self.assertFalse(any(e["claim"]["subject"].get("fromPlayerId") == "p2"
+                             for e in r["effects"]))
+        self.assertFalse(any(w["actorPlayerId"] == "p2" for w in r["actorWitnesses"]))
+        self.assertTrue(any(e["claim"]["subject"].get("fromPlayerId") == "p1"
+                            and e["claim"]["decision"] == "QUALIFIED"
+                            for e in r["effects"]))
+
+    def test_ordered_original_ordinal_and_ambiguous_ordinals_fail_pending(self):
+        b = case(kind="contest", contest=True)
+        result = decisions(b)
+        claim = next(e["claim"] for e in result["effects"]
+                     if e["claim"]["decision"] == "QUALIFIED")
+        self.assertEqual(claim["historicalPosition"]["recordingAtMs"], 11000)
+        self.assertEqual(claim["historicalPosition"]["operationOrdinal"], 10)
+        self.assertEqual(claim["historicalPosition"]["order"], "ORDERED")
+        b["pair_observations"][0]["moment"]["operationOrdinal"] = None
+        altered = decisions(b)
+        self.assertFalse(any(e["claim"]["decision"] == "QUALIFIED" for e in altered["effects"]))
+        self.assertEqual(altered["actorWitnesses"], [])
+        self.assertTrue(any("SOURCE_ORDINAL_UNAVAILABLE_OR_AMBIGUOUS" in x["reasonCodes"]
+                            for x in altered["inferences"]))
+        self.assertTrue(all(e["claim"]["historicalPosition"]["order"] == "PARTIAL"
+                            for e in altered["effects"]))
+        b = case(kind="contest", contest=True)
+        b["pair_observations"][1]["moment"]["atMs"] = 11000
+        b["pair_observations"][1]["moment"]["operationOrdinal"] = 10
+        altered = decisions(b)
+        self.assertTrue(all(e["claim"]["decision"] == "PENDING" for e in altered["effects"]))
+
+    def test_explicit_v1_v2_contracts_never_mint_castle_objective_proof(self):
+        b = case(kind="contest", contest=True)
+        one = decisions(b)
+        b["context"]["version"] = "AOF_SOCIAL_V1_CONTEXT_V2"
+        # V2's strict <15-tile diagnostic is read as contextual, *never*
+        # as construction completion or eligibility for any ordinary rule.
+        b["context"]["placementContexts"] = [{
+            "sourceEventId": "castle-place",
+            "actorReplayPlayerId": 1,
+            "buildingClass": "CASTLE_PLACEMENT",
+            "specialForwardCastle": {
+                "status": "PENDING", "operationEstablished": False,
+                "qualifies": False,
+                "homeProximity": {"ruleVersion": "AOF_FORWARD_CASTLE_HOME_PROXIMITY_V1",
+                                  "distanceGate": "PASS", "distanceTiles": 14.9}}}]
+        two = decisions(b)
+        self.assertEqual([(r["familyId"],r["decision"]) for r in one["inferences"]],
+                         [(r["familyId"],r["decision"]) for r in two["inferences"]])
+        self.assertFalse(any(r["familyId"].endswith("CASTLE") for r in two["inferences"]))
+        self.assertEqual(two["officialWrites"], False)
+        b["context"]["version"] = "AOF_SOCIAL_V1_CONTEXT_V3"
+        with self.assertRaisesRegex(ValueError, "INCOMPATIBLE_CONTEXT"):
+            decisions(b)
+
+    def test_python_qualifier_claim_reaches_javascript_historical_evaluator(self):
+        """Cross-language #126 -> merged #139: ordered effect is allocatable,
+        unknown ordinal remains pending; synthetic-only proposed simulation."""
+        if not shutil.which("node"):
+            self.skipTest("Node runtime not available for Python→JS handoff")
+        b = case(kind="contest", contest=True)
+        q = decisions(b)
+        valid = [e for e in q["effects"] if e["claim"]["decision"] == "QUALIFIED"]
+        self.assertEqual(len(valid), 1)
+        subject = valid[0]["claim"]["subject"]
+        self.assertEqual(subject["track"], "RIVALRY")
+        self.assertEqual(valid[0]["claim"]["historicalPosition"]["operationOrdinal"], 10)
+        payload = {
+            "snapshot": b["snapshot"], "calibration": b["calibration"],
+            "effects": valid, "actorWitnesses": q["actorWitnesses"],
+        }
+        script = """
+import {evaluateHistory} from './functions/src/engines/socialV1History/history.js';
+let input='';
+for await (const part of process.stdin) input+=part;
+const x=JSON.parse(input), policy=x.calibration.policy;
+const R=['GALLANTRY','CRUELTY','CHIVALRY'], P=['RIVALRY','HOSTILITY','BOND'];
+const stages={
+ REPUTATION:Object.fromEntries(R.map(t=>[t,{up:[1,2,3],down:[1,1,1]}])),
+ RELATIONSHIP:Object.fromEntries(P.map(t=>[t,{up:[1,2,3],down:[1,1,1],reciprocity:{3:1}}])),
+};
+const budgets={
+ reputationBattle:Object.fromEntries(R.map(t=>[t,{STRENGTHEN:4,WEAKEN:4}])),
+ relationshipEvent:Object.fromEntries(P.map(t=>[t,{STRENGTHEN:4,WEAKEN:4}])),
+};
+const claim=x.effects[0].claim, calibration={
+ version:'SYNTHETIC_CROSS_LANGUAGE_ONLY',policy,stages,budgets,
+ rules:{[claim.ruleId]:{system:claim.subject.system,track:claim.subject.track,
+  effect:claim.effect,bands:{[claim.significanceBandId]:2}}},
+ treachery:{consumptionUnits:0,maximumStage:3}
+};
+const s=x.snapshot, chapters=[{
+ battleId:s.battleId,matchId:s.matchId,gameId:s.gameId,gameGuid:s.gameGuid,
+ eventId:s.eventId,seasonId:s.seasonId,sourceAuthority:s.authorityRevision,
+ revision:1,state:'READY',order:{event:1,battle:1,game:1,
+ key:claim.historicalPosition.leagueOrderKey}
+}];
+const result=evaluateHistory({chapters,effects:x.effects,
+ actorWitnesses:x.actorWitnesses,calibration});
+const projection=result.projections.find(z=>z.subject.track==='RIVALRY');
+console.log(JSON.stringify({stage:projection?.stage,status:projection?.status,
+ pendingReasons:projection?.pendingReasons,
+ audit:result.audit,receipts:result.receipts.length,
+ officialWrites:result.officialWrites,simulation:result.simulation}));
+"""
+        proc = subprocess.run(["node", "--input-type=module", "-e", script],
+            input=json.dumps(payload), text=True, capture_output=True,
+            cwd=Path(__file__).resolve().parents[2], check=True)
+        r = json.loads(proc.stdout)
+        self.assertEqual(r["status"], "VERIFIED")
+        self.assertEqual(r["stage"], 1)
+        self.assertEqual(r["audit"], [])
+        self.assertEqual(r["pendingReasons"], [])
+        self.assertEqual(r["receipts"], 0)
+        self.assertFalse(r["officialWrites"])
+        self.assertTrue(r["simulation"]["receiptPublicationBlocked"])
+        b["pair_observations"][0]["moment"]["operationOrdinal"] = None
+        partial = decisions(b)
+        self.assertFalse(any(e["claim"]["decision"] == "QUALIFIED"
+                             for e in partial["effects"]))
+        self.assertFalse(partial["actorWitnesses"])
 
 
 if __name__ == "__main__":
