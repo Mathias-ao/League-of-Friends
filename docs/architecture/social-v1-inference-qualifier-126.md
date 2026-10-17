@@ -12,7 +12,7 @@ Server-side integration MUST select the active integrity-verified READY Game, pr
 
 The #124 deedContexts.facetKinds is pair-wide; the qualifier also requires matching original Pair Social Evidence deeds with per-facet actor/target/event refs to avoid copying A's conduct to B. An attack command, engagement detector, BUILD action, gold infrastructure proxy or support geometry is NOT proof of executed harm, received resources, completed structure, mining, rescue or motive. Real Replay execution observation is not required for ordinary V1, but bounded inference must remain labelled as inference.
 
-All source-context proxy measurements require explicit method registration, provenance refs, event/clock and source authority matching, and configuration-provided minimums. Pre-entry measurements must end before the episode. Correlated witness copies cannot count as independent corroboration. Missing required evidence is pending, contradictory known context is not qualified.
+All source-context proxy measurements require explicit method registration, provenance refs, event/clock and source authority matching, and configuration-provided minimums. Pre-entry measurements must end before the episode, and their original Pair Social Evidence observation timestamps must fall inside the attested measurement window. The qualifier requires those original event observations as separate input, not just a self-asserted proxy timestamp. Correlated witness copies cannot count as independent corroboration. Missing required evidence is pending, contradictory known context is not qualified.
 
 ## Proposed ordinary strengthening matrix
 
