@@ -10,6 +10,8 @@ const hash=x=>createHash('sha256').update(encode(x)).digest('hex');
 const key=s=>s.system==='REPUTATION'?encode(['R',s.track,s.playerId]):encode(['D',s.track,s.fromPlayerId,s.toPlayerId]);
 const reverse=s=>key({...s,fromPlayerId:s.toPlayerId,toPlayerId:s.fromPlayerId});
 const pair=s=>encode([s.fromPlayerId,s.toPlayerId].sort());
+// Game document IDs are scoped to their authoritative league Battle/Match.
+const gameKey=row=>encode([row.battleId,row.gameId]);
 const cmp=(a,b)=>{for(let i=0;i<a.length;i++) if(a[i]!==b[i])return a[i]-b[i];return 0;};
 const nonnegative=n=>Number.isFinite(n)&&n>=0;
 const positive=n=>nonnegative(n)&&n>0;
@@ -38,10 +40,10 @@ export function validateCalibration(c){
 function select(chapters){const map=new Map();for(const c of chapters){
  ensure(c.battleId===c.matchId&&c.battleId&&c.gameId&&c.eventId&&c.seasonId&&c.sourceAuthority&&
   Number.isSafeInteger(c.revision)&&c.revision>=0&&['READY','DISPUTED','WITHDRAWN'].includes(c.state),'INVALID_CHAPTER');
- const prev=map.get(c.gameId);if(!prev||prev.revision<c.revision)map.set(c.gameId,c);
+ const id=gameKey(c),prev=map.get(id);if(!prev||prev.revision<c.revision)map.set(id,c);
  else if(prev.revision===c.revision&&encode(prev)!==encode(c))throw Error('CONFLICTING_CHAPTER');
  }const guids=new Map();for(const c of map.values())if(c.state==='READY'&&c.gameGuid){
- const prior=guids.get(c.gameGuid);ensure(!prior||prior===c.gameId,'DUPLICATE_POV_GAME');guids.set(c.gameGuid,c.gameId);
+ const prior=guids.get(c.gameGuid);ensure(!prior||prior===gameKey(c),'DUPLICATE_POV_GAME');guids.set(c.gameGuid,gameKey(c));
  }return map;}
 function subjectState(subject){return {subject,stage:0,peak:0,upBank:0,downBank:0,transitions:[],status:'VERIFIED',
  currentStage:0,lastVerifiedHistoricalStage:0,pendingReasons:[],quarantinedPreExceptionWeakening:0};}
@@ -80,7 +82,7 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const receipts=[],audit=[],claims=[],extras=[],consumption=[];
  const state=s=>{const k=key(s);if(!states.has(k))states.set(k,subjectState(s));return states.get(k);};
  const pend=(s,reason)=>{const k=key(s);state(s);const p=pending.get(k)??new Set();p.add(reason);pending.set(k,p);};
- const source=(row)=>{const c=active.get(row.gameId);return c&&c.state==='READY'&&c.sourceAuthority===row.sourceAuthority&&
+ const source=(row)=>{const c=active.get(gameKey(row));return c&&c.state==='READY'&&c.sourceAuthority===row.sourceAuthority&&
  c.battleId===row.battleId&&c.eventId===row.eventId?c:null;};
  const position=(c,p)=>c?.order&&[c.order.event,c.order.battle,c.order.game].every(Number.isSafeInteger)&&
  p?.order==='ORDERED'&&p.leagueOrderKey===c.order.key&&Number.isSafeInteger(p.recordingAtMs)&&
