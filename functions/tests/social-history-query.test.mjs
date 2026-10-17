@@ -115,7 +115,7 @@ test('missing or disputed Game sources are disclosed rather than interpreted as 
  const r=await getSocialHistory.run(request);assert.equal(r.status,'PARTIAL');assert.equal(r.history.contributions.length,0);
  assert.equal(r.coverage.excludedGames,1);assert.equal(r.excluded[0].reason,'replay_statistics_missing');
  reset();records.get('matches/m/games/g').activeResultDisputeId='dispute';
- const d=await getSocialHistory.run(request);assert.equal(d.history.contributions.length,0);assert.equal(d.excluded[0].reason,'official_result_ineligible');
+ const d=await getSocialHistory.run(request);assert.equal(d.history.contributions.length,0);assert.equal(d.excluded[0].reason,'disputed_or_withdrawn_Game');
 });
 test('unknown chronology remains visible but expressly unresolved; duplicate Game sequence is rejected',async()=>{
  reset();delete records.get('matches/m').completedAt;
