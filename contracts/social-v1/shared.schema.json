@@ -1,0 +1,2739 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mathias-ao/League-of-Friends/contracts/social-v1/shared.schema.json",
+  "title": "AOF_SOCIAL_V1_SHARED_1",
+  "description": "Canonical closed JSON wire contract. Validation checks structure; authority and reference admission remain server responsibilities. See README.md.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "SourceSnapshot"
+        },
+        "value": {
+          "$ref": "#/$defs/SourceSnapshot"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "Observation"
+        },
+        "value": {
+          "$ref": "#/$defs/Observation"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "Incident"
+        },
+        "value": {
+          "$ref": "#/$defs/Incident"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "Inference"
+        },
+        "value": {
+          "$ref": "#/$defs/Inference"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "Claim"
+        },
+        "value": {
+          "$ref": "#/$defs/Claim"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "Receipt"
+        },
+        "value": {
+          "$ref": "#/$defs/Receipt"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "Opportunity"
+        },
+        "value": {
+          "$ref": "#/$defs/Opportunity"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "InvitationSlot"
+        },
+        "value": {
+          "$ref": "#/$defs/InvitationSlot"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "Judgment"
+        },
+        "value": {
+          "$ref": "#/$defs/Judgment"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "BattleFeature"
+        },
+        "value": {
+          "$ref": "#/$defs/BattleFeature"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "PersonalityProfile"
+        },
+        "value": {
+          "$ref": "#/$defs/PersonalityProfile"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "ChronicleScene"
+        },
+        "value": {
+          "$ref": "#/$defs/ChronicleScene"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "RecognitionCandidate"
+        },
+        "value": {
+          "$ref": "#/$defs/RecognitionCandidate"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "PublicClaim"
+        },
+        "value": {
+          "$ref": "#/$defs/PublicClaim"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "recordType",
+        "value"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "recordType": {
+          "const": "PublicJudgment"
+        },
+        "value": {
+          "$ref": "#/$defs/PublicJudgment"
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "PolicyRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policyVersion",
+        "configurationVersion",
+        "status",
+        "approvalRef"
+      ],
+      "properties": {
+        "policyVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "configurationVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "status": {
+          "enum": [
+            "PROPOSED",
+            "APPROVED"
+          ]
+        },
+        "approvalRef": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "APPROVED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "approvalRef": {
+                "$ref": "#/$defs/Id"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "revision",
+        "digest"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "SOURCE_EVENT",
+            "SOURCE_DEED",
+            "MEASUREMENT",
+            "CONTEXT",
+            "INFERENCE",
+            "CLAIM",
+            "RECEIPT",
+            "JUDGMENT",
+            "STRICT_PROOF",
+            "AWARD",
+            "EXCEPTIONAL_MOMENT"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/Id"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      }
+    },
+    "Decision": {
+      "enum": [
+        "QUALIFIED",
+        "PENDING",
+        "NOT_QUALIFIED",
+        "UNCONFIGURED"
+      ]
+    },
+    "Coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tier",
+        "ruleId",
+        "missing",
+        "limitations"
+      ],
+      "properties": {
+        "tier": {
+          "enum": [
+            "ADMITTED",
+            "LIMITED",
+            "INSUFFICIENT"
+          ]
+        },
+        "ruleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        }
+      }
+    },
+    "Position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "leagueOrderKey",
+        "gameNumber",
+        "recordingAtMs",
+        "operationOrdinal",
+        "order"
+      ],
+      "properties": {
+        "leagueOrderKey": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gameNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "recordingAtMs": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "operationOrdinal": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "order": {
+          "enum": [
+            "ORDERED",
+            "PARTIAL",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "Outcome": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "qualification",
+            "resultRevision",
+            "winningPlayerIds"
+          ],
+          "properties": {
+            "qualification": {
+              "const": "OFFICIAL"
+            },
+            "resultRevision": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "winningPlayerIds": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Id"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "qualification",
+            "resultRevision",
+            "winningPlayerIds"
+          ],
+          "properties": {
+            "qualification": {
+              "const": "UNRESOLVED"
+            },
+            "resultRevision": {
+              "const": null
+            },
+            "winningPlayerIds": {
+              "const": null
+            }
+          }
+        }
+      ]
+    },
+    "SourceSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "authorityRevision",
+        "battleId",
+        "matchId",
+        "gameId",
+        "eventId",
+        "seasonId",
+        "gameGuid",
+        "sourceHash",
+        "statisticsRevision",
+        "artifactRefs",
+        "mappingDigest",
+        "eventAdmissionDigest",
+        "outcome",
+        "roster"
+      ],
+      "properties": {
+        "contract": {
+          "const": "AOF_SOCIAL_V1_SHARED_1"
+        },
+        "authorityRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "battleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "matchId": {
+          "$ref": "#/$defs/Id"
+        },
+        "gameId": {
+          "$ref": "#/$defs/Id"
+        },
+        "eventId": {
+          "$ref": "#/$defs/Id"
+        },
+        "seasonId": {
+          "$ref": "#/$defs/Id"
+        },
+        "gameGuid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceHash": {
+          "$ref": "#/$defs/Digest"
+        },
+        "statisticsRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactRefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "digest",
+              "generation"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "STATISTICS",
+                  "RECORDED_EVENTS",
+                  "ORIGINAL"
+                ]
+              },
+              "digest": {
+                "$ref": "#/$defs/Digest"
+              },
+              "generation": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "mappingDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "eventAdmissionDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "roster": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "replaySlot",
+              "playerId",
+              "teamId"
+            ],
+            "properties": {
+              "replaySlot": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "playerId": {
+                "$ref": "#/$defs/Id"
+              },
+              "teamId": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Id"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "Observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observationId",
+        "sourceAuthority",
+        "refs",
+        "semantic",
+        "featureId",
+        "value",
+        "unit",
+        "actorPlayerId",
+        "counterpartPlayerId",
+        "start",
+        "end",
+        "methodVersion",
+        "coverage"
+      ],
+      "properties": {
+        "observationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "sourceAuthority": {
+          "$ref": "#/$defs/Digest"
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Ref"
+          }
+        },
+        "semantic": {
+          "enum": [
+            "RECORDED_COMMAND",
+            "RECORDED_METADATA",
+            "DERIVED_MEASUREMENT"
+          ]
+        },
+        "featureId": {
+          "$ref": "#/$defs/Id"
+        },
+        "value": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "null"
+          ]
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actorPlayerId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "counterpartPlayerId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "start": {
+          "$ref": "#/$defs/Position"
+        },
+        "end": {
+          "$ref": "#/$defs/Position"
+        },
+        "methodVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "coverage": {
+          "$ref": "#/$defs/Coverage"
+        }
+      }
+    },
+    "Incident": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "incidentId",
+        "incidentRevision",
+        "sourceAuthority",
+        "lineage",
+        "state",
+        "sourceDeedRefs",
+        "observationRefs",
+        "overlapGroupId",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "sourceAuthority": {
+          "$ref": "#/$defs/Digest"
+        },
+        "lineage": {
+          "enum": [
+            "SOURCE_ANCHORED",
+            "REVIEWED_REBOUND",
+            "PENDING"
+          ]
+        },
+        "state": {
+          "enum": [
+            "CURRENT",
+            "SUPERSEDED",
+            "WITHDRAWN"
+          ]
+        },
+        "sourceDeedRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "SOURCE_DEED"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "observationRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "SOURCE_EVENT",
+                      "MEASUREMENT",
+                      "CONTEXT"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "overlapGroupId": {
+          "$ref": "#/$defs/Id"
+        },
+        "start": {
+          "$ref": "#/$defs/Position"
+        },
+        "end": {
+          "$ref": "#/$defs/Position"
+        }
+      }
+    },
+    "Inference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inferenceId",
+        "incidentRevision",
+        "modelVersion",
+        "policy",
+        "familyId",
+        "basis",
+        "decision",
+        "action",
+        "supportRefs",
+        "contextBeforeRefs",
+        "counterevidenceRefs",
+        "priorHistoryDigest",
+        "significanceBandId",
+        "coverage",
+        "reasonCodes"
+      ],
+      "properties": {
+        "inferenceId": {
+          "$ref": "#/$defs/Digest"
+        },
+        "incidentRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "modelVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "familyId": {
+          "$ref": "#/$defs/Id"
+        },
+        "basis": {
+          "const": "BOUNDED_INFERENCE"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actorPlayerId",
+            "counterpartPlayerId"
+          ],
+          "properties": {
+            "actorPlayerId": {
+              "$ref": "#/$defs/Id"
+            },
+            "counterpartPlayerId": {
+              "$ref": "#/$defs/Id"
+            }
+          }
+        },
+        "supportRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Ref"
+          }
+        },
+        "contextBeforeRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Ref"
+          }
+        },
+        "counterevidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Ref"
+          }
+        },
+        "priorHistoryDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "significanceBandId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverage": {
+          "$ref": "#/$defs/Coverage"
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        }
+      }
+    },
+    "Subject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "system",
+            "track",
+            "playerId"
+          ],
+          "properties": {
+            "system": {
+              "const": "REPUTATION"
+            },
+            "track": {
+              "enum": [
+                "GALLANTRY",
+                "CRUELTY",
+                "CHIVALRY"
+              ]
+            },
+            "playerId": {
+              "$ref": "#/$defs/Id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "system",
+            "track",
+            "fromPlayerId",
+            "toPlayerId"
+          ],
+          "properties": {
+            "system": {
+              "const": "RELATIONSHIP"
+            },
+            "track": {
+              "enum": [
+                "RIVALRY",
+                "HOSTILITY",
+                "BOND"
+              ]
+            },
+            "fromPlayerId": {
+              "$ref": "#/$defs/Id"
+            },
+            "toPlayerId": {
+              "$ref": "#/$defs/Id"
+            }
+          }
+        }
+      ]
+    },
+    "Claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claimId",
+        "claimRevision",
+        "incidentId",
+        "incidentRevision",
+        "subject",
+        "effect",
+        "basis",
+        "ruleId",
+        "policy",
+        "decision",
+        "supportRefs",
+        "significanceBandId",
+        "contributionKey",
+        "historicalPosition",
+        "reciprocity"
+      ],
+      "properties": {
+        "claimId": {
+          "$ref": "#/$defs/Id"
+        },
+        "claimRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "effect": {
+          "enum": [
+            "STRENGTHEN",
+            "WEAKEN"
+          ]
+        },
+        "basis": {
+          "enum": [
+            "BOUNDED_INFERENCE",
+            "QUALIFIED_JUDGMENT",
+            "STRICT_PROOF"
+          ]
+        },
+        "ruleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "supportRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Ref"
+          }
+        },
+        "significanceBandId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contributionKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "historicalPosition": {
+          "$ref": "#/$defs/Position"
+        },
+        "reciprocity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "ruleId",
+            "independentActorRefs"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "ELIGIBLE",
+                "INELIGIBLE",
+                "PENDING"
+              ]
+            },
+            "ruleId": {
+              "$ref": "#/$defs/Id"
+            },
+            "independentActorRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Ref"
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "decision": {
+                    "const": "ELIGIBLE"
+                  }
+                },
+                "required": [
+                  "decision"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "independentActorRefs": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "basis": {
+                "const": "BOUNDED_INFERENCE"
+              }
+            },
+            "required": [
+              "basis"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supportRefs": {
+                "contains": {
+                  "properties": {
+                    "kind": {
+                      "const": "INFERENCE"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "basis": {
+                "const": "QUALIFIED_JUDGMENT"
+              }
+            },
+            "required": [
+              "basis"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supportRefs": {
+                "contains": {
+                  "properties": {
+                    "kind": {
+                      "const": "JUDGMENT"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "basis": {
+                "const": "STRICT_PROOF"
+              }
+            },
+            "required": [
+              "basis"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supportRefs": {
+                "contains": {
+                  "properties": {
+                    "kind": {
+                      "const": "STRICT_PROOF"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receiptId",
+        "projectionRevision",
+        "inputDigest",
+        "ruleSetVersion",
+        "policy",
+        "claimRevision",
+        "incidentId",
+        "subject",
+        "kind",
+        "state",
+        "budgetKey",
+        "requestedUnits",
+        "allocatedUnits",
+        "signedDelta",
+        "reciprocityKey",
+        "stageAfter",
+        "exceptionalAuthority",
+        "historicalPosition",
+        "reasonCodes"
+      ],
+      "properties": {
+        "receiptId": {
+          "$ref": "#/$defs/Digest"
+        },
+        "projectionRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "inputDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "ruleSetVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "claimRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "kind": {
+          "enum": [
+            "MOVEMENT",
+            "RECIPROCITY",
+            "EXCEPTIONAL_STAGE"
+          ]
+        },
+        "state": {
+          "enum": [
+            "APPLIED",
+            "CAPPED",
+            "PENDING",
+            "SUPERSEDED"
+          ]
+        },
+        "budgetKey": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestedUnits": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "allocatedUnits": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "signedDelta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reciprocityKey": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stageAfter": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "exceptionalAuthority": {
+          "anyOf": [
+            {
+              "enum": [
+                "STRICT_TREACHERY"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "historicalPosition": {
+          "$ref": "#/$defs/Position"
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "APPLIED"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "policy": {
+                "properties": {
+                  "status": {
+                    "const": "APPROVED"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "CAPPED"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "policy": {
+                "properties": {
+                  "status": {
+                    "const": "APPROVED"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "PENDING"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "requestedUnits": {
+                "const": null
+              },
+              "allocatedUnits": {
+                "const": null
+              },
+              "signedDelta": {
+                "const": null
+              },
+              "stageAfter": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "EXCEPTIONAL_STAGE"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "exceptionalAuthority": {
+                "const": "STRICT_TREACHERY"
+              },
+              "requestedUnits": {
+                "const": null
+              },
+              "allocatedUnits": {
+                "const": null
+              },
+              "signedDelta": {
+                "const": null
+              },
+              "subject": {
+                "properties": {
+                  "system": {
+                    "const": "RELATIONSHIP"
+                  },
+                  "track": {
+                    "const": "HOSTILITY"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "MOVEMENT"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "exceptionalAuthority": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "RECIPROCITY"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "exceptionalAuthority": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "APPLIED"
+              },
+              "kind": {
+                "const": "MOVEMENT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "requestedUnits": {
+                "type": "number"
+              },
+              "allocatedUnits": {
+                "type": "number"
+              },
+              "signedDelta": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "CAPPED"
+              },
+              "kind": {
+                "const": "MOVEMENT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "requestedUnits": {
+                "type": "number"
+              },
+              "allocatedUnits": {
+                "const": 0
+              },
+              "signedDelta": {
+                "const": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "APPLIED"
+              },
+              "kind": {
+                "const": "RECIPROCITY"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reciprocityKey": {
+                "$ref": "#/$defs/Id"
+              },
+              "requestedUnits": {
+                "const": null
+              },
+              "allocatedUnits": {
+                "const": null
+              },
+              "signedDelta": {
+                "const": null
+              },
+              "stageAfter": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "APPLIED"
+              },
+              "kind": {
+                "const": "EXCEPTIONAL_STAGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "stageAfter": {
+                "type": "integer",
+                "minimum": 3
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "RECIPROCITY"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "requestedUnits": {
+                "const": null
+              },
+              "allocatedUnits": {
+                "const": null
+              },
+              "signedDelta": {
+                "const": null
+              },
+              "stageAfter": {
+                "const": null
+              }
+            }
+          }
+        }
+      ]
+    },
+    "JudgmentFamily": {
+      "enum": [
+        "ASSISTANCE",
+        "SITUATED_GRIEVANCE",
+        "SKILL_ACKNOWLEDGMENT",
+        "TREACHERY_VICTIM"
+      ]
+    },
+    "Opportunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slotId",
+        "opportunityRevision",
+        "battleId",
+        "matchId",
+        "incidentId",
+        "incidentRevision",
+        "sourceAuthority",
+        "respondentPlayerId",
+        "counterpartPlayerId",
+        "family",
+        "questionVersion",
+        "choiceIds",
+        "selectorPolicy",
+        "fatigueSnapshotDigest",
+        "state"
+      ],
+      "properties": {
+        "slotId": {
+          "$ref": "#/$defs/Digest"
+        },
+        "opportunityRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "battleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "matchId": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "sourceAuthority": {
+          "$ref": "#/$defs/Digest"
+        },
+        "respondentPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "counterpartPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "family": {
+          "$ref": "#/$defs/JudgmentFamily"
+        },
+        "questionVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "choiceIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "selectorPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "fatigueSnapshotDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "state": {
+          "enum": [
+            "OFFERED",
+            "DEFERRED",
+            "DECLINED",
+            "SUBMITTED",
+            "WITHDRAWN"
+          ]
+        }
+      }
+    },
+    "InvitationSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slotId",
+        "battleId",
+        "matchId",
+        "respondentPlayerId",
+        "revision",
+        "state",
+        "firstOpportunityRevision",
+        "currentOpportunityRevision"
+      ],
+      "properties": {
+        "slotId": {
+          "$ref": "#/$defs/Digest"
+        },
+        "battleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "matchId": {
+          "$ref": "#/$defs/Id"
+        },
+        "respondentPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "state": {
+          "enum": [
+            "OFFERED",
+            "DEFERRED",
+            "DECLINED",
+            "SUBMITTED",
+            "WITHDRAWN"
+          ]
+        },
+        "firstOpportunityRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "currentOpportunityRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "WITHDRAWN"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "currentOpportunityRevision": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "not": {
+                  "const": "WITHDRAWN"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "currentOpportunityRevision": {
+                "$ref": "#/$defs/Digest"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "judgmentId",
+        "judgmentRevision",
+        "incidentId",
+        "incidentRevision",
+        "sourceAuthority",
+        "authorPlayerId",
+        "counterpartPlayerId",
+        "family",
+        "questionVersion",
+        "qualificationPolicy",
+        "choices",
+        "historicalPosition",
+        "submittedAt",
+        "correction",
+        "supersedesJudgmentRevision",
+        "privateNoteRef",
+        "auditRef"
+      ],
+      "properties": {
+        "judgmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "judgmentRevision": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "sourceAuthority": {
+          "$ref": "#/$defs/Digest"
+        },
+        "authorPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "counterpartPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "family": {
+          "$ref": "#/$defs/JudgmentFamily"
+        },
+        "questionVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "qualificationPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "choiceId",
+              "decision",
+              "qualifiedMeaningRefs",
+              "reasonCodes"
+            ],
+            "properties": {
+              "choiceId": {
+                "$ref": "#/$defs/Id"
+              },
+              "decision": {
+                "$ref": "#/$defs/Decision"
+              },
+              "qualifiedMeaningRefs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Ref"
+                }
+              },
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Id"
+                }
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "historicalPosition": {
+          "$ref": "#/$defs/Position"
+        },
+        "submittedAt": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+        },
+        "correction": {
+          "enum": [
+            "NONE",
+            "REQUESTED",
+            "REOPENED",
+            "SUPERSEDED"
+          ]
+        },
+        "supersedesJudgmentRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "privateNoteRef": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "auditRef": {
+          "$ref": "#/$defs/Id"
+        }
+      }
+    },
+    "BattleFeature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "playerId",
+        "battleId",
+        "matchId",
+        "inputDigest",
+        "featureVersion",
+        "contextKey",
+        "featureId",
+        "numerator",
+        "denominator",
+        "normalized",
+        "coverage",
+        "evidenceRefs",
+        "sampleUnit"
+      ],
+      "properties": {
+        "playerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "battleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "matchId": {
+          "$ref": "#/$defs/Id"
+        },
+        "inputDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "featureVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "contextKey": {
+          "$ref": "#/$defs/Id"
+        },
+        "featureId": {
+          "$ref": "#/$defs/Id"
+        },
+        "numerator": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "denominator": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "normalized": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverage": {
+          "$ref": "#/$defs/Coverage"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Ref"
+          }
+        },
+        "sampleUnit": {
+          "const": "INDEPENDENT_BATTLE"
+        }
+      }
+    },
+    "PersonalityProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "playerId",
+        "projectionRevision",
+        "policy",
+        "sliders"
+      ],
+      "properties": {
+        "playerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "projectionRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "sliders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "axis",
+              "status",
+              "value",
+              "independentBattles",
+              "contextKey",
+              "coverage",
+              "featureRefs"
+            ],
+            "properties": {
+              "axis": {
+                "enum": [
+                  "BOOMER_AGGRESSOR",
+                  "CAUTIOUS_BOLD",
+                  "GUERRILLA_FRONTLINE",
+                  "SPECIALIST_IMPROVISER",
+                  "COMPACT_EXPANSIVE"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "DEVELOPING",
+                  "READY",
+                  "CONTEXT_LIMITED"
+                ]
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "independentBattles": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "contextKey": {
+                "$ref": "#/$defs/Id"
+              },
+              "coverage": {
+                "$ref": "#/$defs/Coverage"
+              },
+              "featureRefs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Ref"
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "const": "DEVELOPING"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "value": {
+                      "const": null
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "const": "READY"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "value": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 5,
+          "maxItems": 5,
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "axis": {
+                    "const": "BOOMER_AGGRESSOR"
+                  }
+                },
+                "required": [
+                  "axis"
+                ]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "axis": {
+                    "const": "CAUTIOUS_BOLD"
+                  }
+                },
+                "required": [
+                  "axis"
+                ]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "axis": {
+                    "const": "GUERRILLA_FRONTLINE"
+                  }
+                },
+                "required": [
+                  "axis"
+                ]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "axis": {
+                    "const": "SPECIALIST_IMPROVISER"
+                  }
+                },
+                "required": [
+                  "axis"
+                ]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "properties": {
+                  "axis": {
+                    "const": "COMPACT_EXPANSIVE"
+                  }
+                },
+                "required": [
+                  "axis"
+                ]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          ]
+        }
+      }
+    },
+    "ChronicleScene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sceneId",
+        "sceneRevision",
+        "battleId",
+        "matchId",
+        "ownerPlayerId",
+        "counterpartPlayerId",
+        "factRefs",
+        "inferredClaimRefs",
+        "receiptRefs",
+        "publicJudgmentRefs",
+        "awardRefs",
+        "exceptionalMomentRefs",
+        "priorHistoryDigest",
+        "historyCoverage",
+        "result"
+      ],
+      "properties": {
+        "sceneId": {
+          "$ref": "#/$defs/Digest"
+        },
+        "sceneRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "battleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "matchId": {
+          "$ref": "#/$defs/Id"
+        },
+        "ownerPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "counterpartPlayerId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "factRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "SOURCE_EVENT",
+                      "SOURCE_DEED",
+                      "MEASUREMENT",
+                      "CONTEXT"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "inferredClaimRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "CLAIM"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "receiptRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "RECEIPT"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "publicJudgmentRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "JUDGMENT"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "awardRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "AWARD"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "exceptionalMomentRefs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "EXCEPTIONAL_MOMENT"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "priorHistoryDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "historyCoverage": {
+          "$ref": "#/$defs/Coverage"
+        },
+        "result": {
+          "$ref": "#/$defs/Outcome"
+        }
+      }
+    },
+    "RecognitionCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateId",
+        "candidateRevision",
+        "kind",
+        "catalogueVersion",
+        "ruleId",
+        "policy",
+        "inputDigest",
+        "subjectPlayerIds",
+        "incidentIds",
+        "supportRefs",
+        "decision",
+        "effect",
+        "reasonCodes"
+      ],
+      "properties": {
+        "candidateId": {
+          "$ref": "#/$defs/Id"
+        },
+        "candidateRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "kind": {
+          "enum": [
+            "AWARD",
+            "EXCEPTIONAL_MOMENT"
+          ]
+        },
+        "catalogueVersion": {
+          "$ref": "#/$defs/Id"
+        },
+        "ruleId": {
+          "$ref": "#/$defs/Id"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "inputDigest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "subjectPlayerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "incidentIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "supportRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Ref"
+          }
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "effect": {
+          "enum": [
+            "EDITORIAL_ONLY",
+            "CONFIGURED_ORDINARY_EFFECT",
+            "STRICT_TREACHERY"
+          ]
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "effect": {
+                "const": "STRICT_TREACHERY"
+              }
+            },
+            "required": [
+              "effect"
+            ]
+          },
+          "then": {
+            "properties": {
+              "supportRefs": {
+                "allOf": [
+                  {
+                    "contains": {
+                      "properties": {
+                        "kind": {
+                          "const": "STRICT_PROOF"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ]
+                    }
+                  },
+                  {
+                    "contains": {
+                      "properties": {
+                        "kind": {
+                          "const": "JUDGMENT"
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "PublicClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claimId",
+        "claimRevision",
+        "subject",
+        "effect",
+        "basis",
+        "label",
+        "decision",
+        "policy"
+      ],
+      "properties": {
+        "claimId": {
+          "$ref": "#/$defs/Id"
+        },
+        "claimRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "effect": {
+          "enum": [
+            "STRENGTHEN",
+            "WEAKEN"
+          ]
+        },
+        "basis": {
+          "const": "BOUNDED_INFERENCE"
+        },
+        "label": {
+          "const": "Inferred"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "policy": {
+          "$ref": "#/$defs/PolicyRef"
+        }
+      }
+    },
+    "PublicJudgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "judgmentId",
+        "judgmentRevision",
+        "incidentId",
+        "incidentRevision",
+        "sourceAuthority",
+        "authorPlayerId",
+        "counterpartPlayerId",
+        "family",
+        "qualificationPolicy",
+        "choices"
+      ],
+      "properties": {
+        "judgmentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "judgmentRevision": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentId": {
+          "$ref": "#/$defs/Id"
+        },
+        "incidentRevision": {
+          "$ref": "#/$defs/Digest"
+        },
+        "sourceAuthority": {
+          "$ref": "#/$defs/Digest"
+        },
+        "authorPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "counterpartPlayerId": {
+          "$ref": "#/$defs/Id"
+        },
+        "family": {
+          "$ref": "#/$defs/JudgmentFamily"
+        },
+        "qualificationPolicy": {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "choiceId",
+                  "decision",
+                  "label"
+                ],
+                "properties": {
+                  "choiceId": {
+                    "$ref": "#/$defs/Id"
+                  },
+                  "decision": {
+                    "const": "QUALIFIED"
+                  },
+                  "label": {
+                    "const": "Qualified"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "choiceId",
+                  "decision",
+                  "label"
+                ],
+                "properties": {
+                  "choiceId": {
+                    "$ref": "#/$defs/Id"
+                  },
+                  "decision": {
+                    "const": "NOT_QUALIFIED"
+                  },
+                  "label": {
+                    "const": "Not Qualified — No Relationship Effect"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "RecordType": {
+      "enum": [
+        "SourceSnapshot",
+        "Observation",
+        "Incident",
+        "Inference",
+        "Claim",
+        "Receipt",
+        "Opportunity",
+        "InvitationSlot",
+        "Judgment",
+        "BattleFeature",
+        "PersonalityProfile",
+        "ChronicleScene",
+        "RecognitionCandidate",
+        "PublicClaim",
+        "PublicJudgment"
+      ]
+    }
+  }
+}

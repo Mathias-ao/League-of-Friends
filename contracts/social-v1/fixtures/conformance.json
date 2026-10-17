@@ -1,0 +1,1714 @@
+{
+  "description": "Synthetic structural/guard constants only; no production predicate, score, threshold or catalogue approval. Shared by Python jsonschema and Node Ajv/TypeScript.",
+  "approvals": [
+    {
+      "policyVersion": "fixture-policy-only",
+      "configurationVersion": "fixture-config-only",
+      "status": "APPROVED",
+      "approvalRef": "fixture-owner-review"
+    }
+  ],
+  "bases": {
+    "SourceSnapshot": {
+      "contract": "AOF_SOCIAL_V1_SHARED_1",
+      "authorityRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "battleId": "match-1",
+      "matchId": "match-1",
+      "gameId": "game-1",
+      "eventId": "event-1",
+      "seasonId": "season-1",
+      "gameGuid": null,
+      "sourceHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "statisticsRevision": 1,
+      "artifactRefs": [
+        {
+          "kind": "STATISTICS",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "generation": null
+        }
+      ],
+      "mappingDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "eventAdmissionDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "outcome": {
+        "qualification": "UNRESOLVED",
+        "resultRevision": null,
+        "winningPlayerIds": null
+      },
+      "roster": [
+        {
+          "replaySlot": 1,
+          "playerId": "p1",
+          "teamId": null
+        },
+        {
+          "replaySlot": 2,
+          "playerId": "p2",
+          "teamId": null
+        }
+      ]
+    },
+    "Observation": {
+      "observationId": "obs-1",
+      "sourceAuthority": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "refs": [
+        {
+          "kind": "SOURCE_EVENT",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "semantic": "RECORDED_COMMAND",
+      "featureId": "requested-forward-placement",
+      "value": 1,
+      "unit": "request",
+      "actorPlayerId": "p1",
+      "counterpartPlayerId": "p2",
+      "start": {
+        "leagueOrderKey": null,
+        "gameNumber": 1,
+        "recordingAtMs": 1000,
+        "operationOrdinal": 2,
+        "order": "PARTIAL"
+      },
+      "end": {
+        "leagueOrderKey": null,
+        "gameNumber": 1,
+        "recordingAtMs": 1000,
+        "operationOrdinal": 2,
+        "order": "PARTIAL"
+      },
+      "methodVersion": "fixture-method",
+      "coverage": {
+        "tier": "LIMITED",
+        "ruleId": "fixture-rule-only",
+        "missing": [],
+        "limitations": [
+          "Fixture measurements are not execution proof."
+        ]
+      }
+    },
+    "Incident": {
+      "incidentId": "incident-1",
+      "incidentRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceAuthority": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "lineage": "SOURCE_ANCHORED",
+      "state": "CURRENT",
+      "sourceDeedRefs": [
+        {
+          "kind": "SOURCE_DEED",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "observationRefs": [
+        {
+          "kind": "MEASUREMENT",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "overlapGroupId": "overlap-1",
+      "start": {
+        "leagueOrderKey": null,
+        "gameNumber": 1,
+        "recordingAtMs": 1000,
+        "operationOrdinal": 2,
+        "order": "PARTIAL"
+      },
+      "end": {
+        "leagueOrderKey": null,
+        "gameNumber": 1,
+        "recordingAtMs": 1000,
+        "operationOrdinal": 2,
+        "order": "PARTIAL"
+      }
+    },
+    "Inference": {
+      "inferenceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "incidentRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "modelVersion": "fixture-model",
+      "policy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "PROPOSED",
+        "approvalRef": null
+      },
+      "familyId": "fixture-family",
+      "basis": "BOUNDED_INFERENCE",
+      "decision": "UNCONFIGURED",
+      "action": {
+        "actorPlayerId": "p1",
+        "counterpartPlayerId": "p2"
+      },
+      "supportRefs": [
+        {
+          "kind": "MEASUREMENT",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "contextBeforeRefs": [],
+      "counterevidenceRefs": [],
+      "priorHistoryDigest": null,
+      "significanceBandId": null,
+      "coverage": {
+        "tier": "LIMITED",
+        "ruleId": "fixture-rule-only",
+        "missing": [],
+        "limitations": [
+          "Fixture measurements are not execution proof."
+        ]
+      },
+      "reasonCodes": [
+        "CALIBRATION_NOT_APPROVED"
+      ]
+    },
+    "Claim": {
+      "claimId": "claim-1",
+      "claimRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "incidentId": "incident-1",
+      "incidentRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "subject": {
+        "system": "RELATIONSHIP",
+        "track": "BOND",
+        "fromPlayerId": "p1",
+        "toPlayerId": "p2"
+      },
+      "effect": "STRENGTHEN",
+      "basis": "BOUNDED_INFERENCE",
+      "ruleId": "fixture-rule-only",
+      "policy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "PROPOSED",
+        "approvalRef": null
+      },
+      "decision": "UNCONFIGURED",
+      "supportRefs": [
+        {
+          "kind": "INFERENCE",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "significanceBandId": null,
+      "contributionKey": "contribution-1",
+      "historicalPosition": {
+        "leagueOrderKey": null,
+        "gameNumber": 1,
+        "recordingAtMs": 1000,
+        "operationOrdinal": 2,
+        "order": "PARTIAL"
+      },
+      "reciprocity": {
+        "decision": "PENDING",
+        "ruleId": "fixture-own-actor-rule",
+        "independentActorRefs": []
+      }
+    },
+    "Receipt": {
+      "receiptId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "projectionRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "inputDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "ruleSetVersion": "fixture-rules",
+      "policy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "PROPOSED",
+        "approvalRef": null
+      },
+      "claimRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "incidentId": "incident-1",
+      "subject": {
+        "system": "RELATIONSHIP",
+        "track": "BOND",
+        "fromPlayerId": "p1",
+        "toPlayerId": "p2"
+      },
+      "kind": "MOVEMENT",
+      "state": "PENDING",
+      "budgetKey": null,
+      "requestedUnits": null,
+      "allocatedUnits": null,
+      "signedDelta": null,
+      "reciprocityKey": null,
+      "stageAfter": null,
+      "exceptionalAuthority": null,
+      "historicalPosition": {
+        "leagueOrderKey": null,
+        "gameNumber": 1,
+        "recordingAtMs": 1000,
+        "operationOrdinal": 2,
+        "order": "PARTIAL"
+      },
+      "reasonCodes": [
+        "CALIBRATION_NOT_APPROVED"
+      ]
+    },
+    "Opportunity": {
+      "slotId": "e101e1ba8585eec8c93db851592a82ba598efed78e55cfd462e35c828c3fda12",
+      "opportunityRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "battleId": "match-1",
+      "matchId": "match-1",
+      "incidentId": "incident-1",
+      "incidentRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceAuthority": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "respondentPlayerId": "p1",
+      "counterpartPlayerId": "p2",
+      "family": "ASSISTANCE",
+      "questionVersion": "fixture-question",
+      "choiceIds": [
+        "fixture-choice"
+      ],
+      "selectorPolicy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "APPROVED",
+        "approvalRef": "fixture-owner-review"
+      },
+      "fatigueSnapshotDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "state": "OFFERED"
+    },
+    "InvitationSlot": {
+      "slotId": "e101e1ba8585eec8c93db851592a82ba598efed78e55cfd462e35c828c3fda12",
+      "battleId": "match-1",
+      "matchId": "match-1",
+      "respondentPlayerId": "p1",
+      "revision": 1,
+      "state": "OFFERED",
+      "firstOpportunityRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "currentOpportunityRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "Judgment": {
+      "judgmentId": "judgment-1",
+      "judgmentRevision": "jrev-1",
+      "incidentId": "incident-1",
+      "incidentRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceAuthority": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "authorPlayerId": "p1",
+      "counterpartPlayerId": "p2",
+      "family": "ASSISTANCE",
+      "questionVersion": "fixture-question",
+      "qualificationPolicy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "APPROVED",
+        "approvalRef": "fixture-owner-review"
+      },
+      "choices": [
+        {
+          "choiceId": "resolved-positive",
+          "decision": "QUALIFIED",
+          "qualifiedMeaningRefs": [
+            {
+              "kind": "CLAIM",
+              "id": "fixture-evidence",
+              "revision": "fixture-rev",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ],
+          "reasonCodes": []
+        },
+        {
+          "choiceId": "private-pending",
+          "decision": "PENDING",
+          "qualifiedMeaningRefs": [],
+          "reasonCodes": [
+            "PRIVATE_REASON"
+          ]
+        },
+        {
+          "choiceId": "resolved-negative",
+          "decision": "NOT_QUALIFIED",
+          "qualifiedMeaningRefs": [],
+          "reasonCodes": [
+            "PRIVATE_REASON"
+          ]
+        }
+      ],
+      "historicalPosition": {
+        "leagueOrderKey": null,
+        "gameNumber": 1,
+        "recordingAtMs": 1000,
+        "operationOrdinal": 2,
+        "order": "PARTIAL"
+      },
+      "submittedAt": "2026-10-17T12:00:00Z",
+      "correction": "NONE",
+      "supersedesJudgmentRevision": null,
+      "privateNoteRef": "PRIVATE_NOTE",
+      "auditRef": "PRIVATE_AUDIT"
+    },
+    "BattleFeature": {
+      "playerId": "p1",
+      "battleId": "match-1",
+      "matchId": "match-1",
+      "inputDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "featureVersion": "fixture-feature",
+      "contextKey": "fixture-context",
+      "featureId": "requested-placement-rate",
+      "numerator": null,
+      "denominator": null,
+      "normalized": null,
+      "coverage": {
+        "tier": "LIMITED",
+        "ruleId": "fixture-rule-only",
+        "missing": [],
+        "limitations": [
+          "Fixture measurements are not execution proof."
+        ]
+      },
+      "evidenceRefs": [
+        {
+          "kind": "MEASUREMENT",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "sampleUnit": "INDEPENDENT_BATTLE"
+    },
+    "PersonalityProfile": {
+      "playerId": "p1",
+      "projectionRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "PROPOSED",
+        "approvalRef": null
+      },
+      "sliders": [
+        {
+          "axis": "BOOMER_AGGRESSOR",
+          "status": "DEVELOPING",
+          "value": null,
+          "independentBattles": 0,
+          "contextKey": "fixture-context",
+          "coverage": {
+            "tier": "LIMITED",
+            "ruleId": "fixture-rule-only",
+            "missing": [],
+            "limitations": [
+              "Fixture measurements are not execution proof."
+            ]
+          },
+          "featureRefs": []
+        },
+        {
+          "axis": "CAUTIOUS_BOLD",
+          "status": "DEVELOPING",
+          "value": null,
+          "independentBattles": 0,
+          "contextKey": "fixture-context",
+          "coverage": {
+            "tier": "LIMITED",
+            "ruleId": "fixture-rule-only",
+            "missing": [],
+            "limitations": [
+              "Fixture measurements are not execution proof."
+            ]
+          },
+          "featureRefs": []
+        },
+        {
+          "axis": "GUERRILLA_FRONTLINE",
+          "status": "DEVELOPING",
+          "value": null,
+          "independentBattles": 0,
+          "contextKey": "fixture-context",
+          "coverage": {
+            "tier": "LIMITED",
+            "ruleId": "fixture-rule-only",
+            "missing": [],
+            "limitations": [
+              "Fixture measurements are not execution proof."
+            ]
+          },
+          "featureRefs": []
+        },
+        {
+          "axis": "SPECIALIST_IMPROVISER",
+          "status": "DEVELOPING",
+          "value": null,
+          "independentBattles": 0,
+          "contextKey": "fixture-context",
+          "coverage": {
+            "tier": "LIMITED",
+            "ruleId": "fixture-rule-only",
+            "missing": [],
+            "limitations": [
+              "Fixture measurements are not execution proof."
+            ]
+          },
+          "featureRefs": []
+        },
+        {
+          "axis": "COMPACT_EXPANSIVE",
+          "status": "DEVELOPING",
+          "value": null,
+          "independentBattles": 0,
+          "contextKey": "fixture-context",
+          "coverage": {
+            "tier": "LIMITED",
+            "ruleId": "fixture-rule-only",
+            "missing": [],
+            "limitations": [
+              "Fixture measurements are not execution proof."
+            ]
+          },
+          "featureRefs": []
+        }
+      ]
+    },
+    "ChronicleScene": {
+      "sceneId": "01c09044ac3b36bbb9992715c764b8784bb666c7c2884b50c4cac705f2d82279",
+      "sceneRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "battleId": "match-1",
+      "matchId": "match-1",
+      "ownerPlayerId": "p1",
+      "counterpartPlayerId": "p2",
+      "factRefs": [
+        {
+          "kind": "SOURCE_EVENT",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "inferredClaimRefs": [
+        {
+          "kind": "CLAIM",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "receiptRefs": [],
+      "publicJudgmentRefs": [],
+      "awardRefs": [],
+      "exceptionalMomentRefs": [],
+      "priorHistoryDigest": null,
+      "historyCoverage": {
+        "tier": "LIMITED",
+        "ruleId": "fixture-rule-only",
+        "missing": [],
+        "limitations": [
+          "Fixture measurements are not execution proof."
+        ]
+      },
+      "result": {
+        "qualification": "UNRESOLVED",
+        "resultRevision": null,
+        "winningPlayerIds": null
+      }
+    },
+    "RecognitionCandidate": {
+      "candidateId": "candidate-1",
+      "candidateRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "AWARD",
+      "catalogueVersion": "fixture-catalogue",
+      "ruleId": "fixture-only",
+      "policy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "PROPOSED",
+        "approvalRef": null
+      },
+      "inputDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "subjectPlayerIds": [
+        "p1"
+      ],
+      "incidentIds": [
+        "incident-1"
+      ],
+      "supportRefs": [
+        {
+          "kind": "CLAIM",
+          "id": "fixture-evidence",
+          "revision": "fixture-rev",
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "decision": "UNCONFIGURED",
+      "effect": "EDITORIAL_ONLY",
+      "reasonCodes": [
+        "NO_APPROVED_CATALOGUE"
+      ]
+    },
+    "PublicClaim": {
+      "claimId": "claim-1",
+      "claimRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "subject": {
+        "system": "RELATIONSHIP",
+        "track": "BOND",
+        "fromPlayerId": "p1",
+        "toPlayerId": "p2"
+      },
+      "effect": "STRENGTHEN",
+      "basis": "BOUNDED_INFERENCE",
+      "label": "Inferred",
+      "decision": "PENDING",
+      "policy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "APPROVED",
+        "approvalRef": "fixture-owner-review"
+      }
+    },
+    "PublicJudgment": {
+      "judgmentId": "judgment-1",
+      "judgmentRevision": "jrev-1",
+      "incidentId": "incident-1",
+      "incidentRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceAuthority": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "authorPlayerId": "p1",
+      "counterpartPlayerId": "p2",
+      "family": "ASSISTANCE",
+      "qualificationPolicy": {
+        "policyVersion": "fixture-policy-only",
+        "configurationVersion": "fixture-config-only",
+        "status": "APPROVED",
+        "approvalRef": "fixture-owner-review"
+      },
+      "choices": [
+        {
+          "choiceId": "resolved-positive",
+          "decision": "QUALIFIED",
+          "label": "Qualified"
+        },
+        {
+          "choiceId": "resolved-negative",
+          "decision": "NOT_QUALIFIED",
+          "label": "Not Qualified — No Relationship Effect"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "name": "valid-SourceSnapshot",
+      "recordType": "SourceSnapshot",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-Observation",
+      "recordType": "Observation",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-Incident",
+      "recordType": "Incident",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-Inference",
+      "recordType": "Inference",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-Claim",
+      "recordType": "Claim",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-Receipt",
+      "recordType": "Receipt",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-Opportunity",
+      "recordType": "Opportunity",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-InvitationSlot",
+      "recordType": "InvitationSlot",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-Judgment",
+      "recordType": "Judgment",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-BattleFeature",
+      "recordType": "BattleFeature",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-PersonalityProfile",
+      "recordType": "PersonalityProfile",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-ChronicleScene",
+      "recordType": "ChronicleScene",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-RecognitionCandidate",
+      "recordType": "RecognitionCandidate",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-PublicClaim",
+      "recordType": "PublicClaim",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "valid-PublicJudgment",
+      "recordType": "PublicJudgment",
+      "patch": [],
+      "valid": true
+    },
+    {
+      "name": "second-game-same-battle",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "gameId"
+          ],
+          "value": "game-2"
+        },
+        {
+          "path": [
+            "authorityRevision"
+          ],
+          "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        {
+          "path": [
+            "statisticsRevision"
+          ],
+          "value": 2
+        }
+      ],
+      "valid": true
+    },
+    {
+      "name": "native-pinned-artifacts",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "gameGuid"
+          ],
+          "value": "guid-fixture"
+        },
+        {
+          "path": [
+            "artifactRefs"
+          ],
+          "value": [
+            {
+              "kind": "STATISTICS",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "generation": "12345"
+            },
+            {
+              "kind": "RECORDED_EVENTS",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "generation": "12345"
+            },
+            {
+              "kind": "ORIGINAL",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "generation": "12345"
+            }
+          ]
+        }
+      ],
+      "valid": true
+    },
+    {
+      "name": "official-result",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "outcome"
+          ],
+          "value": {
+            "qualification": "OFFICIAL",
+            "resultRevision": 1,
+            "winningPlayerIds": [
+              "p1"
+            ]
+          }
+        }
+      ],
+      "valid": true
+    },
+    {
+      "name": "mismatched-battle",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "battleId"
+          ],
+          "value": "some-other-match"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "mismatched-feature-battle",
+      "recordType": "BattleFeature",
+      "patch": [
+        {
+          "path": [
+            "battleId"
+          ],
+          "value": "game-1"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "mismatched-scene-battle",
+      "recordType": "ChronicleScene",
+      "patch": [
+        {
+          "path": [
+            "battleId"
+          ],
+          "value": "game-1"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "scene-id-version-change",
+      "recordType": "ChronicleScene",
+      "patch": [
+        {
+          "path": [
+            "sceneId"
+          ],
+          "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "mismatched-invitation-battle",
+      "recordType": "Opportunity",
+      "patch": [
+        {
+          "path": [
+            "battleId"
+          ],
+          "value": "game-1"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "incident-cannot-change-slot",
+      "recordType": "Opportunity",
+      "patch": [
+        {
+          "path": [
+            "slotId"
+          ],
+          "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "duplicate-roster-slot",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "roster",
+            "1",
+            "replaySlot"
+          ],
+          "value": 1
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "duplicate-roster-player",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "roster",
+            "1",
+            "playerId"
+          ],
+          "value": "p1"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "winner-outside-roster",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "outcome"
+          ],
+          "value": {
+            "qualification": "OFFICIAL",
+            "resultRevision": 1,
+            "winningPlayerIds": [
+              "outsider"
+            ]
+          }
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "unknown-result-no-winners",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "outcome",
+            "winningPlayerIds"
+          ],
+          "value": [
+            "p1"
+          ]
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "bad-generation",
+      "recordType": "SourceSnapshot",
+      "patch": [
+        {
+          "path": [
+            "artifactRefs",
+            "0",
+            "generation"
+          ],
+          "value": "latest"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "unknown-field",
+      "recordType": "Observation",
+      "patch": [
+        {
+          "path": [
+            "executed"
+          ],
+          "value": true
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "command-is-not-execution",
+      "recordType": "Observation",
+      "patch": [
+        {
+          "path": [
+            "semantic"
+          ],
+          "value": "EXECUTED_ATTACK"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "inferred-not-a-fact",
+      "recordType": "ChronicleScene",
+      "patch": [
+        {
+          "path": [
+            "factRefs"
+          ],
+          "value": [
+            {
+              "kind": "CLAIM",
+              "id": "fixture-evidence",
+              "revision": "fixture-rev",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ]
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "public-inference-must-labelled",
+      "recordType": "PublicClaim",
+      "patch": [
+        {
+          "path": [
+            "label"
+          ],
+          "value": "Confirmed attack"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "ordinary-forward-placement-permitted",
+      "recordType": "Inference",
+      "patch": [
+        {
+          "path": [
+            "familyId"
+          ],
+          "value": "inferred-forward-placement"
+        },
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        },
+        {
+          "path": [
+            "decision"
+          ],
+          "value": "QUALIFIED"
+        }
+      ],
+      "valid": true
+    },
+    {
+      "name": "inference-not-strict-proof",
+      "recordType": "Claim",
+      "patch": [
+        {
+          "path": [
+            "basis"
+          ],
+          "value": "STRICT_PROOF"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "strict-exception-needs-witness-and-victim",
+      "recordType": "RecognitionCandidate",
+      "patch": [
+        {
+          "path": [
+            "effect"
+          ],
+          "value": "STRICT_TREACHERY"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "ordinary-inference-cannot-grant-new-stage-privilege",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "kind"
+          ],
+          "value": "EXCEPTIONAL_STAGE"
+        },
+        {
+          "path": [
+            "exceptionalAuthority"
+          ],
+          "value": "FORWARD_CASTLE"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "stage-exception-not-ordinary-points",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "kind"
+          ],
+          "value": "EXCEPTIONAL_STAGE"
+        },
+        {
+          "path": [
+            "exceptionalAuthority"
+          ],
+          "value": "STRICT_TREACHERY"
+        },
+        {
+          "path": [
+            "signedDelta"
+          ],
+          "value": 1
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "self-relationship",
+      "recordType": "Claim",
+      "patch": [
+        {
+          "path": [
+            "subject",
+            "toPlayerId"
+          ],
+          "value": "p1"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "reciprocity-needs-independent-actor",
+      "recordType": "Claim",
+      "patch": [
+        {
+          "path": [
+            "reciprocity",
+            "decision"
+          ],
+          "value": "ELIGIBLE"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "proposed-no-applied-receipt",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "state"
+          ],
+          "value": "APPLIED"
+        },
+        {
+          "path": [
+            "requestedUnits"
+          ],
+          "value": 1
+        },
+        {
+          "path": [
+            "allocatedUnits"
+          ],
+          "value": 1
+        },
+        {
+          "path": [
+            "signedDelta"
+          ],
+          "value": 1
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "proposed-no-capped-receipt",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "state"
+          ],
+          "value": "CAPPED"
+        },
+        {
+          "path": [
+            "requestedUnits"
+          ],
+          "value": 1
+        },
+        {
+          "path": [
+            "allocatedUnits"
+          ],
+          "value": 0
+        },
+        {
+          "path": [
+            "signedDelta"
+          ],
+          "value": 0
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "pending-has-no-guessed-zero",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "allocatedUnits"
+          ],
+          "value": 0
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "approved-applied-fixture-only",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        },
+        {
+          "path": [
+            "state"
+          ],
+          "value": "APPLIED"
+        },
+        {
+          "path": [
+            "requestedUnits"
+          ],
+          "value": 2
+        },
+        {
+          "path": [
+            "allocatedUnits"
+          ],
+          "value": 1
+        },
+        {
+          "path": [
+            "signedDelta"
+          ],
+          "value": 1
+        }
+      ],
+      "valid": true,
+      "publication": true
+    },
+    {
+      "name": "approved-no-unknown-amount",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        },
+        {
+          "path": [
+            "state"
+          ],
+          "value": "APPLIED"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "no-overallocation",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        },
+        {
+          "path": [
+            "state"
+          ],
+          "value": "APPLIED"
+        },
+        {
+          "path": [
+            "requestedUnits"
+          ],
+          "value": 1
+        },
+        {
+          "path": [
+            "allocatedUnits"
+          ],
+          "value": 2
+        },
+        {
+          "path": [
+            "signedDelta"
+          ],
+          "value": 2
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "developing-is-not-midpoint",
+      "recordType": "PersonalityProfile",
+      "patch": [
+        {
+          "path": [
+            "sliders",
+            "0",
+            "value"
+          ],
+          "value": 50
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "all-five-distinct-axes",
+      "recordType": "PersonalityProfile",
+      "patch": [
+        {
+          "path": [
+            "sliders",
+            "0",
+            "axis"
+          ],
+          "value": "CAUTIOUS_BOLD"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "ready-has-value",
+      "recordType": "PersonalityProfile",
+      "patch": [
+        {
+          "path": [
+            "sliders",
+            "0",
+            "status"
+          ],
+          "value": "READY"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "no-numerical-defaults-in-preview",
+      "recordType": "PersonalityProfile",
+      "patch": [],
+      "valid": true,
+      "publication": false
+    },
+    {
+      "name": "proposed-ready-only-preview",
+      "recordType": "PersonalityProfile",
+      "patch": [
+        {
+          "path": [
+            "sliders",
+            "0",
+            "status"
+          ],
+          "value": "READY"
+        },
+        {
+          "path": [
+            "sliders",
+            "0",
+            "value"
+          ],
+          "value": 42
+        }
+      ],
+      "valid": true,
+      "publication": false
+    },
+    {
+      "name": "approved-proposed-configuration-still-denied",
+      "recordType": "PersonalityProfile",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "unapproved-other-config",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        }
+      ],
+      "valid": true,
+      "publication": false
+    },
+    {
+      "name": "forged-approval-still-denied",
+      "recordType": "Opportunity",
+      "patch": [
+        {
+          "path": [
+            "selectorPolicy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "invented"
+          }
+        }
+      ],
+      "valid": true,
+      "publication": false
+    },
+    {
+      "name": "proposed-invitation-preview-only",
+      "recordType": "Opportunity",
+      "patch": [
+        {
+          "path": [
+            "selectorPolicy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "PROPOSED",
+            "approvalRef": null
+          }
+        }
+      ],
+      "valid": true,
+      "publication": false
+    },
+    {
+      "name": "public-no-private-note",
+      "recordType": "PublicJudgment",
+      "patch": [
+        {
+          "path": [
+            "privateNoteRef"
+          ],
+          "value": "LEAK"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "public-no-pending-sibling",
+      "recordType": "PublicJudgment",
+      "patch": [
+        {
+          "path": [
+            "choices",
+            "0",
+            "decision"
+          ],
+          "value": "PENDING"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "approved-status-needs-reference",
+      "recordType": "PersonalityProfile",
+      "patch": [
+        {
+          "path": [
+            "policy",
+            "status"
+          ],
+          "value": "APPROVED"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "duplicate-binding-choice",
+      "recordType": "Judgment",
+      "patch": [
+        {
+          "path": [
+            "choices",
+            "1",
+            "choiceId"
+          ],
+          "value": "resolved-positive"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "publication-needs-server-registry-Receipt",
+      "recordType": "Receipt",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        }
+      ],
+      "valid": true,
+      "publication": false,
+      "approvals": []
+    },
+    {
+      "name": "publication-needs-server-registry-Opportunity",
+      "recordType": "Opportunity",
+      "patch": [],
+      "valid": true,
+      "publication": false,
+      "approvals": []
+    },
+    {
+      "name": "publication-needs-server-registry-PersonalityProfile",
+      "recordType": "PersonalityProfile",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        }
+      ],
+      "valid": true,
+      "publication": false,
+      "approvals": []
+    },
+    {
+      "name": "publication-needs-server-registry-PublicClaim",
+      "recordType": "PublicClaim",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        }
+      ],
+      "valid": true,
+      "publication": false,
+      "approvals": []
+    },
+    {
+      "name": "publication-needs-server-registry-PublicJudgment",
+      "recordType": "PublicJudgment",
+      "patch": [],
+      "valid": true,
+      "publication": false,
+      "approvals": []
+    },
+    {
+      "name": "publication-needs-server-registry-RecognitionCandidate",
+      "recordType": "RecognitionCandidate",
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        }
+      ],
+      "valid": true,
+      "publication": false,
+      "approvals": []
+    },
+    {
+      "name": "reciprocity-never-mints-movement",
+      "recordType": "Receipt",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "kind"
+          ],
+          "value": "RECIPROCITY"
+        },
+        {
+          "path": [
+            "allocatedUnits"
+          ],
+          "value": 1
+        }
+      ]
+    },
+    {
+      "name": "approved-capped-zero-is-known",
+      "recordType": "Receipt",
+      "valid": true,
+      "publication": true,
+      "patch": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "policyVersion": "fixture-policy-only",
+            "configurationVersion": "fixture-config-only",
+            "status": "APPROVED",
+            "approvalRef": "fixture-owner-review"
+          }
+        },
+        {
+          "path": [
+            "state"
+          ],
+          "value": "CAPPED"
+        },
+        {
+          "path": [
+            "requestedUnits"
+          ],
+          "value": 1
+        },
+        {
+          "path": [
+            "allocatedUnits"
+          ],
+          "value": 0
+        },
+        {
+          "path": [
+            "signedDelta"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "exception-requires-hostility-subject",
+      "recordType": "Receipt",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "kind"
+          ],
+          "value": "EXCEPTIONAL_STAGE"
+        },
+        {
+          "path": [
+            "exceptionalAuthority"
+          ],
+          "value": "STRICT_TREACHERY"
+        }
+      ]
+    },
+    {
+      "name": "withdrawn-selection-is-permanent",
+      "recordType": "InvitationSlot",
+      "valid": true,
+      "patch": [
+        {
+          "path": [
+            "state"
+          ],
+          "value": "WITHDRAWN"
+        },
+        {
+          "path": [
+            "currentOpportunityRevision"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "withdrawn-selection-cannot-retain-current",
+      "recordType": "InvitationSlot",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "state"
+          ],
+          "value": "WITHDRAWN"
+        }
+      ]
+    }
+  ],
+  "identityVectors": [
+    {
+      "battleId": "match-1",
+      "owner": "p1",
+      "counterpart": "p2",
+      "slotId": "e101e1ba8585eec8c93db851592a82ba598efed78e55cfd462e35c828c3fda12",
+      "sceneId": "01c09044ac3b36bbb9992715c764b8784bb666c7c2884b50c4cac705f2d82279"
+    },
+    {
+      "battleId": "multi-game",
+      "owner": "玩家🎮",
+      "counterpart": "æøå",
+      "slotId": "2a6ab4161b4d0b7096dce55b0bfaf91844d5de5e7b84a33447278348806a3b9f",
+      "sceneId": "0a1582bd0b605bcf8cba6913349f3c6f08b1b6f6fc007544d75c54ff726fd50b"
+    },
+    {
+      "battleId": "match-1",
+      "owner": "p2",
+      "counterpart": null,
+      "slotId": "b90913a7f40c52a621a18d19378c814ab30b253e5b96bb1fc18a7506bb07fc8e",
+      "sceneId": "af5d0e93af92fbe945af5778c76833a80c3ad989ace5aeedc16703b10567b8e2"
+    }
+  ]
+}
