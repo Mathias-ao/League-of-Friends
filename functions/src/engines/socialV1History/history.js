@@ -46,7 +46,7 @@ function select(chapters){const map=new Map();for(const c of chapters){
  const prior=guids.get(c.gameGuid);ensure(!prior||prior===gameKey(c),'DUPLICATE_POV_GAME');guids.set(c.gameGuid,gameKey(c));
  }return map;}
 function subjectState(subject){return {subject,stage:0,peak:0,upBank:0,downBank:0,transitions:[],status:'VERIFIED',
- currentStage:0,lastVerifiedHistoricalStage:0,pendingReasons:[],quarantinedPreExceptionWeakening:0};}
+ currentStage:0,lastVerifiedHistoricalStage:0,pendingReasons:[]};}
 function canUp(s,t,credits){const level=s.stage+1;if(level>t.up.length)return false;if(s.subject.system==='REPUTATION'||level<3)return true;
  const minimum=t.reciprocity[level];return (credits.get(key(s.subject))?.size??0)>=minimum&&
  (credits.get(reverse(s.subject))?.size??0)>=minimum;}
@@ -78,10 +78,16 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const unique=a=>[...new Map(a.map(v=>[encode(v),v])).values()].sort((a,b)=>encode(a).localeCompare(encode(b)));
  const inputDigest=hash({chapters:unique([...active.values()]),effects:unique(effects),actorWitnesses:unique(actorWitnesses),
  treachery:unique(treachery),acknowledgments:unique(acknowledgments),calibration});
- const revision=hash([VERSION,inputDigest]),states=new Map(),pending=new Map(),credits=new Map(),ack=new Set();
+ const revision=hash([VERSION,inputDigest]),states=new Map(),pending=new Map(),barriers=new Map(),credits=new Map(),ack=new Set();
  const receipts=[],audit=[],claims=[],extras=[],consumption=[];
  const state=s=>{const k=key(s);if(!states.has(k))states.set(k,subjectState(s));return states.get(k);};
- const pend=(s,reason)=>{const k=key(s);state(s);const p=pending.get(k)??new Set();p.add(reason);pending.set(k,p);};
+ // Unknown Game-local order blocks only that Game and its dependent successors.
+ const unknownAt=c=>c?.order&&[c.order.event,c.order.battle,c.order.game].every(Number.isSafeInteger)
+  ?[c.order.event,c.order.battle,c.order.game,-1,-1]:[-Infinity,-Infinity,-Infinity,-Infinity,-Infinity];
+ const pend=(s,reason,at=null)=>{const k=key(s);state(s);const p=pending.get(k)??new Set();p.add(reason);pending.set(k,p);
+  const b=at??[-Infinity,-Infinity,-Infinity,-Infinity,-Infinity],old=barriers.get(k);
+  if(!old||cmp(b,old)<0)barriers.set(k,b);};
+ const blocked=(s,at)=>{const b=barriers.get(key(s));return !!b&&cmp(at,b)>=0;};
  const source=(row)=>{const c=active.get(gameKey(row));return c&&c.state==='READY'&&c.sourceAuthority===row.sourceAuthority&&
  c.battleId===row.battleId&&c.eventId===row.eventId?c:null;};
  const position=(c,p)=>c?.order&&[c.order.event,c.order.battle,c.order.game].every(Number.isSafeInteger)&&
@@ -94,10 +100,14 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const ch=source(row);if(!ch){audit.push({claimId:c.claimId,reason:'INACTIVE_SOURCE'});continue;}
  if(c.decision!=='QUALIFIED'){audit.push({claimId:c.claimId,reason:'NOT_ADMITTED'});continue;}
  if(c.policy.policyVersion!==cfg.policy.policyVersion||c.policy.configurationVersion!==cfg.policy.configurationVersion||
- c.policy.status!==cfg.policy.status||c.policy.approvalRef!==cfg.policy.approvalRef){pend(s,'POLICY_MISMATCH');continue;}
+ c.policy.status!==cfg.policy.status||c.policy.approvalRef!==cfg.policy.approvalRef){pend(s,'POLICY_MISMATCH',unknownAt(ch));continue;}
  const rule=cfg.rules[c.ruleId];if(!rule||rule.system!==s.system||rule.track!==s.track||rule.effect!==c.effect||
- !positive(rule.bands[c.significanceBandId])){pend(s,'UNCONFIGURED_EFFECT');continue;}
- const at=position(ch,c.historicalPosition);if(!at){pend(s,'ORDER_UNAVAILABLE');continue;}
+ !positive(rule.bands[c.significanceBandId])){pend(s,'UNCONFIGURED_EFFECT',unknownAt(ch));continue;}
+ const at=position(ch,c.historicalPosition);if(!at){
+  pend(s,'ORDER_UNAVAILABLE',unknownAt(ch));
+  if(s.system==='RELATIONSHIP'&&c.effect==='STRENGTHEN'&&c.reciprocity?.decision!=='INELIGIBLE')
+   pend({...s,fromPlayerId:s.toPlayerId,toPlayerId:s.fromPlayerId},'RECIPROCITY_ORDER_UNAVAILABLE',unknownAt(ch));
+  continue;}
  const old=observed.get(c.claimId);if(old&&encode(old)!==encode(row))throw Error('CONFLICTING_CLAIM_ID');observed.set(c.claimId,row);
  const own=c.reciprocity?.decision==='ELIGIBLE'&&s.system==='RELATIONSHIP'&&
  c.reciprocity.independentActorRefs?.some(ref=>actorWitnesses.some(w=>w.qualification==='QUALIFIED'&&
@@ -116,7 +126,7 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
   if(key(movements[i].subject)===key(movements[j].subject)&&cmp(movements[i].at,movements[j].at)===0&&
      movements[i].group!==movements[j].group)pend(movements[i].subject,'AMBIGUOUS_SAME_MOMENT');
  for(const row of treachery){const s={system:'RELATIONSHIP',track:'HOSTILITY',fromPlayerId:row.victimPlayerId,toPlayerId:row.responsiblePlayerId};
- const ch=source(row);if(!ch)continue;const at=position(ch,row.historicalPosition);if(!at){pend(s,'TREACHERY_ORDER_UNKNOWN');continue;}
+ const ch=source(row);if(!ch)continue;const at=position(ch,row.historicalPosition);if(!at){pend(s,'TREACHERY_ORDER_UNKNOWN',unknownAt(ch));continue;}
  const required=['effectiveMutualAlliance','unilateralRupture','orderedHostility','kingLoss','responsibility','associatedIncident','eligibleModeAndIdentity'];
  if(!row.qualifierVersion||!row.incidentId||!row.incidentRevision||!row.qualifiedByStrictResolver||
  row.victimJudgment!=='BETRAYED'||row.strictProofRef?.kind!=='STRICT_PROOF'||
@@ -127,7 +137,8 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  if(duplicate){ensure(encode(duplicate.row)===encode(row),'CONFLICTING_TREACHERY');continue;}
  extras.push({kind:'TREACHERY',subject:s,row,ch,at,incidentKey});}
  for(const row of acknowledgments){const ch=source(row);if(!ch)continue;const s={system:'RELATIONSHIP',track:'RIVALRY',fromPlayerId:row.fromPlayerId,toPlayerId:row.toPlayerId};
- const at=position(ch,row.historicalPosition);if(!at){pend(s,'ACK_ORDER_UNKNOWN');continue;}
+ const at=position(ch,row.historicalPosition);if(!at){pend(s,'ACK_ORDER_UNKNOWN',unknownAt(ch));
+  pend({...s,fromPlayerId:s.toPlayerId,toPlayerId:s.fromPlayerId},'ACK_ORDER_UNKNOWN',unknownAt(ch));continue;}
  if(row.qualification==='QUALIFIED'&&row.acknowledgedSuperiorPlayerId===row.toPlayerId&&row.explicitStructuredJudgmentRef?.kind==='JUDGMENT')
  extras.push({kind:'ACK',subject:s,row,ch,at});}
  const seenCredits=new Set();for(const e of movements.flatMap(m=>m.reciprocityProof?[m.reciprocityProof]:[]).sort((a,b)=>cmp(a.at,b.at))){
@@ -149,18 +160,18 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const used=spent.get(k)??0;e.budgetKey=k;e.allocated=Math.max(0,Math.min(e.units,budget[e.claim.effect]-used));spent.set(k,used+e.allocated);}
  const rank={RECIP:0,MOVE:1,TREACHERY:2,ACK:3};const timeline=[...movements,...extras]
  .sort((a,b)=>cmp(a.at,b.at)||rank[a.kind]-rank[b.kind]||encode(a).localeCompare(encode(b)));
- for(const e of timeline){const s=state(e.subject);if(pending.has(key(e.subject)))continue;
+ for(const e of timeline){const s=state(e.subject);if(blocked(e.subject,e.at))continue;
  const t=cfg.stages[e.subject.system][e.subject.track];
  if(e.kind==='RECIP'){
  const k=key(e.subject),set=credits.get(k)??new Set();set.add(e.row.eventId);credits.set(k,set);
  if(publishable)receipts.push(recordReceipt(e,'RECIPROCITY',null,null,null,revision,inputDigest,cfg,null,e.recipKey));
- for(const dir of [k,reverse(e.subject)]){const other=states.get(dir);if(other&&!pending.has(dir))cross(other,cfg.stages.RELATIONSHIP[other.subject.track],credits,e.at,ack);}
+ for(const dir of [k,reverse(e.subject)]){const other=states.get(dir);if(other&&!blocked(other.subject,e.at))cross(other,cfg.stages.RELATIONSHIP[other.subject.track],credits,e.at,ack);}
  }else if(e.kind==='MOVE'){
  if(e.allocated)movement(s,e.allocated,e.claim.effect,t,credits,e.at,ack);
  if(publishable)receipts.push(recordReceipt(e,'MOVEMENT',e.units,e.allocated,s.stage,revision,inputDigest,cfg,e.budgetKey));
  }else if(e.kind==='ACK'){
  ack.add(pair(e.subject));for(const dir of [key(e.subject),reverse(e.subject)]){
- const other=states.get(dir);if(other&&!pending.has(dir))cross(other,cfg.stages.RELATIONSHIP.RIVALRY,credits,e.at,ack);}
+ const other=states.get(dir);if(other&&!blocked(other.subject,e.at))cross(other,cfg.stages.RELATIONSHIP.RIVALRY,credits,e.at,ack);}
  }else if(e.kind==='TREACHERY'){
  const after=s.stage<3?3:Math.min(cfg.treachery.maximumStage,s.stage+1);
  if(after>s.stage){s.quarantinedPreExceptionWeakening+=s.downBank;s.downBank=0;s.stage=after;
@@ -170,7 +181,7 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  receipts.push(recordReceipt(synthetic,'EXCEPTIONAL_STAGE',null,null,s.stage,revision,inputDigest,cfg));}
  }}
  const projections=[...states].map(([k,s])=>({...s,currentStage:pending.has(k)?null:s.stage,
- lastVerifiedHistoricalStage:pending.has(k)?null:s.stage,status:pending.has(k)?'PENDING':'VERIFIED',
+ lastVerifiedHistoricalStage:s.stage,status:pending.has(k)?'PENDING':'VERIFIED',
  pendingReasons:[...(pending.get(k)??[])],reciprocityEvents:s.subject.system==='RELATIONSHIP'?(credits.get(k)?.size??0):null}))
  .sort((a,b)=>key(a.subject).localeCompare(key(b.subject)));
  return {version:VERSION,sharedContract:'AOF_SOCIAL_V1_SHARED_1',inputDigest,projectionRevision:revision,
