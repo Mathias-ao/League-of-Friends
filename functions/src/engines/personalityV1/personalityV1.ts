@@ -234,10 +234,11 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const entropy = included > 0 && allowed.length > 1 ? -amounts.reduce<number>((s,x) => {
     const q = (x as number)/included; return s + (q > 0 ? q*Math.log(q) : 0);
   },0)/Math.log(allowed.length) : null;
+  const entropyFraction = entropy === null ? null : Math.max(0, Math.min(1, entropy));
   // No unknown/unclassified positive queues or artificial zero-sample specialization.
-  result.SPECIALIST_IMPROVISER = allowed.length > 1 && entropy !== null &&
+  result.SPECIALIST_IMPROVISER = allowed.length > 1 && entropyFraction !== null &&
     totalRequests === included && num(requests.unknownAmountCommands) === 0
-    ? feature('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION',entropy,1,[],
+    ? feature('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION',entropyFraction,1,[],
         [String(military.modelVersion ?? '')])
     : missing('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION','CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE');
 
