@@ -147,6 +147,23 @@ export async function readSocialHistory(ownerPlayerId:string){
         excluded.push({gameIdentity,reason:'active_artifact_unavailable'});continue;
       }
       checkpoints.push({ref:sourceRef,token:sourceToken(source),type:'SOURCE'});
+      // The accepted Game roster, league Match roster and retained recording
+      // player mapping must agree; a valid replay digest alone cannot attribute
+      // facts to arbitrary league players.
+      const roster=Array.isArray(game.data.players)?game.data.players.map((p:any)=>p?.playerId):[];
+      const mapping=Array.isArray(source.playerMapping)?source.playerMapping:[];
+      const leagueIds=mapping.map((p:any)=>p?.playerId);
+      const matchRoster=Array.isArray(data.participants)?data.participants.map((p:any)=>p?.playerId):null;
+      if(roster.length<2||roster.length>8||mapping.length!==roster.length||
+         roster.some((id:any)=>typeof id!=='string'||!id)||
+         leagueIds.some((id:any)=>typeof id!=='string'||!id)||
+         new Set(roster).size!==roster.length||new Set(leagueIds).size!==leagueIds.length||
+         !roster.every((id:string)=>leagueIds.includes(id))||
+         matchRoster&&(!roster.every((id:string)=>matchRoster.includes(id))||
+           new Set(matchRoster).size!==matchRoster.length)||
+         source.sourceHash!=null&&source.sourceHash!==sourceId){
+        excluded.push({gameIdentity,reason:'active_recording_roster_or_source_mismatch'});continue;
+      }
       const nativeLooking=source.nativePublicationVersion!==undefined||
         source.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
         source.statistics?.projectionDeliveryVersion===NATIVE_SHARED_DELIVERY;
@@ -196,6 +213,8 @@ export async function readSocialHistory(ownerPlayerId:string){
         try{statistics=decodeReplayStatistics(bytes,source.statistics);}
         catch{throw new HttpsError('data-loss','A social source failed statistics decoding or integrity verification.');}
       }
+      if(source.sourceHash&&statistics?.source?.replaySha256!==source.sourceHash)
+        throw new HttpsError('data-loss','The statistics artifact is not bound to the active source.');
       const official=currentOfficialGameOutcome(game.data,data);
       const review=projectSocialIncidents({statistics,playerMapping:source.playerMapping??[],
         officialOutcome:official,context:{gameId:gameIdentity,battleId:match.doc.id}});
