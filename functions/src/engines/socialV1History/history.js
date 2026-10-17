@@ -78,7 +78,7 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const unique=a=>[...new Map(a.map(v=>[encode(v),v])).values()].sort((a,b)=>encode(a).localeCompare(encode(b)));
  const inputDigest=hash({chapters:unique([...active.values()]),effects:unique(effects),actorWitnesses:unique(actorWitnesses),
  treachery:unique(treachery),acknowledgments:unique(acknowledgments),calibration});
- const revision=hash([VERSION,inputDigest]),states=new Map(),pending=new Map(),barriers=new Map(),credits=new Map(),ack=new Set();
+ const revision=hash([VERSION,inputDigest]),states=new Map(),pending=new Map(),barriers=new Map(),verifiedPrefixes=new Set(),credits=new Map(),ack=new Set();
  const receipts=[],audit=[],claims=[],extras=[],consumption=[];
  const state=s=>{const k=key(s);if(!states.has(k))states.set(k,subjectState(s));return states.get(k);};
  // Unknown Game-local order blocks only that Game and its dependent successors.
@@ -109,7 +109,7 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
    pend({...s,fromPlayerId:s.toPlayerId,toPlayerId:s.fromPlayerId},'RECIPROCITY_ORDER_UNAVAILABLE',unknownAt(ch));
   continue;}
  const old=observed.get(c.claimId);if(old&&encode(old)!==encode(row))throw Error('CONFLICTING_CLAIM_ID');observed.set(c.claimId,row);
- const own=c.reciprocity?.decision==='ELIGIBLE'&&s.system==='RELATIONSHIP'&&
+ const own=c.effect==='STRENGTHEN'&&c.reciprocity?.decision==='ELIGIBLE'&&s.system==='RELATIONSHIP'&&
  c.reciprocity.independentActorRefs?.some(ref=>actorWitnesses.some(w=>w.qualification==='QUALIFIED'&&
  w.claimId===c.claimId&&w.incidentId===c.incidentId&&w.battleId===row.battleId&&
  w.actorPlayerId===s.fromPlayerId&&refKey(ref)===refKey(w.ref)));
@@ -175,6 +175,7 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  const rank={RECIP:0,MOVE:1,TREACHERY:2,ACK:3};const timeline=timelineItems
  .sort((a,b)=>cmp(a.at,b.at)||rank[a.kind]-rank[b.kind]||encode(a).localeCompare(encode(b)));
  for(const e of timeline){const s=state(e.subject);if(blocked(e.subject,e.at))continue;
+ verifiedPrefixes.add(key(e.subject));
  const t=cfg.stages[e.subject.system][e.subject.track];
  if(e.kind==='RECIP'){
  const k=key(e.subject),set=credits.get(k)??new Set();set.add(e.row.eventId);credits.set(k,set);
@@ -200,7 +201,7 @@ export function evaluateHistory({chapters=[],effects=[],actorWitnesses=[],treach
  receipts.push(recordReceipt(synthetic,'EXCEPTIONAL_STAGE',null,null,s.stage,revision,inputDigest,cfg));}
  }}
  const projections=[...states].map(([k,s])=>({...s,currentStage:pending.has(k)?null:s.stage,
- lastVerifiedHistoricalStage:s.stage,status:pending.has(k)?'PENDING':'VERIFIED',
+ lastVerifiedHistoricalStage:pending.has(k)&&!verifiedPrefixes.has(k)?null:s.stage,status:pending.has(k)?'PENDING':'VERIFIED',
  pendingReasons:[...(pending.get(k)??[])],reciprocityEvents:s.subject.system==='RELATIONSHIP'?(credits.get(k)?.size??0):null}))
  .sort((a,b)=>key(a.subject).localeCompare(key(b.subject)));
  return {version:VERSION,sharedContract:'AOF_SOCIAL_V1_SHARED_1',inputDigest,projectionRevision:revision,
