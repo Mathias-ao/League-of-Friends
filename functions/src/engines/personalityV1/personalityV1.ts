@@ -35,6 +35,8 @@ export interface GameContext {
   mapFamily: MapFamily;
   startFamily: StartFamily;
   mapId: string;
+  /** Server-classified duration category; numeric cutoffs are an approval decision. */
+  durationFamily: string;
   civilization: string;
   /** Approved opportunity class, not an assumed equivalence of all civilizations. */
   civilizationOpportunityKey: string;
@@ -129,8 +131,8 @@ const feature = (axis: PersonalityAxis, semantic: Feature['semantic'], numerator
 const missing = (axis: PersonalityAxis, semantic: Feature['semantic'], why: string): Feature =>
   feature(axis, semantic, null, null, [], [], why);
 const keyOf = (c: GameContext): string =>
-  [c.format, c.mapFamily, c.startFamily, c.mapId, c.civilizationOpportunityKey].join('|');
-const known = (c: GameContext): boolean => !!c.mapId && !!c.civilization &&
+  [c.format, c.mapFamily, c.startFamily, c.mapId, c.durationFamily, c.civilizationOpportunityKey].join('|');
+const known = (c: GameContext): boolean => !!c.mapId && !!c.durationFamily && !!c.civilization &&
   !!c.civilizationOpportunityKey && num(c.observedUntilMs) !== null &&
   num(c.durationMs) !== null && c.observedUntilMs >= c.durationMs &&
   ['ONE_V_ONE','TEAM','FFA'].includes(c.format) && ['LAND','WATER','HYBRID'].includes(c.mapFamily) &&
@@ -142,11 +144,11 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   if (!game.playerId || !game.gameId || !game.battleId || game.matchId !== game.battleId ||
       !Number.isInteger(game.gameNumber) || game.gameNumber < 1 || !Number.isInteger(game.authorityRevision) ||
       game.authorityRevision < 0 || !Number.isInteger(game.replaySlot) || game.replaySlot < 1 ||
-      !game.sourceHash || !game.mappingDigest || !game.sourceAuthority) {
+      !(/^[0-9a-f]{64}$/.test(game.sourceHash)) || !(/^[0-9a-f]{64}$/.test(game.mappingDigest)) || !(/^[0-9a-f]{64}$/.test(game.sourceAuthority))) {
     throw new Error('PERSONALITY_UNTRUSTED_BATTLE_OR_SOURCE_BINDING');
   }
   const c = game.context, p = obj(game.statistics);
-  const validPlayer = p.replaySlot === game.replaySlot;
+  const validPlayer = p.replaySlot === game.replaySlot && p.playerId === game.replaySlot;
   const eligible = game.sourceStatus === 'READY' && game.outcome === 'OFFICIAL' &&
     game.admitted && validPlayer && known(c);
   const result = {} as Record<PersonalityAxis, Feature>;
@@ -209,12 +211,13 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     }
   }
   const seen = new Set<string>(), episodes: typeof candidates = [];
+  let overlapAmbiguous = false;
   for (const row of [...candidates].sort((a,b) => a.kind.localeCompare(b.kind))) {
-    if (row.sources.some(x => seen.has(x))) continue;
+    if (row.sources.some(x => seen.has(x))) {overlapAmbiguous = true; continue;}
     for (const x of row.sources) seen.add(x);
     episodes.push(row);
   }
-  result.GUERRILLA_FRONTLINE = config && (c.format !== 'FFA' || c.dynamicDiplomacyQualified) &&
+  result.GUERRILLA_FRONTLINE = config && !overlapAmbiguous && (c.format !== 'FFA' || c.dynamicDiplomacyQualified) &&
     episodes.length >= config.minimumIndependentCommandEpisodes
     ? feature('GUERRILLA_FRONTLINE','COMMAND_POSTURE',
         episodes.filter(x => x.kind === 'CONTESTED').length, episodes.length,
