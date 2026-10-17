@@ -26,6 +26,8 @@ const num = (v: unknown): number | null => typeof v === 'number' && Number.isFin
 const id = (v: unknown): string | null => typeof v === 'string' && v.length > 0 ? v : null;
 const digest = (v: unknown): string => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const mean = (v: number[]): number => v.reduce((s, x) => s + x, 0) / v.length;
+const median = (values:number[]):number => {const a=[...values].sort((x,y)=>x-y), m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;};
+const hasModel = (v:unknown):boolean => typeof v==='string' && v.startsWith('AOF_');
 
 export type Format = 'ONE_V_ONE' | 'TEAM' | 'FFA';
 export type MapFamily = 'LAND' | 'WATER' | 'HYBRID';
@@ -95,6 +97,8 @@ export interface PersonalityCalibration {
   minimumIndependentBattles: number;
   recentBattleCount: number;
   careerWeight: number;
+  /** Robustness choice is proposed/configured, not an engine-hidden scoring policy. */
+  aggregationMethod: 'MEAN' | 'MEDIAN';
   /** Only these building ids count as strategically relevant B placements. */
   strategicBuildingIds: number[];
   /** Qualifying family opportunity taxonomy is explicit, not inferred from observed unit selection. */
@@ -142,7 +146,8 @@ const ids = (items: Json[]): string[] => items.map(x => id(x.sourceEventId)).fil
 /** Derive exactly one observation per axis from retained player statistics. No endpoint scoring here. */
 export function measurePersonalityGame(game: AuthorizedGame, config: PersonalityCalibration | null): GameEvidence {
   if (!game.playerId || !game.gameId || !game.battleId || game.matchId !== game.battleId ||
-      !Number.isInteger(game.gameNumber) || game.gameNumber < 1 || !Number.isInteger(game.authorityRevision) ||
+      !Number.isInteger(game.gameNumber) || game.gameNumber < 1 || !Number.isFinite(game.playedAtMs) ||
+      game.playedAtMs < 0 || !Number.isInteger(game.authorityRevision) ||
       game.authorityRevision < 0 || !Number.isInteger(game.replaySlot) || game.replaySlot < 1 ||
       !(/^[0-9a-f]{64}$/.test(game.sourceHash)) || !(/^[0-9a-f]{64}$/.test(game.mappingDigest)) || !(/^[0-9a-f]{64}$/.test(game.sourceAuthority))) {
     throw new Error('PERSONALITY_UNTRUSTED_BATTLE_OR_SOURCE_BINDING');
@@ -166,7 +171,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   // A: same full-game positive-cost BUILD/queue/research request accounting, not actual spending
   // or a fabricated 20-minute economy denominator.
   result.BOOMER_AGGRESSOR = total !== null && mil !== null &&
-    coverage.unpricedRequestCommands === 0 && spend.unpricedMilitaryCommandAmount === 0
+    coverage.unpricedRequestCommands === 0 && spend.unpricedMilitaryCommandAmount === 0 &&
+    hasModel(commitment.modelVersion) && hasModel(military.modelVersion)
     ? feature('BOOMER_AGGRESSOR','RECORDED_COMMITMENT',mil,total,[],
         [String(commitment.modelVersion ?? ''),String(military.modelVersion ?? '')])
     : missing('BOOMER_AGGRESSOR','RECORDED_COMMITMENT','FULL_GAME_COST_COVERAGE_UNAVAILABLE');
@@ -181,7 +187,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     (!['home','forward','midMap'].includes(x.sector) || !id(x.sourceEventId)));
   result.CAUTIOUS_BOLD = config && strategic.length && !unknown &&
     obj(mp.homeAnchor).method === 'initial_town_center' &&
-    num(sectors.classifiedPlacementCount) !== null
+    num(sectors.classifiedPlacementCount) !== null && hasModel(mp.modelVersion)
     ? feature('CAUTIOUS_BOLD','PLACEMENT_POSTURE',
         unique.filter(x => x.sector === 'forward').length,unique.length,ids(unique),
         [String(mp.modelVersion ?? '')])
@@ -194,17 +200,20 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const battleRows = list(obj(engagements.engagementEvidence).battles);
   const slot = String(p.playerId);
   const candidates: {kind:'ECONOMY'|'CONTESTED'; sources:string[]}[] = [];
-  if (c.format !== 'FFA' || c.dynamicDiplomacyQualified) {
+  if ((c.format !== 'FFA' || c.dynamicDiplomacyQualified) && hasModel(engagements.engagementModelVersion)) {
     for (const row of raidRows) {
       const sourceIds = Array.isArray(row.sourceEventIds) ? row.sourceEventIds.filter((v:unknown):v is string=>!!id(v)) : [];
-      if (row.attackerPlayerId === p.playerId && row.victimPlayerId !== null &&
-          sourceIds.length && num(row.startedAtMs) !== null) candidates.push({kind:'ECONOMY',sources:sourceIds});
+      if (row.attackerPlayerId === p.playerId && num(row.victimPlayerId) !== null &&
+          sourceIds.length && num(row.startedAtMs) !== null && row.startedAtMs <= c.observedUntilMs &&
+          (num(row.endedAtMs) === null || row.endedAtMs <= c.observedUntilMs)) candidates.push({kind:'ECONOMY',sources:sourceIds});
     }
     for (const row of battleRows) {
       const ownIds = obj(row.contributionSourceEventIdsByPlayer)[slot];
       const sourceIds = Array.isArray(ownIds) ? ownIds.filter((v:unknown):v is string=>!!id(v)) : [];
       const classRow = obj(obj(row.unitClassEvidenceByPlayer)[slot]);
       if (row.baseOwnerPlayerId === null && sourceIds.length &&
+          num(row.startedAtMs) !== null && row.startedAtMs <= c.observedUntilMs &&
+          num(row.endedAtMs) !== null && row.endedAtMs <= c.observedUntilMs &&
           num(classRow.militaryClassInstances) !== null && classRow.militaryClassInstances > 0) {
         candidates.push({kind:'CONTESTED',sources:sourceIds});
       }
@@ -217,7 +226,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     for (const x of row.sources) seen.add(x);
     episodes.push(row);
   }
-  result.GUERRILLA_FRONTLINE = config && !overlapAmbiguous && (c.format !== 'FFA' || c.dynamicDiplomacyQualified) &&
+  result.GUERRILLA_FRONTLINE = config && !overlapAmbiguous && hasModel(engagements.engagementModelVersion) &&
+    (c.format !== 'FFA' || c.dynamicDiplomacyQualified) &&
     episodes.length >= config.minimumIndependentCommandEpisodes
     ? feature('GUERRILLA_FRONTLINE','COMMAND_POSTURE',
         episodes.filter(x => x.kind === 'CONTESTED').length, episodes.length,
@@ -237,7 +247,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const entropyFraction = entropy === null ? null : Math.max(0, Math.min(1, entropy));
   // No unknown/unclassified positive queues or artificial zero-sample specialization.
   result.SPECIALIST_IMPROVISER = allowed.length > 1 && entropyFraction !== null &&
-    totalRequests === included && num(requests.unknownAmountCommands) === 0
+    totalRequests === included && num(requests.unknownAmountCommands) === 0 && hasModel(military.modelVersion)
     ? feature('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION',entropyFraction,1,[],
         [String(military.modelVersion ?? '')])
     : missing('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION','CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE');
@@ -245,7 +255,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   // E: site-normalized distinct remote expansion *placement* clusters, not raw clicks.
   const zones = obj(mp.expansionZones), remote = num(zones.eligibleRemoteBuildingCount),
     home = num(zones.eligibleBuildingPlacementsInsideHomeRadius), sites = num(zones.count);
-  const supported = zones.status === 'ok' && obj(mp.homeAnchor).method === 'initial_town_center' &&
+  const supported = zones.status === 'ok' && hasModel(mp.modelVersion) &&
+    obj(mp.homeAnchor).method === 'initial_town_center' &&
     remote !== null && home !== null && sites !== null && sites <= remote &&
     list(zones.zones).length === sites;
   result.COMPACT_EXPANSIVE = supported ?
@@ -271,6 +282,7 @@ function checkCalibration(config: PersonalityCalibration): void {
       !Number.isSafeInteger(config.recentBattleCount) || config.recentBattleCount < 1 ||
       !Number.isSafeInteger(config.minimumIndependentCommandEpisodes) || config.minimumIndependentCommandEpisodes < 1 ||
       !Number.isFinite(config.careerWeight) || config.careerWeight < 0 || config.careerWeight > 1 ||
+      !['MEAN','MEDIAN'].includes(config.aggregationMethod) ||
       !Array.isArray(config.strategicBuildingIds) || !config.strategicBuildingIds.every(x => Number.isSafeInteger(x)) ||
       !config.anchors || !config.availableMilitaryFamilies) throw new Error('PERSONALITY_CALIBRATION_UNAPPROVED_SHAPE');
   for (const entries of Object.values(config.anchors)) for (const a of Object.values(entries)) {
@@ -290,6 +302,14 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
     if (!old || game.authorityRevision > old.authorityRevision) latest.set(k,game);
     else if (game.authorityRevision === old.authorityRevision &&
       JSON.stringify(old) !== JSON.stringify(game)) throw new Error('PERSONALITY_CONFLICTING_AUTHORITY_REVISION');
+  }
+  const recordings = new Map<string,string>();
+  for (const game of latest.values()) {
+    const identity = JSON.stringify([game.playerId,game.battleId,game.gameId]);
+    const key = game.playerId + ':' + game.sourceHash;
+    const prior = recordings.get(key);
+    if (prior && prior !== identity) throw new Error('PERSONALITY_DUPLICATE_RECORDING_CROSS_BATTLES');
+    recordings.set(key,identity);
   }
   const groups = new Map<string,AuthorizedGame[]>();
   for (const game of latest.values()) {
@@ -344,8 +364,9 @@ export function projectPersonalityPreview(playerId: string,games: AuthorizedGame
     // independent-Battle/context normalization; no hidden scoring rules.
     let value:number|null=null;
     if(supported){
-      const career=mean(records.map(r=>r.value));
-      const recent=mean(records.slice(-config!.recentBattleCount).map(r=>r.value));
+      const aggregate=config!.aggregationMethod==='MEDIAN'?median:mean;
+      const career=aggregate(records.map(r=>r.value));
+      const recent=aggregate(records.slice(-config!.recentBattleCount).map(r=>r.value));
       const blended=config!.careerWeight*career+(1-config!.careerWeight)*recent;
       const ruleSet:PlaystyleRuleSet={ruleVersion:config!.configurationVersion,sliders:[{
         sliderId:axis,leftLabel:PERSONALITY_AXES[axis][0],rightLabel:PERSONALITY_AXES[axis][1],
