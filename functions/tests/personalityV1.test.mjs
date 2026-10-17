@@ -45,7 +45,7 @@ const game=(i=1,mod={})=>{
 const key=c=>[c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,c.civilizationOpportunityKey].join('|');
 const config=(context=baseContext())=>({
   configurationVersion:'PERSONALITY_CANDIDATE_TEST_ONLY',status:'PROPOSED',
-  minimumIndependentBattles:2,recentBattleCount:2,careerWeight:.5,
+  minimumIndependentBattles:2,recentBattleCount:2,careerWeight:.5,aggregationMethod:'MEDIAN',
   strategicBuildingIds:[80],availableMilitaryFamilies:{LAND_STANDARD:['infantry','archers','cavalry']},
   anchors:{[key(context)]:Object.fromEntries(axisNames.map(a=>[a,{lower:0,upper:1,comparisonGroup:'standard-land'}]))},
   minimumIndependentCommandEpisodes:2
@@ -156,12 +156,12 @@ test('Guerrilla/Frontline requires attributed military commands; overlapping det
     attackerPlayerId:1,victimPlayerId:2,sourceEventIds:[],startedAtMs:10}];});
   assert.equal(measurePersonalityGame(empty,c).features.GUERRILLA_FRONTLINE.fraction,null);
   const frontal=tweak(game(),p=>{p.military.engagements.engagementEvidence.battles=[
-    {baseOwnerPlayerId:null,contributionSourceEventIdsByPlayer:{1:['b1']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}},
-    {baseOwnerPlayerId:null,contributionSourceEventIdsByPlayer:{1:['b2']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}}
+    {baseOwnerPlayerId:null,startedAtMs:100000,endedAtMs:120000,contributionSourceEventIdsByPlayer:{1:['b1']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}},
+    {baseOwnerPlayerId:null,startedAtMs:100000,endedAtMs:120000,contributionSourceEventIdsByPlayer:{1:['b2']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}}
   ];p.military.engagements.raidEvidence.initiatedEpisodes=[];});
   assert.equal(measurePersonalityGame(frontal,c).features.GUERRILLA_FRONTLINE.fraction,1);
   const overlap=tweak(game(),p=>{p.military.engagements.engagementEvidence.battles=[
-    {baseOwnerPlayerId:null,contributionSourceEventIdsByPlayer:{1:['raid1']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}}
+    {baseOwnerPlayerId:null,startedAtMs:100000,endedAtMs:120000,contributionSourceEventIdsByPlayer:{1:['raid1']},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}}
   ];});
   assert.equal(measurePersonalityGame(overlap,c).features.GUERRILLA_FRONTLINE.fraction,null);
 });
@@ -180,6 +180,31 @@ test('repeated BUILD clicks cannot fabricate remote sites; missing initial TC bl
   const noAnchor=tweak(game(),p=>{p.mapPresence.homeAnchor.method=null;});
   assert.equal(measurePersonalityGame(noAnchor,config()).features.COMPACT_EXPANSIVE.fraction,null);
   assert.equal(measurePersonalityGame(noAnchor,config()).features.CAUTIOUS_BOLD.fraction,null);
+});
+test('outlier Battle is bounded by explicitly chosen median aggregation',()=>{
+  const extreme=tweak(game(3),p=>{p.military.militarySpend.resources=1000;});
+  const normal=game(),next=game(2);
+  const c=config();
+  c.recentBattleCount=3;
+  c.careerWeight=1;
+  c.aggregationMethod='MEDIAN';
+  const robust=projectPersonalityPreview('playerA',[normal,next,extreme],c);
+  assert.equal(slider(robust,'BOOMER_AGGRESSOR').value,30);
+  c.aggregationMethod='MEAN';
+  const nonrobust=projectPersonalityPreview('playerA',[normal,next,extreme],c);
+  assert.ok(slider(nonrobust,'BOOMER_AGGRESSOR').value>30);
+});
+test('duplicate same recording across separate league Battles cannot manufacture longitudinal samples',()=>{
+  const duplicated={...game(2),sourceHash:game().sourceHash};
+  assert.throws(()=>buildPersonalityBattles([game(),duplicated],config()),
+    /DUPLICATE_RECORDING_CROSS_BATTLES/);
+});
+test('out-of-recording inferred command episode is not counted as military posture',()=>{
+  const invalid=tweak(game(),p=>{
+    p.military.engagements.raidEvidence.initiatedEpisodes=[{attackerPlayerId:1,victimPlayerId:2,
+      startedAtMs:3000000,sourceEventIds:['future']}];
+  });
+  assert.equal(measurePersonalityGame(invalid,config()).features.GUERRILLA_FRONTLINE.fraction,null);
 });
 test('context calibration must be explicit, frozen, in-range; invalid unapproved constants rejected',()=>{
   const c=config();c.anchors[key(baseContext())].CAUTIOUS_BOLD={lower:.2,upper:.8,comparisonGroup:'test'};
