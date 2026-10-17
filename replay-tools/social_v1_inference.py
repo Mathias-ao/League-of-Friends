@@ -1,6 +1,6 @@
 """AoF #126: PURE, PROPOSED, source-linked six-track ordinary inference.
 
-Consumes Worker #124's neutral AOF_SOCIAL_V1_CONTEXT_V1 projection and the
+Consumes Worker #124's neutral, explicitly versioned V1/V2 context projection and the
 merged SHARED_1 source/claim contract. Does not authenticate evidence, parse a
 recording, decide objective execution, assign units, persist or publish scores.
 The server integrator MUST admit original READY sources, prove all externally
@@ -19,7 +19,13 @@ import math
 from social_v1_contract import CONTRACT, validate_record
 
 VERSION = "AOF_SOCIAL_V1_INFERENCE_1"
-CONTEXT_VERSION = "AOF_SOCIAL_V1_CONTEXT_V1"
+# Exact supported neutral output contracts; V2 only adds Castle diagnostics.
+# No territorial/castle decision or numeric threshold is imported as social evidence.
+CONTEXT_VERSIONS = frozenset({"AOF_SOCIAL_V1_CONTEXT_V1", "AOF_SOCIAL_V1_CONTEXT_V2"})
+ACTOR_OWNED_FACETS = frozenset({
+    "TARGETED_COMMAND", "ECONOMY_PRESSURE",
+    "DEFENSIVE_PARTICIPATION", "REINFORCEMENT_COMMANDS",
+})
 
 # Exact semantic branches. These are proposed ordinary *inference*, not evidence
 # of a kill, military execution, a real rescue, a completed Castle or a motive.
@@ -171,10 +177,26 @@ def _ref(kind, id_, revision, authority):
             "digest": _hash([CONTRACT, kind, id_, revision, authority])}
 
 
-def _pos(order, at):
-    """League order is passed by the server, never reconstructed from arrival time."""
+def _pos(order, facets, observations):
+    """Chronology is anchored in *original actor-owned events*, not indexes or upload time.
+
+    The earliest source-backed (atMs, operationOrdinal) supplies a genuine
+    operation anchor. A missing/duplicated or contradictory ordinal makes this
+    particular position PARTIAL, even when the league Game order is known.
+    """
+    refs = sorted({ref for f in facets if f["kind"] in ACTOR_OWNED_FACETS
+                   for ref in f["sourceEventIds"]})
+    anchors = [observations[r] for r in refs]
+    usable = (order["order"] == "ORDERED" and bool(refs)
+              and bool(order["leagueOrderKey"])
+              and all(type(x["ordinal"]) is int and 0 <= x["ordinal"] <= 9007199254740991
+                      for x in anchors)
+              and len({(x["atMs"], x["ordinal"]) for x in anchors}) == len(anchors))
+    first = min(anchors, key=lambda x: (x["atMs"], x["ordinal"] if x["ordinal"] is not None else -1)) if anchors else None
     return {"leagueOrderKey": order["leagueOrderKey"], "gameNumber": order["gameNumber"],
-            "recordingAtMs": at, "operationOrdinal": None, "order": order["order"]}
+            "recordingAtMs": first["atMs"] if first else None,
+            "operationOrdinal": first["ordinal"] if first and usable else None,
+            "order": "ORDERED" if usable else ("UNKNOWN" if order["order"] == "UNKNOWN" else "PARTIAL")}
 
 
 def _normalize_bindings(snapshot, bindings, config):
@@ -313,7 +335,7 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
     """
     validate_record("SourceSnapshot", snapshot)
     validate_inference_configuration(calibration)
-    _require(context.get("version") == CONTEXT_VERSION and
+    _require(context.get("version") in CONTEXT_VERSIONS and
              context.get("compatibleSharedContract") == CONTRACT, "INCOMPATIBLE_CONTEXT")
     _require(context.get("trust", {}).get("officialLeagueAuthority") is False and
              context.get("trust", {}).get("socialClaimsQualified") is False,
@@ -341,7 +363,9 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                  and type(event.get("actorPlayerId")) is int
                  and event["actorPlayerId"] in bindings["players"],
                  "INVALID_RECORDED_EVENT_ANCHOR")
-        e = {"atMs": event["moment"]["atMs"], "actor": event["actorPlayerId"]}
+        ordinal = event["moment"].get("operationOrdinal")
+        e = {"atMs": event["moment"]["atMs"], "actor": event["actorPlayerId"],
+             "ordinal": ordinal if type(ordinal) is int and 0 <= ordinal <= 9007199254740991 else None}
         prior = original_events.get(event["sourceEventId"])
         _require(prior is None or prior == e, "CONFLICTING_RECORDED_EVENT_ID")
         original_events[event["sourceEventId"]] = e
@@ -361,6 +385,7 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
         source_deeds[did] = raw
     seen = set()
     results, effects, witnesses = [], [], []
+    refused_directions = []
     for deed in sorted(context["deedContexts"], key=lambda x: (
             x["firstAtMs"], x["sourceDeedId"])):
         did = deed["sourceDeedId"]
@@ -377,6 +402,7 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                  and sorted({f.get("kind") for f in original["facets"]}) == deed["facetKinds"],
                  "SOURCE_DEED_CONTEXT_MISMATCH")
         facet_events = {}
+        invalid_direction = set()
         for f in original["facets"]:
             # Shared offensive participation records group contributions, not a
             # directed helper or competitive target pair. Retain as neutral
@@ -389,7 +415,11 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                                  and isinstance(c.get("sourceEventIds"), list)
                                  and c["sourceEventIds"]
                                  and set(c["sourceEventIds"]).issubset(set(deed["sourceEventIds"]))
-                                 for c in contributions),
+                                 and all(ref in original_events and
+                                         original_events[ref]["actor"] == c["contributorPlayerId"]
+                                         for ref in c["sourceEventIds"])
+                                 for c in contributions)
+                         and len({c["contributorPlayerId"] for c in contributions}) >= 2,
                          "INVALID_SHARED_TARGET_CONTEXT")
                 continue
             _require(isinstance(f, dict) and isinstance(f.get("kind"), str)
@@ -398,7 +428,13 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                      and isinstance(f.get("sourceEventIds"), list) and f["sourceEventIds"]
                      and set(f["sourceEventIds"]).issubset(set(deed["sourceEventIds"])),
                      "DIRECTIONAL_FACET_PROVENANCE_REQUIRED")
-            facet_events.setdefault((f["fromPlayerId"], f["toPlayerId"]), []).append(f)
+            pair = (f["fromPlayerId"], f["toPlayerId"])
+            facet_events.setdefault(pair, []).append(f)
+            if f["kind"] in ACTOR_OWNED_FACETS and any(
+                    ref not in original_events or
+                    original_events[ref]["actor"] != f["fromPlayerId"]
+                    for ref in f["sourceEventIds"]):
+                invalid_direction.add(pair)
         _require(set(facet_events) == {(d["fromReplayPlayerId"], d["toReplayPlayerId"])
                     for d in deed["directionalActors"]}, "DIRECTIONAL_FACET_MAPPING_MISMATCH")
         lineage = incident_lineages[did]
@@ -415,6 +451,11 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
         _require(0 <= deed["firstAtMs"] <= deed["lastAtMs"], "BAD_DEED_ORDER")
         directions = sorted(facet_events)
         for actor, target in directions:
+            if (actor, target) in invalid_direction:
+                refused_directions.append({"sourceDeedId": did,
+                    "fromReplayPlayerId": actor, "toReplayPlayerId": target,
+                    "reason": "ACTOR_OWNED_SOURCE_EVENT_MISMATCH"})
+                continue
             if actor not in bindings["players"] or target not in bindings["players"] or actor == target:
                 continue
             actor_id, target_id = bindings["players"][actor], bindings["players"][target]
@@ -425,7 +466,10 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                 decision, reasons, sr, br, cr = _qualify(
                     deed, context, family, actor, target, index, rule,
                     facet_events[(actor, target)])
-                start = _pos(historical_order, deed["firstAtMs"])
+                start = _pos(historical_order, facet_events[(actor, target)], original_events)
+                if decision == "QUALIFIED" and start["order"] != "ORDERED":
+                    decision = "PENDING"
+                    reasons = sorted(set(reasons + ["SOURCE_ORDINAL_UNAVAILABLE_OR_AMBIGUOUS"]))
                 revision = _hash([VERSION, snapshot["authorityRevision"],
                     context["sourceContextRevision"], did, lineage, deed,
                     actor, target, family, calibration])
@@ -512,6 +556,7 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
         "publicationAllowed": False, "officialWrites": False,
         "inferences": results, "effects": effects,
         "actorWitnesses": witnesses,
+        "rejectedActorDirections": refused_directions,
         "audit": {"notAnExecutionOracle": True,
                   "realSourceApprovalRequired": True,
                   "strictTreacheryUntouched": True,
