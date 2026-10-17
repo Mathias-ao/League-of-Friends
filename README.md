@@ -19,7 +19,7 @@ Implemented foundations include:
 - derived replay statistics and Match Analysis through V1.4;
 - player-facing brand, Season I and Event I content.
 
-The normal player upload flow, permanent replay artifact storage, complete extraction qualification and a user-facing web client are not yet implemented end to end. The current relationship engine also predates the latest split between player currencies (Gallantry / Treachery / Chivalry) and pair tracks (Rivalry / Hostility / Bond).
+Ordinary native AUTO upload integration and authenticated read-only Social Evidence V1a are merged in source (PRs #119/#120), but full staged/cloud/browser acceptance, activated social progression and production release are **not** established. The older relationship engine predates the approved split between player-owned **Reputation (Gallantry / Cruelty / Chivalry)** and directional pair **Relationships (Rivalry / Hostility / Bond)**. **Treachery** is an exceptional qualified turning-point event, not a Reputation track. See the [17 October V1 Social Launch Roadmap](docs/project/SOCIAL-V1-LAUNCH-ROADMAP-2026-10-17.md).
 
 ## Start here
 
@@ -30,6 +30,8 @@ Every task should begin with the latest `main` branch and these sources:
 | [`docs/project/CORE-IDENTITY.md`](docs/project/CORE-IDENTITY.md) | Lasting product rules, including the authoritative [Season event contract](docs/project/CORE-IDENTITY.md#season-event-contract). |
 | [`docs/project/PROJECT-CONTINUITY.md`](docs/project/PROJECT-CONTINUITY.md) | Project identity, locked decisions, source authority and cross-workstream rules. |
 | [`docs/project/CURRENT-STATE.md`](docs/project/CURRENT-STATE.md) | Implemented state, known gaps, open decisions and routing for the next task. |
+| [`docs/project/SOCIAL-V1-LAUNCH-ROADMAP-2026-10-17.md`](docs/project/SOCIAL-V1-LAUNCH-ROADMAP-2026-10-17.md) | Integrated social V1 launch goal, six worker findings, evidence limitations, critical path and owner approvals. |
+| [`docs/project/ORGANISER-2-HANDOVER-2026-10-17.md`](docs/project/ORGANISER-2-HANDOVER-2026-10-17.md) | Organizer handover, current code checkpoint and next worker delegation. |
 | Current code and configuration | Implemented behavior. Code outranks a stale implementation description. |
 | [`docs/architecture/`](docs/architecture/) | Firestore, statistics and replay extraction contracts. |
 | [`docs/design/statistics-experience.md`](docs/design/statistics-experience.md) | Player-facing Battle/Event/Player/Season statistics structure, records, Economy presentation and relationship-system boundaries. |
@@ -50,7 +52,7 @@ The authority order and fresh-task procedure are defined in the continuity file.
 - Season Events follow the [core Season event contract](docs/project/CORE-IDENTITY.md#season-event-contract): week-before warmups, guest challenge before AI fallback for an odd roster, standings-based uneven main teams, and validated updates without waiting for Emperor finalisation. See CURRENT-STATE.md for implementation gaps.
 - Authentication UID, durable league `playerId`, external profile ID, replay slot and object instance ID are different identities.
 - League Points, War Room Points and Gold are separate systems.
-- Player relationship currencies are Gallantry, Treachery and Chivalry; pair relationship tracks are separately Rivalry, Hostility and Bond. Their earning/progression rules are intentionally not yet frozen, and the current relationship engine requires migration before final exposure.
+- Player-owned Reputation tracks are **Gallantry, Cruelty and Chivalry**; separate directional pair Relationship tracks are **Rivalry, Hostility and Bond**. Exceptional Treachery is a distinct event/Relationship interpretation, not a Reputation track. Detailed qualitative SOC/REL rules are approved; numeric progression and source-proven qualifications remain unconfigured, and the older engine must not be reused as if it were the approved successor.
 - Player portraits reflect sustained production commitment across recent and lifetime evidence, with confidence and hysteresis.
 
 ## Current competition

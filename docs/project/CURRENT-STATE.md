@@ -1,10 +1,22 @@
 # Age of Friends — Current State
 
-Last reviewed: **16 October 2026**. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
+Last reviewed: **17 October 2026**. Latest social/recording checkpoint below supersedes older status snapshots. Read [Core Identity](CORE-IDENTITY.md) for binding product decisions and [Current Statistics](CURRENT-STATS.md) for active models, evidence limits and publication status. This page is a current-state summary, not a change log or a production-acceptance certificate.
 
 **Keep three states distinct:** `main` is the merged source implementation; `demo-aof-e2e` is an isolated, user-operated local Firebase emulator with temporary code adjustments; staging (`age-of-friends-staging`) and production (`league-of-friends-cc274`) are separate environments. An observed emulator success does **not** mean a fix was merged, deployed or accepted with real users.
 
-## Social Evidence V1a — 16 October 2026
+## Social V1 launch and merged V1a — 17 October 2026 (current; supersedes the older 16 October section)
+
+**Verified `main`: `25f120412df5ed0118b9557cdf822ab175108242`.** PR [#119](https://github.com/Mathias-ao/League-of-Friends/pull/119) ordinary native AUTO/Recorded Events V1 integration and PR [#120](https://github.com/Mathias-ao/League-of-Friends/pull/120) authenticated read-only Social Evidence V1a are **both merged**. #120's exact head passed 12/12 workflows and 27/27 checks. Source merge does not mean cloud deployment, enabled flags or successful genuine browser E2E. Staging's 15 October E2E remains stopped.
+
+**Product launch target now explicit:** five Personality sliders (Boomer/Aggressor; Cautious/Bold; Guerrilla/Frontline Fighter; Specialist/Improviser; Compact/Expansive), earned Gallantry/Cruelty/Chivalry Reputation, directional Rivalry/Hostility/Bond Relationships, and factual Chronicle with sparse authenticated source-linked player reports. This extends the earlier deferred reporting implementation scope; the existing SOC/REL evidence rules, source/privacy gates and unapproved numerical calibration remain unchanged.
+
+**Read-only evidence status:** Codex examined four authentic formats, 10 cases, 610 source deeds and 892 pending track claims; none of six substantive qualifications is independently executable from today's inspected decoded commands. Four-format canonical/native projection parity supports reproducibility, not actual engine-state execution. FFA has 14 nonzero tribute requests, 392 zero controls; C8's 2,346 resources are requested, not confirmed delivered. Five subsequent independent worker investigations have been archived; none implemented new progression. The documented replay-engine observer interface is a *hypothesis pending controlled current-build validation*, not an accepted extraction source.
+
+**Next work approved in principle:** Sol Work read-only integrated PR plan **in parallel** with Codex local controlled tribute/kill/construction observer experiment. Personality calibration, territorial actor/opponent admission and factual Chronicle/reporting may progress as separately bounded work; genuine six-track awards require proof, configuration and acceptance. No production or staging activation, scoring changes, unsanctioned score thresholds, or release authorization is implied.
+
+**Authoritative new navigation:** [Social V1 launch roadmap](SOCIAL-V1-LAUNCH-ROADMAP-2026-10-17.md), [Organiser 2 handover](ORGANISER-2-HANDOVER-2026-10-17.md), [archived five worker reports](../research/social-v1-2026-10-17-worker-1-military-spatial.md) and [Codex empirical report](../research/social-v1-2026-10-17-codex-v1b-empirical.md). Current social activation remains **off**, and league-wide pending-evidence privacy still requires approval. **Earlier sections below are historical, even where their wording says #120 is unmerged or normal AUTO upload has not merged.**
+
+## Social Evidence V1a — 16 October 2026 (historical pre-merge snapshot)
 
 Main was verified at `4798d358d5f40715198f03a874c153d2c06a72e3`: PR #119's ordinary Recorded Events V1 upload integration is **merged**, not merely branch work. Deployment/activation is not inferred.
 
