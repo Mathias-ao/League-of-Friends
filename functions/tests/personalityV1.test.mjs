@@ -215,6 +215,15 @@ test('out-of-recording inferred command episode is not counted as military postu
   });
   assert.equal(measurePersonalityGame(invalid,config()).features.GUERRILLA_FRONTLINE.fraction,null);
 });
+test('correcting Battle chronology or context changes projection revision even when fractions match',()=>{
+  const c=config(),base=projectPersonalityPreview('playerA',[game(),game(2)],c);
+  const later={...game(),authorityRevision:2,playedAtMs:99999};
+  const revised=projectPersonalityPreview('playerA',[game(),later,game(2)],c);
+  assert.notEqual(base.projectionRevision,revised.projectionRevision);
+  const alternative={...game(),authorityRevision:2,context:{...baseContext(),mapId:'different-map'}};
+  const different=projectPersonalityPreview('playerA',[game(),alternative,game(2)],c);
+  assert.notEqual(base.projectionRevision,different.projectionRevision);
+});
 test('upstream formula changes invalidate rather than silently recalibrate historical personality',()=>{
   const c=config();
   const changed=tweak(game(),p=>{p.mapPresence.modelVersion='AOF_MAP_PRESENCE_V9';});
