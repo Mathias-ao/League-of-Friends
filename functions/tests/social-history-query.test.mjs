@@ -11,12 +11,20 @@ const {getStorage}=await import('firebase-admin/storage');
 const {getSocialHistory}=await import('../lib/queries/getSocialHistory.js');
 const {getPlayerChronicle}=await import('../lib/queries/getPlayerChronicle.js');
 const records=new Map();let bytes,downloadHook;
-const reference=(path,collection=false)=>({path,id:path.split('/').at(-1),doc:id=>reference(path+'/'+id),collection:id=>reference(path+'/'+id,true),
- where:()=>reference(path,true),limit:()=>reference(path,true),get:async()=>collection?query(path):snapshot(path)});
+const reference=(path,collection=false,queryOptions={})=>({
+ path,id:path.split('/').at(-1),doc:id=>reference(path+'/'+id),
+ collection:id=>reference(path+'/'+id,true),
+ where:()=>reference(path,true,queryOptions),
+ orderBy:()=>reference(path,true,queryOptions),
+ limit:limit=>reference(path,true,{...queryOptions,limit}),
+ startAfter:doc=>reference(path,true,{...queryOptions,after:doc.id}),
+ get:async()=>collection?query(path,queryOptions):snapshot(path)});
 const snapshot=path=>{const value=records.get(path);const copy=value?{...value,canonicalResult:value.canonicalResult?{...value.canonicalResult}:undefined}:undefined;
  return {id:path.split('/').at(-1),exists:!!value,data:()=>copy,ref:reference(path)};};
-const query=path=>{const docs=[...records.keys()].filter(k=>k.startsWith(path+'/')&&k.split('/').length===path.split('/').length+1)
- .filter(k=>path!=='matches'||records.get(k).status==='COMPLETED').map(snapshot);return {docs,size:docs.length};};
+const query=(path,{after,limit}={})=>{
+ const docs=[...records.keys()].filter(k=>k.startsWith(path+'/')&&k.split('/').length===path.split('/').length+1)
+  .sort().filter(k=>!after||k.split('/').at(-1)>after).slice(0,limit??Infinity).map(snapshot);
+ return {docs,size:docs.length};};
 Object.defineProperty(db,'collection',{value:path=>reference(path,true)});
 Object.defineProperty(db,'getAll',{value:async(...refs)=>refs.map(r=>snapshot(r.path))});
 Object.defineProperty(getStorage(),'bucket',{value:()=>({file:()=>({download:async()=>{downloadHook?.();return [bytes];}})})});
@@ -109,8 +117,13 @@ test('missing or disputed Game sources are disclosed rather than interpreted as 
  reset();records.get('matches/m/games/g').activeResultDisputeId='dispute';
  const d=await getSocialHistory.run(request);assert.equal(d.history.contributions.length,0);assert.equal(d.excluded[0].reason,'official_result_ineligible');
 });
-test('unknown chronology and duplicate Game sequence cannot invent historical ordering',async()=>{
- reset();delete records.get('matches/m').completedAt;await assert.rejects(getSocialHistory.run(request),e=>e.code==='failed-precondition');
+test('unknown chronology remains visible but expressly unresolved; duplicate Game sequence is rejected',async()=>{
+ reset();delete records.get('matches/m').completedAt;
+ const result=await getPlayerChronicle.run(request);
+ assert.equal(result.status,'PARTIAL');
+ assert.equal(result.coverage.chronologyPendingBattles,1);
+ assert.equal(result.chronicle.pages[0].entries[0].chronologyStatus,'UNRESOLVED');
+ assert.equal(result.chronicle.pages[0].entries[0].playedAtMs,null);
  reset();records.set('matches/m/games/other',{...records.get('matches/m/games/g')});
  await assert.rejects(getSocialHistory.run(request),e=>e.code==='failed-precondition');
 });
@@ -220,4 +233,103 @@ test('native social history rejects missing neutral evidence and corrupted pinne
    if(shadow===undefined)delete process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS;else process.env.AOF_ACTIVE_NATIVE_SOCIAL_READS=shadow;
   }
  }
+});
+
+test('READY recording with unresolved Game outcome enters the factual book but not the official-duel shadow',async()=>{
+ reset();
+ const match=records.get('matches/m'),game=records.get('matches/m/games/g');
+ match.status='ACTIVE';delete match.completedAt;
+ game.status='AWAITING_CONFIRMATION';delete game.canonicalResult;
+ const factual=await getPlayerChronicle.run(request);
+ assert.equal(factual.status,'PARTIAL','unknown chronology is disclosed');
+ assert.equal(factual.coverage.unresolvedOutcomeGames,1);
+ assert.equal(factual.coverage.readableAcceptedGames,1);
+ const entry=factual.chronicle.pages[0].entries[0];
+ assert.equal(entry.resultStatus,'UNRESOLVED');
+ assert.equal(entry.chronologyStatus,'UNRESOLVED');
+ assert.doesNotMatch(entry.paragraphs.join(' '),/official duel|accepted result|victor|winner|defeat|rescue/i);
+ const shadow=await getSocialHistory.run(request);
+ assert.equal(shadow.history.contributions.length,0);
+ assert.equal(shadow.history.policy.productionScoringEnabled,false);
+});
+
+test('long Match histories page beyond 100 without truncation and stable scene IDs survive source correction',async()=>{
+ reset();
+ const seedMatch=records.get('matches/m'),seedGame=records.get('matches/m/games/g');
+ const seedSource=records.get('matches/m/games/g/replaySources/r1');
+ for(let i=1;i<=134;i++){
+  const matchId='m'+String(i).padStart(3,'0'),sourceId='r'+String(i+1);
+  records.set('matches/'+matchId,{...seedMatch,completedAt:{toMillis:()=>1000+i}});
+  records.set('matches/'+matchId+'/games/g',{...seedGame,activeReplayStatisticsId:sourceId});
+  records.set('matches/'+matchId+'/games/g/replaySources/'+sourceId,{...seedSource});
+ }
+ const read=await getPlayerChronicle.run(request);
+ assert.equal(read.coverage.scannedBattles,135);
+ assert.equal(read.coverage.readableAcceptedGames,135);
+ assert.equal(read.coverage.excludedGames,0);
+ assert.equal(new Set(read.chronicle.pages[0].entries.map(x=>x.entryId)).size,read.chronicle.pages[0].entries.length);
+ const original=read.chronicle.pages[0].entries[0].entryId;
+ const revisedGame=records.get('matches/m/games/g');
+ revisedGame.canonicalResult={...revisedGame.canonicalResult,revision:2};
+ const corrected=await getPlayerChronicle.run(request);
+ assert.equal(corrected.chronicle.pages[0].entries[0].entryId,original);
+ assert.equal(corrected.coverage.readableAcceptedGames,135);
+});
+
+test('source withdrawal and replacement remove stale facts without writing scores or leaking sources',async()=>{
+ reset();
+ const initial=await getPlayerChronicle.run(request);
+ const initialId=initial.chronicle.pages[0].entries[0].entryId;
+ const game=records.get('matches/m/games/g'),old=records.get('matches/m/games/g/replaySources/r1');
+ game.activeReplayStatisticsId='r2';
+ records.set('matches/m/games/g/replaySources/r2',{...old,state:'READY'});
+ const updated=await getPlayerChronicle.run(request);
+ assert.equal(updated.coverage.readableAcceptedGames,1);
+ assert.equal(updated.chronicle.pages[0].entries[0].entryId,initialId);
+ assert.equal(JSON.stringify(updated).includes('r2'),false,'private source IDs remain internal');
+ records.get('matches/m/games/g/replaySources/r2').state='WITHDRAWN';
+ const withdrawn=await getPlayerChronicle.run(request);
+ assert.equal(withdrawn.coverage.readableAcceptedGames,0);
+ assert.equal(withdrawn.coverage.excludedGames,1);
+ assert.equal(withdrawn.chronicle.pages.length,0);
+});
+
+test('valid warmup Event membership counts independent of scoring slot and wrong membership blocks',async()=>{
+ reset();
+ const match=records.get('matches/m');
+ match.eventId='e';match.seasonId='s';
+ records.set('events/e',{seasonId:'s',status:'ACTIVE',warmupMatchIds:['m'],officialMatchIds:[]});
+ records.set('seasons/s',{status:'ACTIVE'});
+ const ok=await getPlayerChronicle.run(request);
+ assert.equal(ok.coverage.readableAcceptedGames,1);
+ records.get('events/e').warmupMatchIds=[];
+ const blocked=await getPlayerChronicle.run(request);
+ assert.equal(blocked.coverage.readableAcceptedGames,0);
+ assert.equal(blocked.coverage.excludedGames,1);
+});
+
+test('another account cannot select someone else Chronicle, and suspended members cannot read',async()=>{
+ reset();records.set('authLinks/account-b',{playerId:'b'});records.set('players/b',{membershipStatus:'ACTIVE',role:'PLAYER'});
+ const other=await getPlayerChronicle.run({...request,auth:{uid:'account-b',token:{}},data:{playerId:'a'}});
+ assert.equal(other.chronicle.ownerPlayerId,'b');
+ assert.equal(other.chronicle.pages[0].counterpartPlayerId,'a');
+ records.get('players/b').membershipStatus='SUSPENDED';
+ await assert.rejects(getPlayerChronicle.run({...request,auth:{uid:'account-b',token:{}},data:{playerId:'a'}}),e=>e.code==='permission-denied');
+});
+
+test('two Games in one Battle remain one scene; duplicate recorded source is not counted twice',async()=>{
+ reset();
+ const g=records.get('matches/m/games/g'),src=records.get('matches/m/games/g/replaySources/r1');
+ records.set('matches/m/games/g2',{...g,gameNumber:2,activeReplayStatisticsId:'r2'});
+ records.set('matches/m/games/g2/replaySources/r2',{...src});
+ const result=await getPlayerChronicle.run(request);
+ assert.equal(result.coverage.readableAcceptedGames,2);
+ assert.equal(result.chronicle.pages[0].entries.length,1);
+ const firstId=result.chronicle.pages[0].entries[0].entryId;
+ records.get('matches/m/games/g2').activeReplayStatisticsId='r1';
+ records.set('matches/m/games/g2/replaySources/r1',{...src});
+ const duplicate=await getPlayerChronicle.run(request);
+ assert.equal(duplicate.coverage.readableAcceptedGames,1);
+ assert.equal(duplicate.coverage.excludedGames,1);
+ assert.equal(duplicate.chronicle.pages[0].entries[0].entryId,firstId);
 });
