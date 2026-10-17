@@ -209,7 +209,7 @@ def _base_family(deed, context, family, actor, target, directional_facets):
     directed = bool(own_events)
     contest = directed and ("TARGETED_COMMAND" in facets or
                             "DEFENSIVE_PARTICIPATION" in facets) and (
-        "LOCAL_COMMAND_OVERLAP" in facets or
+        "LOCAL_COMMAND_OVERLAP" in facets and
         _has_linked_detector(deed, context, {"SKIRMISH", "TECHNICAL_BATTLE"}, own_events))
     pressure = directed and ("ECONOMY_PRESSURE" in facets or
                             ("TARGETED_COMMAND" in facets and
