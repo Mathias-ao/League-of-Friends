@@ -63,8 +63,39 @@ test('browser installation is origin-bound and restoring observation sends no re
   const listeners=new Map();let requests=0;const fetch=()=>{requests++;return Promise.resolve({ok:false});};
   class Observer{observe(){}disconnect(){}}
   const win={location:{origin:config.origin,href:config.origin+'/'},performance:{now:()=>0},fetch,MutationObserver:Observer,
-    document:{documentElement:{},addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)},requestAnimationFrame:()=>{}};
+    document:{documentElement:{},addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)},addEventListener(){},removeEventListener(){},requestAnimationFrame:()=>{}};
   assert.throws(()=>installUploadObserver({...config,origin:'http://localhost:5173'},win));
-  const observer=installUploadObserver(config,win);assert.equal(requests,0);assert.equal(listeners.size,2);observer.stop();
+  const observer=installUploadObserver(config,win);assert.equal(requests,0);assert.equal(listeners.size,3);observer.stop();
   assert.equal(win.fetch,fetch);assert.equal(listeners.size,0);assert.equal(requests,0);assert.equal(win.__aofUploadObserver,undefined);
+});
+
+test('only a valid server UUID on a matching READY receipt is exported for span joining',()=>{
+  const id='97fa20b1-d35e-4dd4-9415-90acb3be56e5';
+  const f=fixture();qualify(f);f.capture.uploadReturned({result:{...upload().result,diagnosticTraceId:id}});
+  assert.equal(f.capture.report().diagnosticTraceId,id);assert.equal(f.capture.report().serverSpanCorrelation,'JOIN_BY_SERVER_ISSUED_TRACE_ID');
+  for(const patch of [{diagnosticTraceId:'PRIVATE VALUE'},{diagnosticTraceId:id,state:'VALIDATED_NOT_READY'}]){
+    const g=fixture();g.capture.commit();g.capture.uploadStarted({auto:true,auth:true});g.capture.uploadReturned({result:{...upload().result,...patch}});
+    assert.equal(g.capture.report().diagnosticTraceId,null);
+  }
+});
+test('source-bound visible frame requires READY, query and frame witness; hidden or replaced view invalidates manual confirmation',()=>{
+  const f=fixture();qualify(f);f.capture.observeDom({table:true,docket:false,sourceBound:true,frame:true});
+  assert.equal(f.capture.report().sourceMatchedVisibleFrameMs,null,'unjoined legacy/unknown route cannot produce a native timing witness');
+  f.capture.uploadReturned({result:{...upload().result,diagnosticTraceId:'97fa20b1-d35e-4dd4-9415-90acb3be56e5'}});
+  f.tick(180);f.capture.observeDom({table:true,docket:false,sourceBound:true});
+  assert.equal(f.capture.report().sourceMatchedVisibleFrameMs,null,'synchronous DOM sampling is not a frame');
+  f.tick(200);f.capture.observeDom({table:true,docket:false,sourceBound:true,frame:true});
+  assert.equal(f.capture.report().sourceMatchedVisibleFrameMs,200);assert.doesNotThrow(()=>f.capture.confirmDisplayed());
+  f.capture.observeDom({table:true,docket:false,sourceBound:false,frame:true});assert.throws(()=>f.capture.confirmDisplayed());
+  f.capture.observeDom({table:false,docket:false,sourceBound:true,frame:true});assert.throws(()=>f.capture.confirmDisplayed());
+  const g=fixture();g.capture.commit();g.capture.observeDom({table:true,sourceBound:true,frame:true});
+  assert.equal(g.capture.report().sourceMatchedVisibleFrameMs,null);assert.throws(()=>g.capture.confirmDisplayed());
+});
+
+test('failed upload retains only a bounded error class and server UUID, never message/details or a READY display',()=>{
+  const f=fixture();f.capture.commit();f.capture.uploadStarted({auto:true,auth:true});f.tick(80);
+  const id='97fa20b1-d35e-4dd4-9415-90acb3be56e5';
+  f.capture.uploadReturned({error:{status:'ABORTED',message:'PRIVATE NAME',details:{diagnosticTraceId:id,secret:'PRIVATE DETAILS'}}});
+  const r=f.capture.report();assert.equal(r.errorCode,'ABORTED');assert.equal(r.diagnosticTraceId,id);assert.equal(r.uploadMatched,false);
+  assert.equal(JSON.stringify(r).includes('PRIVATE'),false);assert.throws(()=>f.capture.confirmDisplayed());
 });
