@@ -484,3 +484,17 @@ test('history over explicit capacity fails complete-or-error without returning 2
   e=>e.code==='resource-exhausted'&&/complete-read Match limit/.test(e.message));
  assert.equal(metrics.downloads,0,'reject before any artifact I/O');
 });
+
+test('aggregate Battle-result and Match roster revisions during artifact read abort a mixed historical view',async()=>{
+ for(const mutation of [
+  m=>{m.canonicalResult={revision:3,source:'ADMIN_CORRECTED',type:'PLAYER_WIN',winningPlayerIds:['b']};},
+  m=>{m.participants=[{playerId:'a'},{playerId:'c'}];}
+ ]){
+  reset();
+  const m=records.get('matches/m');
+  m.canonicalResult={revision:1,source:'ADMIN_RESOLVED',type:'PLAYER_WIN',winningPlayerIds:['a']};
+  downloadHook=()=>mutation(m);
+  await assert.rejects(getPlayerChronicle.run(request),e=>e.code==='aborted',
+   'corrected Match result/roster cannot bypass the complete read revision fence');
+ }
+});
