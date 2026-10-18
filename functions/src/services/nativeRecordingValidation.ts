@@ -13,11 +13,43 @@ import {statisticsMetadata} from './statisticsExperienceProjection.js';
 type Bag=Record<string,any>;
 const fail=(message:string)=>new HttpsError('failed-precondition',message);
 const changed=()=>new HttpsError('aborted','Native validation inputs or lease changed; retry.');
+const DIAGNOSTIC_UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+
+/** Diagnostic identity is server-owned, ephemeral and never an authority key. */
+export function nativeUploadDiagnosticEnabled(env:NodeJS.ProcessEnv):boolean{
+  const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
+  return env.AOF_REPLAY_UPLOAD_PERF_TRACE==='1'&&!!project&&
+    (project==='age-of-friends-staging'||env.FUNCTIONS_EMULATOR==='true'&&project.startsWith('demo-'));
+}
+export function nativeUploadDiagnosticTraceId(env:NodeJS.ProcessEnv):string|undefined{
+  return nativeUploadDiagnosticEnabled(env)?randomUUID():undefined;
+}
+
+/** Fixed numeric allowlist: worker-returned diagnostics cannot log payloads/IDs. */
+export function nativeUploadDiagnosticTimings(raw:unknown,depth=0):Bag{
+  if(!raw||typeof raw!=='object'||Array.isArray(raw)||depth>3)return {};
+  const input=raw as Bag,result:Bag={};
+  const fields=('authorityAndClaimMs originalStorageAndVerificationMs workerResponseMs serverReceivedToWorkerResponseMs '+
+    'responseIntegrityVerificationMs mappingMs derivedStorageAndVerificationMs readModelCreationMs validationPublicationMs totalServerReceivedToValidationMs '+
+    'recordedEventsExtractionAndVerifiedHydrationMs sourcePreflightHeaderMs decoderAndEventWriteMs verifiedEventReadAndOptionalHydrationMs '+
+    'statisticsAndSocialProjectionMs statisticsJsonAndGzipMs totalLocalPackageMs '+
+    'analysisValidationAndCatalogMs actionIndexMs buildOrderMs raidDetectionMs openingMs resourceCommitmentMs economyMs militaryMs '+
+    'skirmishDetectionMs engagementInferenceMs executionMs mapPresenceMs forwardEconomyMs participantAssemblyMs resultAndPairSocialMs '+
+    'pairEpisodeContextMs statisticsSchemaValidationMs directSharedPackingMs '+
+    'nativeHandlerAuthenticationMs nativeHandlerInputValidationAndDecodeMs nativeInitialAuthorityAndSelectionMs nativeValidationTotalMs '+
+    'nativeValidationPublicationMs nativePublicationAuthorityAndSourceReadMs nativeCandidateReadAndCheckMs nativeImmutableArtifactsReadMs '+
+    'nativePublicationPackageVerificationMs nativePublicationMappingAndReadModelMs nativeReadyPublicationTransactionMs nativeRetryAuthorityTransactionMs '+
+    'nativeResultResolutionMs nativePostResolverFenceMs nativeHandlerTotalMs').split(' ');
+  for(const key of fields)if(typeof input[key]==='number'&&Number.isFinite(input[key])&&input[key]>=0)result[key]=input[key];
+  for(const key of ['workerStages','recordedEventsSubsteps','statisticsSubsteps'])if(input[key])result[key]=nativeUploadDiagnosticTimings(input[key],depth+1);
+  return result;
+}
 
 /** Only internal tests supply transport dependencies; request payloads cannot choose a token provider. */
 interface NativeWorkerTransport {
   fetcher?:typeof fetch;
   getIdToken?:(audience:string)=>Promise<string>;
+  diagnosticTraceId?:string;
 }
 
 /** Native HTTP contract is explicit and bounded; legacy /process is never retried here.
@@ -40,6 +72,11 @@ export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'
   const headers:Record<string,string>={
     'content-type':'application/json',authorization:'Bearer '+process.env.REPLAY_WORKER_AUTH_TOKEN,
   };
+  if(transport.diagnosticTraceId!==undefined){
+    if(route!=='/process-native-v1'||!nativeUploadDiagnosticEnabled(process.env)||transport.diagnosticTraceId.length!==36||!DIAGNOSTIC_UUID.test(transport.diagnosticTraceId))
+      throw fail('Native upload diagnostic trace is not enabled or valid.');
+    headers['X-AoF-Upload-Trace-Id']=transport.diagnosticTraceId;
+  }
   if(!process.env.FUNCTIONS_EMULATOR){
     const identity=transport.getIdToken
       ?await transport.getIdToken(target)

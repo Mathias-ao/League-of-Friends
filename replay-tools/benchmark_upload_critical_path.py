@@ -138,12 +138,39 @@ def direct_candidate(path: Path, payload_b64: str) -> dict:
     }
 
 
+def native_worker(path: Path, payload_b64: str) -> dict:
+    """Measure the unchanged ordinary native worker, not the fast candidate."""
+    started = time.perf_counter()
+    from native_worker_transport import process_native_replay
+    stages: dict[str, Any] = {}
+    stages["nativeModuleImportMs"] = ms(started)
+    result = process_native_replay(path.name, payload_b64, timing_sink=stages)
+    if result["sourceHash"] != source_digest(path):
+        raise ValueError("Native worker replay hash does not match input")
+    encoding_started = time.perf_counter()
+    serialized = json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    stages["workerHttpJsonEncodingMs"] = ms(encoding_started)
+    sizes = {"workerHttpJsonBytes": len(serialized), **{
+        name + "GzipBytes": result[name]["bytes"] for name in ("recordedEvents", "statistics")
+    }}
+    revision = result["processorRevision"]
+    del serialized, result
+    return {
+        "mode": "native-worker", "stageTimings": stages,
+        "artifactBytes": sizes, "processorRevision": revision, "totalMs": ms(started),
+        "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--replay", type=Path, required=True)
-    parser.add_argument("--mode", choices=["existing-worker", "direct-events-candidate"], required=True)
+    parser.add_argument("--mode", choices=["existing-worker", "direct-events-candidate", "native-worker"], required=True)
+    parser.add_argument("--repeat", type=int, default=1, help="Calls in one process: first import-cold, subsequent process-warm; not a cloud cold-start measurement")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
+    if not 1 <= args.repeat <= 100:
+        parser.error("--repeat must be between 1 and 100")
     path = args.replay
     if not path.is_file() or path.suffix.lower() not in {".aoe2record", ".mgz"}:
         parser.error("A real .aoe2record/.mgz file is required")
@@ -151,12 +178,22 @@ def main() -> None:
     # fully transferred bytes from the Python worker's perspective.
     payload_b64 = base64.b64encode(path.read_bytes()).decode("ascii")
     start = time.perf_counter()
-    report = (current_worker(path, payload_b64) if args.mode == "existing-worker"
-              else direct_candidate(path, payload_b64))
+    runner = {"existing-worker": current_worker, "direct-events-candidate": direct_candidate,
+              "native-worker": native_worker}[args.mode]
+    samples = []
+    for index in range(args.repeat):
+        sample = runner(path, payload_b64)
+        sample["processCondition"] = "first-call-import-cold" if index == 0 else "same-process-warm"
+        sample["maxRssKiBProcessHighWater"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        samples.append(sample)
+    report = dict(samples[0])
+    if args.repeat > 1:
+        report["samples"] = samples
     report.update({
         "benchmarkVersion": VERSION,
         "fixture": path.stem,
         "inputBytes": path.stat().st_size,
+        "inputSha256": source_digest(path),
         "maxRssKiB": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         "cliProcessMs": ms(start),
         "limitations": [

@@ -1,0 +1,144 @@
+name: Upload owner candidate attestation (NO deploy)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/upload-owner-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  candidate-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CANDIDATE_SHA: 2ece99cd37eabf6316f354e9177ceb74a3c8ce7f
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+          persist-credentials: false
+      - name: Resolve the base and build the reviewed worker locally (NO registry push)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/aof-owner-candidate"
+          docker pull python:3.12-slim-bookworm
+          python - <<'PY'
+          import json, os, pathlib, subprocess
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'aof-owner-candidate'
+          base = json.loads(subprocess.check_output(['docker', 'image', 'inspect', 'python:3.12-slim-bookworm']))[0]['RepoDigests'][0]
+          source = pathlib.Path('replay-tools/Dockerfile.staging').read_text()
+          assert source.count('FROM ') == 1 and 'FROM python:3.12-slim-bookworm\n' in source
+          (out / 'Dockerfile.resolved').write_text(source.replace('FROM python:3.12-slim-bookworm\n', 'FROM ' + base + '\n'))
+          (out / 'base-image.txt').write_text(base + '\n')
+          PY
+          docker build --platform linux/amd64 -f "$RUNNER_TEMP/aof-owner-candidate/Dockerfile.resolved" \
+            --label "org.opencontainers.image.revision=$CANDIDATE_SHA" -t aof-owner-candidate:reviewed replay-tools
+      - name: Recompute processor in the actual candidate and retain its immutable bytes
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev \
+            --entrypoint python aof-owner-candidate:reviewed \
+            -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())' \
+            > "$RUNNER_TEMP/aof-owner-candidate/processor.txt"
+          docker save -o "$RUNNER_TEMP/aof-owner-candidate/worker-image.tar" aof-owner-candidate:reviewed
+          python - <<'PY'
+          import hashlib, json, os, pathlib, re, subprocess
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'aof-owner-candidate'
+          sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert sha == os.environ['CANDIDATE_SHA']
+          processor = (out / 'processor.txt').read_text().strip()
+          assert re.fullmatch('[a-f0-9]{64}', processor)
+          image = json.loads(subprocess.check_output(['docker', 'image', 'inspect', 'aof-owner-candidate:reviewed']))[0]
+          assert image['Config']['Labels']['org.opencontainers.image.revision'] == sha
+          digest = hashlib.sha256()
+          with (out / 'worker-image.tar').open('rb') as image_file:
+              for block in iter(lambda: image_file.read(1024 * 1024), b''):
+                  digest.update(block)
+          report = {'contract': 'AOF_UPLOAD_OWNER_CANDIDATE_1', 'sourceCommit': sha,
+              'sourceTrees': {name: subprocess.check_output(['git', 'rev-parse', 'HEAD:' + name], text=True).strip() for name in ['functions', 'web', 'replay-tools']},
+              'platform': 'linux/amd64', 'baseImage': (out / 'base-image.txt').read_text().strip(),
+              'resolvedDockerfileSha256': hashlib.sha256((out / 'Dockerfile.resolved').read_bytes()).hexdigest(),
+              'imageConfigDigest': image['Id'], 'imageIdentityKind': 'DOCKER_CONFIG_DIGEST_NOT_REGISTRY_MANIFEST_DIGEST',
+              'imageArchiveSha256': digest.hexdigest(), 'processorRevisionInImage': processor,
+              'privateRegistryManifestDigest': None, 'cloudRunRevision': None,
+              'cloudAction': 'NONE_NO_PUSH_NO_DEPLOY', 'stagingAuthorization': 'NOT_GRANTED'}
+          (out / 'attestation.json').write_text(json.dumps(report, indent=2) + '\n')
+          print('AOF_OWNER_CANDIDATE_ATTESTATION=' + json.dumps(report, separators=(',', ':')))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upload-owner-candidate-${{ env.CANDIDATE_SHA }}
+          path: ${{ runner.temp }}/aof-owner-candidate/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+  local-diagnostic-witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      FIREBASE_CLI_DISABLE_USAGE_REPORTING: 'true'
+      FUNCTIONS_EMULATOR: 'true'
+      GCLOUD_PROJECT: demo-aof-native-player
+      REPLAY_BUCKET: demo-aof-native-player.appspot.com
+      REPLAY_WORKER_URL: http://127.0.0.1:18765
+      REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-native-player-test
+      AOF_REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-native-player-test
+      AOF_REPLAY_WORKER_BIND: 127.0.0.1
+      AOF_REPLAY_WORKER_PORT: '18765'
+      AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
+      AOF_SOCIAL_EVIDENCE_V1A_ENDPOINT: '1'
+      AOF_SOCIAL_EVIDENCE_V1A_READS: '1'
+      AOF_REPLAY_UPLOAD_PERF_TRACE: '1'
+      AOF_REPLAY_WORKER_PERF_TRACE: '1'
+      AOF_NATIVE_DIAGNOSTIC_WITNESS: '1'
+      AOF_NATIVE_PERF_CONCURRENCY: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify frozen production code, install and test the render bridge
+        run: |
+          git diff --exit-code 2ece99cd37eabf6316f354e9177ceb74a3c8ce7f -- functions/src web/src replay-tools
+          pip install -r replay-tools/requirements.txt
+          npm ci --prefix functions
+          npm ci --prefix web
+          npm run build --prefix functions
+          (cd web && node --import ./tests/register-assets.mjs --import tsx --test tests/upload-diagnostic-render-witness.test.ts)
+      - name: Prepare pinned genuine recordings for distinct concurrent Games
+        run: |
+          mkdir -p "$RUNNER_TEMP/native-owner-corpus"
+          for fixture in 1v1_t90-deak 2v2_arabia; do
+            cp ".fixture-corpus/replay-fixtures/build-185872/$fixture.aoe2record" "$RUNNER_TEMP/native-owner-corpus/"
+            cp ".fixture-corpus/replay-fixtures/build-185872/townbell_build-185872/$fixture.json" "$RUNNER_TEMP/native-owner-corpus/"
+          done
+          echo "AOF_NATIVE_CORPUS=$RUNNER_TEMP/native-owner-corpus" >> "$GITHUB_ENV"
+          echo "AOF_NATIVE_DIAGNOSTIC_WORKER_LOG=$RUNNER_TEMP/diagnostic-worker.log" >> "$GITHUB_ENV"
+          echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')" >> "$GITHUB_ENV"
+          python replay-tools/tests/prepare_social_canonical_fixture.py "$RUNNER_TEMP/native-owner-corpus/1v1_t90-deak.aoe2record" .replay-lab/social-canonical.json.gz
+      - name: Real authenticated handler and worker to source-bound SSR/JSDOM (NOT browser paint)
+        run: |
+          python replay-tools/upload_worker.py > "$AOF_NATIVE_DIAGNOSTIC_WORKER_LOG" 2>&1 &
+          diagnostic_worker_pid=$!
+          trap 'kill "$diagnostic_worker_pid" 2>/dev/null || true' EXIT
+          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/native-player-upload-emulator.mjs"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upload-owner-local-diagnostic-witness
+          path: .replay-lab/native-player/diagnostic-render-witness.json
+          retention-days: 7
+          if-no-files-found: error

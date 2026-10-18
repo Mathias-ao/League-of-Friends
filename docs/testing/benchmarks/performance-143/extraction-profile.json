@@ -1,0 +1,554 @@
+{
+  "boundary": "extract_recorded_events with verified hydration; cProfile substantially perturbs runtime; NOT a latency baseline or p95",
+  "fixture": "4v4_arabia",
+  "profiledWallMs": 23903.410584000085,
+  "stages": {
+    "decoderAndEventWriteMs": 13941.458,
+    "sourcePreflightHeaderMs": 610.253,
+    "verifiedEventReadAndOptionalHydrationMs": 9323.744
+  },
+  "topCumulative": [
+    {
+      "cumulativeSeconds": 23.903149900000003,
+      "file": "recorded_events_stream.py",
+      "function": "extract_recorded_events",
+      "line": 272,
+      "primitiveCalls": 1,
+      "selfSeconds": 0.075051849,
+      "totalCalls": 1
+    },
+    {
+      "cumulativeSeconds": 12.891196278,
+      "file": "parse_replay.py",
+      "function": "parse_body",
+      "line": 426,
+      "primitiveCalls": 1,
+      "selfSeconds": 0.538057887,
+      "totalCalls": 1
+    },
+    {
+      "cumulativeSeconds": 9.323619378,
+      "file": "recorded_events_stream.py",
+      "function": "load_analysis",
+      "line": 406,
+      "primitiveCalls": 1,
+      "selfSeconds": 0.386230838,
+      "totalCalls": 1
+    },
+    {
+      "cumulativeSeconds": 7.112173804,
+      "file": "recorded_events_stream.py",
+      "function": "read_records",
+      "line": 234,
+      "primitiveCalls": 273187,
+      "selfSeconds": 0.477719074,
+      "totalCalls": 273187
+    },
+    {
+      "cumulativeSeconds": 7.019332408,
+      "file": "recorded_events_stream.py",
+      "function": "consume",
+      "line": 62,
+      "primitiveCalls": 546372,
+      "selfSeconds": 1.553881709,
+      "totalCalls": 546372
+    },
+    {
+      "cumulativeSeconds": 6.718411466,
+      "file": "recorded_events_stream.py",
+      "function": "write",
+      "line": 218,
+      "primitiveCalls": 210572,
+      "selfSeconds": 0.280017428,
+      "totalCalls": 210572
+    },
+    {
+      "cumulativeSeconds": 6.213247592,
+      "file": "recorded_events_stream.py",
+      "function": "record",
+      "line": 209,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.372854167,
+      "totalCalls": 273186
+    },
+    {
+      "cumulativeSeconds": 3.731647494,
+      "file": "recorded_events_stream.py",
+      "function": "_safe",
+      "line": 40,
+      "primitiveCalls": 1436954,
+      "selfSeconds": 2.395500557,
+      "totalCalls": 3448276
+    },
+    {
+      "cumulativeSeconds": 3.710109724,
+      "file": "recorded_events_stream.py",
+      "function": "_geometry",
+      "line": 180,
+      "primitiveCalls": 488464,
+      "selfSeconds": 0.34796931400000003,
+      "totalCalls": 488464
+    },
+    {
+      "cumulativeSeconds": 3.3641129370000002,
+      "file": "canonical_stream.py",
+      "function": "frames",
+      "line": 36,
+      "primitiveCalls": 210573,
+      "selfSeconds": 0.610296095,
+      "totalCalls": 210573
+    },
+    {
+      "cumulativeSeconds": 2.435735289,
+      "file": "canonical_io.py",
+      "function": "load_json",
+      "line": 41,
+      "primitiveCalls": 273188,
+      "selfSeconds": 0.13477270500000002,
+      "totalCalls": 273188
+    },
+    {
+      "cumulativeSeconds": 2.301661487,
+      "file": "__init__.py",
+      "function": "loads",
+      "line": 299,
+      "primitiveCalls": 273245,
+      "selfSeconds": 0.46078845300000004,
+      "totalCalls": 273245
+    },
+    {
+      "cumulativeSeconds": 1.560145995,
+      "file": "canonical_io.py",
+      "function": "json_bytes",
+      "line": 32,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.17774572200000002,
+      "totalCalls": 273186
+    },
+    {
+      "cumulativeSeconds": 1.455514776,
+      "file": "~",
+      "function": "<built-in method builtins.isinstance>",
+      "line": 0,
+      "primitiveCalls": 17042401,
+      "selfSeconds": 1.455484581,
+      "totalCalls": 17042401
+    },
+    {
+      "cumulativeSeconds": 1.3340108540000002,
+      "file": "__init__.py",
+      "function": "dumps",
+      "line": 183,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.25709034000000003,
+      "totalCalls": 273186
+    },
+    {
+      "cumulativeSeconds": 1.2871756,
+      "file": "~",
+      "function": "<built-in method builtins.next>",
+      "line": 0,
+      "primitiveCalls": 115012,
+      "selfSeconds": 0.036174686000000005,
+      "totalCalls": 115012
+    },
+    {
+      "cumulativeSeconds": 1.277348664,
+      "file": "recorded_events.py",
+      "function": "iter_events",
+      "line": 75,
+      "primitiveCalls": 230012,
+      "selfSeconds": 0.373853663,
+      "totalCalls": 230012
+    },
+    {
+      "cumulativeSeconds": 1.135750685,
+      "file": "decoder.py",
+      "function": "decode",
+      "line": 333,
+      "primitiveCalls": 273245,
+      "selfSeconds": 0.301322845,
+      "totalCalls": 273245
+    },
+    {
+      "cumulativeSeconds": 1.134082274,
+      "file": "canonical_stream.py",
+      "function": "read",
+      "line": 16,
+      "primitiveCalls": 862303,
+      "selfSeconds": 0.49029237000000003,
+      "totalCalls": 862303
+    },
+    {
+      "cumulativeSeconds": 1.1064004360000002,
+      "file": "__init__.py",
+      "function": "operation",
+      "line": 347,
+      "primitiveCalls": 191190,
+      "selfSeconds": 0.21201216,
+      "totalCalls": 191190
+    },
+    {
+      "cumulativeSeconds": 1.081792013,
+      "file": "parse_replay.py",
+      "function": "generic_body_event",
+      "line": 378,
+      "primitiveCalls": 191190,
+      "selfSeconds": 0.37327457,
+      "totalCalls": 191190
+    },
+    {
+      "cumulativeSeconds": 1.062304001,
+      "file": "parse_replay.py",
+      "function": "json_safe",
+      "line": 147,
+      "primitiveCalls": 325530,
+      "selfSeconds": 0.700964327,
+      "totalCalls": 885079
+    },
+    {
+      "cumulativeSeconds": 1.0203595330000002,
+      "file": "encoder.py",
+      "function": "encode",
+      "line": 183,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.240306454,
+      "totalCalls": 273186
+    },
+    {
+      "cumulativeSeconds": 1.0000742820000001,
+      "file": "recorded_events.py",
+      "function": "_row",
+      "line": 56,
+      "primitiveCalls": 115006,
+      "selfSeconds": 0.45778704200000003,
+      "totalCalls": 115006
+    },
+    {
+      "cumulativeSeconds": 0.990161229,
+      "file": "~",
+      "function": "<built-in method builtins.any>",
+      "line": 0,
+      "primitiveCalls": 1027698,
+      "selfSeconds": 0.443417013,
+      "totalCalls": 1027698
+    },
+    {
+      "cumulativeSeconds": 0.8593435020000001,
+      "file": "canonical_stream.py",
+      "function": "tell",
+      "line": 26,
+      "primitiveCalls": 1608969,
+      "selfSeconds": 0.369582442,
+      "totalCalls": 1608969
+    },
+    {
+      "cumulativeSeconds": 0.805488343,
+      "file": "copy.py",
+      "function": "deepcopy",
+      "line": 118,
+      "primitiveCalls": 115055,
+      "selfSeconds": 0.37764042800000003,
+      "totalCalls": 390905
+    },
+    {
+      "cumulativeSeconds": 0.729868093,
+      "file": "parse_replay.py",
+      "function": "canonical_action_event",
+      "line": 314,
+      "primitiveCalls": 19382,
+      "selfSeconds": 0.174840232,
+      "totalCalls": 19382
+    },
+    {
+      "cumulativeSeconds": 0.690275238,
+      "file": "gzip.py",
+      "function": "write",
+      "line": 305,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.14438884400000002,
+      "totalCalls": 273186
+    },
+    {
+      "cumulativeSeconds": 0.6835402930000001,
+      "file": "encoder.py",
+      "function": "iterencode",
+      "line": 205,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.6835402930000001,
+      "totalCalls": 273186
+    }
+  ],
+  "topSelf": [
+    {
+      "cumulativeSeconds": 3.731647494,
+      "file": "recorded_events_stream.py",
+      "function": "_safe",
+      "line": 40,
+      "primitiveCalls": 1436954,
+      "selfSeconds": 2.395500557,
+      "totalCalls": 3448276
+    },
+    {
+      "cumulativeSeconds": 7.019332408,
+      "file": "recorded_events_stream.py",
+      "function": "consume",
+      "line": 62,
+      "primitiveCalls": 546372,
+      "selfSeconds": 1.553881709,
+      "totalCalls": 546372
+    },
+    {
+      "cumulativeSeconds": 1.455514776,
+      "file": "~",
+      "function": "<built-in method builtins.isinstance>",
+      "line": 0,
+      "primitiveCalls": 17042401,
+      "selfSeconds": 1.455484581,
+      "totalCalls": 17042401
+    },
+    {
+      "cumulativeSeconds": 1.062304001,
+      "file": "parse_replay.py",
+      "function": "json_safe",
+      "line": 147,
+      "primitiveCalls": 325530,
+      "selfSeconds": 0.700964327,
+      "totalCalls": 885079
+    },
+    {
+      "cumulativeSeconds": 0.6835402930000001,
+      "file": "encoder.py",
+      "function": "iterencode",
+      "line": 205,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.6835402930000001,
+      "totalCalls": 273186
+    },
+    {
+      "cumulativeSeconds": 3.3641129370000002,
+      "file": "canonical_stream.py",
+      "function": "frames",
+      "line": 36,
+      "primitiveCalls": 210573,
+      "selfSeconds": 0.610296095,
+      "totalCalls": 210573
+    },
+    {
+      "cumulativeSeconds": 0.5879638540000001,
+      "file": "~",
+      "function": "<method 'get' of 'dict' objects>",
+      "line": 0,
+      "primitiveCalls": 5463675,
+      "selfSeconds": 0.5879638540000001,
+      "totalCalls": 5463675
+    },
+    {
+      "cumulativeSeconds": 12.891196278,
+      "file": "parse_replay.py",
+      "function": "parse_body",
+      "line": 426,
+      "primitiveCalls": 1,
+      "selfSeconds": 0.538057887,
+      "totalCalls": 1
+    },
+    {
+      "cumulativeSeconds": 1.134082274,
+      "file": "canonical_stream.py",
+      "function": "read",
+      "line": 16,
+      "primitiveCalls": 862303,
+      "selfSeconds": 0.49029237000000003,
+      "totalCalls": 862303
+    },
+    {
+      "cumulativeSeconds": 0.48977586100000003,
+      "file": "~",
+      "function": "<method 'tell' of '_io.BufferedReader' objects>",
+      "line": 0,
+      "primitiveCalls": 1608977,
+      "selfSeconds": 0.48977586100000003,
+      "totalCalls": 1608977
+    },
+    {
+      "cumulativeSeconds": 7.112173804,
+      "file": "recorded_events_stream.py",
+      "function": "read_records",
+      "line": 234,
+      "primitiveCalls": 273187,
+      "selfSeconds": 0.477719074,
+      "totalCalls": 273187
+    },
+    {
+      "cumulativeSeconds": 0.5926614130000001,
+      "file": "decoder.py",
+      "function": "raw_decode",
+      "line": 344,
+      "primitiveCalls": 273245,
+      "selfSeconds": 0.476601987,
+      "totalCalls": 273245
+    },
+    {
+      "cumulativeSeconds": 2.301661487,
+      "file": "__init__.py",
+      "function": "loads",
+      "line": 299,
+      "primitiveCalls": 273245,
+      "selfSeconds": 0.46078845300000004,
+      "totalCalls": 273245
+    },
+    {
+      "cumulativeSeconds": 1.0000742820000001,
+      "file": "recorded_events.py",
+      "function": "_row",
+      "line": 56,
+      "primitiveCalls": 115006,
+      "selfSeconds": 0.45778704200000003,
+      "totalCalls": 115006
+    },
+    {
+      "cumulativeSeconds": 0.990161229,
+      "file": "~",
+      "function": "<built-in method builtins.any>",
+      "line": 0,
+      "primitiveCalls": 1027698,
+      "selfSeconds": 0.443417013,
+      "totalCalls": 1027698
+    },
+    {
+      "cumulativeSeconds": 0.393005602,
+      "file": "~",
+      "function": "<built-in method builtins.len>",
+      "line": 0,
+      "primitiveCalls": 3995952,
+      "selfSeconds": 0.392974955,
+      "totalCalls": 3996135
+    },
+    {
+      "cumulativeSeconds": 9.323619378,
+      "file": "recorded_events_stream.py",
+      "function": "load_analysis",
+      "line": 406,
+      "primitiveCalls": 1,
+      "selfSeconds": 0.386230838,
+      "totalCalls": 1
+    },
+    {
+      "cumulativeSeconds": 0.805488343,
+      "file": "copy.py",
+      "function": "deepcopy",
+      "line": 118,
+      "primitiveCalls": 115055,
+      "selfSeconds": 0.37764042800000003,
+      "totalCalls": 390905
+    },
+    {
+      "cumulativeSeconds": 1.277348664,
+      "file": "recorded_events.py",
+      "function": "iter_events",
+      "line": 75,
+      "primitiveCalls": 230012,
+      "selfSeconds": 0.373853663,
+      "totalCalls": 230012
+    },
+    {
+      "cumulativeSeconds": 1.081792013,
+      "file": "parse_replay.py",
+      "function": "generic_body_event",
+      "line": 378,
+      "primitiveCalls": 191190,
+      "selfSeconds": 0.37327457,
+      "totalCalls": 191190
+    },
+    {
+      "cumulativeSeconds": 6.213247592,
+      "file": "recorded_events_stream.py",
+      "function": "record",
+      "line": 209,
+      "primitiveCalls": 273186,
+      "selfSeconds": 0.372854167,
+      "totalCalls": 273186
+    },
+    {
+      "cumulativeSeconds": 0.8593435020000001,
+      "file": "canonical_stream.py",
+      "function": "tell",
+      "line": 26,
+      "primitiveCalls": 1608969,
+      "selfSeconds": 0.369582442,
+      "totalCalls": 1608969
+    },
+    {
+      "cumulativeSeconds": 0.354842333,
+      "file": "~",
+      "function": "<method 'compress' of 'zlib.Compress' objects>",
+      "line": 0,
+      "primitiveCalls": 1164,
+      "selfSeconds": 0.354842333,
+      "totalCalls": 1164
+    },
+    {
+      "cumulativeSeconds": 3.710109724,
+      "file": "recorded_events_stream.py",
+      "function": "_geometry",
+      "line": 180,
+      "primitiveCalls": 488464,
+      "selfSeconds": 0.34796931400000003,
+      "totalCalls": 488464
+    },
+    {
+      "cumulativeSeconds": 0.307855484,
+      "file": "~",
+      "function": "<method 'startswith' of 'str' objects>",
+      "line": 0,
+      "primitiveCalls": 2218686,
+      "selfSeconds": 0.307855484,
+      "totalCalls": 2218686
+    },
+    {
+      "cumulativeSeconds": 1.135750685,
+      "file": "decoder.py",
+      "function": "decode",
+      "line": 333,
+      "primitiveCalls": 273245,
+      "selfSeconds": 0.301322845,
+      "totalCalls": 273245
+    },
+    {
+      "cumulativeSeconds": 0.290494114,
+      "file": "~",
+      "function": "<method 'find' of 'bytes' objects>",
+      "line": 0,
+      "primitiveCalls": 28545,
+      "selfSeconds": 0.290494114,
+      "totalCalls": 28545
+    },
+    {
+      "cumulativeSeconds": 6.718411466,
+      "file": "recorded_events_stream.py",
+      "function": "write",
+      "line": 218,
+      "primitiveCalls": 210572,
+      "selfSeconds": 0.280017428,
+      "totalCalls": 210572
+    },
+    {
+      "cumulativeSeconds": 0.33097856000000003,
+      "file": "recorded_events_stream.py",
+      "function": "<genexpr>",
+      "line": 185,
+      "primitiveCalls": 753936,
+      "selfSeconds": 0.273174793,
+      "totalCalls": 753936
+    },
+    {
+      "cumulativeSeconds": 0.270308072,
+      "file": "decoder.py",
+      "function": "__init__",
+      "line": 285,
+      "primitiveCalls": 273188,
+      "selfSeconds": 0.270308072,
+      "totalCalls": 273188
+    }
+  ]
+}

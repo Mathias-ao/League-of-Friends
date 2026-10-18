@@ -1,0 +1,1289 @@
+{
+  "environment": {
+    "cloudBrowserNetworkStatus": "UNMEASURED",
+    "corpusCommit": "2d04ec6adbe871d156c108a4351448efeb08f4e6",
+    "cpu": "AMD EPYC 9V74; 9 visible logical CPUs; cgroup quota 8 CPUs",
+    "excludedSamples": [
+      "1v1-cold1.json",
+      "2v2_arabia-cold1.json (initial overlapping trials excluded entirely)"
+    ],
+    "instrumentationCommit": "af326796a5c766defd67ec3988e984fd1afb53ae",
+    "memoryLimitBytes": 8589934592,
+    "node": "v24.19.0",
+    "p95Status": "NOT ESTABLISHED: n=3 per process condition/category; no cloud/browser acceptance",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "productionCodeBase": "29f5ed995bbdc1572ef12550cd3c9cc8e8511186",
+    "python": "3.12.14",
+    "workerOnlyCondition": "Sequential calls, loopback filesystem; native transport with fast_action_windows=False; fresh process does not mean cold OS or cloud instance"
+  },
+  "fixtures": [
+    {
+      "fixture": "1v1_t90-deak",
+      "inputBytes": 3781255,
+      "samples": [
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 1704298,
+            "statisticsGzipBytes": 147513,
+            "workerHttpJsonBytes": 2478222
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 68872,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "1v1_t90-deak-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 69.845,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 6996.17,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4174.37,
+              "sourcePreflightHeaderMs": 193.729,
+              "verifiedEventReadAndOptionalHydrationMs": 2609.445
+            },
+            "statisticsAndSocialProjectionMs": 679.468,
+            "statisticsJsonAndGzipMs": 82.471,
+            "statisticsSubsteps": {
+              "actionIndexMs": 4.367,
+              "analysisValidationAndCatalogMs": 11.317,
+              "buildOrderMs": 3.922,
+              "directSharedPackingMs": 17.42,
+              "economyMs": 13.94,
+              "engagementInferenceMs": 89.98,
+              "executionMs": 79.899,
+              "forwardEconomyMs": 1.605,
+              "mapPresenceMs": 79.592,
+              "militaryMs": 3.56,
+              "openingMs": 4.283,
+              "pairEpisodeContextMs": 5.463,
+              "participantAssemblyMs": 0.77,
+              "raidDetectionMs": 26.585,
+              "resourceCommitmentMs": 1.845,
+              "resultAndPairSocialMs": 130.258,
+              "skirmishDetectionMs": 202.892,
+              "statisticsSchemaValidationMs": 1.209
+            },
+            "totalLocalPackageMs": 7765.239,
+            "workerHttpJsonEncodingMs": 4.743
+          },
+          "totalMs": 7879.938
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 1704298,
+            "statisticsGzipBytes": 147513,
+            "workerHttpJsonBytes": 2478227
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 7327.891,
+          "fixture": "1v1_t90-deak",
+          "inputBytes": 3781255,
+          "inputSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 68828,
+          "maxRssKiBProcessHighWater": 68828,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "1v1_t90-deak-cold2.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 67.788,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 6525.354,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 3976.784,
+              "sourcePreflightHeaderMs": 190.986,
+              "verifiedEventReadAndOptionalHydrationMs": 2341.927
+            },
+            "statisticsAndSocialProjectionMs": 607.869,
+            "statisticsJsonAndGzipMs": 71.882,
+            "statisticsSubsteps": {
+              "actionIndexMs": 3.657,
+              "analysisValidationAndCatalogMs": 9.202,
+              "buildOrderMs": 3.037,
+              "directSharedPackingMs": 17.099,
+              "economyMs": 11.799,
+              "engagementInferenceMs": 79.728,
+              "executionMs": 75.469,
+              "forwardEconomyMs": 1.565,
+              "mapPresenceMs": 80.965,
+              "militaryMs": 2.79,
+              "openingMs": 3.715,
+              "pairEpisodeContextMs": 5.267,
+              "participantAssemblyMs": 0.745,
+              "raidDetectionMs": 21.496,
+              "resourceCommitmentMs": 1.876,
+              "resultAndPairSocialMs": 118.256,
+              "skirmishDetectionMs": 169.526,
+              "statisticsSchemaValidationMs": 1.105
+            },
+            "totalLocalPackageMs": 7211.638,
+            "workerHttpJsonEncodingMs": 4.87
+          },
+          "totalMs": 7324.871
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 1704298,
+            "statisticsGzipBytes": 147513,
+            "workerHttpJsonBytes": 2478224
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 7657.142,
+          "fixture": "1v1_t90-deak",
+          "inputBytes": 3781255,
+          "inputSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 68844,
+          "maxRssKiBProcessHighWater": 68844,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "1v1_t90-deak-cold3.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 74.654,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 6823.086,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4200.017,
+              "sourcePreflightHeaderMs": 192.883,
+              "verifiedEventReadAndOptionalHydrationMs": 2414.073
+            },
+            "statisticsAndSocialProjectionMs": 632.491,
+            "statisticsJsonAndGzipMs": 73.056,
+            "statisticsSubsteps": {
+              "actionIndexMs": 3.576,
+              "analysisValidationAndCatalogMs": 9.466,
+              "buildOrderMs": 3.115,
+              "directSharedPackingMs": 16.36,
+              "economyMs": 12.558,
+              "engagementInferenceMs": 84.945,
+              "executionMs": 78.246,
+              "forwardEconomyMs": 1.854,
+              "mapPresenceMs": 83.764,
+              "militaryMs": 2.916,
+              "openingMs": 3.613,
+              "pairEpisodeContextMs": 5.577,
+              "participantAssemblyMs": 0.764,
+              "raidDetectionMs": 21.179,
+              "resourceCommitmentMs": 1.804,
+              "resultAndPairSocialMs": 121.021,
+              "skirmishDetectionMs": 180.038,
+              "statisticsSchemaValidationMs": 1.15
+            },
+            "totalLocalPackageMs": 7535.3,
+            "workerHttpJsonEncodingMs": 4.62
+          },
+          "totalMs": 7654.283
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 1704298,
+            "statisticsGzipBytes": 147513,
+            "workerHttpJsonBytes": 2478220
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 76484,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "1v1_t90-deak-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 6658.448,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 3993.264,
+              "sourcePreflightHeaderMs": 189.213,
+              "verifiedEventReadAndOptionalHydrationMs": 2465.601
+            },
+            "statisticsAndSocialProjectionMs": 640.888,
+            "statisticsJsonAndGzipMs": 75.566,
+            "statisticsSubsteps": {
+              "actionIndexMs": 3.84,
+              "analysisValidationAndCatalogMs": 8.752,
+              "buildOrderMs": 4.527,
+              "directSharedPackingMs": 16.526,
+              "economyMs": 17.81,
+              "engagementInferenceMs": 85.39,
+              "executionMs": 77.824,
+              "forwardEconomyMs": 2.149,
+              "mapPresenceMs": 81.394,
+              "militaryMs": 3.515,
+              "openingMs": 15.625,
+              "pairEpisodeContextMs": 5.94,
+              "participantAssemblyMs": 0.923,
+              "raidDetectionMs": 25.5,
+              "resourceCommitmentMs": 2.545,
+              "resultAndPairSocialMs": 97.631,
+              "skirmishDetectionMs": 189.459,
+              "statisticsSchemaValidationMs": 0.95
+            },
+            "totalLocalPackageMs": 7382.277,
+            "workerHttpJsonEncodingMs": 4.713
+          },
+          "totalMs": 7424.704
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 1704298,
+            "statisticsGzipBytes": 147513,
+            "workerHttpJsonBytes": 2478224
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 78156,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "1v1_t90-deak-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.004,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 6914.403,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4080.857,
+              "sourcePreflightHeaderMs": 184.955,
+              "verifiedEventReadAndOptionalHydrationMs": 2638.958
+            },
+            "statisticsAndSocialProjectionMs": 645.573,
+            "statisticsJsonAndGzipMs": 79.374,
+            "statisticsSubsteps": {
+              "actionIndexMs": 3.087,
+              "analysisValidationAndCatalogMs": 7.727,
+              "buildOrderMs": 3.494,
+              "directSharedPackingMs": 16.572,
+              "economyMs": 16.368,
+              "engagementInferenceMs": 86.293,
+              "executionMs": 83.525,
+              "forwardEconomyMs": 1.722,
+              "mapPresenceMs": 86.29,
+              "militaryMs": 3.099,
+              "openingMs": 3.676,
+              "pairEpisodeContextMs": 5.44,
+              "participantAssemblyMs": 0.767,
+              "raidDetectionMs": 21.513,
+              "resourceCommitmentMs": 1.772,
+              "resultAndPairSocialMs": 98.946,
+              "skirmishDetectionMs": 203.755,
+              "statisticsSchemaValidationMs": 0.911
+            },
+            "totalLocalPackageMs": 7646.034,
+            "workerHttpJsonEncodingMs": 4.875
+          },
+          "totalMs": 7689.06
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 1704298,
+            "statisticsGzipBytes": 147513,
+            "workerHttpJsonBytes": 2478225
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 78160,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "1v1_t90-deak-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7114.059,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4238.834,
+              "sourcePreflightHeaderMs": 193.037,
+              "verifiedEventReadAndOptionalHydrationMs": 2672.082
+            },
+            "statisticsAndSocialProjectionMs": 713.801,
+            "statisticsJsonAndGzipMs": 84.86,
+            "statisticsSubsteps": {
+              "actionIndexMs": 4.295,
+              "analysisValidationAndCatalogMs": 8.941,
+              "buildOrderMs": 5.285,
+              "directSharedPackingMs": 19.485,
+              "economyMs": 20.474,
+              "engagementInferenceMs": 94.98,
+              "executionMs": 85.211,
+              "forwardEconomyMs": 2.158,
+              "mapPresenceMs": 83.272,
+              "militaryMs": 3.032,
+              "openingMs": 4.288,
+              "pairEpisodeContextMs": 6.823,
+              "participantAssemblyMs": 0.754,
+              "raidDetectionMs": 60.815,
+              "resourceCommitmentMs": 1.727,
+              "resultAndPairSocialMs": 138.468,
+              "skirmishDetectionMs": 171.959,
+              "statisticsSchemaValidationMs": 1.112
+            },
+            "totalLocalPackageMs": 7919.859,
+            "workerHttpJsonEncodingMs": 5.152
+          },
+          "totalMs": 7965.185
+        }
+      ],
+      "sourceSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef"
+    },
+    {
+      "fixture": "2v2_arabia",
+      "inputBytes": 5558786,
+      "samples": [
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2652095,
+            "statisticsGzipBytes": 478954,
+            "workerHttpJsonBytes": 4185237
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 105084,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "2v2_arabia-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 78.478,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 9866.955,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 6066.725,
+              "sourcePreflightHeaderMs": 270.034,
+              "verifiedEventReadAndOptionalHydrationMs": 3512.636
+            },
+            "statisticsAndSocialProjectionMs": 1756.53,
+            "statisticsJsonAndGzipMs": 360.292,
+            "statisticsSubsteps": {
+              "actionIndexMs": 6.29,
+              "analysisValidationAndCatalogMs": 12.312,
+              "buildOrderMs": 7.512,
+              "directSharedPackingMs": 151.316,
+              "economyMs": 47.344,
+              "engagementInferenceMs": 159.383,
+              "executionMs": 162.27,
+              "forwardEconomyMs": 4.187,
+              "mapPresenceMs": 164.859,
+              "militaryMs": 5.385,
+              "openingMs": 14.334,
+              "pairEpisodeContextMs": 11.579,
+              "participantAssemblyMs": 1.51,
+              "raidDetectionMs": 140.438,
+              "resourceCommitmentMs": 3.777,
+              "resultAndPairSocialMs": 278.897,
+              "skirmishDetectionMs": 582.257,
+              "statisticsSchemaValidationMs": 2.056
+            },
+            "totalLocalPackageMs": 11993.45,
+            "workerHttpJsonEncodingMs": 8.517
+          },
+          "totalMs": 12150.381
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2652095,
+            "statisticsGzipBytes": 478954,
+            "workerHttpJsonBytes": 4185237
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 11956.914,
+          "fixture": "2v2_arabia",
+          "inputBytes": 5558786,
+          "inputSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 104972,
+          "maxRssKiBProcessHighWater": 104972,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "2v2_arabia-cold2.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 61.366,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 9816.738,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 5985.35,
+              "sourcePreflightHeaderMs": 246.35,
+              "verifiedEventReadAndOptionalHydrationMs": 3569.846
+            },
+            "statisticsAndSocialProjectionMs": 1635.617,
+            "statisticsJsonAndGzipMs": 355.374,
+            "statisticsSubsteps": {
+              "actionIndexMs": 6.203,
+              "analysisValidationAndCatalogMs": 10.777,
+              "buildOrderMs": 7.38,
+              "directSharedPackingMs": 134.621,
+              "economyMs": 40.615,
+              "engagementInferenceMs": 153.445,
+              "executionMs": 162.247,
+              "forwardEconomyMs": 3.94,
+              "mapPresenceMs": 168.931,
+              "militaryMs": 5.919,
+              "openingMs": 13.873,
+              "pairEpisodeContextMs": 11.294,
+              "participantAssemblyMs": 1.778,
+              "raidDetectionMs": 104.319,
+              "resourceCommitmentMs": 3.517,
+              "resultAndPairSocialMs": 276.677,
+              "skirmishDetectionMs": 527.15,
+              "statisticsSchemaValidationMs": 2.008
+            },
+            "totalLocalPackageMs": 11817.457,
+            "workerHttpJsonEncodingMs": 8.141
+          },
+          "totalMs": 11952.568
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2652095,
+            "statisticsGzipBytes": 478954,
+            "workerHttpJsonBytes": 4185239
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 12113.096,
+          "fixture": "2v2_arabia",
+          "inputBytes": 5558786,
+          "inputSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 105040,
+          "maxRssKiBProcessHighWater": 105040,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "2v2_arabia-cold3.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 63.67,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 9451.46,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 5655.948,
+              "sourcePreflightHeaderMs": 252.981,
+              "verifiedEventReadAndOptionalHydrationMs": 3525.302
+            },
+            "statisticsAndSocialProjectionMs": 2087.055,
+            "statisticsJsonAndGzipMs": 410.385,
+            "statisticsSubsteps": {
+              "actionIndexMs": 7.736,
+              "analysisValidationAndCatalogMs": 14.459,
+              "buildOrderMs": 9.399,
+              "directSharedPackingMs": 162.589,
+              "economyMs": 70.429,
+              "engagementInferenceMs": 163.748,
+              "executionMs": 162.662,
+              "forwardEconomyMs": 3.539,
+              "mapPresenceMs": 157.562,
+              "militaryMs": 5.683,
+              "openingMs": 19.995,
+              "pairEpisodeContextMs": 14.488,
+              "participantAssemblyMs": 1.371,
+              "raidDetectionMs": 130.592,
+              "resourceCommitmentMs": 4.31,
+              "resultAndPairSocialMs": 294.398,
+              "skirmishDetectionMs": 860.206,
+              "statisticsSchemaValidationMs": 2.988
+            },
+            "totalLocalPackageMs": 11961.073,
+            "workerHttpJsonEncodingMs": 8.535
+          },
+          "totalMs": 12108.707
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2652095,
+            "statisticsGzipBytes": 478954,
+            "workerHttpJsonBytes": 4185239
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 105468,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "2v2_arabia-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 9412.74,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 5665.444,
+              "sourcePreflightHeaderMs": 249.804,
+              "verifiedEventReadAndOptionalHydrationMs": 3487.123
+            },
+            "statisticsAndSocialProjectionMs": 1664.298,
+            "statisticsJsonAndGzipMs": 358.528,
+            "statisticsSubsteps": {
+              "actionIndexMs": 6.395,
+              "analysisValidationAndCatalogMs": 11.562,
+              "buildOrderMs": 6.552,
+              "directSharedPackingMs": 131.365,
+              "economyMs": 43.776,
+              "engagementInferenceMs": 161.425,
+              "executionMs": 165.881,
+              "forwardEconomyMs": 4.536,
+              "mapPresenceMs": 181.751,
+              "militaryMs": 5.307,
+              "openingMs": 13.963,
+              "pairEpisodeContextMs": 11.589,
+              "participantAssemblyMs": 1.376,
+              "raidDetectionMs": 43.695,
+              "resourceCommitmentMs": 3.577,
+              "resultAndPairSocialMs": 295.019,
+              "skirmishDetectionMs": 573.889,
+              "statisticsSchemaValidationMs": 1.825
+            },
+            "totalLocalPackageMs": 11445.343,
+            "workerHttpJsonEncodingMs": 8.312
+          },
+          "totalMs": 11516.846
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2652095,
+            "statisticsGzipBytes": 478954,
+            "workerHttpJsonBytes": 4185237
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 113408,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "2v2_arabia-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 9468.348,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 5767.151,
+              "sourcePreflightHeaderMs": 238.762,
+              "verifiedEventReadAndOptionalHydrationMs": 3452.579
+            },
+            "statisticsAndSocialProjectionMs": 1730.051,
+            "statisticsJsonAndGzipMs": 353.151,
+            "statisticsSubsteps": {
+              "actionIndexMs": 6.609,
+              "analysisValidationAndCatalogMs": 12.092,
+              "buildOrderMs": 8.126,
+              "directSharedPackingMs": 132.986,
+              "economyMs": 52.374,
+              "engagementInferenceMs": 159.423,
+              "executionMs": 166.414,
+              "forwardEconomyMs": 4.653,
+              "mapPresenceMs": 175.242,
+              "militaryMs": 5.825,
+              "openingMs": 13.622,
+              "pairEpisodeContextMs": 11.927,
+              "participantAssemblyMs": 1.5,
+              "raidDetectionMs": 98.583,
+              "resourceCommitmentMs": 3.33,
+              "resultAndPairSocialMs": 284.977,
+              "skirmishDetectionMs": 589.694,
+              "statisticsSchemaValidationMs": 1.802
+            },
+            "totalLocalPackageMs": 11560.979,
+            "workerHttpJsonEncodingMs": 8.275
+          },
+          "totalMs": 11631.637
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2652095,
+            "statisticsGzipBytes": 478954,
+            "workerHttpJsonBytes": 4185239
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 113452,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "2v2_arabia-serial-repeat.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.006,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 9727.437,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 5802.933,
+              "sourcePreflightHeaderMs": 247.342,
+              "verifiedEventReadAndOptionalHydrationMs": 3666.202
+            },
+            "statisticsAndSocialProjectionMs": 1795.852,
+            "statisticsJsonAndGzipMs": 380.742,
+            "statisticsSubsteps": {
+              "actionIndexMs": 6.983,
+              "analysisValidationAndCatalogMs": 14.248,
+              "buildOrderMs": 8.776,
+              "directSharedPackingMs": 146.401,
+              "economyMs": 55.994,
+              "engagementInferenceMs": 163.147,
+              "executionMs": 166.215,
+              "forwardEconomyMs": 4.538,
+              "mapPresenceMs": 179.087,
+              "militaryMs": 5.362,
+              "openingMs": 15.271,
+              "pairEpisodeContextMs": 12.64,
+              "participantAssemblyMs": 1.479,
+              "raidDetectionMs": 126.339,
+              "resourceCommitmentMs": 3.803,
+              "resultAndPairSocialMs": 327.397,
+              "skirmishDetectionMs": 555.03,
+              "statisticsSchemaValidationMs": 2.236
+            },
+            "totalLocalPackageMs": 11914.443,
+            "workerHttpJsonEncodingMs": 8.413
+          },
+          "totalMs": 11989.984
+        }
+      ],
+      "sourceSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05"
+    },
+    {
+      "fixture": "4v4_arabia",
+      "inputBytes": 5129372,
+      "samples": [
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2521889,
+            "statisticsGzipBytes": 1994492,
+            "workerHttpJsonBytes": 6034476
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 207832,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "4v4_arabia-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 72.686,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 8671.244,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4671.598,
+              "sourcePreflightHeaderMs": 524.251,
+              "verifiedEventReadAndOptionalHydrationMs": 3458.211
+            },
+            "statisticsAndSocialProjectionMs": 9312.206,
+            "statisticsJsonAndGzipMs": 1883.957,
+            "statisticsSubsteps": {
+              "actionIndexMs": 21.46,
+              "analysisValidationAndCatalogMs": 24.177,
+              "buildOrderMs": 16.639,
+              "directSharedPackingMs": 611.856,
+              "economyMs": 218.893,
+              "engagementInferenceMs": 1012.344,
+              "executionMs": 1061.412,
+              "forwardEconomyMs": 9.949,
+              "mapPresenceMs": 673.24,
+              "militaryMs": 16.19,
+              "openingMs": 88.531,
+              "pairEpisodeContextMs": 99.242,
+              "participantAssemblyMs": 4.102,
+              "raidDetectionMs": 356.858,
+              "resourceCommitmentMs": 11.699,
+              "resultAndPairSocialMs": 1070.94,
+              "skirmishDetectionMs": 4007.607,
+              "statisticsSchemaValidationMs": 5.89
+            },
+            "totalLocalPackageMs": 19877.918,
+            "workerHttpJsonEncodingMs": 13.623
+          },
+          "totalMs": 20095.437
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2521889,
+            "statisticsGzipBytes": 1994492,
+            "workerHttpJsonBytes": 6034479
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 19776.375,
+          "fixture": "4v4_arabia",
+          "inputBytes": 5129372,
+          "inputSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 207936,
+          "maxRssKiBProcessHighWater": 207936,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "4v4_arabia-cold2.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 63.586,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7952.253,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4538.816,
+              "sourcePreflightHeaderMs": 513.804,
+              "verifiedEventReadAndOptionalHydrationMs": 2882.696
+            },
+            "statisticsAndSocialProjectionMs": 9628.115,
+            "statisticsJsonAndGzipMs": 1965.559,
+            "statisticsSubsteps": {
+              "actionIndexMs": 17.255,
+              "analysisValidationAndCatalogMs": 23.285,
+              "buildOrderMs": 12.825,
+              "directSharedPackingMs": 633.291,
+              "economyMs": 212.327,
+              "engagementInferenceMs": 951.639,
+              "executionMs": 1290.808,
+              "forwardEconomyMs": 11.56,
+              "mapPresenceMs": 780.505,
+              "militaryMs": 16.861,
+              "openingMs": 45.2,
+              "pairEpisodeContextMs": 101.865,
+              "participantAssemblyMs": 5.019,
+              "raidDetectionMs": 335.927,
+              "resourceCommitmentMs": 11.281,
+              "resultAndPairSocialMs": 1312.503,
+              "skirmishDetectionMs": 3858.127,
+              "statisticsSchemaValidationMs": 6.454
+            },
+            "totalLocalPackageMs": 19556.276,
+            "workerHttpJsonEncodingMs": 17.3
+          },
+          "totalMs": 19772.519
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2521889,
+            "statisticsGzipBytes": 1994492,
+            "workerHttpJsonBytes": 6034481
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 20166.28,
+          "fixture": "4v4_arabia",
+          "inputBytes": 5129372,
+          "inputSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 207824,
+          "maxRssKiBProcessHighWater": 207824,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "4v4_arabia-cold3.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 69.661,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 8109.118,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4523.146,
+              "sourcePreflightHeaderMs": 499.178,
+              "verifiedEventReadAndOptionalHydrationMs": 3071.634
+            },
+            "statisticsAndSocialProjectionMs": 9806.363,
+            "statisticsJsonAndGzipMs": 2011.615,
+            "statisticsSubsteps": {
+              "actionIndexMs": 18.042,
+              "analysisValidationAndCatalogMs": 22.559,
+              "buildOrderMs": 14.768,
+              "directSharedPackingMs": 641.446,
+              "economyMs": 201.201,
+              "engagementInferenceMs": 1174.946,
+              "executionMs": 1117.915,
+              "forwardEconomyMs": 10.33,
+              "mapPresenceMs": 694.648,
+              "militaryMs": 16.645,
+              "openingMs": 45.819,
+              "pairEpisodeContextMs": 100.585,
+              "participantAssemblyMs": 4.125,
+              "raidDetectionMs": 343.951,
+              "resourceCommitmentMs": 11.569,
+              "resultAndPairSocialMs": 1185.608,
+              "skirmishDetectionMs": 4194.354,
+              "statisticsSchemaValidationMs": 6.51
+            },
+            "totalLocalPackageMs": 19937.739,
+            "workerHttpJsonEncodingMs": 16.704
+          },
+          "totalMs": 20162.333
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2521889,
+            "statisticsGzipBytes": 1994492,
+            "workerHttpJsonBytes": 6034480
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 210260,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "4v4_arabia-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7877.616,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4460.613,
+              "sourcePreflightHeaderMs": 466.556,
+              "verifiedEventReadAndOptionalHydrationMs": 2939.14
+            },
+            "statisticsAndSocialProjectionMs": 11414.516,
+            "statisticsJsonAndGzipMs": 1908.459,
+            "statisticsSubsteps": {
+              "actionIndexMs": 22.142,
+              "analysisValidationAndCatalogMs": 28.056,
+              "buildOrderMs": 20.405,
+              "directSharedPackingMs": 598.485,
+              "economyMs": 377.035,
+              "engagementInferenceMs": 990.116,
+              "executionMs": 1609.509,
+              "forwardEconomyMs": 15.355,
+              "mapPresenceMs": 1015.629,
+              "militaryMs": 24.483,
+              "openingMs": 78.328,
+              "pairEpisodeContextMs": 92.83,
+              "participantAssemblyMs": 5.228,
+              "raidDetectionMs": 245.164,
+              "resourceCommitmentMs": 15.467,
+              "resultAndPairSocialMs": 1555.178,
+              "skirmishDetectionMs": 4714.051,
+              "statisticsSchemaValidationMs": 5.769
+            },
+            "totalLocalPackageMs": 21210.839,
+            "workerHttpJsonEncodingMs": 13.253
+          },
+          "totalMs": 21357.951
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2521889,
+            "statisticsGzipBytes": 1994492,
+            "workerHttpJsonBytes": 6034478
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 210260,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "4v4_arabia-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.006,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7712.354,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4382.813,
+              "sourcePreflightHeaderMs": 461.333,
+              "verifiedEventReadAndOptionalHydrationMs": 2858.404
+            },
+            "statisticsAndSocialProjectionMs": 10618.909,
+            "statisticsJsonAndGzipMs": 1928.085,
+            "statisticsSubsteps": {
+              "actionIndexMs": 17.592,
+              "analysisValidationAndCatalogMs": 22.24,
+              "buildOrderMs": 16.395,
+              "directSharedPackingMs": 606.97,
+              "economyMs": 256.323,
+              "engagementInferenceMs": 1622.799,
+              "executionMs": 1073.497,
+              "forwardEconomyMs": 11.006,
+              "mapPresenceMs": 690.652,
+              "militaryMs": 17.646,
+              "openingMs": 50.409,
+              "pairEpisodeContextMs": 94.964,
+              "participantAssemblyMs": 4.827,
+              "raidDetectionMs": 186.723,
+              "resourceCommitmentMs": 11.14,
+              "resultAndPairSocialMs": 1412.302,
+              "skirmishDetectionMs": 4516.117,
+              "statisticsSchemaValidationMs": 6.09
+            },
+            "totalLocalPackageMs": 20269.555,
+            "workerHttpJsonEncodingMs": 14.128
+          },
+          "totalMs": 20411.884
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2521889,
+            "statisticsGzipBytes": 1994492,
+            "workerHttpJsonBytes": 6034476
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 210260,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "4v4_arabia-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.007,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7794.414,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4309.362,
+              "sourcePreflightHeaderMs": 483.547,
+              "verifiedEventReadAndOptionalHydrationMs": 2990.457
+            },
+            "statisticsAndSocialProjectionMs": 9474.043,
+            "statisticsJsonAndGzipMs": 1848.731,
+            "statisticsSubsteps": {
+              "actionIndexMs": 17.706,
+              "analysisValidationAndCatalogMs": 22.832,
+              "buildOrderMs": 15.797,
+              "directSharedPackingMs": 606.398,
+              "economyMs": 228.73,
+              "engagementInferenceMs": 885.663,
+              "executionMs": 830.569,
+              "forwardEconomyMs": 11.544,
+              "mapPresenceMs": 783.802,
+              "militaryMs": 16.728,
+              "openingMs": 60.253,
+              "pairEpisodeContextMs": 89.901,
+              "participantAssemblyMs": 4.199,
+              "raidDetectionMs": 187.98,
+              "resourceCommitmentMs": 12.033,
+              "resultAndPairSocialMs": 1347.06,
+              "skirmishDetectionMs": 4345.516,
+              "statisticsSchemaValidationMs": 5.898
+            },
+            "totalLocalPackageMs": 19127.338,
+            "workerHttpJsonEncodingMs": 13.256
+          },
+          "totalMs": 19264.18
+        }
+      ],
+      "sourceSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7"
+    },
+    {
+      "fixture": "FFA_7",
+      "inputBytes": 5314319,
+      "samples": [
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2560547,
+            "statisticsGzipBytes": 476524,
+            "workerHttpJsonBytes": 4073213
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 159952,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "FFA_7-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 63.9,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7968.291,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4466.597,
+              "sourcePreflightHeaderMs": 419.423,
+              "verifiedEventReadAndOptionalHydrationMs": 3066.835
+            },
+            "statisticsAndSocialProjectionMs": 7515.505,
+            "statisticsJsonAndGzipMs": 261.415,
+            "statisticsSubsteps": {
+              "actionIndexMs": 16.642,
+              "analysisValidationAndCatalogMs": 22.956,
+              "buildOrderMs": 18.977,
+              "directSharedPackingMs": 57.907,
+              "economyMs": 313.875,
+              "engagementInferenceMs": 515.69,
+              "executionMs": 846.693,
+              "forwardEconomyMs": 10.558,
+              "mapPresenceMs": 1017.143,
+              "militaryMs": 32.48,
+              "openingMs": 46.274,
+              "pairEpisodeContextMs": 23.68,
+              "participantAssemblyMs": 3.786,
+              "raidDetectionMs": 515.28,
+              "resourceCommitmentMs": 21.966,
+              "resultAndPairSocialMs": 594.977,
+              "skirmishDetectionMs": 3449.589,
+              "statisticsSchemaValidationMs": 5.994
+            },
+            "totalLocalPackageMs": 15755.606,
+            "workerHttpJsonEncodingMs": 7.792
+          },
+          "totalMs": 15922.902
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2560547,
+            "statisticsGzipBytes": 476524,
+            "workerHttpJsonBytes": 4073217
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 16389.586,
+          "fixture": "FFA_7",
+          "inputBytes": 5314319,
+          "inputSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 160000,
+          "maxRssKiBProcessHighWater": 160000,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "FFA_7-cold2.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 65.556,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 8265.856,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4732.288,
+              "sourcePreflightHeaderMs": 379.785,
+              "verifiedEventReadAndOptionalHydrationMs": 3138.823
+            },
+            "statisticsAndSocialProjectionMs": 7681.254,
+            "statisticsJsonAndGzipMs": 263.271,
+            "statisticsSubsteps": {
+              "actionIndexMs": 17.791,
+              "analysisValidationAndCatalogMs": 30.377,
+              "buildOrderMs": 22.491,
+              "directSharedPackingMs": 58.656,
+              "economyMs": 302.252,
+              "engagementInferenceMs": 470.002,
+              "executionMs": 802.926,
+              "forwardEconomyMs": 9.955,
+              "mapPresenceMs": 867.912,
+              "militaryMs": 32.553,
+              "openingMs": 27.891,
+              "pairEpisodeContextMs": 25.622,
+              "participantAssemblyMs": 3.463,
+              "raidDetectionMs": 449.927,
+              "resourceCommitmentMs": 19.799,
+              "resultAndPairSocialMs": 552.244,
+              "skirmishDetectionMs": 3980.166,
+              "statisticsSchemaValidationMs": 6.203
+            },
+            "totalLocalPackageMs": 16219.997,
+            "workerHttpJsonEncodingMs": 8.265
+          },
+          "totalMs": 16385.838
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2560547,
+            "statisticsGzipBytes": 476524,
+            "workerHttpJsonBytes": 4073216
+          },
+          "benchmarkVersion": "AOF_LOCAL_UPLOAD_CRITICAL_PATH_V1",
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "cliProcessMs": 15516.766,
+          "fixture": "FFA_7",
+          "inputBytes": 5314319,
+          "inputSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+          "limitations": [
+            "One sample per fixture/mode is diagnostic, not production P95.",
+            "Different legacy/native evidence provenance; cross-format gameplay correctness is a separate validation gate.",
+            "Current mode includes the complete HTTP JSON response encoding but not network transfer.",
+            "Direct candidate has no authenticated upload, binary transport, Firestore publication or frontend adapter.",
+            "The modes have intentionally different local-ready boundaries and are NOT measured upload-to-READY latencies.",
+            "Parser/code runtime and GitHub runner hardware can differ from actual deployment."
+          ],
+          "maxRssKiB": 159968,
+          "maxRssKiBProcessHighWater": 159968,
+          "mode": "native-worker",
+          "processCondition": "first-call-import-cold",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "FFA_7-cold3.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 75.682,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 8030.596,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4645.227,
+              "sourcePreflightHeaderMs": 391.771,
+              "verifiedEventReadAndOptionalHydrationMs": 2977.457
+            },
+            "statisticsAndSocialProjectionMs": 7036.299,
+            "statisticsJsonAndGzipMs": 259.663,
+            "statisticsSubsteps": {
+              "actionIndexMs": 16.499,
+              "analysisValidationAndCatalogMs": 20.072,
+              "buildOrderMs": 17.657,
+              "directSharedPackingMs": 56.915,
+              "economyMs": 284.045,
+              "engagementInferenceMs": 456.808,
+              "executionMs": 884.526,
+              "forwardEconomyMs": 10.586,
+              "mapPresenceMs": 972.92,
+              "militaryMs": 33.033,
+              "openingMs": 24.585,
+              "pairEpisodeContextMs": 24.181,
+              "participantAssemblyMs": 4.554,
+              "raidDetectionMs": 435.878,
+              "resourceCommitmentMs": 19.61,
+              "resultAndPairSocialMs": 548.974,
+              "skirmishDetectionMs": 3218.553,
+              "statisticsSchemaValidationMs": 5.833
+            },
+            "totalLocalPackageMs": 15336.228,
+            "workerHttpJsonEncodingMs": 7.625
+          },
+          "totalMs": 15513.393
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2560547,
+            "statisticsGzipBytes": 476524,
+            "workerHttpJsonBytes": 4073214
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 177412,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "FFA_7-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7743.237,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4330.169,
+              "sourcePreflightHeaderMs": 394.105,
+              "verifiedEventReadAndOptionalHydrationMs": 3007.482
+            },
+            "statisticsAndSocialProjectionMs": 7003.133,
+            "statisticsJsonAndGzipMs": 270.857,
+            "statisticsSubsteps": {
+              "actionIndexMs": 15.575,
+              "analysisValidationAndCatalogMs": 19.761,
+              "buildOrderMs": 19.7,
+              "directSharedPackingMs": 58.562,
+              "economyMs": 296.88,
+              "engagementInferenceMs": 527.883,
+              "executionMs": 1050.691,
+              "forwardEconomyMs": 12.35,
+              "mapPresenceMs": 906.691,
+              "militaryMs": 29.468,
+              "openingMs": 28.744,
+              "pairEpisodeContextMs": 24.356,
+              "participantAssemblyMs": 3.677,
+              "raidDetectionMs": 416.578,
+              "resourceCommitmentMs": 19.469,
+              "resultAndPairSocialMs": 543.058,
+              "skirmishDetectionMs": 3022.393,
+              "statisticsSchemaValidationMs": 6.222
+            },
+            "totalLocalPackageMs": 15027.997,
+            "workerHttpJsonEncodingMs": 9.008
+          },
+          "totalMs": 15130.33
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2560547,
+            "statisticsGzipBytes": 476524,
+            "workerHttpJsonBytes": 4073214
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 197064,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "FFA_7-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7731.7,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4327.983,
+              "sourcePreflightHeaderMs": 362.544,
+              "verifiedEventReadAndOptionalHydrationMs": 3030.761
+            },
+            "statisticsAndSocialProjectionMs": 6539.051,
+            "statisticsJsonAndGzipMs": 252.447,
+            "statisticsSubsteps": {
+              "actionIndexMs": 16.134,
+              "analysisValidationAndCatalogMs": 19.318,
+              "buildOrderMs": 19.502,
+              "directSharedPackingMs": 54.654,
+              "economyMs": 364.003,
+              "engagementInferenceMs": 462.316,
+              "executionMs": 632.095,
+              "forwardEconomyMs": 11.806,
+              "mapPresenceMs": 858.272,
+              "militaryMs": 30.782,
+              "openingMs": 118.635,
+              "pairEpisodeContextMs": 23.979,
+              "participantAssemblyMs": 3.555,
+              "raidDetectionMs": 429.292,
+              "resourceCommitmentMs": 26.946,
+              "resultAndPairSocialMs": 714.401,
+              "skirmishDetectionMs": 2746.71,
+              "statisticsSchemaValidationMs": 5.58
+            },
+            "totalLocalPackageMs": 14532.486,
+            "workerHttpJsonEncodingMs": 8.094
+          },
+          "totalMs": 14627.151
+        },
+        {
+          "artifactBytes": {
+            "recordedEventsGzipBytes": 2560547,
+            "statisticsGzipBytes": 476524,
+            "workerHttpJsonBytes": 4073216
+          },
+          "boundary": "unchanged ordinary native Python worker through response JSON encoding; excludes browser, Functions, HTTP transport, Storage, publication, result resolver and UI",
+          "maxRssKiBProcessHighWater": 204564,
+          "mode": "native-worker",
+          "processCondition": "same-process-warm",
+          "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+          "sourceFile": "FFA_7-cold1.json",
+          "stageTimings": {
+            "nativeModuleImportMs": 0.005,
+            "recordedEventsExtractionAndVerifiedHydrationMs": 7575.45,
+            "recordedEventsSubsteps": {
+              "decoderAndEventWriteMs": 4266.544,
+              "sourcePreflightHeaderMs": 351.578,
+              "verifiedEventReadAndOptionalHydrationMs": 2947.526
+            },
+            "statisticsAndSocialProjectionMs": 7162.935,
+            "statisticsJsonAndGzipMs": 260.385,
+            "statisticsSubsteps": {
+              "actionIndexMs": 16.929,
+              "analysisValidationAndCatalogMs": 19.986,
+              "buildOrderMs": 18.757,
+              "directSharedPackingMs": 55.622,
+              "economyMs": 314.369,
+              "engagementInferenceMs": 452.696,
+              "executionMs": 861.457,
+              "forwardEconomyMs": 12.925,
+              "mapPresenceMs": 849.506,
+              "militaryMs": 29.898,
+              "openingMs": 28.427,
+              "pairEpisodeContextMs": 23.884,
+              "participantAssemblyMs": 3.689,
+              "raidDetectionMs": 436.412,
+              "resourceCommitmentMs": 19.889,
+              "resultAndPairSocialMs": 542.254,
+              "skirmishDetectionMs": 3469.744,
+              "statisticsSchemaValidationMs": 5.422
+            },
+            "totalLocalPackageMs": 15008.266,
+            "workerHttpJsonEncodingMs": 8.682
+          },
+          "totalMs": 15104.624
+        }
+      ],
+      "sourceSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8"
+    }
+  ]
+}

@@ -11,7 +11,8 @@ export function BattleStatistics({game,viewerId,preview,provisional,openPlayer}:
   const players=[...game.players].sort((a,b)=>(a.team??Infinity)-(b.team??Infinity)||a.name.localeCompare(b.name));
   useEffect(()=>{if(inspect)evidence.current?.focus();},[inspect]);
   const close=()=>{setInspect(null);trigger.current?.focus();};
-  return <div className="sx-panel battle-ledger">
+  return <div className="sx-panel battle-ledger" data-aof-match-id={game.matchId} data-aof-game-id={game.gameId}
+    data-aof-source={game.sourceHash} data-aof-revision={game.revision} data-aof-preview={String(preview)}>
     <div className="sx-notice">{preview&&<strong>Illustrative preview · </strong>}{provisional?'Provisional recording · result pending or under review.':'Accepted recording.'} Select a measurement to inspect its meaning and source. Missing evidence remains “—”.</div>
     <nav className="sx-tabs" aria-label="Statistics categories">{CATEGORIES.map(item=><button key={item} aria-pressed={category===item} onClick={()=>{setCategory(item);setInspect(null);}}>{item}</button>)}</nav>
     <section aria-label={`${category} statistics`}>

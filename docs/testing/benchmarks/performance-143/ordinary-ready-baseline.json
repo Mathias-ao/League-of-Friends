@@ -1,0 +1,1137 @@
+{
+  "browserCallableCloud": "UNMEASURED; uses uploadReplay.run with auth-bound request and real native HTTP worker, not external callable HTTP or browser",
+  "compiledInstrumentationCommit": "af326796a5c766defd67ec3988e984fd1afb53ae",
+  "conditions": "One persistent Python HTTP worker; fresh isolated Firestore data per trial, originals retained in Storage emulator; first 1v1 imports cold, other calls process-warm; serial 1v1 includes a duplicate-request race; concurrent trial is a two-user mixed read/reward-audit workload, one initial upload per player",
+  "corpusCommit": "2d04ec6adbe871d156c108a4351448efeb08f4e6",
+  "productionCodeBase": "29f5ed995bbdc1572ef12550cd3c9cc8e8511186",
+  "trials": [
+    {
+      "name": "serial-1",
+      "report": {
+        "environment": "local Firestore/Storage emulators; real uploadReplay.run and authenticated native worker; no external callable HTTP/browser",
+        "faults": {
+          "concurrentOrdinaryRequests": true,
+          "corruptArtifact": true,
+          "crossGameGuidConflict": true,
+          "failedJobRetries": true,
+          "staleAuthority": true,
+          "workerFailureRetainsOriginal": true
+        },
+        "fixtures": [
+          {
+            "authenticatedBoundedReadMs": 63.933484999999564,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "1v1_t90-deak",
+            "idempotentRetryMs": 128.73001400000066,
+            "independentOutcomeVerified": true,
+            "inputBytes": 3781255,
+            "ordinaryRequestAttempts": [
+              {
+                "code": "aborted",
+                "state": "REJECTED"
+              },
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 11342,
+            "sourceSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+            "validationTimings": {
+              "authorityAndClaimMs": 2080,
+              "derivedStorageAndVerificationMs": 128,
+              "mappingMs": 14,
+              "originalStorageAndVerificationMs": 157,
+              "readModelCreationMs": 11,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 476,
+              "serverReceivedToWorkerResponseMs": 9937,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 7633,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 6767.689,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4060.788,
+                  "sourcePreflightHeaderMs": 182.675,
+                  "verifiedEventReadAndOptionalHydrationMs": 2514.684
+                },
+                "statisticsAndSocialProjectionMs": 682,
+                "statisticsJsonAndGzipMs": 79.614,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 3.86,
+                  "analysisValidationAndCatalogMs": 9.338,
+                  "buildOrderMs": 3.24,
+                  "directSharedPackingMs": 18.191,
+                  "economyMs": 11.884,
+                  "engagementInferenceMs": 84.146,
+                  "executionMs": 84.395,
+                  "forwardEconomyMs": 1.821,
+                  "mapPresenceMs": 91.467,
+                  "militaryMs": 3.031,
+                  "openingMs": 4.343,
+                  "pairEpisodeContextMs": 5.58,
+                  "participantAssemblyMs": 0.84,
+                  "raidDetectionMs": 23.026,
+                  "resourceCommitmentMs": 1.825,
+                  "resultAndPairSocialMs": 145.226,
+                  "skirmishDetectionMs": 187.826,
+                  "statisticsSchemaValidationMs": 1.38
+                },
+                "totalLocalPackageMs": 7536.048
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 105.47418299999845,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "2v2_arabia",
+            "idempotentRetryMs": 144.51012700000138,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5558786,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 13824,
+            "sourceSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+            "validationTimings": {
+              "authorityAndClaimMs": 38,
+              "derivedStorageAndVerificationMs": 102,
+              "mappingMs": 11,
+              "originalStorageAndVerificationMs": 151,
+              "readModelCreationMs": 2,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 606,
+              "serverReceivedToWorkerResponseMs": 12383,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 12152,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 9801.852,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 5706.095,
+                  "sourcePreflightHeaderMs": 249.603,
+                  "verifiedEventReadAndOptionalHydrationMs": 3835.282
+                },
+                "statisticsAndSocialProjectionMs": 1830.687,
+                "statisticsJsonAndGzipMs": 385.957,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 6.412,
+                  "analysisValidationAndCatalogMs": 12.743,
+                  "buildOrderMs": 8.203,
+                  "directSharedPackingMs": 144.904,
+                  "economyMs": 58.697,
+                  "engagementInferenceMs": 153.685,
+                  "executionMs": 170.624,
+                  "forwardEconomyMs": 4.815,
+                  "mapPresenceMs": 184.467,
+                  "militaryMs": 5.66,
+                  "openingMs": 12.879,
+                  "pairEpisodeContextMs": 12.736,
+                  "participantAssemblyMs": 1.703,
+                  "raidDetectionMs": 50.977,
+                  "resourceCommitmentMs": 4.077,
+                  "resultAndPairSocialMs": 352.403,
+                  "skirmishDetectionMs": 642.809,
+                  "statisticsSchemaValidationMs": 1.802
+                },
+                "totalLocalPackageMs": 12029.973
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 433.64012000000366,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "4v4_arabia",
+            "idempotentRetryMs": 148.4404530000029,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5129372,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 23231,
+            "sourceSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+            "validationTimings": {
+              "authorityAndClaimMs": 40,
+              "derivedStorageAndVerificationMs": 162,
+              "mappingMs": 9,
+              "originalStorageAndVerificationMs": 134,
+              "readModelCreationMs": 3,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 866,
+              "serverReceivedToWorkerResponseMs": 21061,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 20848,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 8237.44,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4541.648,
+                  "sourcePreflightHeaderMs": 476.369,
+                  "verifiedEventReadAndOptionalHydrationMs": 3209.361
+                },
+                "statisticsAndSocialProjectionMs": 10398.079,
+                "statisticsJsonAndGzipMs": 2003.289,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 18.37,
+                  "analysisValidationAndCatalogMs": 25.201,
+                  "buildOrderMs": 16.507,
+                  "directSharedPackingMs": 660.919,
+                  "economyMs": 235.403,
+                  "engagementInferenceMs": 1362.752,
+                  "executionMs": 1120.221,
+                  "forwardEconomyMs": 10.648,
+                  "mapPresenceMs": 725.522,
+                  "militaryMs": 18.47,
+                  "openingMs": 53.951,
+                  "pairEpisodeContextMs": 103.095,
+                  "participantAssemblyMs": 4.256,
+                  "raidDetectionMs": 206.992,
+                  "resourceCommitmentMs": 11.568,
+                  "resultAndPairSocialMs": 1176.013,
+                  "skirmishDetectionMs": 4640.003,
+                  "statisticsSchemaValidationMs": 6.832
+                },
+                "totalLocalPackageMs": 20650.423
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 121.1766229999921,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "FFA_7",
+            "idempotentRetryMs": 157.25711999999476,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5314319,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 19570,
+            "sourceSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+            "validationTimings": {
+              "authorityAndClaimMs": 40,
+              "derivedStorageAndVerificationMs": 84,
+              "mappingMs": 12,
+              "originalStorageAndVerificationMs": 139,
+              "readModelCreationMs": 2,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 456,
+              "serverReceivedToWorkerResponseMs": 18344,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 18124,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 8318.559,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4909.255,
+                  "sourcePreflightHeaderMs": 396.048,
+                  "verifiedEventReadAndOptionalHydrationMs": 3002.834
+                },
+                "statisticsAndSocialProjectionMs": 9342.082,
+                "statisticsJsonAndGzipMs": 301.438,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 19.337,
+                  "analysisValidationAndCatalogMs": 23.564,
+                  "buildOrderMs": 19.271,
+                  "directSharedPackingMs": 65.432,
+                  "economyMs": 395.787,
+                  "engagementInferenceMs": 743.056,
+                  "executionMs": 965.156,
+                  "forwardEconomyMs": 12.112,
+                  "mapPresenceMs": 1110.774,
+                  "militaryMs": 35.466,
+                  "openingMs": 30.12,
+                  "pairEpisodeContextMs": 46.224,
+                  "participantAssemblyMs": 4.171,
+                  "raidDetectionMs": 505.142,
+                  "resourceCommitmentMs": 19.571,
+                  "resultAndPairSocialMs": 781.255,
+                  "skirmishDetectionMs": 4558.605,
+                  "statisticsSchemaValidationMs": 5.964
+                },
+                "totalLocalPackageMs": 17972.555
+              }
+            }
+          }
+        ],
+        "independentUserConcurrency": 1,
+        "workload": "Serial formats; separate duplicate-request race control on 1v1."
+      }
+    },
+    {
+      "name": "serial-2",
+      "report": {
+        "environment": "local Firestore/Storage emulators; real uploadReplay.run and authenticated native worker; no external callable HTTP/browser",
+        "faults": {
+          "concurrentOrdinaryRequests": true,
+          "corruptArtifact": true,
+          "crossGameGuidConflict": true,
+          "failedJobRetries": true,
+          "staleAuthority": true,
+          "workerFailureRetainsOriginal": true
+        },
+        "fixtures": [
+          {
+            "authenticatedBoundedReadMs": 47.83270799999991,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "1v1_t90-deak",
+            "idempotentRetryMs": 89.60791099999915,
+            "independentOutcomeVerified": true,
+            "inputBytes": 3781255,
+            "ordinaryRequestAttempts": [
+              {
+                "code": "aborted",
+                "state": "REJECTED"
+              },
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 9050,
+            "sourceSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+            "validationTimings": {
+              "authorityAndClaimMs": 52,
+              "derivedStorageAndVerificationMs": 62,
+              "mappingMs": 6,
+              "originalStorageAndVerificationMs": 120,
+              "readModelCreationMs": 10,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 374,
+              "serverReceivedToWorkerResponseMs": 8036,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 7807,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 7029.033,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4170.062,
+                  "sourcePreflightHeaderMs": 183.491,
+                  "verifiedEventReadAndOptionalHydrationMs": 2665.434
+                },
+                "statisticsAndSocialProjectionMs": 602.127,
+                "statisticsJsonAndGzipMs": 75.132,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 3.595,
+                  "analysisValidationAndCatalogMs": 9.065,
+                  "buildOrderMs": 3.749,
+                  "directSharedPackingMs": 18.011,
+                  "economyMs": 11.764,
+                  "engagementInferenceMs": 85.018,
+                  "executionMs": 74.494,
+                  "forwardEconomyMs": 1.576,
+                  "mapPresenceMs": 83.933,
+                  "militaryMs": 2.887,
+                  "openingMs": 3.125,
+                  "pairEpisodeContextMs": 5.647,
+                  "participantAssemblyMs": 0.77,
+                  "raidDetectionMs": 21.899,
+                  "resourceCommitmentMs": 1.769,
+                  "resultAndPairSocialMs": 95.738,
+                  "skirmishDetectionMs": 177.295,
+                  "statisticsSchemaValidationMs": 1.072
+                },
+                "totalLocalPackageMs": 7713.006
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 124.0976010000013,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "2v2_arabia",
+            "idempotentRetryMs": 110.29277999999977,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5558786,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 13993,
+            "sourceSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+            "validationTimings": {
+              "authorityAndClaimMs": 27,
+              "derivedStorageAndVerificationMs": 76,
+              "mappingMs": 10,
+              "originalStorageAndVerificationMs": 169,
+              "readModelCreationMs": 2,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 544,
+              "serverReceivedToWorkerResponseMs": 12702,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 12467,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 9841.766,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 6085.503,
+                  "sourcePreflightHeaderMs": 271.126,
+                  "verifiedEventReadAndOptionalHydrationMs": 3474.823
+                },
+                "statisticsAndSocialProjectionMs": 2139.48,
+                "statisticsJsonAndGzipMs": 355.572,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 6.504,
+                  "analysisValidationAndCatalogMs": 11.152,
+                  "buildOrderMs": 58.15,
+                  "directSharedPackingMs": 131.893,
+                  "economyMs": 43.231,
+                  "engagementInferenceMs": 267.851,
+                  "executionMs": 182.613,
+                  "forwardEconomyMs": 3.66,
+                  "mapPresenceMs": 193.846,
+                  "militaryMs": 7.21,
+                  "openingMs": 13.439,
+                  "pairEpisodeContextMs": 11.213,
+                  "participantAssemblyMs": 1.382,
+                  "raidDetectionMs": 43.209,
+                  "resourceCommitmentMs": 4.559,
+                  "resultAndPairSocialMs": 293.542,
+                  "skirmishDetectionMs": 863.124,
+                  "statisticsSchemaValidationMs": 2.091
+                },
+                "totalLocalPackageMs": 12346.277
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 393.3334510000059,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "4v4_arabia",
+            "idempotentRetryMs": 141.3731040000057,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5129372,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 22436,
+            "sourceSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+            "validationTimings": {
+              "authorityAndClaimMs": 31,
+              "derivedStorageAndVerificationMs": 126,
+              "mappingMs": 7,
+              "originalStorageAndVerificationMs": 125,
+              "readModelCreationMs": 3,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 806,
+              "serverReceivedToWorkerResponseMs": 20461,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 20270,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 7923.516,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4405.326,
+                  "sourcePreflightHeaderMs": 484.217,
+                  "verifiedEventReadAndOptionalHydrationMs": 3023.052
+                },
+                "statisticsAndSocialProjectionMs": 10257.391,
+                "statisticsJsonAndGzipMs": 1890.212,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 16.525,
+                  "analysisValidationAndCatalogMs": 23.631,
+                  "buildOrderMs": 173.789,
+                  "directSharedPackingMs": 604.791,
+                  "economyMs": 217.73,
+                  "engagementInferenceMs": 1169.323,
+                  "executionMs": 1273.679,
+                  "forwardEconomyMs": 10.357,
+                  "mapPresenceMs": 763.115,
+                  "militaryMs": 16.522,
+                  "openingMs": 47.742,
+                  "pairEpisodeContextMs": 102.633,
+                  "participantAssemblyMs": 4.39,
+                  "raidDetectionMs": 191.021,
+                  "resourceCommitmentMs": 11.194,
+                  "resultAndPairSocialMs": 1132.47,
+                  "skirmishDetectionMs": 4491.306,
+                  "statisticsSchemaValidationMs": 5.917
+                },
+                "totalLocalPackageMs": 20081.346
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 80.63110099999176,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "FFA_7",
+            "idempotentRetryMs": 122.62578499999654,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5314319,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 16537,
+            "sourceSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+            "validationTimings": {
+              "authorityAndClaimMs": 29,
+              "derivedStorageAndVerificationMs": 82,
+              "mappingMs": 12,
+              "originalStorageAndVerificationMs": 121,
+              "readModelCreationMs": 4,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 501,
+              "serverReceivedToWorkerResponseMs": 15232,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 15042,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 7420.818,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4155.026,
+                  "sourcePreflightHeaderMs": 343.65,
+                  "verifiedEventReadAndOptionalHydrationMs": 2912.359
+                },
+                "statisticsAndSocialProjectionMs": 7185.705,
+                "statisticsJsonAndGzipMs": 267.789,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 15.078,
+                  "analysisValidationAndCatalogMs": 21.456,
+                  "buildOrderMs": 19.029,
+                  "directSharedPackingMs": 69.389,
+                  "economyMs": 291.755,
+                  "engagementInferenceMs": 440.82,
+                  "executionMs": 816.188,
+                  "forwardEconomyMs": 11.285,
+                  "mapPresenceMs": 957.317,
+                  "militaryMs": 30.899,
+                  "openingMs": 24.662,
+                  "pairEpisodeContextMs": 30.452,
+                  "participantAssemblyMs": 3.688,
+                  "raidDetectionMs": 280.922,
+                  "resourceCommitmentMs": 19.62,
+                  "resultAndPairSocialMs": 638.167,
+                  "skirmishDetectionMs": 3504.958,
+                  "statisticsSchemaValidationMs": 8.826
+                },
+                "totalLocalPackageMs": 14884.494
+              }
+            }
+          }
+        ],
+        "independentUserConcurrency": 1,
+        "workload": "Serial formats; separate duplicate-request race control on 1v1."
+      }
+    },
+    {
+      "name": "serial-3",
+      "report": {
+        "environment": "local Firestore/Storage emulators; real uploadReplay.run and authenticated native worker; no external callable HTTP/browser",
+        "faults": {
+          "concurrentOrdinaryRequests": true,
+          "corruptArtifact": true,
+          "crossGameGuidConflict": true,
+          "failedJobRetries": true,
+          "staleAuthority": true,
+          "workerFailureRetainsOriginal": true
+        },
+        "fixtures": [
+          {
+            "authenticatedBoundedReadMs": 47.74807800000053,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "1v1_t90-deak",
+            "idempotentRetryMs": 91.65531100000044,
+            "independentOutcomeVerified": true,
+            "inputBytes": 3781255,
+            "ordinaryRequestAttempts": [
+              {
+                "code": "aborted",
+                "state": "REJECTED"
+              },
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 10294,
+            "sourceSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+            "validationTimings": {
+              "authorityAndClaimMs": 2031,
+              "derivedStorageAndVerificationMs": 58,
+              "mappingMs": 6,
+              "originalStorageAndVerificationMs": 119,
+              "readModelCreationMs": 9,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 349,
+              "serverReceivedToWorkerResponseMs": 9402,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 7193,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 6446.966,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 3868.442,
+                  "sourcePreflightHeaderMs": 185.793,
+                  "verifiedEventReadAndOptionalHydrationMs": 2383.016
+                },
+                "statisticsAndSocialProjectionMs": 581.767,
+                "statisticsJsonAndGzipMs": 72.961,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 4.162,
+                  "analysisValidationAndCatalogMs": 12.527,
+                  "buildOrderMs": 4.099,
+                  "directSharedPackingMs": 21.315,
+                  "economyMs": 11.24,
+                  "engagementInferenceMs": 79.17,
+                  "executionMs": 72.85,
+                  "forwardEconomyMs": 1.361,
+                  "mapPresenceMs": 70.372,
+                  "militaryMs": 3.102,
+                  "openingMs": 3.32,
+                  "pairEpisodeContextMs": 5.377,
+                  "participantAssemblyMs": 0.75,
+                  "raidDetectionMs": 22.082,
+                  "resourceCommitmentMs": 1.773,
+                  "resultAndPairSocialMs": 92.955,
+                  "skirmishDetectionMs": 173.548,
+                  "statisticsSchemaValidationMs": 0.915
+                },
+                "totalLocalPackageMs": 7108.432
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 115.97840999999971,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "2v2_arabia",
+            "idempotentRetryMs": 118.66316400000142,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5558786,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 13839,
+            "sourceSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+            "validationTimings": {
+              "authorityAndClaimMs": 24,
+              "derivedStorageAndVerificationMs": 72,
+              "mappingMs": 17,
+              "originalStorageAndVerificationMs": 125,
+              "readModelCreationMs": 2,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 610,
+              "serverReceivedToWorkerResponseMs": 12348,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 12166,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 9761.817,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 5926.403,
+                  "sourcePreflightHeaderMs": 242.418,
+                  "verifiedEventReadAndOptionalHydrationMs": 3582.941
+                },
+                "statisticsAndSocialProjectionMs": 1929.568,
+                "statisticsJsonAndGzipMs": 359.147,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 6.878,
+                  "analysisValidationAndCatalogMs": 12.198,
+                  "buildOrderMs": 7.538,
+                  "directSharedPackingMs": 133.52,
+                  "economyMs": 53.608,
+                  "engagementInferenceMs": 207.611,
+                  "executionMs": 165.57,
+                  "forwardEconomyMs": 3.89,
+                  "mapPresenceMs": 176.539,
+                  "militaryMs": 6.245,
+                  "openingMs": 12.663,
+                  "pairEpisodeContextMs": 11.327,
+                  "participantAssemblyMs": 1.456,
+                  "raidDetectionMs": 119.153,
+                  "resourceCommitmentMs": 4.226,
+                  "resultAndPairSocialMs": 290.868,
+                  "skirmishDetectionMs": 713.509,
+                  "statisticsSchemaValidationMs": 1.969
+                },
+                "totalLocalPackageMs": 12060.141
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 445.386136000001,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "4v4_arabia",
+            "idempotentRetryMs": 139.3481460000039,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5129372,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 21986,
+            "sourceSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+            "validationTimings": {
+              "authorityAndClaimMs": 30,
+              "derivedStorageAndVerificationMs": 121,
+              "mappingMs": 9,
+              "originalStorageAndVerificationMs": 123,
+              "readModelCreationMs": 3,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 796,
+              "serverReceivedToWorkerResponseMs": 20094,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 19902,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 7980.744,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4548.602,
+                  "sourcePreflightHeaderMs": 471.524,
+                  "verifiedEventReadAndOptionalHydrationMs": 2950.687
+                },
+                "statisticsAndSocialProjectionMs": 9711.697,
+                "statisticsJsonAndGzipMs": 2010.85,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 16.733,
+                  "analysisValidationAndCatalogMs": 23.226,
+                  "buildOrderMs": 14.551,
+                  "directSharedPackingMs": 628.908,
+                  "economyMs": 222.216,
+                  "engagementInferenceMs": 1127.414,
+                  "executionMs": 921.865,
+                  "forwardEconomyMs": 10.705,
+                  "mapPresenceMs": 672.848,
+                  "militaryMs": 16.906,
+                  "openingMs": 54.336,
+                  "pairEpisodeContextMs": 118.447,
+                  "participantAssemblyMs": 5.012,
+                  "raidDetectionMs": 325.169,
+                  "resourceCommitmentMs": 11.358,
+                  "resultAndPairSocialMs": 1402.925,
+                  "skirmishDetectionMs": 4130.2,
+                  "statisticsSchemaValidationMs": 7.613
+                },
+                "totalLocalPackageMs": 19713.492
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 89.55735300001106,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "FFA_7",
+            "idempotentRetryMs": 120.5919409999915,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5314319,
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 16374,
+            "sourceSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+            "validationTimings": {
+              "authorityAndClaimMs": 25,
+              "derivedStorageAndVerificationMs": 74,
+              "mappingMs": 12,
+              "originalStorageAndVerificationMs": 122,
+              "readModelCreationMs": 3,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 454,
+              "serverReceivedToWorkerResponseMs": 15199,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 15010,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 7695.772,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 4344.576,
+                  "sourcePreflightHeaderMs": 361.106,
+                  "verifiedEventReadAndOptionalHydrationMs": 2980.284
+                },
+                "statisticsAndSocialProjectionMs": 6893.534,
+                "statisticsJsonAndGzipMs": 267.21,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 15.749,
+                  "analysisValidationAndCatalogMs": 22.168,
+                  "buildOrderMs": 17.614,
+                  "directSharedPackingMs": 58.1,
+                  "economyMs": 303.988,
+                  "engagementInferenceMs": 439.281,
+                  "executionMs": 796.551,
+                  "forwardEconomyMs": 12.166,
+                  "mapPresenceMs": 873.904,
+                  "militaryMs": 30.356,
+                  "openingMs": 26.051,
+                  "pairEpisodeContextMs": 24.479,
+                  "participantAssemblyMs": 4.484,
+                  "raidDetectionMs": 432.492,
+                  "resourceCommitmentMs": 19.843,
+                  "resultAndPairSocialMs": 623.9,
+                  "skirmishDetectionMs": 3185.345,
+                  "statisticsSchemaValidationMs": 5.897
+                },
+                "totalLocalPackageMs": 14866.633
+              }
+            }
+          }
+        ],
+        "independentUserConcurrency": 1,
+        "workload": "Serial formats; separate duplicate-request race control on 1v1."
+      }
+    },
+    {
+      "name": "concurrent-2",
+      "report": {
+        "environment": "local Firestore/Storage emulators; real uploadReplay.run and authenticated native worker; no external callable HTTP/browser",
+        "faults": {
+          "concurrentOrdinaryRequests": false,
+          "corruptArtifact": true,
+          "crossGameGuidConflict": true,
+          "failedJobRetries": true,
+          "staleAuthority": true,
+          "workerFailureRetainsOriginal": true
+        },
+        "fixtures": [
+          {
+            "authenticatedBoundedReadMs": 54.19539200000145,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "1v1_t90-deak",
+            "idempotentRetryMs": 96.52461199999743,
+            "independentOutcomeVerified": true,
+            "inputBytes": 3781255,
+            "nativeHandlerTimings": [],
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 22245,
+            "sourceSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+            "validationTimings": {
+              "authorityAndClaimMs": 59,
+              "derivedStorageAndVerificationMs": 62,
+              "mappingMs": 18,
+              "originalStorageAndVerificationMs": 173,
+              "readModelCreationMs": 9,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 366,
+              "serverReceivedToWorkerResponseMs": 21321,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 21056,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 20223.581,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 15367.934,
+                  "sourcePreflightHeaderMs": 217.702,
+                  "verifiedEventReadAndOptionalHydrationMs": 4626.037
+                },
+                "statisticsAndSocialProjectionMs": 652.283,
+                "statisticsJsonAndGzipMs": 81.292,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 3.927,
+                  "analysisValidationAndCatalogMs": 9.885,
+                  "buildOrderMs": 3.616,
+                  "directSharedPackingMs": 17.75,
+                  "economyMs": 13.165,
+                  "engagementInferenceMs": 85.153,
+                  "executionMs": 79.718,
+                  "forwardEconomyMs": 2.2,
+                  "mapPresenceMs": 78.867,
+                  "militaryMs": 3.058,
+                  "openingMs": 3.328,
+                  "pairEpisodeContextMs": 5.667,
+                  "participantAssemblyMs": 0.903,
+                  "raidDetectionMs": 22.004,
+                  "resourceCommitmentMs": 1.821,
+                  "resultAndPairSocialMs": 129.583,
+                  "skirmishDetectionMs": 189.774,
+                  "statisticsSchemaValidationMs": 1.229
+                },
+                "totalLocalPackageMs": 20965.334
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 89.40663400000267,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "2v2_arabia",
+            "idempotentRetryMs": 107.3483759999981,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5558786,
+            "nativeHandlerTimings": [],
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 30564,
+            "sourceSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+            "validationTimings": {
+              "authorityAndClaimMs": 100,
+              "derivedStorageAndVerificationMs": 85,
+              "mappingMs": 16,
+              "originalStorageAndVerificationMs": 129,
+              "readModelCreationMs": 2,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 573,
+              "serverReceivedToWorkerResponseMs": 29199,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 28933,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 26338.311,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 22287.957,
+                  "sourcePreflightHeaderMs": 360.866,
+                  "verifiedEventReadAndOptionalHydrationMs": 3589.761
+                },
+                "statisticsAndSocialProjectionMs": 2010.464,
+                "statisticsJsonAndGzipMs": 380.511,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 8.002,
+                  "analysisValidationAndCatalogMs": 13.73,
+                  "buildOrderMs": 7.949,
+                  "directSharedPackingMs": 156.627,
+                  "economyMs": 59.281,
+                  "engagementInferenceMs": 277.53,
+                  "executionMs": 186.527,
+                  "forwardEconomyMs": 4.491,
+                  "mapPresenceMs": 182.959,
+                  "militaryMs": 5.449,
+                  "openingMs": 16.255,
+                  "pairEpisodeContextMs": 15.361,
+                  "participantAssemblyMs": 1.433,
+                  "raidDetectionMs": 55.877,
+                  "resourceCommitmentMs": 3.707,
+                  "resultAndPairSocialMs": 338.305,
+                  "skirmishDetectionMs": 673.758,
+                  "statisticsSchemaValidationMs": 2.318
+                },
+                "totalLocalPackageMs": 28740.701
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 450.6818959999946,
+            "boundedReader": true,
+            "expectedOutcome": "ACCEPTED",
+            "fixture": "4v4_arabia",
+            "idempotentRetryMs": 130.0273359999992,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5129372,
+            "nativeHandlerTimings": [],
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 39514,
+            "sourceSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+            "validationTimings": {
+              "authorityAndClaimMs": 36,
+              "derivedStorageAndVerificationMs": 125,
+              "mappingMs": 16,
+              "originalStorageAndVerificationMs": 240,
+              "readModelCreationMs": 3,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 763,
+              "serverReceivedToWorkerResponseMs": 37579,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 37238,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 21744.638,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 14435.96,
+                  "sourcePreflightHeaderMs": 783.918,
+                  "verifiedEventReadAndOptionalHydrationMs": 6501.08
+                },
+                "statisticsAndSocialProjectionMs": 12478.237,
+                "statisticsJsonAndGzipMs": 2739.064,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 19.473,
+                  "analysisValidationAndCatalogMs": 28.983,
+                  "buildOrderMs": 18.02,
+                  "directSharedPackingMs": 753,
+                  "economyMs": 257.756,
+                  "engagementInferenceMs": 1713.186,
+                  "executionMs": 1500.724,
+                  "forwardEconomyMs": 12.452,
+                  "mapPresenceMs": 894.171,
+                  "militaryMs": 18.848,
+                  "openingMs": 56.804,
+                  "pairEpisodeContextMs": 104.329,
+                  "participantAssemblyMs": 4.082,
+                  "raidDetectionMs": 395.416,
+                  "resourceCommitmentMs": 12.588,
+                  "resultAndPairSocialMs": 1243.549,
+                  "skirmishDetectionMs": 5434.775,
+                  "statisticsSchemaValidationMs": 8.826
+                },
+                "totalLocalPackageMs": 36991.401
+              }
+            }
+          },
+          {
+            "authenticatedBoundedReadMs": 112.89282500000263,
+            "boundedReader": true,
+            "expectedOutcome": "PENDING_ADMIN_REVIEW",
+            "fixture": "FFA_7",
+            "idempotentRetryMs": 161.61779899999965,
+            "independentOutcomeVerified": true,
+            "inputBytes": 5314319,
+            "nativeHandlerTimings": [],
+            "ordinaryRequestAttempts": [
+              {
+                "alreadyProcessed": false,
+                "state": "READY"
+              }
+            ],
+            "pendingExclusion": true,
+            "processorRevision": "f66c9946c7c8f4372f889c33ff873f745109e4b4c153d58140e69ecfdd3db725",
+            "ready": true,
+            "retentionVerified": true,
+            "retryIdempotent": true,
+            "serverReceivedToReadyAndResolutionMs": 47825,
+            "sourceSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+            "validationTimings": {
+              "authorityAndClaimMs": 93,
+              "derivedStorageAndVerificationMs": 91,
+              "mappingMs": 7,
+              "originalStorageAndVerificationMs": 200,
+              "readModelCreationMs": 2,
+              "readyPublicationMs": null,
+              "responseIntegrityVerificationMs": 435,
+              "serverReceivedToWorkerResponseMs": 46698,
+              "totalServerReceivedToReadyMs": null,
+              "workerResponseMs": 46334,
+              "workerStages": {
+                "recordedEventsExtractionAndVerifiedHydrationMs": 38146.07,
+                "recordedEventsSubsteps": {
+                  "decoderAndEventWriteMs": 18468.256,
+                  "sourcePreflightHeaderMs": 618.248,
+                  "verifiedEventReadAndOptionalHydrationMs": 18865.913
+                },
+                "statisticsAndSocialProjectionMs": 7677.866,
+                "statisticsJsonAndGzipMs": 309.554,
+                "statisticsSubsteps": {
+                  "actionIndexMs": 18.166,
+                  "analysisValidationAndCatalogMs": 29.86,
+                  "buildOrderMs": 20.988,
+                  "directSharedPackingMs": 68.476,
+                  "economyMs": 366.067,
+                  "engagementInferenceMs": 470.705,
+                  "executionMs": 821.96,
+                  "forwardEconomyMs": 12.399,
+                  "mapPresenceMs": 859.559,
+                  "militaryMs": 38.595,
+                  "openingMs": 28.313,
+                  "pairEpisodeContextMs": 28.689,
+                  "participantAssemblyMs": 3.556,
+                  "raidDetectionMs": 343.055,
+                  "resourceCommitmentMs": 24.795,
+                  "resultAndPairSocialMs": 842.027,
+                  "skirmishDetectionMs": 3688.726,
+                  "statisticsSchemaValidationMs": 10.397
+                },
+                "totalLocalPackageMs": 46143.638
+              }
+            }
+          }
+        ],
+        "independentUserConcurrency": 2,
+        "workload": "Two independent authenticated uploads; existing read-model/reward audits may overlap the other upload."
+      }
+    }
+  ]
+}

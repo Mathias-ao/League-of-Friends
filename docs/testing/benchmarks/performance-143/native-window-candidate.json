@@ -1,0 +1,333 @@
+{
+  "boundary": "prepare_native_upload local package; no HTTP/Functions/Storage/UI; one paired diagnostic per fixture, not p95; False then True order not randomized",
+  "samples": [
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "1v1_t90-deak",
+      "indexedActionWindows": false,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 6577.335,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 4011.209,
+          "sourcePreflightHeaderMs": 181.984,
+          "verifiedEventReadAndOptionalHydrationMs": 2369.802
+        },
+        "statisticsAndSocialProjectionMs": 682.277,
+        "statisticsJsonAndGzipMs": 75.32,
+        "statisticsSubsteps": {
+          "actionIndexMs": 4.303,
+          "analysisValidationAndCatalogMs": 10.215,
+          "buildOrderMs": 3.531,
+          "directSharedPackingMs": 17.5,
+          "economyMs": 11.532,
+          "engagementInferenceMs": 91.769,
+          "executionMs": 79.914,
+          "forwardEconomyMs": 1.839,
+          "mapPresenceMs": 85.757,
+          "militaryMs": 2.8,
+          "openingMs": 3.309,
+          "pairEpisodeContextMs": 6.097,
+          "participantAssemblyMs": 0.873,
+          "raidDetectionMs": 23.036,
+          "resourceCommitmentMs": 1.868,
+          "resultAndPairSocialMs": 138.366,
+          "skirmishDetectionMs": 197.769,
+          "statisticsSchemaValidationMs": 1.151
+        },
+        "totalLocalPackageMs": 7341.515
+      },
+      "statisticsGzipBytes": 147513,
+      "totalMs": 7357.597189999979
+    },
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "1v1_t90-deak",
+      "indexedActionWindows": true,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "3f2ee71756017332182620ee9f273e249b3fe6bc61222637df26bb7a84d400ef",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 6726.166,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 3976.17,
+          "sourcePreflightHeaderMs": 181.704,
+          "verifiedEventReadAndOptionalHydrationMs": 2559.172
+        },
+        "statisticsAndSocialProjectionMs": 433.484,
+        "statisticsJsonAndGzipMs": 76.642,
+        "statisticsSubsteps": {
+          "actionIndexMs": 4.426,
+          "analysisValidationAndCatalogMs": 8.923,
+          "buildOrderMs": 3.964,
+          "directSharedPackingMs": 17.462,
+          "economyMs": 13.443,
+          "engagementInferenceMs": 10.416,
+          "executionMs": 74.13,
+          "forwardEconomyMs": 1.549,
+          "mapPresenceMs": 82.63,
+          "militaryMs": 2.757,
+          "openingMs": 3.793,
+          "pairEpisodeContextMs": 6.678,
+          "participantAssemblyMs": 0.766,
+          "raidDetectionMs": 29.91,
+          "resourceCommitmentMs": 1.879,
+          "resultAndPairSocialMs": 93.423,
+          "skirmishDetectionMs": 75.616,
+          "statisticsSchemaValidationMs": 1.078
+        },
+        "totalLocalPackageMs": 7243.015
+      },
+      "statisticsGzipBytes": 147513,
+      "totalMs": 7259.904496999752
+    },
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "2v2_arabia",
+      "indexedActionWindows": false,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 9484.863,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 5752.88,
+          "sourcePreflightHeaderMs": 249.553,
+          "verifiedEventReadAndOptionalHydrationMs": 3471.758
+        },
+        "statisticsAndSocialProjectionMs": 1547.305,
+        "statisticsJsonAndGzipMs": 359.44,
+        "statisticsSubsteps": {
+          "actionIndexMs": 4.959,
+          "analysisValidationAndCatalogMs": 9.618,
+          "buildOrderMs": 6.274,
+          "directSharedPackingMs": 134.31,
+          "economyMs": 40.584,
+          "engagementInferenceMs": 158.209,
+          "executionMs": 222.064,
+          "forwardEconomyMs": 3.694,
+          "mapPresenceMs": 161.873,
+          "militaryMs": 5.035,
+          "openingMs": 11.028,
+          "pairEpisodeContextMs": 10.862,
+          "participantAssemblyMs": 1.448,
+          "raidDetectionMs": 40.22,
+          "resourceCommitmentMs": 3.471,
+          "resultAndPairSocialMs": 213.254,
+          "skirmishDetectionMs": 517.724,
+          "statisticsSchemaValidationMs": 1.881
+        },
+        "totalLocalPackageMs": 11401.596
+      },
+      "statisticsGzipBytes": 478954,
+      "totalMs": 11435.043709999718
+    },
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "2v2_arabia",
+      "indexedActionWindows": true,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "b80aec98153eaacb92e14a7759e209d21218858f306551eb5c14b6c432b0ad05",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 9607.82,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 5824.021,
+          "sourcePreflightHeaderMs": 261.26,
+          "verifiedEventReadAndOptionalHydrationMs": 3511.165
+        },
+        "statisticsAndSocialProjectionMs": 1294.139,
+        "statisticsJsonAndGzipMs": 373.426,
+        "statisticsSubsteps": {
+          "actionIndexMs": 6.017,
+          "analysisValidationAndCatalogMs": 11.131,
+          "buildOrderMs": 6.876,
+          "directSharedPackingMs": 140.068,
+          "economyMs": 49.344,
+          "engagementInferenceMs": 28.501,
+          "executionMs": 172.247,
+          "forwardEconomyMs": 4.099,
+          "mapPresenceMs": 181.997,
+          "militaryMs": 6.153,
+          "openingMs": 11.765,
+          "pairEpisodeContextMs": 11.95,
+          "participantAssemblyMs": 1.537,
+          "raidDetectionMs": 81.826,
+          "resourceCommitmentMs": 3.386,
+          "resultAndPairSocialMs": 288.54,
+          "skirmishDetectionMs": 285.817,
+          "statisticsSchemaValidationMs": 2.007
+        },
+        "totalLocalPackageMs": 11285.456
+      },
+      "statisticsGzipBytes": 478954,
+      "totalMs": 11320.36398299988
+    },
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "4v4_arabia",
+      "indexedActionWindows": false,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 7714.757,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 4354.131,
+          "sourcePreflightHeaderMs": 498.894,
+          "verifiedEventReadAndOptionalHydrationMs": 2850.967
+        },
+        "statisticsAndSocialProjectionMs": 9013.81,
+        "statisticsJsonAndGzipMs": 1871.601,
+        "statisticsSubsteps": {
+          "actionIndexMs": 17.464,
+          "analysisValidationAndCatalogMs": 24.847,
+          "buildOrderMs": 16.207,
+          "directSharedPackingMs": 587.588,
+          "economyMs": 203.437,
+          "engagementInferenceMs": 971.559,
+          "executionMs": 1010.932,
+          "forwardEconomyMs": 11.737,
+          "mapPresenceMs": 693.693,
+          "militaryMs": 16.441,
+          "openingMs": 47.285,
+          "pairEpisodeContextMs": 92.368,
+          "participantAssemblyMs": 4.917,
+          "raidDetectionMs": 190.042,
+          "resourceCommitmentMs": 11.45,
+          "resultAndPairSocialMs": 1090.503,
+          "skirmishDetectionMs": 4016.068,
+          "statisticsSchemaValidationMs": 5.863
+        },
+        "totalLocalPackageMs": 18610.392
+      },
+      "statisticsGzipBytes": 1994492,
+      "totalMs": 18784.108078999907
+    },
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "4v4_arabia",
+      "indexedActionWindows": true,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "ad3d7716d8e6a52f73997812a281f1e158bd181f482fdafe8d0c5e8617d6d2d7",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 8283.722,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 4690.186,
+          "sourcePreflightHeaderMs": 531.297,
+          "verifiedEventReadAndOptionalHydrationMs": 3051.443
+        },
+        "statisticsAndSocialProjectionMs": 5934.384,
+        "statisticsJsonAndGzipMs": 1961.05,
+        "statisticsSubsteps": {
+          "actionIndexMs": 17.595,
+          "analysisValidationAndCatalogMs": 23.986,
+          "buildOrderMs": 16.215,
+          "directSharedPackingMs": 599.925,
+          "economyMs": 230.444,
+          "engagementInferenceMs": 107.596,
+          "executionMs": 1069.475,
+          "forwardEconomyMs": 12.049,
+          "mapPresenceMs": 780.289,
+          "militaryMs": 16.515,
+          "openingMs": 58.379,
+          "pairEpisodeContextMs": 92.846,
+          "participantAssemblyMs": 4.563,
+          "raidDetectionMs": 346.872,
+          "resourceCommitmentMs": 17.582,
+          "resultAndPairSocialMs": 1380.482,
+          "skirmishDetectionMs": 1152.304,
+          "statisticsSchemaValidationMs": 5.956
+        },
+        "totalLocalPackageMs": 16189.425
+      },
+      "statisticsGzipBytes": 1994492,
+      "totalMs": 16292.167255000095
+    },
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "FFA_7",
+      "indexedActionWindows": false,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 7659.211,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 4263.314,
+          "sourcePreflightHeaderMs": 359.594,
+          "verifiedEventReadAndOptionalHydrationMs": 3026.356
+        },
+        "statisticsAndSocialProjectionMs": 6794.062,
+        "statisticsJsonAndGzipMs": 302.22,
+        "statisticsSubsteps": {
+          "actionIndexMs": 19.89,
+          "analysisValidationAndCatalogMs": 22.864,
+          "buildOrderMs": 19.73,
+          "directSharedPackingMs": 62.581,
+          "economyMs": 322.478,
+          "engagementInferenceMs": 438.434,
+          "executionMs": 690.152,
+          "forwardEconomyMs": 12.425,
+          "mapPresenceMs": 944.005,
+          "militaryMs": 39.748,
+          "openingMs": 26.141,
+          "pairEpisodeContextMs": 25.72,
+          "participantAssemblyMs": 3.881,
+          "raidDetectionMs": 291.724,
+          "resourceCommitmentMs": 19.211,
+          "resultAndPairSocialMs": 759.845,
+          "skirmishDetectionMs": 3087.821,
+          "statisticsSchemaValidationMs": 6.083
+        },
+        "totalLocalPackageMs": 14764.941
+      },
+      "statisticsGzipBytes": 476524,
+      "totalMs": 14824.24858100012
+    },
+    {
+      "completeManifestEquivalent": true,
+      "completeStatisticsEquivalent": true,
+      "fixture": "FFA_7",
+      "indexedActionWindows": true,
+      "retainedEventsByteIdentical": true,
+      "sourceSha256": "d86ba4dfafdc430d9c125f75ca20e90dee41e27c5e207edbd5561058e41531b8",
+      "stageTimings": {
+        "recordedEventsExtractionAndVerifiedHydrationMs": 8208.2,
+        "recordedEventsSubsteps": {
+          "decoderAndEventWriteMs": 4431.179,
+          "sourcePreflightHeaderMs": 352.873,
+          "verifiedEventReadAndOptionalHydrationMs": 3414.121
+        },
+        "statisticsAndSocialProjectionMs": 5697.06,
+        "statisticsJsonAndGzipMs": 297.767,
+        "statisticsSubsteps": {
+          "actionIndexMs": 16.474,
+          "analysisValidationAndCatalogMs": 19.862,
+          "buildOrderMs": 21.687,
+          "directSharedPackingMs": 62.237,
+          "economyMs": 581.848,
+          "engagementInferenceMs": 55.733,
+          "executionMs": 2200.874,
+          "forwardEconomyMs": 12.239,
+          "mapPresenceMs": 945.652,
+          "militaryMs": 35.718,
+          "openingMs": 89.345,
+          "pairEpisodeContextMs": 27.91,
+          "participantAssemblyMs": 3.74,
+          "raidDetectionMs": 514.314,
+          "resourceCommitmentMs": 28.654,
+          "resultAndPairSocialMs": 597.56,
+          "skirmishDetectionMs": 476.488,
+          "statisticsSchemaValidationMs": 5.557
+        },
+        "totalLocalPackageMs": 14212.659
+      },
+      "statisticsGzipBytes": 476524,
+      "totalMs": 14297.182883000005
+    }
+  ]
+}

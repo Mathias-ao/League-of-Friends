@@ -20,6 +20,26 @@ async function setup(){
  return {dom,root,repository,data,props,click,close:async()=>{await act(async()=>root.unmount());dom.window.close();}};
 }
 
+test('visible statistics identify the current source and revision; preview and source replacement remain distinguishable',async()=>{
+ const ctx=await setup();
+ try{
+  const dataset=await ctx.repository.statisticsExperience({matchId:ctx.data.match.matchId});
+  const game=dataset.games[0];assert.ok(game);
+  const render=async(value:typeof game,preview:boolean)=>{await act(async()=>ctx.root.render(React.createElement(BattleStatistics,{game:value,preview,provisional:true,openPlayer:()=>{}})));return document.querySelector('.battle-ledger')!;};
+  let ledger=await render(game,true);
+  assert.equal(ledger.getAttribute('data-aof-preview'),'true');
+  assert.equal(ledger.getAttribute('data-aof-source'),game.sourceHash);
+  const revised={...game,sourceHash:'f'.repeat(64),revision:game.revision+1};
+  ledger=await render(revised,false);
+  assert.equal(ledger.getAttribute('data-aof-preview'),'false');
+  assert.equal(ledger.getAttribute('data-aof-match-id'),game.matchId);
+  assert.equal(ledger.getAttribute('data-aof-game-id'),game.gameId);
+  assert.equal(ledger.getAttribute('data-aof-source'),revised.sourceHash);
+  assert.equal(ledger.getAttribute('data-aof-revision'),String(revised.revision));
+  assert.ok(ledger.querySelector('.battle-ledger-table'));
+ }finally{await ctx.close();}
+});
+
 test('Battle view is compact, opposing players gain recording readings, and statistics/timeline open in an overlay',async()=>{
  const ctx=await setup();const {data,props,root,click}=ctx;
  const game=data.games[0];game.replay={statisticsState:'READY',statisticsId:'a'.repeat(64)};
