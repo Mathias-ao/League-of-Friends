@@ -11,6 +11,7 @@ import {statisticsMetadata} from './statisticsExperienceProjection.js';
 import {assertMatchPlayOpened,matchPlayWindow} from './eventTiming.js';
 import {resolveRecordingResult} from './recordingResult.js';
 import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
+import {performance} from 'node:perf_hooks';
 
 type Bag=Record<string,any>;
 type Actor={playerId:string;authUid:string;role:string};
@@ -86,15 +87,20 @@ export async function rollbackPendingNativePlayerRecording(input:{db:any;actor:A
 }
 
 /** No winner is needed for READY statistics. Result resolution remains the existing retryable stage. */
-export async function publishNativePlayerRecording(input:{db:any;bucket:any;matchId:string;gameId:string;sourceHash:string;candidateId?:string;actor:Actor;env:NodeJS.ProcessEnv}) {
+export async function publishNativePlayerRecording(input:{db:any;bucket:any;matchId:string;gameId:string;sourceHash:string;candidateId?:string;actor:Actor;env:NodeJS.ProcessEnv;performanceTimings?:Record<string,number>}) {
   const {db,bucket,matchId,gameId,sourceHash,actor,env}=input;
+  const timings=env.AOF_REPLAY_UPLOAD_PERF_TRACE==='1'?input.performanceTimings:undefined;
+  const mark=(name:string,start:number)=>{if(timings)timings[name]=performance.now()-start;};
+  let stageStarted=performance.now();
   const processor=assertNativePlayerUploadAllowed(env,matchId,gameId);
   const mr=db.collection('matches').doc(matchId),gr=mr.collection('games').doc(gameId);
   const sr=gr.collection('replaySources').doc(sourceHash);
   const authority=(tx?:any)=>readNativePlayerAuthority({...input,tx});
   const initial=await authority();
   const existing=await sr.get();
+  mark('nativePublicationAuthorityAndSourceReadMs',stageStarted);
   if(existing.exists){
+    stageStarted=performance.now();
     const result=await db.runTransaction(async(tx:any)=>{
       const fresh=await authority(tx),s=(await tx.get(sr)).data();
       if(s?.ordinaryUploadVersion!==NATIVE_PLAYER_UPLOAD||
@@ -106,25 +112,33 @@ export async function publishNativePlayerRecording(input:{db:any;bucket:any;matc
          claim.data()?.matchId!==matchId||claim.data()?.gameId!==gameId||claim.data()?.sourceHash!==sourceHash)throw abort();
       return {revision:fresh.game.replayStatisticsRevision,mapping:s.playerMapping};
     });
+    mark('nativeRetryAuthorityTransactionMs',stageStarted);
     return finish(result.revision,result.mapping,true);
   }
   if(!input.candidateId)throw fail('A verified recording candidate is required.');
   const cr=gr.collection('nativeReplayValidations').doc(input.candidateId);
   const pr=gr.collection('nativeReplayPublications').doc(input.candidateId);
+  stageStarted=performance.now();
   const cs=await cr.get(),c=cs.data();
   if(!cs.exists||c.ordinaryUploadVersion!==NATIVE_PLAYER_UPLOAD||c.validatedBy!==actor.playerId||
      c.bindingToken!==initial.token||c.state!=='VALIDATED_NOT_READY')throw abort();
   checkedCandidate(c,{matchId,gameId,sourceHash,candidateId:input.candidateId,expectedArtifactSha256:c.statistics.sha256} as any,processor);
+  mark('nativeCandidateReadAndCheckMs',stageStarted);
   // Use the same package verifier and immutable generation reader, not a second parser.
+  stageStarted=performance.now();
   const [original,events,statistics]=await Promise.all([
     readImmutable(bucket,c.originalRecording,32*1024*1024),readImmutable(bucket,c.recordedEvents,48*1024*1024),readImmutable(bucket,c.statistics,48*1024*1024),
   ]);
+  mark('nativeImmutableArtifactsReadMs',stageStarted);
+  stageStarted=performance.now();
   const verified=await verifyNativePackage({contract:NATIVE_PACKAGE,state:'VERIFIED_UNPUBLISHED',originalRecordingRetentionRequired:true,
     sourceHash,sourceBytes:original.length,sourcePlayers:c.playerMapping.map((p:Bag)=>({replaySlot:p.replaySlot,sourceName:p.sourceName})),
     matchFacts:c.matchFacts,recordedEvents:{...c.recordedEvents,base64:events.toString('base64')},
     statistics:{...c.statistics,base64:statistics.toString('base64')}},original);
   if(verified.revision!==c.artifactRevision||bindingDigest(verified.extraction)!==bindingDigest(c.extraction)||
      bindingDigest(verified.completeness)!==bindingDigest(c.completeness))throw fail('Native candidate provenance changed.');
+  mark('nativePublicationPackageVerificationMs',stageStarted);
+  stageStarted=performance.now();
   checkedMapping(c.playerMapping,initial.game.players,verified.raw);
   nativeSocialInput(verified.raw,c.playerMapping); // evidence availability only; no social interpretation
   const guid=c.matchFacts.game?.guid;
@@ -142,6 +156,8 @@ export async function publishNativePlayerRecording(input:{db:any;bucket:any;matc
     timingQualification:initial.match.timingPolicy&&initial.window.closesAt&&Date.now()>=initial.window.closesAt.toMillis()?'ADMIN_REVIEW_REQUIRED':'WITHIN_UPLOAD_WINDOW',
     uploadedBy:actor.playerId,uploadedAt:now};
   if(Buffer.byteLength(JSON.stringify(source))>850_000)throw fail('Native source exceeds Firestore size budget.');
+  mark('nativePublicationMappingAndReadModelMs',stageStarted);
+  stageStarted=performance.now();
   await db.runTransaction(async(tx:any)=>{
     const fresh=await authority(tx);
     const [candidate,journal,prior,claim]=await Promise.all([tx.get(cr),tx.get(pr),tx.get(sr),tx.get(claimRef)]);
@@ -171,15 +187,20 @@ export async function publishNativePlayerRecording(input:{db:any;bucket:any;matc
       action:'NATIVE_PLAYER_RECORDING_PUBLISHED',targetType:'GAME',targetId:matchId+'/'+gameId,
       after:{sourceHash,statisticsRevision:revision,candidateId:input.candidateId},createdAt:now});
   });
+  mark('nativeReadyPublicationTransactionMs',stageStarted);
   return finish(revision,c.playerMapping,false);
   async function finish(revision:number,mapping:Bag[],alreadyProcessed:boolean){
+    let started=performance.now();
     const outcomeResolution=await resolveRecordingResult(matchId,gameId,undefined,db);
+    mark('nativeResultResolutionMs',started);
+    started=performance.now();
     const resultQualification=await db.runTransaction(async(tx:any)=>{
       const fresh=await authority(tx),source=(await tx.get(sr)).data();
       if(fresh.game.replayStatisticsRevision!==revision||
          !activeNativeStatisticsSource(matchId,gameId,fresh.match,fresh.game,sourceHash,source,true,true))throw abort();
       return currentOfficialGameOutcome(fresh.game,fresh.match).qualification;
     });
+    mark('nativePostResolverFenceMs',started);
     return {success:true,state:'READY',alreadyProcessed,matchId,gameId,statisticsId:sourceHash,sourceHash,
       replayStatisticsRevision:revision,playerMapping:mapping,outcomeResolution,resultQualification};
   }
