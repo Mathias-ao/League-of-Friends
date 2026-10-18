@@ -220,6 +220,30 @@ class QualificationTests(unittest.TestCase):
                 self.assertIn("BOUNDED_ORDINARY_INFERENCE_NOT_EXECUTION_PROOF",
                               positive[0]["reasonCodes"])
 
+    def test_genuine_local_overlap_shape_retains_own_source_and_not_return_credit(self):
+        # Neutral Pair V1 emits contributorPlayerId/otherPlayerId, with
+        # commands by both participants. Opponent command is context only.
+        b = case(kind="contest", contest=True)
+        b["pair_deeds"][0]["facets"][1] = {
+            "kind": "LOCAL_COMMAND_OVERLAP",
+            "contributorPlayerId": 1, "otherPlayerId": 2,
+            "sourceEventIds": ["cmd1", "cmd2"],
+            "targetedActionEstablished": False}
+        b["pair_observations"][1]["actorPlayerId"] = 2
+        r = decisions(b)
+        positives = [x for x in r["inferences"] if x["familyId"] == "PAIR_CONTEST"
+                     and x["decision"] == "QUALIFIED"]
+        self.assertEqual(len(positives), 1)
+        self.assertEqual(positives[0]["action"]["actorPlayerId"], "p1")
+        self.assertFalse(any(w["actorPlayerId"] == "p2" for w in r["actorWitnesses"]))
+        own_refs = [f["id"] for f in positives[0]["supportRefs"]
+                    if f["kind"] == "SOURCE_EVENT"]
+        self.assertIn("cmd1", own_refs)
+        self.assertNotIn("cmd2", own_refs)
+        b["pair_observations"][1]["actorPlayerId"] = 3
+        with self.assertRaisesRegex(ValueError, "INVALID_RECORDED_EVENT_ANCHOR"):
+            decisions(b)
+
     def test_ordinary_warfare_is_neither_cruelty_nor_hostility(self):
         b = case(kind="pressure")
         self.assertFalse(admitted(b, "DISTINCT_RUPTURE_ANTAGONISM"))
