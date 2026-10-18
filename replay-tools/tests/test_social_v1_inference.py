@@ -8,7 +8,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from social_v1_context import project_social_v1_context
+from social_v1_context import project_social_v1_context, VERSION as EMITTED_CONTEXT_VERSION
 from social_v1_inference import (qualify_social_v1, validate_inference_configuration,
                                  MANDATORY, FAMILIES)
 from social_v1_contract import validate_record
@@ -63,7 +63,7 @@ def metric(kind, ident, at, *, actor=1, target=2, value=2, duration=None):
 
 
 def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
-         contest=False, facts=(), locked=True, battle="match-1", event="event-1"):
+         contest=False, facts=(), locked=True, battle="match-1", event="event-1", castle=False):
     teams = teams or {p: p for p in people}
     facets = {
         "pressure": ("ECONOMY_PRESSURE", "TARGETED_COMMAND"),
@@ -138,6 +138,12 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
             "military": {"engagements": {"engagementEvidence":
                 military if p == actor else {}}}}
         players.append(entry)
+    if castle:
+        players[0]["mapPresence"]["forwardBuildings"]["evidence"] = [{
+            "sourceEventId": "castle-placement",
+            "building": {"rawId": 82, "name": "Castle"},
+            "position": {"x": 45.0, "y": 10.0},
+            "atMs": 8000, "enemyProgressPercent": 80}]
     stats = {"source": deepcopy(SOURCE), "scope": {"observedUntilMs": 20000},
              "participants": players,
              "matchFacts": {"rules": {"lockTeams": {"value": locked,
@@ -467,29 +473,44 @@ class QualificationTests(unittest.TestCase):
         self.assertEqual(len(contested), 1)
         self.assertEqual(contested[0]["decision"], "PENDING")
 
-    def test_explicit_v1_v2_contracts_never_mint_castle_objective_proof(self):
-        b = case(kind="contest", contest=True)
-        one = decisions(b)
-        b["context"]["version"] = "AOF_SOCIAL_V1_CONTEXT_V2"
-        # V2's strict <15-tile diagnostic is read as contextual, *never*
-        # as construction completion or eligibility for any ordinary rule.
-        b["context"]["placementContexts"] = [{
-            "sourceEventId": "castle-place",
-            "actorReplayPlayerId": 1,
-            "buildingClass": "CASTLE_PLACEMENT",
-            "specialForwardCastle": {
-                "status": "PENDING", "operationEstablished": False,
-                "qualifies": False,
-                "homeProximity": {"ruleVersion": "AOF_FORWARD_CASTLE_HOME_PROXIMITY_V1",
-                                  "distanceGate": "PASS", "distanceTiles": 14.9}}}]
-        two = decisions(b)
-        self.assertEqual([(r["familyId"],r["decision"]) for r in one["inferences"]],
-                         [(r["familyId"],r["decision"]) for r in two["inferences"]])
-        self.assertFalse(any(r["familyId"].endswith("CASTLE") for r in two["inferences"]))
-        self.assertEqual(two["officialWrites"], False)
+    def test_actual_emitted_context_version_and_castle_are_not_social_proof(self):
+        # This calls the actual merged context PROJECTOR, not a relabelled V1
+        # dictionary. Once Worker 1's corrected V2 lands, CI automatically
+        # exercises the authentic V2 serializer/consumer contract.
+        b = case(kind="contest", contest=True, castle=True)
+        self.assertEqual(b["context"]["version"], EMITTED_CONTEXT_VERSION)
+        self.assertIn(EMITTED_CONTEXT_VERSION,
+                      {"AOF_SOCIAL_V1_CONTEXT_V1", "AOF_SOCIAL_V1_CONTEXT_V2"})
+        self.assertEqual(len(b["context"]["placementContexts"]), 1)
+        castle = b["context"]["placementContexts"][0]["specialForwardCastle"]
+        self.assertFalse(castle["operationEstablished"])
+        self.assertFalse(castle["qualifies"])
+        r = decisions(b)
+        self.assertEqual(len([e for e in r["effects"] if e["claim"]["decision"] == "QUALIFIED"
+                              and e["claim"]["subject"]["track"] == "CRUELTY"]), 0)
+        self.assertEqual(len([e for e in r["effects"] if e["claim"]["decision"] == "QUALIFIED"
+                              and e["claim"]["subject"]["track"] == "HOSTILITY"]), 0)
+        self.assertFalse(any("CASTLE" in x["familyId"] for x in r["inferences"]))
         b["context"]["version"] = "AOF_SOCIAL_V1_CONTEXT_V3"
         with self.assertRaisesRegex(ValueError, "INCOMPATIBLE_CONTEXT"):
             decisions(b)
+
+    def test_actual_context_v2_projector_acceptance(self):
+        if EMITTED_CONTEXT_VERSION != "AOF_SOCIAL_V1_CONTEXT_V2":
+            self.skipTest("Worker 1 corrected actual Context V2 is not merged")
+        b = case(kind="contest", contest=True, castle=True)
+        assert b["context"]["version"] == EMITTED_CONTEXT_VERSION
+        castle = b["context"]["placementContexts"][0]["specialForwardCastle"]
+        self.assertIn(castle["status"], ("PENDING", "NOT_QUALIFIED"))
+        self.assertFalse(castle["qualifies"])
+        self.assertFalse(castle["operationEstablished"])
+        self.assertTrue(any(x["claim"]["decision"] == "QUALIFIED"
+                            and x["claim"]["subject"]["track"] == "RIVALRY"
+                            for x in decisions(b)["effects"]))
+        # Castle placement and distance never become a distinct antagonism act.
+        self.assertFalse(any(x["claim"]["decision"] == "QUALIFIED"
+                             and x["claim"]["subject"]["track"] == "HOSTILITY"
+                             for x in decisions(b)["effects"]))
 
     def test_python_qualifier_claim_reaches_javascript_historical_evaluator(self):
         """Cross-language #126 -> merged #139: ordered effect is allocatable,
