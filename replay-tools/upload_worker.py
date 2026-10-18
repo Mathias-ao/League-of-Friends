@@ -6,6 +6,7 @@ import io
 import json
 import hmac
 import os
+import re
 import tempfile
 import time
 import zipfile
@@ -19,6 +20,31 @@ from statistics_projector import project_statistics
 
 MAX_REPLAY_BYTES = 32 * 1024 * 1024
 MAX_REQUEST_BYTES = 48 * 1024 * 1024
+DIAGNOSTIC_UUID = re.compile(r"[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}")
+
+
+def _diagnostic_scope() -> bool:
+    project = os.environ.get("GCLOUD_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT") or ""
+    return os.environ.get("AOF_REPLAY_WORKER_PERF_TRACE") == "1" and (
+        project == "age-of-friends-staging" or
+        os.environ.get("FUNCTIONS_EMULATOR") == "true" and project.startswith("demo-")
+    )
+
+
+def _diagnostic_timings(raw: dict, depth: int = 0) -> dict:
+    """Only fixed numeric stages, never payload/header/identity values."""
+    if not isinstance(raw, dict) or depth > 3:
+        return {}
+    fields = ("recordedEventsExtractionAndVerifiedHydrationMs sourcePreflightHeaderMs decoderAndEventWriteMs "
+        "verifiedEventReadAndOptionalHydrationMs statisticsAndSocialProjectionMs statisticsJsonAndGzipMs totalLocalPackageMs "
+        "analysisValidationAndCatalogMs actionIndexMs buildOrderMs raidDetectionMs openingMs resourceCommitmentMs economyMs militaryMs "
+        "skirmishDetectionMs engagementInferenceMs executionMs mapPresenceMs forwardEconomyMs participantAssemblyMs resultAndPairSocialMs "
+        "pairEpisodeContextMs statisticsSchemaValidationMs directSharedPackingMs httpResponseJsonAndSendMs authenticatedWorkerRequestMs").split()
+    result = {key: raw[key] for key in fields if type(raw.get(key)) in (int, float) and 0 <= raw[key] < float("inf")}
+    for key in ("recordedEventsSubsteps", "statisticsSubsteps"):
+        if key in raw:
+            result[key] = _diagnostic_timings(raw[key], depth + 1)
+    return result
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -176,12 +202,34 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": "not_found"})
             return
 
+        # A trusted upstream supplies an opaque per-attempt UUID only after its
+        # own admission. It never affects evidence identity, claims or output.
+        supplied_trace = self.headers.get("X-AoF-Upload-Trace-Id") if native_route else None
+        if supplied_trace is not None and DIAGNOSTIC_UUID.fullmatch(supplied_trace) is None:
+            self._json(400, {"error": "invalid_diagnostic_trace"})
+            return
+        diagnostic_trace_id = supplied_trace if native_route and _diagnostic_scope() else None
+        worker_request_started = time.perf_counter()
+        trace: dict[str, Any] | None = None
+
+        def diagnostic_failure(code: str) -> None:
+            if diagnostic_trace_id:
+                timings = trace if trace is not None else {}
+                timings["authenticatedWorkerRequestMs"] = round((time.perf_counter() - worker_request_started) * 1000, 3)
+                try:
+                    print(json.dumps({"event": "AOF_WORKER_PERFORMANCE_V1", "diagnosticTraceId": diagnostic_trace_id,
+                        "status": "FAILED", "failureCode": code, "route": "/process-native-v1",
+                        "timings": _diagnostic_timings(timings)}, sort_keys=True), flush=True)
+                except Exception:
+                    pass  # Diagnostic output must not change the HTTP outcome.
+
         try:
             length = int(self.headers.get("content-length", "0"))
         except ValueError:
             length = 0
         if length <= 0 or length > MAX_REQUEST_BYTES:
             self._json(413, {"error": "request_too_large"})
+            diagnostic_failure("REQUEST_SIZE_REJECTED")
             return
 
         try:
@@ -210,12 +258,23 @@ class Handler(BaseHTTPRequestHandler):
                     trace["observedWorkerRequestMs"] = round(
                         trace["workerCoreMs"] + trace["httpResponseJsonAndSendMs"], 3
                     )
-                print(json.dumps({"event": "AOF_WORKER_PERFORMANCE_V1", "timings": trace},
-                                 ensure_ascii=True, sort_keys=True), flush=True)
+                record = {"event": "AOF_WORKER_PERFORMANCE_V1", "timings": trace}
+                if diagnostic_trace_id:
+                    trace["authenticatedWorkerRequestMs"] = round((time.perf_counter() - worker_request_started) * 1000, 3)
+                    record.update(diagnosticTraceId=diagnostic_trace_id, status="SUCCEEDED", route="/process-native-v1", timings=_diagnostic_timings(trace))
+                if diagnostic_trace_id:
+                    try:
+                        print(json.dumps(record, ensure_ascii=True, sort_keys=True), flush=True)
+                    except Exception:
+                        pass
+                else:
+                    print(json.dumps(record, ensure_ascii=True, sort_keys=True), flush=True)
         except (ValueError, RuntimeError, FileExistsError) as error:
             self._json(400, {"error": "replay_rejected", "message": str(error)})
+            diagnostic_failure("REPLAY_REJECTED")
         except Exception:
             self._json(500, {"error": "worker_failed", "message": "Replay processing failed."})
+            diagnostic_failure("WORKER_FAILED")
 
     def log_message(self, format: str, *args: Any) -> None:
         if os.environ.get("AOF_REPLAY_WORKER_LOG") == "1":

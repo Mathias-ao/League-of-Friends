@@ -53,6 +53,28 @@ test('ordinary participant publishes retained native READY while outcome stays p
   assert.equal([...t.rows.keys()].some(k=>k.startsWith('processingJobs/')),false);
 });
 
+test('optional performance spans preserve publication response and remain inert when disabled',async()=>{
+  const plain=await fixture(),traced=await fixture();
+  const disabled={},enabled={};
+  plain.input.performanceTimings=disabled;
+  traced.input.performanceTimings=enabled;
+  traced.input.env={...env,AOF_REPLAY_UPLOAD_PERF_TRACE:'1'};
+  const expected=await plain.run(),actual=await traced.run();
+  assert.deepEqual(actual,expected);
+  assert.deepEqual(disabled,{});
+  for(const name of ['nativePublicationAuthorityAndSourceReadMs','nativeCandidateReadAndCheckMs',
+    'nativeImmutableArtifactsReadMs','nativePublicationPackageVerificationMs','nativePublicationMappingAndReadModelMs',
+    'nativeReadyPublicationTransactionMs','nativeResultResolutionMs','nativePostResolverFenceMs']){
+    assert.ok(Number.isFinite(enabled[name])&&enabled[name]>=0,name);
+  }
+  assert.equal(Object.keys(actual).some(key=>/timing|performance/i.test(key)),false);
+  assert.deepEqual([...plain.rows.keys()].sort(),[...traced.rows.keys()].sort());
+  assert.deepEqual([...plain.objects.keys()].sort(),[...traced.objects.keys()].sort());
+  await traced.run();
+  assert.ok(Number.isFinite(enabled.nativeRetryAuthorityTransactionMs));
+  assert.equal(traced.rows.get('matches/m/games/g').replayStatisticsRevision,1);
+});
+
 for(const [name,mutate] of Object.entries({
   'suspended membership':t=>t.rows.get('players/p1').membershipStatus='SUSPENDED',
   'changed auth link':t=>t.rows.get('authLinks/player-uid').playerId='p2',

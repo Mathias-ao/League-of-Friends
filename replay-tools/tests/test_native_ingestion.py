@@ -90,7 +90,14 @@ class NativeUploadTests(unittest.TestCase):
         statistics = base64.b64decode(result["statistics"]["base64"], validate=True)
         self.assertEqual(hashlib.sha256(events).hexdigest(), result["recordedEvents"]["sha256"])
         self.assertEqual(hashlib.sha256(statistics).hexdigest(), result["statistics"]["sha256"])
-        self.assertIn("sharedEpisodeDelivery", json.loads(gzip.decompress(statistics)))
+        compact = json.loads(gzip.decompress(statistics))
+        self.assertIn("sharedEpisodeDelivery", compact)
+        # Compare the actual transport's indexed path with the complete
+        # unindexed reference, including source IDs and ordering.
+        event_path = self.root / "transport-events.jsonl.gz"
+        event_path.write_bytes(events)
+        analysis = load_analysis(event_path, result["recordedEvents"])
+        self.assertEqual(restore_full_statistics(compact), project_statistics_from_analysis(analysis))
 
     def test_native_endpoint_requires_explicit_enablement_and_worker_token(self):
         for env, expected in (
