@@ -24,13 +24,14 @@ import {validateNativeRecording} from '../lib/services/nativeRecordingValidation
 import {publishNativePlayerRecording} from '../lib/services/nativePlayerRecording.js';
 import {AsyncLocalStorage} from 'node:async_hooks';
 
-// Associate anonymous server spans with this local test invocation, without
-// adding player/source identifiers or diagnostic fields to the callable API.
+// Associate only safe diagnostic records with this local test invocation.
 const performanceContext=new AsyncLocalStorage();
 const serverInfo=console.info;
 console.info=(message,...rest)=>{
   try{const value=JSON.parse(message);
-    if(value.event==='AOF_REPLAY_UPLOAD_NATIVE_PERFORMANCE_V1')performanceContext.getStore()?.push(value.timings);
+    if(value.event==='AOF_REPLAY_UPLOAD_NATIVE_PERFORMANCE_V1'){
+      const context=performanceContext.getStore();context?.push(value.timings);context?.records?.push(value);
+    }
   }catch{/* Other existing logs are not performance records. */}
   serverInfo(message,...rest);
 };
@@ -80,14 +81,29 @@ async function runCase([name,format,expected]){
   if(concurrency===1)process.env.AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST=matchId+'/'+gameId;
   const seededMatch=(await mr.get()).data(),seededGame=(await gr.get()).data();
   const request={auth:{uid:actor.authUid},data:{matchId,gameId,fileName:name+'.aoe2record',replayBase64:original.toString('base64'),processingMode:'AUTO'}};
-  await assert.rejects(uploadReplay.run({...request,auth:{uid:'operator-unknown'}}));
+  const diagnosticOn=process.env.AOF_REPLAY_UPLOAD_PERF_TRACE==='1';
+  if(diagnosticOn)request.data.diagnosticTraceId='00000000-0000-4000-8000-000000000000'; // Must never be trusted.
+  await assert.rejects(uploadReplay.run({...request,auth:{uid:'operator-unknown'}}),error=>{assert.equal(error.details?.diagnosticTraceId,undefined);return true;});
   const began=Date.now();
-  const nativeHandlerTimings=[];
+  const nativeHandlerTimings=[];nativeHandlerTimings.records=[];
   const initialUpload=()=>performanceContext.run(nativeHandlerTimings,()=>uploadReplay.run(request));
   const attempts=await Promise.allSettled(name==='1v1_t90-deak'&&concurrency===1?[initialUpload(),initialUpload()]:[initialUpload()]);
   const successes=attempts.filter(r=>r.status==='fulfilled');
   assert.ok(successes.length>0,attempts.map(r=>r.reason?.message).join('; '));
   const response=successes[0].value;
+  const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+  if(diagnosticOn){
+    assert.match(response.diagnosticTraceId,uuid);assert.notEqual(response.diagnosticTraceId,request.data.diagnosticTraceId);
+    const record=nativeHandlerTimings.records.find(record=>record.diagnosticTraceId===response.diagnosticTraceId);
+    assert.equal(record?.status,'READY');assert.equal(typeof record?.workerInvoked,'boolean');
+    assert.ok(nativeHandlerTimings.records.some(record=>record.workerInvoked));
+    assert.equal(record?.route,'/process-native-v1');assert.equal(record?.configuredProcessorRevision,process.env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION);
+    assert.equal(new Set(nativeHandlerTimings.records.map(record=>record.diagnosticTraceId)).size,attempts.length);
+    for(const attempt of attempts)if(attempt.status==='rejected'&&attempt.reason.details?.diagnosticTraceId){
+      assert.match(attempt.reason.details.diagnosticTraceId,uuid);
+      assert.ok(nativeHandlerTimings.records.some(record=>record.diagnosticTraceId===attempt.reason.details.diagnosticTraceId&&record.status==='FAILED'));
+    }
+  }else assert.equal(response.diagnosticTraceId,undefined);
   const uploadMs=Date.now()-began;
   assert.equal(response.state,'READY');assert.equal(response.outcomeResolution.state,expected,name+': '+JSON.stringify(response.outcomeResolution));
   const sr=gr.collection('replaySources').doc(sourceHash),source=(await sr.get()).data();
@@ -148,8 +164,22 @@ async function runCase([name,format,expected]){
   await rebuildStatisticsReadModels();
   assert.equal((await db.doc('players/'+actor.playerId+'/statistics/experienceLifetime').get()).data().games,expected==='ACCEPTED'?1:0);
   const retryBegan=performance.now();
-  const retry=await uploadReplay.run(request);assert.equal(retry.alreadyProcessed,true);assert.equal(retry.replayStatisticsRevision,1);
+  const retryRecords=[];retryRecords.records=[];
+  const retry=await performanceContext.run(retryRecords,()=>uploadReplay.run(request));assert.equal(retry.alreadyProcessed,true);assert.equal(retry.replayStatisticsRevision,1);
   const idempotentRetryMs=performance.now()-retryBegan;
+  let diagnosticTraceOffResponseEquivalent=null;
+  if(diagnosticOn){
+    assert.match(retry.diagnosticTraceId,uuid);assert.notEqual(retry.diagnosticTraceId,response.diagnosticTraceId);
+    const record=retryRecords.records.find(record=>record.diagnosticTraceId===retry.diagnosticTraceId);
+    assert.equal(record?.workerInvoked,false);assert.deepEqual(record?.validationTimings,{});
+    if(concurrency===1){
+      const saved=process.env.AOF_REPLAY_UPLOAD_PERF_TRACE;
+      try{delete process.env.AOF_REPLAY_UPLOAD_PERF_TRACE;const plain=await uploadReplay.run(request);
+        const {diagnosticTraceId,...expected}=retry;assert.equal(plain.diagnosticTraceId,undefined);
+        assert.equal(JSON.stringify(plain),JSON.stringify(expected));diagnosticTraceOffResponseEquivalent=true;
+      }finally{if(saved===undefined)delete process.env.AOF_REPLAY_UPLOAD_PERF_TRACE;else process.env.AOF_REPLAY_UPLOAD_PERF_TRACE=saved;}
+    }
+  }else assert.equal(retry.diagnosticTraceId,undefined);
   assert.equal((await gr.collection('replaySources').get()).size,1);assert.equal((await gr.collection('nativeReplayPublications').get()).size,1);
   await resolveRecordingResult(matchId,gameId);assert.equal((await gr.get()).data().resultRevision,expected==='ACCEPTED'?1:undefined);
   if(name==='2v2_arabia'){
@@ -167,6 +197,7 @@ async function runCase([name,format,expected]){
     expectedOutcome:expected,ready:true,retentionVerified:true,independentOutcomeVerified:true,boundedReader:true,
     pendingExclusion:true,retryIdempotent:true,serverReceivedToReadyAndResolutionMs:uploadMs,
     authenticatedBoundedReadMs,authenticatedBattleStatisticsQueryMs,idempotentRetryMs,validationTimings:validationTimings??null,nativeHandlerTimings,
+    diagnosticTraceOffResponseEquivalent,
     ordinaryRequestAttempts:attempts.map(r=>r.status==='fulfilled'?{state:r.value.state,alreadyProcessed:r.value.alreadyProcessed}:
       {state:'REJECTED',code:r.reason?.code??null})});
   console.log(JSON.stringify(reports.at(-1)));
