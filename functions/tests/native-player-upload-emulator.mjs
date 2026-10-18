@@ -10,6 +10,7 @@ import {db} from '../lib/config/firebase.js';
 import {uploadReplay} from '../lib/commands/statistics/uploadReplay.js';
 import {adminReviewRecordingResult} from '../lib/commands/results/reviewRecordingResult.js';
 import {getPlayerChronicle} from '../lib/queries/getPlayerChronicle.js';
+import {getStatisticsExperience} from '../lib/queries/getStatisticsExperience.js';
 import {readActiveNativeBattleDetail} from '../lib/queries/getActiveNativeBattleDetail.js';
 import {collectStatistics,rebuildStatisticsReadModels} from '../lib/services/statisticsExperienceProjection.js';
 import {resolveRecordingResult} from '../lib/services/recordingResult.js';
@@ -21,6 +22,18 @@ import {SYSTEM_RESULT_PROCESSING_ACTOR} from '../lib/services/resultProcessingAc
 import {seasonScoringSnapshot} from '../lib/engines/seasonPoints.js';
 import {validateNativeRecording} from '../lib/services/nativeRecordingValidation.js';
 import {publishNativePlayerRecording} from '../lib/services/nativePlayerRecording.js';
+import {AsyncLocalStorage} from 'node:async_hooks';
+
+// Associate anonymous server spans with this local test invocation, without
+// adding player/source identifiers or diagnostic fields to the callable API.
+const performanceContext=new AsyncLocalStorage();
+const serverInfo=console.info;
+console.info=(message,...rest)=>{
+  try{const value=JSON.parse(message);
+    if(value.event==='AOF_REPLAY_UPLOAD_NATIVE_PERFORMANCE_V1')performanceContext.getStore()?.push(value.timings);
+  }catch{/* Other existing logs are not performance records. */}
+  serverInfo(message,...rest);
+};
 
 const project='demo-aof-native-player';
 assert.equal(process.env.GCLOUD_PROJECT,project);
@@ -37,9 +50,12 @@ const bucket=getStorage().bucket(process.env.REPLAY_BUCKET),reports=[];
 let first;
 const cases=[['1v1_t90-deak','ONE_V_ONE','ACCEPTED'],['2v2_arabia','TWO_V_TWO','PENDING_ADMIN_REVIEW'],
   ['4v4_arabia','FOUR_V_FOUR','ACCEPTED'],['FFA_7','FFA','PENDING_ADMIN_REVIEW']];
+const concurrency=Number(process.env.AOF_NATIVE_PERF_CONCURRENCY??1);
+assert.ok([1,2].includes(concurrency),'Local authentic performance diagnostic supports one or two users.');
+if(concurrency===2)process.env.AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST=cases.map(([name])=>'player-'+name+'/g1').join(',');
 await db.doc('players/operator').set({role:'ADMIN',membershipStatus:'ACTIVE'});
 await db.doc('authLinks/operator').set({playerId:'operator'});
-for(const [name,format,expected] of cases){
+async function runCase([name,format,expected]){
   const independent=JSON.parse(await readFile(resolve(root,name+'.json'),'utf8'));
   assert.equal(independent.meta.game_build,185872);
   const matchId='player-'+name,gameId='g1',mr=db.doc('matches/'+matchId),gr=mr.collection('games').doc(gameId);
@@ -61,12 +77,14 @@ for(const [name,format,expected] of cases){
   for(const p of roster)await db.doc('events/'+eventId+'/scoringSlots/MAIN_'+p.playerId).set({matchId,playerId:p.playerId,seasonId,act:'MAIN'});
   await gr.create({status:'READY',gameNumber:1,players:roster,replayStatisticsRevision:0,activeReplayStatisticsId:null,
     replayParticipantBindings:players.map((p,i)=>({sourceNameNormalized:p.name.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US'),playerId:roster[i].playerId}))});
-  process.env.AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST=matchId+'/'+gameId;
+  if(concurrency===1)process.env.AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST=matchId+'/'+gameId;
   const seededMatch=(await mr.get()).data(),seededGame=(await gr.get()).data();
   const request={auth:{uid:actor.authUid},data:{matchId,gameId,fileName:name+'.aoe2record',replayBase64:original.toString('base64'),processingMode:'AUTO'}};
   await assert.rejects(uploadReplay.run({...request,auth:{uid:'operator-unknown'}}));
   const began=Date.now();
-  const attempts=await Promise.allSettled(name==='1v1_t90-deak'?[uploadReplay.run(request),uploadReplay.run(request)]:[uploadReplay.run(request)]);
+  const nativeHandlerTimings=[];
+  const initialUpload=()=>performanceContext.run(nativeHandlerTimings,()=>uploadReplay.run(request));
+  const attempts=await Promise.allSettled(name==='1v1_t90-deak'&&concurrency===1?[initialUpload(),initialUpload()]:[initialUpload()]);
   const successes=attempts.filter(r=>r.status==='fulfilled');
   assert.ok(successes.length>0,attempts.map(r=>r.reason?.message).join('; '));
   const response=successes[0].value;
@@ -113,12 +131,25 @@ for(const [name,format,expected] of cases){
   }else{
     assert.equal(game.canonicalResult,undefined);assert.equal((await db.collection('processingJobs').where('matchId','==',matchId).get()).size,0);
   }
+  const readBegan=performance.now();
   const detail=await readActiveNativeBattleDetail({db,bucket,actor,env:process.env,request:{matchId,gameId,mode:'list',replaySlot:players[0].number,group:'battles',pageSize:20}});
+  const authenticatedBoundedReadMs=performance.now()-readBegan;
   assert.equal(detail.state,'READY');
+  await assert.rejects(getStatisticsExperience.run({auth:{uid:'operator-unknown'},data:{matchId}}));
+  const battleQueryBegan=performance.now();
+  const battleDataset=await getStatisticsExperience.run({auth:{uid:actor.authUid},data:{matchId}});
+  const authenticatedBattleStatisticsQueryMs=performance.now()-battleQueryBegan;
+  assert.equal(battleDataset.games.length,1);
+  assert.equal(battleDataset.games[0].sourceHash,sourceHash);
+  assert.equal(battleDataset.games[0].revision,1);
+  assert.equal(battleDataset.games[0].eligible,expected==='ACCEPTED');
+  assert.deepEqual(battleDataset.games[0].players.map(p=>p.playerId).sort(),roster.map(p=>p.playerId).sort());
   let dataset=await collectStatistics({matchId});assert.equal(dataset.games.length,1);assert.equal(dataset.games[0].eligible,expected==='ACCEPTED');
   await rebuildStatisticsReadModels();
   assert.equal((await db.doc('players/'+actor.playerId+'/statistics/experienceLifetime').get()).data().games,expected==='ACCEPTED'?1:0);
+  const retryBegan=performance.now();
   const retry=await uploadReplay.run(request);assert.equal(retry.alreadyProcessed,true);assert.equal(retry.replayStatisticsRevision,1);
+  const idempotentRetryMs=performance.now()-retryBegan;
   assert.equal((await gr.collection('replaySources').get()).size,1);assert.equal((await gr.collection('nativeReplayPublications').get()).size,1);
   await resolveRecordingResult(matchId,gameId);assert.equal((await gr.get()).data().resultRevision,expected==='ACCEPTED'?1:undefined);
   if(name==='2v2_arabia'){
@@ -130,11 +161,25 @@ for(const [name,format,expected] of cases){
     assert.equal((await uploadReplay.run(request)).replayStatisticsRevision,1);
   }
   assert.equal(candidate.ordinaryUploadVersion,'AOF_NATIVE_PLAYER_UPLOAD_V1');
-  reports.push({fixture:name,expectedOutcome:expected,ready:true,retentionVerified:true,independentOutcomeVerified:true,boundedReader:true,
-    pendingExclusion:true,retryIdempotent:true,serverReceivedToReadyAndResolutionMs:uploadMs});
+  const jobs=await gr.collection('nativeReplayValidationJobs').get();
+  const validationTimings=jobs.docs.find(d=>d.data().candidateId===source.nativeValidationCandidateId)?.data().timings;
+  reports.push({fixture:name,sourceSha256:sourceHash,inputBytes:original.length,processorRevision:source.processorRevision,
+    expectedOutcome:expected,ready:true,retentionVerified:true,independentOutcomeVerified:true,boundedReader:true,
+    pendingExclusion:true,retryIdempotent:true,serverReceivedToReadyAndResolutionMs:uploadMs,
+    authenticatedBoundedReadMs,authenticatedBattleStatisticsQueryMs,idempotentRetryMs,validationTimings:validationTimings??null,nativeHandlerTimings,
+    ordinaryRequestAttempts:attempts.map(r=>r.status==='fulfilled'?{state:r.value.state,alreadyProcessed:r.value.alreadyProcessed}:
+      {state:'REJECTED',code:r.reason?.code??null})});
   console.log(JSON.stringify(reports.at(-1)));
 }
+for(let offset=0;offset<cases.length;offset+=concurrency)await Promise.all(cases.slice(offset,offset+concurrency).map(runCase));
 // Fault injection reuses the verified real package; it never changes source facts.
+const faultMeasurements=[];
+async function rejectFault(name,run,expected){
+  const started=performance.now();let code=null;
+  await assert.rejects(async()=>{try{return await run();}catch(error){code=error.code??null;throw error;}},expected);
+  faultMeasurements.push({fault:name,elapsedMs:performance.now()-started,code,injectedOrControlled:true,
+    boundary:'Local service rejection; not a real worker/network timeout.'});
+}
 async function faultInput(name){
   const matchId='fault-'+name,gameId='g1',mr=db.doc('matches/'+matchId),gr=mr.collection('games').doc(gameId);
   await mr.set(first.match);await gr.set(first.game);
@@ -143,20 +188,22 @@ async function faultInput(name){
     worker:async()=>first.worker,resolveMapping:async()=>first.mapping,gr};
 }
 let fault=await faultInput('worker-failure');
-await assert.rejects(validateNativeRecording({...fault,worker:async()=>{throw Error('injected worker failure');}}));
+await rejectFault('worker-failure',()=>validateNativeRecording({...fault,worker:async()=>{throw Error('injected worker failure');}}));
 assert.equal((await fault.gr.collection('replaySources').get()).size,0);
 assert.equal((await fault.gr.collection('nativeReplayValidationJobs').get()).docs[0].data().state,'FAILED');
 const [retained]=await bucket.file(`native-replay-evidence/${fault.matchId}/g1/${first.sourceHash}/source.aoe2record`).download();
 assert.equal(digest(retained),first.sourceHash);
 const recovered=await validateNativeRecording(fault);assert.equal(recovered.state,'VALIDATED_NOT_READY');
-await assert.rejects(publishNativePlayerRecording({...fault,sourceHash:first.sourceHash,candidateId:recovered.candidateId,env:process.env}),/already claimed/);
+await rejectFault('cross-game-guid-claim',()=>publishNativePlayerRecording({...fault,sourceHash:first.sourceHash,candidateId:recovered.candidateId,env:process.env}),/already claimed/);
 assert.equal((await fault.gr.collection('replaySources').get()).size,0);
 fault=await faultInput('stale-authority');
-await assert.rejects(validateNativeRecording({...fault,worker:async()=>{await fault.gr.update({activeResultDisputeId:'opened-during-worker'});return first.worker;}}));
+await rejectFault('stale-authority',()=>validateNativeRecording({...fault,worker:async()=>{await fault.gr.update({activeResultDisputeId:'opened-during-worker'});return first.worker;}}));
 assert.equal((await fault.gr.collection('nativeReplayValidations').get()).size,0);
 fault=await faultInput('corrupt-artifact');
-await assert.rejects(validateNativeRecording({...fault,worker:async()=>({...first.worker,statistics:{...first.worker.statistics,sha256:'0'.repeat(64)}})}));
+await rejectFault('corrupt-artifact',()=>validateNativeRecording({...fault,worker:async()=>({...first.worker,statistics:{...first.worker.statistics,sha256:'0'.repeat(64)}})}));
 assert.equal((await fault.gr.collection('nativeReplayValidations').get()).size,0);
 await writeFile(resolve(out,'report.json'),JSON.stringify({environment:'local Firestore/Storage emulators; real uploadReplay.run and authenticated native worker; no external callable HTTP/browser',
-  fixtures:reports,faults:{concurrentOrdinaryRequests:true,workerFailureRetainsOriginal:true,failedJobRetries:true,crossGameGuidConflict:true,staleAuthority:true,corruptArtifact:true}},null,2)+'\n');
+  independentUserConcurrency:concurrency,
+  workload:concurrency===2?'Two independent authenticated uploads; existing read-model/reward audits may overlap the other upload.':'Serial formats; separate duplicate-request race control on 1v1.',
+  fixtures:reports,faultMeasurements,faults:{concurrentOrdinaryRequests:concurrency===1,workerFailureRetainsOriginal:true,failedJobRetries:true,crossGameGuidConflict:true,staleAuthority:true,corruptArtifact:true}},null,2)+'\n');
 await db.terminate();
