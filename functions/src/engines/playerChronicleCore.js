@@ -185,7 +185,7 @@ export function projectPlayerChronicle({ownerPlayerId,chapters=[],history=null,n
     for(const raw of rows(chapter.review.chronicle)){
       const beat=beatForLeaguePair(raw,chapter,participants,ownerPlayerId);if(!beat)continue;
       const page=ensurePage(beat.counterpartPlayerId);
-      const group=page.groups.get(beat.battleId)??{battleId:beat.battleId,eventId:beat.eventId,seasonId:beat.seasonId,playedAtMs:beat.playedAtMs,order:beat.chapterOrder,beats:[],firstExposure:null,resultStatus:'OFFICIAL',chronologyQualified:true,sourceLineage:[]};
+      const group=page.groups.get(beat.battleId)??{battleId:beat.battleId,eventId:beat.eventId,seasonId:beat.seasonId,playedAtMs:beat.playedAtMs,order:beat.chapterOrder,beats:[],firstExposure:null,result:null,chronologyQualified:true,sourceLineage:[]};
       group.beats.push(beat);
       if(beat.chapterOrder<group.order)group.order=beat.chapterOrder;
       if(group.playedAtMs==null&&beat.playedAtMs!=null)group.playedAtMs=beat.playedAtMs;
