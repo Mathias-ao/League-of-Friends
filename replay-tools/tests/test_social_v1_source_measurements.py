@@ -25,7 +25,8 @@ ROOT = Path(__file__).resolve().parents[2]
 PINS = {
     "duel": ("replay-fixtures/1v1_1.aoe2record",
              "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181", 2),
-    "team": ("replay-fixtures/4v4.aoe2record", None, 8),
+    "team": ("replay-fixtures/4v4.aoe2record",
+             "e415855f5223562820f5a34daf1298455ba5cbd940a4b502f03d2d8a2436a123", 8),
     "ffa": ("replay-fixtures/FFA_diplo.aoe2record",
             "ab947d934bbd4fa4e2531f4f8a5014f9b923038a34aa7332d7260eb78fb3fab5", 8),
 }
