@@ -41,6 +41,8 @@ const token=(value:unknown)=>JSON.stringify(value);
 const matchToken=(v:any)=>token({status:v?.status,opponentKind:v?.opponentKind,
   eventId:v?.eventId??null,seasonId:v?.seasonId??null,dispute:v?.activeResultDisputeId??null,
   firstCompletedAt:v?.firstCompletedAt??null,completedAt:v?.completedAt??null,
+  participants:v?.participants??null,seriesRule:v?.seriesRule??null,
+  canonicalResult:v?.canonicalResult??null,
   replacementMatchId:v?.replacementMatchId??null});
 const gameToken=(v:any)=>token({status:v?.status,dispute:v?.activeResultDisputeId??null,
   statisticsId:v?.activeReplayStatisticsId??null,statisticsState:v?.replayStatisticsState??null,
