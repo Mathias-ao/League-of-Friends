@@ -7,13 +7,18 @@ from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 import os
+import json
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from social_v1_source_measurements import project_social_source_measurements as project
-from test_social_v1_inference import case, decisions
+from test_social_v1_inference import case, decisions, config, snapshot
+from social_v1_inference import qualify_social_v1
+from social_v1_contract import validate_record
 
 ROOT = Path(__file__).resolve().parents[2]
 # Genuine repository recordings; original hashes verified independently.
@@ -178,10 +183,101 @@ class AuthenticCorpusMeasurements(unittest.TestCase):
                                         for x in measured["observations"]))
                     self.assertEqual(measured, project(statistics=stat, context=context,
                         action_events=list(reversed(analysis["actionEvents"])), lookback_ms=120000))
+                    # Source-authenticated admission cannot be created inside
+                    # this test. This is deliberately a SYNTHETIC league binding
+                    # wrapped around genuinely decoded recording observations.
+                    # No new semantic measurements are fabricated: existing
+                    # source-bound Pair Contest is the only configured rule.
+                    pair = stat["pairSocialEvidence"]
+                    ids = sorted(p["playerId"] for p in stat["participants"])
+                    authority = sha256((actual + ":" + name).encode()).hexdigest()
+                    snap = snapshot(tuple(ids), authority=authority,
+                                    battle="TEST-BATTLE-" + name, game="game-1",
+                                    event="TEST-EVENT-" + name, source=actual)
+                    orig = pair["observations"]
+                    lineages = {deed["deedId"]: {
+                        "incidentId": "synthetic-source-" +
+                            sha256((actual + name + deed["deedId"]).encode()).hexdigest(),
+                        "overlapGroupId": "synthetic-overlap-" +
+                            sha256((actual + name + deed["deedId"]).encode()).hexdigest(),
+                        "lineage": "SOURCE_ANCHORED", "state": "CURRENT"}
+                        for deed in pair["deeds"]}
+                    kwargs = {
+                        "snapshot": snap, "context": context, "pair_deeds": pair["deeds"],
+                        "pair_observations": orig,
+                        "replay_bindings": {"players": {i: "p" + str(i) for i in ids},
+                                            "methodVersions": ["SYNTHETIC_ATTESTED_STATS_NOT_APPROVED_V1"]},
+                        "incident_lineages": lineages, "measurements": [],
+                        "calibration": config(["PAIR_CONTEST"]),
+                        "historical_order": {"leagueOrderKey": "TEST-EVENT-" + name,
+                                              "gameNumber": 1, "order": "ORDERED"},
+                    }
+                    proposed = qualify_social_v1(**kwargs)
+                    for inference in proposed["inferences"]:
+                        validate_record("Inference", inference)
+                    for effect in proposed["effects"]:
+                        validate_record("Claim", effect["claim"])
+                    self.assertFalse(proposed["publicationAllowed"])
+                    self.assertFalse(proposed["officialWrites"])
+                    self.assertFalse(any(x["decision"] == "QUALIFIED"
+                        for x in proposed["inferences"] if x["familyId"] != "PAIR_CONTEST"))
+                    admissible = [e for e in proposed["effects"]
+                        if e["claim"]["decision"] == "QUALIFIED"]
+                    for e in admissible:
+                        self.assertEqual(e["claim"]["subject"]["track"], "RIVALRY")
+                        self.assertEqual(e["claim"]["historicalPosition"]["order"], "ORDERED")
+                        self.assertIsInstance(e["claim"]["historicalPosition"]["operationOrdinal"], int)
+                    self._test_history_handoff(snap, proposed)
                     print("AUTHENTIC_MEASUREMENT_REPORT " + name +
                           " SHA256=" + actual + " candidates=" +
                           str(len(measured["observations"])) +
-                          " diagnostics=" + str(len(measured["diagnostics"])), flush=True)
+                          " diagnostics=" + str(len(measured["diagnostics"])) +
+                          " proposed_pair_contest=" + str(len(admissible)) +
+                          " other_semantic_facts=0",
+                          flush=True)
+
+    def _test_history_handoff(self, snap, proposed):
+        if not shutil.which("node"):
+            self.skipTest("Node not installed in authentic test job")
+        script = """
+import {evaluateHistory} from './functions/src/engines/socialV1History/history.js';
+let raw=''; for await(const chunk of process.stdin)raw+=chunk;
+const x=JSON.parse(raw); const tracks={REPUTATION:['GALLANTRY','CRUELTY','CHIVALRY'],RELATIONSHIP:['RIVALRY','HOSTILITY','BOND']};
+const stages=Object.fromEntries(Object.entries(tracks).map(([sys,items])=>[
+  sys,Object.fromEntries(items.map(track=>[track,{
+    up:[1,2,3],down:[1,1,1],...(sys==='RELATIONSHIP'?{reciprocity:{3:1}}:{})
+  }]))]));
+const budgets={
+  reputationBattle:Object.fromEntries(tracks.REPUTATION.map(t=>[t,{STRENGTHEN:3,WEAKEN:3}])),
+  relationshipEvent:Object.fromEntries(tracks.RELATIONSHIP.map(t=>[t,{STRENGTHEN:3,WEAKEN:3}]))
+};
+const rules={};
+for(const e of x.effects){ const c=e.claim;if(c.decision!=='QUALIFIED')continue;
+rules[c.ruleId]={system:c.subject.system,track:c.subject.track,effect:c.effect,
+ bands:{[c.significanceBandId]:1}};
+}
+const cfg={version:'AUTHENTIC_SOURCE_SYNTHETIC_CALIBRATION_UNAPPROVED',
+ policy:{policyVersion:'AOF_SOC_V1_INFERENCE_PROPOSAL',configurationVersion:'SYNTHETIC_TEST_ONLY',status:'PROPOSED',approvalRef:null},
+ stages,budgets,rules,treachery:{consumptionUnits:0,maximumStage:3}};
+const s=x.snapshot,chapters=[{battleId:s.battleId,matchId:s.matchId,gameId:s.gameId,
+ gameGuid:s.gameGuid,eventId:s.eventId,seasonId:s.seasonId,sourceAuthority:s.authorityRevision,
+ revision:1,state:'READY',order:{event:1,battle:1,game:1,key:s.eventId}}];
+const r=evaluateHistory({chapters,effects:x.effects,actorWitnesses:x.witnesses,calibration:cfg});
+console.log(JSON.stringify({officialWrites:r.officialWrites,
+ publicationAllowed:r.publicationAllowed,receipts:r.receipts.length,
+ projections:r.projections.map(p=>({track:p.subject.track,status:p.status,stage:p.stage,pendingReasons:p.pendingReasons})),
+ audits:r.audit}));
+"""
+        process = subprocess.run(["node", "--input-type=module", "-e", script],
+             input=json.dumps({"snapshot": snap,"effects": proposed["effects"],
+                               "witnesses": proposed["actorWitnesses"]}),
+             text=True, cwd=ROOT, capture_output=True, check=True)
+        result = json.loads(process.stdout)
+        self.assertFalse(result["officialWrites"])
+        self.assertFalse(result["publicationAllowed"])
+        self.assertEqual(result["receipts"], 0)
+        self.assertTrue(all(p["track"] == "RIVALRY" for p in result["projections"]))
+
 
 
 if __name__ == "__main__":
