@@ -430,6 +430,28 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                          and len({c["contributorPlayerId"] for c in contributions}) >= 2,
                          "INVALID_SHARED_TARGET_CONTEXT")
                 continue
+            if isinstance(f, dict) and f.get("kind") == "LOCAL_COMMAND_OVERLAP":
+                # Genuine Pair Social Evidence uses contributorPlayerId and
+                # otherPlayerId (not from/to) for neutral local overlap. It
+                # includes commands from both actors. Preserve this as *local
+                # interaction context*, never a second actor-owned targeted
+                # event or reciprocal witness.
+                contributor, opponent = f.get("contributorPlayerId"), f.get("otherPlayerId")
+                refs = f.get("sourceEventIds")
+                _require(type(contributor) is int and type(opponent) is int
+                         and contributor != opponent and
+                         isinstance(refs, list) and refs and len(refs) == len(set(refs))
+                         and set(refs).issubset(set(deed["sourceEventIds"]))
+                         and all(ref in original_events and
+                                 original_events[ref]["actor"] in (contributor, opponent)
+                                 for ref in refs), "INVALID_LOCAL_OVERLAP_PROVENANCE")
+                own = [ref for ref in refs if original_events[ref]["actor"] == contributor]
+                # The local overlap is a detector context, not evidence of a
+                # confirmed attack from either direction or of mutual credit.
+                facet_events.setdefault((contributor, opponent), []).append({
+                    "kind": "LOCAL_COMMAND_OVERLAP", "fromPlayerId": contributor,
+                    "toPlayerId": opponent, "sourceEventIds": own})
+                continue
             _require(isinstance(f, dict) and isinstance(f.get("kind"), str)
                      and type(f.get("fromPlayerId")) is int and
                      type(f.get("toPlayerId")) is int
