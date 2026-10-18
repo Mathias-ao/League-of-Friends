@@ -2,10 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import Ajv2020 from 'ajv/dist/2020.js';
 import {projectPlayerChronicle,chronicleWasSeenByLegacyId} from '../lib/engines/playerChronicleCore.js';
 import {chronicleSceneId,assertRecordInvariants} from '../lib/domain/socialV1.js';
 
 const fixture=JSON.parse(readFileSync(new URL('./fixtures/chronicle-scene-handoff-v1.json',import.meta.url),'utf8'));
+const sharedSchema=JSON.parse(readFileSync(new URL('../../contracts/social-v1/shared.schema.json',import.meta.url),'utf8'));
+const validateScene=new Ajv2020({strict:false}).compile({
+ $schema:'https://json-schema.org/draft/2020-12/schema',
+ ...sharedSchema.$defs.ChronicleScene,$defs:sharedSchema.$defs,
+});
 const history={modelVersion:'AOF_SOCIAL_HISTORY_V1',contributions:[],pairs:[],profiles:[]};
 const participants=[{playerId:1,leaguePlayerId:'a',name:'A'},{playerId:2,leaguePlayerId:'b',name:'B'}];
 const chapter=(gameIdentity,order,beats,sourceRevision)=>({
@@ -50,6 +56,7 @@ test('projection can be lifted into strict canonical ChronicleScene with unresol
   historyCoverage:{tier:'LIMITED',ruleId:'Factual-only incomplete outcome',
     missing:['BATTLE_RESULT'],limitations:[]},result:e.result
  };
+ assert.equal(validateScene(scene),true,JSON.stringify(validateScene.errors));
  assert.doesNotThrow(()=>assertRecordInvariants('ChronicleScene',scene));
  assert.equal(scene.result.winningPlayerIds,null);
  assert.equal(scene.receiptRefs.length,0,'shadow scoring is never a published receipt');
