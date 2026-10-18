@@ -230,12 +230,28 @@ class AuthenticCorpusMeasurements(unittest.TestCase):
                         self.assertEqual(e["claim"]["historicalPosition"]["order"], "ORDERED")
                         self.assertIsInstance(e["claim"]["historicalPosition"]["operationOrdinal"], int)
                     self._test_history_handoff(snap, proposed)
-                    print("AUTHENTIC_MEASUREMENT_REPORT " + name +
-                          " SHA256=" + actual + " candidates=" +
-                          str(len(measured["observations"])) +
-                          " diagnostics=" + str(len(measured["diagnostics"])) +
-                          " proposed_pair_contest=" + str(len(admissible)) +
-                          " other_semantic_facts=0",
+                    sample = measured["observations"][0] if measured["observations"] else None
+                    witness = admissible[0]["claim"] if admissible else None
+                    print("AUTHENTIC_SOURCE_TO_CLAIM_WITNESS " +
+                          json.dumps({"recording": name, "originalSha256": actual,
+                              "neutralCandidateCount": len(measured["observations"]),
+                              "sourceCandidate": None if sample is None else {
+                                  "sourceDeedId": sample["sourceDeedId"],
+                                  "kind": sample["kind"],
+                                  "fromReplayPlayerId": sample["fromReplayPlayerId"],
+                                  "toReplayPlayerId": sample["toReplayPlayerId"],
+                                  "sourceEventIds": sample["sourceEventIds"][:4],
+                                  "firstSourceMoment": sample["firstSourceMoment"],
+                                  "coverage": sample["coverage"]},
+                              "qualifiedPairContestCountUnderUnapprovedTestPolicy": len(admissible),
+                              "syntheticTestClaim": None if witness is None else {
+                                  "claimId": witness["claimId"],
+                                  "incidentId": witness["incidentId"],
+                                  "subject": witness["subject"],
+                                  "historicalPosition": witness["historicalPosition"],
+                                  "supportRefs": [r["id"] for r in witness["supportRefs"]]},
+                              "otherSemanticFactsQualified": 0,
+                              "officialWrites": False}, sort_keys=True),
                           flush=True)
 
     def _test_history_handoff(self, snap, proposed):
