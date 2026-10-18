@@ -1,5 +1,8 @@
 # Age of Friends — Project Continuity
 
+> **Current V1 implementation contract — 17 October 2026:** [AOF_SOCIAL_V1_SHARED_1](../../contracts/social-v1/README.md) and the [narrow inference-first amendment](../architecture/social-v1-inference-amendment.md) supersede the older observer-dependent launch sequence and ordinary execution-proof restrictions below. The owner-directed ordinary inference method is decided; detailed predicates, numbers, TERR semantics and new exceptional privileges remain approval-gated. Five automatic sliders, six independently inferred strengthening/weakening tracks, rare contributions, trophies and low-cost stories remain launch scope. The observer is **post-V1**. After the shared-contract PR merges, #123/#124/#125 and pure #126/#127 may proceed in parallel; #128 follows factual/admitted-candidate seams, then the separate INT-V1 PR and #132. Historical research findings and strict Treachery/Forward Castle proof, source authority, stage-3+ independent reciprocity, privacy and corrections remain binding. No deployment, flags or staging E2E restart.
+
+
 Last updated: **17 October 2026**. New social launch checkpoint below supersedes older implementation-status snapshots. This file is the entrypoint for continuing the project; it is not a substitute for the current code or specialist contracts.
 
 ## Current organizer checkpoint — 17 October 2026

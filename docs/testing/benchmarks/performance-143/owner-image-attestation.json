@@ -1,0 +1,27 @@
+{
+  "contract": "AOF_UPLOAD_OWNER_CANDIDATE_1",
+  "sourceCommit": "2ece99cd37eabf6316f354e9177ceb74a3c8ce7f",
+  "sourceTrees": {
+    "functions": "e27e0dd28a7012bfaea7c1f0e106d97a5690a687",
+    "web": "a458a176a7dcc83be3130cf861aa0a1c9e1853a8",
+    "replay-tools": "a9331c6c3ac9db19f94fd384158365273cae8ddc"
+  },
+  "platform": "linux/amd64",
+  "baseImage": "python@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258",
+  "resolvedDockerfileSha256": "5f7ff8cf19b34f26611a96c1c1cb737300b0b91893c020ac1bc50cf321badda9",
+  "imageConfigDigest": "sha256:2709832d387f08143c511e846aab3d25e5654f00a0639d96ba6740563054efb3",
+  "imageIdentityKind": "DOCKER_CONFIG_DIGEST_NOT_REGISTRY_MANIFEST_DIGEST",
+  "imageArchiveSha256": "f34824bc6ed800e03d9e3961c6c8f3317a920c4e2dd320b9fda5b27135507831",
+  "processorRevisionInImage": "3f52fd692f77809796cde467b578a0765a066113fe74686a6d29a6684f30a339",
+  "privateRegistryManifestDigest": null,
+  "cloudRunRevision": null,
+  "cloudAction": "NONE_NO_PUSH_NO_DEPLOY",
+  "stagingAuthorization": "NOT_GRANTED",
+  "evidence": {
+    "runId": 39128981226,
+    "jobId": 117680033729,
+    "artifactId": 12137137895,
+    "artifactZipSha256": "3a724d873585d7b03167c1843a229fb2cb37ff558b3d2a9244a9e9559192bfe7",
+    "artifactExpiresAt": "2026-10-25T12:50:58Z"
+  }
+}

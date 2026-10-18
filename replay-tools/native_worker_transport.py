@@ -59,7 +59,10 @@ def process_native_replay(
         target = root / "package"
         timings = timing_sink if timing_sink is not None else {}
         revision = native_processor_revision()
-        manifest = prepare_native_upload(source_path, target, stage_timings=timings)
+        manifest = prepare_native_upload(
+            source_path, target, stage_timings=timings,
+            fast_action_windows=True,
+        )
         events = (target / manifest["recordedEvents"]["path"]).read_bytes()
         stats = (target / manifest["statistics"]["path"]).read_bytes()
         if len(events) + len(stats) > MAX_RESPONSE_ARTIFACT_BYTES:

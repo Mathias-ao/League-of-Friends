@@ -18,7 +18,8 @@ import {projectStatistics} from "../../engines/statisticsExperience.js";
 import {statisticsMetadata} from "../../services/statisticsExperienceProjection.js";
 import {encodeReplayStatistics, verifiedReplayArtifactSave} from "../../services/replayStatisticsStorage.js";
 import {validateRecordingMatchFacts, currentOfficialGameOutcome} from "../../engines/recordingMatchFacts.js";
-import {callNativeWorker,validateNativeRecording} from "../../services/nativeRecordingValidation.js";
+import {callNativeWorker,validateNativeRecording,nativeUploadDiagnosticTraceId,nativeUploadDiagnosticTimings} from "../../services/nativeRecordingValidation.js";
+import {performance} from 'node:perf_hooks';
 
 const MAX_REPLAY_BYTES = 32 * 1024 * 1024;
 const replayWorkerAuthToken = defineSecret("REPLAY_WORKER_AUTH_TOKEN");
@@ -247,8 +248,10 @@ export const uploadReplay = onCall<UploadReplayInput>(
     secrets: [replayWorkerAuthToken],
   },
   async (request) => {
+    const handlerStarted=performance.now();
     const receivedAt=Date.now();
     const actor = await requireLeaguePlayer(request);
+    const authenticatedAt=performance.now();
     if(request.data.processingMode!==undefined&&!['AUTO','LEGACY','NATIVE_UPLOAD_V1','NATIVE_VALIDATION_V1'].includes(request.data.processingMode))
       throw new HttpsError('invalid-argument','Unknown recording processing mode.');
     const matchId = requiredText(request.data.matchId, "matchId", 200);
@@ -258,6 +261,7 @@ export const uploadReplay = onCall<UploadReplayInput>(
       throw new HttpsError("invalid-argument", "Choose an .aoe2record recording.");
     }
     const bytes = replayBytes(request.data.replayBase64);
+    const decodedAt=performance.now();
     // The upload payload has already reached Functions at this point. A worker
     // trace can be correlated by request timing without logging replay/user data.
     const tracing = process.env.AOF_REPLAY_UPLOAD_PERF_TRACE === "1";
@@ -301,12 +305,47 @@ export const uploadReplay = onCall<UploadReplayInput>(
     // Already published legacy/operator sources remain valid idempotent uploads;
     // AUTO never converts them or repeats extraction.
     if(ordinaryNative&&!(existingSource.data()?.state==="READY"&&existingSource.data()?.ordinaryUploadVersion!==NATIVE_PLAYER_UPLOAD)){
-      assertNativePlayerUploadAllowed(process.env,matchId,gameId);
-      const input={db,bucket:getStorage().bucket(bucketName()),matchId,gameId,sourceHash:localSourceHash,actor,env:process.env};
-      if(existingSource.exists)return publishNativePlayerRecording(input);
-      const candidate=await validateNativeRecording({db,bucket:input.bucket,matchId,gameId,fileName,bytes,actor,receivedAt,ordinary:true,
-        worker:()=>callNativeWorker(workerUrl(),fileName,request.data.replayBase64),resolveMapping:resolvePlayerMapping});
-      return publishNativePlayerRecording({...input,candidateId:candidate.candidateId});
+      const processorRevision=assertNativePlayerUploadAllowed(process.env,matchId,gameId);
+      const diagnosticTraceId=nativeUploadDiagnosticTraceId(process.env);
+      const nativeTimings:Record<string,number>|undefined=diagnosticTraceId?{
+        nativeHandlerAuthenticationMs:authenticatedAt-handlerStarted,
+        nativeHandlerInputValidationAndDecodeMs:decodedAt-authenticatedAt,
+        nativeInitialAuthorityAndSelectionMs:performance.now()-decodedAt,
+      }:undefined;
+      const input={db,bucket:getStorage().bucket(bucketName()),matchId,gameId,sourceHash:localSourceHash,actor,env:process.env,performanceTimings:nativeTimings};
+      let candidateId:string|undefined;
+      let workerInvoked=false,status='FAILED',failureCode:string|undefined,validationTimings:unknown;
+      try{
+      if(!existingSource.exists){
+        const started=performance.now();
+        const candidate=await validateNativeRecording({db,bucket:input.bucket,matchId,gameId,fileName,bytes,actor,receivedAt,ordinary:true,
+          worker:()=>{workerInvoked=true;return callNativeWorker(workerUrl(),fileName,request.data.replayBase64,
+            diagnosticTraceId?{diagnosticTraceId}:{});},resolveMapping:resolvePlayerMapping});
+        if(nativeTimings){
+          nativeTimings.nativeValidationTotalMs=performance.now()-started;
+          if(typeof candidate.timings?.validationPublicationMs==='number')
+            nativeTimings.nativeValidationPublicationMs=candidate.timings.validationPublicationMs;
+        }
+        validationTimings=candidate.timings;
+        candidateId=candidate.candidateId;
+      }
+      const result=await publishNativePlayerRecording({...input,candidateId});
+      status='READY';
+      return diagnosticTraceId?{...result,diagnosticTraceId}:result;
+      }catch(error){
+        failureCode=error instanceof HttpsError?error.code:'internal';
+        if(diagnosticTraceId&&error instanceof HttpsError&&error.details===undefined)
+          throw new HttpsError(error.code,error.message,{diagnosticTraceId});
+        throw error;
+      }finally{
+        if(diagnosticTraceId&&nativeTimings){
+          nativeTimings.nativeHandlerTotalMs=performance.now()-handlerStarted;
+          // Diagnostic logging must never change publication or error behavior.
+          try{console.info(JSON.stringify({event:'AOF_REPLAY_UPLOAD_NATIVE_PERFORMANCE_V1',diagnosticTraceId,status,
+            ...(failureCode?{failureCode}:{}),workerInvoked,route:'/process-native-v1',configuredProcessorRevision:processorRevision,
+            timings:nativeUploadDiagnosticTimings(nativeTimings),validationTimings:nativeUploadDiagnosticTimings(validationTimings)}));}catch{}
+        }
+      }
     }
     if (existingSource.exists && existingSource.data()?.state === "READY") {
       const resolution=game.activeReplayStatisticsId===localSourceHash?await resolveRecordingResult(matchId,gameId):null;
