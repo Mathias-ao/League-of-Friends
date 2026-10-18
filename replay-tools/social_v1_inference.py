@@ -445,6 +445,10 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                          and all(ref in original_events and
                                  original_events[ref]["actor"] in (contributor, opponent)
                                  for ref in refs), "INVALID_LOCAL_OVERLAP_PROVENANCE")
+                if (contributor, opponent) not in {
+                        (d["fromReplayPlayerId"], d["toReplayPlayerId"])
+                        for d in deed["directionalActors"]}:
+                    continue  # no actor-owned directed facet for this direction
                 own = [ref for ref in refs if original_events[ref]["actor"] == contributor]
                 # The local overlap is a detector context, not evidence of a
                 # confirmed attack from either direction or of mutual credit.
