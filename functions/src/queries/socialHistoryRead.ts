@@ -12,7 +12,28 @@ import {nativeSocialInput} from '../engines/nativeSocialInput.js';
 
 // Bounded Firestore query pages, not a 100-Battle lifetime ceiling. All pages
 // are re-enumerated after source reads to catch inserted/removed Matches.
-const MATCH_PAGE_SIZE=64;
+export const CHRONICLE_QUERY_LIMITS=Object.freeze({
+  matchPageSize:64,maxMatches:256,maxGames:768,deadlineBudgetMs:100_000,
+});
+const MATCH_PAGE_SIZE=CHRONICLE_QUERY_LIMITS.matchPageSize;
+const unresolvedBattleOutcome=()=>({qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null});
+function acceptedBattleOutcome(match:any,games:any[],admitted:any[]){
+  const r=match?.canonicalResult;
+  const winners=r?.winningPlayerIds;
+  const roster=Array.isArray(match?.participants)?match.participants.map((p:any)=>p?.playerId):
+    [...new Set(games.flatMap(g=>Array.isArray(g.data?.players)?g.data.players.map((p:any)=>p?.playerId):[]))];
+  if(match?.status!=='COMPLETED'||match?.activeResultDisputeId||
+     !Array.isArray(games)||games.length===0||admitted.length!==games.length||
+     admitted.some(ch=>ch.resultStatus!=='OFFICIAL')||
+     !Number.isSafeInteger(r?.revision)||r.revision<1||
+     !['PLAYER_CONFIRMED','ADMIN_RESOLVED','ADMIN_CORRECTED','RECORDING_VERIFIED'].includes(r?.source)||
+     !Array.isArray(winners)||winners.length<1||winners.length>=roster.length||
+     winners.some((id:any)=>typeof id!=='string'||!roster.includes(id))||
+     new Set(winners).size!==winners.length)
+     return unresolvedBattleOutcome();
+  return {qualification:'OFFICIAL',resultRevision:r.revision,
+    winningPlayerIds:[...winners].sort()};
+}
 const MATCH_STATES=new Set(['READY','ACTIVE','AWAITING_CONFIRMATION','COMPLETED']);
 const EVENT_STATES=new Set(['PUBLISHED','ACTIVE','COMPLETED','POSTPONED']);
 const SEASON_STATES=new Set(['UPCOMING','ACTIVE','COMPLETED','ARCHIVED']);
@@ -39,11 +60,12 @@ const seasonToken=(v:any)=>token({status:v?.status});
 /** Use document-ID cursors so all Matches (not only COMPLETED) are considered.
  * Reject non-advancing pages instead of silently returning truncated history.
  */
-async function allMatchPages(){
+async function allMatchPages(assertBudget:()=>void=()=>{}){
   const docs:any[]=[];
   let last:any=null;
   const seen=new Set<string>();
   while(true){
+    assertBudget();
     let query:any=db.collection(collections.matches).orderBy('__name__').limit(MATCH_PAGE_SIZE);
     if(last)query=query.startAfter(last);
     const page=await query.get();
@@ -55,6 +77,8 @@ async function allMatchPages(){
         throw new HttpsError('aborted','Chronicle Match cursor did not advance.');
       seen.add(doc.id);
       docs.push(doc);
+      if(docs.length>CHRONICLE_QUERY_LIMITS.maxMatches)
+        throw new HttpsError('resource-exhausted','Chronicle history exceeds the bounded complete-read Match limit; no truncated book was returned.');
     }
     if(page.docs.length<MATCH_PAGE_SIZE)break;
     last=page.docs[page.docs.length-1];
@@ -87,7 +111,13 @@ function linkedEventStatus(event:any,season:any,match:any,matchId:string):string
  * to historically ordered OFFICIAL Games and never published as official state.
  */
 export async function readSocialHistory(ownerPlayerId:string){
-  const matches=await allMatchPages();
+  const started=Date.now();
+  const assertBudget=()=>{
+    if(Date.now()-started>CHRONICLE_QUERY_LIMITS.deadlineBudgetMs)
+      throw new HttpsError('resource-exhausted','Chronicle complete-read deadline budget exceeded; no partial book was returned.');
+  };
+  const matches=await allMatchPages(assertBudget);
+  let scannedGames=0;
   const checkpoints:any[]=matches.map(doc=>({ref:doc.ref,token:matchToken(doc.data()),type:'MATCH'}));
   const ordered=matches.filter(doc=>doc.data().opponentKind!=='AI'&&MATCH_STATES.has(doc.data().status))
     .map(doc=>({doc,data:doc.data(),at:matchOrder(doc.data())}))
@@ -104,6 +134,7 @@ export async function readSocialHistory(ownerPlayerId:string){
   const duplicateSources=new Set<string>(),duplicateGuids=new Set<string>();
   let order=0,unresolvedOutcomes=0,chronologyPending=0;
   for(const match of ordered){
+    assertBudget();
     const data=match.data;
     let eventBlock:string|null=null;
     if(data.eventId!=null||data.seasonId!=null){
@@ -120,12 +151,17 @@ export async function readSocialHistory(ownerPlayerId:string){
     }
     const games=await match.doc.ref.collection('games').get();
     const orderedGames=games.docs.map((doc:any)=>({doc,data:doc.data()}));
+    scannedGames+=orderedGames.length;
+    if(scannedGames>CHRONICLE_QUERY_LIMITS.maxGames)
+      throw new HttpsError('resource-exhausted','Chronicle history exceeds the bounded complete-read Game limit; no truncated book was returned.');
     if(orderedGames.some((g:any)=>!Number.isSafeInteger(g.data.gameNumber)||g.data.gameNumber<1)||
        new Set(orderedGames.map((g:any)=>g.data.gameNumber)).size!==orderedGames.length)
       throw new HttpsError('failed-precondition','Game sequence is missing or duplicated; Chronicle cannot assign Game order.');
     orderedGames.sort((a:any,b:any)=>a.data.gameNumber-b.data.gameNumber);
     let admittedInMatch=false;
+    const matchChapterStart=chapters.length;
     for(const game of orderedGames){
+      assertBudget();
       order++;
       checkpoints.push({ref:game.doc.ref,token:gameToken(game.data),type:'GAME'});
       const gameIdentity=match.doc.id+'/'+game.doc.id;
@@ -234,11 +270,14 @@ export async function readSocialHistory(ownerPlayerId:string){
         resultStatus:official.qualification==='OFFICIAL'?'OFFICIAL':'UNRESOLVED',
         sourceRevision:sourceId,accepted:true,review});
     }
+    const battleOutcome=acceptedBattleOutcome(data,orderedGames,chapters.slice(matchChapterStart));
+    for(const chapter of chapters.slice(matchChapterStart))chapter.battleOutcome=battleOutcome;
     if(admittedInMatch&&match.at===null)chronologyPending++;
   }
   // Optimistic revision fence covers the entire Match population, current
   // selected sources, Event/Season admission and correction/dispute state.
   for(let index=0;index<checkpoints.length;index+=50){
+    assertBudget();
     const batch=checkpoints.slice(index,index+50),fresh=await db.getAll(...batch.map(c=>c.ref));
     for(let n=0;n<batch.length;n++){
       const item=batch[n],current=fresh[n]?.data();
@@ -249,19 +288,24 @@ export async function readSocialHistory(ownerPlayerId:string){
         throw new HttpsError('aborted','Accepted Chronicle authority changed during the read; retry.');
     }
   }
-  const after=await allMatchPages();
+  const after=await allMatchPages(assertBudget);
   if(after.length!==matches.length||after.some((doc:any,i:number)=>doc.id!==matches[i].id))
     throw new HttpsError('aborted','Chronicle Match population changed during the read; retry.');
   // The legacy shadow evaluator is *not* a factual eligibility gate: pending
   // outcomes and undated Battles stay in the factual Chronicle only.
+  assertBudget();
   const history=rebuildSocialHistory(chapters.filter(ch=>
     ch.resultStatus==='OFFICIAL'&&ch.chronologyQualified));
   const chronicle=projectPlayerChronicle({ownerPlayerId,chapters,history,names});
+  assertBudget();
   return {success:true,
     status:excluded.length||chronologyPending?'PARTIAL':'AVAILABLE',
     history,chronicle,names,excluded,
     coverage:{completedBattles:matches.filter(doc=>doc.data().status==='COMPLETED').length,
-      scannedBattles:matches.length,readableAcceptedGames:chapters.length,excludedGames:excluded.length,
+      scannedBattles:matches.length,scannedGames,
+      matchQueryPages:2*(Math.floor(matches.length/MATCH_PAGE_SIZE)+1),
+      queryLimits:CHRONICLE_QUERY_LIMITS,
+      readableAcceptedGames:chapters.length,excludedGames:excluded.length,
       unresolvedOutcomeGames:unresolvedOutcomes,chronologyPendingBattles:chronologyPending,
       stageMeaning:'shadow_stages_from_ordered_official_sources_only',
       opportunityCompleteness:excluded.length===0&&chronologyPending===0}};
