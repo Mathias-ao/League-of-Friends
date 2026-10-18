@@ -73,6 +73,7 @@ class InertMeasurementTests(unittest.TestCase):
     def test_fake_actor_and_source_revision_are_not_qualified(self):
         b, stats, actions = synthetic_bundle(kind="contest", contest=True)
         stats["pairSocialEvidence"]["deeds"][0]["facets"][0]["fromPlayerId"] = 2
+        stats["pairSocialEvidence"]["deeds"][0]["facets"][0]["toPlayerId"] = 1
         output = measure(b, stats, actions)
         self.assertTrue(output["diagnostics"])
         self.assertFalse(any(o["fromReplayPlayerId"] == 2 for o in output["observations"]))
