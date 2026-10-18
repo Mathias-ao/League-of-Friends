@@ -6,11 +6,13 @@ V8 replaces their touch-as-holding inference with command observations.
 from __future__ import annotations
 
 from typing import Any, Iterable
+import math
 
 import map_presence as v1
 import map_presence_v7 as v7
 
 MAP_PRESENCE_MODEL_VERSION = "AOF_MAP_PRESENCE_V8"
+STARTING_TC_WITNESS_VERSION = "AOF_STARTING_TOWN_CENTER_SOURCE_V1"
 RELIC_EVIDENCE_VERSION = "AOF_RELIC_TARGETING_V1"
 
 
@@ -79,6 +81,49 @@ def relic_targeting(
     return result
 
 
+def starting_town_centers(initial_objects: Iterable[dict[str, Any]],
+                          participant_ids: set[int], catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Preserve each raw starting TC, never substitute V8's rounded centroid.
+
+    The header object search is partial; a singleton is not a completeness proof.
+    """
+    found = {pid: [] for pid in participant_ids}
+    identities = set()
+    for event in initial_objects:
+        payload = event.get("payload") or {}
+        owner, raw_id = payload.get("ownerPlayerId"), payload.get("objectId")
+        if type(owner) is not int or owner not in found or not v1._is_town_center(catalog, raw_id):
+            continue
+        event_id = event.get("eventId")
+        instance = payload.get("instanceId")
+        pos = event.get("position") or {}
+        x, y = pos.get("x"), pos.get("y")
+        position_valid = all(type(v) in (int, float) and math.isfinite(v) for v in (x, y))
+        key = (owner, event_id)
+        if key in identities or (type(instance) is int and (owner, "instance", instance) in identities):
+            raise ValueError("duplicate_initial_town_center_identity")
+        identities.add(key)
+        if type(instance) is int:
+            identities.add((owner, "instance", instance))
+        found[owner].append({
+            "sourceEventId": event_id if isinstance(event_id, str) and event_id else None,
+            "objectInstanceId": instance if type(instance) is int and instance >= 0 else None,
+            "objectBlockIndex": payload.get("objectBlockIndex"),
+            "rawObjectId": raw_id,
+            "position": {"x": x, "y": y} if position_valid else None,
+            "positionPrecision": "ORIGINAL_DECODED_NO_ROUNDING" if position_valid else "UNAVAILABLE",
+        })
+    return {str(pid): {
+        "modelVersion": STARTING_TC_WITNESS_VERSION,
+        "sourceDomain": "RETAINED_HEADER_INITIAL_OBJECTS",
+        "coverage": "PARTIAL_HEADER_OBJECT_SEARCH",
+        "exhaustiveInitialTcListEstablished": False,
+        "observedCount": len(found[pid]),
+        "objects": sorted(found[pid], key=lambda o: (o["sourceEventId"] or "",
+                    o["objectInstanceId"] if o["objectInstanceId"] is not None else -1)),
+    } for pid in sorted(found)}
+
+
 def project_map_presence(
     *, manifest: dict[str, Any], catalog: dict[str, Any],
     initial_objects: Iterable[dict[str, Any]], build_events: Iterable[dict[str, Any]],
@@ -89,8 +134,11 @@ def project_map_presence(
         manifest=manifest, catalog=catalog, initial_objects=objects,
         build_events=builds, wall_events=walls, action_events=actions,
     )
-    relics = relic_targeting(actions, objects, set(v1._participants(manifest)))
+    ids = set(v1._participants(manifest))
+    relics = relic_targeting(actions, objects, ids)
+    tc_sources = starting_town_centers(objects, ids, catalog)
     for player_id, row in result.items():
         row["modelVersion"] = MAP_PRESENCE_MODEL_VERSION
         row["relicControl"] = relics[player_id]
+        row["startingTownCenters"] = tc_sources[player_id]
     return result

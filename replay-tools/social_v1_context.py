@@ -10,7 +10,7 @@ from hashlib import sha256
 import json
 import math
 
-VERSION = "AOF_SOCIAL_V1_CONTEXT_V1"
+VERSION = "AOF_SOCIAL_V1_CONTEXT_V2"
 SHARED_CONTRACT = "AOF_SOCIAL_V1_SHARED_1"
 PAIR_VERSION = "AOF_PAIR_SOCIAL_EVIDENCE_V1"
 MAP_VERSION = "AOF_MAP_PRESENCE_V8"
@@ -18,6 +18,7 @@ FORWARD_ECO_VERSION = "AOF_FORWARD_ECO_V2"
 # Only this raw type is a Castle candidate. 1251 (Krepost) is deliberately not.
 GENUINE_CASTLE_RAW_ID = 82
 FORWARD_CASTLE_QUEUE_WINDOW_MS = 5 * 60_000  # Existing approved rule; not calibration.
+FORWARD_CASTLE_HOME_RADIUS_TILES = 15.0  # Owner-approved strict <15, not <=15.
 
 
 def _digest(value):
@@ -132,6 +133,73 @@ def _territory(actor, point, anchors, teams, locked, policy):
             "scope": "initial_TCs_and_locked_lobby_team_groups_not_effective_time_varying_diplomacy",
         })
     return results
+
+
+def _castle_home_proximity(actor, point, sources, teams, locked):
+    """TERR-02 source precision: inspect every *individual* retained starting TC.
+
+    The parser's header-object search is explicitly non-exhaustive. Observed
+    unrounded distances cannot assert the unique actual starting TC set.
+    """
+    rows, nearby = [], []
+    multiple_tcs = False
+    incomplete = False
+    for other in sorted(teams):
+        if other == actor:
+            continue
+        relation = _alignment(actor, other, teams, locked)
+        witness = sources.get(other) or {}
+        observed = []
+        for obj in witness.get("objects") or []:
+            xy = _point(obj.get("position"))
+            valid = (xy is not None and obj.get("positionPrecision") == "ORIGINAL_DECODED_NO_ROUNDING"
+                     and type(obj.get("objectInstanceId")) is int
+                     and isinstance(obj.get("sourceEventId"), str) and bool(obj["sourceEventId"]))
+            distance = math.hypot(point[0] - xy[0], point[1] - xy[1]) if valid else None
+            observed.append({
+                "sourceEventId": obj.get("sourceEventId"),
+                "objectInstanceId": obj.get("objectInstanceId"),
+                "rawObjectId": obj.get("rawObjectId"),
+                "originalPosition": obj.get("position"),
+                "unroundedDistanceTiles": distance,
+                "strictlyLessThan15Tiles": distance < FORWARD_CASTLE_HOME_RADIUS_TILES if distance is not None else None,
+                "identityAndPrecisionAvailable": valid,
+            })
+        if relation == "FIXED_OPPONENTS":
+            if len(observed) > 1:
+                multiple_tcs = True
+            if len(observed) != 1 or not observed[0]["identityAndPrecisionAvailable"]:
+                incomplete = True
+            if len(observed) == 1 and observed[0]["strictlyLessThan15Tiles"] is True:
+                nearby.append(other)
+        rows.append({
+            "counterpartReplayPlayerId": other,
+            "relationContext": relation,
+            "sourceCoverage": witness.get("coverage", "UNAVAILABLE"),
+            "exhaustiveInitialTcListEstablished": witness.get("exhaustiveInitialTcListEstablished") is True,
+            "observedTcCount": len(observed),
+            "sourceStartingTownCenters": observed,
+        })
+    if not locked:
+        gate, reasons = "PENDING", ["EFFECTIVE_OPPONENT_RELATION_UNAVAILABLE"]
+    elif multiple_tcs or len(nearby) > 1:
+        gate, reasons = "AMBIGUOUS", ["MULTIPLE_PLAUSIBLE_STARTING_TCS_OR_OPPONENTS"]
+    elif incomplete or not any(r["relationContext"] == "FIXED_OPPONENTS" for r in rows):
+        gate, reasons = "PENDING", ["INCOMPLETE_SPECIFIC_OPPONENT_STARTING_TC_IDENTITY"]
+    else:
+        # Do not turn an incomplete snapshot into definitive PASS or FAIL.
+        gate, reasons = "PENDING", ["HEADER_OBJECT_SEARCH_NOT_EXHAUSTIVE"]
+    return {
+        "modelVersion": "AOF_FORWARD_CASTLE_HOME_PROXIMITY_V2",
+        "limitTiles": FORWARD_CASTLE_HOME_RADIUS_TILES,
+        "comparison": "STRICT_LESS_THAN",
+        "distanceGate": gate,
+        "soleDistanceCandidateReplayPlayerId": None,
+        "observedNearbyOpponentReplayPlayerIds": sorted(nearby),
+        "perOpponent": rows,
+        "reasonCodes": reasons,
+        "sourceMeaning": "source_linked_unrounded_header_initial_TC_objects_nonexhaustive_not_operational_castle_proof",
+    }
 
 
 def _classify_building(raw, categories):
@@ -316,6 +384,41 @@ def project_social_v1_context(*, statistics, territory_policy=None, max_placemen
         point = _point(anchor)
         if anchor.get("method") == "initial_town_center" and point is not None:
             anchors[player["playerId"]] = point
+    # Starting-TC witness must be source-linked, exact and non-exhaustive.
+    # Old Map Presence homeAnchor is rounded / possibly a multi-TC centroid.
+    sources = {}
+    all_source_ids = set()
+    all_instances = set()
+    for player in parts:
+        pid = player["playerId"]
+        witness = (player.get("mapPresence") or {}).get("startingTownCenters") or {}
+        if witness:
+            if (witness.get("modelVersion") != "AOF_STARTING_TOWN_CENTER_SOURCE_V1"
+                    or witness.get("coverage") != "PARTIAL_HEADER_OBJECT_SEARCH"
+                    or witness.get("exhaustiveInitialTcListEstablished") is not False):
+                raise ValueError("untrusted_initial_town_center_coverage")
+            records = witness.get("objects")
+            if (not isinstance(records, list) or len(records) > 32
+                    or witness.get("observedCount") != len(records)):
+                raise ValueError("invalid_initial_town_center_count")
+            for obj in records:
+                if not isinstance(obj, dict) or obj.get("rawObjectId") not in (71, 109, 621):
+                    raise ValueError("invalid_initial_town_center_identity")
+                ref, instance = obj.get("sourceEventId"), obj.get("objectInstanceId")
+                if ref is not None:
+                    if not isinstance(ref, str) or not ref or ref in all_source_ids:
+                        raise ValueError("conflicting_initial_town_center_source")
+                    all_source_ids.add(ref)
+                if instance is not None:
+                    if type(instance) is not int or instance < 0 or (pid, instance) in all_instances:
+                        raise ValueError("conflicting_initial_town_center_instance")
+                    all_instances.add((pid, instance))
+                if obj.get("positionPrecision") == "ORIGINAL_DECODED_NO_ROUNDING":
+                    if _point(obj.get("position")) is None:
+                        raise ValueError("invalid_original_initial_town_center_position")
+                elif obj.get("position") is not None:
+                    raise ValueError("untrusted_initial_town_center_precision")
+        sources[pid] = witness
     placements = []
     gold = []
     for player in parts:
@@ -327,17 +430,20 @@ def project_social_v1_context(*, statistics, territory_policy=None, max_placemen
             if placed["atMs"] > recorded_until:
                 raise ValueError("placement_outside_recording_clock")
             territories = _territory(pid, _point(placed["position"]), anchors, teams, locked, policy)
+            castle_home = (_castle_home_proximity(pid, _point(placed["position"]), sources, teams, locked)
+                           if placed["buildingClass"] == "CASTLE_PLACEMENT" else None)
             reasons = ["COMPLETION_NOT_OBSERVED", "SAME_INSTANCE_QUEUE_NOT_VERIFIED",
-                       "Genuine_Castle_Catalog_Build_Unqualified"] if placed["buildingClass"] == "CASTLE_PLACEMENT" else []
-            if placed["buildingClass"] == "CASTLE_PLACEMENT":
-                reasons.extend(["SPECIFIC_ENEMY_HOME_UNQUALIFIED"] if not any(
-                    t["territory"] == "enemy" for t in territories) else [])
+                       "GENUINE_CASTLE_INSTANCE_BINDING_UNQUALIFIED", "TERR_01_ENEMY_TERRITORY_PENDING"] if castle_home else []
+            if castle_home:
+                reasons.extend(castle_home["reasonCodes"])
             placements.append({"actorReplayPlayerId": pid, **placed, "perOpponentTerritory": territories,
                                "specialForwardCastle": {
-                                   "status": "PENDING", "reasonCodes": reasons,
+                                   "status": "PENDING",
+                                   "reasonCodes": reasons,
+                                   "homeProximity": castle_home,
                                    "sameInstanceQueueWindowMs": FORWARD_CASTLE_QUEUE_WINDOW_MS,
                                    "operationEstablished": False, "qualifies": False,
-                               } if placed["buildingClass"] == "CASTLE_PLACEMENT" else None,
+                               } if castle_home else None,
                                "sourceLayer": "OBSERVED_BUILD_PLACEMENT_AND_INFERRED_GEOMETRY",
                                "territoryPolicyApproval": "UNAPPROVED"})
             if len(placements) > max_placements:
@@ -385,5 +491,6 @@ def project_social_v1_context(*, statistics, territory_policy=None, max_placemen
             "limitations": ["REQUESTED_COMMANDS_NOT_EXECUTION", "GAME_LOCAL_SOURCE_ONLY",
                             "UNKNOWN_OPPONENT_OPPORTUNITY_DENOMINATORS",
                             "NO_VERIFIED_COMPLETED_CASTLE_INSTANCE_OR_OWN_QUEUE_CHAIN",
+                            "INITIAL_TC_SOURCE_SEARCH_NOT_EXHAUSTIVE",
                             "NO_MINED_GOLD_OR_POSSESSION_PROOF", "NO_RESCUE_DAMAGE_KILL_OR_INTENT_PROOF",
                             "DYNAMIC_DIPLOMACY_UNQUALIFIED", "NO_TRACK_CREDITS"]}
