@@ -126,8 +126,11 @@ function composeEntry(group,first,ownerName,counterpartName,history,ownerPlayerI
     {qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
   const sceneRevision=createHash('sha256').update(JSON.stringify({
     sceneId,result,chronologyQualified:group.chronologyQualified,
+    eventId:group.eventId,seasonId:group.seasonId,playedAtMs:group.playedAtMs,
+    firstExposureContext:group.firstExposure?.context??null,
     sourceLineage:[...group.sourceLineage].sort((a,b)=>a.gameIdentity.localeCompare(b.gameIdentity)),
-    sourceBeatIds,sourceEventIds
+    sourceBeatIds,sourceEventIds,priorOnlyContext:context,
+    rendered:{rubric:narrative.rubric,title:narrative.title,paragraphs:narrative.paragraphs}
   })).digest('hex');
   return {
     // Preserve old identifiers for deployed browser new-ink caches and references.
