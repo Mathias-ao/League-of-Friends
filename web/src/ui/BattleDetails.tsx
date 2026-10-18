@@ -4,6 +4,7 @@ import {formatName,type MatchDetail} from '../domain/league';
 import {MatchDialog} from './Views';
 import {BattleTimeline,useStatistics} from './StatisticsDashboardLegacy';
 import {BattleStatistics} from './BattleStatistics';
+import {PrivateSocialExperience} from './PrivateSocialExperience';
 import {NativeBattleEvidence} from './NativeBattleEvidence';
 import {NativeBattleRecordViewer} from './NativeBattleRecordViewer';
 import {StagingE2eControls} from './StagingE2eControls';
@@ -30,6 +31,13 @@ export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>vo
     {statisticsOpen&&<BattleOverlay title={`Battle Ledger · Game ${selected?.gameNumber??1}`} wide onClose={()=>setStatisticsOpen(false)}><div className="battle-details battle-full-statistics">
       {state.error?<div role="alert"><p>{state.error}</p><button onClick={state.retry}>Retry reading statistics</button></div>:!state.dataset?<p role="status">Reading the battle ledger…</p>:recorded?<>
         <BattleStatistics key={recorded.gameId+'/'+recorded.revision+'/'+recorded.sourceHash} game={recorded} preview={preview} provisional={!recorded.eligible||!!selected?.resultDisputeOpen||!selected?.result} viewerId={snapshot.viewer?.playerId} openPlayer={openPlayer}/>
+        {import.meta.env?.VITE_AOF_INT_V1_PRIVATE_READS==='source-v1'&&
+          (import.meta.env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'||
+            import.meta.env.VITE_USE_EMULATORS==='true'&&import.meta.env.VITE_FIREBASE_PROJECT_ID?.startsWith('demo-'))&&!preview&&data.viewer.isParticipant&&snapshot.viewer&&
+          selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&!selected.resultDisputeOpen&&
+          selected.players.some(player=>player.playerId===snapshot.viewer!.playerId)&&<PrivateSocialExperience
+            repository={repository} matchId={data.match.matchId} gameId={selected.gameId}
+            viewerId={snapshot.viewer.playerId} sourceHash={recorded.sourceHash} revision={recorded.revision}/>}
         <section className="battle-full-timeline" aria-label="Battle timeline"><BattleTimeline game={recorded}/></section>
         {!preview&&!selected?.resultDisputeOpen&&selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&selected.replay.nativePlayerMapping?.length&&<NativeBattleEvidence
           key={data.match.matchId+':'+selected.gameId+':'+selected.replay.statisticsRevision}
