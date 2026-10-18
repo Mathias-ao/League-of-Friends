@@ -1,10 +1,24 @@
+import {createHash} from 'node:crypto';
+import {chronicleSceneId} from '../domain/socialV1.js';
 import {buildPriorNarrativeContext,writeBattleNarrative} from './playerChronicleNarrative.js';
 
 /** Deterministic player Chronicle projection from the source-qualified social shadow read model.
  * This is a read-only writer. It never awards points or upgrades shadow stages to official state.
  */
 export const PLAYER_CHRONICLE_VERSION = 'AOF_PLAYER_CHRONICLE_V2';
-const PLAYER_CHRONICLE_ENTRY_ID_VERSION = 'AOF_PLAYER_CHRONICLE_V1'; // Stable historical identity across prose-only writer upgrades.
+const PLAYER_CHRONICLE_ENTRY_ID_VERSION = 'AOF_PLAYER_CHRONICLE_V1'; // Legacy browser seen-ID format.
+
+/** Pure INT-V1 migration seam: a browser's stored old beat-derived IDs are
+ * equivalent to this pair×Battle scene, even when source correction changed
+ * the beat suffix. Only the signed-in owner and counterpart are consulted.
+ * This does not read localStorage or change the existing UI.
+ */
+export function chronicleWasSeenByLegacyId(storedIds,entry,ownerId,counterpartId){
+  if(!Array.isArray(storedIds)||!entry?.sceneId)return false;
+  if(storedIds.includes(entry.sceneId)||storedIds.includes(entry.entryId))return true;
+  const prefix=PLAYER_CHRONICLE_ENTRY_ID_VERSION+':'+ownerId+':'+counterpartId+':'+entry.battleId+':';
+  return storedIds.some(value=>typeof value==='string'&&value.startsWith(prefix));
+}
 
 const rows=v=>Array.isArray(v)?v:[];
 const rec=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:null;
@@ -105,8 +119,29 @@ function composeEntry(group,first,ownerName,counterpartName,history,ownerPlayerI
   const sourceEventIds=unique(ordered.flatMap(beat=>rows(beat.sourceEventIds)));
   const marks=contributionMarks(history,group.battleId,ownerPlayerId,counterpartPlayerId);
   const narrative=writeBattleNarrative({group:{...group,beats:ordered},first,ownerName,counterpartName,context,names});
+  // Canonical SHARED_1 identity is immutable across Game, source, prose and revisions.
+  const sceneId=chronicleSceneId(group.battleId,ownerPlayerId,counterpartPlayerId);
+  const legacyEntryId=PLAYER_CHRONICLE_ENTRY_ID_VERSION+':'+ownerPlayerId+':'+counterpartPlayerId+':'+group.battleId+':'+(sourceBeatIds.join(',')||'exposure');
+  const result=group.result?.qualification==='OFFICIAL'?group.result:
+    {qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  const sceneRevision=createHash('sha256').update(JSON.stringify({
+    sceneId,result,chronologyQualified:group.chronologyQualified,
+    eventId:group.eventId,seasonId:group.seasonId,playedAtMs:group.playedAtMs,
+    firstExposureContext:group.firstExposure?.context??null,
+    sourceLineage:[...group.sourceLineage].sort((a,b)=>a.gameIdentity.localeCompare(b.gameIdentity)),
+    sourceBeatIds,sourceEventIds,priorOnlyContext:context,
+    rendered:{rubric:narrative.rubric,title:narrative.title,paragraphs:narrative.paragraphs}
+  })).digest('hex');
   return {
-    entryId:PLAYER_CHRONICLE_ENTRY_ID_VERSION+':'+ownerPlayerId+':'+counterpartPlayerId+':'+group.battleId+':'+(sourceBeatIds.join(',')||'exposure'),
+    // Preserve old identifiers for deployed browser new-ink caches and references.
+    // INT-V1 will migrate browser seen IDs to sceneId using the exact legacy prefix.
+    entryId:legacyEntryId,
+    sceneId,
+    sceneRevision,
+    result,
+    resultStatus:result.qualification,
+    chronologyStatus:group.chronologyQualified?'QUALIFIED':'UNRESOLVED',
+    sourceLineage:group.sourceLineage,
     battleId:group.battleId,
     eventId:group.eventId,
     seasonId:group.seasonId,
@@ -152,18 +187,28 @@ export function projectPlayerChronicle({ownerPlayerId,chapters=[],history=null,n
       const exposure=exposureForLeaguePair(raw,chapter,participants,ownerPlayerId);if(!exposure)continue;
       const page=ensurePage(exposure.counterpartPlayerId);
       if(!page.firstExposure||exposure.chapterOrder<page.firstExposure.chapterOrder)page.firstExposure=exposure;
-      const group=page.groups.get(exposure.battleId)??{battleId:exposure.battleId,eventId:exposure.eventId,seasonId:exposure.seasonId,playedAtMs:exposure.playedAtMs,order:exposure.chapterOrder,beats:[],firstExposure:exposure};
+      const group=page.groups.get(exposure.battleId)??{battleId:exposure.battleId,eventId:exposure.eventId,seasonId:exposure.seasonId,playedAtMs:exposure.playedAtMs,order:exposure.chapterOrder,beats:[],firstExposure:exposure,result:null,resultStatus:'UNRESOLVED',chronologyQualified:true,sourceLineage:[]};
       if(exposure.chapterOrder<group.order){group.order=exposure.chapterOrder;group.firstExposure=exposure;}
       if(group.playedAtMs==null&&exposure.playedAtMs!=null)group.playedAtMs=exposure.playedAtMs;
+      // Match-authoritative aggregate outcome; never read a single Game winner
+      // as the winner of a multi-Game league Battle.
+      group.result=chapter.battleOutcome??null;
+      group.resultStatus=group.result?.qualification??'UNRESOLVED';
+      if(chapter.chronologyQualified===false)group.chronologyQualified=false;
+      if(chapter.sourceRevision)group.sourceLineage.push({gameIdentity:chapter.gameIdentity,sourceRevision:chapter.sourceRevision});
       page.groups.set(exposure.battleId,group);
     }
     for(const raw of rows(chapter.review.chronicle)){
       const beat=beatForLeaguePair(raw,chapter,participants,ownerPlayerId);if(!beat)continue;
       const page=ensurePage(beat.counterpartPlayerId);
-      const group=page.groups.get(beat.battleId)??{battleId:beat.battleId,eventId:beat.eventId,seasonId:beat.seasonId,playedAtMs:beat.playedAtMs,order:beat.chapterOrder,beats:[],firstExposure:null};
+      const group=page.groups.get(beat.battleId)??{battleId:beat.battleId,eventId:beat.eventId,seasonId:beat.seasonId,playedAtMs:beat.playedAtMs,order:beat.chapterOrder,beats:[],firstExposure:null,result:null,resultStatus:'UNRESOLVED',chronologyQualified:true,sourceLineage:[]};
       group.beats.push(beat);
       if(beat.chapterOrder<group.order)group.order=beat.chapterOrder;
       if(group.playedAtMs==null&&beat.playedAtMs!=null)group.playedAtMs=beat.playedAtMs;
+      group.result=chapter.battleOutcome??null;
+      group.resultStatus=group.result?.qualification??'UNRESOLVED';
+      if(chapter.chronologyQualified===false)group.chronologyQualified=false;
+      if(chapter.sourceRevision&&!group.sourceLineage.some(x=>x.gameIdentity===chapter.gameIdentity))group.sourceLineage.push({gameIdentity:chapter.gameIdentity,sourceRevision:chapter.sourceRevision});
       page.groups.set(beat.battleId,group);
     }
   }
@@ -177,10 +222,10 @@ export function projectPlayerChronicle({ownerPlayerId,chapters=[],history=null,n
     const entries=[],priorGroups=[];
     for(let index=0;index<groups.length;index++){
       const group=groups[index];
-      const context=buildPriorNarrativeContext({group,priorGroups,history,ownerPlayerId,counterpartPlayerId,orderByGame});
-      const entry=composeEntry(group,index===0,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId,context,names);
+      const context=group.chronologyQualified?buildPriorNarrativeContext({group,priorGroups:priorGroups.filter(g=>g.chronologyQualified),history,ownerPlayerId,counterpartPlayerId,orderByGame}):null;
+      const entry=composeEntry(group,index===0&&group.chronologyQualified,ownerName,counterpartName,history,ownerPlayerId,counterpartPlayerId,context,names);
       if(index===0||entry.sourceBeatIds.length>0||entry.relationshipMarks.length>0||entry.reputationMarks.length>0)entries.push(entry);
-      priorGroups.push(group);
+      if(group.chronologyQualified)priorGroups.push(group);
     }
     pages.push({
       pairId:pairKey(ownerPlayerId,counterpartPlayerId),
