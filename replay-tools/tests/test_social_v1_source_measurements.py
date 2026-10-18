@@ -131,6 +131,36 @@ class InertMeasurementTests(unittest.TestCase):
         self.assertEqual(first["priorDirectedEpisodeCandidates"]["sameDirectionSourceDeedIds"], [])
         self.assertFalse(projected["qualifiesAnySocialFact"])
 
+    def test_observed_tribute_request_zero_nonzero_unknown_is_not_received_aid(self):
+        b, stats, actions = synthetic_bundle()
+        donor = next(p for p in stats["participants"] if p["playerId"] == 1)
+        donor["economy"] = {"tributeSent": {"evidence": [
+            {"sourceEventId": "tribute-zero", "atMs": 8000,
+             "counterpartPlayerId": 2, "decodedResourceAmount": 0, "resourceId": 0},
+            {"sourceEventId": "tribute-positive", "atMs": 9000,
+             "counterpartPlayerId": 2, "decodedResourceAmount": 640, "resourceId": 1},
+            {"sourceEventId": "tribute-unknown", "atMs": 9200,
+             "counterpartPlayerId": 2, "decodedResourceAmount": None, "resourceId": 2}]}}
+        for i, ref in enumerate(("tribute-zero", "tribute-positive", "tribute-unknown")):
+            actions.append({"eventId": ref, "actorPlayerId": 1,
+                            "timestampMs": [8000, 9000, 9200][i],
+                            "operationOrdinal": 90 + i,
+                            "sourceActionName": "DE_TRIBUTE"})
+        result = measure(b, stats, actions)
+        self.assertEqual([r["requestAmountStatus"] for r in result["tributeRequestContexts"]],
+                         ["ZERO", "NONZERO", "UNKNOWN"])
+        self.assertEqual([r["decodedRequestAmount"] for r in result["tributeRequestContexts"]],
+                         [0, 640, None])
+        self.assertTrue(all(r["coverage"] == "LIMITED" and not r["qualifiesSocialFact"]
+                            for r in result["tributeRequestContexts"]))
+        self.assertFalse(result["qualifiesAnySocialFact"])
+        actions[-2]["actorPlayerId"] = 2
+        refused = measure(b, stats, actions)
+        self.assertNotIn("tribute-positive", [r["sourceEventId"]
+                                for r in refused["tributeRequestContexts"]])
+        self.assertTrue(any(d["reason"] == "TRIBUTE_REQUEST_ORIGINAL_ACTOR_UNVERIFIED"
+                            for d in refused["diagnostics"]))
+
     def test_game_scoping_and_corrected_context_revision(self):
         b, stats, actions = synthetic_bundle()
         before = measure(b, stats, actions)
@@ -266,6 +296,10 @@ class AuthenticCorpusMeasurements(unittest.TestCase):
                     print("AUTHENTIC_SOURCE_TO_CLAIM_WITNESS " +
                           json.dumps({"recording": name, "originalSha256": actual,
                               "neutralCandidateCount": len(measured["observations"]),
+                              "decodedTributeRequestCount": len(measured["tributeRequestContexts"]),
+                              "nonzeroTributeRequestCount": sum(
+                                  r["requestAmountStatus"] == "NONZERO"
+                                  for r in measured["tributeRequestContexts"]),
                               "sourceCandidate": None if sample is None else {
                                   "sourceDeedId": sample["sourceDeedId"],
                                   "kind": sample["kind"],
