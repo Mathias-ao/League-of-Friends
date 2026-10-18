@@ -236,6 +236,7 @@ export interface LeagueRepository {
   stagingSubmitGameResult?(matchId:string,gameId:string,outcome:{winnerTeam?:number;winnerPlayerId?:string;winnerPlayerIds?:string[]}):Promise<{submissionId:string}>;
   stagingConfirmGameResult?(matchId:string,gameId:string,submissionId:string):Promise<void>;
   uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;activeNativeBattleDetail?(query:ActiveNativeDetailRequest):Promise<ActiveNativeDetailResult>;activeNativeBattleRecord?(query:ActiveNativeBattleRecordQuery):Promise<ActiveNativeBattleRecordResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
+  mySocialExperience?(request:{matchId:string;gameId:string}):Promise<import('./intV1Experience').IntV1PrivateExperience>;
   playerChronicle?():Promise<PlayerChronicleResponse>;
   socialHistory?():Promise<SocialHistoryResponse>;
   event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;

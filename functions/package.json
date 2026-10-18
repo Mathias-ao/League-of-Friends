@@ -7,7 +7,7 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node ../contracts/social-v1/package-runtime-schema.mjs",
     "watch": "tsc -p tsconfig.json --watch",
     "lint": "tsc -p tsconfig.json --noEmit",
     "test": "node --test tests/*.test.mjs"
@@ -15,10 +15,10 @@
   "dependencies": {
     "firebase-admin": "14.5.0",
     "firebase-functions": "7.3.2",
-    "google-auth-library": "10.9.1"
+    "google-auth-library": "10.9.1",
+    "ajv": "8.20.0"
   },
   "devDependencies": {
-    "ajv": "8.20.0",
     "typescript": "7.0.2"
   }
 }
