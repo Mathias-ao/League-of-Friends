@@ -1,0 +1,89 @@
+{
+  "fixtureVersion": "AOF_PERSONALITY_SHARED1_ADAPTER_CONFORMANCE_V1",
+  "classification": "SYNTHETIC_CONTRACT_TEST_INPUTS_ONLY",
+  "policyVersion": "PERSONALITY_TEST_POLICY_NOT_APPROVED",
+  "expected": {
+    "contract": "AOF_SOCIAL_V1_SHARED_1",
+    "publication": "PRIVATE_PREVIEW_ONLY",
+    "gameCount": 2,
+    "independentBattleCount": 2,
+    "featureCount": 10,
+    "axes": [
+      "BOOMER_AGGRESSOR",
+      "CAUTIOUS_BOLD",
+      "GUERRILLA_FRONTLINE",
+      "SPECIALIST_IMPROVISER",
+      "COMPACT_EXPANSIVE"
+    ],
+    "rawFractions": {
+      "BOOMER_AGGRESSOR": 0.3,
+      "CAUTIOUS_BOLD": 0.5,
+      "GUERRILLA_FRONTLINE": 0,
+      "SPECIALIST_IMPROVISER": 0,
+      "COMPACT_EXPANSIVE": 0.3333333333333333
+    },
+    "normalizedCandidate": {
+      "BOOMER_AGGRESSOR": 30,
+      "CAUTIOUS_BOLD": 50,
+      "GUERRILLA_FRONTLINE": 0,
+      "SPECIALIST_IMPROVISER": 0,
+      "COMPACT_EXPANSIVE": 33.333333333333336
+    },
+    "proposedPolicyPublication": false,
+    "developingValue": null,
+    "absentAnchorNormalized": null,
+    "commandPostureCaveat": "MILITARY_COMMAND_POSTURE_INFERENCE_ONLY"
+  },
+  "authenticSourceChecks": [
+    {
+      "caseId": "upstream-duel-save66.6",
+      "format": "1v1",
+      "source": "replay-tools/tests/goldens/upstream-duel-save66.6.json",
+      "sourceHash": "dc1a630ea33b197703f70fab0386b476d02b5bdd43916ec012f971ef580d3985",
+      "players": 2,
+      "positiveQueueByReplaySlot": {
+        "1": 153,
+        "2": 156
+      },
+      "authLeaguePlayerMapping": false,
+      "personalityPoleCalibrated": false
+    },
+    {
+      "caseId": "user-ffa-diplo-save68.9",
+      "format": "FFA",
+      "source": "replay-tools/tests/goldens/user-ffa-diplo-save68.9.json",
+      "sourceHash": "ab947d934bbd4fa4e2531f4f8a5014f9b923038a34aa7332d7260eb78fb3fab5",
+      "players": 8,
+      "positiveQueueByReplaySlot": {
+        "1": 1047,
+        "2": 702,
+        "3": 1208,
+        "4": 385,
+        "5": 80,
+        "6": 828,
+        "7": 1803,
+        "8": 1982
+      },
+      "authLeaguePlayerMapping": false,
+      "personalityPoleCalibrated": false
+    },
+    {
+      "caseId": "2v2_arabia",
+      "format": "TEAM",
+      "source": "docs/research/social-v1-2026-10-17-codex-v1b-empirical.md",
+      "sourceCommands": 7363,
+      "players": 4,
+      "authLeaguePlayerMapping": false,
+      "personalityPoleCalibrated": false
+    },
+    {
+      "caseId": "4v4_arabia",
+      "format": "TEAM",
+      "source": "docs/research/social-v1-2026-10-17-codex-v1b-empirical.md",
+      "sourceCommands": 19382,
+      "players": 8,
+      "authLeaguePlayerMapping": false,
+      "personalityPoleCalibrated": false
+    }
+  ]
+}
