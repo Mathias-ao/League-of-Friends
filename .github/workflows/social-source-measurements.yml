@@ -24,6 +24,9 @@ jobs:
           cache-dependency-path: replay-tools/requirements.txt
       - name: Install existing replay dependencies
         run: python -m pip install -r replay-tools/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - name: Inspect hash-pinned real original recordings without scoring or deployment
         env:
           AOF_SOCIAL_AUTHENTIC_MEASUREMENTS: "1"
