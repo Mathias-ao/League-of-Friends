@@ -23,6 +23,7 @@ import {seasonScoringSnapshot} from '../lib/engines/seasonPoints.js';
 import {validateNativeRecording} from '../lib/services/nativeRecordingValidation.js';
 import {publishNativePlayerRecording} from '../lib/services/nativePlayerRecording.js';
 import {AsyncLocalStorage} from 'node:async_hooks';
+import {diagnosticRenderWitness} from './support/upload-diagnostic-render-witness.mjs';
 
 // Associate only safe diagnostic records with this local test invocation.
 const performanceContext=new AsyncLocalStorage();
@@ -48,9 +49,12 @@ Object.assign(process.env,{AOF_NATIVE_PLAYER_UPLOAD:'recorded-events-v1',AOF_NAT
 // Admin validation/publication flags stay OFF. Existing read-only history is enabled locally, never social scoring.
 assert.ok(!process.env.AOF_NATIVE_REPLAY_INTEGRATION&&!process.env.AOF_NATIVE_READY_PUBLICATION);
 const bucket=getStorage().bucket(process.env.REPLAY_BUCKET),reports=[];
+const witnessMode=process.env.AOF_NATIVE_DIAGNOSTIC_WITNESS==='1',witnesses=[],witnessGuids=new Set(),witnessActors=new Set(),witnessIntervals=[];
+if(witnessMode){assert.equal(process.env.AOF_REPLAY_UPLOAD_PERF_TRACE,'1');assert.ok(process.env.AOF_NATIVE_DIAGNOSTIC_WORKER_LOG);}
 let first;
-const cases=[['1v1_t90-deak','ONE_V_ONE','ACCEPTED'],['2v2_arabia','TWO_V_TWO','PENDING_ADMIN_REVIEW'],
+const allCases=[['1v1_t90-deak','ONE_V_ONE','ACCEPTED'],['2v2_arabia','TWO_V_TWO','PENDING_ADMIN_REVIEW'],
   ['4v4_arabia','FOUR_V_FOUR','ACCEPTED'],['FFA_7','FFA','PENDING_ADMIN_REVIEW']];
+const cases=witnessMode?allCases.slice(0,2):allCases;
 const concurrency=Number(process.env.AOF_NATIVE_PERF_CONCURRENCY??1);
 assert.ok([1,2].includes(concurrency),'Local authentic performance diagnostic supports one or two users.');
 if(concurrency===2)process.env.AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST=cases.map(([name])=>'player-'+name+'/g1').join(',');
@@ -87,7 +91,7 @@ async function runCase([name,format,expected]){
   const began=Date.now();
   const nativeHandlerTimings=[];nativeHandlerTimings.records=[];
   const initialUpload=()=>performanceContext.run(nativeHandlerTimings,()=>uploadReplay.run(request));
-  const attempts=await Promise.allSettled(name==='1v1_t90-deak'&&concurrency===1?[initialUpload(),initialUpload()]:[initialUpload()]);
+  const attempts=await Promise.allSettled(name==='1v1_t90-deak'&&concurrency===1&&!witnessMode?[initialUpload(),initialUpload()]:[initialUpload()]);
   const successes=attempts.filter(r=>r.status==='fulfilled');
   assert.ok(successes.length>0,attempts.map(r=>r.reason?.message).join('; '));
   const response=successes[0].value;
@@ -160,6 +164,16 @@ async function runCase([name,format,expected]){
   assert.equal(battleDataset.games[0].revision,1);
   assert.equal(battleDataset.games[0].eligible,expected==='ACCEPTED');
   assert.deepEqual(battleDataset.games[0].players.map(p=>p.playerId).sort(),roster.map(p=>p.playerId).sort());
+  if(witnessMode){
+    const witness=await diagnosticRenderWitness({receipt:response,dataset:battleDataset,
+      expected:{matchId,gameId,sourceSha256:sourceHash,revision:response.replayStatisticsRevision},
+      records:nativeHandlerTimings.records,workerLogPath:process.env.AOF_NATIVE_DIAGNOSTIC_WORKER_LOG,root:resolve('.')});
+    const current=(await gr.get()).data();
+    assert.ok(current.activeReplayStatisticsId===sourceHash&&current.replayStatisticsRevision===response.replayStatisticsRevision,'Current source changed during render witness');
+    assert.ok(!witnessGuids.has(source.matchFacts.game.guid)&&!witnessActors.has(actor.authUid),'Witness requires independent recorded Games and authenticated actors');
+    witnessGuids.add(source.matchFacts.game.guid);witnessActors.add(actor.authUid);witnessIntervals.push([began,began+uploadMs]);
+    witnesses.push({...witness,currentSourceRevisionRechecked:true});
+  }
   let dataset=await collectStatistics({matchId});assert.equal(dataset.games.length,1);assert.equal(dataset.games[0].eligible,expected==='ACCEPTED');
   await rebuildStatisticsReadModels();
   assert.equal((await db.doc('players/'+actor.playerId+'/statistics/experienceLifetime').get()).data().games,expected==='ACCEPTED'?1:0);
@@ -200,9 +214,17 @@ async function runCase([name,format,expected]){
     diagnosticTraceOffResponseEquivalent,
     ordinaryRequestAttempts:attempts.map(r=>r.status==='fulfilled'?{state:r.value.state,alreadyProcessed:r.value.alreadyProcessed}:
       {state:'REJECTED',code:r.reason?.code??null})});
-  console.log(JSON.stringify(reports.at(-1)));
+  if(!witnessMode)console.log(JSON.stringify(reports.at(-1)));
 }
 for(let offset=0;offset<cases.length;offset+=concurrency)await Promise.all(cases.slice(offset,offset+concurrency).map(runCase));
+if(witnessMode){
+  assert.equal(witnesses.length,2);assert.equal(new Set(witnesses.map(row=>row.diagnosticTraceId)).size,2);
+  const concurrentHandlerOverlap=concurrency===2&&Math.max(...witnessIntervals.map(row=>row[0]))<Math.min(...witnessIntervals.map(row=>row[1]));
+  if(concurrency===2)assert.ok(concurrentHandlerOverlap,'Independent handler attempts did not overlap');
+  await writeFile(resolve(out,'diagnostic-render-witness.json'),JSON.stringify({contract:'AOF_UPLOAD_DIAGNOSTIC_RENDER_WITNESS_1',
+    demoOnly:true,distinctRecordedGuids:witnessGuids.size===2,distinctAuthenticatedActors:witnessActors.size===2,
+    distinctAttemptTraceIds:true,concurrentHandlerOverlap,witnesses},null,2)+'\n');
+}
 // Fault injection reuses the verified real package; it never changes source facts.
 const faultMeasurements=[];
 async function rejectFault(name,run,expected){

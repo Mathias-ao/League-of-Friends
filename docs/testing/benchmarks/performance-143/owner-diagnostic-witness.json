@@ -1,0 +1,44 @@
+{
+  "contract": "AOF_UPLOAD_DIAGNOSTIC_RENDER_WITNESS_1",
+  "demoOnly": true,
+  "distinctRecordedGuids": true,
+  "distinctAuthenticatedActors": true,
+  "distinctAttemptTraceIds": true,
+  "concurrentHandlerOverlap": true,
+  "witnesses": [
+    {
+      "diagnosticTraceId": "d399c8ba-0102-4bbd-9e57-0bbd52dc396c",
+      "authenticatedReceiptContractMatched": true,
+      "sourceRevisionRendered": true,
+      "nonPreviewRendered": true,
+      "usableStatisticsRendered": true,
+      "observerReceiptFrameContractMatched": true,
+      "ssrJsdomOnly": true,
+      "browserClickObserved": false,
+      "browserLayoutObserved": false,
+      "compositorPaintObserved": false,
+      "p95Established": false,
+      "functionsNumericLogJoined": true,
+      "authenticatedWorkerLogJoined": true,
+      "diagnosticLogPrivacyChecked": true,
+      "currentSourceRevisionRechecked": true
+    },
+    {
+      "diagnosticTraceId": "c8f4c32d-dfc9-48e9-a010-13fadd3eb0ad",
+      "authenticatedReceiptContractMatched": true,
+      "sourceRevisionRendered": true,
+      "nonPreviewRendered": true,
+      "usableStatisticsRendered": true,
+      "observerReceiptFrameContractMatched": true,
+      "ssrJsdomOnly": true,
+      "browserClickObserved": false,
+      "browserLayoutObserved": false,
+      "compositorPaintObserved": false,
+      "p95Established": false,
+      "functionsNumericLogJoined": true,
+      "authenticatedWorkerLogJoined": true,
+      "diagnosticLogPrivacyChecked": true,
+      "currentSourceRevisionRechecked": true
+    }
+  ]
+}
