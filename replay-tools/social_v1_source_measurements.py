@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+import math
 
 VERSION = "AOF_SOCIAL_SOURCE_MEASUREMENTS_PREVIEW_1"
 METHOD = "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1"
@@ -206,8 +207,52 @@ def project_social_source_measurements(*, statistics, context, action_events,
             }
             observations.append(observation)
     observations.sort(key=lambda x: x["observationId"])
+
+    # A separate factual family already exposed by Economy Statistics V5.
+    # A recorded DE_TRIBUTE *request* preserves direction and requested amount,
+    # but is NOT proven settled transfer, helpfulness, urgency or recipient need.
+    tribute = {}
+    for player in statistics.get("participants") or []:
+        actor = player["playerId"]
+        evidence = (((player.get("economy") or {}).get("tributeSent") or {}).get("evidence") or [])
+        for row in evidence:
+            ref = row.get("sourceEventId")
+            target = row.get("counterpartPlayerId")
+            if type(target) is not int or target not in roster or target == actor:
+                diagnostics.append({"sourceEventId": ref, "reason": "TRIBUTE_RECIPIENT_UNVERIFIED"})
+                continue
+            e = original.get(ref)
+            if not e or e["actorReplayPlayerId"] != actor:
+                diagnostics.append({"sourceEventId": ref, "reason": "TRIBUTE_REQUEST_ORIGINAL_ACTOR_UNVERIFIED"})
+                continue
+            if type(row.get("atMs")) is not int or row["atMs"] != e["recordingAtMs"]:
+                diagnostics.append({"sourceEventId": ref, "reason": "TRIBUTE_REQUEST_SOURCE_CLOCK_MISMATCH"})
+                continue
+            amount = row.get("decodedResourceAmount")
+            if amount is not None and (type(amount) not in (float, int)
+                                       or not math.isfinite(amount) or amount < 0):
+                raise ValueError("INVALID_DECODED_TRIBUTE_REQUEST_AMOUNT")
+            record = {
+                "sourceEventId": ref, "methodVersion": "AOF_ECONOMY_TRIBUTE_REQUEST_SOURCE_V1",
+                "fromReplayPlayerId": actor, "toReplayPlayerId": target,
+                "recordingAtMs": e["recordingAtMs"],
+                "operationOrdinal": e["operationOrdinal"],
+                "sourceAction": e["originalAction"],
+                "resourceId": row.get("resourceId"),
+                "decodedRequestAmount": amount,
+                "requestAmountStatus": ("UNKNOWN" if amount is None
+                                         else "ZERO" if amount == 0 else "NONZERO"),
+                "layer": "OBSERVED_DECODED_TRIBUTE_COMMAND_REQUEST",
+                "coverage": "LIMITED", "qualifiesSocialFact": False,
+                "reasonCodes": ["DELIVERED_RESOURCES_NOT_PROVEN",
+                                "BENEFICIARY_NEED_AND_MATERIALITY_UNQUALIFIED"],
+            }
+            if ref in tribute and tribute[ref] != record:
+                raise ValueError("CONFLICTING_TRIBUTE_SOURCE_EVENT")
+            tribute[ref] = record
+    tribute_requests = [tribute[k] for k in sorted(tribute)]
     revision_digest = _hash([VERSION, revision, context["sourceContextRevision"],
-                             lookback_ms, observations, diagnostics])
+                             lookback_ms, observations, tribute_requests, diagnostics])
     return {
         "version": VERSION, "methodVersion": METHOD,
         "sourceRevision": revision, "sourceContextRevision": context["sourceContextRevision"],
@@ -215,11 +260,13 @@ def project_social_source_measurements(*, statistics, context, action_events,
         "authenticSourceAuthenticationPerformed": False,
         "officialLeagueAuthority": False, "publicationAllowed": False,
         "qualifiesAnySocialFact": False,
-        "observations": observations, "diagnostics": diagnostics,
+        "observations": observations, "tributeRequestContexts": tribute_requests,
+        "diagnostics": diagnostics,
         "limitations": [
             "ORIGINAL_SOURCE_EVENT_VERIFIED_WITHIN_THIS_RETAINED_INPUT_ONLY",
             "SERVER_READY_SOURCE_AND_ACTIVE_MAPPING_MUST_BE_EXTERNALLY_ATTESTED",
             "NO_COMPLETED_ACTION_DAMAGE_KILL_CASTLE_OR_RESCUE_PROOF",
+            "TRIBUTE_REQUEST_NOT_SETTLED_RECIPIENT_CREDIT_OR_HELP",
             "NO_PREENTRY_OPPONENT_STRENGTH_OR_VICTIM_VULNERABILITY_PROOF",
             "NO_EFFECTIVE_DIPLOMACY_OR_RUPTURE_PROOF",
             "NO_QUALIFIED_CONDUCT_CLAIMS_OR_RECIPROCITY",
