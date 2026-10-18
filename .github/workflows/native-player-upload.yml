@@ -18,6 +18,9 @@ jobs:
       CI: 'true'
       FIREBASE_CLI_DISABLE_USAGE_REPORTING: 'true'
       FUNCTIONS_EMULATOR: 'true'
+      GCLOUD_PROJECT: demo-aof-native-player
+      AOF_REPLAY_UPLOAD_PERF_TRACE: '1'
+      AOF_REPLAY_WORKER_PERF_TRACE: '1'
       REPLAY_BUCKET: demo-aof-native-player.appspot.com
       REPLAY_WORKER_URL: http://127.0.0.1:18765
       REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-native-player-test

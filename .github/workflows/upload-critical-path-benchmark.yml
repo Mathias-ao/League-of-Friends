@@ -74,6 +74,15 @@ jobs:
             --mode existing-worker \
             --replay ".fixture-corpus/replay-fixtures/build-185872/$FIXTURE.aoe2record" \
             --out ".replay-lab/upload-profile-$FIXTURE/existing.json"
+      - name: Ordinary native worker local path (not browser-to-READY acceptance)
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          /usr/bin/time -v -o ".replay-lab/upload-profile-$FIXTURE/native-resources.txt" \
+            python replay-tools/benchmark_upload_critical_path.py \
+            --mode native-worker \
+            --replay ".fixture-corpus/replay-fixtures/build-185872/$FIXTURE.aoe2record" \
+            --out ".replay-lab/upload-profile-$FIXTURE/native.json"
       - name: Direct Recorded Events and shared-producer local path
         env:
           FIXTURE: ${{ matrix.fixture }}
@@ -115,7 +124,9 @@ jobs:
           path: |
             .replay-lab/upload-profile-${{ matrix.fixture }}/existing.json
             .replay-lab/upload-profile-${{ matrix.fixture }}/direct.json
+            .replay-lab/upload-profile-${{ matrix.fixture }}/native.json
             .replay-lab/upload-profile-${{ matrix.fixture }}/existing-resources.txt
             .replay-lab/upload-profile-${{ matrix.fixture }}/direct-resources.txt
+            .replay-lab/upload-profile-${{ matrix.fixture }}/native-resources.txt
           if-no-files-found: warn
           retention-days: 14
