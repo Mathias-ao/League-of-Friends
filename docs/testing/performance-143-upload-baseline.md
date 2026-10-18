@@ -99,3 +99,5 @@ The default is three serial trials with a persistent local worker and a fresh de
 - **P3:** choose the smallest extraction/hydration change from the measured profile. Preserve validators and immutable events; no new parser or alternate source database.
 
 INT-V1 integrates accepted changes without conflicting with Workers 1/4/Personality/Chronicle ownership. Independent #132 repeats the accepted exact INT head, four-format p50/p95/error distribution and correctness gates. A meaningful sample count, declared client/network/concurrency envelope and separately authorized bounded cloud window remain necessary for release acceptance. No deployment, resource change, feature activation or stopped staging E2E restart was performed.
+
+The owner's actual-browser follow-up is the separate [upload-only staging acceptance plan](performance-143-upload-only-staging.md). It records merged source pins, unresolved deployment/observability prerequisites, fixture/GUID capacity, private timing boundaries and rollback. It does not authorize staging execution or certify the p95 gate.
