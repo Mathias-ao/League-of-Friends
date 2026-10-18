@@ -1,6 +1,8 @@
 # AoF V1 — Exceptional Social Events: six-family candidate catalogue
 
 **Revision:** 1.1 (Organiser 2 review). **Status:** DESIGN PROPOSAL / PREVIEW ONLY; not approved, not an implemented detector, not scoring, not live. **The revised V1 Cruelty and Hostility pathways and exact positive/negative predicates are in the [inference-first review companion](exceptional-social-events-v1-inference-review-2026-10-17.md). This v1.1 companion supersedes the original launch-readiness assessments and retains strict future variants.** **Work order:** [#130](https://github.com/Mathias-ao/League-of-Friends/issues/130). **Reference main:** c9c124f80fff9ebabbdec44bc69dc6e7d180ea1e (17 October 2026). **Coordination:** #122 policy; #124 context; #125 Chronicle; #126 inference; #127 evaluator; #128 invitations; #129 honours; #131 storylets. No production modifications or deployments.
+> **Latest mobile owner-review entrypoint (18 October 2026):** [Six deeds worthy of the annals — owner decision sheet](exceptional-social-events-v1-owner-decisions-2026-10-18.md). This is the concise shortlist, exact six-family gate register, evidence-readiness/correction matrix, Chronicle samples and owner choices. It supersedes earlier preliminary launch-readiness wording where there is a conflict; the full catalogue and inference-first companion remain supporting alternatives.
+
 
 ## 1. Product intention, hard boundaries and shortlist
 
