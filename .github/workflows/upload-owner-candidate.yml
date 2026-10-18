@@ -1,0 +1,73 @@
+name: Upload owner candidate attestation (NO deploy)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/upload-owner-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  candidate-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CANDIDATE_SHA: 2ece99cd37eabf6316f354e9177ceb74a3c8ce7f
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+          persist-credentials: false
+      - name: Resolve the base and build the reviewed worker locally (NO registry push)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/aof-owner-candidate"
+          docker pull python:3.12-slim-bookworm
+          python - <<'PY'
+          import json, os, pathlib, subprocess
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'aof-owner-candidate'
+          base = json.loads(subprocess.check_output(['docker', 'image', 'inspect', 'python:3.12-slim-bookworm']))[0]['RepoDigests'][0]
+          source = pathlib.Path('replay-tools/Dockerfile.staging').read_text()
+          assert source.count('FROM ') == 1 and 'FROM python:3.12-slim-bookworm\n' in source
+          (out / 'Dockerfile.resolved').write_text(source.replace('FROM python:3.12-slim-bookworm\n', 'FROM ' + base + '\n'))
+          (out / 'base-image.txt').write_text(base + '\n')
+          PY
+          docker build --platform linux/amd64 -f "$RUNNER_TEMP/aof-owner-candidate/Dockerfile.resolved" \
+            --label "org.opencontainers.image.revision=$CANDIDATE_SHA" -t aof-owner-candidate:reviewed replay-tools
+      - name: Recompute processor in the actual candidate and retain its immutable bytes
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev \
+            --entrypoint python aof-owner-candidate:reviewed \
+            -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())' \
+            > "$RUNNER_TEMP/aof-owner-candidate/processor.txt"
+          docker save -o "$RUNNER_TEMP/aof-owner-candidate/worker-image.tar" aof-owner-candidate:reviewed
+          python - <<'PY'
+          import hashlib, json, os, pathlib, re, subprocess
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'aof-owner-candidate'
+          sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert sha == os.environ['CANDIDATE_SHA']
+          processor = (out / 'processor.txt').read_text().strip()
+          assert re.fullmatch('[a-f0-9]{64}', processor)
+          image = json.loads(subprocess.check_output(['docker', 'image', 'inspect', 'aof-owner-candidate:reviewed']))[0]
+          assert image['Config']['Labels']['org.opencontainers.image.revision'] == sha
+          digest = hashlib.sha256()
+          with (out / 'worker-image.tar').open('rb') as image_file:
+              for block in iter(lambda: image_file.read(1024 * 1024), b''):
+                  digest.update(block)
+          report = {'contract': 'AOF_UPLOAD_OWNER_CANDIDATE_1', 'sourceCommit': sha,
+              'sourceTrees': {name: subprocess.check_output(['git', 'rev-parse', 'HEAD:' + name], text=True).strip() for name in ['functions', 'web', 'replay-tools']},
+              'platform': 'linux/amd64', 'baseImage': (out / 'base-image.txt').read_text().strip(),
+              'resolvedDockerfileSha256': hashlib.sha256((out / 'Dockerfile.resolved').read_bytes()).hexdigest(),
+              'imageConfigDigest': image['Id'], 'imageIdentityKind': 'DOCKER_CONFIG_DIGEST_NOT_REGISTRY_MANIFEST_DIGEST',
+              'imageArchiveSha256': digest.hexdigest(), 'processorRevisionInImage': processor,
+              'privateRegistryManifestDigest': None, 'cloudRunRevision': None,
+              'cloudAction': 'NONE_NO_PUSH_NO_DEPLOY', 'stagingAuthorization': 'NOT_GRANTED'}
+          (out / 'attestation.json').write_text(json.dumps(report, indent=2) + '\n')
+          print('AOF_OWNER_CANDIDATE_ATTESTATION=' + json.dumps(report, separators=(',', ':')))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upload-owner-candidate-${{ env.CANDIDATE_SHA }}
+          path: ${{ runner.temp }}/aof-owner-candidate/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
