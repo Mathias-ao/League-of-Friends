@@ -275,11 +275,11 @@ test('long Match histories page beyond 100 without truncation and stable scene I
  assert.equal(read.coverage.readableAcceptedGames,135);
  assert.equal(read.coverage.excludedGames,0);
  assert.equal(new Set(read.chronicle.pages[0].entries.map(x=>x.entryId)).size,read.chronicle.pages[0].entries.length);
- const original=read.chronicle.pages[0].entries[0].entryId;
+ const original=read.chronicle.pages[0].entries[0].sceneId;
  const revisedGame=records.get('matches/m/games/g');
  revisedGame.canonicalResult={...revisedGame.canonicalResult,revision:2};
  const corrected=await getPlayerChronicle.run(request);
- assert.equal(corrected.chronicle.pages[0].entries[0].entryId,original);
+ assert.equal(corrected.chronicle.pages[0].entries[0].sceneId,original);
  assert.equal(corrected.coverage.readableAcceptedGames,135);
 });
 
@@ -332,13 +332,13 @@ test('two Games in one Battle remain one scene; duplicate recorded source is not
  const result=await getPlayerChronicle.run(request);
  assert.equal(result.coverage.readableAcceptedGames,2);
  assert.equal(result.chronicle.pages[0].entries.length,1);
- const firstId=result.chronicle.pages[0].entries[0].entryId;
+ const firstId=result.chronicle.pages[0].entries[0].sceneId;
  records.get('matches/m/games/g2').activeReplayStatisticsId='r1';
  records.set('matches/m/games/g2/replaySources/r1',{...src});
  const duplicate=await getPlayerChronicle.run(request);
  assert.equal(duplicate.coverage.readableAcceptedGames,1);
  assert.equal(duplicate.coverage.excludedGames,1);
- assert.equal(duplicate.chronicle.pages[0].entries[0].entryId,firstId);
+ assert.equal(duplicate.chronicle.pages[0].entries[0].sceneId,firstId);
 });
 
 test('ordinary native READY upload contributes factual Chronicle before accepted Game result or Match finalisation',async()=>{
@@ -471,7 +471,8 @@ test('authenticated correction-heavy 145 Battles × 2 Games gives complete bound
  const corrected=await getPlayerChronicle.run(request);
  assert.equal(corrected.coverage.readableAcceptedGames,289);
  assert.equal(corrected.chronicle.pages[0].entries.at(-1).sceneId,prior.sceneId);
- assert.equal(corrected.chronicle.pages[0].entries.at(-1).entryId,prior.entryId);
+ assert.equal(corrected.chronicle.pages[0].entries.at(-1).sceneId,prior.sceneId);
+ assert.notEqual(corrected.chronicle.pages[0].entries.at(-1).entryId,prior.entryId,'old source-derived entryId is preserved by design, sceneId is stable');
 });
 
 test('history over explicit capacity fails complete-or-error without returning 256 deceptively complete Matches',async()=>{
