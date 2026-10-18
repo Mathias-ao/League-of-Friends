@@ -15,7 +15,7 @@
 | Hostility · **Old Wounds Reopened** `E-HOS-02` | Someone once helped B, then in later war specifically bore down on B again | Earlier A→B meaningful help + later actual A/B opposition + separate A→B economic p and directed q | **High-risk / owner approval essential**: new distinct-Hostility meaning, no actual genuine positive yet |
 | Bond · **Stand Together** `E-BON-01` | An act of aid is remembered and later repaid by deeds | Different Battles contain independent A→B and B→A directed meaningful help | **Conditional / at risk**: two genuine directed-help witnesses still needed |
 
-**These are six **proposed** memorable historical event families, NOT six working launch recognizers.** Rarity is the logical conjunction of historically separate substantive acts and unusual context, not a secretly chosen multiplier, percentile, timing cutoff or player quota. Specific materials/coverage thresholds and any further numerical rarity calibration need separate owner and real-fixture review.
+**Six proposed historical event families; none is a demonstrated working V1 recognizer.** Rarity is the logical conjunction of historically separate substantive acts and unusual context, not a secretly chosen multiplier, percentile, timing cutoff or player quota. Specific materials/coverage thresholds and any further numerical rarity calibration need separate owner and real-fixture review.
 
 ## Shared hard gate for all six
 
