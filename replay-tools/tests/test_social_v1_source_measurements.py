@@ -100,6 +100,35 @@ class InertMeasurementTests(unittest.TestCase):
         self.assertEqual(affected["firstSourceMoment"]["order"], "PARTIAL")
         self.assertIsNone(affected["firstSourceMoment"]["operationOrdinal"])
 
+    def test_prior_pair_history_is_before_entry_and_not_manufactured_reciprocity(self):
+        b, stats, actions = synthetic_bundle(kind="pressure")
+        source_deed = deepcopy(stats["pairSocialEvidence"]["deeds"][0])
+        source_deed["deedId"] = "deed-Y"
+        source_deed["sourceEventIds"] = ["next-pressure"]
+        source_deed["facets"] = [{
+            "kind": "ECONOMY_PRESSURE", "fromPlayerId": 1, "toPlayerId": 2,
+            "sourceEventIds": ["next-pressure"]}]
+        stats["pairSocialEvidence"]["deeds"].append(source_deed)
+        next_context = deepcopy(b["context"]["deedContexts"][0])
+        next_context.update(sourceDeedId="deed-Y", sourceEventIds=["next-pressure"],
+                            facetKinds=["ECONOMY_PRESSURE"],
+                            firstAtMs=16000, lastAtMs=16000)
+        b["context"]["deedContexts"].append(next_context)
+        actions.append({"eventId": "next-pressure", "actorPlayerId": 1,
+                        "timestampMs": 16000, "operationOrdinal": 30,
+                        "sourceActionName": "ORDER"})
+        projected = measure(b, stats, actions)
+        latter = next(x for x in projected["observations"]
+                      if x["sourceDeedId"] == "deed-Y")
+        prior = latter["priorDirectedEpisodeCandidates"]
+        self.assertEqual(prior["sameDirectionSourceDeedIds"], ["deed-X"])
+        self.assertEqual(prior["oppositeDirectionSourceDeedIds"], [])
+        self.assertFalse(prior["absenceQualified"])
+        first = next(x for x in projected["observations"]
+                     if x["sourceDeedId"] == "deed-X")
+        self.assertEqual(first["priorDirectedEpisodeCandidates"]["sameDirectionSourceDeedIds"], [])
+        self.assertFalse(projected["qualifiesAnySocialFact"])
+
     def test_game_scoping_and_corrected_context_revision(self):
         b, stats, actions = synthetic_bundle()
         before = measure(b, stats, actions)
