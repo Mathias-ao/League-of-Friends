@@ -15,6 +15,9 @@ function publicChronicleProjection(chronicle:any){
       entries:(page.entries??[]).map((entry:any)=>({
         entryId:entry.entryId,
         sceneId:entry.sceneId,
+        sceneRevision:entry.sceneRevision,
+        // Aggregate authoritative Match result, not a single Game's winner.
+        result:entry.result??{qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null},
         resultStatus:entry.resultStatus??'UNRESOLVED',
         chronologyStatus:entry.chronologyStatus??'UNRESOLVED',
         battleId:entry.battleId,
@@ -48,6 +51,7 @@ export const getPlayerChronicle=onCall({...callableOptions,timeoutSeconds:120},a
     coverage:{
       completedBattles:result.coverage.completedBattles,
       scannedBattles:result.coverage.scannedBattles,
+      scannedGames:result.coverage.scannedGames,
       unresolvedOutcomeGames:result.coverage.unresolvedOutcomeGames,
       chronologyPendingBattles:result.coverage.chronologyPendingBattles,
       readableAcceptedGames:result.coverage.readableAcceptedGames,
