@@ -75,7 +75,7 @@ await disputeCanonicalGameResult.run({auth:{uid},data:{requestId:'intb-dispute',
 const disputed=await ownRead();assert.equal(disputed.coverage.currentSources,0);
 const winner=game.canonicalResult.winningPlayerIds.includes(owner)?other:owner;
 await adminResolveCanonicalResultDispute.run({auth:{uid:admin},data:{requestId:'intb-resolve',matchId,gameId:'g1',disputeId:'intb-dispute',
- resolution:'CORRECT',reason:'Controlled test only: authoritative revision replacement.',expectedSourceHash:game.activeReplayStatisticsId,winnerPlayerId:winner}});
+ resolution:'CORRECT',reason:'Controlled test only: authoritative revision replacement.',expectedSourceHash:game.activeReplayStatisticsId,winnerTeam:roster.find(p=>p.playerId===winner).team}});
 const corrected=await ownRead();assert.notEqual(corrected.inputDigest,initial.inputDigest);assert.equal(corrected.coverage.currentSources,2);
 assert.equal(corrected.personality.battleFeatures.length,5);
 const correctedBook=await bookRead(),newEntry=correctedBook.chronicle.pages.find(p=>p.counterpartPlayerId===other)?.entries[0];
