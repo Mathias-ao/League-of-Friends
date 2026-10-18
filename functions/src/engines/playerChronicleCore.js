@@ -6,7 +6,19 @@ import {buildPriorNarrativeContext,writeBattleNarrative} from './playerChronicle
  * This is a read-only writer. It never awards points or upgrades shadow stages to official state.
  */
 export const PLAYER_CHRONICLE_VERSION = 'AOF_PLAYER_CHRONICLE_V2';
-const PLAYER_CHRONICLE_ENTRY_ID_VERSION = 'AOF_PLAYER_CHRONICLE_V1'; // Stable historical identity across prose-only writer upgrades.
+const PLAYER_CHRONICLE_ENTRY_ID_VERSION = 'AOF_PLAYER_CHRONICLE_V1'; // Legacy browser seen-ID format.
+
+/** Pure INT-V1 migration seam: a browser's stored old beat-derived IDs are
+ * equivalent to this pair×Battle scene, even when source correction changed
+ * the beat suffix. Only the signed-in owner and counterpart are consulted.
+ * This does not read localStorage or change the existing UI.
+ */
+export function chronicleWasSeenByLegacyId(storedIds,entry,ownerId,counterpartId){
+  if(!Array.isArray(storedIds)||!entry?.sceneId)return false;
+  if(storedIds.includes(entry.sceneId)||storedIds.includes(entry.entryId))return true;
+  const prefix=PLAYER_CHRONICLE_ENTRY_ID_VERSION+':'+ownerId+':'+counterpartId+':'+entry.battleId+':';
+  return storedIds.some(value=>typeof value==='string'&&value.startsWith(prefix));
+}
 
 const rows=v=>Array.isArray(v)?v:[];
 const rec=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:null;
