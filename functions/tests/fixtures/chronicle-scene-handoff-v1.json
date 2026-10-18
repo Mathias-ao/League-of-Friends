@@ -1,0 +1,80 @@
+{
+  "version": "AOF_CHRONICLE_FACTUAL_SCENE_HANDOFF_V1",
+  "synthetic": true,
+  "matchId": "battle-1",
+  "battleId": "battle-1",
+  "ownerPlayerId": "a",
+  "counterpartPlayerId": "b",
+  "sceneId": "afb46b315610df0ef96ccda9e9019f9096cb32f8850b178b404ab8f96e00ef88",
+  "legacyEntryId": "AOF_PLAYER_CHRONICLE_V1:a:b:battle-1:help",
+  "result": {
+    "qualification": "UNRESOLVED",
+    "resultRevision": null,
+    "winningPlayerIds": null
+  },
+  "chronologyQualified": true,
+  "sourceLineage": [
+    {
+      "gameIdentity": "battle-1/game-1",
+      "sourceRevision": "source-1"
+    },
+    {
+      "gameIdentity": "battle-1/game-2",
+      "sourceRevision": "source-2"
+    }
+  ],
+  "sourceQualifiedBeats": [
+    {
+      "id": "help",
+      "kind": "SUPPORT_PARTICIPATION",
+      "moment": {
+        "atMs": 22000,
+        "operationOrdinal": 2
+      },
+      "actorPlayerId": 1,
+      "targetPlayerId": 2,
+      "scope": "INFERRED_SUPPORT_COMMAND_PARTICIPATION",
+      "sourceEventIds": [
+        "event-1"
+      ]
+    }
+  ],
+  "publicDto": {
+    "entryId": "AOF_PLAYER_CHRONICLE_V1:a:b:battle-1:help",
+    "sceneId": "afb46b315610df0ef96ccda9e9019f9096cb32f8850b178b404ab8f96e00ef88",
+    "resultStatus": "UNRESOLVED",
+    "chronologyStatus": "QUALIFIED",
+    "result": {
+      "qualification": "UNRESOLVED",
+      "resultRevision": null,
+      "winningPlayerIds": null
+    }
+  },
+  "correction": {
+    "sourceRevision": "source-3",
+    "newBeatId": "corrected-help",
+    "unchangedSceneId": "afb46b315610df0ef96ccda9e9019f9096cb32f8850b178b404ab8f96e00ef88"
+  },
+  "privacy": {
+    "internalOnly": [
+      "sourceLineage",
+      "sourceQualifiedBeats",
+      "sourceEventIds",
+      "shadowStages",
+      "sourceHashes",
+      "privateTestimony"
+    ],
+    "publicOnly": [
+      "entryId",
+      "sceneId",
+      "sceneRevision",
+      "battleId",
+      "result",
+      "resultStatus",
+      "chronologyStatus",
+      "rubric",
+      "title",
+      "paragraphs"
+    ]
+  }
+}
