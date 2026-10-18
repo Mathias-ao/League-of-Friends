@@ -89,6 +89,26 @@ def project_social_source_measurements(*, statistics, context, action_events,
     original = _original_index(action_events, max_events)
     allowed = {r["sourceDeedId"]: r for r in context.get("deedContexts") or []}
     deeds = pair.get("deeds") or []
+    # Reuse stable neutral deeds to describe strictly previous, independently
+    # sourced pair episodes. This is not a second social/historical ledger.
+    prior_pair = {}
+    for row in deeds:
+        did = row.get("deedId")
+        d = allowed.get(did)
+        if not d:
+            continue
+        for facet in row.get("facets") or []:
+            if facet.get("kind") not in ACTOR_FACETS:
+                continue
+            direction = (facet.get("fromPlayerId"), facet.get("toPlayerId"))
+            if any(type(p) is not int for p in direction):
+                continue
+            prior_pair.setdefault(direction, {})[did] = {
+                "sourceDeedId": did, "firstAtMs": d["firstAtMs"],
+                "lastAtMs": d["lastAtMs"],
+                "facetKinds": sorted({f.get("kind") for f in row["facets"]
+                                      if f.get("fromPlayerId") == direction[0] and
+                                         f.get("toPlayerId") == direction[1]})}
     observations = []
     diagnostics = []
     for deed in sorted(deeds, key=lambda d: str(d.get("deedId"))):
@@ -137,6 +157,20 @@ def project_social_source_measurements(*, statistics, context, action_events,
                            key=lambda e: (e["recordingAtMs"],
                                           e["operationOrdinal"] if e["operationOrdinal"] is not None else -1,
                                           e["sourceEventId"]))
+            # Previous independent directed deeds are genuine prior candidate
+            # observations. Their absence is *not* proof of cooperation/peace.
+            previous = [row for row in prior_pair.get((actor, target), {}).values()
+                        if row["sourceDeedId"] != did and
+                        max(0, first - lookback_ms) <= row["lastAtMs"] < first]
+            previous = sorted(previous, key=lambda row: (row["lastAtMs"], row["sourceDeedId"]))
+            return_pressure = sorted([
+                row for row in prior_pair.get((target, actor), {}).values()
+                if max(0, first - lookback_ms) <= row["lastAtMs"] < first
+                ], key=lambda row: (row["lastAtMs"], row["sourceDeedId"]))
+            counts_by_source_command = {}
+            for event in prior:
+                action = event["originalAction"] or "UNRESOLVED_ACTION"
+                counts_by_source_command[action] = counts_by_source_command.get(action, 0) + 1
             # Pre-entry command history is a requested-activity count, *not*
             # at-entry army size, completed production or opponent challenge.
             observation = {
@@ -155,8 +189,14 @@ def project_social_source_measurements(*, statistics, context, action_events,
                     "windowStartMs": max(0, first - lookback_ms),
                     "windowEndExclusiveMs": first,
                     "actorOriginalCommandCount": len(prior),
+                    "originalCommandKinds": dict(sorted(counts_by_source_command.items())),
                     "sourceEventIds": [e["sourceEventId"] for e in prior],
                     "meaning": "ORIGINAL_REQUEST_COUNT_NOT_ARMY_SURVIVAL_OR_EFFECT"},
+                "priorDirectedEpisodeCandidates": {
+                    "sameDirectionSourceDeedIds": [row["sourceDeedId"] for row in previous],
+                    "oppositeDirectionSourceDeedIds": [row["sourceDeedId"] for row in return_pressure],
+                    "meaning": "CHRONOLOGICALLY_EARLIER_COMMAND_EPISODES_NOT_RECIPROCITY_OR_VENDETTA",
+                    "absenceQualified": False},
                 "layer": "OBSERVED_COMMANDS_AND_INFERRED_PAIR_ATTRIBUTION",
                 "coverage": "LIMITED",
                 "reasonCodes": ["BEHAVIORAL_MATERIALITY_UNAPPROVED",
