@@ -267,6 +267,14 @@ def _qualify(deed, context, family, actor, target, index, rule, directional_face
         for f in pool:
             if f["coverage"] == "INSUFFICIENT":
                 continue
+            if f["coverage"] == "LIMITED":
+                # SHARED_1 coverage reports partial evidence, never implicit
+                # family-level semantic admission. There is NO approved,
+                # versioned, fact-kind + methodVersion-specific rule here
+                # authorizing this partial measurement to qualify. A future
+                # explicitly reviewed coverage contract must retain limitations.
+                reasons.append("LIMITED_METHOD_COVERAGE_RULE_UNCONFIGURED")
+                continue
             if kind in PREENTRY and f["windowEndMs"] >= deed["firstAtMs"]:
                 counter.update(f["sourceEventIds"])
                 reasons.append("POST_ENTRY_CONTEXT_CANNOT_PROVE_PREENTRY")
@@ -481,7 +489,8 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                 crefs = [_ref("CONTEXT", s, context["sourceContextRevision"],
                               snapshot["authorityRevision"]) for s in sorted(cr)]
                 tier = "ADMITTED" if decision == "QUALIFIED" else (
-                    "LIMITED" if decision == "NOT_QUALIFIED" else "INSUFFICIENT")
+                    "LIMITED" if ("LIMITED_METHOD_COVERAGE_RULE_UNCONFIGURED" in reasons
+                                  or decision == "NOT_QUALIFIED") else "INSUFFICIENT")
                 inf = {"inferenceId": inference_id, "incidentRevision": revision,
                     "modelVersion": VERSION, "policy": deepcopy(calibration["policy"]),
                     "familyId": family, "basis": "BOUNDED_INFERENCE", "decision": decision,
