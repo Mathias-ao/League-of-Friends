@@ -43,8 +43,10 @@ def synthetic_bundle(kind="pressure", **kwargs):
             "operationOrdinal": e["moment"]["operationOrdinal"],
             "sourceActionName": e.get("commandType")})
     pair = {"modelVersion": "AOF_PAIR_SOCIAL_EVIDENCE_V1",
-            "gameScope": r, "deeds": b["pair_deeds"]}
-    statistics = {"source": r, "participants": [
+            "gameScope": deepcopy(r), "deeds": deepcopy(b["pair_deeds"])}
+    # Independent objects model immutable artifacts and separate retained
+    # Context revision. Never let mutating one source alias the other.
+    statistics = {"source": deepcopy(r), "participants": [
         {"playerId": p} for p in b["replay_bindings"]["players"]],
         "pairSocialEvidence": pair}
     return b, statistics, rows
