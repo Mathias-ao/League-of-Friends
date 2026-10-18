@@ -72,7 +72,9 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
         "help": ("DEFENSIVE_PARTICIPATION",),
         "co-target": ("SHARED_OPPONENT_PARTICIPATION",),
     }[kind]
-    source_events = ["cmd1", "cmd2"] if len(facets) > 1 or kind == "co-target" else ["cmd1"]
+    source_events = (["cmd1", "cmd2", "cmd3"] if kind in {"contest", "defense"}
+                     else ["cmd1", "cmd2"] if len(facets) > 1 or kind == "co-target"
+                     else ["cmd1"])
     source_facets = ([{"kind": "SHARED_OPPONENT_PARTICIPATION",
                        "targetPlayerId": next(p for p in people if p not in (actor, target)),
                        "contributions": [
@@ -80,7 +82,12 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
                            {"contributorPlayerId": target, "sourceEventIds": ["cmd2"]}],
                        "coordinationIntent": "UNAVAILABLE"}]
                      if kind == "co-target" else
-                     [{"kind": facet, "fromPlayerId": actor, "toPlayerId": target,
+                     [{"kind": "LOCAL_COMMAND_OVERLAP",
+                       "contributorPlayerId": actor, "otherPlayerId": target,
+                       "sourceEventIds": source_events,
+                       "targetedActionEstablished": False}
+                      if facet == "LOCAL_COMMAND_OVERLAP" else
+                      {"kind": facet, "fromPlayerId": actor, "toPlayerId": target,
                        "sourceEventIds": [source_events[i % len(source_events)]]}
                       for i, facet in enumerate(facets)])
     row = {"deedId": "deed-X", "pairPlayerIds": sorted([actor, target]),
@@ -89,7 +96,8 @@ def case(*, people=(1, 2), teams=None, kind="pressure", actor=1, target=2,
            "endedAt": {"atMs": 14000, "operationOrdinal": 20},
            "facets": source_facets}
     observations = [{"sourceEventId": ident,
-                     "actorPlayerId": target if kind == "co-target" and i == 1 else actor,
+                     "actorPlayerId": target if kind in {"co-target", "contest", "defense"}
+                                 and i == 1 else actor,
                      "moment": {"atMs": 11000 + 100 * i,
                                 "operationOrdinal": 10 + i}, "commandType": "ORDER"}
                     for i, ident in enumerate(source_events)]
@@ -224,12 +232,11 @@ class QualificationTests(unittest.TestCase):
         # Neutral Pair V1 emits contributorPlayerId/otherPlayerId, with
         # commands by both participants. Opponent command is context only.
         b = case(kind="contest", contest=True)
-        b["pair_deeds"][0]["facets"][1] = {
-            "kind": "LOCAL_COMMAND_OVERLAP",
-            "contributorPlayerId": 1, "otherPlayerId": 2,
-            "sourceEventIds": ["cmd1", "cmd2"],
-            "targetedActionEstablished": False}
-        b["pair_observations"][1]["actorPlayerId"] = 2
+        self.assertEqual(b["pair_deeds"][0]["facets"][1]["kind"],
+                         "LOCAL_COMMAND_OVERLAP")
+        self.assertEqual(b["pair_deeds"][0]["facets"][1]["sourceEventIds"],
+                         ["cmd1", "cmd2", "cmd3"])
+        self.assertEqual(b["pair_observations"][1]["actorPlayerId"], 2)
         r = decisions(b)
         positives = [x for x in r["inferences"] if x["familyId"] == "PAIR_CONTEST"
                      and x["decision"] == "QUALIFIED"]
@@ -486,6 +493,7 @@ class QualificationTests(unittest.TestCase):
         b["pair_deeds"][0]["facets"].append({
             "kind": "TARGETED_COMMAND", "fromPlayerId": 1, "toPlayerId": 2,
             "sourceEventIds": ["cmd2"]})
+        b["pair_observations"][1]["actorPlayerId"] = 1
         b["pair_observations"][1]["moment"]["atMs"] = 11000
         b["pair_observations"][1]["moment"]["operationOrdinal"] = 10
         altered = decisions(b)
