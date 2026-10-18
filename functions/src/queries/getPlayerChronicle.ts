@@ -36,12 +36,10 @@ function publicChronicleProjection(chronicle:any){
   };
 }
 
-/** Player-facing Chronicle read. Deliberately omits shadow scoring and source internals. */
-export const getPlayerChronicle=onCall({...callableOptions,timeoutSeconds:120},async request=>{
-  const actor=await requireLeaguePlayer(request);
-  const result=await readSocialHistory(actor.playerId);
+/** Shared allowlist seam for the existing and INT-B owner-bound surfaces. */
+export function playerChronicleResponse(result:any,ownerPlayerId:string){
   const chronicle=publicChronicleProjection(result.chronicle);
-  const visibleIds=new Set<string>([actor.playerId,...chronicle.pages.map((page:any)=>page.counterpartPlayerId)]);
+  const visibleIds=new Set<string>([ownerPlayerId,...chronicle.pages.map((page:any)=>page.counterpartPlayerId)]);
   const names=Object.fromEntries(Object.entries(result.names).filter(([playerId])=>visibleIds.has(playerId)));
   return {
     success:result.success,
@@ -59,4 +57,10 @@ export const getPlayerChronicle=onCall({...callableOptions,timeoutSeconds:120},a
       opportunityCompleteness:result.coverage.opportunityCompleteness,
     },
   };
+}
+
+/** Player-facing Chronicle read; wire behavior remains unchanged. */
+export const getPlayerChronicle=onCall({...callableOptions,timeoutSeconds:120},async request=>{
+  const actor=await requireLeaguePlayer(request);
+  return playerChronicleResponse(await readSocialHistory(actor.playerId),actor.playerId);
 });
