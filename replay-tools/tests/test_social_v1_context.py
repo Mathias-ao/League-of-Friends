@@ -172,6 +172,24 @@ class SocialContextTests(unittest.TestCase):
         castle = project_social_v1_context(statistics=case)["placementContexts"][0]["specialForwardCastle"]
         self.assertEqual(castle["homeProximity"]["distanceGate"], "PENDING")
 
+    def test_non_forward_castle_build_is_not_lost_and_deduplicates(self):
+        s = stats(people=[player(1, 10, 10), player(2, 90, 10)])
+        presence = s["participants"][0]["mapPresence"]
+        raw = build("home-castle", 82, 11, 10)
+        presence["castlePlacementCommands"] = {"modelVersion": "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1",
+                                               "evidence": [raw]}
+        result = project_social_v1_context(statistics=s)
+        places = result["placementContexts"]
+        self.assertEqual(len(places), 1)
+        self.assertEqual(places[0]["sourceFamilies"], ["castleBuildCommands"])
+        self.assertEqual(places[0]["specialForwardCastle"]["status"], "PENDING")
+        # Same original command can appear in the historical V8 forward view.
+        presence["forwardBuildings"]["evidence"].append(dict(raw))
+        again = project_social_v1_context(statistics=s)
+        self.assertEqual(len(again["placementContexts"]), 1)
+        self.assertEqual(again["placementContexts"][0]["sourceFamilies"],
+                         ["castleBuildCommands", "forwardBuildings"])
+
     def test_same_build_observed_in_three_models_is_one_placement(self):
         s = stats(people=[player(1, 10, 10, [build("watch", 79, 85, 10)]), player(2, 90, 10)])
         place = s["participants"][0]["mapPresence"]

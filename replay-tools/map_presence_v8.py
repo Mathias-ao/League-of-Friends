@@ -137,8 +137,27 @@ def project_map_presence(
     ids = set(v1._participants(manifest))
     relics = relic_targeting(actions, objects, ids)
     tc_sources = starting_town_centers(objects, ids, catalog)
+    # Unlike legacy 'forwardBuildings', this includes every observed Castle BUILD
+    # request. Source coverage is limited to decoded commands, not completions.
+    castles = {str(pid): [] for pid in ids}
+    for event in builds:
+        pid = event.get("replaySlot")
+        if pid not in ids or event.get("buildingId") != 82:
+            continue
+        x, y = event.get("x"), event.get("y")
+        if (type(x) not in (int, float) or type(y) not in (int, float)
+                or not math.isfinite(x) or not math.isfinite(y)):
+            continue
+        castles[str(pid)].append({
+            "sourceEventId": event.get("sourceEventId"),
+            "atMs": event.get("atMs"),
+            "position": {"x": x, "y": y},
+            "building": {"rawId": 82},
+        })
     for player_id, row in result.items():
         row["modelVersion"] = MAP_PRESENCE_MODEL_VERSION
         row["relicControl"] = relics[player_id]
         row["startingTownCenters"] = tc_sources[player_id]
+        row["castlePlacementCommands"] = {"modelVersion": "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1",
+                                           "evidence": castles[player_id]}
     return result

@@ -153,6 +153,7 @@ def _castle_home_proximity(actor, point, sources, teams, locked):
         for obj in witness.get("objects") or []:
             xy = _point(obj.get("position"))
             valid = (xy is not None and obj.get("positionPrecision") == "ORIGINAL_DECODED_NO_ROUNDING"
+                     and obj.get("rawObjectId") in (71, 109, 621)
                      and type(obj.get("objectInstanceId")) is int
                      and isinstance(obj.get("sourceEventId"), str) and bool(obj["sourceEventId"]))
             distance = math.hypot(point[0] - xy[0], point[1] - xy[1]) if valid else None
@@ -224,6 +225,7 @@ def _placements(player):
         ("forwardBuildings", (presence.get("forwardBuildings") or {}).get("evidence") or []),
         ("tower", (presence.get("towers") or {}).get("evidence") or []),
         ("forwardEco", (presence.get("forwardEco") or {}).get("evidence") or []),
+        ("castleBuildCommands", (presence.get("castlePlacementCommands") or {}).get("evidence") or []),
     )
     merged = {}
     for category, rows in sources:
@@ -402,7 +404,7 @@ def project_social_v1_context(*, statistics, territory_policy=None, max_placemen
                     or witness.get("observedCount") != len(records)):
                 raise ValueError("invalid_initial_town_center_count")
             for obj in records:
-                if not isinstance(obj, dict) or obj.get("rawObjectId") not in (71, 109, 621):
+                if not isinstance(obj, dict) or type(obj.get("rawObjectId")) is not int or obj["rawObjectId"] < 0:
                     raise ValueError("invalid_initial_town_center_identity")
                 ref, instance = obj.get("sourceEventId"), obj.get("objectInstanceId")
                 if ref is not None:
