@@ -75,7 +75,7 @@ The scenes below deliberately distinguish **book-ready from semantic inputs** an
 
 **Rubric:** At the threatened ground · **Battle B06:** 4v4 Lombardia, Aldric and Beren on the same official team, Cato opposed.
 
-> A qualified defensive encounter formed near Beren's starting town, with Cato recorded as the opposing source of pressure. Aldric also took part in that defence. Four earlier contests had set Aldric and Beren against one another; this page placed them within the same encounter on the defended side.
+> Near Beren's starting town, Cato's pressure met a defence in which Aldric also took part. Four earlier Battles had set Aldric and Beren against one another; here their names stood on the same side of the line.
 
 **Exact required facts and historical position.** Current O roster/time/side says A and B are teammates, C opposes them. B's starting TC anchor is a trusted source position; the mapped engagement belongs to a qualified defensive episode near that anchor; C's attributable pressure and A's participation in that same episode are source-backed (S) with bounded geographic/beneficiary inference (I) from #124/#126 where required. **Prior:** B01–B04 are four distinct qualified A/B opponent encounters, counted from full history. **Inference:** A was present in B's defended episode, **not** that A saved B or caused C's withdrawal.
 
@@ -85,7 +85,7 @@ The scenes below deliberately distinguish **book-ready from semantic inputs** an
 
 **Rubric:** The direction returned · **Battle B07:** later 4v4, Beren now participates in a separately qualified defensive episode around Aldric.
 
-> The older page had placed Aldric in the defence around Beren. In this Battle, it was Beren who appeared in a defensive encounter around Aldric. The record now held such participation in both directions, though neither entry proved a rescue.
+> The older page had placed Aldric in the defence around Beren. Now Beren appeared in a separate defensive episode around Aldric. Two encounters, and the direction had changed.
 
 **Exact required facts and historical position.** A/B appear as fixed teammates at B07; a **new**, independent, source-qualified B→A beneficiary-linked defensive episode exists, distinguished from B06's A→B event by Battle, target, time and source lineage. **Prior:** B06 contains source-admitted A→B defensive participation and passes the same semantic meaning bar, with full historical ordering. **Inference:** direction of *defensive participation* reversed, but reciprocity in Relationship stage progression is a separate evaluator decision and mutual affection is never established.
 
@@ -105,7 +105,7 @@ The scenes below deliberately distinguish **book-ready from semantic inputs** an
 
 **Rubric:** After the ally mark · **Battle B09:** FFA with directional diplomatic commands and an unresolved official Battle result.
 
-> Aldric's ally declaration toward Beren entered the FFA ledger before he withdrew that mark. A later, independently admitted offensive attempt pointed toward Beren's economy. Whether it took effect is not established, and the Battle's official result remains unresolved.
+> Aldric's ally declaration toward Beren entered the FFA ledger before he withdrew that mark. A later, separately recorded offensive attempt pointed toward Beren's economy. Whether it took effect is not established, and the Battle's official result remains unresolved.
 
 **Exact required facts and historical position.** Current B09 mode is FFA; an ordered A→B DECLARATION_ESTABLISHED(ALLY) exists, followed by A→B ALLY_DECLARATION_WITHDRAWN with sufficient full diplomacy-context provenance, followed by an **independently qualified** A→B OFFENSIVE_ATTEMPT_AFTER_WITHDRAWAL with an economic target role. Official aggregate B09 Battle result is UNRESOLVED, not guessed from a Game or scoreboard. **Prior:** none required for these three statements; B08 need not matter. **Inference:** none about successful assault or effective alliance; the mark was a command/declaration, not verified effective Ally state.
 
@@ -115,7 +115,7 @@ The scenes below deliberately distinguish **book-ready from semantic inputs** an
 
 **Rubric:** A crown entered the record · **Battle B10:** eligible FFA Regicide, a separate later encounter with Aldric and Beren; **hypothetical strict Treachery qualification**.
 
-> An independently established alliance between Aldric and Beren ended through Aldric's qualified unilateral rupture. In the ordered encounter that followed, the loss of Beren's king was attributed to Aldric. The crown marked a turning point that required no invented motive.
+> An effective alliance between Aldric and Beren ended at Aldric's initiative. Later in the same Regicide Battle, the loss of Beren's king was attributed to Aldric. The crown was the fact; the motive remained unwritten.
 
 **Separate attributed testimony inset — only after an authenticated, binding, visible and still-valid victim response:**
 
@@ -146,3 +146,8 @@ The scenes below deliberately distinguish **book-ready from semantic inputs** an
 ### Owner editorial decision
 
 These are ten guarded target scenes, **not ten stock templates**. Approve the annalist's emotional distance, the marked contrast between ordinary and exceptional pages, and the idea that a low-information Battle should remain briefly recorded. Scene-level source gates are mandatory, even where the prose itself is short. The C1 composer remains inexpensive, source-only and deterministic; it must never fill the Chronicle with invented feats to satisfy a uniqueness metric.
+
+
+### Verification note after the editorial draft was written
+
+On the same day, Worker 5 pushed an updated technical factual handoff with a frozen test fixture at `functions/tests/fixtures/chronicle-scene-handoff-v1.json` and tests in `chronicle-scene-handoff.test.mjs` (initial new head 9c58ab1; a subsequent revision c0abc42 followed). The revised seam passes **a Match-level Battle result object** containing `qualification`, `resultRevision` and `winningPlayerIds`, and retains the old beat-derived `entryId` alongside a correction-stable canonical `sceneId` and `sceneRevision`. This is a **technical draft fixture**, not yet merged or owner accepted. C1 #140 was patched on its own branch to treat unknown or non-OFFICIAL aggregate outcomes as *not eligible for prose variation*, with isolated tests updated for accepted Battle result inputs and scene ID versus legacy ID on correction. Fresh stacked CI and Worker 5 acceptance remain gates. Neither implementation infers winners from Game statistics, and the result prose examples above remain **editorial-only** until independently approved output slots exist.
