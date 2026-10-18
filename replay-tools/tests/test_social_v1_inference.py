@@ -317,6 +317,37 @@ class QualificationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "PREVIEWS_ONLY"):
             decisions(b)
 
+    def test_reproduced_both_limited_measurements_never_promote_to_admitted(self):
+        # Organiser 2 reproducible counterexample at db4c2102: two distinct
+        # original actor-bound sources, values above test-only minima, but
+        # both method-specific measurements only LIMITED, not ADMITTED.
+        facts = [metric("PREENTRY_CHALLENGE", "prior-challenge", 5000),
+                 metric("MEANINGFUL_OFFENSIVE_COMMITMENT", "own-commit", 12000)]
+        for fact in facts:
+            fact["coverage"] = "LIMITED"
+        b = case(kind="pressure", facts=facts)
+        result = decisions(b)
+        inference = next(x for x in result["inferences"] if x["familyId"] == "DARING_OFFENSE")
+        self.assertEqual(inference["decision"], "PENDING")
+        self.assertEqual(inference["coverage"]["tier"], "LIMITED")
+        self.assertIn("LIMITED_METHOD_COVERAGE_RULE_UNCONFIGURED", inference["reasonCodes"])
+        self.assertNotEqual(inference["coverage"]["tier"], "ADMITTED")
+        claims = [e["claim"] for e in result["effects"] if e["claim"]["subject"]["track"] == "GALLANTRY"]
+        self.assertEqual(len(claims), 1)
+        self.assertEqual(claims[0]["decision"], "PENDING")
+        self.assertEqual(claims[0]["reciprocity"]["decision"], "INELIGIBLE")
+        self.assertFalse(result["actorWitnesses"])
+
+        # A single LIMITED dimension cannot borrow an otherwise sound one,
+        # and an unsupported method string cannot bypass the method registry.
+        facts[0]["coverage"] = "ADMITTED"
+        partial = decisions(b)
+        self.assertEqual(next(x for x in partial["inferences"]
+                              if x["familyId"] == "DARING_OFFENSE")["decision"], "PENDING")
+        facts[1]["methodVersion"] = "FAKE_UNREGISTERED_LIMITED_METHOD"
+        with self.assertRaisesRegex(ValueError, "UNADMITTED_MEASUREMENT_PROVENANCE"):
+            decisions(b)
+
     def test_identity_dedup_and_correction_fences(self):
         b = case(kind="contest", contest=True, battle="match-A", event="warmup")
         r = decisions(b)
