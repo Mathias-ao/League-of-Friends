@@ -11,6 +11,7 @@ const {getStorage}=await import('firebase-admin/storage');
 const {getSocialHistory}=await import('../lib/queries/getSocialHistory.js');
 const {getPlayerChronicle}=await import('../lib/queries/getPlayerChronicle.js');
 const records=new Map();let bytes,downloadHook;
+const metrics={matchPages:0,gamePages:0,sourceReads:0,checkpointBatches:0,checkpointDocs:0,downloads:0};
 const reference=(path,collection=false,queryOptions={})=>({
  path,id:path.split('/').at(-1),doc:id=>reference(path+'/'+id),
  collection:id=>reference(path+'/'+id,true),
@@ -22,15 +23,21 @@ const reference=(path,collection=false,queryOptions={})=>({
 const snapshot=path=>{const value=records.get(path);const copy=value?{...value,canonicalResult:value.canonicalResult?{...value.canonicalResult}:undefined}:undefined;
  return {id:path.split('/').at(-1),exists:!!value,data:()=>copy,ref:reference(path)};};
 const query=(path,{after,limit}={})=>{
+ if(path==='matches')metrics.matchPages++;
+ if(path.endsWith('/games'))metrics.gamePages++;
  const docs=[...records.keys()].filter(k=>k.startsWith(path+'/')&&k.split('/').length===path.split('/').length+1)
   .sort().filter(k=>!after||k.split('/').at(-1)>after).slice(0,limit??Infinity).map(snapshot);
  return {docs,size:docs.length};};
 Object.defineProperty(db,'collection',{value:path=>reference(path,true)});
-Object.defineProperty(db,'getAll',{value:async(...refs)=>refs.map(r=>snapshot(r.path))});
-Object.defineProperty(getStorage(),'bucket',{value:()=>({file:()=>({download:async()=>{downloadHook?.();return [bytes];}})})});
+Object.defineProperty(db,'getAll',{value:async(...refs)=>{
+ metrics.checkpointBatches++;metrics.checkpointDocs+=refs.length;
+ return refs.map(r=>snapshot(r.path));
+}});
+Object.defineProperty(getStorage(),'bucket',{value:()=>({file:()=>({download:async()=>{metrics.downloads++;downloadHook?.();return [bytes];}})})});
 const request={auth:{uid:'account',token:{}},data:{},rawRequest:{}};
 function reset(){
  records.clear();downloadHook=null;
+ for(const key of Object.keys(metrics))metrics[key]=0;
  records.set('authLinks/account',{playerId:'a'});records.set('players/a',{membershipStatus:'ACTIVE',role:'PLAYER'});
  records.set('matches/m',{status:'COMPLETED',completedAt:{toMillis:()=>1000}});
  records.set('matches/m/games/g',{gameNumber:1,status:'COMPLETED',players:[{playerId:'a'},{playerId:'b'}],activeReplayStatisticsId:'r1',
@@ -395,4 +402,84 @@ test('missing Event authority is incomplete history, not a false Chronicle entry
  assert.equal(r.coverage.readableAcceptedGames,0);
  assert.equal(r.coverage.excludedGames,1);
  assert.equal(r.chronicle.pages.length,0);
+});
+
+test('aggregate Battle result remains unresolved with two individually official Games without an authoritative Match result',async()=>{
+ reset();
+ const g=records.get('matches/m/games/g'),src=records.get('matches/m/games/g/replaySources/r1');
+ records.set('matches/m/games/g2',{...g,gameNumber:2,
+  canonicalResult:{revision:4,source:'PLAYER_CONFIRMED',type:'PLAYER_WIN',winningPlayerIds:['b'],losingPlayerIds:['a']},
+  activeReplayStatisticsId:'r2'});
+ records.set('matches/m/games/g2/replaySources/r2',{...src});
+ const unresolved=await getPlayerChronicle.run(request);
+ assert.equal(unresolved.coverage.readableAcceptedGames,2);
+ assert.equal(unresolved.chronicle.pages[0].entries.length,1);
+ const first=unresolved.chronicle.pages[0].entries[0];
+ assert.deepEqual(first.result,{qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null});
+ assert.equal(first.resultStatus,'UNRESOLVED');
+ const match=records.get('matches/m');
+ match.canonicalResult={revision:8,source:'ADMIN_RESOLVED',
+  winningPlayerIds:['a'],type:'PLAYER_WIN'};
+ const resolved=await getPlayerChronicle.run(request);
+ const entry=resolved.chronicle.pages[0].entries[0];
+ assert.deepEqual(entry.result,{qualification:'OFFICIAL',resultRevision:8,winningPlayerIds:['a']});
+ assert.equal(entry.sceneId,first.sceneId);
+ assert.equal(entry.entryId,first.entryId);
+ assert.notEqual(entry.sceneRevision,first.sceneRevision);
+ const second=records.get('matches/m/games/g2');
+ second.activeResultDisputeId='open';
+ const disputed=await getPlayerChronicle.run(request);
+ assert.deepEqual(disputed.chronicle.pages[0].entries[0].result,
+  {qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null});
+});
+
+test('authenticated correction-heavy 145 Battles × 2 Games gives complete bounded scans and revision-safe IDs',async()=>{
+ reset();
+ const seedMatch=records.get('matches/m'),seedGame=records.get('matches/m/games/g');
+ const seedSource=records.get('matches/m/games/g/replaySources/r1');
+ for(let i=1;i<=144;i++){
+  const matchId='m'+String(i).padStart(3,'0');
+  records.set('matches/'+matchId,{...seedMatch,completedAt:{toMillis:()=>2000+i}});
+  for(let j=1;j<=2;j++){
+   const sourceId='r'+i+'-'+j,gameId='g'+j;
+   records.set('matches/'+matchId+'/games/'+gameId,
+    {...seedGame,gameNumber:j,activeReplayStatisticsId:sourceId,canonicalResult:{
+     ...seedGame.canonicalResult,revision:i%3+1}});
+   records.set('matches/'+matchId+'/games/'+gameId+'/replaySources/'+sourceId,{...seedSource});
+  }
+ }
+ const actorB={...request,auth:{uid:'account-b',token:{}}};
+ records.set('authLinks/account-b',{playerId:'b'});
+ records.set('players/b',{membershipStatus:'ACTIVE',role:'PLAYER'});
+ const read=await getPlayerChronicle.run(request);
+ assert.equal(read.coverage.scannedBattles,145);
+ assert.equal(read.coverage.scannedGames,289);
+ assert.equal(read.coverage.readableAcceptedGames,289);
+ assert.equal(read.chronicle.pages[0].entries.length,145);
+ assert.equal(metrics.matchPages,6,'three bounded cursor pages per complete scan');
+ assert.equal(metrics.gamePages,145,'each Battle enumerated once');
+ assert.equal(metrics.downloads,289,'no source reused as duplicate by source ID');
+ assert.ok(metrics.checkpointDocs>=145+289*2,'complete authority revision check');
+ assert.equal(new Set(read.chronicle.pages[0].entries.map(e=>e.sceneId)).size,145);
+ const ownerB=await getPlayerChronicle.run(actorB);
+ assert.equal(ownerB.chronicle.ownerPlayerId,'b');
+ assert.equal(ownerB.chronicle.pages[0].entries.length,145);
+ const prior=read.chronicle.pages[0].entries.at(-1);
+ records.get('matches/m144/games/g2').canonicalResult.revision+=1;
+ records.get('matches/m144/games/g2').activeReplayStatisticsId='r144-new';
+ records.set('matches/m144/games/g2/replaySources/r144-new',{...seedSource});
+ const corrected=await getPlayerChronicle.run(request);
+ assert.equal(corrected.coverage.readableAcceptedGames,289);
+ assert.equal(corrected.chronicle.pages[0].entries.at(-1).sceneId,prior.sceneId);
+ assert.equal(corrected.chronicle.pages[0].entries.at(-1).entryId,prior.entryId);
+});
+
+test('history over explicit capacity fails complete-or-error without returning 256 deceptively complete Matches',async()=>{
+ reset();
+ const seed=records.get('matches/m');
+ for(let i=0;i<256;i++)records.set('matches/cap'+String(i).padStart(3,'0'),
+  {...seed,completedAt:{toMillis:()=>5000+i}});
+ await assert.rejects(getPlayerChronicle.run(request),
+  e=>e.code==='resource-exhausted'&&/complete-read Match limit/.test(e.message));
+ assert.equal(metrics.downloads,0,'reject before any artifact I/O');
 });
