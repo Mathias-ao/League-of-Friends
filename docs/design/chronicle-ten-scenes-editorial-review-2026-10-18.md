@@ -151,3 +151,36 @@ These are ten guarded target scenes, **not ten stock templates**. Approve the an
 ### Verification note after the editorial draft was written
 
 On the same day, Worker 5 pushed an updated technical factual handoff with a frozen test fixture at `functions/tests/fixtures/chronicle-scene-handoff-v1.json` and tests in `chronicle-scene-handoff.test.mjs` (initial new head 9c58ab1; a subsequent revision c0abc42 followed). The revised seam passes **a Match-level Battle result object** containing `qualification`, `resultRevision` and `winningPlayerIds`, and retains the old beat-derived `entryId` alongside a correction-stable canonical `sceneId` and `sceneRevision`. This is a **technical draft fixture**, not yet merged or owner accepted. C1 #140 was patched on its own branch to treat unknown or non-OFFICIAL aggregate outcomes as *not eligible for prose variation*, with isolated tests updated for accepted Battle result inputs and scene ID versus legacy ID on correction. Fresh stacked CI and Worker 5 acceptance remain gates. Neither implementation infers winners from Game statistics, and the result prose examples above remain **editorial-only** until independently approved output slots exist.
+
+
+---
+
+## Worker E final editorial review against accepted Chronicle (20 October 2026)
+
+**Technical context, superseding the historical checkpoint above:** #136 is merged, #151 private Chronicle and append-only seen-history migration are merged, and accepted main for Worker E's rebuild is `cea95c23a20244b99e46b44eb5d3f879358d327b`. PR #140 is rebuilt as a three-file composer-only diff against that exact main. Sol's `chronicleEntryKey` resolves `sceneId` before `entryId`, and the renderer uses the existing paragraph list; C1 does **not** own either UI behavior. The ten pages remain editorial exemplars: source proof is a nonnegotiable prerequisite, not silently supplied by narrative code.
+
+### Ten-scene literary assessment
+
+| Scene | Editorial decision | Data/proof ceiling |
+|---|---|---|
+| 01, first 1v1 | **Retain spare opening**. No invented battle manoeuvres or direct engagement. | First pair exposure and accepted winner; omit "first" on incomplete past. Winner prose is not yet a C1 feature. |
+| 02, rematch | **Retain historical result contrast**. This is memory rather than generic recap. | Two independent accepted Battle outcomes, direction and pair verified. |
+| 03, setback | **Retain restrained accumulated result**; do not claim skill hierarchy. | Three distinct accepted outcomes with revision-safe chronology, not match commands or player sentiment. |
+| 04, reversal | **Recommended signature dry aside:** "The ledger was even; it did not claim the players were." | Four independently accepted results; never imply identical skills or Equal Rivalry. Owner to approve the occasional humour level. |
+| 05, quiet 4v4 | **Keep to one sentence.** A credible manuscript has modest pages. | Team assignment only; no automatic Bond, deed or continued co-presence spam. |
+| 06, pressured defence | **Retain the place-specific scene only when location and participation are qualified.** | Authenticated B home anchor + admitted C pressure + A defence participation and four distinct earlier opposing Battles. Otherwise remove "near starting town" and use command-only wording if applicable. |
+| 07, reverse assistance | **Retain directional return** without calling it reconciliation or debt repaid. | Distinct earlier A→B participation and later B→A beneficiary-specific episode; separately approved Bond recognizer remains disabled. |
+| 08, FFA engagement | **Retain one cautious, readable uncertainty clause**; no claim of a coordinated plan. | Shared opponent C in the *same admitted engagement*, not independent attacks, teammate assignment or effective diplomacy. |
+| 09, unresolved FFA | **Keep uncertainty brief but unmissable.** | Ordered ally declaration and withdrawn **mark** + independently admitted economic-target attempt, with unresolved canonical Battle outcome; no transfer to "broken effective truce" or "successful damage". |
+| 10, rare king loss | **Keep one exceptional cadence, with separate attributed testimony.** | Objective effective alliance, unilateral effective rupture, attributed king loss and binding victim choice; no motive or imagined speech. If any strict gate fails, print only lesser supportable facts. |
+
+### Four owner literary choices (none authorizes a new evidence rule)
+
+1. **Dry aside:** Approve the rare, explicitly qualified irony in scene 04 ("The ledger was even; it did not claim the players were"), or prefer wholly solemn manuscript prose. Recommended: allow no more than one such aside in a meaningful run of chapters and never make failure itself the joke.
+2. **How often to state uncertainty:** Prefer concise uncertainty once per genuinely unresolved proposition, integrated into the prose, rather than a repeated legal disclaimer after every scene. Do not trade away semantic precision for rhythm. The current C1 corpus errs conservative; an eventual **separately reviewed C2 wording edition** may reduce repeated cadences without changing facts or stable scene identity.
+3. **Place specificity:** Allow geographical wording ("near Beren's starting town", "on Arabia") only if admitted, well-mapped source geometry or official Game metadata supplies it. Otherwise use the shorter anonymous field/defence wording. Recommended: approve this conditional literary device, never the storyteller's independent map inference.
+4. **Exceptional illumination and attribution:** Reserve the crown/rupture register for a confirmed strict event and show any victim judgment as a labelled speaker's testimony inset, not the annalist's voice. All #130 six-track recognition names remain default-off unless an independent event owner approves the exact qualified IDs and wording. Recommended: keep the exceptional threshold high.
+
+### Release conclusion
+
+The ten scenes are **approved direction proposals, not automatic textual proof**. #140 C1 implements only deterministic, low-cost variations of previously qualified episode families and retrospective callbacks; it neither calculates winners, derives Home geometry, triggers optional questions, grants honours, discovers exceptional eligibility nor publishes privately pending testimony. Accepted scene/legacy migration, factual Battle results and source corrections remain with #136/#151. Owner approval of the four literary choices above and a green exact-head #140 regression are separate merge gates. No runtime LLM/API, staging, scoring, flags or deployment.
