@@ -29,6 +29,7 @@ jobs:
       AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
       AOF_SOCIAL_EVIDENCE_V1A_ENDPOINT: '1'
       AOF_SOCIAL_EVIDENCE_V1A_READS: '1'
+      AOF_INT_V1_ACCEPTANCE: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -50,6 +51,7 @@ jobs:
         run: |
           pip install -r replay-tools/requirements.txt
           npm ci --prefix functions
+          npm ci --prefix web
           npm run build --prefix functions
       - name: Prepare pinned authentic recordings and independent TownBell expectations
         run: |

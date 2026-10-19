@@ -95,7 +95,7 @@ One event may have raid, engagement, territory and support facets yet remain **o
 
 ## 8. Owner approval register — decisions, not accidental defaults
 
-1. **TERR-01 / TERR-02**: friendly/neutral/enemy semantics in fixed teams/FFA/ambiguous zones; exact special Castle home-pressure condition, preserving unique operational/queue witness.
+1. **TERR-01**: friendly/neutral/enemy semantics in fixed teams/FFA/ambiguous zones remain open. **TERR-02 is approved:** a special Forward Castle must be strictly <15 map tiles from the specific opponent's actual, unrounded starting TC. The source-linked starting-TC list is currently partial; distance results are observations, not definitive Castle PASS/FAIL. Unique starting-TC identity/completeness, TERR-01 territory and unique Castle operational/queue evidence remain blockers.
 2. **Personality V1**: approve game-context comparators, component taxonomy, normalized anchors, longitudinal weighting, sample/confidence/Developing gates, and narrowly named command-based Guerrilla/Frontline meaning. All numeric suggestions remain candidates.
 3. **Social calibration**: actual qualifying materiality and historical-entry comparisons, numerical Reputation per player × track × Battle budgets, Relationship per Event × unordered pair × track × direction budgets, contribution strength, stage thresholds, ordinary 3+ reciprocity counts and configured maximum. No shadow-pilot values.
 4. **Policy proposals, if needed**: MIL-01 selective opponent focus, MIL-02 territorial/resource deed family, or bounded aggregate-substance substitution for a missing execution witness. None approved merely by appearing in a worker report; no Hostility for routine warfare.
