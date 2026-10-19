@@ -147,12 +147,31 @@ class InertMeasurementTests(unittest.TestCase):
                             "operationOrdinal": 90 + i,
                             "sourceActionName": "DE_TRIBUTE"})
         result = measure(b, stats, actions)
-        self.assertEqual([r["requestAmountStatus"] for r in result["tributeRequestContexts"]],
-                         ["ZERO", "NONZERO", "UNKNOWN"])
-        self.assertEqual([r["decodedRequestAmount"] for r in result["tributeRequestContexts"]],
-                         [0, 640, None])
-        self.assertTrue(all(r["coverage"] == "LIMITED" and not r["qualifiesSocialFact"]
-                            for r in result["tributeRequestContexts"]))
+        # The neutral producer sorts by original event identity, not by the
+        # semantic amount classes. Test the precise source-to-observation link.
+        by_source = {r["sourceEventId"]: r for r in result["tributeRequestContexts"]}
+        self.assertEqual(len(by_source), 3)
+        self.assertEqual({
+            ref: (row["requestAmountStatus"], row["decodedRequestAmount"])
+            for ref, row in by_source.items()
+        }, {
+            "tribute-zero": ("ZERO", 0),
+            "tribute-positive": ("NONZERO", 640),
+            "tribute-unknown": ("UNKNOWN", None),
+        })
+        self.assertTrue(all(row["coverage"] == "LIMITED"
+                            and not row["qualifiesSocialFact"]
+                            for row in by_source.values()))
+        # Source ordering is irrelevant to the observed request; reversing
+        # event storage cannot turn requested tribute into received resources.
+        reversed_result = measure(b, stats, list(reversed(actions)))
+        self.assertEqual({
+            row["sourceEventId"]: (row["requestAmountStatus"], row["decodedRequestAmount"])
+            for row in reversed_result["tributeRequestContexts"]
+        }, {
+            ref: (row["requestAmountStatus"], row["decodedRequestAmount"])
+            for ref, row in by_source.items()
+        })
         self.assertFalse(result["qualifiesAnySocialFact"])
         actions[-2]["actorPlayerId"] = 2
         refused = measure(b, stats, actions)
