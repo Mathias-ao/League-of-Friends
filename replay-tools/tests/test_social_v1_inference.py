@@ -612,5 +612,30 @@ console.log(JSON.stringify({stage:projection?.stage,status:projection?.status,
         self.assertFalse(partial["actorWitnesses"])
 
 
+    def test_mixed_missing_and_known_actor_order_remains_pending_without_sort_crash(self):
+        b = case(kind="contest", contest=True)
+        # A genuinely actor-owned command has an original source timestamp.
+        # Removing the anchor from a different directional claim must never
+        # fabricate its historical moment or crash the mixed output sort.
+        b["pair_deeds"][0]["facets"].append({
+            "kind": "TARGETED_COMMAND", "fromPlayerId": 2, "toPlayerId": 1,
+            "sourceEventIds": ["cmd2"]})
+        b["pair_observations"][1]["actorPlayerId"] = 2
+        b["context"]["deedContexts"][0]["directionalActors"].append({
+            "fromReplayPlayerId": 2, "toReplayPlayerId": 1})
+        b["pair_observations"][1]["moment"]["operationOrdinal"] = None
+        result = decisions(b)
+        reverse = [e["claim"] for e in result["effects"]
+                   if e["claim"]["subject"].get("fromPlayerId") == "p2"]
+        forward = [e["claim"] for e in result["effects"]
+                   if e["claim"]["subject"].get("fromPlayerId") == "p1"]
+        self.assertTrue(forward)
+        self.assertTrue(reverse)
+        self.assertTrue(any(c["decision"] == "QUALIFIED" for c in forward))
+        self.assertTrue(all(c["decision"] != "QUALIFIED" for c in reverse))
+        self.assertTrue(all(c["historicalPosition"]["operationOrdinal"] is None
+                            for c in reverse))
+
+
 if __name__ == "__main__":
     unittest.main()
