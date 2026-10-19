@@ -577,8 +577,13 @@ def qualify_social_v1(*, snapshot, context, pair_deeds, pair_observations, repla
                         "qualification": "QUALIFIED", "ref": wref})
     # Corrections fully replace projections; raw out-of-scope evidence remains in
     # #124's ledger, not a second history. No receipts, publication or scores.
-    effects.sort(key=lambda e: (e["claim"]["historicalPosition"]["recordingAtMs"],
-                    e["claim"]["claimId"]))
+    # Deterministic presentation order only; never infer missing chronology.
+    # A partial/unknown source position remains unchanged for #139 to pend.
+    effects.sort(key=lambda e: (
+        e["claim"]["historicalPosition"]["recordingAtMs"] is None,
+        e["claim"]["historicalPosition"]["recordingAtMs"]
+            if e["claim"]["historicalPosition"]["recordingAtMs"] is not None else 0,
+        e["claim"]["claimId"]))
     results.sort(key=lambda e: e["inferenceId"])
     witnesses.sort(key=lambda e: e["claimId"])
     return {"version": VERSION, "sharedContract": CONTRACT,
