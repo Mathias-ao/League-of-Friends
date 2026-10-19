@@ -148,6 +148,9 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     // Server-owned rollout selects native ingestion; explicit LEGACY remains compatible.
     return this.sendReplay<ReplayUploadResult>(matchId,gameId,file,'AUTO');
   }
+  mySocialExperience(request:{matchId:string;gameId:string}){return this.call<import('../domain/intV1Experience').IntV1PrivateExperience>('getMySocialExperience',request);}
+  myPrivateChronicle(){return this.call<PlayerChronicleResponse>('getMyPrivateChronicle');}
+  myPersonalityHistory(){return this.call<import('../domain/privateHistory').PrivatePersonalityHistory>('getMyPersonalityHistory');}
   playerChronicle(){return this.call<PlayerChronicleResponse>('getPlayerChronicle');}
   socialHistory(){return this.call<SocialHistoryResponse>('getSocialHistory');}
   replayStatistics(matchId:string,gameId:string){return this.call<ReplayStatisticsResult>('getReplayStatistics',{matchId,gameId});}

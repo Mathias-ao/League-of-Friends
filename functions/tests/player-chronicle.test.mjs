@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {projectPlayerChronicle} from '../lib/engines/playerChronicleCore.js';
+import {projectPlayerChronicle,chronicleWasSeenByLegacyId} from '../lib/engines/playerChronicleCore.js';
+import {chronicleSceneId} from '../lib/domain/socialV1.js';
 
 const moment=(atMs,operationOrdinal=0)=>({atMs,operationOrdinal});
 const participants=[
@@ -15,8 +16,8 @@ const baseHistory=(overrides={})=>({
   profiles:[],
   ...overrides,
 });
-const chapter=({order=1,battleId='battle-1',gameIdentity='battle-1/game-1',playedAtMs=1000,chronicle=[],exposure=null}={})=>({
-  order,battleId,gameIdentity,playedAtMs,eventId:'event-1',seasonId:'season-1',revision:1,accepted:true,
+const chapter=({order=1,battleId='battle-1',gameIdentity='battle-1/game-1',playedAtMs=1000,chronicle=[],exposure=null,battleOutcome=null,sourceRevision=null}={})=>({
+  order,battleId,gameIdentity,playedAtMs,eventId:'event-1',seasonId:'season-1',revision:1,accepted:true,battleOutcome,sourceRevision,
   review:{
     status:'REVIEW_AVAILABLE',
     participants,
@@ -90,4 +91,50 @@ test('projection is deterministic under chapter input reordering when historical
   const history=baseHistory();
   const input={ownerPlayerId:'a',history,names:{a:'Aldric',b:'Beren',c:'Cato'}};
   assert.deepEqual(projectPlayerChronicle({...input,chapters}),projectPlayerChronicle({...input,chapters:[...chapters].reverse()}));
+});
+
+test('legacy browser bookmark IDs stay unchanged; scene migration recognizes corrected beats without false new ink',()=>{
+ const input={ownerPlayerId:'a',history:baseHistory(),names:{a:'Aldric',b:'Beren'}};
+ const old=projectPlayerChronicle({...input,chapters:[chapter({
+   chronicle:[beat('help','SUPPORT_PARTICIPATION',1000,1,2)],
+   sourceRevision:'source-r1'})]}).pages[0].entries[0];
+ assert.equal(old.entryId,'AOF_PLAYER_CHRONICLE_V1:a:b:battle-1:help');
+ assert.equal(old.sceneId,chronicleSceneId('battle-1','a','b'));
+ const reread=projectPlayerChronicle({...input,chapters:[chapter({
+   chronicle:[beat('help','SUPPORT_PARTICIPATION',1000,1,2)],
+   sourceRevision:'source-r1'})]}).pages[0].entries[0];
+ assert.equal(reread.entryId,old.entryId,'pre-existing ink must not reappear after upgrade');
+ const corrected=projectPlayerChronicle({...input,chapters:[chapter({
+   chronicle:[beat('revised-help','SUPPORT_PARTICIPATION',1000,1,2)],
+   sourceRevision:'source-r2'})]}).pages[0].entries[0];
+ assert.notEqual(corrected.entryId,old.entryId,'source beat refs are revision-sensitive legacy IDs');
+ assert.equal(corrected.sceneId,old.sceneId,'pair×Battle identity must not be');
+ assert.notEqual(corrected.sceneRevision,old.sceneRevision,'content revision must change');
+ assert.equal(chronicleWasSeenByLegacyId([old.entryId],corrected,'a','b'),true);
+ assert.equal(chronicleWasSeenByLegacyId([old.sceneId],corrected,'a','b'),true);
+ assert.equal(chronicleWasSeenByLegacyId([old.entryId],corrected,'b','a'),false);
+ const newBattle={...corrected,battleId:'battle-2',sceneId:chronicleSceneId('battle-2','a','b')};
+ assert.equal(chronicleWasSeenByLegacyId([old.entryId],newBattle,'a','b'),false);
+});
+
+test('canonical scene identity uses SHARED_1, aggregates Games and revisions the Battle outcome separately',()=>{
+ const result={qualification:'OFFICIAL',resultRevision:6,winningPlayerIds:['a']};
+ const input={ownerPlayerId:'a',history:baseHistory(),names:{a:'Aldric',b:'Beren'}};
+ const chapters=[
+  chapter({order:1,gameIdentity:'battle-1/g1',sourceRevision:'s1',battleOutcome:result}),
+  chapter({order:2,gameIdentity:'battle-1/g2',sourceRevision:'s2',battleOutcome:result,
+   chronicle:[beat('aid','SUPPORT_PARTICIPATION',1200,1,2)]}),
+ ];
+ const before=projectPlayerChronicle({...input,chapters}).pages[0].entries[0];
+ assert.equal(before.sceneId,chronicleSceneId('battle-1','a','b'));
+ assert.equal(before.result.qualification,'OFFICIAL');
+ assert.deepEqual(before.result.winningPlayerIds,['a']);
+ assert.equal(before.sourceLineage.length,2);
+ const corrected=projectPlayerChronicle({...input,chapters:chapters.map(ch=>({
+  ...ch,battleOutcome:{qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null}
+ }))}).pages[0].entries[0];
+ assert.equal(corrected.sceneId,before.sceneId);
+ assert.equal(corrected.result.qualification,'UNRESOLVED');
+ assert.equal(corrected.result.winningPlayerIds,null);
+ assert.notEqual(corrected.sceneRevision,before.sceneRevision);
 });

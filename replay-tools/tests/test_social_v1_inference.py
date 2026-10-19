@@ -612,5 +612,73 @@ console.log(JSON.stringify({stage:projection?.stage,status:projection?.status,
         self.assertFalse(partial["actorWitnesses"])
 
 
+    def test_mixed_unanchored_and_source_ordered_claims_have_stable_total_sort(self):
+        # A neutral overlap-only observation has a genuine recorded moment but
+        # does NOT provide an actor-owned action suitable for #139 chronology.
+        # Keep its Position explicitly unanchored; don't use deed startedAt
+        # or another player's operation ordinal to fill it in.
+        b = case(kind="contest", contest=True)
+        neutral = deepcopy(b["context"]["deedContexts"][0])
+        neutral.update(sourceDeedId="deed-unanchored",
+                       sourceEventIds=["cmd3"],
+                       facetKinds=["LOCAL_COMMAND_OVERLAP"],
+                       firstAtMs=11200, lastAtMs=11200,
+                       linkedEngagementDetectors=[],
+                       directionalActors=[{"fromReplayPlayerId": 1,
+                                           "toReplayPlayerId": 2}])
+        b["context"]["deedContexts"].append(neutral)
+        b["pair_deeds"].append({
+            "deedId": "deed-unanchored", "sourceEventIds": ["cmd3"],
+            "facets": [{"kind": "LOCAL_COMMAND_OVERLAP",
+                        "contributorPlayerId": 1, "otherPlayerId": 2,
+                        "sourceEventIds": ["cmd3"],
+                        "targetedActionEstablished": False}]})
+        b["incident_lineages"]["deed-unanchored"] = {
+            "incidentId": "stable-unanchored", "overlapGroupId": "neutral-only",
+            "lineage": "SOURCE_ANCHORED", "state": "CURRENT"}
+        r = decisions(b)
+        ordered = [e["claim"] for e in r["effects"]
+                   if e["claim"]["incidentId"] == "stable-lineage-X"]
+        unanchored = [e["claim"] for e in r["effects"]
+                      if e["claim"]["incidentId"] == "stable-unanchored"]
+        self.assertTrue(any(c["decision"] == "QUALIFIED"
+                            and c["historicalPosition"]["order"] == "ORDERED"
+                            and c["historicalPosition"]["operationOrdinal"] == 10
+                            for c in ordered))
+        self.assertTrue(unanchored)
+        self.assertTrue(all(c["decision"] != "QUALIFIED" for c in unanchored))
+        self.assertTrue(all(c["historicalPosition"]["recordingAtMs"] is None
+                            and c["historicalPosition"]["operationOrdinal"] is None
+                            and c["historicalPosition"]["order"] == "PARTIAL"
+                            for c in unanchored))
+        self.assertEqual(r, decisions(deepcopy(b)))
+        self.assertFalse(r["publicationAllowed"])
+        self.assertFalse(r["officialWrites"])
+
+    def test_mixed_missing_and_known_actor_order_remains_pending_without_sort_crash(self):
+        b = case(kind="contest", contest=True)
+        # A genuinely actor-owned command has an original source timestamp.
+        # Removing the anchor from a different directional claim must never
+        # fabricate its historical moment or crash the mixed output sort.
+        b["pair_deeds"][0]["facets"].append({
+            "kind": "TARGETED_COMMAND", "fromPlayerId": 2, "toPlayerId": 1,
+            "sourceEventIds": ["cmd2"]})
+        b["pair_observations"][1]["actorPlayerId"] = 2
+        b["context"]["deedContexts"][0]["directionalActors"].append({
+            "fromReplayPlayerId": 2, "toReplayPlayerId": 1})
+        b["pair_observations"][1]["moment"]["operationOrdinal"] = None
+        result = decisions(b)
+        reverse = [e["claim"] for e in result["effects"]
+                   if e["claim"]["subject"].get("fromPlayerId") == "p2"]
+        forward = [e["claim"] for e in result["effects"]
+                   if e["claim"]["subject"].get("fromPlayerId") == "p1"]
+        self.assertTrue(forward)
+        self.assertTrue(reverse)
+        self.assertTrue(any(c["decision"] == "QUALIFIED" for c in forward))
+        self.assertTrue(all(c["decision"] != "QUALIFIED" for c in reverse))
+        self.assertTrue(all(c["historicalPosition"]["operationOrdinal"] is None
+                            for c in reverse))
+
+
 if __name__ == "__main__":
     unittest.main()

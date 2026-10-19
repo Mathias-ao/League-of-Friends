@@ -18,7 +18,14 @@ POLICY = {"friendlyMaxDistanceTiles": 20, "enemyMaxDistanceTiles": 20, "ambiguit
 def player(pid, x=None, y=None, entries=None, military=None, gold=None):
     home = ({"x": x, "y": y, "method": "initial_town_center"}
             if x is not None else {"x": None, "y": None, "method": "initial_owned_object_centroid"})
+    objects = ([{"sourceEventId": f"initial-object-{pid}", "objectInstanceId": 100+pid,
+                 "rawObjectId": 109, "objectBlockIndex": 0, "position": {"x": x, "y": y},
+                 "positionPrecision": "ORIGINAL_DECODED_NO_ROUNDING"}] if x is not None else [])
+    witness = {"modelVersion": "AOF_STARTING_TOWN_CENTER_SOURCE_V1",
+               "coverage": "PARTIAL_HEADER_OBJECT_SEARCH", "exhaustiveInitialTcListEstablished": False,
+               "observedCount": len(objects), "objects": objects}
     return {"playerId": pid, "mapPresence": {"modelVersion": "AOF_MAP_PRESENCE_V8",
+        "startingTownCenters": witness,
         "homeAnchor": home,
         "forwardBuildings": {"evidence": list(entries or [])}, "towers": {"evidence": []},
         "forwardEco": {"ruleVersion": "AOF_FORWARD_ECO_V2", "evidence": []},
@@ -123,6 +130,65 @@ class SocialContextTests(unittest.TestCase):
         self.assertEqual(rows["castle"]["specialForwardCastle"]["status"], "PENDING")
         self.assertFalse(rows["castle"]["specialForwardCastle"]["operationEstablished"])
         self.assertIsNone(rows["krepost"]["specialForwardCastle"])
+
+    def test_strict_castle_radius_is_source_based_and_pending_when_nonexhaustive(self):
+        for x, inside in ((75.00001, True), (75.0, False), (74.99999, False)):
+            with self.subTest(x=x):
+                case = stats(people=[player(1, 10, 10, [build("castle", 82, x, 10)]),
+                                     player(2, 90, 10)])
+                placed = project_social_v1_context(statistics=case)["placementContexts"][0]
+                castle = placed["specialForwardCastle"]
+                observed = castle["homeProximity"]["perOpponent"][0]["sourceStartingTownCenters"][0]
+                self.assertIs(observed["strictlyLessThan15Tiles"], inside)
+                self.assertAlmostEqual(observed["unroundedDistanceTiles"], abs(90 - x))
+                self.assertEqual(castle["homeProximity"]["distanceGate"], "PENDING")
+                self.assertEqual(castle["status"], "PENDING")
+                self.assertFalse(castle["qualifies"])
+                self.assertEqual(placed["legacyEnemyProgressPercent"], 80)
+
+    def test_castle_ally_home_is_not_target(self):
+        case = stats(people=[player(1, 10, 10, [build("castle", 82, 85, 10)]),
+                             player(2, 150, 10), player(3, 85, 10)],
+                     teams={1: 1, 2: 2, 3: 1})
+        castle = project_social_v1_context(statistics=case)["placementContexts"][0]["specialForwardCastle"]
+        self.assertEqual(castle["homeProximity"]["observedNearbyOpponentReplayPlayerIds"], [])
+        ally = next(v for v in castle["homeProximity"]["perOpponent"] if v["counterpartReplayPlayerId"] == 3)
+        self.assertEqual(ally["relationContext"], "FIXED_ALLIES")
+        self.assertTrue(ally["sourceStartingTownCenters"][0]["strictlyLessThan15Tiles"])
+        self.assertEqual(castle["status"], "PENDING")
+
+    def test_multiple_enemies_and_missing_diplomacy_do_not_choose_target(self):
+        case = stats(people=[player(1, 10, 10, [build("castle", 82, 90, 10)]),
+                             player(2, 90, 9), player(3, 90, 11)])
+        castle = project_social_v1_context(statistics=case)["placementContexts"][0]["specialForwardCastle"]
+        self.assertEqual(castle["homeProximity"]["distanceGate"], "AMBIGUOUS")
+        self.assertIsNone(castle["homeProximity"]["soleDistanceCandidateReplayPlayerId"])
+        case["matchFacts"]["rules"]["lockTeams"]["value"] = False
+        castle = project_social_v1_context(statistics=case)["placementContexts"][0]["specialForwardCastle"]
+        self.assertEqual(castle["homeProximity"]["distanceGate"], "PENDING")
+        case["matchFacts"]["rules"]["lockTeams"]["value"] = True
+        witness = case["participants"][2]["mapPresence"]["startingTownCenters"]
+        witness["objects"], witness["observedCount"] = [], 0
+        castle = project_social_v1_context(statistics=case)["placementContexts"][0]["specialForwardCastle"]
+        self.assertEqual(castle["homeProximity"]["distanceGate"], "PENDING")
+
+    def test_non_forward_castle_build_is_not_lost_and_deduplicates(self):
+        s = stats(people=[player(1, 10, 10), player(2, 90, 10)])
+        presence = s["participants"][0]["mapPresence"]
+        raw = build("home-castle", 82, 11, 10)
+        presence["castlePlacementCommands"] = {"modelVersion": "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1",
+                                               "evidence": [raw]}
+        result = project_social_v1_context(statistics=s)
+        places = result["placementContexts"]
+        self.assertEqual(len(places), 1)
+        self.assertEqual(places[0]["sourceFamilies"], ["castleBuildCommands"])
+        self.assertEqual(places[0]["specialForwardCastle"]["status"], "PENDING")
+        # Same original command can appear in the historical V8 forward view.
+        presence["forwardBuildings"]["evidence"].append(dict(raw))
+        again = project_social_v1_context(statistics=s)
+        self.assertEqual(len(again["placementContexts"]), 1)
+        self.assertEqual(again["placementContexts"][0]["sourceFamilies"],
+                         ["castleBuildCommands", "forwardBuildings"])
 
     def test_same_build_observed_in_three_models_is_one_placement(self):
         s = stats(people=[player(1, 10, 10, [build("watch", 79, 85, 10)]), player(2, 90, 10)])

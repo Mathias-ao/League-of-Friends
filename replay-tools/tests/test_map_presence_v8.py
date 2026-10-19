@@ -52,6 +52,24 @@ class RelicTargetingV1Tests(unittest.TestCase):
         self.assertIsNone(result["1"]["relicControl"]["inferredRelicsHeldAtEnd"])
         self.assertEqual(result["1"]["relicControl"]["uniqueRelicsTouched"], 1)
 
+    def test_castle_build_requests_are_retained_without_forward_filter(self):
+        from test_map_presence_v4 import build as builder
+        game = {"participants": [participant(1), participant(2)],
+                "initialState": {"map": {"width": 100, "height": 100}}}
+        objects = [initial("p1-tc", 1, 109, 101, 10, 10),
+                   initial("p2-tc", 2, 109, 201, 90, 10)]
+        # Close to own TC; existing forwardBuildings should not include this.
+        builds = [builder("castle-at-home", 1, 1000, 82, 11, 10),
+                  builder("krepost-at-home", 1, 1001, 1251, 12, 10)]
+        projected = project_map_presence(manifest=game, catalog=CATALOG,
+            initial_objects=objects, build_events=builds, wall_events=[], action_events=[])
+        candidate = projected["1"]["castlePlacementCommands"]
+        self.assertEqual(candidate["modelVersion"], "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1")
+        self.assertEqual([o["sourceEventId"] for o in candidate["evidence"]], ["castle-at-home"])
+        self.assertEqual(candidate["evidence"][0]["position"], {"x": 11, "y": 10})
+        self.assertEqual(projected["1"]["forwardBuildings"]["count"], 0)
+        self.assertEqual(projected["1"]["homeAnchor"]["x"], 10)
+
     def test_no_relic_commands_still_does_not_prove_no_possession(self):
         row = relic_targeting([], self.objects, {1})["1"]
         self.assertEqual(row["totalRelicCommands"], 0)
