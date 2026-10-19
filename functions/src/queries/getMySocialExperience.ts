@@ -24,7 +24,7 @@ export function assertIntV1PrivateReadEnabled(env:NodeJS.ProcessEnv){
     throw new HttpsError('failed-precondition','Private integration read is disabled.');
 }
 
-export async function readMySocialExperience(input:{db:any;bucket:any;actor:{playerId:string;authUid:string};
+export async function loadMyCurrentSocialSource(input:{db:any;bucket:any;actor:{playerId:string;authUid:string};
   request:MySocialExperienceRequest;env:NodeJS.ProcessEnv}){
   const {db,bucket,actor,request:r,env}=input;
   assertIntV1PrivateReadEnabled(env);
@@ -96,8 +96,18 @@ export async function readMySocialExperience(input:{db:any;bucket:any;actor:{pla
   await loaded.revalidate();
   // Final transactional snapshot is the response's linearization point. A
   // correction, roster remap, GUID transfer or membership change must abort.
-  await db.runTransaction(async(tx:any)=>{if((await snapshot(tx)).token!==before.token)throw stale();});
-  return response;
+  const revalidate=async(tx?:any)=>{
+    const check=async(t:any)=>{if((await snapshot(t)).token!==before.token)throw stale();};
+    if(tx)await check(tx);else await db.runTransaction(check);
+  };
+  await revalidate();
+  return {source:response.source,statistics:loaded.statistics,match:before.m,game:before.g,revalidate};
+}
+
+/** Existing INT-A wire response is unchanged; INT-B reuses the same verified load. */
+export async function readMySocialExperience(input:Parameters<typeof loadMyCurrentSocialSource>[0]){
+  const loaded=await loadMyCurrentSocialSource(input);
+  return privateSourceExperience(input.actor.playerId,loaded.source);
 }
 
 export const getMySocialExperience=onCall<MySocialExperienceRequest>({...callableOptions,timeoutSeconds:120,memory:'1GiB'},async request=>{

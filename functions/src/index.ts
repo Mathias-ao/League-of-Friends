@@ -98,3 +98,5 @@ export {adminRejectAIWarmup} from './commands/events/verifyAIWarmup.js';
 
 export {getSocialEvidenceV1a} from "./queries/getSocialEvidenceV1a.js";
 export {getMySocialExperience} from './queries/getMySocialExperience.js';
+export {getMyPersonalityHistory} from './queries/getMyPersonalityHistory.js';
+export {getMyPrivateChronicle} from './queries/getMyPrivateChronicle.js';
