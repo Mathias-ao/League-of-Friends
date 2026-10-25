@@ -89,6 +89,56 @@ test('real 1v1/team/FFA recordings preserve raw observed clocks and settings onl
   assert.equal(ffa.source.sha256,'ab947d934bbd4fa4e2531f4f8a5014f9b923038a34aa7332d7260eb78fb3fab5');
   assert.equal(corpus.reports.find(r=>r.id==='user-ffa-diplo-save68.9').observedUntilMs,ffa.durationMs);
 });
+test('real team and duel metadata feed the source-field adapter without manufactured classification',()=>{
+  // Synthetic current Match/SourceSnapshot envelopes exercise the *pure adapter*.
+  // Numeric fields below come unchanged from genuine retained recording reports;
+  // they are NOT historical league auth, source-authorized pole labels or rules.
+  for(const [report,format,count] of [[two,'TWO_V_TWO',4],[four,'FOUR_V_FOUR',8]]){
+    const x=original(count,format);
+    x.statistics.matchFacts.source.gameBuild=report.meta.game_build;
+    x.statistics.matchFacts.map.id=report.meta.settings.rms_map_id;
+    x.statistics.matchFacts.rules.mapId.value=report.meta.settings.rms_map_id;
+    x.statistics.matchFacts.rules.startingAgeId.value=report.meta.settings.starting_age_id;
+    x.statistics.matchFacts.rules.startingResourcesId.value=report.meta.settings.starting_resources_id;
+    x.statistics.scope.observedUntilMs=report.meta.duration_ms;
+    x.statistics.matchFacts.game.observedDurationMs=report.meta.duration_ms;
+    for(const p of x.statistics.matchFacts.players)delete p.civilization.rawId;
+    const a=admit(x);
+    assert.equal(a.fields.format.value,'TEAM');
+    assert.equal(a.fields.mapId.value,String(report.meta.settings.rms_map_id));
+    assert.equal(a.fields.durationMs.value,report.meta.duration_ms);
+    assert.equal(a.fields.civilizationOpportunityKey.value,null);
+    assert.equal(a.fields.mapFamily.value,null);
+    assert.equal(a.status,'PENDING');
+  }
+  const x=original(2,'ONE_V_ONE');
+  x.source.sourceHash=duel.source.sha256;
+  x.statistics.matchFacts.source.replaySha256=duel.source.sha256;
+  x.statistics.matchFacts.source.gameBuild=duel.source.gameBuild;
+  x.statistics.scope.observedUntilMs=duel.durationMs;
+  x.statistics.matchFacts.game.observedDurationMs=duel.durationMs;
+  x.statistics.matchFacts.rules.mapId={value:null,status:'UNKNOWN'};
+  const d=admit(x);
+  assert.equal(d.fields.format.value,'ONE_V_ONE');
+  assert.equal(d.fields.observedUntilMs.value,duel.durationMs);
+  assert.equal(d.fields.civilizationOpportunityKey.value,'BUILD_158041_CIV_2');
+  assert.equal(d.fields.mapId.value,null);
+  assert.equal(d.context,null);
+  const free=original(8,'FFA');
+  free.source.sourceHash=ffa.source.sha256;
+  free.statistics.matchFacts.source.replaySha256=ffa.source.sha256;
+  free.statistics.matchFacts.source.gameBuild=ffa.source.gameBuild;
+  free.statistics.scope.observedUntilMs=ffa.durationMs;
+  free.statistics.matchFacts.game.observedDurationMs=ffa.durationMs;
+  free.statistics.matchFacts.rules.mapId={status:'UNKNOWN',value:null};
+  const f=admit(free);
+  assert.equal(f.fields.format.value,'FFA');
+  assert.equal(f.fields.durationMs.value,ffa.durationMs);
+  assert.equal(f.fields.dynamicDiplomacyQualified.value,false);
+  assert.equal(f.fields.mapFamily.value,null);
+  assert.equal(f.context,null);
+});
+
 test('1v1/team/FFA mode requires current league topology and source-bound complete roster',()=>{
   const v1=original(2,'ONE_V_ONE'),v2=original(4,'TWO_V_TWO'),v4=original(8,'FOUR_V_FOUR'),
     free=original(8,'FFA');
