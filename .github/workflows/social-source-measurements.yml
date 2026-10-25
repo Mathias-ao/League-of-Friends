@@ -1,0 +1,33 @@
+name: Social Source Measurement Corpus (Inert)
+
+on:
+  pull_request:
+    paths:
+      - "replay-tools/social_v1_source_measurements.py"
+      - "replay-tools/tests/test_social_v1_source_measurements.py"
+      - ".github/workflows/social-source-measurements.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authentic-neutral:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: replay-tools/requirements.txt
+      - name: Install existing replay dependencies
+        run: python -m pip install -r replay-tools/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Inspect hash-pinned real original recordings without scoring or deployment
+        env:
+          AOF_SOCIAL_AUTHENTIC_MEASUREMENTS: "1"
+        run: python -m unittest discover -s replay-tools/tests -p test_social_v1_source_measurements.py -v
