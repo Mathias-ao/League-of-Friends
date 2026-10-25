@@ -12,7 +12,8 @@ from hashlib import sha256
 import json
 
 from social_v1_source_measurements import (
-    VERSION as SOURCE_VERSION, METHOD as SOURCE_METHOD, _original_index,
+    VERSION as SOURCE_VERSION, METHOD as SOURCE_METHOD,
+    KINDS as ORIGINAL_FACET_KINDS, _original_index,
 )
 
 VERSION = "AOF_SOCIAL_METRIC_GRADE_CANDIDATES_1"
@@ -46,6 +47,7 @@ CANDIDATE_HYPOTHESES = {
         "BOND": ["MATERIAL_INDEPENDENT_RECIPIENT_ASSISTANCE"],
     },
 }
+FACET_FOR_KIND = {v: k for k, v in ORIGINAL_FACET_KINDS.items()}
 SOURCE_METRICS = {
     "DIRECTED_TARGET_COMMAND": "AOF_ORIGINAL_TARGET_REQUEST_COUNT_V1",
     "DIRECTED_PRESSURE_REQUEST": "AOF_ORIGINAL_ECONOMIC_PRESSURE_REQUEST_COUNT_V1",
@@ -125,6 +127,9 @@ def prepare_social_metric_grade_candidates(
     _check(roster and all(type(p) is int and p > 0 for p in roster),
            "ORIGINAL_ROSTER_REQUIRED")
     neutral = {d["sourceDeedId"]: d for d in context.get("deedContexts") or []}
+    original_deeds = {
+        d["deedId"]: d for d in ((statistics.get("pairSocialEvidence") or {}).get("deeds") or [])
+    }
     mode = _mode(statistics)
     measurements = source_measurements.get("observations")
     _check(isinstance(measurements, list) and len(measurements) <= max_candidates,
@@ -150,6 +155,21 @@ def prepare_social_metric_grade_candidates(
         _check(isinstance(refs, list) and refs and len(set(refs)) == len(refs)
                and set(refs).issubset(set(d["sourceEventIds"])),
                "ORIGINAL_EVENT_PROVENANCE_REQUIRED")
+        # Neither the signed direction nor metric family comes from a caller's
+        # free-form descriptor: bind back to the unchanged original Pair deed.
+        original_deed = original_deeds.get(did)
+        _check(original_deed is not None and
+               set(original_deed.get("sourceEventIds") or []) == set(d["sourceEventIds"])
+               and any(f.get("kind") == FACET_FOR_KIND[row["kind"]]
+                       and f.get("fromPlayerId") == actor
+                       and f.get("toPlayerId") == target
+                       and set(f.get("sourceEventIds") or []) == set(refs)
+                       for f in original_deed.get("facets") or []),
+               "SOURCE_FACET_DIRECTION_AND_KIND_UNVERIFIED")
+        _check(any(dr.get("fromReplayPlayerId") == actor and
+                   dr.get("toReplayPlayerId") == target
+                   for dr in d.get("directionalActors") or []),
+               "NEUTRAL_CONTEXT_DIRECTION_UNVERIFIED")
         _check(all(ref in originals and
                    originals[ref]["actorReplayPlayerId"] == actor and
                    d["firstAtMs"] <= originals[ref]["recordingAtMs"] <= d["lastAtMs"]
@@ -190,8 +210,15 @@ def prepare_social_metric_grade_candidates(
                        if x["lastAtMs"] < d["firstAtMs"] and
                        x["lastAtMs"] >= prior["windowStartMs"]}
         for kind in ("sameDirectionSourceDeedIds", "oppositeDirectionSourceDeedIds"):
+            expected_actor, expected_other = ((actor, target) if kind.startswith("same")
+                                              else (target, actor))
             _check(isinstance(prev.get(kind), list)
-                   and all(p in valid_prior and p != did for p in prev[kind]),
+                   and all(p in valid_prior and p != did
+                           and any(f.get("fromPlayerId") == expected_actor
+                                   and f.get("toPlayerId") == expected_other
+                                   and f.get("kind") in ORIGINAL_FACET_KINDS
+                                   for f in original_deeds.get(p, {}).get("facets") or [])
+                           for p in prev[kind]),
                    "HISTORICAL_RECURRENCE_UNVERIFIED")
         ident = row.get("observationId")
         _check(isinstance(ident, str) and ident, "MISSING_SOURCE_OBSERVATION_ID")
@@ -413,6 +440,20 @@ def prepare_social_metric_grade_candidates(
             "opponentSpecificTerritoryProven": False,
             "coverage": "LIMITED",
         })
+    # Tribute request amount/direction must also come from exact retained
+    # Economy V5 source evidence; client-shifted donors or magnitudes are
+    # refused even though they would remain noncreditable.
+    retained_tribute = {}
+    for player in statistics.get("participants") or []:
+        for request in (((player.get("economy") or {}).get("tributeSent") or {}).get("evidence") or []):
+            ref = request.get("sourceEventId")
+            if not isinstance(ref, str) or not ref:
+                continue
+            identity = (player["playerId"], request.get("counterpartPlayerId"),
+                        request.get("atMs"), request.get("decodedResourceAmount"))
+            if ref in retained_tribute:
+                _check(retained_tribute[ref] == identity, "CONFLICTING_RETAINED_TRIBUTE")
+            retained_tribute[ref] = identity
     tribute = []
     for t in source_measurements.get("tributeRequestContexts") or []:
         actor, other, ref = (t.get(k) for k in
@@ -421,8 +462,15 @@ def prepare_social_metric_grade_candidates(
         _check(t.get("coverage") == "LIMITED" and
                t.get("qualifiesSocialFact") is False,
                "TRIBUTE_CANNOT_BE_PROMOTED_TO_HELP")
-        if not e or e["actorReplayPlayerId"] != actor or other not in roster:
-            continue
+        _check(e is not None and e["actorReplayPlayerId"] == actor
+               and other in roster and other != actor
+               and retained_tribute.get(ref) ==
+                   (actor, other, e["recordingAtMs"], t.get("decodedRequestAmount"))
+               and e["operationOrdinal"] == t.get("operationOrdinal")
+               and (t.get("requestAmountStatus") ==
+                    ("UNKNOWN" if t.get("decodedRequestAmount") is None else
+                     "ZERO" if t["decodedRequestAmount"] == 0 else "NONZERO")),
+               "TRIBUTE_ORIGINAL_REQUEST_IDENTITY_MISMATCH")
         tribute.append({"sourceEventId": ref, "actorReplayPlayerId": actor,
                         "counterpartReplayPlayerId": other,
                         "requestAmountStatus": t["requestAmountStatus"],
