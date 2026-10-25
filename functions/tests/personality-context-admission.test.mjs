@@ -112,6 +112,9 @@ test('FFA diplomacy uncertainty remains explicit false and never proves combat/a
   assert.equal(result.fields.dynamicDiplomacyQualified.status,'SOURCE_VERIFIED');
   assert.ok(result.context);
   assert.ok(!JSON.stringify(result).includes('confirmed_combat'));
+  const unknown=structuredClone(x);delete unknown.statistics.matchFacts.diplomacy.effectiveRuntimeStateQualified;
+  assert.equal(admit(unknown,p).fields.dynamicDiplomacyQualified.value,null);
+  assert.equal(admit(unknown,p).status,'PENDING');
 });
 test('reviewed classification must bind exact source, build, map ID, start and recorded interval',()=>{
   const x=original(),p=proof(x);
