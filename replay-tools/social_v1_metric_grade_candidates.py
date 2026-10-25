@@ -1,0 +1,510 @@
+"""SOC-GRADE-02: pure, *inert* game-local metric-grade candidate preparation.
+
+Uses existing #149 original-source descriptors and merged #142 Context V2.
+This is not a semantic qualifier, owner grade policy, source-authority adapter,
+historical evaluator, replay parser, or a path to official writes. No metric is
+ADMITTED or assigned a score/band merely because an original request exists.
+"""
+from __future__ import annotations
+
+from copy import deepcopy
+from hashlib import sha256
+import json
+
+from social_v1_source_measurements import (
+    VERSION as SOURCE_VERSION, METHOD as SOURCE_METHOD,
+    KINDS as ORIGINAL_FACET_KINDS, _original_index,
+)
+
+VERSION = "AOF_SOCIAL_METRIC_GRADE_CANDIDATES_1"
+CONTRACT = "AOF_SOCIAL_V1_SHARED_1"
+CONTEXT = "AOF_SOCIAL_V1_CONTEXT_V2"
+TRACKS = {
+    "GALLANTRY": "REPUTATION", "CRUELTY": "REPUTATION",
+    "CHIVALRY": "REPUTATION", "RIVALRY": "RELATIONSHIP",
+    "HOSTILITY": "RELATIONSHIP", "BOND": "RELATIONSHIP",
+}
+# Candidate hypotheses, NOT approved metric-to-track assignments.
+CANDIDATE_HYPOTHESES = {
+    "DIRECTED_TARGET_COMMAND": {
+        "GALLANTRY": ["PAST_ONLY_OPPONENT_CHALLENGE", "MEANINGFUL_OFFENSIVE_COMMITMENT"],
+        "RIVALRY": ["MATERIAL_OPPONENT_SPECIFIC_COMPETITION"],
+        "HOSTILITY": ["DISTINCT_PREEXISTING_COOPERATION_AND_ATTRIBUTABLE_RUPTURE"],
+    },
+    "DIRECTED_PRESSURE_REQUEST": {
+        "CRUELTY": ["INDEPENDENT_PREENTRY_VICTIM_VULNERABILITY",
+                    "MEANINGFUL_EXECUTED_PRESSURE_NOT_JUST_ORDER"],
+        "RIVALRY": ["MATERIAL_COMPETITIVE_OPPORTUNITY"],
+        "HOSTILITY": ["NONROUTINE_DISTINCT_DIRECTED_ANTAGONISM_AND_HISTORY"],
+    },
+    "DEFENSIVE_PARTICIPATION_REQUEST": {
+        # Here counterpart is the *beneficiary*, not the attacker:
+        # defender→opponent Rivalry needs a separate originally attributed
+        # defensive contest, never a relabelled helper→ally pair.
+        "CHIVALRY": ["PREEXISTING_RECIPIENT_THREAT", "MATERIAL_RECIPIENT_SPECIFIC_PROTECTION"],
+        "BOND": ["MATERIAL_INDEPENDENT_RECIPIENT_ASSISTANCE"],
+    },
+    "REINFORCEMENT_REQUEST": {
+        "CHIVALRY": ["PREEXISTING_RECIPIENT_THREAT", "MATERIAL_PROTECTION"],
+        "BOND": ["MATERIAL_INDEPENDENT_RECIPIENT_ASSISTANCE"],
+    },
+}
+FACET_FOR_KIND = {v: k for k, v in ORIGINAL_FACET_KINDS.items()}
+SOURCE_METRICS = {
+    "DIRECTED_TARGET_COMMAND": "AOF_ORIGINAL_TARGET_REQUEST_COUNT_V1",
+    "DIRECTED_PRESSURE_REQUEST": "AOF_ORIGINAL_ECONOMIC_PRESSURE_REQUEST_COUNT_V1",
+    "DEFENSIVE_PARTICIPATION_REQUEST": "AOF_ORIGINAL_DEFENSE_REQUEST_COUNT_V1",
+    "REINFORCEMENT_REQUEST": "AOF_ORIGINAL_REINFORCEMENT_REQUEST_COUNT_V1",
+}
+STOP_ACTIONS = frozenset({"STOP", "DE_STOP", "CANCEL", "DE_CANCEL"})
+
+
+def _digest(value):
+    return sha256(json.dumps(value, sort_keys=True, ensure_ascii=False,
+                             separators=(",", ":"), allow_nan=False).encode("utf-8")).hexdigest()
+
+
+def _check(condition, reason):
+    if not condition:
+        raise ValueError(reason)
+
+
+def _mode(statistics):
+    """Only lobby-locked teams; FFA diplomacy is *never* fixed by a lobby flag."""
+    facts = statistics.get("matchFacts") or {}
+    team_rule = (facts.get("rules") or {}).get("lockTeams") or {}
+    teams = (facts.get("players") or [])
+    players = {p.get("playerId") for p in statistics.get("participants") or []}
+    by_id = {r.get("playerId"): r.get("lobbyTeamIdRaw") for r in teams}
+    if (team_rule.get("value") is not True or team_rule.get("status") != "DECODED"
+            or set(by_id) != players or
+            not all(type(v) is int and v > 0 for v in by_id.values())):
+        return {"kind": "DYNAMIC_DIPLOMACY_OR_UNVERIFIED",
+                "fixedAlignmentProven": False,
+                "effectiveDiplomacyProven": False}
+    ids = list(by_id.values())
+    return {"kind": "LOCKED_TEAMS" if len(set(ids)) < len(ids)
+            else "LOCKED_DISTINCT_TEAMS",
+            "fixedAlignmentProven": True,
+            "effectiveDiplomacyProven": False}
+
+
+def prepare_social_metric_grade_candidates(
+        *, statistics, context, source_measurements, action_events, game_scope,
+        max_events=600000, max_candidates=10000):
+    """Normalize verified-in-this-input source facts; all grade/effects PENDING.
+
+    game_scope is caller-supplied metadata and remains explicitly untrusted:
+    {battleId, gameId, gameGuid, authorityRevision}. Sol alone binds it to an
+    authenticated READY Match/Game/current-source transaction later.
+    """
+    _check(isinstance(statistics, dict) and isinstance(context, dict)
+           and isinstance(source_measurements, dict), "SOURCE_ARTIFACTS_REQUIRED")
+    _check(context.get("version") == CONTEXT
+           and context.get("compatibleSharedContract") == CONTRACT,
+           "ACTUAL_CONTEXT_V2_REQUIRED")
+    _check(context.get("trust", {}).get("officialLeagueAuthority") is False
+           and context.get("trust", {}).get("socialClaimsQualified") is False,
+           "CONTEXT_IMPERSONATES_AUTHORITY")
+    _check(source_measurements.get("version") == SOURCE_VERSION
+           and source_measurements.get("methodVersion") == SOURCE_METHOD
+           and source_measurements.get("qualifiesAnySocialFact") is False
+           and source_measurements.get("publicationAllowed") is False
+           and source_measurements.get("officialLeagueAuthority") is False,
+           "UNTRUSTED_SOURCE_MEASUREMENT_ADMISSION")
+    rev = context.get("sourceRevision")
+    _check(isinstance(rev, dict) and rev and rev == source_measurements.get("sourceRevision")
+           and rev == {k: statistics.get("source", {}).get(k) for k in rev}
+           and context.get("sourceContextRevision") ==
+           source_measurements.get("sourceContextRevision"),
+           "STALE_SOURCE_OR_CONTEXT_REVISION")
+    _check(type(max_candidates) is int and 0 < max_candidates <= 20000,
+           "CANDIDATE_BUDGET_REQUIRED")
+    _check(isinstance(game_scope, dict)
+           and set(game_scope) == {"battleId", "gameId", "gameGuid", "authorityRevision"}
+           and all(isinstance(v, str) and v for v in game_scope.values()),
+           "EXPLICIT_UNTRUSTED_GAME_SCOPE_REQUIRED")
+    originals = _original_index(action_events, max_events)
+    roster = {p.get("playerId") for p in statistics.get("participants") or []}
+    _check(roster and all(type(p) is int and p > 0 for p in roster),
+           "ORIGINAL_ROSTER_REQUIRED")
+    neutral = {d["sourceDeedId"]: d for d in context.get("deedContexts") or []}
+    original_deeds = {
+        d["deedId"]: d for d in ((statistics.get("pairSocialEvidence") or {}).get("deeds") or [])
+    }
+    mode = _mode(statistics)
+    measurements = source_measurements.get("observations")
+    _check(isinstance(measurements, list) and len(measurements) <= max_candidates,
+           "MEASUREMENT_CANDIDATE_BUDGET_EXCEEDED")
+    # A neutral measurement is a possible observation only. Never accept
+    # client-added ADMITTED labels, fake grades or pre-entry semantic FACTS.
+    nodes = []
+    unique = {}
+    for row in measurements:
+        _check(isinstance(row, dict)
+               and row.get("coverage") == "LIMITED"
+               and row.get("qualifiesSocialFact") is False
+               and row.get("methodVersion") == SOURCE_METHOD
+               and row.get("kind") in SOURCE_METRICS,
+               "MEASUREMENT_PRETENDS_TO_BE_QUALIFIED")
+        did, actor, target = (row.get(k) for k in
+                              ("sourceDeedId", "fromReplayPlayerId", "toReplayPlayerId"))
+        d = neutral.get(did)
+        _check(d is not None and type(actor) is int and type(target) is int
+               and actor in roster and target in roster and actor != target,
+               "UNBOUND_DIRECTIONAL_EPISODE")
+        refs = row.get("sourceEventIds")
+        _check(isinstance(refs, list) and refs and len(set(refs)) == len(refs)
+               and set(refs).issubset(set(d["sourceEventIds"])),
+               "ORIGINAL_EVENT_PROVENANCE_REQUIRED")
+        # Neither the signed direction nor metric family comes from a caller's
+        # free-form descriptor: bind back to the unchanged original Pair deed.
+        original_deed = original_deeds.get(did)
+        _check(original_deed is not None and
+               set(original_deed.get("sourceEventIds") or []) == set(d["sourceEventIds"])
+               and any(f.get("kind") == FACET_FOR_KIND[row["kind"]]
+                       and f.get("fromPlayerId") == actor
+                       and f.get("toPlayerId") == target
+                       and set(f.get("sourceEventIds") or []) == set(refs)
+                       for f in original_deed.get("facets") or []),
+               "SOURCE_FACET_DIRECTION_AND_KIND_UNVERIFIED")
+        _check(any(dr.get("fromReplayPlayerId") == actor and
+                   dr.get("toReplayPlayerId") == target
+                   for dr in d.get("directionalActors") or []),
+               "NEUTRAL_CONTEXT_DIRECTION_UNVERIFIED")
+        _check(all(ref in originals and
+                   originals[ref]["actorReplayPlayerId"] == actor and
+                   d["firstAtMs"] <= originals[ref]["recordingAtMs"] <= d["lastAtMs"]
+                   for ref in refs),
+               "SOURCE_EVENT_ACTOR_CLOCK_MISMATCH")
+        ordered = sorted((originals[ref] for ref in refs),
+                         key=lambda r: (r["recordingAtMs"],
+                                        -1 if r["operationOrdinal"] is None else r["operationOrdinal"],
+                                        r["sourceEventId"]))
+        reliable = (all(e["operationOrdinal"] is not None for e in ordered)
+                    and len({(e["recordingAtMs"], e["operationOrdinal"])
+                             for e in ordered}) == len(ordered))
+        moment = row.get("firstSourceMoment")
+        _check(isinstance(moment, dict)
+               and moment.get("recordingAtMs") == ordered[0]["recordingAtMs"]
+               and (moment.get("operationOrdinal") ==
+                    (ordered[0]["operationOrdinal"] if reliable else None))
+               and moment.get("order") == ("ORDERED" if reliable else "PARTIAL"),
+               "ORIGINAL_POSITION_MISMATCH")
+        _check(type(row.get("recordedCommandCount")) is int
+               and row["recordedCommandCount"] == len(refs),
+               "ORIGINAL_COMMAND_COUNT_MISMATCH")
+        prior = row.get("preEntryRequestedActivity")
+        _check(isinstance(prior, dict)
+               and prior.get("windowEndExclusiveMs") == d["firstAtMs"]
+               and type(prior.get("windowStartMs")) is int
+               and 0 <= prior["windowStartMs"] <= d["firstAtMs"],
+               "PREENTRY_WINDOW_NOT_PAST_ONLY")
+        pre_refs = prior.get("sourceEventIds")
+        _check(isinstance(pre_refs, list) and all(
+            ref in originals and originals[ref]["actorReplayPlayerId"] == actor
+            and prior["windowStartMs"] <= originals[ref]["recordingAtMs"] < d["firstAtMs"]
+            for ref in pre_refs), "PREENTRY_HINDSIGHT_OR_ACTOR_MISMATCH")
+        _check(prior.get("actorOriginalCommandCount") == len(pre_refs),
+               "PREENTRY_COUNT_NOT_SOURCE_BACKED")
+        prev = row.get("priorDirectedEpisodeCandidates") or {}
+        valid_prior = {x["sourceDeedId"]: x for x in neutral.values()
+                       if x["lastAtMs"] < d["firstAtMs"] and
+                       x["lastAtMs"] >= prior["windowStartMs"]}
+        for kind in ("sameDirectionSourceDeedIds", "oppositeDirectionSourceDeedIds"):
+            expected_actor, expected_other = ((actor, target) if kind.startswith("same")
+                                              else (target, actor))
+            _check(isinstance(prev.get(kind), list)
+                   and all(p in valid_prior and p != did
+                           and any(f.get("fromPlayerId") == expected_actor
+                                   and f.get("toPlayerId") == expected_other
+                                   and f.get("kind") in ORIGINAL_FACET_KINDS
+                                   for f in original_deeds.get(p, {}).get("facets") or [])
+                           for p in prev[kind]),
+                   "HISTORICAL_RECURRENCE_UNVERIFIED")
+        ident = row.get("observationId")
+        _check(isinstance(ident, str) and ident, "MISSING_SOURCE_OBSERVATION_ID")
+        if ident in unique:
+            _check(unique[ident] == row, "CONFLICTING_SOURCE_OBSERVATION")
+            continue
+        unique[ident] = row
+        nodes.append({"source": row, "deed": d, "actor": actor, "target": target,
+                      "refs": set(refs), "moment": moment})
+    # Source-linked union only within the SAME original actor→counterpart
+    # direction. Different participant directions never imply reciprocity.
+    parent = list(range(len(nodes)))
+    def root(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+    def union(i, j):
+        a, b = root(i), root(j)
+        if a != b:
+            parent[max(a, b)] = min(a, b)
+    seen_events = {}
+    seen_incidents = {}
+    for i, n in enumerate(nodes):
+        direction = (n["actor"], n["target"])
+        for ref in n["refs"]:
+            k = (direction, ref)
+            if k in seen_events:
+                union(i, seen_events[k])
+            else:
+                seen_events[k] = i
+        for inc in n["deed"].get("sourceIncidentIds") or []:
+            k = (direction, inc)
+            if k in seen_incidents:
+                union(i, seen_incidents[k])
+            else:
+                seen_incidents[k] = i
+    components = {}
+    for i, n in enumerate(nodes):
+        components.setdefault(root(i), []).append(n)
+    groups = []
+    for members in components.values():
+        actor, target = members[0]["actor"], members[0]["target"]
+        refs = sorted(set().union(*(x["refs"] for x in members)))
+        deeds = sorted({x["source"]["sourceDeedId"] for x in members})
+        first, last = min(originals[e]["recordingAtMs"] for e in refs), max(
+            originals[e]["recordingAtMs"] for e in refs)
+        source_rows = sorted((originals[e] for e in refs),
+                             key=lambda x: (x["recordingAtMs"],
+                                            -1 if x["operationOrdinal"] is None else x["operationOrdinal"],
+                                            x["sourceEventId"]))
+        reliable = (all(e["operationOrdinal"] is not None for e in source_rows)
+                    and len({(e["recordingAtMs"], e["operationOrdinal"])
+                             for e in source_rows}) == len(source_rows))
+        metric_rows = {}
+        for member in members:
+            src = member["source"]
+            mid = SOURCE_METRICS[src["kind"]]
+            metric_rows.setdefault(mid, set()).update(src["sourceEventIds"])
+        measured = [{"metricDefinitionId": key, "rawValue": len(srcs),
+                     "unit": "distinct_original_actor_commands",
+                     "sourceEventIds": sorted(srcs),
+                     "measurementMeaning": "OBSERVED_REQUEST_NOT_EXECUTION"}
+                    for key, srcs in sorted(metric_rows.items())]
+        hypotheses = {}
+        for member in members:
+            for track, needs in CANDIDATE_HYPOTHESES[member["source"]["kind"]].items():
+                hypotheses.setdefault(track, set()).update(needs)
+        opportunity = sorted({ref for n in members
+            for ref in n["source"]["preEntryRequestedActivity"]["sourceEventIds"]})
+        # MatchFacts can expose decoded map/civ context, but an approved
+        # map/civilization-adjusted denominator is not provided by that fact.
+        mf = statistics.get("matchFacts") or {}
+        census = {p.get("playerId"): p for p in (mf.get("players") or [])}
+        comparability = {
+            "mapSourceContext": deepcopy(mf.get("map")) if isinstance(mf.get("map"), dict) else None,
+            "civilizationSourceContext": [
+                {"replayPlayerId": pid,
+                 "rawCivilization": deepcopy(census.get(pid, {}).get("civilization"))}
+                for pid in (actor, target)],
+            "observedClock": {
+                "observedUntilMs": (
+                    (statistics.get("scope") or {}).get("observedUntilMs")
+                    if type((statistics.get("scope") or {}).get("observedUntilMs")) is int else None),
+                "basis": (statistics.get("scope") or {}).get("clock"),
+                "fullGameOriginAndCompletenessEstablished": False},
+            "normalizationRuleVersion": None,
+            "status": "UNQUALIFIED_NO_MAP_CIV_MODE_OR_OPPORTUNITY_POLICY",
+        }
+        previous = sorted({ref for n in members for ref in
+            n["source"]["priorDirectedEpisodeCandidates"]["sameDirectionSourceDeedIds"]})
+        opposite = sorted({ref for n in members for ref in
+            n["source"]["priorDirectedEpisodeCandidates"]["oppositeDirectionSourceDeedIds"]})
+        # Engagement views can repeat the same underlying promoted skirmish
+        # in multiple per-player projections. One detector is one context ref,
+        # never another contribution.
+        detector_index = {}
+        for e in context.get("engagementContexts") or []:
+            linked = sorted(set(refs) & set(e.get("sourceEventIds") or []))
+            if not linked:
+                continue
+            key = (e["kind"], e["sourceDetectorId"])
+            descriptor = {"kind": e["kind"], "sourceDetectorId": e["sourceDetectorId"],
+                          "sharedOriginalEventIds": linked}
+            if key in detector_index:
+                # Same already-projected detector can appear as several
+                # neutral participant views. Union *original shared* refs,
+                # never count the repeat as another action or contribution.
+                existing = detector_index[key]
+                existing["sharedOriginalEventIds"] = sorted(set(
+                    existing["sharedOriginalEventIds"]) | set(linked))
+            else:
+                detector_index[key] = descriptor
+        detectors = [detector_index[k] for k in sorted(detector_index)]
+        # V3 raid detector is opponent-specific, but still inferred from
+        # commands/geography: it is source-overlap CONTEXT, not proven damage.
+        raid_index = {}
+        for player in statistics.get("participants") or []:
+            if player.get("playerId") != actor:
+                continue
+            military = (player.get("military") or {}).get("engagements") or {}
+            source_raid = military.get("raidEvidence") or {}
+            for raid in source_raid.get("initiatedEpisodes") or []:
+                if raid.get("attackerPlayerId") != actor or raid.get("victimPlayerId") != target:
+                    continue
+                related = sorted(set(refs) & set(raid.get("sourceEventIds") or []))
+                if not related:
+                    continue
+                if not all(ref in originals and
+                           originals[ref]["actorReplayPlayerId"] == actor
+                           for ref in related):
+                    continue
+                raid_id = raid.get("raidId")
+                if not isinstance(raid_id, str) or not raid_id:
+                    continue
+                descriptor = {
+                    "raidId": raid_id, "modelVersion": military.get("modelVersion"),
+                    "attackerReplayPlayerId": actor, "victimReplayPlayerId": target,
+                    "sharedOriginalEventIds": related,
+                    "meaning": "INFERRED_DIRECTED_ECONOMIC_RAID_COMMANDS_NOT_DAMAGE",
+                }
+                if raid_id in raid_index:
+                    _check(raid_index[raid_id] == descriptor, "CONFLICTING_RAID_CONTEXT")
+                raid_index[raid_id] = descriptor
+        linked_raids = [raid_index[k] for k in sorted(raid_index)]
+        no_op = sorted(set(ref for ref, event in originals.items()
+            if event["actorReplayPlayerId"] == actor and first <= event["recordingAtMs"] <= last
+            and event["originalAction"] in STOP_ACTIONS and ref not in refs))
+        position = {"recordingAtMs": source_rows[0]["recordingAtMs"],
+                    "operationOrdinal": source_rows[0]["operationOrdinal"] if reliable else None,
+                    "order": "ORDERED" if reliable else "PARTIAL"}
+        group_id = "metric-episode-" + _digest([
+            VERSION, game_scope["battleId"], game_scope["gameId"],
+            rev, context["sourceContextRevision"], actor, target, deeds, refs])
+        groups.append({
+            "candidateId": group_id,
+            "independentContributionKey": group_id,
+            "gameScope": dict(game_scope),
+            "sourceRevision": dict(rev),
+            "sourceContextRevision": context["sourceContextRevision"],
+            "sourceMeasurementsRevision": source_measurements["projectionRevision"],
+            "actorReplayPlayerId": actor, "counterpartReplayPlayerId": target,
+            "sourceDeedIds": deeds, "sourceEventIds": refs,
+            "firstSourceMoment": position,
+            "window": {"startMs": first, "endMs": last},
+            "mode": dict(mode),
+            "rawMeasurements": measured,
+            "originalMetricMethods": sorted({n["source"]["methodVersion"] for n in members}),
+            "originalSourceLayer": "ORIGINAL_ACTOR_COMMANDS_WITH_INFERRED_DIRECTED_CONTEXT",
+            "linkedDetectorCandidates": detectors,
+            "linkedRaidDetectorCandidates": linked_raids,
+            "priorDirectedEpisodeCandidateDeedIds": previous,
+            "priorOppositeDirectedEpisodeCandidateDeedIds": opposite,
+            "opportunity": {"status": "UNQUALIFIED",
+                            "sourceEventIds": opportunity,
+                            "meaning": "PRIOR_COMMAND_REQUESTS_NOT_OPPONENT_CAPACITY",
+                            "approvedDenominator": None},
+            "comparability": comparability,
+            "counterevidenceCandidates": [
+                {"kind": "STOP_OR_CANCEL_CONTEXT_NOT_PROVEN_CANCELLATION",
+                 "sourceEventIds": no_op, "coverage": "LIMITED"}] if no_op else [],
+            "trackHypotheses": [
+                {"system": TRACKS[t], "track": t, "decision": "PENDING",
+                 "missingEvidence": sorted(needs),
+                 "proposedOnly": True, "noOfficialEligibility": True}
+                for t, needs in sorted(hypotheses.items())],
+            "coverage": {"tier": "LIMITED",
+                         "limitations": ["REQUEST_NOT_EXECUTION",
+                                         "BEHAVIORAL_MATERIALITY_UNAPPROVED",
+                                         "OPPONENT_OPPORTUNITY_NOT_ESTABLISHED"]},
+            "grade": {"decision": "PENDING", "bandId": None,
+                      "ruleVersion": None, "units": None,
+                      "historicalEffect": None},
+            "explanation": ("Recorded, source-attributed command/context candidates "
+                            "are grouped into one noncreditable episode; "
+                            "neither severity nor a track grade is established."),
+        })
+    groups.sort(key=lambda g: (g["actorReplayPlayerId"], g["counterpartReplayPlayerId"],
+                                g["window"]["startMs"], g["candidateId"]))
+    # V2 placements and tribute requests are independently factual CONTEXT,
+    # never a second social deed or inferred directed beneficiary.
+    placements = []
+    for p in context.get("placementContexts") or []:
+        actor, ref = p.get("actorReplayPlayerId"), p.get("sourceEventId")
+        e = originals.get(ref)
+        if (e is None or type(actor) is not int or e["actorReplayPlayerId"] != actor
+                or p.get("atMs") != e["recordingAtMs"]):
+            continue
+        placements.append({
+            "sourceEventId": ref, "actorReplayPlayerId": actor,
+            "originalMoment": {"recordingAtMs": e["recordingAtMs"],
+                               "operationOrdinal": e["operationOrdinal"]},
+            "buildingClass": p.get("buildingClass"),
+            "rawBuildingId": p.get("rawBuildingId"),
+            "sourceMeaning": "BUILD_PLACEMENT_REQUEST_NOT_COMPLETED_BUILDING",
+            "counterpartReplayPlayerId": None,
+            "grade": {"decision": "PENDING", "bandId": None},
+            "castleOperationProven": False,
+            "opponentSpecificTerritoryProven": False,
+            "coverage": "LIMITED",
+        })
+    # Tribute request amount/direction must also come from exact retained
+    # Economy V5 source evidence; client-shifted donors or magnitudes are
+    # refused even though they would remain noncreditable.
+    retained_tribute = {}
+    for player in statistics.get("participants") or []:
+        for request in (((player.get("economy") or {}).get("tributeSent") or {}).get("evidence") or []):
+            ref = request.get("sourceEventId")
+            if not isinstance(ref, str) or not ref:
+                continue
+            identity = (player["playerId"], request.get("counterpartPlayerId"),
+                        request.get("atMs"), request.get("decodedResourceAmount"))
+            if ref in retained_tribute:
+                _check(retained_tribute[ref] == identity, "CONFLICTING_RETAINED_TRIBUTE")
+            retained_tribute[ref] = identity
+    tribute = []
+    for t in source_measurements.get("tributeRequestContexts") or []:
+        actor, other, ref = (t.get(k) for k in
+                             ("fromReplayPlayerId", "toReplayPlayerId", "sourceEventId"))
+        e = originals.get(ref)
+        _check(t.get("coverage") == "LIMITED" and
+               t.get("qualifiesSocialFact") is False,
+               "TRIBUTE_CANNOT_BE_PROMOTED_TO_HELP")
+        _check(e is not None and e["actorReplayPlayerId"] == actor
+               and other in roster and other != actor
+               and retained_tribute.get(ref) ==
+                   (actor, other, e["recordingAtMs"], t.get("decodedRequestAmount"))
+               and e["operationOrdinal"] == t.get("operationOrdinal")
+               and (t.get("requestAmountStatus") ==
+                    ("UNKNOWN" if t.get("decodedRequestAmount") is None else
+                     "ZERO" if t["decodedRequestAmount"] == 0 else "NONZERO")),
+               "TRIBUTE_ORIGINAL_REQUEST_IDENTITY_MISMATCH")
+        tribute.append({"sourceEventId": ref, "actorReplayPlayerId": actor,
+                        "counterpartReplayPlayerId": other,
+                        "requestAmountStatus": t["requestAmountStatus"],
+                        "decodedRequestAmount": t["decodedRequestAmount"],
+                        "sourceMeaning": "TRIBUTE_REQUEST_NOT_DELIVERED_BENEFIT",
+                        "grade": {"decision": "PENDING", "bandId": None},
+                        "coverage": "LIMITED"})
+    digest = _digest([VERSION, game_scope, rev, context["sourceContextRevision"],
+                      source_measurements["projectionRevision"], groups,
+                      placements, tribute, mode])
+    return {"version": VERSION, "sharedContractCompatibility": CONTRACT,
+            "ownerMatrixStatus": "EXACT_OWNER_MATRIX_NOT_SUPPLIED",
+            "gradePolicyStatus": "UNAPPROVED_NO_DEFAULTS",
+            "gameScope": dict(game_scope), "gameScopeAuthenticated": False,
+            "sourceRevision": dict(rev),
+            "sourceContextRevision": context["sourceContextRevision"],
+            "sourceMeasurementsRevision": source_measurements["projectionRevision"],
+            "projectionRevision": digest,
+            "mode": mode, "candidateEpisodeGroups": groups,
+            "neutralPlacementContexts": sorted(placements, key=lambda x: x["sourceEventId"]),
+            "neutralTributeRequestContexts": sorted(tribute, key=lambda x: x["sourceEventId"]),
+            "officialWrites": False, "publicationAllowed": False,
+            "claims": [], "actorWitnesses": [], "receipts": [],
+            "trackCredits": [], "significanceBands": [],
+            "limitations": [
+                "GAME_SCOPE_NOT_SERVER_AUTHENTICATED",
+                "EXACT_OWNER_GRADE_MATRIX_NOT_RECEIVED",
+                "COVERAGE_LIMITED_NEVER_PROMOTED_TO_ADMITTED",
+                "NO_GRADE_ELIGIBILITY_OR_THRESHOLDS_APPROVED",
+                "ONE_ORIGINAL_EPISODE_ONE_CANDIDATE_NOT_MULTIPLE_TRACK_CREDITS",
+                "FFA_EFFECTIVE_DIPLOMACY_NOT_PROVEN_BY_LOBBY_TEAMS",
+                "REQUESTS_NOT_EXECUTED_DAMAGE_RESCUE_SETTLED_TRANSFER_OR_COMPLETION",
+                "CASTLE_V2_DISTANCE_NOT_OPERATIONAL_CASTLE_PROOF",
+                "NO_PROVEN_COUNTERFACTUAL_OR_MATERIAL_RECIPROCITY",
+            ]}

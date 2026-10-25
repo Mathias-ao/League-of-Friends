@@ -1,0 +1,909 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mathias-ao/League-of-Friends/contracts/social-v1/metric-grade-candidates-v1.schema.json",
+  "title": "AOF_SOCIAL_METRIC_GRADE_CANDIDATES_1 — PRIVATE PROPOSED INERT",
+  "description": "Private, nonauthoritative preparation DTO. Not a SHARED_1 Claim/Inference, never receipt-eligible.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "sharedContractCompatibility",
+    "ownerMatrixStatus",
+    "gradePolicyStatus",
+    "gameScope",
+    "gameScopeAuthenticated",
+    "sourceRevision",
+    "sourceContextRevision",
+    "sourceMeasurementsRevision",
+    "projectionRevision",
+    "mode",
+    "candidateEpisodeGroups",
+    "neutralPlacementContexts",
+    "neutralTributeRequestContexts",
+    "officialWrites",
+    "publicationAllowed",
+    "claims",
+    "actorWitnesses",
+    "receipts",
+    "trackCredits",
+    "significanceBands",
+    "limitations"
+  ],
+  "properties": {
+    "version": {
+      "const": "AOF_SOCIAL_METRIC_GRADE_CANDIDATES_1"
+    },
+    "sharedContractCompatibility": {
+      "const": "AOF_SOCIAL_V1_SHARED_1"
+    },
+    "ownerMatrixStatus": {
+      "const": "EXACT_OWNER_MATRIX_NOT_SUPPLIED"
+    },
+    "gradePolicyStatus": {
+      "const": "UNAPPROVED_NO_DEFAULTS"
+    },
+    "gameScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "battleId",
+        "gameId",
+        "gameGuid",
+        "authorityRevision"
+      ],
+      "properties": {
+        "battleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gameId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gameGuid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorityRevision": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "gameScopeAuthenticated": {
+      "const": false
+    },
+    "sourceRevision": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "integer",
+          "null"
+        ]
+      }
+    },
+    "sourceContextRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceMeasurementsRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectionRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "fixedAlignmentProven",
+        "effectiveDiplomacyProven"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "LOCKED_TEAMS",
+            "LOCKED_DISTINCT_TEAMS",
+            "DYNAMIC_DIPLOMACY_OR_UNVERIFIED"
+          ]
+        },
+        "fixedAlignmentProven": {
+          "type": "boolean"
+        },
+        "effectiveDiplomacyProven": {
+          "const": false
+        }
+      }
+    },
+    "candidateEpisodeGroups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidateId",
+          "independentContributionKey",
+          "gameScope",
+          "sourceRevision",
+          "sourceContextRevision",
+          "sourceMeasurementsRevision",
+          "actorReplayPlayerId",
+          "counterpartReplayPlayerId",
+          "sourceDeedIds",
+          "sourceEventIds",
+          "firstSourceMoment",
+          "window",
+          "mode",
+          "rawMeasurements",
+          "originalMetricMethods",
+          "originalSourceLayer",
+          "linkedDetectorCandidates",
+          "priorDirectedEpisodeCandidateDeedIds",
+          "priorOppositeDirectedEpisodeCandidateDeedIds",
+          "opportunity",
+          "counterevidenceCandidates",
+          "trackHypotheses",
+          "coverage",
+          "grade",
+          "explanation",
+          "linkedRaidDetectorCandidates",
+          "comparability"
+        ],
+        "properties": {
+          "candidateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "independentContributionKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gameScope": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "battleId",
+              "gameId",
+              "gameGuid",
+              "authorityRevision"
+            ],
+            "properties": {
+              "battleId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "gameId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "gameGuid": {
+                "type": "string",
+                "minLength": 1
+              },
+              "authorityRevision": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "sourceRevision": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "sourceContextRevision": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceMeasurementsRevision": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actorReplayPlayerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "counterpartReplayPlayerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sourceDeedIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "sourceEventIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "firstSourceMoment": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "recordingAtMs",
+              "operationOrdinal",
+              "order"
+            ],
+            "properties": {
+              "recordingAtMs": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "operationOrdinal": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "order": {
+                "enum": [
+                  "ORDERED",
+                  "PARTIAL"
+                ]
+              }
+            }
+          },
+          "window": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "startMs",
+              "endMs"
+            ],
+            "properties": {
+              "startMs": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "endMs": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "mode": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "fixedAlignmentProven",
+              "effectiveDiplomacyProven"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "LOCKED_TEAMS",
+                  "LOCKED_DISTINCT_TEAMS",
+                  "DYNAMIC_DIPLOMACY_OR_UNVERIFIED"
+                ]
+              },
+              "fixedAlignmentProven": {
+                "type": "boolean"
+              },
+              "effectiveDiplomacyProven": {
+                "const": false
+              }
+            }
+          },
+          "rawMeasurements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "metricDefinitionId",
+                "rawValue",
+                "unit",
+                "sourceEventIds",
+                "measurementMeaning"
+              ],
+              "properties": {
+                "metricDefinitionId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "rawValue": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "unit": {
+                  "const": "distinct_original_actor_commands"
+                },
+                "sourceEventIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "measurementMeaning": {
+                  "const": "OBSERVED_REQUEST_NOT_EXECUTION"
+                }
+              }
+            }
+          },
+          "originalMetricMethods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "originalSourceLayer": {
+            "const": "ORIGINAL_ACTOR_COMMANDS_WITH_INFERRED_DIRECTED_CONTEXT"
+          },
+          "linkedDetectorCandidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "sourceDetectorId",
+                "sharedOriginalEventIds"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sourceDetectorId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sharedOriginalEventIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          },
+          "priorDirectedEpisodeCandidateDeedIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "priorOppositeDirectedEpisodeCandidateDeedIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "opportunity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "sourceEventIds",
+              "meaning",
+              "approvedDenominator"
+            ],
+            "properties": {
+              "status": {
+                "const": "UNQUALIFIED"
+              },
+              "sourceEventIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "meaning": {
+                "const": "PRIOR_COMMAND_REQUESTS_NOT_OPPONENT_CAPACITY"
+              },
+              "approvedDenominator": {
+                "type": "null"
+              }
+            }
+          },
+          "counterevidenceCandidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "sourceEventIds",
+                "coverage"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "STOP_OR_CANCEL_CONTEXT_NOT_PROVEN_CANCELLATION"
+                },
+                "sourceEventIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "coverage": {
+                  "const": "LIMITED"
+                }
+              }
+            }
+          },
+          "trackHypotheses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "system",
+                "track",
+                "decision",
+                "missingEvidence",
+                "proposedOnly",
+                "noOfficialEligibility"
+              ],
+              "properties": {
+                "system": {
+                  "enum": [
+                    "REPUTATION",
+                    "RELATIONSHIP"
+                  ]
+                },
+                "track": {
+                  "enum": [
+                    "GALLANTRY",
+                    "CRUELTY",
+                    "CHIVALRY",
+                    "RIVALRY",
+                    "HOSTILITY",
+                    "BOND"
+                  ]
+                },
+                "decision": {
+                  "const": "PENDING"
+                },
+                "missingEvidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "proposedOnly": {
+                  "const": true
+                },
+                "noOfficialEligibility": {
+                  "const": true
+                }
+              }
+            }
+          },
+          "coverage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tier",
+              "limitations"
+            ],
+            "properties": {
+              "tier": {
+                "const": "LIMITED"
+              },
+              "limitations": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "grade": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decision",
+              "bandId",
+              "ruleVersion",
+              "units",
+              "historicalEffect"
+            ],
+            "properties": {
+              "decision": {
+                "const": "PENDING"
+              },
+              "bandId": {
+                "type": "null"
+              },
+              "ruleVersion": {
+                "type": "null"
+              },
+              "units": {
+                "type": "null"
+              },
+              "historicalEffect": {
+                "type": "null"
+              }
+            }
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "linkedRaidDetectorCandidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "raidId",
+                "modelVersion",
+                "attackerReplayPlayerId",
+                "victimReplayPlayerId",
+                "sharedOriginalEventIds",
+                "meaning"
+              ],
+              "properties": {
+                "raidId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "modelVersion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "attackerReplayPlayerId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "victimReplayPlayerId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sharedOriginalEventIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "meaning": {
+                  "const": "INFERRED_DIRECTED_ECONOMIC_RAID_COMMANDS_NOT_DAMAGE"
+                }
+              }
+            }
+          },
+          "comparability": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "mapSourceContext",
+              "civilizationSourceContext",
+              "observedClock",
+              "normalizationRuleVersion",
+              "status"
+            ],
+            "properties": {
+              "mapSourceContext": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "civilizationSourceContext": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "replayPlayerId",
+                    "rawCivilization"
+                  ],
+                  "properties": {
+                    "replayPlayerId": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "rawCivilization": {}
+                  }
+                }
+              },
+              "observedClock": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "observedUntilMs",
+                  "basis",
+                  "fullGameOriginAndCompletenessEstablished"
+                ],
+                "properties": {
+                  "observedUntilMs": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "basis": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "fullGameOriginAndCompletenessEstablished": {
+                    "const": false
+                  }
+                }
+              },
+              "normalizationRuleVersion": {
+                "type": "null"
+              },
+              "status": {
+                "const": "UNQUALIFIED_NO_MAP_CIV_MODE_OR_OPPORTUNITY_POLICY"
+              }
+            }
+          }
+        }
+      }
+    },
+    "neutralPlacementContexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceEventId",
+          "actorReplayPlayerId",
+          "originalMoment",
+          "buildingClass",
+          "rawBuildingId",
+          "sourceMeaning",
+          "counterpartReplayPlayerId",
+          "grade",
+          "castleOperationProven",
+          "opponentSpecificTerritoryProven",
+          "coverage"
+        ],
+        "properties": {
+          "sourceEventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actorReplayPlayerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "originalMoment": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "recordingAtMs",
+              "operationOrdinal"
+            ],
+            "properties": {
+              "recordingAtMs": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "operationOrdinal": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "buildingClass": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rawBuildingId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "sourceMeaning": {
+            "const": "BUILD_PLACEMENT_REQUEST_NOT_COMPLETED_BUILDING"
+          },
+          "counterpartReplayPlayerId": {
+            "type": "null"
+          },
+          "grade": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decision",
+              "bandId"
+            ],
+            "properties": {
+              "decision": {
+                "const": "PENDING"
+              },
+              "bandId": {
+                "type": "null"
+              },
+              "ruleVersion": {
+                "type": "null"
+              },
+              "units": {
+                "type": "null"
+              },
+              "historicalEffect": {
+                "type": "null"
+              }
+            }
+          },
+          "castleOperationProven": {
+            "const": false
+          },
+          "opponentSpecificTerritoryProven": {
+            "const": false
+          },
+          "coverage": {
+            "const": "LIMITED"
+          }
+        }
+      }
+    },
+    "neutralTributeRequestContexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceEventId",
+          "actorReplayPlayerId",
+          "counterpartReplayPlayerId",
+          "requestAmountStatus",
+          "decodedRequestAmount",
+          "sourceMeaning",
+          "grade",
+          "coverage"
+        ],
+        "properties": {
+          "sourceEventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actorReplayPlayerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "counterpartReplayPlayerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "requestAmountStatus": {
+            "enum": [
+              "ZERO",
+              "NONZERO",
+              "UNKNOWN"
+            ]
+          },
+          "decodedRequestAmount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "sourceMeaning": {
+            "const": "TRIBUTE_REQUEST_NOT_DELIVERED_BENEFIT"
+          },
+          "grade": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decision",
+              "bandId"
+            ],
+            "properties": {
+              "decision": {
+                "const": "PENDING"
+              },
+              "bandId": {
+                "type": "null"
+              },
+              "ruleVersion": {
+                "type": "null"
+              },
+              "units": {
+                "type": "null"
+              },
+              "historicalEffect": {
+                "type": "null"
+              }
+            }
+          },
+          "coverage": {
+            "const": "LIMITED"
+          }
+        }
+      }
+    },
+    "officialWrites": {
+      "const": false
+    },
+    "publicationAllowed": {
+      "const": false
+    },
+    "claims": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "actorWitnesses": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "receipts": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "trackCredits": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "significanceBands": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}

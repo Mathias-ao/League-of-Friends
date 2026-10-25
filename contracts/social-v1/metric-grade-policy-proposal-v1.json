@@ -1,0 +1,72 @@
+{
+  "version": "AOF_SOC_GRADE_POLICY_REGISTER_1",
+  "originIssue": "#152",
+  "sourceStatus": "EXACT_GRADE_REPUTATION_METRICS_OWNER_MATRIX_NOT_PROVIDED",
+  "policyStatus": "PROPOSED_UNAPPROVED",
+  "approvalRef": null,
+  "ownerMatrix": {
+    "originalText": null,
+    "checksum": null,
+    "transcribedBy": null,
+    "ownerConfirmation": null,
+    "preserveMetricNames": true,
+    "preserveOwnerReasoning": true
+  },
+  "gradeBands": [],
+  "thresholds": [],
+  "eventCaps": [],
+  "weights": [],
+  "sourceCoveragePromotionRules": [],
+  "gradeToInferenceSignificanceBandRules": [],
+  "ordinaryWeakeningRules": [],
+  "metricTrackSelections": [],
+  "trackDecisionRegister": {
+    "GALLANTRY": {
+      "system": "REPUTATION",
+      "strengthening": null,
+      "weakening": null,
+      "opportunityDefinition": null
+    },
+    "CRUELTY": {
+      "system": "REPUTATION",
+      "strengthening": null,
+      "weakening": null,
+      "opportunityDefinition": null
+    },
+    "CHIVALRY": {
+      "system": "REPUTATION",
+      "strengthening": null,
+      "weakening": null,
+      "opportunityDefinition": null
+    },
+    "RIVALRY": {
+      "system": "RELATIONSHIP",
+      "strengthening": null,
+      "weakening": null,
+      "opportunityDefinition": null
+    },
+    "HOSTILITY": {
+      "system": "RELATIONSHIP",
+      "strengthening": null,
+      "weakening": null,
+      "opportunityDefinition": null
+    },
+    "BOND": {
+      "system": "RELATIONSHIP",
+      "strengthening": null,
+      "weakening": null,
+      "opportunityDefinition": null
+    }
+  },
+  "approvedInvariants": [
+    "NO_PASSIVE_RELATIONSHIP_HOSTILITY_FROM_ORDINARY_WARFARE",
+    "NO_TEAM_OR_COTARGET_TO_BOND",
+    "INDEPENDENT_STAGE_3_PLUS_RECIPROCITY",
+    "STRICT_TREACHERY_WITH_VICTIM_BINDING_UNCHANGED",
+    "NO_MISSING_SOURCE_AS_ZERO",
+    "CORRECTION_SAFE_MATCH_PLUS_GAME",
+    "LIMITED_NOT_ADMITTED",
+    "NO_AUTOMATIC_REPUTATION_TO_RELATIONSHIP_TRANSFER"
+  ],
+  "semanticCandidateRuleStatus": "NOT_A_POLICY_RULESET"
+}
