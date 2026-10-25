@@ -155,13 +155,26 @@ export function selectRareChronicleProposals({
    !blockedPairs.has(pairKey(c.respondentPlayerId,c.counterpartPlayerId)));
  // Stable rank independent of Game/upload/POV input order; never score recency
  // or infer player emotion from an unapproved numeric intensity.
+ // Conflicting POV interpretations of the same independently reviewed
+ // episode must pend, not pick an arbitrary first source.
+ const conflictingEpisodes=new Set<string>();
+ const signatures=new Map<string,string>();
+ const episodeKey=(c:ReviewedTurningPoint)=>JSON.stringify([c.respondentPlayerId,c.independentEpisodeKey]);
+ for(const c of eligible){
+   const key=episodeKey(c);
+   const signature=JSON.stringify([c.counterpartPlayerId,c.family,c.incidentId]);
+   if(signatures.has(key)&&signatures.get(key)!==signature)conflictingEpisodes.add(key);
+   else signatures.set(key,signature);
+ }
  eligible.sort((a,b)=>rank(a)-rank(b)||
    (a.significance==='EXCEPTIONAL'?0:1)-(b.significance==='EXCEPTIONAL'?0:1)||
-   a.incidentId.localeCompare(b.incidentId)||a.gameId.localeCompare(b.gameId));
+   a.incidentId.localeCompare(b.incidentId)||a.gameId.localeCompare(b.gameId)||
+   a.qualifierMethod.localeCompare(b.qualifierMethod)||
+   a.counterpartPlayerId.localeCompare(b.counterpartPlayerId));
  const chosen=new Map<string,ReviewedTurningPoint>(),seenEpisode=new Set<string>();
  for(const c of eligible){
-   const episode=[c.respondentPlayerId,c.independentEpisodeKey].join('\u0000');
-   if(seenEpisode.has(episode))continue;
+   const episode=episodeKey(c);
+   if(conflictingEpisodes.has(episode)||seenEpisode.has(episode))continue;
    seenEpisode.add(episode);
    if(!chosen.has(c.respondentPlayerId))chosen.set(c.respondentPlayerId,c);
  }
