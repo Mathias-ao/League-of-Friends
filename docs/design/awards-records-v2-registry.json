@@ -67,7 +67,16 @@
     "additionalBattleCountRequirement": false,
     "drushFlushMandated": "OWNER_DECISION_OPEN",
     "numericalTierThresholds": null,
-    "correction": "recompute equipment entitlement from currently active component tiers; do not remove a valid PB after a weaker subsequent Game"
+    "correction": "recompute equipment entitlement from currently active component tiers; do not remove a valid PB after a weaker subsequent Game",
+    "componentEntitlementIds": {
+      "disciplinedDrushElite": "AR2_ACH_DRUSH#ELITE_DISCIPLINED",
+      "invasionChoice": [
+        "AR2_ACH_SCOUT_RUSH#ELITE",
+        "AR2_ACH_ARCHER_RUSH#ELITE"
+      ],
+      "fastCastleBoomElite": "AR2_ACH_FAST_CASTLE__FAST_CASTLE_BOOM#ELITE"
+    },
+    "componentIdsAreLiveAwardIds": false
   },
   "achievementFamilies": [
     {
@@ -85,7 +94,8 @@
       "variant": {
         "name": "Drush Flush",
         "additionalPredicate": "Qualified Dark Age three-Militia Drush with Loom, modelled macro discipline AND independently attributable Feudal follow-through; no assumed damage.",
-        "thresholds": "OWNER_CALIBRATION_REQUIRED"
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_DRUSH__DRUSH_FLUSH"
       },
       "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
       "cutoffValues": null,
@@ -100,7 +110,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "ELITE disciplined exact three Dark Age Militia Drush, Loom and validated cancellation-aware TC/population macro continuity. Whether Feudal follow-through (Drush Flush) is compulsory remains UNDECIDED.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_ARCHER_RUSH",
@@ -127,7 +166,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "game_milliseconds"
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "Must meet the approved elite branch speed AND unit/production/Feudal sequence under current patch/civ effects; other rush branch need not be qualified.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_SCOUT_RUSH",
@@ -154,7 +222,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "game_milliseconds"
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "Must meet the approved elite branch speed AND unit/production/Feudal sequence under current patch/civ effects; other rush branch need not be qualified.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_FAST_CASTLE",
@@ -171,7 +268,8 @@
       "variant": {
         "name": "Fast Castle Boom",
         "additionalPredicate": "Qualified fast Castle model plus two distinct additional early TC placement sites within approved post-Castle window; not completed TCs.",
-        "thresholds": "OWNER_CALIBRATION_REQUIRED"
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_FAST_CASTLE__FAST_CASTLE_BOOM"
       },
       "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
       "cutoffValues": null,
@@ -187,7 +285,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "game_milliseconds"
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "MUST be the Fast Castle Boom variant: owner-calibrated fast Castle projection plus two distinct early extra TC BUILD sites; not completed TCs.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_FISH_BOOM",
@@ -216,7 +343,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "WATER_OPENING_START",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_WATER_OPENING",
@@ -232,7 +388,8 @@
       "variant": {
         "name": "Naval Rush",
         "additionalPredicate": "Qualified naval military queues/placement and early timing, not simply fishing economy.",
-        "thresholds": "OWNER_CALIBRATION_REQUIRED"
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_WATER_OPENING__NAVAL_RUSH"
       },
       "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
       "cutoffValues": null,
@@ -247,7 +404,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "WATER_OPENING_START",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_TOWER_RUSH",
@@ -276,7 +462,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "game_milliseconds"
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_PERFECT_DARK_AGE",
@@ -293,7 +508,8 @@
       "variant": {
         "name": "Perfect Dark Age to Feudal",
         "additionalPredicate": "Dark Age discipline plus validated uninterrupted early Feudal transition; not just faster Feudal click.",
-        "thresholds": "OWNER_CALIBRATION_REQUIRED"
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_PERFECT_DARK_AGE__PERFECT_DARK_AGE_TO_FEUDAL"
       },
       "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
       "cutoffValues": null,
@@ -308,7 +524,36 @@
         "AOF_ECONOMY_STATISTICS_V5"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_PERSIAN_DOUCHE",
@@ -337,7 +582,36 @@
         "AOF_MAP_PRESENCE_V8"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "PERSIAN_TC_RELOCATE",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_MONK_SIEGE",
@@ -365,7 +639,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_RELIC_TOUCH",
@@ -390,7 +693,36 @@
         "AOF_RELIC_TARGETING_V1"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "unique_known_relic_target_instances"
+      "unit": "unique_known_relic_target_instances",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_GOLD_CONTROL",
@@ -415,7 +747,36 @@
         "AOF_MAP_PRESENCE_V8"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "percent_inferred_infrastructure_gold_control"
+      "unit": "percent_inferred_infrastructure_gold_control",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_FARMS_AT_20",
@@ -442,7 +803,36 @@
         "AOF_ECONOMY_STATISTICS_V5"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_RESOURCES_AT_20",
@@ -469,7 +859,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "pinned_catalog_resource_units"
+      "unit": "pinned_catalog_resource_units",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_WALLS",
@@ -494,7 +913,36 @@
         "AOF_MAP_PRESENCE_V8"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_CASTLE_COUNT",
@@ -521,7 +969,36 @@
         "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_TC_COUNT",
@@ -548,7 +1025,36 @@
         "AOF_MAP_PRESENCE_V8"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_TC_IDLE_20",
@@ -577,7 +1083,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "projected_town_center_idle_milliseconds"
+      "unit": "projected_town_center_idle_milliseconds",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_MILITARY_INVESTMENT_20",
@@ -602,7 +1137,36 @@
         "AOF_MILITARY_STATISTICS_V4"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "pinned_catalog_resource_units"
+      "unit": "pinned_catalog_resource_units",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_ECO_ZONES_30",
@@ -629,7 +1193,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_RAIDS",
@@ -655,7 +1248,36 @@
         "AOF_RAID_DETECTION_V3"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_FORWARD_CASTLE",
@@ -684,7 +1306,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_SCOUT_ENEMY",
@@ -712,7 +1363,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "game_milliseconds"
+      "unit": "game_milliseconds",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_DEFENSIVE_ASSISTS",
@@ -736,7 +1416,36 @@
         "AOF_ENGAGEMENT_STATISTICS_V4"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_BATTLE_PARTICIPATION_SHARE",
@@ -761,7 +1470,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_TRIBUTE_TO_ALLIES",
@@ -786,7 +1524,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "resource_units_verified_received"
+      "unit": "resource_units_verified_received",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_SETUP_TRADE_TEAM",
@@ -802,7 +1569,8 @@
       "variant": {
         "name": "Thriving Trade",
         "additionalPredicate": "Established functioning route AND independently measured trade-gold income, not trade-unit queues.",
-        "thresholds": "OWNER_CALIBRATION_REQUIRED"
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_SETUP_TRADE_TEAM__THRIVING_TRADE"
       },
       "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
       "cutoffValues": null,
@@ -814,7 +1582,36 @@
         "AOF_ECONOMY_STATISTICS_V5"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "trade_route_gold_received_verified"
+      "unit": "trade_route_gold_received_verified",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_FISH_TRAPPER",
@@ -837,7 +1634,36 @@
         "AOF_ECONOMY_STATISTICS_V5"
       ],
       "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
-      "unit": "net_fish_trap_requests"
+      "unit": "net_fish_trap_requests",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_UNDER_20_WIN_TEAM",
@@ -863,7 +1689,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "OFFICIAL_RESULT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
     },
     {
       "id": "AR2_ACH_SPIES",
@@ -886,7 +1741,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_TURN_ON_ALLY",
@@ -902,7 +1786,8 @@
       "variant": {
         "name": "King Slayer Treachery",
         "additionalPredicate": "Qualified mutual EFFECTIVE alliance, rupture, independently attributed hostile conduct and confirmed responsible king elimination.",
-        "thresholds": "OWNER_CALIBRATION_REQUIRED"
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_TURN_ON_ALLY__KING_SLAYER_TREACHERY"
       },
       "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
       "cutoffValues": null,
@@ -915,7 +1800,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_WIN_DIPLO",
@@ -931,7 +1845,8 @@
       "variant": {
         "name": "Last Man Standing",
         "additionalPredicate": "Independently verified sole surviving player at conclusion; not inferred from a team or general official winner result.",
-        "thresholds": "OWNER_CALIBRATION_REQUIRED"
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_WIN_DIPLO__LAST_MAN_STANDING"
       },
       "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
       "cutoffValues": null,
@@ -944,7 +1859,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_NEUTRAL_DIPLO",
@@ -969,7 +1913,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_HOUSE_KING",
@@ -994,7 +1967,36 @@
         "AOF_DIPLOMACY_TIMELINE_V2"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_SETUP_TRADE_DIPLO",
@@ -1019,7 +2021,36 @@
         "AOF_DIPLOMACY_TIMELINE_V2"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "trade_route_gold_received_verified"
+      "unit": "trade_route_gold_received_verified",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_ALLY_N_TIMES",
@@ -1044,7 +2075,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     },
     {
       "id": "AR2_ACH_EXTORTION",
@@ -1069,7 +2129,36 @@
         "AOF_RECORDED_EVENTS_V1"
       ],
       "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
-      "unit": "axis_specific_qualifying_events_or_composite_score"
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
     }
   ],
   "achievementFamilyCounts": {
@@ -1163,6 +2252,36 @@
         "current_final_result_revisions",
         "same_season_and_competition_definition",
         "no_disputed_missing_or_unknown_streak_edge"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "WATER_OPENING_START": {
+      "required": [
+        "NORMAL_START_OPENING",
+        "water_access_and_supported_map_mode",
+        "same_approved_water_spawn_class",
+        "source_qualified_dock_or_water_unit_identity",
+        "civilization_naval_bonus_compatibility"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "DIPLO_FFA_GAME": {
+      "required": [
+        "QUALIFIED_GAME",
+        "approved_unlocked_diplomacy_FFA",
+        "current_effective_initial_stances_known",
+        "qualified_directed_mutual_ally_enemy_neutral_transition_semantics",
+        "complete_king_trade_tribute_state_coverage_for_claimed_deed"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "PERSIAN_TC_RELOCATE": {
+      "required": [
+        "NORMAL_START_OPENING",
+        "verified_Persians_civilization",
+        "source_qualified_original_TC_instance",
+        "executed_original_TC_deletion",
+        "distinct_source_qualified_enemy_home_TC_rebuild_and_completeness"
       ],
       "holdOnAnyMissing": true
     }
@@ -1341,7 +2460,7 @@
         "recordedEvents.actionEvents[BUILD/DE_QUEUE/GAME]"
       ],
       "availability": "DERIVE",
-      "comparisonProfile": "NORMAL_START_OPENING",
+      "comparisonProfile": "WATER_OPENING_START",
       "seasonMetricId": null,
       "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
       "evidenceRule": "Define comparable fishing signature; no claim of fish income.",
