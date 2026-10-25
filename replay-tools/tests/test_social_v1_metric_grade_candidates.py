@@ -74,6 +74,10 @@ class SourceBoundMetricGradeTests(unittest.TestCase):
         self.assertTrue(all(t["decision"] == "PENDING" and t["noOfficialEligibility"]
                             for t in group["trackHypotheses"]))
         self.assertEqual(group["coverage"]["tier"], "LIMITED")
+        self.assertIsNone(group["opportunity"]["approvedDenominator"])
+        self.assertIsNone(group["comparability"]["normalizationRuleVersion"])
+        self.assertFalse(group["comparability"]["observedClock"]
+                         ["fullGameOriginAndCompletenessEstablished"])
         self.assertFalse(result["publicationAllowed"])
         self.assertFalse(result["officialWrites"])
         self.assertEqual(result["claims"], [])
