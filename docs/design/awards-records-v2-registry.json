@@ -1,0 +1,3122 @@
+{
+  "schemaVersion": "AOF_AWARDS_RECORDS_DESIGN_REGISTRY_V1",
+  "releaseState": "DESIGN_ONLY_DO_NOT_IMPORT_INTO_PRODUCTION",
+  "reviewedMain": "e453d40c147ad488f3bfd369e54eba82b29c43b5",
+  "parentIssues": [
+    129,
+    157
+  ],
+  "sourcePathConvention": "player.* denotes one canonical per-Game participant statistics object; recordedEvents.* is a proposed join to already retained source-bearing command facts; official.* names existing official Match/Battle authority, NOT a single flattened player field. Bracket filters are specification selectors, NOT implemented JSONPath.",
+  "availabilityLegend": {
+    "EXISTING_MEASUREMENT": "Versioned metric/source already projected; award/record rule and current-source completeness/fairness STILL need review.",
+    "DERIVE": "Underlying source facts or partial model exist; new pure compositional/checkpoint/identity detector is required.",
+    "ENGINE_WITNESS": "Claimed completed/effective game-state effect is NOT defensible from current replay-command projection; withhold until independent engine-state or validated equivalent evidence."
+  },
+  "approvedProductDecisions": {
+    "featuredRecordPlaquesPerTab": 3,
+    "existingStatisticsTabs": [
+      "Opening",
+      "Economy",
+      "Military",
+      "Map Presence",
+      "Execution"
+    ],
+    "recordBook": "COMPLETE_APPROVED_QUALIFIED_RECORDS_BY_TAB_NOT_ALL_RAW_RECORD_FLAGS",
+    "competitiveSeasonRecordsSurface": "Statistics tab; current Season and eventual true all-time League are separate scopes",
+    "privatePersonalBestsSurface": "private, owner-only Chronicle self-leaf full record ledger, separate from capped three showcasedRecordCodes",
+    "achievementSurface": "tiered collection with fixed owner-approved thresholds; not rank-based",
+    "epithetRule": "one manually equipped PRE_NOMINAL/SOBRIQUET/POST_NOMINAL entitlement, never auto-equipped",
+    "militaryDistinctionsRule": "rare battlefield merit with separately source-proven extreme conditions/outcome, never raw metric maxima",
+    "trophiesRule": "separately approved measurable record/competitive deed, not automatically every record holder",
+    "eventSeasonHonoursRule": "dated official Event/Season source authority only"
+  },
+  "allRankThresholds": "PENDING_OWNER_CALIBRATION_NOT_APPROVED",
+  "genericTierLadder": [
+    {
+      "rank": "INITIATE",
+      "level": 1,
+      "gate": "First complete, fully eligible qualified performance; not a raw classifier label.",
+      "numericThreshold": null
+    },
+    {
+      "rank": "PRACTICED",
+      "level": 2,
+      "gate": "Stricter source-qualified performance or sustained consistency on same axis.",
+      "numericThreshold": null
+    },
+    {
+      "rank": "EXPERT",
+      "level": 3,
+      "gate": "Difficult performance and additional validity/quality gate where appropriate.",
+      "numericThreshold": null
+    },
+    {
+      "rank": "ELITE",
+      "level": 4,
+      "gate": "Exceptionally hard corpus-calibrated performance plus relevant structural predicates; no elite from mere volume spam.",
+      "numericThreshold": null
+    }
+  ],
+  "derivedEpithet": {
+    "id": "AR2_EPITHET_MASTER_OF_THREE_SCHOOLS",
+    "name": "Master of the Three Schools",
+    "grammaticalForm": "POST_NOMINAL",
+    "optInEquip": true,
+    "sourceOnlyFromActiveComponents": true,
+    "predicate": "ACTIVE_ELITE(DRUSH_DISCIPLINED) AND (ACTIVE_ELITE(SCOUT_RUSH) OR ACTIVE_ELITE(ARCHER_RUSH)) AND ACTIVE_ELITE(FAST_CASTLE_BOOM)",
+    "additionalBattleCountRequirement": false,
+    "drushFlushMandated": "OWNER_DECISION_OPEN",
+    "numericalTierThresholds": null,
+    "correction": "recompute equipment entitlement from currently active component tiers; do not remove a valid PB after a weaker subsequent Game",
+    "componentEntitlementIds": {
+      "disciplinedDrushElite": "AR2_ACH_DRUSH#ELITE_DISCIPLINED",
+      "invasionChoice": [
+        "AR2_ACH_SCOUT_RUSH#ELITE",
+        "AR2_ACH_ARCHER_RUSH#ELITE"
+      ],
+      "fastCastleBoomElite": "AR2_ACH_FAST_CASTLE__FAST_CASTLE_BOOM#ELITE"
+    },
+    "componentIdsAreLiveAwardIds": false
+  },
+  "achievementFamilies": [
+    {
+      "id": "AR2_ACH_DRUSH",
+      "name": "Drush",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "COMPOSITE_OPENING_QUALITY",
+      "sourcePaths": [
+        "player.opening.ageUp.feudal",
+        "recordedEvents.actionEvents[RESEARCH/BUILD/DE_QUEUE]",
+        "player.opening.villagersBeforeFeudalAge"
+      ],
+      "variant": {
+        "name": "Drush Flush",
+        "additionalPredicate": "Qualified Dark Age three-Militia Drush with Loom, modelled macro discipline AND independently attributable Feudal follow-through; no assumed damage.",
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_DRUSH__DRUSH_FLUSH"
+      },
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Old primary Drush classifier includes Men-at-Arms; do not use it as exact three-Militia proof.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "ELITE disciplined exact three Dark Age Militia Drush, Loom and validated cancellation-aware TC/population macro continuity. Whether Feudal follow-through (Drush Flush) is compulsory remains UNDECIDED.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_ARCHER_RUSH",
+      "name": "Archer Rush",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "EARLIER_QUALIFIED_OPENING_MS",
+      "sourcePaths": [
+        "player.opening.ageUp.feudal",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Military Range placement, valid Archer queue and clock/sequence must jointly qualify.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "Must meet the approved elite branch speed AND unit/production/Feudal sequence under current patch/civ effects; other rush branch need not be qualified.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_SCOUT_RUSH",
+      "name": "Scout Rush",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "EARLIER_QUALIFIED_OPENING_MS",
+      "sourcePaths": [
+        "player.opening.ageUp.feudal",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Initial Scout is not a trained Scout; use qualified new queue requests.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "Must meet the approved elite branch speed AND unit/production/Feudal sequence under current patch/civ effects; other rush branch need not be qualified.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_FAST_CASTLE",
+      "name": "Fast Castle",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "LOWER_PROJECTED_AGE_MS",
+      "sourcePaths": [
+        "player.opening.ageUp.castle.ageUpAtMs",
+        "player.economy.townCenters",
+        "recordedEvents.actionEvents[BUILD]"
+      ],
+      "variant": {
+        "name": "Fast Castle Boom",
+        "additionalPredicate": "Qualified fast Castle model plus two distinct additional early TC placement sites within approved post-Castle window; not completed TCs.",
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_FAST_CASTLE__FAST_CASTLE_BOOM"
+      },
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Castle timestamp is latest Castle research request plus nominal duration; research cancellation must be screened.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": "MUST be the Fast Castle Boom variant: owner-calibrated fast Castle projection plus two distinct early extra TC BUILD sites; not completed TCs.",
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_FISH_BOOM",
+      "name": "Fish Boom",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "COMPOSITE_OPENING_QUALITY",
+      "sourcePaths": [
+        "player.buildOrder",
+        "player.economy.economyBuildings.byType.fishTraps.count",
+        "recordedEvents.actionEvents[DE_QUEUE/GAME]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Existing primary classifier is a candidate; Fishing Ships/Docks/Fish Traps are requests not working food income.",
+      "currentSourceModelRevisions": [
+        "AOF_BUILD_ORDER_V2",
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "WATER_OPENING_START",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_WATER_OPENING",
+      "name": "Water Opening",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "COMPOSITE_OPENING_QUALITY",
+      "sourcePaths": [
+        "player.buildOrder",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "variant": {
+        "name": "Naval Rush",
+        "additionalPredicate": "Qualified naval military queues/placement and early timing, not simply fishing economy.",
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_WATER_OPENING__NAVAL_RUSH"
+      },
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Separable from Fish Boom and mode/map requires valid water access.",
+      "currentSourceModelRevisions": [
+        "AOF_BUILD_ORDER_V2",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "WATER_OPENING_START",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_TOWER_RUSH",
+      "name": "Tower Rush",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "EARLIER_QUALIFIED_OPENING_MS",
+      "sourcePaths": [
+        "player.buildOrder",
+        "player.mapPresence.towers",
+        "recordedEvents.actionEvents[BUILD]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Enemy-progress and timing qualify requested towers; no completed/attacking tower proof.",
+      "currentSourceModelRevisions": [
+        "AOF_BUILD_ORDER_V2",
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_PERFECT_DARK_AGE",
+      "name": "Perfect Dark Age",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "COMPOSITE_MACRO_QUALITY",
+      "sourcePaths": [
+        "player.opening.villagersBeforeFeudalAge",
+        "player.opening.ageUp.feudal",
+        "player.economy.tcIdleTimeDarkAge"
+      ],
+      "variant": {
+        "name": "Perfect Dark Age to Feudal",
+        "additionalPredicate": "Dark Age discipline plus validated uninterrupted early Feudal transition; not just faster Feudal click.",
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_PERFECT_DARK_AGE__PERFECT_DARK_AGE_TO_FEUDAL"
+      },
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Legacy Dark Age TC idle proxy ignores cancellations; new cancellation-aware production schedule and real fixture calibration required.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_PERSIAN_DOUCHE",
+      "name": "Persian Douche",
+      "category": "Opening",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "STRUCTURAL_STRATEGY_QUALITY",
+      "sourcePaths": [
+        "participant.civilizationId",
+        "recordedEvents.actionEvents[DELETE/BUILD]",
+        "player.mapPresence.startingTownCenters"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Requires Persians, confirmed own original TC deletion, correctly attributed replacement TC in enemy home, and any claimed operation independently verified.",
+      "currentSourceModelRevisions": [
+        "SOURCE_MODEL_NOT_YET_QUALIFIED",
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "PERSIAN_TC_RELOCATE",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_MONK_SIEGE",
+      "name": "Monk–Siege Build Order",
+      "category": "Opening",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "COMPOSITE_OPENING_QUALITY",
+      "sourcePaths": [
+        "player.military.composition.monks",
+        "player.military.firstMonk",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Requires monastery + siege workshop sequencing and relevant unit queues; conversion/siege damage unproven.",
+      "currentSourceModelRevisions": [
+        "AOF_MILITARY_STATISTICS_V4",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_RELIC_TOUCH",
+      "name": "Relic Touch",
+      "category": "Map Presence",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_DISTINCT_TARGETED_RELICS",
+      "sourcePaths": [
+        "player.mapPresence.relicControl.uniqueRelicsTouched"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Unique initially-known relic interactions, not collected/deposited/held relics.",
+      "currentSourceModelRevisions": [
+        "AOF_RELIC_TARGETING_V1"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "unique_known_relic_target_instances",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_GOLD_CONTROL",
+      "name": "Gold Control",
+      "category": "Map Presence",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "HIGHER_INFERRED_CONTROL_SHARE",
+      "sourcePaths": [
+        "player.mapPresence.goldControl.controlSharePercent"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Source-weighted influence by placed infrastructure; not actual mining or persistent ownership.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "percent_inferred_infrastructure_gold_control",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_FARMS_AT_20",
+      "name": "Farms at 20 Minutes",
+      "category": "Economy",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_DISTINCT_PLACEMENTS_AT_CHECKPOINT",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD:Farm]",
+        "player.economy.farmsPlaced.count"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Need exact [0,20:00] placement counter; existing Farms Placed is full Game.",
+      "currentSourceModelRevisions": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_RESOURCES_AT_20",
+      "name": "Resources Committed at 20",
+      "category": "Economy",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "HIGHER_ESTIMATED_COMMITMENT_AT_CHECKPOINT",
+      "sourcePaths": [
+        "player.economy.resourceCommitment.resourcesCommitted.total",
+        "recordedEvents.actionEvents[DE_QUEUE/RESEARCH/BUILD/WALL]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Resource Commitment V1 lacks an all-category 20:00 checkpoint; costs are catalog estimates, not actual spend.",
+      "currentSourceModelRevisions": [
+        "AOF_RESOURCE_COMMITMENT_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "pinned_catalog_resource_units",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_WALLS",
+      "name": "Walls",
+      "category": "Map Presence",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_UNIQUE_WALL_TILE_ORDERS",
+      "sourcePaths": [
+        "player.mapPresence.wallTiles.totalWallTiles"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Unique placements do not prove a sealed or completed perimeter.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_CASTLE_COUNT",
+      "name": "Castle Count",
+      "category": "Military",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_DISTINCT_CASTLE_PLACEMENTS",
+      "sourcePaths": [
+        "player.military.castles.count",
+        "player.mapPresence.castlePlacementCommands.evidence"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Deduplicate instance/site and BUILD attempts; not completed Castles.",
+      "currentSourceModelRevisions": [
+        "AOF_MILITARY_STATISTICS_V4",
+        "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_TC_COUNT",
+      "name": "Town Center Count",
+      "category": "Economy",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_DISTINCT_TC_PLACEMENTS",
+      "sourcePaths": [
+        "player.economy.townCenters.count",
+        "player.mapPresence.startingTownCenters"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Verified starting TC plus unique placement sites, not finished or surviving TCs.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_TC_IDLE_20",
+      "name": "Town Center Idle at 20",
+      "category": "Execution",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "LOWER_PROJECTED_IDLE_MS",
+      "sourcePaths": [
+        "player.economy.tcIdleTimeDarkAge",
+        "player.opening.villagersBeforeFeudalAge",
+        "recordedEvents.actionEvents[DE_QUEUE/RESEARCH]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Not the existing Dark Age-only idle metric: requires full 20m multi-TC, cancellations, producer identity and population-block schedule; only projected workload.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "projected_town_center_idle_milliseconds",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_MILITARY_INVESTMENT_20",
+      "name": "Military Investment at 20",
+      "category": "Military",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "HIGHER_ESTIMATED_COMMITMENT_AT_CHECKPOINT",
+      "sourcePaths": [
+        "player.military.armyCommitmentCheckpoints.at20Minutes"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Source-pinned net queue commitment, not actual unit production or fielded army value.",
+      "currentSourceModelRevisions": [
+        "AOF_MILITARY_STATISTICS_V4"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "pinned_catalog_resource_units",
+      "comparisonProfile": "ECO_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_ECO_ZONES_30",
+      "name": "Eco Zones at 30",
+      "category": "Map Presence",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_EXPANSION_CLUSTERS_AT_CHECKPOINT",
+      "sourcePaths": [
+        "player.mapPresence.expansionZones.count",
+        "recordedEvents.actionEvents[BUILD]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Existing expansion count is not a 30:00 snapshot; need time-cut replay of same clustering model.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_RAIDS",
+      "name": "Raids Performed",
+      "category": "Military",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "axis": "MORE_DISTINCT_QUALIFIED_RAID_EPISODES",
+      "sourcePaths": [
+        "player.military.engagements.raidsInitiated",
+        "player.military.engagements.raidEvidence.initiatedEpisodes"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "At most one episode-ID set credited per Battle; actual kills/raid success not proven.",
+      "currentSourceModelRevisions": [
+        "AOF_RAID_DETECTION_V3"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_FORWARD_CASTLE",
+      "name": "Forward Castle",
+      "category": "Military",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "QUALIFIED_FORWARD_CASTLE_DEED",
+      "sourcePaths": [
+        "player.mapPresence.castlePlacementCommands.evidence",
+        "player.mapPresence.startingTownCenters",
+        "recordedEvents.actionEvents[DE_QUEUE]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "#129 social rule needs verified Castle operation and same-instance production within 5m of operation; proximity/BUILD alone is insufficient.",
+      "currentSourceModelRevisions": [
+        "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1",
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_SCOUT_ENEMY",
+      "name": "Scout Enemy",
+      "category": "Map Presence",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "EARLIER_QUALIFIED_SCOUT_CONTACT_MS",
+      "sourcePaths": [
+        "player.mapPresence.scoutCoverageAt5Minutes",
+        "player.mapPresence.enemyBaseContact.atMs",
+        "recordedEvents.actionEvents[MOVE/ORDER/PATROL]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "ONE_V_ONE",
+        "FIXED_TEAM",
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Specific starting-scout selected identity + source geometry, not any-unit command contact or actual fog visibility.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_DEFENSIVE_ASSISTS",
+      "name": "Defensive Assists",
+      "category": "Military",
+      "availability": "DERIVE",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "axis": "MORE_DISTINCT_ASSIST_EPISODES",
+      "sourcePaths": [
+        "player.military.engagements.defensiveAssistsGiven",
+        "player.military.engagements.engagementEvidence.defensiveAssistsGiven"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "FIXED_TEAM"
+      ],
+      "evidenceRule": "Require actual source-attributed helper/beneficiary/threat not simple teammate co-presence.",
+      "currentSourceModelRevisions": [
+        "AOF_ENGAGEMENT_STATISTICS_V4"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_BATTLE_PARTICIPATION_SHARE",
+      "name": "Part of Battles %",
+      "category": "Military",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "HIGHER_ATTRIBUTED_ENGAGEMENT_SHARE",
+      "sourcePaths": [
+        "player.military.engagements.engagementEvidence.battles",
+        "recordedEvents.actionEvents"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "FIXED_TEAM"
+      ],
+      "evidenceRule": "Numerator = player's independently attributed qualified engagements; denominator = qualified team episodes; require minimum samples and fixed team alignment.",
+      "currentSourceModelRevisions": [
+        "AOF_ENGAGEMENT_STATISTICS_V4",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_TRIBUTE_TO_ALLIES",
+      "name": "Tribute to Allies",
+      "category": "Economy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "axis": "MORE_VERIFIED_RECEIPT_VALUE",
+      "sourcePaths": [
+        "player.economy.tributeSent",
+        "recordedEvents.actionEvents[DE_TRIBUTE/TRIBUTE]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "FIXED_TEAM"
+      ],
+      "evidenceRule": "Decoded donor/recipient amounts are requests only; fee deduction and actual received resources require independent confirmation.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "resource_units_verified_received",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_SETUP_TRADE_TEAM",
+      "name": "Set Up Trade",
+      "category": "Economy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "HIGHER_ACTUAL_TRADE_INCOME",
+      "sourcePaths": [
+        "player.economy.tradeUnitsTrained",
+        "player.economy.economyBuildings.byType.markets.count"
+      ],
+      "variant": {
+        "name": "Thriving Trade",
+        "additionalPredicate": "Established functioning route AND independently measured trade-gold income, not trade-unit queues.",
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_SETUP_TRADE_TEAM__THRIVING_TRADE"
+      },
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "FIXED_TEAM"
+      ],
+      "evidenceRule": "Trade unit requests do not demonstrate round-trip or earned resources.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "trade_route_gold_received_verified",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_FISH_TRAPPER",
+      "name": "Fish Trapper",
+      "category": "Economy",
+      "availability": "EXISTING_MEASUREMENT",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_NET_FISH_TRAP_REQUESTS",
+      "sourcePaths": [
+        "player.economy.economyBuildings.byType.fishTraps.count"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "FIXED_TEAM"
+      ],
+      "evidenceRule": "GAME fishtrap queue/unqueue reconstructed request count, not operating traps.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "net_fish_trap_requests",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_UNDER_20_WIN_TEAM",
+      "name": "Win in Under 20 Minutes",
+      "category": "Competition",
+      "availability": "DERIVE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "LOWER_OFFICIAL_WIN_DURATION_MS",
+      "sourcePaths": [
+        "official.matchResult",
+        "recordedEvents.postgameEvents",
+        "recordedEvents.scope.observedUntilMs"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "FIXED_TEAM"
+      ],
+      "evidenceRule": "Official winning Game/Match duration and format-specific outcome source; multi-Game series winner != single Game winner.",
+      "currentSourceModelRevisions": [
+        "AOF_OFFICIAL_MATCH_RESULT_CURRENT_REVISION",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "OFFICIAL_RESULT_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "NONE_UNTIL_OWNER_THRESHOLDS_AND_AUTHENTIC_FIXTURES"
+    },
+    {
+      "id": "AR2_ACH_SPIES",
+      "name": "Research Spies",
+      "category": "Military",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "QUALIFIED_SPIES_RESEARCH_EVENT",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[RESEARCH:Spies]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "FIXED_TEAM"
+      ],
+      "evidenceRule": "Request can be detected with source-qualified tech ID, but 'researched' implies completed/accepted technology, not shown by request alone.",
+      "currentSourceModelRevisions": [
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_TURN_ON_ALLY",
+      "name": "Turn on Ally",
+      "category": "Diplomacy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_SEVERE_VERIFIED_BETRAYAL",
+      "sourcePaths": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1.directedDeclarations",
+        "recordedEvents.actionEvents[GAME:diplomacy]"
+      ],
+      "variant": {
+        "name": "King Slayer Treachery",
+        "additionalPredicate": "Qualified mutual EFFECTIVE alliance, rupture, independently attributed hostile conduct and confirmed responsible king elimination.",
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_TURN_ON_ALLY__KING_SLAYER_TREACHERY"
+      },
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Raw Ally/Enemy declaration change does not prove effective state or king death.",
+      "currentSourceModelRevisions": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_WIN_DIPLO",
+      "name": "Win Diplomacy Game",
+      "category": "Competition",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_DIFFICULT_VERIFIED_WIN_CONFIGURATION",
+      "sourcePaths": [
+        "official.matchResult",
+        "recordedEvents.postgameEvents"
+      ],
+      "variant": {
+        "name": "Last Man Standing",
+        "additionalPredicate": "Independently verified sole surviving player at conclusion; not inferred from a team or general official winner result.",
+        "thresholds": "OWNER_CALIBRATION_REQUIRED",
+        "entitlementId": "AR2_ACH_WIN_DIPLO__LAST_MAN_STANDING"
+      },
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Higher levels can require strict surviving coalition/team-size context; outcome/FFA coverage unresolved.",
+      "currentSourceModelRevisions": [
+        "AOF_OFFICIAL_MATCH_RESULT_CURRENT_REVISION",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_NEUTRAL_DIPLO",
+      "name": "Neutral",
+      "category": "Diplomacy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_COMPLETE_NEUTRALITY_CHALLENGE",
+      "sourcePaths": [
+        "AOF_DIPLOMACY_TIMELINE_V2.effectiveIntervals[UNQUALIFIED_IN_PRODUCTION]",
+        "recordedEvents.actionEvents[GAME:diplomacy]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Prove never EFFECTIVELY allied across full qualified initial and runtime span; missing stance is UNKNOWN not Neutral.",
+      "currentSourceModelRevisions": [
+        "AOF_DIPLOMACY_TIMELINE_V2",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_HOUSE_KING",
+      "name": "House an Allied King",
+      "category": "Diplomacy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_DIFFICULT_VERIFIED_KING_SHELTER",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[ORDER/UNGARRISON]",
+        "AOF_DIPLOMACY_TIMELINE_V2.effectiveIntervals[UNQUALIFIED_IN_PRODUCTION]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Working interpretation: actually garrison ally's King in host's building; confirmed King instance, effective alliance, executed garrison required.",
+      "currentSourceModelRevisions": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_DIPLOMACY_TIMELINE_V2"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_SETUP_TRADE_DIPLO",
+      "name": "Set Up Trade in Diplomacy",
+      "category": "Economy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "BEST_QUALIFIED_GAME",
+      "axis": "MORE_ACTUAL_DIPLO_TRADE_INCOME",
+      "sourcePaths": [
+        "player.economy.tradeUnitsTrained",
+        "AOF_DIPLOMACY_TIMELINE_V2.effectiveIntervals[UNQUALIFIED_IN_PRODUCTION]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Need mutually valid trading relation and trade-gold receipt; market/unit requests are not income.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_DIPLOMACY_TIMELINE_V2"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "trade_route_gold_received_verified",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "Strictly stronger comparable best-Game result, where an axis supports magnitude; composite quality needs an added qualified requirement."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Stricter performance plus independently supported method/structure quality and full-window coverage."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_ALLY_N_TIMES",
+      "name": "Successfully Ally N Times",
+      "category": "Diplomacy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "axis": "MORE_DISTINCT_EFFECTIVE_ALLIANCES",
+      "sourcePaths": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1.directedDeclarations",
+        "recordedEvents.actionEvents[GAME:diplomacy]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Distinct genuinely effective reciprocal ally counterparts or validated episodes; no repeated unilateral Ally toggle farming.",
+      "currentSourceModelRevisions": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    },
+    {
+      "id": "AR2_ACH_EXTORTION",
+      "name": "Extortion",
+      "category": "Diplomacy",
+      "availability": "ENGINE_WITNESS",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "axis": "MORE_VERIFIED_RECEIVED_TRIBUTE",
+      "sourcePaths": [
+        "player.economy.tributeReceived",
+        "recordedEvents.actionEvents[DE_TRIBUTE/TRIBUTE]"
+      ],
+      "variant": null,
+      "tierLadder": "FOUR_QUALITATIVE_RANKS_UNCALIBRATED",
+      "cutoffValues": null,
+      "eligibleFormats": [
+        "DIPLO_FFA"
+      ],
+      "evidenceRule": "Actual receipt unproven; coercion/motive never inferred from value. Editorial 'Extortion' metaphor must not imply proven threats.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "axis_specific_qualifying_events_or_composite_score",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "tierPlan": [
+        {
+          "rank": "INITIATE",
+          "kind": "QUALIFY_BASE_PREDICATE",
+          "threshold": null,
+          "predicate": "First fully covered source-qualified performance satisfying this family's source and mode contract."
+        },
+        {
+          "rank": "PRACTICED",
+          "kind": "IMPROVE_MAIN_AXIS",
+          "threshold": null,
+          "predicate": "More independent qualified Battle deeds, counting one source-qualified contribution per distinct Match/Battle."
+        },
+        {
+          "rank": "EXPERT",
+          "kind": "IMPROVE_AND_VALIDATE_QUALITY",
+          "threshold": null,
+          "predicate": "Harder distinct-Battle repeatability plus per-Battle minimum independent episode/support evidence."
+        },
+        {
+          "rank": "ELITE",
+          "kind": "OWNER_CALIBRATED_EXCEPTIONAL_GATE",
+          "threshold": null,
+          "predicate": "Exceptionally difficult owner-approved source-qualified standard in an eligible comparable cohort; specific elite branch requirements below if present."
+        }
+      ],
+      "eliteBranchRequirement": null,
+      "earliestEligibleRank": "BLOCKED_UNTIL_RELEVANT_EFFECT_PROOF"
+    }
+  ],
+  "achievementFamilyCounts": {
+    "General": 23,
+    "FixedTeam": 7,
+    "Diplomacy": 7,
+    "total": 37
+  },
+  "recordCohorts": {
+    "NORMAL_START_OPENING": {
+      "required": [
+        "human_official_league_game",
+        "READY_current_authoritative_source",
+        "same_metrics_model_version",
+        "same_approved_game_build_and_mod_rules",
+        "same_game_speed",
+        "same_starting_age",
+        "same_starting_TC_count",
+        "same_starting_resources",
+        "same_starting_population",
+        "same_approved_map_start_class",
+        "same_approved_gameplay_format_or_explicit_cross_format_equivalence",
+        "civilization_effects_normalized_or_split",
+        "complete_research_and_queue_cancellation_coverage"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "QUALIFIED_GAME": {
+      "required": [
+        "human_official_league_game",
+        "READY_current_authoritative_source",
+        "same_metric_model_version",
+        "same_approved_patch_game_speed_and_mode",
+        "compatible_format_and_start_conditions",
+        "complete_metric_clock_and_action_coverage",
+        "minimum_game_duration_if_volume_or_rate"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "ECO_GAME": {
+      "required": [
+        "QUALIFIED_GAME",
+        "same_clock_checkpoint_for_clocked_metric",
+        "civ_economy_context_compatible_or_split",
+        "all_relevant_costs_priced",
+        "no_unqualified_cancellations"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "ENGAGEMENT_GAME": {
+      "required": [
+        "QUALIFIED_GAME",
+        "same_raid_skirmish_engagement_model",
+        "same_actor_target_and_team_qualifier",
+        "sufficient_play_duration_and_episode_coverage"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "FIXED_TEAM_GAME": {
+      "required": [
+        "ENGAGEMENT_GAME",
+        "verified_fixed_teams_and_lockTeams",
+        "true_same_team_beneficiary_at_episode_time",
+        "authoritative_fixed_team_roster_and_player_mapping_revision_consistent"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "MAP_GEOMETRY_GAME": {
+      "required": [
+        "QUALIFIED_GAME",
+        "same_approved_map_and_size_class_or_normalized_rules",
+        "valid_starting_TCs_and_known_object_coverage",
+        "compatible_terrain_geometry",
+        "fixed_diplomacy_or_qualified_effective_stance_where_relevant"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "OFFICIAL_RESULT_GAME": {
+      "required": [
+        "human_official_league_game",
+        "current_final_authoritative_result_revision",
+        "same_victory_rules_format_game_clock_and_game_duration_semantics",
+        "explicit_winning_game_vs_match_scope",
+        "no_invalidating_dispute"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "OFFICIAL_RESULT_SEQUENCE": {
+      "required": [
+        "human_official_league_battles",
+        "chronological_distinct_match_ids",
+        "current_final_result_revisions",
+        "same_season_and_competition_definition",
+        "no_disputed_missing_or_unknown_streak_edge"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "WATER_OPENING_START": {
+      "required": [
+        "NORMAL_START_OPENING",
+        "water_access_and_supported_map_mode",
+        "same_approved_water_spawn_class",
+        "source_qualified_dock_or_water_unit_identity",
+        "civilization_naval_bonus_compatibility"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "DIPLO_FFA_GAME": {
+      "required": [
+        "QUALIFIED_GAME",
+        "approved_unlocked_diplomacy_FFA",
+        "current_effective_initial_stances_known",
+        "qualified_directed_mutual_ally_enemy_neutral_transition_semantics",
+        "complete_king_trade_tribute_state_coverage_for_claimed_deed"
+      ],
+      "holdOnAnyMissing": true
+    },
+    "PERSIAN_TC_RELOCATE": {
+      "required": [
+        "NORMAL_START_OPENING",
+        "verified_Persians_civilization",
+        "source_qualified_original_TC_instance",
+        "executed_original_TC_deletion",
+        "distinct_source_qualified_enemy_home_TC_rebuild_and_completeness"
+      ],
+      "holdOnAnyMissing": true
+    }
+  },
+  "competitiveRecords": [
+    {
+      "id": "AR2_REC_DRUSH_FLUSH",
+      "name": "Fastest Drush Flush",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_STRATEGY_SIGNATURE_MS",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE/RESEARCH/MILITARY_ACTION]",
+        "player.opening.ageUp.feudal"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Composite Drush+Feudal pressure; cannot assert completed actual attacks.",
+      "currentSourceModelRevisions": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_OPENING_STATISTICS_V6"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_SCOUT_RUSH",
+      "name": "Fastest Scout Rush",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_STRATEGY_SIGNATURE_MS",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]",
+        "player.opening.ageUp.feudal"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Starting Scout not queued cavalry; qualify early Stable/Scout queues.",
+      "currentSourceModelRevisions": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_OPENING_STATISTICS_V6"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_ARCHER_RUSH",
+      "name": "Fastest Archer Rush",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_STRATEGY_SIGNATURE_MS",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]",
+        "player.opening.ageUp.feudal"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Range Archer queue and age window.",
+      "currentSourceModelRevisions": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_OPENING_STATISTICS_V6"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_FEUDAL",
+      "name": "Fastest Feudal Age",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "PROJECTED_AGE_MS",
+      "sourcePaths": [
+        "player.opening.ageUp.feudal.ageUpAtMs"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "seasonMetricId": "feudal",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Age request+nominal duration, not engine completion; cancellation coverage must be proven.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_CASTLE",
+      "name": "Fastest Castle Age / Fast Castle",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "PROJECTED_AGE_MS",
+      "sourcePaths": [
+        "player.opening.ageUp.castle.ageUpAtMs"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "seasonMetricId": "castle",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "One record, no duplicated Fast Castle; not research-start timing.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_IMPERIAL",
+      "name": "Fastest Imperial Age",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "PROJECTED_AGE_MS",
+      "sourcePaths": [
+        "player.opening.ageUp.imperial.ageUpAtMs"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "seasonMetricId": "imperial",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Projected age timing, not independently observed completion.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_FC_BOOM",
+      "name": "Fastest Fast Castle Boom",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_POST_CASTLE_TC_SIGNATURE_MS",
+      "sourcePaths": [
+        "player.opening.ageUp.castle.ageUpAtMs",
+        "recordedEvents.actionEvents[BUILD:TownCenter]"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Two distinct correctly timed additional TC sites; BUILD not completion.",
+      "currentSourceModelRevisions": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_FISH_BOOM",
+      "name": "Fastest Fish Boom",
+      "tab": "Opening",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_FISHING_SIGNATURE_MS",
+      "sourcePaths": [
+        "player.buildOrder",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE/GAME]"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "WATER_OPENING_START",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Define comparable fishing signature; no claim of fish income.",
+      "currentSourceModelRevisions": [
+        "AOF_BUILD_ORDER_V2",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_FARMS",
+      "name": "Most Farms Placed",
+      "tab": "Economy",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.economy.farmsPlaced.count"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "ECO_GAME",
+      "seasonMetricId": "farmsPlaced",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Farm placement commands, not completed farms.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "farm_placement_requests",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_VILLAGERS_20",
+      "name": "Highest Villager Queue Estimate @20",
+      "tab": "Economy",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "sourcePaths": [
+        "player.economy.villagersBy20Minutes.count"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "ECO_GAME",
+      "seasonMetricId": "villagers20",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Civ-qualified starting count + net queue estimate; not live Villager count.",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "reconstructed_villager_queue_estimate",
+      "knownClockMs": 1200000,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_COMMITTED_20",
+      "name": "Most Resources Committed @20",
+      "tab": "Economy",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "sourcePaths": [
+        "player.economy.resourceCommitment",
+        "recordedEvents.actionEvents[QUEUE/BUILD/WALL/RESEARCH]"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "ECO_GAME",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "New clock-bounded base-cost estimate; exclude unpriced source events.",
+      "currentSourceModelRevisions": [
+        "AOF_RESOURCE_COMMITMENT_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "pinned_catalog_resource_units",
+      "knownClockMs": 1200000,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_COMMITTED_GAME",
+      "name": "Most Resources Committed in One Game",
+      "tab": "Economy",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.economy.resourceCommitment.resourcesCommitted.total"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "ECO_GAME",
+      "seasonMetricId": "total",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Whole-Game nominal priced requests; duration/minimum and comparability required.",
+      "currentSourceModelRevisions": [
+        "AOF_RESOURCE_COMMITMENT_V1"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "pinned_catalog_resource_units",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_RAIDS",
+      "name": "Most Detected Raids Initiated",
+      "tab": "Military",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.military.engagements.raidsInitiated"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "seasonMetricId": "raidsOut",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Inferred hostile-command episodes; not successful raids.",
+      "currentSourceModelRevisions": [
+        "AOF_RAID_DETECTION_V3"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "inferred_raid_episodes",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_ASSISTS",
+      "name": "Most Qualified Defensive Assists",
+      "tab": "Military",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.military.engagements.defensiveAssistsGiven"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "seasonMetricId": "assistsOut",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Fixed-team only, inferred commands near defended ally home; no proven rescue.",
+      "currentSourceModelRevisions": [
+        "AOF_ENGAGEMENT_STATISTICS_V4"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "inferred_defensive_assist_episodes",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_CASTLES",
+      "name": "Most Castle Placement Orders",
+      "tab": "Military",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.military.castles.count"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "QUALIFIED_GAME",
+      "seasonMetricId": "castles",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "BUILD placements not completed operational Castles.",
+      "currentSourceModelRevisions": [
+        "AOF_MILITARY_STATISTICS_V4"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "castle_placement_requests",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_BATTLES",
+      "name": "Most Detected Engagement Battles",
+      "tab": "Military",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.military.engagements.engagementEvidence.battles"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "seasonMetricId": "battlesFought",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Combat episode detections, not league Matches/Battles.",
+      "currentSourceModelRevisions": [
+        "AOF_ENGAGEMENT_STATISTICS_V4"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "inferred_battle_episodes",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_SCOUT_CONTACT",
+      "name": "Earliest Scout-Attributed Enemy-Base Contact",
+      "tab": "Map Presence",
+      "direction": "MIN",
+      "checkpoint": "FIRST_QUALIFIED_SCOUT_COMMAND_MS",
+      "sourcePaths": [
+        "player.mapPresence.enemyBaseContact.atMs",
+        "player.mapPresence.scoutCoverageAt5Minutes",
+        "recordedEvents.actionEvents[MOVE/ORDER]"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "New starting-scout identity join; no actual arrival or fog visibility.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "game_milliseconds",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_WALLS_20",
+      "name": "Most Unique Wall Tile Orders @20",
+      "tab": "Map Presence",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[WALL]",
+        "player.mapPresence.wallTiles.totalWallTiles"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "New clock cutoff; path tiles unique; no completed or sealing walls.",
+      "currentSourceModelRevisions": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "unique_placed_wall_tiles",
+      "knownClockMs": 1200000,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_MAP_EXPLORED_20",
+      "name": "Map Explored @20",
+      "tab": "Map Presence",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "sourcePaths": [
+        "player.mapPresence.commandMapCoverage.percent",
+        "recordedEvents.actionEvents[position]"
+      ],
+      "availability": "ENGINE_WITNESS",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "LITERAL_FOG_EXPLORATION NOT PRESENT: optional separately titled Command-Route Coverage @20 proxy requires new model and explicit owner choice; do not publish under Map Explored.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "CLAIMED_EFFECT_UNAVAILABLE_SOURCE_FIELDS_ARE_INPUTS_ONLY",
+      "unit": "percent_of_map_explored_UNAVAILABLE",
+      "knownClockMs": 1200000,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_FORWARD",
+      "name": "Most Forward Building Placements",
+      "tab": "Map Presence",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.mapPresence.forwardBuildings.count"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "seasonMetricId": "forward",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": ">=65 percent normalized enemy progress; not completed buildings.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "forward_building_placement_requests",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_GOLD",
+      "name": "Highest Gold Infrastructure Influence",
+      "tab": "Map Presence",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.mapPresence.goldControl.controlSharePercent"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "seasonMetricId": "goldControl",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Deposit-weighted inferred influence; not gold mined.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "percent_inferred_infrastructure_gold_control",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_RELICS",
+      "name": "Most Unique Relic Touches",
+      "tab": "Map Presence",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.mapPresence.relicControl.uniqueRelicsTouched"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "seasonMetricId": "relics",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Qualified command touches, not pickup/deposit.",
+      "currentSourceModelRevisions": [
+        "AOF_RELIC_TARGETING_V1"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "unique_source_qualified_relic_target_instances",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_ECO_ZONES",
+      "name": "Most Economic Expansion Zones",
+      "tab": "Map Presence",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.mapPresence.expansionZones.count"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "seasonMetricId": "expansions",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Clustered expansion placement geography; not operational economy.",
+      "currentSourceModelRevisions": [
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "inferred_economic_expansion_zones",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_APM",
+      "name": "Highest Average Full-Game Raw APM",
+      "tab": "Execution",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "sourcePaths": [
+        "player.execution.apm"
+      ],
+      "availability": "EXISTING_MEASUREMENT",
+      "comparisonProfile": "QUALIFIED_GAME",
+      "seasonMetricId": "apm",
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Total decoded ACTION per observed Game minute, not peak APM; minimum duration pending.",
+      "currentSourceModelRevisions": [
+        "AOF_EXECUTION_STATISTICS_V1"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "raw_actions_per_minute",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_WIN_STREAK",
+      "name": "Longest Official Season Win Streak",
+      "tab": "Competition",
+      "direction": "MAX",
+      "checkpoint": "SEASON_OFFICIAL_MATCH_SEQUENCE",
+      "sourcePaths": [
+        "official.matchResult",
+        "season.standings"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "OFFICIAL_RESULT_SEQUENCE",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Deduplicate multi-Game league Battle, exclude unplayed; recompute after official outcome revisions.",
+      "currentSourceModelRevisions": [
+        "AOF_OFFICIAL_MATCH_RESULT_CURRENT_REVISION",
+        "SOURCE_MODEL_NOT_YET_QUALIFIED"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "consecutive_official_matches",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_FASTEST_WIN",
+      "name": "Fastest Official Win",
+      "tab": "Competition",
+      "direction": "MIN",
+      "checkpoint": "OFFICIAL_WINNING_MATCH_OR_GAME_DURATION",
+      "sourcePaths": [
+        "official.matchResult",
+        "recordedEvents.postgameEvents",
+        "recordedEvents.scope.observedUntilMs"
+      ],
+      "availability": "DERIVE",
+      "comparisonProfile": "OFFICIAL_RESULT_GAME",
+      "seasonMetricId": null,
+      "holderTieRule": "ALL_EXACT_EQUAL_QUALIFIED_EXTREMA",
+      "evidenceRule": "Game win vs series Match win policy open; FFA outcomes, collusion, resign-duration validation needed.",
+      "currentSourceModelRevisions": [
+        "AOF_OFFICIAL_MATCH_RESULT_CURRENT_REVISION",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourceFieldStatus": "PARTIAL_SOURCE_EXISTS_NEW_PREDICATE_NEEDED",
+      "unit": "verified_official_game_or_match_milliseconds_UNDECIDED",
+      "knownClockMs": null,
+      "comparisonAndPublicationState": "DESIGN_ONLY_NOT_APPROVED"
+    }
+  ],
+  "extraExistingRecordCabinetSupport": [
+    {
+      "id": "AR2_REC_RAID_RESPONSE",
+      "name": "Fastest Raid Response",
+      "tab": "Execution",
+      "availability": "EXISTING_MEASUREMENT",
+      "sourcePaths": [
+        "player.execution.raidResponse.medianSeconds"
+      ],
+      "sourceMetricId": "response",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "note": "Inferred qualifying defender control after detected raid; not necessarily garrison or successful defence.",
+      "currentSourceModelRevisions": [
+        "AOF_EXECUTION_STATISTICS_V1"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "seconds_inferred_raid_response",
+      "comparisonAndPublicationState": "PROVISIONAL_FEATURED_ONLY_NOT_APPROVED"
+    },
+    {
+      "id": "AR2_REC_BATTLE_ECO",
+      "name": "Most Economy Actions in Skirmishes",
+      "tab": "Execution",
+      "availability": "EXISTING_MEASUREMENT",
+      "sourcePaths": [
+        "player.execution.skirmishContext.ecoActions"
+      ],
+      "sourceMetricId": "ecoActionsFights",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "note": "Existing but raw count may reflect long passive windows; proposed battle multitasking supersedes as stronger plaque later.",
+      "currentSourceModelRevisions": [
+        "AOF_EXECUTION_STATISTICS_V1"
+      ],
+      "sourceFieldStatus": "PROJECTED_METRIC_REQUIRES_ADMISSION",
+      "unit": "economy_classified_actions_during_inferred_skirmishes",
+      "comparisonAndPublicationState": "PROVISIONAL_FEATURED_ONLY_NOT_APPROVED"
+    }
+  ],
+  "recordCounts": {
+    "candidateRecords": 26,
+    "categoryBreakdown": {
+      "Opening": 8,
+      "Economy": 4,
+      "Military": 4,
+      "Map Presence": 7,
+      "Execution": 1,
+      "Competition": 2
+    },
+    "seasonMetricDefinitions": 71,
+    "rawRecordFlaggedMetrics": 68
+  },
+  "featuredRecordProvisionalCandidates": {
+    "Opening": [
+      "AR2_REC_FEUDAL",
+      "AR2_REC_CASTLE",
+      "AR2_REC_IMPERIAL"
+    ],
+    "Economy": [
+      "AR2_REC_FARMS",
+      "AR2_REC_VILLAGERS_20",
+      "AR2_REC_COMMITTED_GAME"
+    ],
+    "Military": [
+      "AR2_REC_RAIDS",
+      "AR2_REC_ASSISTS",
+      "AR2_REC_BATTLES"
+    ],
+    "Map Presence": [
+      "AR2_REC_FORWARD",
+      "AR2_REC_GOLD",
+      "AR2_REC_RELICS"
+    ],
+    "Execution": [
+      "AR2_REC_APM",
+      "AR2_REC_RAID_RESPONSE",
+      "AR2_REC_BATTLE_ECO"
+    ]
+  },
+  "featuredSelectionStatus": "PRESENTATION_PLACEHOLDERS_ONLY_NOT_OWNER_APPROVED_AND_NOT_GUARANTEED_COHORT_QUALIFIED",
+  "investigativeMetrics": [
+    {
+      "id": "GARRISON_RAID_RESPONSE",
+      "priority": 1,
+      "displayName": "Raid-response garrison ORDER latency",
+      "availability": "DERIVE",
+      "from": [
+        "player.execution.garrisonsDuringRaids",
+        "player.execution.raidResponse.evidence",
+        "recordedEvents.actionEvents[ORDER]"
+      ],
+      "qualifies": "Per received raid, earliest player ORDER to known owned garrison-capable initial target within bounded attack window.",
+      "doesNotProve": "Unit actually entered; later-built garrison structures may be missed.",
+      "nextWitness": "controlled actual-garrison and false-order recordings",
+      "currentSourceModelRevisions": [
+        "AOF_EXECUTION_STATISTICS_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ]
+    },
+    {
+      "id": "BATTLE_MULTITASKING",
+      "priority": 2,
+      "displayName": "Concurrent combat-control and economy-command windows",
+      "availability": "DERIVE",
+      "from": [
+        "player.execution.skirmishContext.ecoActions",
+        "player.execution.skirmishContext.apm",
+        "player.military.engagements.engagementEvidence.battles",
+        "recordedEvents.actionEvents"
+      ],
+      "qualifies": "Same attributed player has combat-control and independently classified economy commands in shared short windows of qualified opposing engagement, normalized per admitted active minute.",
+      "doesNotProve": "Damage, military success, productive economy; later-created Villager control may undercount.",
+      "nextWitness": "controlled positive dual-domain and idle/passive/spam negatives",
+      "currentSourceModelRevisions": [
+        "AOF_EXECUTION_STATISTICS_V1",
+        "AOF_ENGAGEMENT_STATISTICS_V4",
+        "AOF_RECORDED_EVENTS_V1"
+      ]
+    },
+    {
+      "id": "RAID_QUICKWALL",
+      "priority": 3,
+      "displayName": "Raid-relative emergency WALL placement",
+      "availability": "DERIVE",
+      "from": [
+        "player.military.engagements.raidEvidence.receivedEpisodes",
+        "recordedEvents.actionEvents[WALL]"
+      ],
+      "qualifies": "New deduped defender wall tile orders after independently attributed raid onset, close to threatened zone within calibrated time window.",
+      "doesNotProve": "Finished wall, actual obstruction or saved villagers.",
+      "nextWitness": "controlled time/location false-positive and true quickwall example",
+      "currentSourceModelRevisions": [
+        "AOF_RAID_DETECTION_V3",
+        "AOF_RECORDED_EVENTS_V1"
+      ]
+    },
+    {
+      "id": "ENEMY_BOAR_INTERACTION",
+      "priority": 4,
+      "displayName": "Enemy-side boar targeting candidate",
+      "availability": "DERIVE",
+      "from": [
+        "player.economy.boarsTaken",
+        "player.economy.firstBoarLure",
+        "initialObjects",
+        "recordedEvents.actionEvents[ORDER]"
+      ],
+      "qualifies": "Player's attributable early order on distinct known boar associated with opponent starting territory; only a contest/target candidate.",
+      "doesNotProve": "Successful stolen boar, lure destination, resource denial or killed boar.",
+      "nextWitness": "engine-observed boar move/aggro/ownership/endpoint",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ]
+    },
+    {
+      "id": "MONK_CONVERSION_SUCCESS",
+      "priority": 5,
+      "displayName": "Engine-observed Monk conversion success",
+      "availability": "ENGINE_WITNESS",
+      "from": [
+        "player.military.composition.monks",
+        "recordedEvents.actionEvents[ORDER]"
+      ],
+      "qualifies": "Same target instance changes proven owner enemy→player with attributed converting Monk/time and independent accepted state.",
+      "doesNotProve": "A target ORDER or monk queue alone never establishes conversion.",
+      "nextWitness": "offline engine observer target ownership transition positive and failed/reconvert controls",
+      "currentSourceModelRevisions": [
+        "AOF_MILITARY_STATISTICS_V4",
+        "AOF_RECORDED_EVENTS_V1"
+      ]
+    },
+    {
+      "id": "TRADE_ROUTE_GOLD",
+      "priority": 6,
+      "displayName": "Actual Trade Cart/Cog route-gold income",
+      "availability": "ENGINE_WITNESS",
+      "from": [
+        "player.economy.tradeUnitsTrained",
+        "player.economy.market.volumeTraded",
+        "recordedEvents.actionEvents"
+      ],
+      "qualifies": "Verified trade-unit route receipt/increment independently distinguished from mining, market, tribute and other gold delta.",
+      "doesNotProve": "Market BUY/SELL lots×100 is MARKET EXCHANGE VOLUME, never Trade Cart/Cog earned gold; queued trade units are not functioning routes.",
+      "nextWitness": "offline observer gold receipt by source trade unit / route",
+      "currentSourceModelRevisions": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ]
+    }
+  ],
+  "projectionRules": {
+    "oneVerifiedSource": "Source-attributed qualified Game measurement once; THREE independent projections: Season/League records, owner private personal best, fixed achievement tier.",
+    "extrema": "Apply record min/max only within approved compatible cohort; equal exact qualified values share all holders. Different models/contexts stay separate or unavailable.",
+    "dedupe": "Canonical Game ID under authoritative Match/Battle; duplicate uploaded POV never counts twice; cumulative achievement counts distinct official matchId for Battle contribution.",
+    "correction": "On source/result/identity/mapping/model revision or disputes, rebuild relevant current extrema, private PB, tier entitlements, honours, append-only correction journal; never persist stale public honour.",
+    "history": "Former record holders distinguish historic once-valid achievement from CURRENT holder; invalid evidence revokes historical claim. PB survives being surpassed by others; weaker subsequent play never revokes earned validated tier.",
+    "unknown": "PENDING_EVIDENCE is not zero, disqualification, or earned status.",
+    "scoring": "No League Points, Reputation, Relationships, Gold, ladder rank, deployment or live award grants."
+  },
+  "ownerOpenDecisions": [
+    "Thresholds, ranks and calibration population per tier/record including minimum eligible Game duration",
+    "Must Elite Drush include the Drush Flush continuation, or may disciplined Dark Age alone qualify?",
+    "Exact elite Scout/Archer branch action/macro requirements; exact elite Fast Castle Boom projected clock and TC-site window",
+    "Which cohorts can compare civs/maps/formats across patches and which must remain separate?",
+    "Is Map Explored @20 acceptable renamed as command-route coverage proxy, or must true fog exploration be proven?",
+    "Should Fastest Win measure winning Game or completed series Match; FFA outcome and collusion rules",
+    "For House an Allied King confirm shelter/garrison meaning; for Extortion confirm whether title may be used without observed coercion",
+    "Which earned achievement variants get separate names and which stay numbered tiers after corpus evaluation",
+    "Actual 15 featured record IDs editorial approval deferred; requirement is exactly 3 slots per tab"
+  ],
+  "currentSourceModelContract": {
+    "modelRevisions": "Each entry lists required CURRENT or candidate model IDs. Exact accepted source artifact carries concrete model versions; no comparing versions by string equality alone if semantics changed.",
+    "fieldPathTruth": "Paths beginning player.* identify current participant projection fields. Paths with recordedEvents.* are upstream retained facts for future pure detectors; bracket filtering is pseudocode. AOF_DIPLOMACY_TIMELINE_V2.effectiveIntervals is NOT a production-ready qualified effective stance field and must NEVER grant from raw declarations.",
+    "patchCivSemantics": "Approved build-save-data-mod tuple and source-pinned civ effects required. Missing patch/civ or request cancellation leaves PENDING_EVIDENCE."
+  },
+  "qualityAssurance": {
+    "fixedCensus": [
+      23,
+      7,
+      7,
+      37,
+      26,
+      6
+    ],
+    "validation": "Run replay-tools/tests/test_awards_records_design_registry.py; design-only structural and truth-boundary assertions, NOT authentic gameplay proof.",
+    "sourceTruth": "Existing-measurement entry means inputs exist; NOT an enabled achievement, not official execution witness, and not automatically admissible as a record.",
+    "nonGoals": [
+      "create live award definitions",
+      "create source-derived score/reputation/social marks",
+      "publish holders or emblems",
+      "perform staging",
+      "alter other workers UI/engine"
+    ]
+  }
+}
