@@ -10,7 +10,7 @@ import {db} from '../lib/config/firebase.js';
 import {uploadReplay} from '../lib/commands/statistics/uploadReplay.js';
 import {getMyPersonalityHistory,readMyPersonalityHistory} from '../lib/queries/getMyPersonalityHistory.js';
 import {getMyPrivateChronicle} from '../lib/queries/getMyPrivateChronicle.js';
-import {getMyGameplayPreview,readMyGameplayPreview} from '../lib/queries/getMyGameplayPreview.js';
+import {getMyGameplayPreview,readMyGameplayPreview,getMyGameplayCandidates,readMyGameplayCandidates} from '../lib/queries/getMyGameplayPreview.js';
 import {disputeCanonicalGameResult} from '../lib/commands/results/disputeCanonicalGameResult.js';
 import {adminResolveCanonicalResultDispute} from '../lib/commands/results/adminResolveCanonicalResultDispute.js';
 import {bindingDigest,digest} from '../lib/engines/nativeRecordingIntegration.js';
@@ -43,12 +43,12 @@ await mr.create({status:'ACTIVE',format:'ONE_V_ONE',opponentKind:'HUMAN',partici
  gameConfigSnapshot:{maps:{pool:['Arabia']},civilizations:{mode:'UNRESTRICTED'},victory:{conquest:true,wonder:false,relic:false},diplomacyEnabled:false,additionalSettings:{}}});
 Object.assign(process.env,{AOF_NATIVE_PLAYER_UPLOAD:'recorded-events-v1',AOF_NATIVE_REPLAY_PROJECT:project,
  AOF_ACTIVE_NATIVE_PLAYER_READS:'1',AOF_ACTIVE_NATIVE_SOCIAL_READS:'1',AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST:matchId+'/g1,'+matchId+'/g2',
- AOF_INT_V1_PRIVATE_READS:'source-v1',AOF_INT_V1_PRIVATE_HISTORY:'battle-v1',AOF_INT_C1_PRIVATE_PREVIEW:'wiring-test-v1'});
+ AOF_INT_V1_PRIVATE_READS:'source-v1',AOF_INT_V1_PRIVATE_HISTORY:'battle-v1',AOF_INT_C1_PRIVATE_PREVIEW:'wiring-test-v1',AOF_INT_C2A_PRIVATE_PREVIEW:'source-compatible-v1'});
 assert.ok(!process.env.AOF_NATIVE_REPLAY_INTEGRATION&&!process.env.AOF_NATIVE_READY_PUBLICATION);
 const bucket=getStorage().bucket(process.env.REPLAY_BUCKET),actor={playerId:owner,authUid:uid};
 const ownRead=()=>getMyPersonalityHistory.run({auth:{uid},data:{}});
 const bookRead=()=>getMyPrivateChronicle.run({auth:{uid},data:{}});
-const gameplayRead=()=>getMyGameplayPreview.run({auth:{uid},data:{}});
+const gameplayRead=()=>getMyGameplayCandidates.run({auth:{uid},data:{}});
 for(let i=0;i<fixtures.length;i++){
  const f=fixtures[i],gameId='g'+(i+1),game=mr.collection('games').doc(gameId);
  await game.create({status:'READY',gameNumber:i+1,players:roster,replayStatisticsRevision:0,activeReplayStatisticsId:null,
@@ -66,14 +66,15 @@ assert.ok(initial.personality.personalityProfile.sliders.every(s=>s.status==='DE
 assert.equal(new Set(initial.sources.map(s=>s.gameGuid)).size,2);assert.equal(new Set(initial.sources.map(s=>s.sourceHash)).size,2);
 assert.deepEqual(await ownRead(),initial);
 const initialGameplay=await gameplayRead();assert.equal(initialGameplay.coverage.currentSources,2);
-assert.equal(initialGameplay.coverage.ownBattles,1);assert.ok(initialGameplay.grades.length>0&&initialGameplay.claims.length>0);
+assert.equal(initialGameplay.coverage.ownBattles,1);assert.ok(initialGameplay.episodes.length>0&&initialGameplay.legacyPending.claimIds.length>0);
 assert.equal(new Set(initialGameplay.sources.map(s=>s.gameGuid)).size,2);
-assert.ok(initialGameplay.grades.every(g=>g.actorPlayerId===owner&&g.grade.status==='PENDING'));
+assert.ok(initialGameplay.episodes.every(g=>g.binding.actorPlayerId===owner&&g.candidate.grade.decision==='PENDING'));
 assert.deepEqual(await gameplayRead(),initialGameplay);assert.deepEqual(initialGameplay.history.projections,[]);assert.deepEqual(initialGameplay.history.receipts,[]);
-const otherGameplay=await getMyGameplayPreview.run({auth:{uid:'intb-other-uid'},data:{}});
-assert.ok(otherGameplay.grades.every(g=>g.actorPlayerId===other));
-assert.ok(otherGameplay.claims.every(c=>c.subject.system==='REPUTATION'?c.subject.playerId===other:c.subject.fromPlayerId===other));
-assert.equal((await getMyGameplayPreview.run({auth:{uid:outsider},data:{}})).grades.length,0);
+const legacyGameplay=await getMyGameplayPreview.run({auth:{uid},data:{}});assert.equal(legacyGameplay.version,'AOF_INT_C1_PRIVATE_PREVIEW_1');assert.deepEqual(legacyGameplay.claims.map(c=>c.claimId),initialGameplay.legacyPending.claimIds);
+const otherGameplay=await getMyGameplayCandidates.run({auth:{uid:'intb-other-uid'},data:{}});
+assert.ok(otherGameplay.episodes.every(g=>g.binding.actorPlayerId===other));
+assert.ok(otherGameplay.episodes.every(e=>e.candidate.actorReplayPlayerId===e.binding.source.roster.find(p=>p.playerId===other).replaySlot));
+assert.equal((await getMyGameplayCandidates.run({auth:{uid:outsider},data:{}})).episodes.length,0);
 const oldBook=await bookRead(),oldEntry=oldBook.chronicle.pages.find(p=>p.counterpartPlayerId===other)?.entries[0];assert.ok(oldEntry?.sceneId);
 const otherRead=await getMyPersonalityHistory.run({auth:{uid:'intb-other-uid'},data:{}});assert.equal(otherRead.ownerPlayerId,other);
 assert.equal((await getMyPersonalityHistory.run({auth:{uid:outsider},data:{}})).sources.length,0);
@@ -84,7 +85,7 @@ await assert.rejects(getMyPrivateChronicle.run({auth:{uid},data:{playerId:other}
 const gr=mr.collection('games').doc('g1'),game=(await gr.get()).data();assert.ok(game.canonicalResult);
 await disputeCanonicalGameResult.run({auth:{uid},data:{requestId:'intb-dispute',matchId,gameId:'g1',category:'WRONG_RESULT',reason:'Controlled integration correction test.'}});
 const disputed=await ownRead();assert.equal(disputed.coverage.currentSources,0);
-assert.equal((await gameplayRead()).claims.length,0);
+assert.equal((await gameplayRead()).legacyPending.claimIds.length,0);
 const winner=game.canonicalResult.winningPlayerIds.includes(owner)?other:owner;
 await adminResolveCanonicalResultDispute.run({auth:{uid:admin},data:{requestId:'intb-resolve',matchId,gameId:'g1',disputeId:'intb-dispute',
  resolution:'CORRECT',reason:'Controlled test only: authoritative revision replacement.',expectedSourceHash:game.activeReplayStatisticsId,winnerTeam:roster.find(p=>p.playerId===winner).team}});
@@ -92,20 +93,20 @@ const corrected=await ownRead();assert.notEqual(corrected.inputDigest,initial.in
 assert.equal(corrected.personality.battleFeatures.length,5);
 const correctedGameplay=await gameplayRead();assert.notEqual(correctedGameplay.inputDigest,initialGameplay.inputDigest);
 assert.equal(correctedGameplay.coverage.currentSources,2);assert.deepEqual(correctedGameplay.history.receipts,[]);
-assert.ok(correctedGameplay.grades.every(g=>correctedGameplay.sources.some(s=>s.authorityRevision===g.sourceAuthority)));
+assert.ok(correctedGameplay.episodes.every(g=>correctedGameplay.sources.some(s=>s.authorityRevision===g.binding.source.authorityRevision)));
 const correctedBook=await bookRead(),newEntry=correctedBook.chronicle.pages.find(p=>p.counterpartPlayerId===other)?.entries[0];
 assert.equal(newEntry?.sceneId,oldEntry.sceneId,'Source/result correction never remints pair×Battle identity');
 const sr=gr.collection('replaySources').doc(game.activeReplayStatisticsId),source=(await sr.get()).data();
 await sr.update({state:'WITHDRAWN'});const withdrawn=await ownRead();assert.equal(withdrawn.coverage.currentSources,1);assert.equal(withdrawn.pending.length,1);
 const withdrawnGameplay=await gameplayRead();assert.equal(withdrawnGameplay.coverage.currentSources,1);
-assert.ok(withdrawnGameplay.grades.every(g=>g.sourceAuthority!==correctedGameplay.sources.find(s=>s.gameId==='g1').authorityRevision));
+assert.ok(withdrawnGameplay.episodes.every(g=>g.binding.source.authorityRevision!==correctedGameplay.sources.find(s=>s.gameId==='g1').authorityRevision));
 await sr.set(source); // isolated fault-injection fixture restore, not a production reactivation API
 const mapping=source.playerMapping.map((p,i,a)=>({...p,playerId:a[(i+1)%a.length].playerId}));
 const current=(await gr.get()).data(),key=statisticsBindingKey({sourceHash:source.sourceHash,roster:current.players,mapping,opponents:[]});
 await sr.set({...source,playerMapping:mapping,experience:{...source.experience,bindingKey:key}});
 const remapped=await ownRead();assert.notEqual(remapped.inputDigest,corrected.inputDigest);assert.equal(remapped.personality.battleFeatures.length,5);
 const remappedGameplay=await gameplayRead();assert.notEqual(remappedGameplay.inputDigest,correctedGameplay.inputDigest);
-assert.ok(remappedGameplay.grades.every(g=>g.actorReplaySlot===remappedGameplay.sources.find(s=>s.authorityRevision===g.sourceAuthority).roster.find(p=>p.playerId===owner).replaySlot));await sr.set(source);
+assert.ok(remappedGameplay.episodes.every(g=>g.candidate.actorReplayPlayerId===g.binding.source.roster.find(p=>p.playerId===owner).replaySlot));await sr.set(source);
 const eventRef=db.doc('events/intb-event'),event=(await eventRef.get()).data();
 for(const change of [()=>eventRef.update({status:'CANCELLED'}),()=>db.doc('authLinks/'+uid).update({playerId:other}),
  ()=>mr.collection('games').doc('inserted').set({gameNumber:3,status:'READY',players:roster})]){
@@ -117,8 +118,8 @@ for(const change of [()=>eventRef.update({status:'CANCELLED'}),()=>db.doc('authL
 const final=await ownRead(),book=await bookRead();
 // Mutation AFTER worker derivation must invalidate the complete C1 history too.
 const {callVerifiedWorker}=await import('../lib/services/nativeRecordingValidation.js');let changedDuringWorker=false;
-await assert.rejects(readMyGameplayPreview({db,bucket,actor,env:process.env,request:{},derive:async payload=>{
- const value=await callVerifiedWorker(process.env.REPLAY_WORKER_URL,'/social-grade-preview-v1',payload);
+await assert.rejects(readMyGameplayCandidates({db,bucket,actor,env:process.env,request:{},derive:async payload=>{
+ const value=await callVerifiedWorker(process.env.REPLAY_WORKER_URL,'/social-grade-candidates-preview-v1',payload);
  if(!changedDuringWorker){changedDuringWorker=true;await eventRef.update({status:'CANCELLED'});}return value;
 }}));await eventRef.set(event);
 const rendered=spawnSync(process.execPath,['--import','tsx','tests/render-int-b-history.mjs'],{cwd:resolve('web'),

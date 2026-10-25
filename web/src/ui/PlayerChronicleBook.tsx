@@ -1,7 +1,7 @@
 import {chronicleEntryKey,migrateChronicleSeen} from '../domain/chronicleReadHistory';
 import {PrivatePersonalityHistory} from './PrivatePersonalityHistory';
 import {PrivateGameplayPreview} from './PrivateGameplayPreview';
-import {gameplayPreviewEnabled} from '../domain/gameplayPreview';
+import {gameplayCandidatesEnabled,gameplayPreviewEnabled} from '../domain/gameplayPreview';
 import {privateHistoryEnabled} from '../domain/privateHistory';
 import {useEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import {BookOpen,Medal,ScrollText,Trophy,X} from 'lucide-react';
@@ -434,7 +434,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
         {pageLoading?<div className="chronicle-loading" role="status"><BookOpen size={30}/><p>Opening the record…</p></div>
           :pageError?<div className="chronicle-loading" role="alert"><p>{pageError}</p></div>
           :ownerProfile&&selectedPlayer?(isSelf
-            ?<><SelfPage profile={ownerProfile}/>{privateHistoryEnabled(import.meta.env)&&<PrivatePersonalityHistory repository={repository} ownerId={ownerId}/>}{gameplayPreviewEnabled(import.meta.env)&&<PrivateGameplayPreview repository={repository} ownerId={ownerId}/>}</>
+            ?<><SelfPage profile={ownerProfile}/>{privateHistoryEnabled(import.meta.env)&&<PrivatePersonalityHistory repository={repository} ownerId={ownerId}/>}{(gameplayCandidatesEnabled(import.meta.env)||gameplayPreviewEnabled(import.meta.env))&&<PrivateGameplayPreview repository={repository} sourceCandidates={gameplayCandidatesEnabled(import.meta.env)} ownerId={ownerId}/>}</>
             :<RelationshipPage owner={ownerProfile.player} counterpart={selectedPlayer} page={page} official={official} snapshot={snapshot} partial={chronicleRead?.status==='PARTIAL'} freshEntryIds={freshEntryIds}/>)
           :<div className="chronicle-loading"><p>The Chronicle has no page to show.</p></div>}
       </article>

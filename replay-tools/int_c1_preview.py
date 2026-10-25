@@ -53,7 +53,7 @@ def contribution_groups(deeds, snapshot):
             for members in groups.values() for did in members}
 
 
-def preview_from_analysis(*, snapshot, statistics, analysis, historical_order):
+def prepare_preview_inputs(*, snapshot, statistics, analysis):
     validate_record('SourceSnapshot', snapshot)
     require(snapshot['gameGuid'] and len(snapshot['artifactRefs']) == 3, 'NATIVE_SNAPSHOT_REQUIRED')
     source = analysis['source']
@@ -66,6 +66,11 @@ def preview_from_analysis(*, snapshot, statistics, analysis, historical_order):
     context = project_social_v1_context(statistics=statistics)  # TERR is unconfigured.
     descriptors = project_social_source_measurements(statistics=statistics, context=context,
         action_events=analysis['actionEvents'], lookback_ms=TEST['lookbackMs'])
+    return context, descriptors
+
+
+def preview_from_analysis(*, snapshot, statistics, analysis, historical_order, _prepared=None):
+    context, descriptors = _prepared or prepare_preview_inputs(snapshot=snapshot, statistics=statistics, analysis=analysis)
     pair = statistics['pairSocialEvidence']
     groups = contribution_groups(pair['deeds'], snapshot)
     lineages = {d['deedId']: {'incidentId':'incident-'+digest([snapshot['gameGuid'],snapshot['sourceHash'],d['deedId']]),
@@ -125,7 +130,7 @@ def preview_from_analysis(*, snapshot, statistics, analysis, historical_order):
         'officialWrites':False,'publicationAllowed':False,'gradeMethodsInstalled':False}
 
 
-def process_preview(request):
+def load_preview_request(request):
     require(isinstance(request,dict) and set(request)=={'snapshot','statistics','events','historicalOrder'},'INVALID_PRIVATE_PREVIEW_REQUEST')
     envelope=request['events'];require(isinstance(envelope,dict) and set(envelope)=={'metadata','base64'},'INVALID_EVENTS_ENVELOPE')
     meta=envelope['metadata']
@@ -137,5 +142,9 @@ def process_preview(request):
         path=Path(tmp)/'events.jsonl.gz';path.write_bytes(raw)
         analysis=load_analysis(path,meta)  # Existing strict stream validator, exhausted in full.
     require(len(analysis['actionEvents'])<=600000,'PREVIEW_ACTION_BUDGET_EXCEEDED')
-    return preview_from_analysis(snapshot=request['snapshot'], statistics=request['statistics'],
-        analysis=analysis,historical_order=request['historicalOrder'])
+    return dict(snapshot=request['snapshot'], statistics=request['statistics'],
+        analysis=analysis, historical_order=request['historicalOrder'])
+
+
+def process_preview(request):
+    return preview_from_analysis(**load_preview_request(request))

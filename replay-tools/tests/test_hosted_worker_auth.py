@@ -72,11 +72,24 @@ class HostedWorkerAuthTests(TestCase):
         with patch.dict(os.environ, {"AOF_REPLAY_WORKER_AUTH_TOKEN":"test-c1",
              "GCLOUD_PROJECT":"demo-test", "FUNCTIONS_EMULATOR":"true"},clear=True):
             self.assertEqual(self.call('/social-grade-preview-v1','test-c1')[0],404)
+
             os.environ['AOF_INT_C1_ENDPOINT']='1'
             self.assertEqual(self.call('/social-grade-preview-v1')[0],401)
             self.assertEqual(self.call('/social-grade-preview-v1','test-c1')[0],400)
             os.environ['GCLOUD_PROJECT']='league-of-friends-cc274'
             self.assertEqual(self.call('/social-grade-preview-v1','test-c1')[0],404)
+
+    def test_c2a_needs_separate_opt_in_and_cannot_enable_production(self):
+        with patch.dict(os.environ, {'AOF_REPLAY_WORKER_AUTH_TOKEN':'test-c2a',
+             'GCLOUD_PROJECT':'demo-test','FUNCTIONS_EMULATOR':'true','AOF_INT_C1_ENDPOINT':'1'},clear=True):
+            route='/social-grade-candidates-preview-v1'
+            self.assertEqual(self.call(route,'test-c2a')[0],404)
+            os.environ['AOF_INT_C2A_ENDPOINT']='1'
+            self.assertEqual(self.call(route)[0],401)
+            self.assertEqual(self.call(route,'test-c2a')[0],400)
+            os.environ['GCLOUD_PROJECT']='league-of-friends-cc274'
+            self.assertEqual(self.call(route,'test-c2a')[0],404)
+
 
 
 if __name__ == "__main__":
