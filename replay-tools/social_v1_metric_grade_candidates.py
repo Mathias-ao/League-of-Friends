@@ -277,8 +277,14 @@ def prepare_social_metric_grade_candidates(
             descriptor = {"kind": e["kind"], "sourceDetectorId": e["sourceDetectorId"],
                           "sharedOriginalEventIds": linked}
             if key in detector_index:
-                _check(detector_index[key] == descriptor, "CONFLICTING_DETECTOR_CONTEXT")
-            detector_index[key] = descriptor
+                # Same already-projected detector can appear as several
+                # neutral participant views. Union *original shared* refs,
+                # never count the repeat as another action or contribution.
+                existing = detector_index[key]
+                existing["sharedOriginalEventIds"] = sorted(set(
+                    existing["sharedOriginalEventIds"]) | set(linked))
+            else:
+                detector_index[key] = descriptor
         detectors = [detector_index[k] for k in sorted(detector_index)]
         # V3 raid detector is opponent-specific, but still inferred from
         # commands/geography: it is source-overlap CONTEXT, not proven damage.
