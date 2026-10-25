@@ -151,7 +151,8 @@
           "trackHypotheses",
           "coverage",
           "grade",
-          "explanation"
+          "explanation",
+          "linkedRaidDetectorCandidates"
         ],
         "properties": {
           "candidateId": {
@@ -558,6 +559,52 @@
           "explanation": {
             "type": "string",
             "minLength": 1
+          },
+          "linkedRaidDetectorCandidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "raidId",
+                "modelVersion",
+                "attackerReplayPlayerId",
+                "victimReplayPlayerId",
+                "sharedOriginalEventIds",
+                "meaning"
+              ],
+              "properties": {
+                "raidId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "modelVersion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "attackerReplayPlayerId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "victimReplayPlayerId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sharedOriginalEventIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "meaning": {
+                  "const": "INFERRED_DIRECTED_ECONOMIC_RAID_COMMANDS_NOT_DAMAGE"
+                }
+              }
+            }
           }
         }
       }
