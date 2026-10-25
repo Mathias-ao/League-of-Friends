@@ -85,7 +85,7 @@ test('real 1v1/team/FFA recordings preserve raw observed clocks and settings onl
   assert.equal(Object.keys(four.players).length,8);
   assert.equal(ffa.playerCount,8);
   assert.equal(ffa.durationMs,5703316);
-  assert.equal(ffa.source.gameBuild,180059);
+  assert.equal(ffa.source.gameBuild,185872);
   assert.equal(ffa.source.sha256,'ab947d934bbd4fa4e2531f4f8a5014f9b923038a34aa7332d7260eb78fb3fab5');
   assert.equal(corpus.reports.find(r=>r.id==='user-ffa-diplo-save68.9').observedUntilMs,ffa.durationMs);
 });
@@ -246,6 +246,30 @@ test('source correction, map update, roster remap and Game source disagreement i
   assert.equal(admit(dispute,p).status,'PENDING');
   const missing=structuredClone(x);delete missing.statistics.matchFacts;
   assert.equal(admit(missing,p).status,'PENDING');
+  // Regression for incomplete/older source artifacts: absent, null or malformed
+  // facts.players must not throw or borrow a reviewed source proof.
+  for(const value of [undefined,null,{},'invalid',[]]){
+    const absent=structuredClone(x);
+    if(value===undefined)delete absent.statistics.matchFacts.players;
+    else absent.statistics.matchFacts.players=value;
+    let result;
+    assert.doesNotThrow(()=>{result=admit(absent,p);});
+    assert.equal(result.status,'PENDING');
+    assert.equal(result.context,null);
+    assert.equal(result.fields.format.value,null);
+    assert.equal(result.fields.civilization.value,null);
+    assert.equal(result.fields.civilizationOpportunityKey.value,null);
+    assert.equal(result.fields.mapFamily.value,null);
+    assert.equal(result.fields.startFamily.value,null);
+    assert.equal(result.fields.durationFamily.value,null);
+    assert.equal(result.fields.durationMs.value,null);
+    assert.ok(result.missing.length>0);
+    assert.equal(personalityContextForHistory(absent,'owner-1',p),null);
+  }
+  const corruptedPlayer=structuredClone(x);
+  corruptedPlayer.statistics.matchFacts.players[0]=null;
+  assert.doesNotThrow(()=>admit(corruptedPlayer,p));
+  assert.equal(admit(corruptedPlayer,p).status,'PENDING');
 });
 test('same Game ID in two Matches, duplicate POVs and multiple Games remain source-owned identities',()=>{
   const a=original();
