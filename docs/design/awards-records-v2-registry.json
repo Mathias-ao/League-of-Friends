@@ -2221,7 +2221,8 @@
       "required": [
         "ENGAGEMENT_GAME",
         "verified_fixed_teams_and_lockTeams",
-        "true_same_team_beneficiary_at_episode_time"
+        "true_same_team_beneficiary_at_episode_time",
+        "authoritative_fixed_team_roster_and_player_mapping_revision_consistent"
       ],
       "holdOnAnyMissing": true
     },
