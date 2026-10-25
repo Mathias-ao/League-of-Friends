@@ -38,9 +38,11 @@ CANDIDATE_HYPOTHESES = {
         "HOSTILITY": ["NONROUTINE_DISTINCT_DIRECTED_ANTAGONISM_AND_HISTORY"],
     },
     "DEFENSIVE_PARTICIPATION_REQUEST": {
+        # Here counterpart is the *beneficiary*, not the attacker:
+        # defender→opponent Rivalry needs a separate originally attributed
+        # defensive contest, never a relabelled helper→ally pair.
         "CHIVALRY": ["PREEXISTING_RECIPIENT_THREAT", "MATERIAL_RECIPIENT_SPECIFIC_PROTECTION"],
         "BOND": ["MATERIAL_INDEPENDENT_RECIPIENT_ASSISTANCE"],
-        "RIVALRY": ["ACTIVE_DEFENDER_CONTRIBUTION_NOT_PASSIVE_SURVIVAL"],
     },
     "REINFORCEMENT_REQUEST": {
         "CHIVALRY": ["PREEXISTING_RECIPIENT_THREAT", "MATERIAL_PROTECTION"],
