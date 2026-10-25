@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import unittest
+from jsonschema import Draft202012Validator
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from social_v1_metric_grade_candidates import (
@@ -16,6 +17,8 @@ from social_v1_source_measurements import project_social_source_measurements as 
 from test_social_v1_source_measurements import synthetic_bundle
 
 ROOT = Path(__file__).resolve().parents[2]
+SCHEMA = json.loads((ROOT / "contracts/social-v1/metric-grade-candidates-v1.schema.json").read_text())
+Draft202012Validator.check_schema(SCHEMA)
 PINS = {
     "1v1": ("replay-fixtures/1v1_1.aoe2record",
             "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181"),
@@ -43,11 +46,13 @@ def call(b, stats, events, *, game=None, measured=None):
     measured = measured if measured is not None else measure(
         statistics=stats, context=b["context"], action_events=events,
         lookback_ms=5000)
-    return grade(statistics=stats, context=b["context"],
-                 source_measurements=measured, action_events=events,
-                 game_scope=game or {"battleId": "match-A", "gameId": "game-1",
-                                     "gameGuid": "GUID-TEST",
-                                     "authorityRevision": "unverified-only"})
+    output = grade(statistics=stats, context=b["context"],
+                   source_measurements=measured, action_events=events,
+                   game_scope=game or {"battleId": "match-A", "gameId": "game-1",
+                                       "gameGuid": "GUID-TEST",
+                                       "authorityRevision": "unverified-only"})
+    Draft202012Validator(SCHEMA).validate(output)
+    return output
 
 
 class SourceBoundMetricGradeTests(unittest.TestCase):
@@ -174,6 +179,40 @@ class SourceBoundMetricGradeTests(unittest.TestCase):
                             other_match["candidateEpisodeGroups"][0]["independentContributionKey"])
         self.assertFalse(first["gameScopeAuthenticated"])
 
+    def test_raids_are_source_bound_context_not_an_extra_independent_contribution(self):
+        b, stats, actions = bundle("pressure")
+        p = next(p for p in stats["participants"] if p["playerId"] == 1)
+        p["military"] = {"engagements": {
+            "modelVersion": "AOF_RAID_DETECTION_V3",
+            "raidEvidence": {"initiatedEpisodes": [
+                {"raidId": "raid-1", "attackerPlayerId": 1, "victimPlayerId": 2,
+                 "sourceEventIds": ["cmd1", "cmd2"], "strongCommandCount": 2}]}}}
+        result = call(b, stats, actions)
+        self.assertEqual(len(result["candidateEpisodeGroups"]), 1)
+        raid = result["candidateEpisodeGroups"][0]["linkedRaidDetectorCandidates"]
+        self.assertEqual(len(raid), 1)
+        self.assertEqual(raid[0]["raidId"], "raid-1")
+        self.assertEqual(raid[0]["sharedOriginalEventIds"], ["cmd1", "cmd2"])
+        self.assertEqual(result["candidateEpisodeGroups"][0]["grade"]["decision"], "PENDING")
+        self.assertEqual(result["trackCredits"], [])
+        # An unrelated recipient's raid is not valid context for this pair.
+        p["military"]["engagements"]["raidEvidence"]["initiatedEpisodes"][0]["victimPlayerId"] = 3
+        result = call(b, stats, actions)
+        self.assertEqual(result["candidateEpisodeGroups"][0]["linkedRaidDetectorCandidates"], [])
+
+    def test_closed_private_schema_rejects_credit_promotion(self):
+        b, stats, actions = bundle("pressure")
+        result = call(b, stats, actions)
+        altered = deepcopy(result)
+        altered["officialWrites"] = True
+        self.assertTrue(list(Draft202012Validator(SCHEMA).iter_errors(altered)))
+        altered = deepcopy(result)
+        altered["candidateEpisodeGroups"][0]["grade"]["bandId"] = "FAKE_GRADE"
+        self.assertTrue(list(Draft202012Validator(SCHEMA).iter_errors(altered)))
+        altered = deepcopy(result)
+        altered["claims"] = [{"effect": "STRENGTHEN"}]
+        self.assertTrue(list(Draft202012Validator(SCHEMA).iter_errors(altered)))
+
     def test_context_v2_placement_is_not_castle_or_player_specific_grade(self):
         b, stats, actions = bundle("pressure", castle=True)
         actions.append({"eventId": "castle-placement", "actorPlayerId": 1,
@@ -256,6 +295,7 @@ class AuthenticRecordedMetricGradeTests(unittest.TestCase):
                     assert result == grade(statistics=stats, context=context,
                         source_measurements=measured,
                         action_events=list(reversed(analysis["actionEvents"])), game_scope=scope)
+                    Draft202012Validator(SCHEMA).validate(result)
                     first = result["candidateEpisodeGroups"][0] if result["candidateEpisodeGroups"] else None
                     print("AUTHENTIC_SOURCE_METRIC_GRADE_WITNESS " +
                           json.dumps({"recording": name, "sha256": actual,
@@ -269,7 +309,8 @@ class AuthenticRecordedMetricGradeTests(unittest.TestCase):
                                           "sourceEventIds": first["sourceEventIds"][:6],
                                           "firstSourceMoment": first["firstSourceMoment"],
                                           "candidateId": first["candidateId"],
-                                          "detectors": first["linkedDetectorCandidates"][:2]},
+                                          "detectors": first["linkedDetectorCandidates"][:2],
+                                          "sourceLinkedRaidContexts": first["linkedRaidDetectorCandidates"][:2]},
                                       "semanticTrackCredits": 0,
                                       "officialWrites": False}, sort_keys=True), flush=True)
 
