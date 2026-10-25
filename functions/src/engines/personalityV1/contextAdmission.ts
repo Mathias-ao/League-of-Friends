@@ -174,9 +174,10 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     bucket.lowerObservedMs<bucket.upperObservedMsExclusive&&
     recorded>=bucket.lowerObservedMs&&recorded<bucket.upperObservedMsExclusive?
       ok(bucket.id,'REVIEWED_CLASSIFICATION'):pending('DURATION_BUCKET_UNREVIEWED_OR_INTERVAL_MISMATCH');
-  const dynamicDiplomacyQualified:AdmissionField<boolean>=trust?
-    ok(obj(facts.diplomacy).effectiveRuntimeStateQualified===true):
-    pending('EFFECTIVE_DIPLOMACY_NOT_SOURCE_QUALIFIED');
+  const effectiveDiplomacy=obj(facts.diplomacy).effectiveRuntimeStateQualified;
+  const dynamicDiplomacyQualified:AdmissionField<boolean>=trust&&
+    typeof effectiveDiplomacy==='boolean'?
+    ok(effectiveDiplomacy):pending('EFFECTIVE_DIPLOMACY_NOT_SOURCE_QUALIFIED');
   const fields={format,mapId,mapFamily,startFamily,civilization,civilizationOpportunityKey,
     durationMs,observedUntilMs,durationFamily,dynamicDiplomacyQualified};
   const missing=missingOf(fields);
