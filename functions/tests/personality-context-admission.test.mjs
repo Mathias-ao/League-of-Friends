@@ -118,10 +118,11 @@ test('real team and duel metadata feed the source-field adapter without manufact
   x.statistics.scope.observedUntilMs=duel.durationMs;
   x.statistics.matchFacts.game.observedDurationMs=duel.durationMs;
   x.statistics.matchFacts.rules.mapId={value:null,status:'UNKNOWN'};
+  for(const p of x.statistics.matchFacts.players)delete p.civilization.rawId;
   const d=admit(x);
   assert.equal(d.fields.format.value,'ONE_V_ONE');
   assert.equal(d.fields.observedUntilMs.value,duel.durationMs);
-  assert.equal(d.fields.civilizationOpportunityKey.value,'BUILD_158041_CIV_2');
+  assert.equal(d.fields.civilizationOpportunityKey.value,null);
   assert.equal(d.fields.mapId.value,null);
   assert.equal(d.context,null);
   const free=original(8,'FFA');
@@ -131,6 +132,7 @@ test('real team and duel metadata feed the source-field adapter without manufact
   free.statistics.scope.observedUntilMs=ffa.durationMs;
   free.statistics.matchFacts.game.observedDurationMs=ffa.durationMs;
   free.statistics.matchFacts.rules.mapId={status:'UNKNOWN',value:null};
+  for(const p of free.statistics.matchFacts.players)delete p.civilization.rawId;
   const f=admit(free);
   assert.equal(f.fields.format.value,'FFA');
   assert.equal(f.fields.durationMs.value,ffa.durationMs);
