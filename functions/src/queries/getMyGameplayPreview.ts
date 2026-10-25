@@ -24,7 +24,12 @@ export async function readMyGameplayPreview(input:Parameters<typeof collectMyCur
     try{[bytes]=await bucket.file(meta.path,{generation:String(meta.generation)}).download();
       if(bytes.length!==meta.bytes||digest(bytes)!==meta.sha256)throw new Error('digest');
     }catch{throw new HttpsError('data-loss','Retained original event integrity verification failed.');}
-    const payload={snapshot:loaded.source,statistics:loaded.statistics,events:{metadata:meta,base64:bytes.toString('base64')},
+    // Lossless top-level input allowlist for the existing Context/#149 consumers.
+    // sharedEpisodeDelivery is a large unrelated Battle detail read model. Keep
+    // full verified statistics locally for admission; do not expand or reparse it.
+    const statistics=Object.fromEntries(['source','scope','statisticsProjectionVersion','matchFacts','pairSocialEvidence','participants']
+      .map(key=>[key,loaded.statistics[key]]));
+    const payload={snapshot:loaded.source,statistics,events:{metadata:meta,base64:bytes.toString('base64')},
       historicalOrder:{leagueOrderKey:null,gameNumber:loaded.game.gameNumber,order:'UNKNOWN'}};
     if(Buffer.byteLength(JSON.stringify(payload))>40*1024*1024)throw new HttpsError('resource-exhausted','Private preview transport budget exceeded.');
     const raw=await (input.derive??(p=>callVerifiedWorker(env.REPLAY_WORKER_URL??'','/social-grade-preview-v1',p)))(payload);

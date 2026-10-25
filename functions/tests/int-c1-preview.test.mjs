@@ -9,7 +9,10 @@ const worker=s=>({version:'AOF_INT_C1_WORKER_PREVIEW_1',processorRevision:'c'.re
  testPolicyDigest:C1_TEST_POLICY_DIGEST,contextVersion:'AOF_SOCIAL_V1_CONTEXT_V2',sourceContextRevision:'a'.repeat(64),
  grades:[],inferences:[],effects:[],actorWitnesses:[],officialWrites:false,publicationAllowed:false,gradeMethodsInstalled:false});
 async function setup(){const f=await ready();f.rows.get(f.sourcePath).recordedEvents.uncompressedBytes=100;
- const input={...f.input,env:{...f.input.env,AOF_INT_C1_PRIVATE_PREVIEW:'wiring-test-v1'},derive:async p=>worker(p.snapshot)};
+ const input={...f.input,env:{...f.input.env,AOF_INT_C1_PRIVATE_PREVIEW:'wiring-test-v1'},derive:async p=>{
+  assert.deepEqual(Object.keys(p.statistics),['source','scope','statisticsProjectionVersion','matchFacts','pairSocialEvidence','participants']);
+  assert.equal(p.statistics.sharedEpisodeDelivery,undefined);return worker(p.snapshot);
+ }};
  return {...f,input,read:()=>readMyGameplayPreview(input)};}
 test('default-off authenticated owner-only C1 does not persist or invent any projection',async()=>{
  const f=await setup(),before=JSON.stringify([...f.rows]),r=await f.read();

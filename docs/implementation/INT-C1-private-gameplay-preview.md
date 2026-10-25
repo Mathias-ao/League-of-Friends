@@ -28,6 +28,8 @@ Worker 4 coordination is [#153 comment 6395788399](https://github.com/Mathias-ao
 
 The raw count is a descriptor, not a contextual grade. No proposed numeric grade is manufactured. #141 receives no admitted semantic measurements; C1 additionally down-gates **every** Inference/Claim to Pending/null significance and removes all reciprocal witnesses. TS runtime validation checks SHARED_1 records, exact current source/actor/target/facet event refs, policy digest, method version, processor revision and the Pending restrictions before #139 sees anything.
 
+The worker receives a lossless top-level allowlist from verified statistics: source, scope, statisticsProjectionVersion, matchFacts, pairSocialEvidence and complete participants. These are all inputs read by Context/#149/#141. Large unrelated sharedEpisodeDelivery and other website read models are not transported or expanded. Original retained statistics and published statistical output are untouched.
+
 The explicit `UNAPPROVED_TEST_ONLY` fixture `int_c1_wiring_test.json` reuses existing #139/#141 test numbers solely to satisfy their mandatory configuration contracts. They are neither new balancing values nor product defaults. The private response labels this simulation and its hash. All Claims are Pending before evaluation, so #139 returns **no projections, receipts or consumption**; a nonempty result is rejected. There are no fabricated stage-zero tracks, six-track values, sliders, reciprocal credits or awards.
 
 ## Identity, corrections and bounds
