@@ -1,5 +1,7 @@
 # INT-B — bounded private Battle history
 
+Follow-up: [INT-C1 private Pending gameplay preview](INT-C1-private-gameplay-preview.md) reuses the same current-source collector/fences and adds no Personality calibration or live progression.
+
 Work order #122; final independent acceptance #132. Base `90e81372b42878f377cb090a114077e4dfed010b`: accepted #137 Personality, #150 INT-A and #136 factual Chronicle. #136 was mechanically synced at `f9825c87d6fb2f77b0bfee285e2fc0ecfce6fa37`, all eight worker files unchanged, then merged after Organiser 3's conditional independent GO and five fresh successful checks. This PR does not import #142/#141/#149 or edit a specialist engine/composer.
 
 ## Actual implemented pathway

@@ -20,6 +20,7 @@ jobs:
       AOF_REPLAY_WORKER_BIND: 127.0.0.1
       AOF_REPLAY_WORKER_PORT: '18765'
       AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
+      AOF_INT_C1_ENDPOINT: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4

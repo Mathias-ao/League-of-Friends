@@ -1,4 +1,6 @@
 import {PrivatePersonalityHistory} from './PrivatePersonalityHistory';
+import {PrivateGameplayPreview} from './PrivateGameplayPreview';
+import {gameplayPreviewEnabled} from '../domain/gameplayPreview';
 import {privateHistoryEnabled} from '../domain/privateHistory';
 import {EmperorCampaignControls} from './EmperorCampaignControls';
 import {EmperorBattleControls} from './EmperorControls';
@@ -346,6 +348,7 @@ export function ProfileDialog({data,snapshot,preview,repository}:ViewProps&{data
   return <><div className="profile-overview"><div className="profile-portrait"><Avatar player={data.player} large/><span className="eyebrow">NEWCOMER</span></div><div><span className="eyebrow">PERSISTENT LEAGUE IDENTITY</span><h3>{data.player.steamName}</h3><p>Your banner outlives a single season.</p>{!!data.player.nicknames?.length&&<p>Earlier Steam names: {data.player.nicknames.join(', ')}</p>}<span className="quiet-badge">Military identity awaiting qualified evidence</span></div></div>
     <div className="section-heading"><h3>Battle record{preview?' · Sample':''}</h3><select aria-label="Player record scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="season">This season</option><option value="lifetime">Lifetime</option></select></div><div className="profile-record">{values.map(([label,value])=><div key={label}><strong>{value??'—'}</strong><span>{label}</span></div>)}</div>
     {own&&!preview&&privateHistoryEnabled(import.meta.env)&&snapshot.viewer&&<PrivatePersonalityHistory repository={repository} ownerId={snapshot.viewer.playerId}/>}
+    {own&&!preview&&gameplayPreviewEnabled(import.meta.env)&&snapshot.viewer&&<PrivateGameplayPreview repository={repository} ownerId={snapshot.viewer.playerId}/>}
     <h3>Selected achievements</h3>{data.achievements.length?<div className="achievements">{data.achievements.slice(0,3).map(a=><div key={a.awardId}><Shield size={22}/><strong>{a.name}</strong><p>{a.description}</p></div>)}</div>:<p className="muted">No achievements are showcased. Achievement rules are awaiting validated statistics.</p>}{own&&<p className="footnote">Your full collection and personal progression belong only to you.</p>}<hr/><h3>Shared history</h3><div className="history-columns"><section><span className="eyebrow">ACROSS THE BATTLEFIELD</span>{data.opponents.length?data.opponents.map(r=><p key={r.player.playerId}>{r.player.steamName}<span>{r.matchesTogether} encounters</span></p>):<p className="muted">No recorded opponents yet.</p>}</section><section><span className="eyebrow">UNDER ONE BANNER</span>{data.teammates.length?data.teammates.map(r=><p key={r.player.playerId}>{r.player.steamName}<span>{r.matchesTogether} together</span></p>):<p className="muted">No recorded teammates yet.</p>}</section></div><p className="footnote">Rivalry, Enemy and Friend progression will be drawn from validated battle evidence.</p>
   </>;
 }

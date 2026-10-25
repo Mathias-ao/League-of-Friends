@@ -1,0 +1,318 @@
+{
+  "version": "AOF_INT_C1_UNAPPROVED_WIRING_TEST_1",
+  "status": "UNAPPROVED_TEST_ONLY",
+  "origin": "EXISTING_139_AND_141_TEST_VALUES_NOT_PRODUCT_DEFAULTS",
+  "lookbackMs": 5000,
+  "qualifier": {
+    "version": "INT_C1_TEST_ONLY_1",
+    "policy": {
+      "policyVersion": "INT_C1_UNAPPROVED_WIRING_TEST",
+      "configurationVersion": "TEST_ONLY_NOT_OWNER_CALIBRATION_1",
+      "status": "PROPOSED",
+      "approvalRef": null
+    },
+    "measurementMethods": {
+      "unconfigured": "NO_GRADE_METHOD_INSTALLED"
+    },
+    "rules": {
+      "PAIR_CONTEST": {
+        "ruleId": "PAIR_CONTEST_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {}
+      },
+      "DIRECTED_HELP": {
+        "ruleId": "DIRECTED_HELP_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "MEANINGFUL_DIRECTED_HELP": 1
+        }
+      },
+      "DISTINCT_RUPTURE_ANTAGONISM": {
+        "ruleId": "DISTINCT_RUPTURE_ANTAGONISM_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "DISTINCT_PREENTRY_COOPERATION": 1,
+          "ATTRIBUTABLE_RUPTURE": 1,
+          "POST_RUPTURE_DIRECTED_PRESSURE": 1
+        }
+      },
+      "DARING_OFFENSE": {
+        "ruleId": "DARING_OFFENSE_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "PREENTRY_CHALLENGE": 1,
+          "MEANINGFUL_OFFENSIVE_COMMITMENT": 1
+        }
+      },
+      "PREEXISTING_VULNERABILITY_PRESSURE": {
+        "ruleId": "PREEXISTING_VULNERABILITY_PRESSURE_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "PREENTRY_VULNERABILITY": 1,
+          "MEANINGFUL_OFFENSIVE_COMMITMENT": 1
+        }
+      },
+      "NOTEWORTHY_DIRECTED_PROTECTION": {
+        "ruleId": "NOTEWORTHY_DIRECTED_PROTECTION_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "PREENTRY_RECIPIENT_THREAT": 1,
+          "MEANINGFUL_DIRECTED_HELP": 1
+        }
+      },
+      "RECONCILIATORY_HELP": {
+        "ruleId": "RECONCILIATORY_HELP_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "MEANINGFUL_DIRECTED_HELP": 1,
+          "RECONCILIATION_CONTEXT": 1
+        }
+      },
+      "SERIOUS_BOND_ANTAGONISM": {
+        "ruleId": "SERIOUS_BOND_ANTAGONISM_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "DISTINCT_PREENTRY_COOPERATION": 1,
+          "ATTRIBUTABLE_RUPTURE": 1,
+          "POST_RUPTURE_DIRECTED_PRESSURE": 1,
+          "SERIOUS_BOND_HARM_CONTEXT": 1
+        }
+      },
+      "QUALIFIED_DEESCALATION": {
+        "ruleId": "QUALIFIED_DEESCALATION_SYNTHETIC",
+        "significanceBandId": "SYNTHETIC_MEANINGFUL",
+        "minIndependentSourceEvents": 2,
+        "measurementMinimums": {
+          "EXPLICIT_DEESCALATION_CONTEXT": 1
+        }
+      }
+    }
+  },
+  "history": {
+    "version": "INT_C1_TEST_ONLY_1",
+    "policy": {
+      "policyVersion": "INT_C1_UNAPPROVED_WIRING_TEST",
+      "configurationVersion": "TEST_ONLY_NOT_OWNER_CALIBRATION_1",
+      "status": "PROPOSED",
+      "approvalRef": null
+    },
+    "stages": {
+      "REPUTATION": {
+        "GALLANTRY": {
+          "up": [
+            2,
+            3,
+            5,
+            8
+          ],
+          "down": [
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "CRUELTY": {
+          "up": [
+            2,
+            3,
+            5,
+            8
+          ],
+          "down": [
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "CHIVALRY": {
+          "up": [
+            2,
+            3,
+            5,
+            8
+          ],
+          "down": [
+            4,
+            4,
+            4,
+            4
+          ]
+        }
+      },
+      "RELATIONSHIP": {
+        "RIVALRY": {
+          "up": [
+            2,
+            3,
+            5,
+            8
+          ],
+          "down": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "reciprocity": {
+            "3": 1,
+            "4": 2
+          }
+        },
+        "HOSTILITY": {
+          "up": [
+            2,
+            3,
+            5,
+            8
+          ],
+          "down": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "reciprocity": {
+            "3": 1,
+            "4": 2
+          }
+        },
+        "BOND": {
+          "up": [
+            2,
+            3,
+            5,
+            8
+          ],
+          "down": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "reciprocity": {
+            "3": 1,
+            "4": 2
+          }
+        }
+      }
+    },
+    "budgets": {
+      "reputationBattle": {
+        "GALLANTRY": {
+          "STRENGTHEN": 8,
+          "WEAKEN": 8
+        },
+        "CRUELTY": {
+          "STRENGTHEN": 8,
+          "WEAKEN": 8
+        },
+        "CHIVALRY": {
+          "STRENGTHEN": 8,
+          "WEAKEN": 8
+        }
+      },
+      "relationshipEvent": {
+        "RIVALRY": {
+          "STRENGTHEN": 8,
+          "WEAKEN": 8
+        },
+        "HOSTILITY": {
+          "STRENGTHEN": 8,
+          "WEAKEN": 8
+        },
+        "BOND": {
+          "STRENGTHEN": 8,
+          "WEAKEN": 8
+        }
+      }
+    },
+    "rules": {
+      "PAIR_CONTEST_SYNTHETIC": {
+        "system": "RELATIONSHIP",
+        "track": "RIVALRY",
+        "effect": "STRENGTHEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "DIRECTED_HELP_SYNTHETIC": {
+        "system": "RELATIONSHIP",
+        "track": "BOND",
+        "effect": "STRENGTHEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "DISTINCT_RUPTURE_ANTAGONISM_SYNTHETIC": {
+        "system": "RELATIONSHIP",
+        "track": "HOSTILITY",
+        "effect": "STRENGTHEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "DARING_OFFENSE_SYNTHETIC": {
+        "system": "REPUTATION",
+        "track": "GALLANTRY",
+        "effect": "STRENGTHEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "PREEXISTING_VULNERABILITY_PRESSURE_SYNTHETIC": {
+        "system": "REPUTATION",
+        "track": "CRUELTY",
+        "effect": "STRENGTHEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "NOTEWORTHY_DIRECTED_PROTECTION_SYNTHETIC": {
+        "system": "REPUTATION",
+        "track": "CHIVALRY",
+        "effect": "STRENGTHEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "RECONCILIATORY_HELP_SYNTHETIC": {
+        "system": "RELATIONSHIP",
+        "track": "HOSTILITY",
+        "effect": "WEAKEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "SERIOUS_BOND_ANTAGONISM_SYNTHETIC": {
+        "system": "RELATIONSHIP",
+        "track": "BOND",
+        "effect": "WEAKEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      },
+      "QUALIFIED_DEESCALATION_SYNTHETIC": {
+        "system": "RELATIONSHIP",
+        "track": "RIVALRY",
+        "effect": "WEAKEN",
+        "bands": {
+          "SYNTHETIC_MEANINGFUL": 2
+        }
+      }
+    },
+    "treachery": {
+      "consumptionUnits": 4,
+      "maximumStage": 4
+    }
+  }
+}
