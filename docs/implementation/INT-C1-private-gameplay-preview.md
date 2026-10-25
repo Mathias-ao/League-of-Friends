@@ -1,5 +1,7 @@
 # INT-C1 — authenticated, Pending gameplay preview
 
+Follow-up: [INT-C2A source-compatible preview](INT-C2A-source-compatible-preview.md) adds a separately gated DTO and identity links to accepted #158 without changing this C1 wire contract.
+
 Work order [#154](https://github.com/Mathias-ao/League-of-Friends/issues/154), parent #122; base `e453d40c147ad488f3bfd369e54eba82b29c43b5`. This is the inert C1 slice, not INT-C2 or #132 acceptance.
 
 ## Implemented route and ownership

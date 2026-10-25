@@ -9,11 +9,11 @@ const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});
 Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
 const root=createRoot(document.getElementById('app'));
 try{
- await act(async()=>root.render(React.createElement(PrivateGameplayPreview,{repository:{myGameplayPreview:async()=>value,onAuthChange:()=>()=>{}},ownerId:value.ownerPlayerId})));
+ await act(async()=>root.render(React.createElement(PrivateGameplayPreview,{repository:{myGameplayPreview:async()=>value,myGameplayCandidates:async()=>value,onAuthChange:()=>()=>{}},ownerId:value.ownerPlayerId,sourceCandidates:value.version==='AOF_INT_C2A_PRIVATE_PREVIEW_1'})));
  await act(async()=>document.querySelector('button').click());
  assert.equal(document.querySelector('[data-aof-gameplay-owner]').dataset.aofGameplayRevision,value.inputDigest);
- assert.equal(document.querySelectorAll('li').length,value.grades.length);
+ assert.equal(document.querySelectorAll('[data-aof-contribution]').length,value.episodes?.length??value.grades.length);
  assert.match(document.body.textContent,/Contextual grade: Pending/);assert.match(document.body.textContent,/no progression or rewards/);
- assert.ok(document.body.textContent.includes(value.grades[0].sourceAuthority));assert.equal(document.querySelector('input[type="range"]'),null);
+ assert.ok(document.body.textContent.includes(value.episodes?.[0].binding.source.authorityRevision??value.grades[0].sourceAuthority));assert.equal(document.querySelector('input[type="range"]'),null);
  console.log(JSON.stringify({sourceRevisionRendered:true,pendingOnly:true,jsdomOnly:true}));
 }finally{await act(async()=>root.unmount());dom.window.close();}
