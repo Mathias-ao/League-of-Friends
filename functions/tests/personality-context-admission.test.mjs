@@ -146,6 +146,10 @@ test('no raw ID means no inferred map identity, and no build means no inferred c
   assert.equal(admit(z).fields.civilization.value,null);
   const owner=original();
   assert.equal(admit(owner,null,'unknown-player').fields.civilization.value,null);
+  const noCiv=original();delete noCiv.statistics.matchFacts.players[0].civilization.rawId;
+  assert.equal(admit(noCiv).fields.civilizationOpportunityKey.value,null);
+  const upgraded=original();upgraded.statistics.matchFacts.modelVersion='AOF_RECORDING_MATCH_FACTS_V2';
+  assert.equal(admit(upgraded,proof(upgraded)).status,'PENDING');
 });
 test('observed duration is not whole-game completion, null clocks never become observed zero',()=>{
   const x=original();
