@@ -146,6 +146,12 @@ test('no raw ID means no inferred map identity, and no build means no inferred c
   assert.equal(admit(z).fields.civilization.value,null);
   const owner=original();
   assert.equal(admit(owner,null,'unknown-player').fields.civilization.value,null);
+  const conflict=original();conflict.statistics.matchFacts.headerFieldCandidates={'de.rms_map_id':17};
+  assert.equal(admit(conflict,proof(conflict)).fields.mapId.value,null);
+  const patchConflict=original();patchConflict.statistics.matchFacts.headerFieldCandidates={'de.build':185872};
+  assert.equal(admit(patchConflict).fields.civilizationOpportunityKey.value,null);
+  const startConflict=original();startConflict.statistics.matchFacts.headerFieldCandidates={'de.starting_age_id':1};
+  assert.equal(admit(startConflict,proof(startConflict)).fields.startFamily.value,null);
   const noCiv=original();delete noCiv.statistics.matchFacts.players[0].civilization.rawId;
   assert.equal(admit(noCiv).fields.civilizationOpportunityKey.value,null);
   const upgraded=original();upgraded.statistics.matchFacts.modelVersion='AOF_RECORDING_MATCH_FACTS_V2';
