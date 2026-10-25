@@ -89,6 +89,8 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const {source,statistics,match,game}=input;
   const facts=obj(statistics.matchFacts),rules=obj(facts.rules),factGame=obj(facts.game);
   const factSource=obj(facts.source),factMap=obj(facts.map);
+  const header=obj(facts.headerFieldCandidates);
+  const agrees=(canonical:unknown,candidate:unknown)=>candidate===null||candidate===undefined||candidate===canonical;
   const members=Array.isArray(source.roster)?source.roster:[];
   const ids=members.map((r:Bag)=>r.playerId),slots=members.map((r:Bag)=>r.replaySlot);
   const gameMembers=Array.isArray(game.players)?game.players:[];
@@ -127,10 +129,12 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   }
   const rawMapId=obj(rules.mapId);
   const sourceMapId=rawMapId.status==='DECODED'&&safe(rawMapId.value)&&
-    (factMap.id===null||factMap.id===undefined||factMap.id===rawMapId.value)
+    agrees(rawMapId.value,factMap.id)&&agrees(rawMapId.value,factMap.mapId)&&
+    agrees(rawMapId.value,header['de.rms_map_id'])&&agrees(rawMapId.value,header['scenario.map_id'])
       ?rawMapId.value:null;
   const mapId:AdmissionField<string>=trust&&sourceMapId!==null?ok(String(sourceMapId)):pending('MAP_ID_NOT_SOURCE_QUALIFIED');
-  const replayBuild=safe(factSource.gameBuild)&&factSource.gameBuild>0?factSource.gameBuild:null;
+  const replayBuild=safe(factSource.gameBuild)&&factSource.gameBuild>0&&
+    agrees(factSource.gameBuild,header['de.build'])?factSource.gameBuild:null;
   const civEntries=trust&&replayBuild!==null&&
     facts.players.every((p:Bag)=>safe(obj(p.civilization).rawId)&&p.civilization.rawId>0);
   const civRoster=members.length?facts.players.filter((p:Bag)=>
@@ -152,8 +156,10 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const durationMs:AdmissionField<number>=clockValid?ok(recorded):pending('RECORDED_DURATION_NOT_VERIFIED');
   const observedUntilMs:AdmissionField<number>=clockValid?ok(observed):pending('OBSERVATION_CLOCK_NOT_VERIFIED');
   const ageRule=obj(rules.startingAgeId),resourceRule=obj(rules.startingResourcesId);
-  const age=ageRule.status==='DECODED'&&safe(ageRule.value)?ageRule.value:null;
-  const resources=resourceRule.status==='DECODED'&&safe(resourceRule.value)?resourceRule.value:null;
+  const age=ageRule.status==='DECODED'&&safe(ageRule.value)&&
+    agrees(ageRule.value,header['de.starting_age_id'])?ageRule.value:null;
+  const resources=resourceRule.status==='DECODED'&&safe(resourceRule.value)&&
+    agrees(resourceRule.value,header['de.starting_resources_id'])?resourceRule.value:null;
   const reviewedSource=trust&&reviewed?.version===PERSONALITY_CONTEXT_PROOF_VERSION&&
     reviewed.status==='REVIEWED_SOURCE_CLASSIFICATION'&&name(reviewed.referenceId)&&
     reviewed.sourceHash===source.sourceHash&&reviewed.gameBuild===replayBuild&&
@@ -194,7 +200,8 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     provenanceDigest:hash([PERSONALITY_CONTEXT_ADAPTER_VERSION,source.authorityRevision,
       source.mappingDigest,source.sourceHash,source.statisticsRevision,source.matchId,
       source.gameId,match.format,game.players,subjectPlayerId,subjectSlot,
-      facts.source,facts.game,facts.map,facts.rules,facts.players,facts.diplomacy,
+      facts.source,facts.game,facts.map,facts.rules,facts.headerFieldCandidates,
+      facts.players,facts.diplomacy,
       statistics.scope,reviewed??null]),
     fields,missing,
   };
