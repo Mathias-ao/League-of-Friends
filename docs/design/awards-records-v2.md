@@ -44,12 +44,12 @@ The 37 owner concepts are fully enumerated in JSON. Their evidence-correct **cur
 
 | Group | Existing projected measurement | New pure detector required | Independent engine/effect witness required | Total |
 |---|---:|---:|---:|---:|
-| General, opening and economy | 8 | 13 | 2 | **23** |
+| General, opening and economy | 7 | 14 | 2 | **23** |
 | Fixed-team | 1 | 3 | 3 | **7** |
-| FFA diplomacy | 0 | 1* | 6* | **7** |
+| FFA diplomacy | 0 | 0 | 7 | **7** |
 | **Total** | **8** | **17** | **12** | **37** |
 
-`*` **Authoritative correction:** The design JSON is normative for individual disposition. Most FFA diplomacy concepts still require independently qualified effective stance, actual resource receipt, king state, official outcome or a combination. Any classification difference in this descriptive table must be resolved in favour of the 37 individual entries and tests, not silently “upgraded.” **An existing metric is a source seam, never an automatic award grant.**
+All seven Diplomacy achievement names currently claim effective alliance, executed king/trade/tribute effects, or authoritative FFA winner/survival context; their existing command evidence alone cannot grant them. **An existing metric is a source seam, never an automatic award grant.**
 
 **Elite Master of the Three Schools:** optional **post-nominal** epithet = `ACTIVE_ELITE(disciplined Drush) AND (ACTIVE_ELITE(Scout Rush) OR ACTIVE_ELITE(Archer Rush)) AND ACTIVE_ELITE(Fast Castle Boom)`. Compute from **currently active component tier entitlements only**; it is **not a fourth detector**, extra requirement of three separated Battles, or automatic equipment. The Club requirement includes real source-qualified TC macro discipline and its cancellation/population controls, not just three Militia orders; exact requirement for Drush Flush continuation remains an owner choice. Unapproved numerical time thresholds must remain null.
 
