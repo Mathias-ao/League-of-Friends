@@ -106,6 +106,34 @@ class SourceBoundMetricGradeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SOURCE_EVENT_ACTOR_CLOCK_MISMATCH"):
             call(b, stats, actions, measured=tampered)
 
+    def test_same_source_incident_across_two_deeds_is_one_contribution(self):
+        b, stats, actions = bundle("pressure")
+        # Replayed source ref is legitimately present under two neutral
+        # command-derived deed projections; it is not another historical deed
+        # or another contribution to the same actor→opponent track.
+        duplicate = deepcopy(stats["pairSocialEvidence"]["deeds"][0])
+        duplicate["deedId"] = "deed-X-alternate-context"
+        duplicate["sourceEventIds"] = ["cmd1"]
+        duplicate["facets"] = [deepcopy(duplicate["facets"][0])]
+        stats["pairSocialEvidence"]["deeds"].append(duplicate)
+        neutral = deepcopy(b["context"]["deedContexts"][0])
+        neutral["sourceDeedId"] = "deed-X-alternate-context"
+        neutral["sourceEventIds"] = ["cmd1"]
+        neutral["facetKinds"] = ["ECONOMY_PRESSURE"]
+        b["context"]["deedContexts"].append(neutral)
+        result = call(b, stats, actions)
+        self.assertEqual(len(result["candidateEpisodeGroups"]), 1)
+        group = result["candidateEpisodeGroups"][0]
+        self.assertEqual(group["sourceDeedIds"],
+                         ["deed-X", "deed-X-alternate-context"])
+        self.assertEqual(group["sourceEventIds"], ["cmd1", "cmd2"])
+        pressure = next(m for m in group["rawMeasurements"]
+                        if m["metricDefinitionId"] ==
+                        "AOF_ORIGINAL_ECONOMIC_PRESSURE_REQUEST_COUNT_V1")
+        self.assertEqual(pressure["rawValue"], 1)
+        self.assertEqual(result["trackCredits"], [])
+        self.assertFalse(result["officialWrites"])
+
     def test_original_counterpart_binding_is_not_interchangeable(self):
         b, stats, actions = bundle("pressure", people=(1, 2, 3))
         measured = measure(statistics=stats, context=b["context"],
