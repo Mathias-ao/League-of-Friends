@@ -149,3 +149,13 @@ test('source mapping/roster revision cannot be accepted from stale or incomplete
  assert.deepEqual(choose([c1],{battle:{...battle,currentGames:[{gameId:'g1',sourceAuthority:a},
    {gameId:'g1',sourceAuthority:b}]}}),[],'duplicate Game/POV source not allowed');
 });
+
+test('conflicting POVs for the same episode never select an arbitrary family or target',()=>{
+ const first=fake({incidentId:'same-incident',independentEpisodeKey:'common-episode'});
+ const conflict=fake({incidentId:'other-incident',independentEpisodeKey:'common-episode',
+  gameId:'g2',sourceAuthority:b});
+ assert.deepEqual(choose([first,conflict]),[]);
+ assert.deepEqual(choose([conflict,first]),[]);
+ assert.equal(choose([first,{...first,gameId:'g2',sourceAuthority:b}]).length,1,
+  'same verified original incident on two current Games is deduplicated');
+});
