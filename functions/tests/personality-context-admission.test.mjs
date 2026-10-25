@@ -152,6 +152,10 @@ test('1v1/team/FFA mode requires current league topology and source-bound comple
   assert.equal(admit(fakeTeam).fields.format.value,null);
   const badRoster=structuredClone(v2);badRoster.source.roster[1].playerId='owner-1';
   assert.equal(admit(badRoster).fields.format.value,null);
+  const duplicateGameRoster=structuredClone(v2);duplicateGameRoster.game.players[1].playerId='owner-1';
+  assert.equal(admit(duplicateGameRoster).fields.format.value,null);
+  const invalidOrdinal=structuredClone(v2);invalidOrdinal.game.gameNumber=0;
+  assert.equal(admit(invalidOrdinal).status,'PENDING');
   const wrong=original(8,'ONE_V_ONE');
   assert.equal(admit(wrong).fields.format.value,null);
   const fakeResult=structuredClone(free);fakeResult.source.outcome.qualification='UNRESOLVED';
