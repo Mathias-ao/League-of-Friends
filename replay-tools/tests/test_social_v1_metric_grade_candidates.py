@@ -223,6 +223,8 @@ class SourceBoundMetricGradeTests(unittest.TestCase):
         self.assertTrue(r["mode"]["fixedAlignmentProven"])
         self.assertTrue(any(t["track"] == "BOND"
                             for t in r["candidateEpisodeGroups"][0]["trackHypotheses"]))
+        self.assertNotIn("RIVALRY", {t["track"]
+                         for t in r["candidateEpisodeGroups"][0]["trackHypotheses"]})
         stats["matchFacts"]["rules"]["lockTeams"]["value"] = False
         unknown = call(b, stats, actions)
         self.assertEqual(unknown["mode"]["kind"], "DYNAMIC_DIPLOMACY_OR_UNVERIFIED")
