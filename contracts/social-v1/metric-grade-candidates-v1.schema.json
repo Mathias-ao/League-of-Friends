@@ -152,7 +152,8 @@
           "coverage",
           "grade",
           "explanation",
-          "linkedRaidDetectorCandidates"
+          "linkedRaidDetectorCandidates",
+          "comparability"
         ],
         "properties": {
           "candidateId": {
@@ -410,7 +411,8 @@
             "required": [
               "status",
               "sourceEventIds",
-              "meaning"
+              "meaning",
+              "approvedDenominator"
             ],
             "properties": {
               "status": {
@@ -426,6 +428,9 @@
               },
               "meaning": {
                 "const": "PRIOR_COMMAND_REQUESTS_NOT_OPPONENT_CAPACITY"
+              },
+              "approvedDenominator": {
+                "type": "null"
               }
             }
           },
@@ -603,6 +608,82 @@
                 "meaning": {
                   "const": "INFERRED_DIRECTED_ECONOMIC_RAID_COMMANDS_NOT_DAMAGE"
                 }
+              }
+            }
+          },
+          "comparability": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "mapSourceContext",
+              "civilizationSourceContext",
+              "observedClock",
+              "normalizationRuleVersion",
+              "status"
+            ],
+            "properties": {
+              "mapSourceContext": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "civilizationSourceContext": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "replayPlayerId",
+                    "rawCivilization"
+                  ],
+                  "properties": {
+                    "replayPlayerId": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "rawCivilization": {}
+                  }
+                }
+              },
+              "observedClock": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "observedUntilMs",
+                  "basis",
+                  "fullGameOriginAndCompletenessEstablished"
+                ],
+                "properties": {
+                  "observedUntilMs": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "basis": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "fullGameOriginAndCompletenessEstablished": {
+                    "const": false
+                  }
+                }
+              },
+              "normalizationRuleVersion": {
+                "type": "null"
+              },
+              "status": {
+                "const": "UNQUALIFIED_NO_MAP_CIV_MODE_OR_OPPORTUNITY_POLICY"
               }
             }
           }
