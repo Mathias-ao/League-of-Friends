@@ -74,6 +74,11 @@ class AwardsRecordsDesignRegistryTests(unittest.TestCase):
                 self.assertTrue(r["sourcePaths"])
                 self.assertTrue(r["currentSourceModelRevisions"])
                 self.assertTrue(r["eligibleFormats"])
+                self.assertIn(r["comparisonProfile"], self.data["recordCohorts"])
+                self.assertEqual(len(r["tierPlan"]), 4)
+                self.assertEqual([t["rank"] for t in r["tierPlan"]],
+                                 ["INITIATE", "PRACTICED", "EXPERT", "ELITE"])
+                self.assertTrue(all(t["threshold"] is None for t in r["tierPlan"]))
                 self.assertIsNone(r["cutoffValues"])
                 self.assertTrue(r["evidenceRule"])
                 self.assertEqual(
@@ -104,6 +109,11 @@ class AwardsRecordsDesignRegistryTests(unittest.TestCase):
         self.assertIn("ACTIVE_ELITE(FAST_CASTLE_BOOM)", predicate)
         self.assertIn(" OR ", predicate)
         self.assertFalse(epithet["additionalBattleCountRequirement"])
+        self.assertFalse(epithet["componentIdsAreLiveAwardIds"])
+        ids = epithet["componentEntitlementIds"]
+        self.assertEqual(ids["fastCastleBoomElite"],
+                         "AR2_ACH_FAST_CASTLE__FAST_CASTLE_BOOM#ELITE")
+        self.assertEqual(len(ids["invasionChoice"]), 2)
         self.assertIsNone(epithet["numericalTierThresholds"])
 
     def test_exactly_26_nonduplicated_owner_record_candidates(self) -> None:
@@ -208,7 +218,10 @@ class AwardsRecordsDesignRegistryTests(unittest.TestCase):
             self.assertTrue(required[key])
         self.assertIn("private", data["approvedProductDecisions"]
                       ["privatePersonalBestsSurface"].lower())
-        self.assertEqual(len(data["recordCohorts"]), 8)
+        self.assertEqual(len(data["recordCohorts"]), 11)
+        self.assertIn("WATER_OPENING_START", data["recordCohorts"])
+        self.assertIn("DIPLO_FFA_GAME", data["recordCohorts"])
+        self.assertIn("PERSIAN_TC_RELOCATE", data["recordCohorts"])
         for profile, rules in data["recordCohorts"].items():
             with self.subTest(profile=profile):
                 self.assertTrue(rules["holdOnAnyMissing"])
