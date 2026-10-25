@@ -84,7 +84,7 @@ const missingOf=(fields:PersonalityContextAdmission['fields'])=>
     .map(([k,f])=>k+':'+f.reason).sort();
 
 /** No implicit equivalence or publication is conferred by reviewed classifiers. */
-export function admitPersonalityContext(input:ContextSourceInput,
+export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerId:string,
     reviewed:ReviewedContextProof|null=null):PersonalityContextAdmission {
   const {source,statistics,match,game}=input;
   const facts=obj(statistics.matchFacts),rules=obj(facts.rules),factGame=obj(facts.game);
@@ -95,8 +95,10 @@ export function admitPersonalityContext(input:ContextSourceInput,
   const trust=source.contract==='AOF_SOCIAL_V1_SHARED_1'&&SHA.test(source.sourceHash)&&
     SHA.test(source.authorityRevision)&&SHA.test(source.mappingDigest)&&
     source.matchId===source.battleId&&name(source.matchId)&&
-    source.outcome?.qualification==='OFFICIAL'&&source.gameId===game.id &&
-    match.id===source.matchId&&game.matchId===source.matchId&&
+    source.outcome?.qualification==='OFFICIAL'&&name(source.gameId)&&
+    (game.id===undefined||game.id===source.gameId)&&
+    (game.matchId===undefined||game.matchId===source.matchId)&&
+    (match.id===undefined||match.id===source.matchId)&&
     safe(source.statisticsRevision)&&source.statisticsRevision>0&&
     members.length>=2&&members.length<=8&&
     ids.every(name)&&new Set(ids).size===ids.length&&
@@ -137,7 +139,8 @@ export function admitPersonalityContext(input:ContextSourceInput,
     [p.replaySlot,p.civilization.rawId]):null;
   // GameContext is participant-specific. Return the compatible raw civ for
   // the selected server-resolved subject ONLY. Sol must pass a subjectSlot.
-  const subjectSlot=game.personalityContextReplaySlot;
+  const boundSubject=members.find((p:Bag)=>p.playerId===subjectPlayerId);
+  const subjectSlot=boundSubject?.replaySlot;
   const target=civ?.find((x:number[])=>x[0]===subjectSlot);
   const civilization:AdmissionField<string>=target?ok('RAW_AOE2_CIV_'+target[1]):pending('PARTICIPANT_CIV_SOURCE_BINDING_MISSING');
   const civilizationOpportunityKey:AdmissionField<string>=target&&replayBuild!==null?
@@ -189,7 +192,7 @@ export function admitPersonalityContext(input:ContextSourceInput,
     status:context?'ADMITTED':'PENDING',context,
     provenanceDigest:hash([PERSONALITY_CONTEXT_ADAPTER_VERSION,source.authorityRevision,
       source.mappingDigest,source.sourceHash,source.statisticsRevision,source.matchId,
-      source.gameId,match.format,game.players,game.personalityContextReplaySlot,
+      source.gameId,match.format,game.players,subjectPlayerId,subjectSlot,
       facts.source,facts.game,facts.map,facts.rules,facts.players,facts.diplomacy,
       statistics.scope,reviewed??null]),
     fields,missing,
@@ -197,7 +200,7 @@ export function admitPersonalityContext(input:ContextSourceInput,
 }
 
 /** Optional server-only pure hook; defaults to Pending absent a reviewed exact-source proof. */
-export function personalityContextForHistory(input:ContextSourceInput,
+export function personalityContextForHistory(input:ContextSourceInput,subjectPlayerId:string,
   proof:ReviewedContextProof|null=null):GameContext|null {
-  return admitPersonalityContext(input,proof).context;
+  return admitPersonalityContext(input,subjectPlayerId,proof).context;
 }
