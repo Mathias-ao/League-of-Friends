@@ -51,6 +51,9 @@ export interface ReviewedTurningPoint {
   /** Separately reviewed personally meaningful context, not raw grade intensity. */
   significance:'EXCEPTIONAL'|'REVIEWED_TURNING_POINT'|'ROUTINE'|'UNKNOWN';
   sourceEvidenceRefs:ReadonlyArray<Id>;
+  /** An independently verified prior-only Battle history anchor, not a future or same-Game callback. */
+  historicalContext?:{historyComplete:boolean;priorBattleIds:ReadonlyArray<Id>;
+    sourceEvidenceRefs:ReadonlyArray<Id>};
   /** Verified original incident grouping used to deduplicate correlated signals and POVs. */
   independentEpisodeKey:Id;
   /** Only independently source-qualified executed substantive help, never a support order alone. */
@@ -99,6 +102,13 @@ function qualified(c:ReviewedTurningPoint,b:CurrentChronicleBattle,policy:Approv
      !RARE_CHRONICLE_FAMILIES.includes(c.family)||!policy.familyOrder.includes(c.family)||
      c.qualification!=='ADMITTED'||!validRefs(c.sourceEvidenceRefs)||
      !['EXCEPTIONAL','REVIEWED_TURNING_POINT'].includes(c.significance))return false;
+  if(c.significance==='REVIEWED_TURNING_POINT'){
+    const h=c.historicalContext;
+    if(!h||h.historyComplete!==true||!Array.isArray(h.priorBattleIds)||
+       !h.priorBattleIds.length||!h.priorBattleIds.every(isId)||
+       h.priorBattleIds.includes(b.battleId)||!arrUnique(h.priorBattleIds)||
+       !validRefs(h.sourceEvidenceRefs))return false;
+  }
   if(c.family==='ASSISTANCE')return c.substantiveAssistanceVerified===true;
   if(c.family==='SITUATED_GRIEVANCE')return c.situatedConductVerified===true;
   if(c.family==='SKILL_ACKNOWLEDGMENT'){
