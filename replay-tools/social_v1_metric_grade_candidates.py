@@ -265,12 +265,52 @@ def prepare_social_metric_grade_candidates(
             n["source"]["priorDirectedEpisodeCandidates"]["sameDirectionSourceDeedIds"]})
         opposite = sorted({ref for n in members for ref in
             n["source"]["priorDirectedEpisodeCandidates"]["oppositeDirectionSourceDeedIds"]})
-        detectors = sorted([
-            {"kind": e["kind"], "sourceDetectorId": e["sourceDetectorId"],
-             "sharedOriginalEventIds": sorted(set(refs) & set(e["sourceEventIds"]))}
-            for e in context.get("engagementContexts") or []
-            if set(refs) & set(e.get("sourceEventIds") or [])
-        ], key=lambda d: (d["kind"], d["sourceDetectorId"]))
+        # Engagement views can repeat the same underlying promoted skirmish
+        # in multiple per-player projections. One detector is one context ref,
+        # never another contribution.
+        detector_index = {}
+        for e in context.get("engagementContexts") or []:
+            linked = sorted(set(refs) & set(e.get("sourceEventIds") or []))
+            if not linked:
+                continue
+            key = (e["kind"], e["sourceDetectorId"])
+            descriptor = {"kind": e["kind"], "sourceDetectorId": e["sourceDetectorId"],
+                          "sharedOriginalEventIds": linked}
+            if key in detector_index:
+                _check(detector_index[key] == descriptor, "CONFLICTING_DETECTOR_CONTEXT")
+            detector_index[key] = descriptor
+        detectors = [detector_index[k] for k in sorted(detector_index)]
+        # V3 raid detector is opponent-specific, but still inferred from
+        # commands/geography: it is source-overlap CONTEXT, not proven damage.
+        raid_index = {}
+        for player in statistics.get("participants") or []:
+            if player.get("playerId") != actor:
+                continue
+            military = (player.get("military") or {}).get("engagements") or {}
+            source_raid = military.get("raidEvidence") or {}
+            for raid in source_raid.get("initiatedEpisodes") or []:
+                if raid.get("attackerPlayerId") != actor or raid.get("victimPlayerId") != target:
+                    continue
+                related = sorted(set(refs) & set(raid.get("sourceEventIds") or []))
+                if not related:
+                    continue
+                if not all(ref in originals and
+                           originals[ref]["actorReplayPlayerId"] == actor
+                           for ref in related):
+                    continue
+                raid_id = raid.get("raidId")
+                if not isinstance(raid_id, str) or not raid_id:
+                    continue
+                descriptor = {
+                    "raidId": raid_id, "modelVersion": military.get("modelVersion"),
+                    "attackerReplayPlayerId": actor, "victimReplayPlayerId": target,
+                    "sharedOriginalEventIds": related,
+                    "meaning": "INFERRED_DIRECTED_ECONOMIC_RAID_COMMANDS_NOT_DAMAGE",
+                }
+                if raid_id in raid_index:
+                    _check(raid_index[raid_id] == descriptor, "CONFLICTING_RAID_CONTEXT")
+                raid_index[raid_id] = descriptor
+        linked_raids = [raid_index[k] for k in sorted(raid_index)]
         no_op = sorted(set(ref for ref, event in originals.items()
             if event["actorReplayPlayerId"] == actor and first <= event["recordingAtMs"] <= last
             and event["originalAction"] in STOP_ACTIONS and ref not in refs))
@@ -296,6 +336,7 @@ def prepare_social_metric_grade_candidates(
             "originalMetricMethods": sorted({n["source"]["methodVersion"] for n in members}),
             "originalSourceLayer": "ORIGINAL_ACTOR_COMMANDS_WITH_INFERRED_DIRECTED_CONTEXT",
             "linkedDetectorCandidates": detectors,
+            "linkedRaidDetectorCandidates": linked_raids,
             "priorDirectedEpisodeCandidateDeedIds": previous,
             "priorOppositeDirectedEpisodeCandidateDeedIds": opposite,
             "opportunity": {"status": "UNQUALIFIED",
