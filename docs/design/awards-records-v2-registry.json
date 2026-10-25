@@ -23,7 +23,7 @@
     ],
     "recordBook": "COMPLETE_APPROVED_QUALIFIED_RECORDS_BY_TAB_NOT_ALL_RAW_RECORD_FLAGS",
     "competitiveSeasonRecordsSurface": "Statistics tab; current Season and eventual true all-time League are separate scopes",
-    "privatePersonalBestsSurface": "owner-only Chronicle self-leaf full record ledger, separate from capped three showcasedRecordCodes",
+    "privatePersonalBestsSurface": "private, owner-only Chronicle self-leaf full record ledger, separate from capped three showcasedRecordCodes",
     "achievementSurface": "tiered collection with fixed owner-approved thresholds; not rank-based",
     "epithetRule": "one manually equipped PRE_NOMINAL/SOBRIQUET/POST_NOMINAL entitlement, never auto-equipped",
     "militaryDistinctionsRule": "rare battlefield merit with separately source-proven extreme conditions/outcome, never raw metric maxima",
