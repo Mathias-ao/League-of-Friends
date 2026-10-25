@@ -90,17 +90,52 @@ class SourceBoundMetricGradeTests(unittest.TestCase):
         measured = measure(statistics=stats, context=b["context"],
                            action_events=actions, lookback_ms=5000)
         self.assertEqual(len(measured["observations"]), 1)
-        with self.assertRaisesRegex(ValueError, "SOURCE_EVENT_ACTOR_CLOCK_MISMATCH"):
-            tampered = deepcopy(measured)
-            # Put a valid retained actor-sourced facet back under the wrong actor:
-            # downstream must recheck original event, not trust producer text.
-            tampered["observations"].append({
-                **tampered["observations"][0], "observationId": "spoofed",
-                "sourceEventIds": ["cmd1"], "fromReplayPlayerId": 1,
-                "kind": "DIRECTED_TARGET_COMMAND", "recordedCommandCount": 1,
-                "firstSourceMoment": {"recordingAtMs": 11000,
-                                     "operationOrdinal": 10, "order": "ORDERED"}})
+        tampered = deepcopy(measured)
+        # A different *kind* of facet cannot reinterpret the genuine cmd1.
+        tampered["observations"].append({
+            **tampered["observations"][0], "observationId": "spoofed",
+            "sourceEventIds": ["cmd1"], "fromReplayPlayerId": 1,
+            "kind": "DIRECTED_TARGET_COMMAND", "recordedCommandCount": 1,
+            "firstSourceMoment": {"recordingAtMs": 11000,
+                                 "operationOrdinal": 10, "order": "ORDERED"}})
+        with self.assertRaisesRegex(ValueError, "SOURCE_FACET_DIRECTION_AND_KIND_UNVERIFIED"):
             call(b, stats, actions, measured=tampered)
+        # The kind now matches the original facet, but actual cmd1 belongs
+        # to p2 in the altered observations; the source cannot be borrowed.
+        tampered["observations"][-1]["kind"] = "DIRECTED_PRESSURE_REQUEST"
+        with self.assertRaisesRegex(ValueError, "SOURCE_EVENT_ACTOR_CLOCK_MISMATCH"):
+            call(b, stats, actions, measured=tampered)
+
+    def test_original_counterpart_binding_is_not_interchangeable(self):
+        b, stats, actions = bundle("pressure", people=(1, 2, 3))
+        measured = measure(statistics=stats, context=b["context"],
+                           action_events=actions, lookback_ms=5000)
+        forged = deepcopy(measured)
+        forged["observations"][0]["toReplayPlayerId"] = 3
+        with self.assertRaisesRegex(ValueError, "SOURCE_FACET_DIRECTION_AND_KIND_UNVERIFIED"):
+            call(b, stats, actions, measured=forged)
+
+    def test_tribute_request_original_economy_identity_cannot_be_forged(self):
+        b, stats, actions = bundle("pressure")
+        donor = next(p for p in stats["participants"] if p["playerId"] == 1)
+        donor["economy"] = {"tributeSent": {"evidence": [{
+            "sourceEventId": "tribute-1", "atMs": 9000,
+            "counterpartPlayerId": 2, "decodedResourceAmount": 60,
+            "resourceId": 0}]}}
+        actions.append({"eventId": "tribute-1", "actorPlayerId": 1,
+                        "timestampMs": 9000, "operationOrdinal": 6,
+                        "sourceActionName": "DE_TRIBUTE"})
+        base = measure(statistics=stats, context=b["context"],
+                       action_events=actions, lookback_ms=5000)
+        result = call(b, stats, actions, measured=base)
+        self.assertEqual(len(result["neutralTributeRequestContexts"]), 1)
+        self.assertEqual(result["neutralTributeRequestContexts"][0]["decodedRequestAmount"], 60)
+        self.assertFalse(result["officialWrites"])
+        fake = deepcopy(base)
+        fake["tributeRequestContexts"][0]["decodedRequestAmount"] = 60000
+        fake["tributeRequestContexts"][0]["requestAmountStatus"] = "NONZERO"
+        with self.assertRaisesRegex(ValueError, "TRIBUTE_ORIGINAL_REQUEST_IDENTITY_MISMATCH"):
+            call(b, stats, actions, measured=fake)
 
     def test_shared_opponent_has_no_direction_or_grade(self):
         b, stats, actions = bundle("co-target", people=(1, 2, 3))
