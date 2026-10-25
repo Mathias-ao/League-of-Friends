@@ -7,6 +7,7 @@ ADMITTED or assigned a score/band merely because an original request exists.
 """
 from __future__ import annotations
 
+from copy import deepcopy
 from hashlib import sha256
 import json
 
@@ -261,6 +262,25 @@ def prepare_social_metric_grade_candidates(
                 hypotheses.setdefault(track, set()).update(needs)
         opportunity = sorted({ref for n in members
             for ref in n["source"]["preEntryRequestedActivity"]["sourceEventIds"]})
+        # MatchFacts can expose decoded map/civ context, but an approved
+        # map/civilization-adjusted denominator is not provided by that fact.
+        mf = statistics.get("matchFacts") or {}
+        census = {p.get("playerId"): p for p in (mf.get("players") or [])}
+        comparability = {
+            "mapSourceContext": deepcopy(mf.get("map")) if isinstance(mf.get("map"), dict) else None,
+            "civilizationSourceContext": [
+                {"replayPlayerId": pid,
+                 "rawCivilization": deepcopy(census.get(pid, {}).get("civilization"))}
+                for pid in (actor, target)],
+            "observedClock": {
+                "observedUntilMs": (
+                    (statistics.get("scope") or {}).get("observedUntilMs")
+                    if type((statistics.get("scope") or {}).get("observedUntilMs")) is int else None),
+                "basis": (statistics.get("scope") or {}).get("clock"),
+                "fullGameOriginAndCompletenessEstablished": False},
+            "normalizationRuleVersion": None,
+            "status": "UNQUALIFIED_NO_MAP_CIV_MODE_OR_OPPORTUNITY_POLICY",
+        }
         previous = sorted({ref for n in members for ref in
             n["source"]["priorDirectedEpisodeCandidates"]["sameDirectionSourceDeedIds"]})
         opposite = sorted({ref for n in members for ref in
@@ -347,7 +367,9 @@ def prepare_social_metric_grade_candidates(
             "priorOppositeDirectedEpisodeCandidateDeedIds": opposite,
             "opportunity": {"status": "UNQUALIFIED",
                             "sourceEventIds": opportunity,
-                            "meaning": "PRIOR_COMMAND_REQUESTS_NOT_OPPONENT_CAPACITY"},
+                            "meaning": "PRIOR_COMMAND_REQUESTS_NOT_OPPONENT_CAPACITY",
+                            "approvedDenominator": None},
+            "comparability": comparability,
             "counterevidenceCandidates": [
                 {"kind": "STOP_OR_CANCEL_CONTEXT_NOT_PROVEN_CANCELLATION",
                  "sourceEventIds": no_op, "coverage": "LIMITED"}] if no_op else [],
