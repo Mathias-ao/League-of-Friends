@@ -1,0 +1,722 @@
+{
+  "version": "AOF_SOC_GRADE_OWNER_REVIEW_CATALOGUE_V0_1",
+  "originIssue": "#152",
+  "source": {
+    "title": "Age of Friends — Statistics-to-Social Interpretation Matrix",
+    "sourceLabel": "Metric grading owner-review proposal v0.1",
+    "checkpointQuoted": "e453d40c147ad488f3bfd369e54eba82b29c43b5",
+    "verbatimRepositoryPath": "docs/architecture/grade-reputation-metrics-owner-review-v0.1.md",
+    "verbatimGitBlobSha": "c4c4df316f023a39f6e112562042f4e5c0ad26ff",
+    "transcriptionStatus": "SUPPLIED_OWNER_REVIEW_PROPOSAL_NOT_FINAL_APPROVAL",
+    "ownerConfirmedAsFinalPolicy": false
+  },
+  "policyStatus": "PROPOSED_UNAPPROVED",
+  "approvalRef": null,
+  "tracks": [
+    {
+      "track": "GALLANTRY",
+      "system": "REPUTATION",
+      "definition": "Meaningful daring offensive action in genuinely challenging entry circumstances.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "track": "CRUELTY",
+      "system": "REPUTATION",
+      "definition": "Meaningful directed punishing pressure against a demonstrably disadvantaged opponent, or separately qualified economic betrayal.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "track": "CHIVALRY",
+      "system": "REPUTATION",
+      "definition": "Noteworthy directed protection or help.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "track": "RIVALRY",
+      "system": "RELATIONSHIP",
+      "definition": "A's substantive competition or counterplay against B.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "track": "HOSTILITY",
+      "system": "RELATIONSHIP",
+      "definition": "A's distinct antagonism toward B beyond routine warfare.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "track": "BOND",
+      "system": "RELATIONSHIP",
+      "definition": "A's meaningful help to B.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    }
+  ],
+  "independenceRules": [
+    "REPUTATION_DIMENSIONS_INDEPENDENT",
+    "RELATIONSHIP_A_TO_B_DIRECTIONAL_INDEPENDENT"
+  ],
+  "notation": {
+    "Q": "Candidate strengthening, only if the track's independently justified conduct, context, identity and materiality predicates qualify.",
+    "c": "Supporting context only. Cannot itself produce a track change.",
+    "·": "Ordinarily no direct contribution.",
+    "W": "Candidate weakening, requiring a separately justified positive action and approved predicate."
+  },
+  "metricFamilies": [
+    {
+      "rowId": "OWNER_V0_1_M01",
+      "sourceMetricOrEpisodeFamily": "Detected Raids Initiated / directed economic pressure",
+      "notation": {
+        "GALLANTRY": "Q",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Targeted, substantive, opponent-specific; challenge or prior vulnerability independently qualified.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M02",
+      "sourceMetricOrEpisodeFamily": "Detected Battles / Skirmishes, pair-local contest",
+      "notation": {
+        "GALLANTRY": "Q",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Attribution and individual participation, not mere episode count.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M03",
+      "sourceMetricOrEpisodeFamily": "Return raid / independent reverse pressure",
+      "notation": {
+        "GALLANTRY": "Q",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Reverse actor's own distinct action; chronology; no revenge motive.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M04",
+      "sourceMetricOrEpisodeFamily": "Substantive defensive counterplay against an attacker",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "·",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Defender actively resisted, repositioned or protected; passive victimhood is insufficient.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M05",
+      "sourceMetricOrEpisodeFamily": "Direct opponent targeting in team Battle",
+      "notation": {
+        "GALLANTRY": "Q",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Selective attention requires comparison with actual alternative opponents/opportunities.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M06",
+      "sourceMetricOrEpisodeFamily": "Forward Buildings and Forward Eco placements",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "c",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Specific opponent, geometry, genuine directed contest; no completion claimed.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M07",
+      "sourceMetricOrEpisodeFamily": "Towers / Tower Rush with directed pressure",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Punishing vulnerability needed for Cruelty; zoning alone is not Hostility.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M08",
+      "sourceMetricOrEpisodeFamily": "Castle placement near opponent home",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Generic contested placement only; special Forward Castle achievement remains separately proof-gated.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M09",
+      "sourceMetricOrEpisodeFamily": "Gold Influence ≈ / contested gold-infrastructure positions",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "c",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Rival ownership/contest not inferred from percent alone; no mined gold/real capture.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M10",
+      "sourceMetricOrEpisodeFamily": "Cooperative Attacks against exact common enemy",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "c",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "c"
+      },
+      "qualificationContext": "Each attacker's own target-specific action may count versus enemy; common target alone cannot create ally Bond.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M11",
+      "sourceMetricOrEpisodeFamily": "Defensive Assists (specific helper→recipient)",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "·",
+        "CHIVALRY": "Q",
+        "RIVALRY": "·",
+        "HOSTILITY": "c",
+        "BOND": "Q"
+      },
+      "qualificationContext": "Intervention in independently threatened recipient's defense, materiality; not automatic rescue.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M12",
+      "sourceMetricOrEpisodeFamily": "Reinforcements Sent (specific helper→recipient)",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "·",
+        "CHIVALRY": "Q",
+        "RIVALRY": "·",
+        "HOSTILITY": "c",
+        "BOND": "Q"
+      },
+      "qualificationContext": "Real source-linked protective participation rather than nearby move/co-presence.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M13",
+      "sourceMetricOrEpisodeFamily": "Defensive support under third-party pressure",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "·",
+        "CHIVALRY": "Q",
+        "RIVALRY": "·",
+        "HOSTILITY": "c",
+        "BOND": "Q"
+      },
+      "qualificationContext": "Stronger context than generic assist; matching helper, threatened recipient, third-party source/time.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M14",
+      "sourceMetricOrEpisodeFamily": "Tribute request donor→recipient",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "·",
+        "CHIVALRY": "c",
+        "RIVALRY": "·",
+        "HOSTILITY": "c",
+        "BOND": "c"
+      },
+      "qualificationContext": "Existing request is not an automatic award; separately qualify helpful conduct and significance.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M15",
+      "sourceMetricOrEpisodeFamily": "Repair/guard requests targeting a beneficiary's property",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "·",
+        "CHIVALRY": "c",
+        "RIVALRY": "·",
+        "HOSTILITY": "c",
+        "BOND": "c"
+      },
+      "qualificationContext": "Need source-linked ownership, executed/credible material assistance and coverage.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M16",
+      "sourceMetricOrEpisodeFamily": "Repeated independent pair contests across Battles",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "c",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "c",
+        "BOND": "·"
+      },
+      "qualificationContext": "Versioned history, actual attributed conduct, distinct Games; no duplicate POVs.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M17",
+      "sourceMetricOrEpisodeFamily": "Repeated, unusually selective targeted harassment",
+      "notation": {
+        "GALLANTRY": "c",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "Q",
+        "HOSTILITY": "Q",
+        "BOND": "·"
+      },
+      "qualificationContext": "Cruelty requires earlier target disadvantage; Hostility requires distinct antagonism, not just focus fire.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M18",
+      "sourceMetricOrEpisodeFamily": "Substantive hostile action after qualified effective alliance rupture",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "c",
+        "HOSTILITY": "Q",
+        "BOND": "c"
+      },
+      "qualificationContext": "Ordered effective relationship plus distinct directed conduct; Bond weakening possible only if established prior Bond.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M19",
+      "sourceMetricOrEpisodeFamily": "Material aid to former adversary with reconciliation context",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "W",
+        "CHIVALRY": "Q",
+        "RIVALRY": "c",
+        "HOSTILITY": "W",
+        "BOND": "Q"
+      },
+      "qualificationContext": "Hostility cooling is helper→recipient's own direction; Cruelty reparative weakening requires same prior victim.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_M20",
+      "sourceMetricOrEpisodeFamily": "Serious directed antagonism against established cooperator",
+      "notation": {
+        "GALLANTRY": "·",
+        "CRUELTY": "Q",
+        "CHIVALRY": "·",
+        "RIVALRY": "c",
+        "HOSTILITY": "Q",
+        "BOND": "W"
+      },
+      "qualificationContext": "Independently qualified prior Bond, significance and ordered breach/harm; not simply playing opposite teams.",
+      "sourceMetricDefinitionId": null,
+      "sourceMethodVersion": null,
+      "methodSpecificCoverageApproval": null,
+      "ownerSelectionStatus": "PROPOSED_UNAPPROVED"
+    }
+  ],
+  "excludedStatistics": [
+    {
+      "rowId": "OWNER_V0_1_NO_01",
+      "existingAofStatistic": "Build Order: Boom / Fast Castle / Fish Boom / Drush / Scout Rush / Archer Rush / Naval Rush",
+      "interpretationRole": "Opening identity and commitment context, never morality",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_02",
+      "existingAofStatistic": "Military Units Queued, Military Unit Commitment, Army Commitment @10/15/20",
+      "interpretationRole": "Requested military investment, not surviving army",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_03",
+      "existingAofStatistic": "Villager Queue Estimate @10/20, farms, economic buildings, TC placements, expansion zones",
+      "interpretationRole": "Economic request/placement context, not actual wealth or vulnerability",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_04",
+      "existingAofStatistic": "Walls Before Feudal / Wall Tiles / Wall Style",
+      "interpretationRole": "Defensive preparation, not proof of completed protection",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_05",
+      "existingAofStatistic": "Scout Command Coverage @5, Command Map Coverage, Opponent-Base Command Contact",
+      "interpretationRole": "Map intent and pressure context, not actual vision or courage",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_06",
+      "existingAofStatistic": "Raw APM, Commands @5, Economy Actions in Battles, Combat-window APM",
+      "interpretationRole": "Execution and multitasking descriptors",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_07",
+      "existingAofStatistic": "Market Sales/Purchases / decoded volumeTraded",
+      "interpretationRole": "Market transaction commands, not ally assistance",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_08",
+      "existingAofStatistic": "Trade Units Queued",
+      "interpretationRole": "Trade-unit queue requests, not completed income",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_09",
+      "existingAofStatistic": "Known Relics Targeted and First Relic Target Command",
+      "interpretationRole": "Objective targeting, not possession/theft",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_10",
+      "existingAofStatistic": "Boar Interactions ≈",
+      "interpretationRole": "Interaction inference, not confirmed opponent laming",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_11",
+      "existingAofStatistic": "Wonder BUILD placement candidate (new)",
+      "interpretationRole": "Objective intent, completion unknown",
+      "directSixTrackAward": "No"
+    },
+    {
+      "rowId": "OWNER_V0_1_NO_12",
+      "existingAofStatistic": "Battle results, Season points, victory/loss, opponent skill",
+      "interpretationRole": "Historical stakes and past-only challenge context, not conduct themselves",
+      "directSixTrackAward": "No"
+    }
+  ],
+  "developmentCandidates": [
+    {
+      "rowId": "OWNER_V0_1_DEV_01",
+      "candidate": "Pressure answered with counterplay",
+      "reuseAofEvidence": "Raid V3, Pair Episode Context V1, raidResponse, defender actions",
+      "potentialSocialUse": "Defender→attacker Rivalry",
+      "priorityAndLimitations": "P0. Independently active defender required. Timing alone insufficient.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_02",
+      "candidate": "Threat-linked directed assistance",
+      "reuseAofEvidence": "Defensive Assists, Reinforcements, pressure-on-beneficiary, Context V2",
+      "potentialSocialUse": "Bond; Chivalry if noteworthy",
+      "priorityAndLimitations": "P0. Exact helper, beneficiary, threat and source contribution.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_03",
+      "candidate": "Persistent opponent-specific pressure",
+      "reuseAofEvidence": "Directed deeds across historical Games, prior directed episodes",
+      "potentialSocialUse": "Rivalry; rare Hostility/Cruelty",
+      "priorityAndLimitations": "P0. Opportunity-aware attribution and independently meaningful context.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_04",
+      "candidate": "Material/beneficiary-directed tribute",
+      "reuseAofEvidence": "Tribute commands, resource vectors, recipient",
+      "potentialSocialUse": "Bond; possibly Chivalry or Hostility cooling",
+      "priorityAndLimitations": "P0 research. Request not verified receipt; bounded inference requires approval.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_05",
+      "candidate": "Quickwall response to raid",
+      "reuseAofEvidence": "Wall commands and Raid V3",
+      "potentialSocialUse": "Defender Rivalry context / Chronicle",
+      "priorityAndLimitations": "P1. Need timing/spatial relevance. Not confirmed sealed defense.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_06",
+      "candidate": "Garrison response to raid",
+      "reuseAofEvidence": "Garrisons During Raids, Raid Response",
+      "potentialSocialUse": "Defender Rivalry context / Chronicle",
+      "priorityAndLimitations": "Partly exists. Requires specific threat linkage; no saved-unit claim.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_07",
+      "candidate": "Targeted repair of ally's threatened asset",
+      "reuseAofEvidence": "Repair commands, ownership, incoming pressure",
+      "potentialSocialUse": "Bond / Chivalry",
+      "priorityAndLimitations": "P1. Target attribution and material effect uncertain.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_08",
+      "candidate": "Opposition to contested gold resources",
+      "reuseAofEvidence": "Gold Influence, forward positions, directed pressure",
+      "potentialSocialUse": "Rivalry; Gallantry context",
+      "priorityAndLimitations": "P1. Infrastructure influence is not extraction or actual ownership.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_09",
+      "candidate": "Opponent boar interference / laming",
+      "reuseAofEvidence": "Boar Interactions and object/position history",
+      "potentialSocialUse": "Personality / Chronicle; contextual Cruelty",
+      "priorityAndLimitations": "P2. Opponent entitlement and actual interference not established.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_10",
+      "candidate": "Monk conversions",
+      "reuseAofEvidence": "Monk/class evidence, future conversion outcome",
+      "potentialSocialUse": "Records / Chronicle; contextual Rivalry",
+      "priorityAndLimitations": "P2. Confirmed conversion and ownership-change witness required.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_11",
+      "candidate": "Trade-cart income / partner trade",
+      "reuseAofEvidence": "Trade-unit queues and market evidence",
+      "potentialSocialUse": "Economy records; possible directed Bond",
+      "priorityAndLimitations": "P2. Income and beneficiary not currently established.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_12",
+      "candidate": "Military–economic multitasking under pressure",
+      "reuseAofEvidence": "Economy Actions in Battles, skirmish context, APM",
+      "potentialSocialUse": "Personality / Records; context only",
+      "priorityAndLimitations": "Already partly exists. No direct social points.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_13",
+      "candidate": "Wonder attempt / defense of Wonder",
+      "reuseAofEvidence": "Future Wonder placement + defensive episodes",
+      "potentialSocialUse": "Records / Chronicle; possible beneficiary-directed Bond",
+      "priorityAndLimitations": "P2. Placement does not prove completed Wonder.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_14",
+      "candidate": "Relic theft / transfer / denial",
+      "reuseAofEvidence": "Relic targeting observations and future control proof",
+      "potentialSocialUse": "Rivalry or Bond",
+      "priorityAndLimitations": "P2/post-V1. Current possession, theft and transfer fields are unavailable.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    },
+    {
+      "rowId": "OWNER_V0_1_DEV_15",
+      "candidate": "Confirmed substantive king elimination / Treachery",
+      "reuseAofEvidence": "Effective alliance, king loss, responsible actor, victim judgment",
+      "potentialSocialUse": "Exceptional Hostility escalation",
+      "priorityAndLimitations": "Strict proof gate. Cannot infer from ordinary attacks.",
+      "approvalStatus": "PROPOSED_NOT_AUTHORIZED"
+    }
+  ],
+  "independentWeakening": [
+    {
+      "rowId": "OWNER_V0_1_WEAK_01",
+      "trackToWeaken": "Gallantry −",
+      "proposedQualifyingAction": "Credible actor-owned abandonment of a chosen challenging commitment while independently verified opportunity/capacity remains",
+      "falsePositiveGuardAndLikelyV1Status": "Tactical retreat, loss, inactivity or a surrender command alone not enough; probably Pending until better witness.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_WEAK_02",
+      "trackToWeaken": "Cruelty −",
+      "proposedQualifyingAction": "Meaningful directed material relief/restitution from actor to the same prior harmed counterpart after qualified Cruelty",
+      "falsePositiveGuardAndLikelyV1Status": "Ordinary tribute request, helping someone else and simply ceasing attacks do not count; currently hard to qualify.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_WEAK_03",
+      "trackToWeaken": "Chivalry −",
+      "proposedQualifyingAction": "Independently demonstrated knowing withdrawal of a specific prior protective undertaking while attributable recipient need, capacity and reachable opportunity remained",
+      "falsePositiveGuardAndLikelyV1Status": "Failure to help, non-assistance, defeat and absence are not eligible; currently hard to qualify.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_WEAK_04",
+      "trackToWeaken": "Rivalry −",
+      "proposedQualifyingAction": "Positive actor-owned settlement/de-escalation explicitly tied to that pair, with qualified context or structured judgment",
+      "falsePositiveGuardAndLikelyV1Status": "Unplayed rematches, team changes, silence are not settlement; preserve stage-3 skill acknowledgment floor.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_WEAK_05",
+      "trackToWeaken": "Hostility −",
+      "proposedQualifyingAction": "Substantive A→B reconciliation/aid toward A's former adversary, independently source-backed and tied to prior A→B Hostility",
+      "falsePositiveGuardAndLikelyV1Status": "B→A assistance cannot automatically reduce A→B Hostility; generic shared enemy/ceasefire is inadequate.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    },
+    {
+      "rowId": "OWNER_V0_1_WEAK_06",
+      "trackToWeaken": "Bond −",
+      "proposedQualifyingAction": "Serious independently qualified A→B directed antagonism against B, with established prior A→B support/Bond and historical significance",
+      "falsePositiveGuardAndLikelyV1Status": "Routine competition or opposite sides in later Battles insufficient. A→B only; do not mirror B→A.",
+      "approvalStatus": "PROPOSED_UNAPPROVED"
+    }
+  ],
+  "ordinalGrades": [
+    {
+      "label": "\"+\"",
+      "meaning": "Admitted independently meaningful ordinary strengthening episode",
+      "approvalStatus": "PROPOSED_UNAPPROVED",
+      "numericValue": null,
+      "significanceBandId": null
+    },
+    {
+      "label": "\"++\"",
+      "meaning": "Independently admitted substantial episode with greater qualified significance",
+      "approvalStatus": "PROPOSED_UNAPPROVED",
+      "numericValue": null,
+      "significanceBandId": null
+    },
+    {
+      "label": "\"−\"",
+      "meaning": "Independent admitted weakening conduct",
+      "approvalStatus": "PROPOSED_UNAPPROVED",
+      "numericValue": null,
+      "significanceBandId": null
+    },
+    {
+      "label": "\"−−\"",
+      "meaning": "Substantial independently admitted weakening conduct, if separately approved",
+      "approvalStatus": "PROPOSED_UNAPPROVED",
+      "numericValue": null,
+      "significanceBandId": null
+    },
+    {
+      "label": "\"0\"",
+      "meaning": "Neutral observation or context with no conduct effect",
+      "approvalStatus": "PROPOSED_UNAPPROVED",
+      "numericValue": null,
+      "significanceBandId": null
+    },
+    {
+      "label": "\"?\"",
+      "meaning": "Unknown, incomplete, unauthenticated, LIMITED, PENDING or UNCONFIGURED",
+      "approvalStatus": "PROPOSED_UNAPPROVED",
+      "numericValue": null,
+      "significanceBandId": null
+    }
+  ],
+  "unresolvedOwnerDecisions": [
+    "Whether the proposed Gallantry/Chivalry distinction is satisfactory.",
+    "Whether the proposed ordinary Cruelty and Hostility pathways are acceptable.",
+    "Whether bounded inference from tribute requests may ever establish meaningful help without verified receipt.",
+    "Which independent weakening predicates should be approved or held Pending.",
+    "Which P0/P1 metrics should receive implementation priority."
+  ],
+  "explicitNonApprovals": [
+    "NUMERIC_WEIGHTS",
+    "AUTOMATIC_RECEIPTS",
+    "PUBLIC_SCORING",
+    "EXCEPTIONAL_AWARDS",
+    "ENTITLEMENT_GRANTS",
+    "DEPLOYMENT",
+    "SOURCE_METHOD_COVERAGE_ADMISSION",
+    "METRIC_TO_CANONICAL_FACT_RULES",
+    "HISTORICAL_BAND_MAPPING",
+    "TRACK_EFFECT_ACTIVATION"
+  ],
+  "sourceAndEvidenceRules": [
+    "SEASON_AGGREGATE_IS_NOT_EPISODE_PROOF",
+    "PER_BATTLE_SOURCE_LINKED_RECORDS_REQUIRED",
+    "EACH_TRACK_QUALIFIES_INDEPENDENTLY",
+    "OVERLAPPING_RAID_BATTLE_TARGETING_DO_NOT_MULTIPLY",
+    "ORDINARY_WARFARE_NOT_HOSTILITY",
+    "TRIBUTE_REQUEST_NOT_CONFIRMED_RECEIPT",
+    "NO_COTARGET_BOND",
+    "A_TO_B_NO_AUTOMATIC_REVERSE",
+    "CORRECTIONS_AND_MULTIGAME_PRESERVE_CURRENT_PROVENANCE",
+    "STRICT_TREACHERY_UNCHANGED",
+    "FORWARD_CASTLE_EXCEPTIONAL_PROOF_UNCHANGED",
+    "LIMITED_PENDING_NOT_ADMITTED"
+  ]
+}
