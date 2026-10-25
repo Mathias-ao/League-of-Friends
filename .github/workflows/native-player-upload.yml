@@ -30,6 +30,8 @@ jobs:
       AOF_SOCIAL_EVIDENCE_V1A_ENDPOINT: '1'
       AOF_SOCIAL_EVIDENCE_V1A_READS: '1'
       AOF_INT_V1_ACCEPTANCE: '1'
+      AOF_INT_C1_ACCEPTANCE: '1'
+      AOF_INT_C1_ENDPOINT: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4

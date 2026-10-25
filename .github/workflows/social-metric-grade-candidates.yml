@@ -1,0 +1,31 @@
+name: Social Metric Grade Candidate Corpus (Inert)
+
+on:
+  pull_request:
+    paths:
+      - "replay-tools/social_v1_metric_grade_candidates.py"
+      - "replay-tools/tests/test_social_v1_metric_grade_candidates.py"
+      - "contracts/social-v1/metric-grade-policy-proposal-v1.json"
+      - ".github/workflows/social-metric-grade-candidates.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authentic-neutral-grade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: replay-tools/requirements.txt
+      - name: Install existing replay dependencies
+        run: python -m pip install -r replay-tools/requirements.txt
+      - name: Validate four hash-pinned authentic original recordings (no scoring)
+        env:
+          AOF_SOCIAL_GRADE_AUTHENTIC: "1"
+        run: python -m unittest discover -s replay-tools/tests -p test_social_v1_metric_grade_candidates.py -v

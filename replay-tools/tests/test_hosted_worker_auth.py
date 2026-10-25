@@ -68,6 +68,16 @@ class HostedWorkerAuthTests(TestCase):
             self.assertEqual(self.call("/process")[0], 400)  # local anonymous legacy path remains
             self.assertEqual(self.call("/process-native-v1")[0], 404)
 
+    def test_c1_route_is_default_off_authenticated_and_nonproduction_only(self):
+        with patch.dict(os.environ, {"AOF_REPLAY_WORKER_AUTH_TOKEN":"test-c1",
+             "GCLOUD_PROJECT":"demo-test", "FUNCTIONS_EMULATOR":"true"},clear=True):
+            self.assertEqual(self.call('/social-grade-preview-v1','test-c1')[0],404)
+            os.environ['AOF_INT_C1_ENDPOINT']='1'
+            self.assertEqual(self.call('/social-grade-preview-v1')[0],401)
+            self.assertEqual(self.call('/social-grade-preview-v1','test-c1')[0],400)
+            os.environ['GCLOUD_PROJECT']='league-of-friends-cc274'
+            self.assertEqual(self.call('/social-grade-preview-v1','test-c1')[0],404)
+
 
 if __name__ == "__main__":
     main()

@@ -101,7 +101,7 @@ export async function loadMyCurrentSocialSource(input:{db:any;bucket:any;actor:{
     if(tx)await check(tx);else await db.runTransaction(check);
   };
   await revalidate();
-  return {source:response.source,statistics:loaded.statistics,match:before.m,game:before.g,revalidate};
+  return {source:response.source,statistics:loaded.statistics,match:before.m,game:before.g,recordedEvents:before.source.recordedEvents,revalidate};
 }
 
 /** Existing INT-A wire response is unchanged; INT-B reuses the same verified load. */

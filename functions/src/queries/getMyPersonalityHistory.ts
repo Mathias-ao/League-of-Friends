@@ -18,12 +18,14 @@ export function assertIntBEnabled(env:NodeJS.ProcessEnv){
 }
 /** Complete-or-error current input collection. This is not an evaluator or a
  * persisted ledger. All source admission/artifact verification reuses INT-A. */
-export async function readMyPersonalityHistory(input:{db:any;bucket:any;actor:{playerId:string;authUid:string};
-  request:Record<string,never>;env:NodeJS.ProcessEnv}){
+export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;actor:{playerId:string;authUid:string};
+  request:Record<string,never>;env:NodeJS.ProcessEnv;maxOwnGames?:number}){
   const {db,bucket,actor,env}=input;
   assertIntBEnabled(env);
   if(!input.request||Array.isArray(input.request)||typeof input.request!=='object'||Object.keys(input.request).length)
     throw new HttpsError('invalid-argument','Private history accepts no player, source, policy or cursor arguments.');
+  const maxOwnGames=input.maxOwnGames??INT_B_LIMITS.maxOwnGames;
+  if(!Number.isSafeInteger(maxOwnGames)||maxOwnGames<1||maxOwnGames>INT_B_LIMITS.maxOwnGames)throw new Error('Invalid internal history budget');
   const started=Date.now();
   const budget=()=>{if(Date.now()-started>INT_B_LIMITS.budgetMs)throw new HttpsError('resource-exhausted','Complete private-history read exceeded its budget.');};
   const read=async(ref:any,tx?:any)=>{budget();return tx?tx.get(ref):ref.get();};
@@ -60,9 +62,9 @@ export async function readMyPersonalityHistory(input:{db:any;bucket:any;actor:{p
   const seenSources=new Set<string>(),seenGuids=new Set<string>();let count=0;
   const gamesToken=(docs:any[])=>bindingDigest(docs.map(d=>[d.id,d.data()]));
   for(const matchDoc of own(initialMatches)){
-    const m=matchDoc.data(),query=matchDoc.ref.collection('games').orderBy('__name__').limit(INT_B_LIMITS.maxOwnGames+1);
+    const m=matchDoc.data(),query=matchDoc.ref.collection('games').orderBy('__name__').limit(maxOwnGames+1);
     const games=await read(query);count+=games.docs.length;
-    if(count>INT_B_LIMITS.maxOwnGames)throw new HttpsError('resource-exhausted','Private history exceeds the complete-read Game limit.');
+    if(count>maxOwnGames)throw new HttpsError('resource-exhausted','Private history exceeds the complete-read Game limit.');
     gameSets.push({ref:query,token:gamesToken(games.docs)});
     if(games.docs.some((d:any)=>!validId(d.id)||!Number.isSafeInteger(d.data()?.gameNumber)||d.data().gameNumber<1)||
       new Set(games.docs.map((d:any)=>d.data().gameNumber)).size!==games.docs.length)
@@ -96,26 +98,31 @@ export async function readMyPersonalityHistory(input:{db:any;bucket:any;actor:{p
   }
   const inputDigest=bindingDigest([actor.playerId,accessToken,initialToken,gameSets.map(q=>q.token),
     [...checkpoints].map(([path,p])=>[path,p.token]),loaded.map(s=>s.source)]);
-  const personality=projectPrivatePersonalityHistory(actor.playerId,battles,inputDigest);
-  const response={version:'AOF_INT_B_PRIVATE_HISTORY_1' as const,contract:SOCIAL_V1_CONTRACT,
-    visibility:'OWNER_ONLY' as const,ownerPlayerId:actor.playerId,inputDigest,
-    status:pending.length?'PENDING_INPUTS' as const:'CURRENT_INPUTS' as const,
-    coverage:{completeEnumeration:true,scannedLeagueBattles:initialMatches.length,ownBattles:battles.length,
-      ownGames:count,currentSources:loaded.length,measuredIndependentBattles:0},
-    sources:loaded.map(s=>s.source),pending,personality,
-    social:{status:'PENDING' as const,reason:'SOURCE_QUALIFIER_AND_APPROVED_RULES_PENDING'},
-    effects:{officialWrites:false as const,receiptPublication:false as const,entitlementGrants:false as const}};
-  if(Buffer.byteLength(JSON.stringify(response))>INT_B_LIMITS.maxResponseBytes)
-    throw new HttpsError('resource-exhausted','Private history exceeds its complete-response budget.');
   // One read-only transaction fences the entire enumerated current set, including
   // insertions/deletions, all pending-source authorities, access and loaded sources.
-  await db.runTransaction(async(tx:any)=>{
+  const revalidate=async()=>{await db.runTransaction(async(tx:any)=>{
     if(await access(tx)!==accessToken||matchToken(await matches(tx))!==initialToken)throw changed();
     for(const q of gameSets)if(gamesToken((await read(q.ref,tx)).docs)!==q.token)throw changed();
     for(const p of checkpoints.values())if(bindingDigest((await read(p.ref,tx)).data()??null)!==p.token)throw changed();
     for(const s of loaded)await s.revalidate(tx);
     budget();
-  });
+  });};
+  await revalidate();
+  return {battles,loaded,pending,inputDigest,coverage:{completeEnumeration:true as const,scannedLeagueBattles:initialMatches.length,ownBattles:battles.length,ownGames:count,currentSources:loaded.length,measuredIndependentBattles:0 as const},revalidate};
+}
+/** Existing INT-B wire contract; C1 reuses collection/fencing, not profile values. */
+export async function readMyPersonalityHistory(input:Parameters<typeof collectMyCurrentBattleHistory>[0]){
+  const current=await collectMyCurrentBattleHistory(input);
+  const personality=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,current.inputDigest);
+  const response={version:'AOF_INT_B_PRIVATE_HISTORY_1' as const,contract:SOCIAL_V1_CONTRACT,
+    visibility:'OWNER_ONLY' as const,ownerPlayerId:input.actor.playerId,inputDigest:current.inputDigest,
+    status:current.pending.length?'PENDING_INPUTS' as const:'CURRENT_INPUTS' as const,
+    coverage:current.coverage,sources:current.loaded.map(s=>s.source),pending:current.pending,personality,
+    social:{status:'PENDING' as const,reason:'SOURCE_QUALIFIER_AND_APPROVED_RULES_PENDING'},
+    effects:{officialWrites:false as const,receiptPublication:false as const,entitlementGrants:false as const}};
+  if(Buffer.byteLength(JSON.stringify(response))>INT_B_LIMITS.maxResponseBytes)
+    throw new HttpsError('resource-exhausted','Private history exceeds its complete-response budget.');
+  await current.revalidate();
   return response;
 }
 export const getMyPersonalityHistory=onCall({...callableOptions,timeoutSeconds:120,memory:'1GiB'},async request=>{

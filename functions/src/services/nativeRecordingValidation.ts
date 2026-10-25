@@ -63,7 +63,7 @@ export async function callNativeWorker(
 }
 
 /** Shared authenticated transport; route is server-selected, never a client URL. */
-export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'/social-evidence-v1a',payload:Bag,transport:NativeWorkerTransport={}):Promise<Bag>{
+export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'/social-evidence-v1a'|'/social-grade-preview-v1',payload:Bag,transport:NativeWorkerTransport={}):Promise<Bag>{
   const target=url.replace(/\/+$/,'');
   const parsed=new URL(target),loopback=['127.0.0.1','localhost'].includes(parsed.hostname);
   if(parsed.username||parsed.password||(!loopback&&parsed.protocol!=='https:')||

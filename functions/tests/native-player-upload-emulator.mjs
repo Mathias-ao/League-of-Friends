@@ -1,4 +1,5 @@
 import {intV1SourceAcceptance} from './int-v1-private-experience-emulator.mjs';
+import {intC1SourceAcceptance} from './int-c1-preview-emulator.mjs';
 import {socialEvidenceAcceptance} from './social-evidence-v1a-emulator.mjs';
 /** Ordinary upload acceptance. Real local worker + Firebase emulators only.
  * Fixture metadata and expected winners come from the pinned independent TownBell reports.
@@ -119,6 +120,7 @@ async function runCase([name,format,expected]){
   }
   if(process.env.AOF_SOCIAL_EVIDENCE_V1A_READS==='1')await socialEvidenceAcceptance({db,bucket,actor,matchId,gameId,name});
   if(process.env.AOF_INT_V1_ACCEPTANCE==='1')await intV1SourceAcceptance({db,bucket,actor,matchId,gameId,name});
+  if(process.env.AOF_INT_C1_ACCEPTANCE==='1')await intC1SourceAcceptance({db,bucket,actor,matchId,gameId,name});
   const candidate=(await gr.collection('nativeReplayValidations').doc(source.nativeValidationCandidateId).get()).data();
   const directory=resolve(out,name);await mkdir(directory,{recursive:true});
   for(const [field,file] of [['recordedEvents','events.jsonl.gz'],['statistics','statistics.direct.json.gz']]){
