@@ -1,3 +1,4 @@
+import type {PendingGrade} from '../domain/gameplayPreview.js';
 import {readFileSync} from 'node:fs';
 import type {SourceSnapshot,Claim,Inference} from '../domain/socialV1.js';
 import {validateSharedRecord} from '../domain/socialV1Validation.js';
@@ -14,15 +15,6 @@ const same=(a:unknown,b:unknown)=>bindingDigest(a)===bindingDigest(b);
 const safeId=(v:unknown):v is string=>typeof v==='string'&&v.length>0&&v.length<=500;
 const metricFacets:Record<string,string>={DIRECTED_PRESSURE_REQUEST:'ECONOMY_PRESSURE',DIRECTED_TARGET_COMMAND:'TARGETED_COMMAND',
   DEFENSIVE_PARTICIPATION_REQUEST:'DEFENSIVE_PARTICIPATION',REINFORCEMENT_REQUEST:'REINFORCEMENT_COMMANDS'};
-export interface PendingGrade {
-  version:typeof GRADE_ENVELOPE;candidateId:string;sourceAuthority:string;sourceContextRevision:string;
-  sourceDeedId:string;incidentId:string;contributionGroupId:string;actorPlayerId:string;counterpartPlayerId:string;
-  actorReplaySlot:number;counterpartReplaySlot:number;metricId:string;measurementMethodVersion:string;
-  raw:{value:number;unit:'RECORDED_COMMAND_REQUESTS';opportunity:null};window:{startMs:number;endMs:number};
-  firstSourceMoment:{recordingAtMs:number;operationOrdinal:number|null;order:'ORDERED'|'PARTIAL'};
-  sourceEventIds:string[];meaning:'OBSERVED_COMMANDS_AND_INFERRED_PAIR_ATTRIBUTION';coverage:'LIMITED';
-  grade:{status:'PENDING';methodVersion:null;ruleVersion:null;bandId:null;reasonCodes:string[]};counterevidenceRefs:[];missing:string[];
-}
 export function validateC1Worker(raw:any,source:SourceSnapshot,statistics:any,processorRevision:string){
   if(raw?.version!=='AOF_INT_C1_WORKER_PREVIEW_1'||raw.authorityRevision!==source.authorityRevision||
     !/^[a-f0-9]{64}$/.test(processorRevision)||raw.processorRevision!==processorRevision||

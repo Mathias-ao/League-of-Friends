@@ -12,7 +12,7 @@ Worker 4 coordination is [#153 comment 6395788399](https://github.com/Mathias-ao
 
 ## Pending transport freeze
 
-`AOF_INT_C1_PENDING_GRADE_ENVELOPE_1`, TypeScript `PendingGrade` in `functions/src/integration/gameplayPreview.ts`, produced by `replay-tools/int_c1_preview.py`:
+`AOF_INT_C1_PENDING_GRADE_ENVELOPE_1`, TypeScript `PendingGrade` in `functions/src/domain/gameplayPreview.ts`, produced by `replay-tools/int_c1_preview.py`:
 
 | Fields | Meaning / admission |
 |---|---|

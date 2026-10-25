@@ -1,4 +1,4 @@
-import type {PendingGrade} from '../../../functions/src/integration/gameplayPreview';
+import type {PendingGrade} from '../../../functions/src/domain/gameplayPreview';
 import type {SourceSnapshot} from '../../../functions/src/domain/socialV1';
 export interface PrivateGameplayPreview {
   version:'AOF_INT_C1_PRIVATE_PREVIEW_1';visibility:'OWNER_ONLY';ownerPlayerId:string;inputDigest:string;
