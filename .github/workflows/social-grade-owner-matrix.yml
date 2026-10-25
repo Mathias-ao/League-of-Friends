@@ -1,0 +1,30 @@
+name: Social Owner Matrix v0.1 — Inert Policy Integrity
+
+on:
+  pull_request:
+    paths:
+      - "docs/architecture/grade-reputation-metrics-owner-review-v0.1.md"
+      - "docs/architecture/social-v1-metric-grade-candidates-153.md"
+      - "contracts/social-v1/metric-grade-owner-review-v0.1.json"
+      - "contracts/social-v1/metric-grade-owner-review-v0.1.schema.json"
+      - "contracts/social-v1/metric-grade-policy-proposal-v1.json"
+      - "replay-tools/tests/test_social_grade_owner_proposal_v0_1.py"
+      - ".github/workflows/social-grade-owner-matrix.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proposal-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing schema validator (no replay parser or deployment)
+        run: python -m pip install jsonschema==4.23.0
+      - name: Verify verbatim source, all mappings and ZERO policy approvals
+        run: python -m unittest discover -s replay-tools/tests -p test_social_grade_owner_proposal_v0_1.py -v
