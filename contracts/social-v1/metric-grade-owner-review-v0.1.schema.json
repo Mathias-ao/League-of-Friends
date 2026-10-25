@@ -1,0 +1,434 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mathias-ao/League-of-Friends/contracts/social-v1/metric-grade-owner-review-v0.1.schema.json",
+  "title": "Owner-supplied grading catalogue v0.1 — PROPOSED ONLY",
+  "description": "Closed, auditable owner-review catalogue; source meaning and Q/c/·/W are NOT source fact admission, numerical weights, or historical effects.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "originIssue",
+    "source",
+    "policyStatus",
+    "approvalRef",
+    "tracks",
+    "independenceRules",
+    "notation",
+    "metricFamilies",
+    "excludedStatistics",
+    "developmentCandidates",
+    "independentWeakening",
+    "ordinalGrades",
+    "unresolvedOwnerDecisions",
+    "explicitNonApprovals",
+    "sourceAndEvidenceRules"
+  ],
+  "properties": {
+    "version": {
+      "const": "AOF_SOC_GRADE_OWNER_REVIEW_CATALOGUE_V0_1"
+    },
+    "originIssue": {
+      "const": "#152"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "sourceLabel",
+        "checkpointQuoted",
+        "verbatimRepositoryPath",
+        "verbatimGitBlobSha",
+        "transcriptionStatus",
+        "ownerConfirmedAsFinalPolicy"
+      ],
+      "properties": {
+        "title": {
+          "const": "Age of Friends — Statistics-to-Social Interpretation Matrix"
+        },
+        "sourceLabel": {
+          "const": "Metric grading owner-review proposal v0.1"
+        },
+        "checkpointQuoted": {
+          "const": "e453d40c147ad488f3bfd369e54eba82b29c43b5"
+        },
+        "verbatimRepositoryPath": {
+          "const": "docs/architecture/grade-reputation-metrics-owner-review-v0.1.md"
+        },
+        "verbatimGitBlobSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "transcriptionStatus": {
+          "const": "SUPPLIED_OWNER_REVIEW_PROPOSAL_NOT_FINAL_APPROVAL"
+        },
+        "ownerConfirmedAsFinalPolicy": {
+          "const": false
+        }
+      }
+    },
+    "policyStatus": {
+      "const": "PROPOSED_UNAPPROVED"
+    },
+    "approvalRef": {
+      "const": null
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "track",
+          "system",
+          "definition",
+          "approvalStatus"
+        ],
+        "properties": {
+          "track": {
+            "enum": [
+              "GALLANTRY",
+              "CRUELTY",
+              "CHIVALRY",
+              "RIVALRY",
+              "HOSTILITY",
+              "BOND"
+            ]
+          },
+          "system": {
+            "enum": [
+              "REPUTATION",
+              "RELATIONSHIP"
+            ]
+          },
+          "definition": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvalStatus": {
+            "const": "PROPOSED_UNAPPROVED"
+          }
+        }
+      }
+    },
+    "independenceRules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "notation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Q",
+        "c",
+        "·",
+        "W"
+      ],
+      "properties": {
+        "Q": {
+          "type": "string",
+          "minLength": 1
+        },
+        "c": {
+          "type": "string",
+          "minLength": 1
+        },
+        "·": {
+          "type": "string",
+          "minLength": 1
+        },
+        "W": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "metricFamilies": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rowId",
+          "sourceMetricOrEpisodeFamily",
+          "notation",
+          "qualificationContext",
+          "sourceMetricDefinitionId",
+          "sourceMethodVersion",
+          "methodSpecificCoverageApproval",
+          "ownerSelectionStatus"
+        ],
+        "properties": {
+          "rowId": {
+            "type": "string",
+            "pattern": "^OWNER_V0_1_M\\d{2}$"
+          },
+          "sourceMetricOrEpisodeFamily": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "GALLANTRY",
+              "CRUELTY",
+              "CHIVALRY",
+              "RIVALRY",
+              "HOSTILITY",
+              "BOND"
+            ],
+            "properties": {
+              "GALLANTRY": {
+                "enum": [
+                  "Q",
+                  "c",
+                  "·",
+                  "W"
+                ]
+              },
+              "CRUELTY": {
+                "enum": [
+                  "Q",
+                  "c",
+                  "·",
+                  "W"
+                ]
+              },
+              "CHIVALRY": {
+                "enum": [
+                  "Q",
+                  "c",
+                  "·",
+                  "W"
+                ]
+              },
+              "RIVALRY": {
+                "enum": [
+                  "Q",
+                  "c",
+                  "·",
+                  "W"
+                ]
+              },
+              "HOSTILITY": {
+                "enum": [
+                  "Q",
+                  "c",
+                  "·",
+                  "W"
+                ]
+              },
+              "BOND": {
+                "enum": [
+                  "Q",
+                  "c",
+                  "·",
+                  "W"
+                ]
+              }
+            }
+          },
+          "qualificationContext": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceMetricDefinitionId": {
+            "const": null
+          },
+          "sourceMethodVersion": {
+            "const": null
+          },
+          "methodSpecificCoverageApproval": {
+            "const": null
+          },
+          "ownerSelectionStatus": {
+            "const": "PROPOSED_UNAPPROVED"
+          }
+        }
+      }
+    },
+    "excludedStatistics": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rowId",
+          "existingAofStatistic",
+          "interpretationRole",
+          "directSixTrackAward"
+        ],
+        "properties": {
+          "rowId": {
+            "type": "string",
+            "pattern": "^OWNER_V0_1_NO_\\d{2}$"
+          },
+          "existingAofStatistic": {
+            "type": "string",
+            "minLength": 1
+          },
+          "interpretationRole": {
+            "type": "string",
+            "minLength": 1
+          },
+          "directSixTrackAward": {
+            "const": "No"
+          }
+        }
+      }
+    },
+    "developmentCandidates": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rowId",
+          "candidate",
+          "reuseAofEvidence",
+          "potentialSocialUse",
+          "priorityAndLimitations",
+          "approvalStatus"
+        ],
+        "properties": {
+          "rowId": {
+            "type": "string",
+            "pattern": "^OWNER_V0_1_DEV_\\d{2}$"
+          },
+          "candidate": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reuseAofEvidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "potentialSocialUse": {
+            "type": "string",
+            "minLength": 1
+          },
+          "priorityAndLimitations": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvalStatus": {
+            "const": "PROPOSED_NOT_AUTHORIZED"
+          }
+        }
+      }
+    },
+    "independentWeakening": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rowId",
+          "trackToWeaken",
+          "proposedQualifyingAction",
+          "falsePositiveGuardAndLikelyV1Status",
+          "approvalStatus"
+        ],
+        "properties": {
+          "rowId": {
+            "type": "string",
+            "pattern": "^OWNER_V0_1_WEAK_\\d{2}$"
+          },
+          "trackToWeaken": {
+            "type": "string",
+            "minLength": 1
+          },
+          "proposedQualifyingAction": {
+            "type": "string",
+            "minLength": 1
+          },
+          "falsePositiveGuardAndLikelyV1Status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvalStatus": {
+            "const": "PROPOSED_UNAPPROVED"
+          }
+        }
+      }
+    },
+    "ordinalGrades": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "meaning",
+          "approvalStatus",
+          "numericValue",
+          "significanceBandId"
+        ],
+        "properties": {
+          "label": {
+            "enum": [
+              "\"+\"",
+              "\"++\"",
+              "\"−\"",
+              "\"−−\"",
+              "\"0\"",
+              "\"?\""
+            ]
+          },
+          "meaning": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvalStatus": {
+            "const": "PROPOSED_UNAPPROVED"
+          },
+          "numericValue": {
+            "const": null
+          },
+          "significanceBandId": {
+            "const": null
+          }
+        }
+      }
+    },
+    "unresolvedOwnerDecisions": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "explicitNonApprovals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sourceAndEvidenceRules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
