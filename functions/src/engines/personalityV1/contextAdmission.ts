@@ -97,6 +97,7 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const trust=source.contract==='AOF_SOCIAL_V1_SHARED_1'&&SHA.test(source.sourceHash)&&
     SHA.test(source.authorityRevision)&&SHA.test(source.mappingDigest)&&
     source.matchId===source.battleId&&name(source.matchId)&&
+    safe(game.gameNumber)&&game.gameNumber>=1&&
     source.outcome?.qualification==='OFFICIAL'&&name(source.gameId)&&
     (game.id===undefined||game.id===source.gameId)&&
     (game.matchId===undefined||game.matchId===source.matchId)&&
@@ -106,6 +107,7 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     ids.every(name)&&new Set(ids).size===ids.length&&
     slots.every((x:unknown)=>safe(x)&&x>=1&&x<=8)&&new Set(slots).size===slots.length&&
     gameMembers.length===members.length&&
+    new Set(gameMembers.map((p:Bag)=>p.playerId)).size===members.length&&
     gameMembers.every((p:Bag)=>ids.includes(p.playerId))&&
     obj(facts).modelVersion==='AOF_RECORDING_MATCH_FACTS_V1'&&
     facts.identityNamespace==='CANONICAL_REPLAY_PLAYER_ID'&&
