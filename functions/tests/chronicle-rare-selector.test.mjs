@@ -23,6 +23,8 @@ const fake=(overrides={})=>({
  family:'ASSISTANCE',qualifierMethod:'test-only-executed-aid',
  qualification:'ADMITTED',significance:'REVIEWED_TURNING_POINT',
  sourceEvidenceRefs:['original-event-1'],independentEpisodeKey:'episode-1',
+ historicalContext:{historyComplete:true,priorBattleIds:['previous-battle-1'],
+   sourceEvidenceRefs:['verified-prior-history']},
  substantiveAssistanceVerified:true,...overrides
 });
 const choose=(candidates,changes={})=>selectRareChronicleProposals({
@@ -158,4 +160,31 @@ test('conflicting POVs for the same episode never select an arbitrary family or 
  assert.deepEqual(choose([conflict,first]),[]);
  assert.equal(choose([first,{...first,gameId:'g2',sourceAuthority:b}]).length,1,
   'same verified original incident on two current Games is deduplicated');
+});
+
+test('reviewed significance cannot borrow future, same-Battle, unknown or missing prior history',()=>{
+ const original=fake();
+ for(const historicalContext of [
+  undefined,
+  {historyComplete:false,priorBattleIds:['previous-battle'],sourceEvidenceRefs:['prior-record']},
+  {historyComplete:true,priorBattleIds:['battle-1'],sourceEvidenceRefs:['prior-record']},
+  {historyComplete:true,priorBattleIds:['previous-battle'],sourceEvidenceRefs:[]},
+  {historyComplete:true,priorBattleIds:['previous-battle','previous-battle'],sourceEvidenceRefs:['prior-record']}
+ ])assert.deepEqual(choose([{...original,historicalContext}]),[]);
+ const exceptional=fake({significance:'EXCEPTIONAL',historicalContext:undefined});
+ assert.equal(choose([exceptional]).length,1,'truly independently exceptional evidence needs no fabricated prior relationship');
+});
+
+test('rare verified 1v1 and FFA respondent directions remain optional and do not depend on player count',()=>{
+ const duel={...battle,playerIds:['a','b']};
+ const veryRare=fake({significance:'EXCEPTIONAL',historicalContext:undefined});
+ assert.equal(choose([veryRare],{battle:duel}).length,1);
+ const ffa={...battle,playerIds:['a','b','c','d'],currentGames:[battle.currentGames[0]]};
+ const pairSpecific=fake({family:'SITUATED_GRIEVANCE',qualifierMethod:'test-only-grievance',
+   situatedConductVerified:true,respondentPlayerId:'c',counterpartPlayerId:'d',
+   gameId:'g1',sourceAuthority:a});
+ const chosen=choose([pairSpecific],{battle:ffa});
+ assert.equal(chosen.length,1);
+ assert.equal(chosen[0].respondentPlayerId,'c');
+ assert.equal(chosen[0].counterpartPlayerId,'d');
 });
