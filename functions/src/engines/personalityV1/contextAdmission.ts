@@ -89,6 +89,9 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const {source,statistics,match,game}=input;
   const facts=obj(statistics.matchFacts),rules=obj(facts.rules),factGame=obj(facts.game);
   const factSource=obj(facts.source),factMap=obj(facts.map);
+  // An older/incomplete artifact may have no matchFacts.players at all.
+  // Never inspect its roster via .filter/.every unless it is an array.
+  const factPlayers:Bag[]=Array.isArray(facts.players)?facts.players:[];
   const header=obj(facts.headerFieldCandidates);
   const agrees=(canonical:unknown,candidate:unknown)=>candidate===null||candidate===undefined||candidate===canonical;
   const members=Array.isArray(source.roster)?source.roster:[];
@@ -112,8 +115,9 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     obj(facts).modelVersion==='AOF_RECORDING_MATCH_FACTS_V1'&&
     facts.identityNamespace==='CANONICAL_REPLAY_PLAYER_ID'&&
     factSource.replaySha256===source.sourceHash&&
-    Array.isArray(facts.players)&&facts.players.length===members.length&&
-    members.every((r:Bag)=>facts.players.some((p:Bag)=>p.playerId===r.replaySlot&&p.replaySlot===r.replaySlot));
+    factPlayers.length===members.length&&
+    members.every((r:Bag)=>factPlayers.some((p:Bag)=>
+      obj(p).playerId===r.replaySlot&&obj(p).replaySlot===r.replaySlot));
   const format:AdmissionField<Format>=pending('MODE_NOT_ADMITTED');
   if(trust&&match.opponentKind==='HUMAN'){
     const ff=match.format;
@@ -138,9 +142,9 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const replayBuild=safe(factSource.gameBuild)&&factSource.gameBuild>0&&
     agrees(factSource.gameBuild,header['de.build'])?factSource.gameBuild:null;
   const civEntries=trust&&replayBuild!==null&&
-    facts.players.every((p:Bag)=>safe(obj(p.civilization).rawId)&&p.civilization.rawId>0);
-  const civRoster=members.length?facts.players.filter((p:Bag)=>
-    members.some((r:Bag)=>r.replaySlot===p.replaySlot)):[];
+    factPlayers.every((p:Bag)=>safe(obj(obj(p).civilization).rawId)&&obj(obj(p).civilization).rawId>0);
+  const civRoster=members.length?factPlayers.filter((p:Bag)=>
+    members.some((r:Bag)=>r.replaySlot===obj(p).replaySlot)):[];
   const civ= civEntries&&civRoster.length===members.length?civRoster.map((p:Bag)=>
     [p.replaySlot,p.civilization.rawId]):null;
   // GameContext is participant-specific. Return the compatible raw civ for
