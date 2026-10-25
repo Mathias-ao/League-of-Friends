@@ -183,7 +183,7 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const missing=missingOf(fields);
   const context=missing.length===0?{
     format:format.value!,mapFamily:mapFamily.value!,startFamily:startFamily.value!,
-    mapId:mapId.value!,civilization:civilization.value!,
+    mapId:mapId.value!,durationFamily:durationFamily.value!,civilization:civilization.value!,
     civilizationOpportunityKey:civilizationOpportunityKey.value!,
     observedUntilMs:observedUntilMs.value!,durationMs:durationMs.value!,
     dynamicDiplomacyQualified:dynamicDiplomacyQualified.value!,
