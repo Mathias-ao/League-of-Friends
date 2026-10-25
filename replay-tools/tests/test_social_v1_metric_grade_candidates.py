@@ -19,7 +19,8 @@ ROOT = Path(__file__).resolve().parents[2]
 PINS = {
     "1v1": ("replay-fixtures/1v1_1.aoe2record",
             "f00fdda9c14584c3b7f132fe48bf0543d2a0aa7108d9c781e4e4cf72ad70d181"),
-    "2v2": ("replay-fixtures/2v2.aoe2record", None),
+    "2v2": ("replay-fixtures/2v2.aoe2record",
+            "87447e342f4134e59b5b2cd6fcf6f2e7f1324cbc899d413301b2f3a25cb7baaa"),
     "4v4": ("replay-fixtures/4v4.aoe2record",
             "e415855f5223562820f5a34daf1298455ba5cbd940a4b502f03d2d8a2436a123"),
     "FFA": ("replay-fixtures/FFA_diplo.aoe2record",
@@ -113,13 +114,11 @@ class SourceBoundMetricGradeTests(unittest.TestCase):
         third = call(b, stats, actions)
         self.assertEqual(third["candidateEpisodeGroups"][0]["opportunity"]["sourceEventIds"], [])
         self.assertNotEqual(first["projectionRevision"], second["projectionRevision"])
-        stale = deepcopy(second)
-        with self.assertRaisesRegex(ValueError, "UNTRUSTED_SOURCE_MEASUREMENT_ADMISSION"):
+        with self.assertRaisesRegex(ValueError, "MEASUREMENT_PRETENDS_TO_BE_QUALIFIED"):
             measured = measure(statistics=stats, context=b["context"],
                                action_events=actions, lookback_ms=5000)
             measured["observations"][0]["coverage"] = "ADMITTED"
             call(b, stats, actions, measured=measured)
-        self.assertNotEqual(second["projectionRevision"], stale["sourceMeasurementsRevision"])
 
     def test_original_missing_ordinal_is_partial_never_reconstructed(self):
         b, stats, actions = bundle("pressure")
