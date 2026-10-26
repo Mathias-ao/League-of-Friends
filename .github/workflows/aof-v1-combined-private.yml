@@ -58,12 +58,18 @@ jobs:
           done
           echo "AOF_NATIVE_CORPUS=$RUNNER_TEMP/aof-v1-corpus" >> "$GITHUB_ENV"
           echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')" >> "$GITHUB_ENV"
-      - name: Same demo Firestore Storage and worker — source grades, Personality, factual Chronicle and rare response
+      - name: Isolated current-source multiuser progression and ordinary upload parity
         run: |
           python replay-tools/upload_worker.py > "$RUNNER_TEMP/aof-v1-worker.log" 2>&1 &
           worker_pid=$!
           trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
-          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/int-c2b-progression-emulator.mjs && node functions/tests/chronicle-v1e-auth-emulator.mjs && node functions/tests/aof-v1-combined-private-read.mjs"
+          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/int-c2b-progression-emulator.mjs"
+      - name: Isolated genuine two-Game Chronicle interaction and same-owner four-system read
+        run: |
+          python replay-tools/upload_worker.py > "$RUNNER_TEMP/aof-v1-chronicle-worker.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/chronicle-v1e-auth-emulator.mjs && node functions/tests/aof-v1-combined-private-read.mjs"
       - name: Browser component and privacy regression tests
         run: npm test --prefix web
       - name: Native statistics unchanged for every authentic replay
