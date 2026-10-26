@@ -145,6 +145,15 @@ assert.equal((await offerChronicleInvitation.run(req(otherUid,{battleId}))).offe
 assert.equal((await slot.collection('judgments').get()).size,2);
 assert.equal((await db.collection('leaguePointLedger').get()).size,0);
 assert.equal((await db.collection('goldLedger').get()).size,0);
+// Canonical schedule mutation invalidates the invitation even if every
+// recording and its completion time are unchanged.
+const approvedEvent=(await event.get()).data();
+await event.update({startsAt:Timestamp.fromMillis(3000)});
+assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,false);
+await assert.rejects(act(uid,{requestId:'stale-approved-schedule',action:'CORRECTION_REQUEST',
+  expectedRevision:6,reason:'Approved Event schedule was changed after the response.'}),e=>e.code==='aborted');
+await event.set(approvedEvent);
+assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,true);
 // Sibling Game source/statistics revision invalidates the pair×Battle invitation
 // even when the selected g1 recording and rare incident have not changed.
 // This genuine READY g2 has no canonicalResult object; never fabricate one.
