@@ -1,0 +1,377 @@
+{
+  "version": "AOF_SOC_V1E_BOUNDED_GRADE_METHODS_1",
+  "policy": {
+    "version": "AOF_SOC_V1E_PILOT_TUNING_1",
+    "status": "PROPOSED_EMULATOR_ONLY",
+    "minOriginalCommands": 2,
+    "maxPreentryMs": 90000,
+    "gradeLabels": {
+      "ordinary": "ORDINARY",
+      "substantial": null
+    },
+    "approvalRef": null
+  },
+  "privatePilot": true,
+  "sourceMethodRegistry": {
+    "RIVALRY": {
+      "methodVersion": "AOF_SV1E_PAIR_RAID_ENGAGEMENT_CONTEST_1",
+      "ruleId": "E2E_PAIR_CONTEST",
+      "familyId": "PAIR_CONTEST",
+      "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+      "metricIds": [
+        "AOF_ORIGINAL_ECONOMIC_PRESSURE_REQUEST_COUNT_V1",
+        "AOF_ORIGINAL_TARGET_REQUEST_COUNT_V1"
+      ],
+      "independentContext": [
+        "AOF_RAID_DETECTION_V3",
+        "SKIRMISH_OR_TECHNICAL_BATTLE"
+      ]
+    },
+    "BOND": {
+      "methodVersion": "AOF_SV1E_THREAT_LINKED_DIRECTED_HELP_1",
+      "ruleId": "E2E_DIRECTED_HELP",
+      "familyId": "DIRECTED_HELP",
+      "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+      "metricIds": [
+        "AOF_ORIGINAL_DEFENSE_REQUEST_COUNT_V1",
+        "AOF_ORIGINAL_REINFORCEMENT_REQUEST_COUNT_V1"
+      ],
+      "independentContext": [
+        "EXACT_HELPER_TO_BENEFICIARY_DETECTOR",
+        "INDEPENDENT_THIRD_PARTY_PREENTRY_RAID_THREAT"
+      ]
+    },
+    "CHIVALRY": {
+      "methodVersion": "AOF_SV1E_NOTEWORTHY_THREAT_PROTECTION_1",
+      "ruleId": "E2E_NOTEWORTHY_DIRECTED_PROTECTION",
+      "familyId": "NOTEWORTHY_DIRECTED_PROTECTION",
+      "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+      "metricIds": [
+        "AOF_ORIGINAL_DEFENSE_REQUEST_COUNT_V1",
+        "AOF_ORIGINAL_REINFORCEMENT_REQUEST_COUNT_V1"
+      ],
+      "independentContext": [
+        "EXACT_DEFENSIVE_ASSIST",
+        "MULTIPLE_PRIOR_THIRD_PARTY_THREAT_COMMANDS"
+      ]
+    },
+    "GALLANTRY": {
+      "methodVersion": "AOF_SV1E_CHALLENGED_RETURN_PRESSURE_1",
+      "ruleId": "E2E_DARING_OFFENSE",
+      "familyId": "DARING_OFFENSE",
+      "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+      "metricIds": [
+        "AOF_ORIGINAL_ECONOMIC_PRESSURE_REQUEST_COUNT_V1",
+        "AOF_ORIGINAL_TARGET_REQUEST_COUNT_V1"
+      ],
+      "independentContext": [
+        "OWN_DIRECTED_RAID_AND_ENGAGEMENT",
+        "PREENTRY_TARGET_TO_ACTOR_RAID_CHALLENGE"
+      ]
+    },
+    "CRUELTY": {
+      "methodVersion": "AOF_SV1E_PREENTRY_DISADVANTAGE_PRESSURE_PENDING_1",
+      "ruleId": "E2E_PREEXISTING_VULNERABILITY_PRESSURE",
+      "familyId": "PREEXISTING_VULNERABILITY_PRESSURE",
+      "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+      "metricIds": [
+        "AOF_ORIGINAL_ECONOMIC_PRESSURE_REQUEST_COUNT_V1"
+      ],
+      "independentContext": [
+        "INDEPENDENT_PREENTRY_TARGET_DISADVANTAGE_UNAVAILABLE"
+      ]
+    },
+    "HOSTILITY": {
+      "methodVersion": "AOF_SV1E_SELECTIVE_ANTAGONISM_PENDING_1",
+      "ruleId": "E2E_DISTINCT_RUPTURE_ANTAGONISM",
+      "familyId": "DISTINCT_RUPTURE_ANTAGONISM",
+      "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+      "metricIds": [
+        "AOF_ORIGINAL_ECONOMIC_PRESSURE_REQUEST_COUNT_V1",
+        "AOF_ORIGINAL_TARGET_REQUEST_COUNT_V1"
+      ],
+      "independentContext": [
+        "AUTHENTIC_HISTORICAL_SELECTIVITY_OR_EFFECTIVE_RUPTURE_UNAVAILABLE"
+      ]
+    }
+  },
+  "originalProducerVersion": "AOF_SOCIAL_METRIC_GRADE_CANDIDATES_1",
+  "producerProjectionRevision": "c4ce09145b8cb3723c3f2371de8bd312934ca5be998a5e5f7e6d2a899f6b5906",
+  "sourceRevision": {
+    "replaySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "recordedEventsSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "recordedEventsVersion": "AOF_RECORDED_EVENTS_V1",
+    "parserVersion": "synthetic"
+  },
+  "sourceContextRevision": "8d512dd26d71fe524d3bcc3c67e62477e6e8e4e5c67986500f7b77b1e23449ce",
+  "sourceMeasurementsRevision": "79b9141e890819db4b65d13b937f81e2b94cc61dfca0fb74905ca09fd1b1aa59",
+  "gameScope": {
+    "battleId": "match-1",
+    "gameId": "game-1",
+    "gameGuid": "guid-test",
+    "authorityRevision": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "gameScopeAuthenticated": false,
+  "episodes": [
+    {
+      "sourceCandidateId": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+      "sourceIndependentContributionKey": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+      "gameScope": {
+        "battleId": "match-1",
+        "gameId": "game-1",
+        "gameGuid": "guid-test",
+        "authorityRevision": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      "sourceRevision": {
+        "replaySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "recordedEventsSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "recordedEventsVersion": "AOF_RECORDED_EVENTS_V1",
+        "parserVersion": "synthetic"
+      },
+      "sourceContextRevision": "8d512dd26d71fe524d3bcc3c67e62477e6e8e4e5c67986500f7b77b1e23449ce",
+      "sourceMeasurementsRevision": "79b9141e890819db4b65d13b937f81e2b94cc61dfca0fb74905ca09fd1b1aa59",
+      "actorReplayPlayerId": 1,
+      "counterpartReplayPlayerId": 2,
+      "sourceDeedIds": [
+        "deed-X",
+        "deed-late"
+      ],
+      "sourceEventIds": [
+        "cmd1",
+        "late-cmd"
+      ],
+      "sourcePosition": {
+        "recordingAtMs": 11000,
+        "operationOrdinal": 10,
+        "order": "ORDERED"
+      },
+      "perTrackGrades": [
+        {
+          "track": "RIVALRY",
+          "system": "RELATIONSHIP",
+          "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+          "methodVersion": "AOF_SV1E_PAIR_RAID_ENGAGEMENT_CONTEST_1",
+          "familyId": "PAIR_CONTEST",
+          "pilotRuleId": "E2E_PAIR_CONTEST",
+          "actorReplayPlayerId": 1,
+          "counterpartReplayPlayerId": 2,
+          "decision": "SOURCE_ADMITTED",
+          "gradeBandId": "ORDINARY",
+          "sourceCoverage": "LIMITED",
+          "methodCoverage": "ADMITTED",
+          "materialMeaning": "SOURCE_LINKED_BOUNDED_INFERRED_COMMITMENT_NOT_DAMAGE_OR_AID_RECEIPT",
+          "sourceEventIds": [
+            "cmd1",
+            "late-cmd"
+          ],
+          "corroboration": [
+            {
+              "kind": "RAID_TARGET",
+              "sourceDetectorId": "test-detector",
+              "sourceEventIds": [
+                "cmd1",
+                "late-cmd"
+              ]
+            }
+          ],
+          "missingEvidence": [],
+          "independentContributionKey": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+          "canonicalContributionKey": null,
+          "originalPosition": {
+            "recordingAtMs": 11000,
+            "operationOrdinal": 10,
+            "order": "ORDERED"
+          },
+          "reasonCodes": [
+            "EXPLICIT_SYNTHETIC_ADAPTER_TEST_ONLY"
+          ]
+        },
+        {
+          "track": "BOND",
+          "system": "RELATIONSHIP",
+          "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+          "methodVersion": "AOF_SV1E_THREAT_LINKED_DIRECTED_HELP_1",
+          "familyId": "DIRECTED_HELP",
+          "pilotRuleId": "E2E_DIRECTED_HELP",
+          "actorReplayPlayerId": 1,
+          "counterpartReplayPlayerId": 2,
+          "decision": "PENDING",
+          "gradeBandId": null,
+          "sourceCoverage": "LIMITED",
+          "methodCoverage": "PENDING",
+          "materialMeaning": null,
+          "sourceEventIds": [
+            "cmd1",
+            "late-cmd"
+          ],
+          "corroboration": [],
+          "missingEvidence": [
+            "SYNTHETIC_METHOD_PENDING"
+          ],
+          "independentContributionKey": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+          "canonicalContributionKey": null,
+          "originalPosition": {
+            "recordingAtMs": 11000,
+            "operationOrdinal": 10,
+            "order": "ORDERED"
+          },
+          "reasonCodes": [
+            "EXPLICIT_SYNTHETIC_ADAPTER_TEST_ONLY"
+          ]
+        },
+        {
+          "track": "CHIVALRY",
+          "system": "REPUTATION",
+          "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+          "methodVersion": "AOF_SV1E_NOTEWORTHY_THREAT_PROTECTION_1",
+          "familyId": "NOTEWORTHY_DIRECTED_PROTECTION",
+          "pilotRuleId": "E2E_NOTEWORTHY_DIRECTED_PROTECTION",
+          "actorReplayPlayerId": 1,
+          "counterpartReplayPlayerId": 2,
+          "decision": "PENDING",
+          "gradeBandId": null,
+          "sourceCoverage": "LIMITED",
+          "methodCoverage": "PENDING",
+          "materialMeaning": null,
+          "sourceEventIds": [
+            "cmd1",
+            "late-cmd"
+          ],
+          "corroboration": [],
+          "missingEvidence": [
+            "SYNTHETIC_METHOD_PENDING"
+          ],
+          "independentContributionKey": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+          "canonicalContributionKey": null,
+          "originalPosition": {
+            "recordingAtMs": 11000,
+            "operationOrdinal": 10,
+            "order": "ORDERED"
+          },
+          "reasonCodes": [
+            "EXPLICIT_SYNTHETIC_ADAPTER_TEST_ONLY"
+          ]
+        },
+        {
+          "track": "GALLANTRY",
+          "system": "REPUTATION",
+          "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+          "methodVersion": "AOF_SV1E_CHALLENGED_RETURN_PRESSURE_1",
+          "familyId": "DARING_OFFENSE",
+          "pilotRuleId": "E2E_DARING_OFFENSE",
+          "actorReplayPlayerId": 1,
+          "counterpartReplayPlayerId": 2,
+          "decision": "PENDING",
+          "gradeBandId": null,
+          "sourceCoverage": "LIMITED",
+          "methodCoverage": "PENDING",
+          "materialMeaning": null,
+          "sourceEventIds": [
+            "cmd1",
+            "late-cmd"
+          ],
+          "corroboration": [],
+          "missingEvidence": [
+            "SYNTHETIC_METHOD_PENDING"
+          ],
+          "independentContributionKey": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+          "canonicalContributionKey": null,
+          "originalPosition": {
+            "recordingAtMs": 11000,
+            "operationOrdinal": 10,
+            "order": "ORDERED"
+          },
+          "reasonCodes": [
+            "EXPLICIT_SYNTHETIC_ADAPTER_TEST_ONLY"
+          ]
+        },
+        {
+          "track": "CRUELTY",
+          "system": "REPUTATION",
+          "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+          "methodVersion": "AOF_SV1E_PREENTRY_DISADVANTAGE_PRESSURE_PENDING_1",
+          "familyId": "PREEXISTING_VULNERABILITY_PRESSURE",
+          "pilotRuleId": "E2E_PREEXISTING_VULNERABILITY_PRESSURE",
+          "actorReplayPlayerId": 1,
+          "counterpartReplayPlayerId": 2,
+          "decision": "PENDING",
+          "gradeBandId": null,
+          "sourceCoverage": "LIMITED",
+          "methodCoverage": "PENDING",
+          "materialMeaning": null,
+          "sourceEventIds": [
+            "cmd1",
+            "late-cmd"
+          ],
+          "corroboration": [],
+          "missingEvidence": [
+            "SYNTHETIC_METHOD_PENDING"
+          ],
+          "independentContributionKey": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+          "canonicalContributionKey": null,
+          "originalPosition": {
+            "recordingAtMs": 11000,
+            "operationOrdinal": 10,
+            "order": "ORDERED"
+          },
+          "reasonCodes": [
+            "EXPLICIT_SYNTHETIC_ADAPTER_TEST_ONLY"
+          ]
+        },
+        {
+          "track": "HOSTILITY",
+          "system": "RELATIONSHIP",
+          "sourceMethodVersion": "AOF_SOCIAL_SOURCE_EPISODE_COMMANDS_1",
+          "methodVersion": "AOF_SV1E_SELECTIVE_ANTAGONISM_PENDING_1",
+          "familyId": "DISTINCT_RUPTURE_ANTAGONISM",
+          "pilotRuleId": "E2E_DISTINCT_RUPTURE_ANTAGONISM",
+          "actorReplayPlayerId": 1,
+          "counterpartReplayPlayerId": 2,
+          "decision": "PENDING",
+          "gradeBandId": null,
+          "sourceCoverage": "LIMITED",
+          "methodCoverage": "PENDING",
+          "materialMeaning": null,
+          "sourceEventIds": [
+            "cmd1",
+            "late-cmd"
+          ],
+          "corroboration": [],
+          "missingEvidence": [
+            "SYNTHETIC_METHOD_PENDING"
+          ],
+          "independentContributionKey": "metric-episode-46e08627bdc75136d420ed83a0119b75f37c7b3a3a306054e5ea70a2fbb27d75",
+          "canonicalContributionKey": null,
+          "originalPosition": {
+            "recordingAtMs": 11000,
+            "operationOrdinal": 10,
+            "order": "ORDERED"
+          },
+          "reasonCodes": [
+            "EXPLICIT_SYNTHETIC_ADAPTER_TEST_ONLY"
+          ]
+        }
+      ],
+      "eligibleSourceMethods": [
+        "AOF_SV1E_PAIR_RAID_ENGAGEMENT_CONTEST_1"
+      ],
+      "overlapRule": "ONE_SOURCE_CONNECTED_EPISODE_PER_DIRECTION_PER_TRACK",
+      "originalSourceCoverage": "LIMITED",
+      "currentGameAuthorityVerified": false,
+      "canonicalClaim": null,
+      "canonicalContributionKey": null
+    }
+  ],
+  "sourceAdmittedCount": 1,
+  "publicationAllowed": false,
+  "officialWrites": false,
+  "claims": [],
+  "effects": [],
+  "actorWitnesses": [],
+  "receipts": [],
+  "noAutomaticHistoricalImport": true,
+  "limitations": [
+    "SYNTHETIC_TEST_ONLY"
+  ],
+  "projectionRevision": "46e2083d87ac1bd88abc07e7acaf4ec25d158bfcc992a9787fbb71fb9bb48aaf"
+}

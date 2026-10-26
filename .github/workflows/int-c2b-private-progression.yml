@@ -1,0 +1,74 @@
+name: INT-C2B genuine private progression
+on:
+  pull_request:
+    paths: ['functions/**','web/**','contracts/social-v1/**','replay-tools/**','.github/workflows/int-c2b-private-progression.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-multiuser-progression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      FIREBASE_CLI_DISABLE_USAGE_REPORTING: 'true'
+      FUNCTIONS_EMULATOR: 'true'
+      GCLOUD_PROJECT: demo-aof-native-player
+      REPLAY_BUCKET: demo-aof-native-player.appspot.com
+      REPLAY_WORKER_URL: http://127.0.0.1:18765
+      REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-intc2b-test
+      AOF_REPLAY_WORKER_AUTH_TOKEN: ephemeral-local-intc2b-test
+      AOF_REPLAY_WORKER_BIND: 127.0.0.1
+      AOF_REPLAY_WORKER_PORT: '18765'
+      AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
+      AOF_SOCIAL_E2E_ENDPOINT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build accepted engines and integration
+        run: |
+          pip install -r replay-tools/requirements.txt
+          npm ci --prefix functions
+          npm ci --prefix web
+          npm run build --prefix functions
+      - name: Prepare five genuine originals in four formats
+        run: |
+          mkdir -p "$RUNNER_TEMP/c2b-corpus"
+          for fixture in 1v1_t90-deak 1v1_t90-dobb 2v2_arabia 4v4_arabia FFA_7; do
+            cp ".fixture-corpus/replay-fixtures/build-185872/$fixture.aoe2record" "$RUNNER_TEMP/c2b-corpus/"
+            cp ".fixture-corpus/replay-fixtures/build-185872/townbell_build-185872/$fixture.json" "$RUNNER_TEMP/c2b-corpus/"
+          done
+          echo "AOF_NATIVE_CORPUS=$RUNNER_TEMP/c2b-corpus" >> "$GITHUB_ENV"
+          echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision;print(native_processor_revision())')" >> "$GITHUB_ENV"
+      - name: Authenticate ordinary AUTO to corrected private #139 simulation
+        run: |
+          python replay-tools/upload_worker.py > "$RUNNER_TEMP/c2b-worker.log" 2>&1 &
+          c2b_worker_pid=$!
+          trap 'kill "$c2b_worker_pid" 2>/dev/null || true' EXIT
+          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/int-c2b-progression-emulator.mjs"
+      - name: Ordinary native statistics remain equivalent
+        run: |
+          for fixture in 1v1_t90-deak 1v1_t90-dobb 2v2_arabia 4v4_arabia FFA_7; do
+            python replay-tools/verify_native_package.py --source "$AOF_NATIVE_CORPUS/$fixture.aoe2record" --package ".replay-lab/native-player/$fixture" --report ".replay-lab/social-e2e/$fixture-equivalence.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-source-admitted-progression
+          path: .replay-lab/social-e2e/*report.json
+          if-no-files-found: ignore
+          retention-days: 14

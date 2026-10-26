@@ -242,6 +242,7 @@ export interface LeagueRepository {
   myPrivateChronicle?():Promise<PlayerChronicleResponse>;
   myPersonalityHistory?():Promise<import('./privateHistory').PrivatePersonalityHistory>;
   myGameplayPreview?():Promise<import('./gameplayPreview').PrivateGameplayPreview>;
+  mySocialProgression?():Promise<import('./privateProgression').PrivateProgression>;
   myGameplayCandidates?():Promise<import('./gameplayPreview').PrivateGameplayCandidates>;
   playerChronicle?():Promise<PlayerChronicleResponse>;
   socialHistory?():Promise<SocialHistoryResponse>;

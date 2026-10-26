@@ -184,6 +184,13 @@ class Handler(BaseHTTPRequestHandler):
             if not hmac.compare_digest(supplied, "Bearer " + expected_token):
                 self._json(401, {"error": "unauthorized"})
                 return
+        progression_route = self.path == "/social-e2e-progression-v1"
+        if progression_route:
+            project = os.environ.get("GCLOUD_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT") or ""
+            if (os.environ.get("AOF_SOCIAL_E2E_ENDPOINT") != "1" or not expected_token or
+                os.environ.get("FUNCTIONS_EMULATOR") != "true" or not project.startswith("demo-")):
+                self._json(404, {"error":"not_found"})
+                return
         grade_route = self.path == "/social-grade-preview-v1"
         candidates_route = self.path == "/social-grade-candidates-preview-v1"
         if grade_route or candidates_route:
@@ -208,7 +215,7 @@ class Handler(BaseHTTPRequestHandler):
             if not expected_token:
                 self._json(503, {"error": "native_auth_not_configured"})
                 return
-        elif not social_route and not grade_route and not candidates_route and self.path != "/process":
+        elif not social_route and not grade_route and not candidates_route and not progression_route and self.path != "/process":
             self._json(404, {"error": "not_found"})
             return
 
@@ -245,7 +252,10 @@ class Handler(BaseHTTPRequestHandler):
         try:
             request = json.loads(self.rfile.read(length))
             trace: dict[str, Any] | None = {} if os.environ.get("AOF_REPLAY_WORKER_PERF_TRACE") == "1" else None
-            if candidates_route:
+            if progression_route:
+                from int_c2b_progression import process_progression
+                result = process_progression(request)
+            elif candidates_route:
                 from int_c2a_preview import process_candidates_preview
                 result = process_candidates_preview(request)
             elif grade_route:
