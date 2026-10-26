@@ -1,0 +1,66 @@
+name: CHRON-V1E authenticated invitation emulator
+on:
+  pull_request:
+    paths:
+      - 'functions/**'
+      - 'contracts/social-v1/**'
+      - '.github/workflows/chronicle-v1e-emulator.yml'
+permissions:
+  contents: read
+jobs:
+  chronicle-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      FIREBASE_CLI_DISABLE_USAGE_REPORTING: 'true'
+      FUNCTIONS_EMULATOR: 'true'
+      GCLOUD_PROJECT: demo-aof-native-player
+      REPLAY_BUCKET: demo-aof-native-player.appspot.com
+      REPLAY_WORKER_URL: http://127.0.0.1:18765
+      REPLAY_WORKER_AUTH_TOKEN: ephemeral-chron-local-test
+      AOF_REPLAY_WORKER_AUTH_TOKEN: ephemeral-chron-local-test
+      AOF_REPLAY_WORKER_BIND: 127.0.0.1
+      AOF_REPLAY_WORKER_PORT: '18765'
+      AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
+      AOF_INT_C1_ENDPOINT: '1'
+      AOF_INT_C2A_ENDPOINT: '1'
+      AOF_INT_C2A_ACCEPTANCE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install and build unchanged authentic-source engine
+        run: |
+          pip install -r replay-tools/requirements.txt
+          npm ci --prefix functions
+          npm ci --prefix web
+          npm run build --prefix functions
+      - name: Prepare two pinned original recordings
+        run: |
+          mkdir -p "$RUNNER_TEMP/chron-corpus"
+          for fixture in 1v1_t90-deak 1v1_t90-dobb; do
+            cp ".fixture-corpus/replay-fixtures/build-185872/$fixture.aoe2record" "$RUNNER_TEMP/chron-corpus/"
+            cp ".fixture-corpus/replay-fixtures/build-185872/townbell_build-185872/$fixture.json" "$RUNNER_TEMP/chron-corpus/"
+          done
+          echo "AOF_NATIVE_CORPUS=$RUNNER_TEMP/chron-corpus" >> "$GITHUB_ENV"
+          echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')" >> "$GITHUB_ENV"
+      - name: Authenticated two-Game invitation, privacy, correction and withdrawal
+        run: |
+          python replay-tools/upload_worker.py > "$RUNNER_TEMP/chron-worker.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/chronicle-v1e-auth-emulator.mjs"
