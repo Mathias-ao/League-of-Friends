@@ -1,3 +1,4 @@
+import {composeChronicleC1} from './playerChronicleStorylets.js';
 const rows=value=>Array.isArray(value)?value:[];
 const rec=value=>value&&typeof value==='object'&&!Array.isArray(value)?value:null;
 const text=value=>typeof value==='string'&&value.length>0;
@@ -322,10 +323,14 @@ export function writeBattleNarrative({group,first=false,ownerName,counterpartNam
   const light=reputation?.priority===4?reputation.text:relationship??reputation?.text??null;
   if(light&&!sentences.includes(light))sentences.push(light);
 
+  const authored=composeChronicleC1({
+    group,context,identity,primarySentence:episodeSentence(identity.primary),
+    patternSentence:pattern,sentences,
+  });
   return {
     rubric:identity.rubric,
-    title:identity.title,
-    paragraphs:[sentences.filter(Boolean).slice(0,5).join(' ')],
+    title:authored.title,
+    paragraphs:[authored.sentences.filter(Boolean).slice(0,5).join(' ')],
     narrativeContext:{
       priorFamilyCounts:context?.familyCounts??{},
       priorDirectedFamilyCounts:context?.directedFamilyCounts??{},
