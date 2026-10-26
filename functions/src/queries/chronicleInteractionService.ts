@@ -73,7 +73,7 @@ const visibility=(slot:Bag)=>{
 async function cohort(input:Input){
   const collected=await collectMyCurrentBattleHistory({...input,request:{},maxOwnGames:64,includeScheduleOrder:true});
   const items:Array<{battleId:string;battle:CurrentChronicleBattle;candidates:ReviewedTurningPoint[];
-    match:Bag;orderTuple:[number,number]|null;scheduleRevisions:Array<[string,string]>;ref:any;reviewSnapshots:any[];sources:any[]}> = [];
+    match:Bag;orderTuple:[number,number]|null;scheduleRevisions:Array<{gameId:string;revision:string}>;ref:any;reviewSnapshots:any[];sources:any[]}> = [];
   for(const b of collected.battles){
     const ref=input.db.doc('matches/'+b.battleId),snapshot=await ref.get(),match=snapshot.data();
     if(!match?.participants?.some((p:Bag)=>p.playerId===input.actor.playerId))continue;
@@ -83,8 +83,8 @@ async function cohort(input:Input){
       new Set(orderRows.map(o=>o.gameId)).size===b.gameIds.length;
     const orderTuple:[number,number]|null=ordered?
       [orderRows[0].order!.event,orderRows[0].order!.battle]:null;
-    const scheduleRevisions:Array<[string,string]>=orderRows.map(o=>[o.gameId,o.revision] as [string,string])
-      .sort((a,b)=>a[0].localeCompare(b[0]));
+    const scheduleRevisions:Array<{gameId:string;revision:string}>=orderRows.map(o=>({gameId:o.gameId,revision:o.revision}))
+      .sort((a,b)=>a.gameId.localeCompare(b.gameId));
     const evidenceComplete=b.gameIds.length>0&&b.sources.length===b.gameIds.length&&
       b.sources.every(s=>s.source.roster.some(p=>p.playerId===input.actor.playerId));
     const battle:CurrentChronicleBattle={battleId:b.battleId,
@@ -156,8 +156,8 @@ async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
   const fresh=deriveSocialScheduleOrders([{battleId:selected.battleId,match,
     event:event.data()??null,plan:plan?.data()??null,planId:planId??null,
     games:gs.docs.map((g:any)=>({gameId:g.id,game:g.data()}))}]);
-  const revisions=fresh.map(o=>[o.gameId,o.revision] as [string,string])
-    .sort((a,b)=>a[0].localeCompare(b[0]));
+  const revisions=fresh.map(o=>({gameId:o.gameId,revision:o.revision}))
+    .sort((a,b)=>a.gameId.localeCompare(b.gameId));
   if(fresh.some(o=>o.status!=='ORDERED')||
      currentToken(revisions)!==currentToken(selected.scheduleRevisions))throw stale();
  const byId=new Map(sourceRows.map(s=>[s.source.gameId,s]));
