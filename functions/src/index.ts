@@ -102,3 +102,7 @@ export {getMyPersonalityHistory} from './queries/getMyPersonalityHistory.js';
 export {getMyPrivateChronicle} from './queries/getMyPrivateChronicle.js';
 export {getMyGameplayPreview,getMyGameplayCandidates} from './queries/getMyGameplayPreview.js';
 export {getMySocialProgression} from './queries/getMySocialProgression.js';
+
+// #169: emulator-only authenticated optional Chronicle interactions; production disabled.
+export {offerChronicleInvitation,actOnChronicleInvitation,getMyChronicleInvitations,
+  getMyChronicleSubmission,adminReviewChronicleCorrection} from './queries/chronicleInteractionService.js';
