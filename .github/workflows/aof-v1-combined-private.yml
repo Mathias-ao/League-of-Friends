@@ -1,0 +1,80 @@
+name: AoF V1 combined private social Chronicle acceptance
+on:
+  pull_request:
+    paths: ['functions/**','web/**','contracts/social-v1/**','replay-tools/**','.github/workflows/aof-v1-combined-private.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  four-system-private-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: 'true'
+      FIREBASE_CLI_DISABLE_USAGE_REPORTING: 'true'
+      FUNCTIONS_EMULATOR: 'true'
+      GCLOUD_PROJECT: demo-aof-native-player
+      REPLAY_BUCKET: demo-aof-native-player.appspot.com
+      REPLAY_WORKER_URL: http://127.0.0.1:18765
+      REPLAY_WORKER_AUTH_TOKEN: ephemeral-aof-v1-combined
+      AOF_REPLAY_WORKER_AUTH_TOKEN: ephemeral-aof-v1-combined
+      AOF_REPLAY_WORKER_BIND: 127.0.0.1
+      AOF_REPLAY_WORKER_PORT: '18765'
+      AOF_EXPERIMENTAL_NATIVE_REPLAY_ENDPOINT: '1'
+      AOF_SOCIAL_E2E_ENDPOINT: '1'
+      AOF_INT_C1_ENDPOINT: '1'
+      AOF_INT_C2A_ENDPOINT: '1'
+      AOF_INT_C2A_ACCEPTANCE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 2d04ec6adbe871d156c108a4351448efeb08f4e6
+          path: .fixture-corpus
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build sole source engine and both private interfaces
+        run: |
+          pip install -r replay-tools/requirements.txt
+          npm ci --prefix functions
+          npm ci --prefix web
+          npm run build --prefix functions
+          npm run build --prefix web
+      - name: Five authentic originals across four formats
+        run: |
+          mkdir -p "$RUNNER_TEMP/aof-v1-corpus"
+          for fixture in 1v1_t90-deak 1v1_t90-dobb 2v2_arabia 4v4_arabia FFA_7; do
+            cp ".fixture-corpus/replay-fixtures/build-185872/$fixture.aoe2record" "$RUNNER_TEMP/aof-v1-corpus/"
+            cp ".fixture-corpus/replay-fixtures/build-185872/townbell_build-185872/$fixture.json" "$RUNNER_TEMP/aof-v1-corpus/"
+          done
+          echo "AOF_NATIVE_CORPUS=$RUNNER_TEMP/aof-v1-corpus" >> "$GITHUB_ENV"
+          echo "AOF_NATIVE_REPLAY_PROCESSOR_REVISION=$(PYTHONPATH=replay-tools python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')" >> "$GITHUB_ENV"
+      - name: Same demo Firestore Storage and worker — source grades, Personality, factual Chronicle and rare response
+        run: |
+          python replay-tools/upload_worker.py > "$RUNNER_TEMP/aof-v1-worker.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/int-c2b-progression-emulator.mjs && node functions/tests/chronicle-v1e-auth-emulator.mjs && node functions/tests/aof-v1-combined-private-read.mjs"
+      - name: Browser component and privacy regression tests
+        run: npm test --prefix web
+      - name: Native statistics unchanged for every authentic replay
+        run: |
+          for fixture in 1v1_t90-deak 1v1_t90-dobb 2v2_arabia 4v4_arabia FFA_7; do
+            python replay-tools/verify_native_package.py --source "$AOF_NATIVE_CORPUS/$fixture.aoe2record" --package ".replay-lab/native-player/$fixture" --report ".replay-lab/social-e2e/$fixture-equivalence.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aof-v1-combined-private-acceptance
+          path: .replay-lab/social-e2e/*report.json
+          if-no-files-found: ignore
+          retention-days: 14
