@@ -2,10 +2,10 @@ import type {SourceSnapshot,BattleFeature,PersonalityProfile} from '../../../fun
 export interface PrivatePersonalityHistory {
   version:'AOF_INT_B_PRIVATE_HISTORY_1';contract:'AOF_SOCIAL_V1_SHARED_1';visibility:'OWNER_ONLY';ownerPlayerId:string;
   inputDigest:string;status:'CURRENT_INPUTS'|'PENDING_INPUTS';
-  coverage:{completeEnumeration:true;scannedLeagueBattles:number;ownBattles:number;ownGames:number;currentSources:number;measuredIndependentBattles:0};
+  coverage:{completeEnumeration:true;scannedLeagueBattles:number;ownBattles:number;ownGames:number;currentSources:number;measuredIndependentBattles:number};
   sources:SourceSnapshot[];pending:Array<{battleId:string;gameId:string;reason:string}>;
   personality:{publication:'PRIVATE_PREVIEW_ONLY';battleFeatures:BattleFeature[];personalityProfile:PersonalityProfile;
-    contextAdmission:'PENDING';calibration:'UNCONFIGURED'};
+    contextAdmission:'PENDING'|'SOURCE_QUALIFIED';calibration:'UNCONFIGURED'|'PROPOSED'};
   social:{status:'PENDING';reason:string};effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};
 }
 export function privateHistoryEnabled(env:Record<string,string|boolean|undefined>={}):boolean{
