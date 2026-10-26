@@ -135,6 +135,17 @@ async function actorInTransaction(tx:any,input:Input){
  if(p.data()?.membershipStatus!=='ACTIVE'||l.data()?.playerId!==input.actor.playerId)
    throw new HttpsError('permission-denied','Active linked Chronicle respondent required.');
 }
+function sameApprovedSchedule(battleId:string,match:Bag,event:Bag|null,plan:Bag|null,
+  planId:string|null,games:Array<{gameId:string;game:Bag}>,expected:unknown):boolean{
+  if(!Array.isArray(expected)||!expected.length)return false;
+  try{
+    const rows=deriveSocialScheduleOrders([{battleId,match,event,plan,planId,games}]);
+    const revisions=rows.map(o=>({gameId:o.gameId,revision:o.revision}))
+      .sort((a,b)=>a.gameId.localeCompare(b.gameId));
+    return rows.length===expected.length&&rows.every(o=>o.status==='ORDERED')&&
+      currentToken(revisions)===currentToken(expected);
+  }catch{return false;}
+}
 async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
  const mr=input.db.doc('matches/'+selected.battleId);
  const ms=await tx.get(mr),match=ms.data();
@@ -153,14 +164,10 @@ async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
   const planId=event.data()?.approvedMatchPlanId;
   const plan=typeof planId==='string'&&planId?
     await tx.get(input.db.doc('events/'+match.eventId+'/matchPlans/'+planId)):null;
-  const fresh=deriveSocialScheduleOrders([{battleId:selected.battleId,match,
-    event:event.data()??null,plan:plan?.data()??null,planId:planId??null,
-    games:gs.docs.map((g:any)=>({gameId:g.id,game:g.data()}))}]);
-  const revisions=fresh.map(o=>({gameId:o.gameId,revision:o.revision}))
-    .sort((a,b)=>a.gameId.localeCompare(b.gameId));
-  if(fresh.some(o=>o.status!=='ORDERED')||
-     currentToken(revisions)!==currentToken(selected.scheduleRevisions))throw stale();
- const byId=new Map(sourceRows.map(s=>[s.source.gameId,s]));
+  if(!sameApprovedSchedule(selected.battleId,match,event.data()??null,
+      plan?.data()??null,planId??null,
+      gs.docs.map((g:any)=>({gameId:g.id,game:g.data()})),selected.scheduleRevisions))throw stale();
+  const byId=new Map(sourceRows.map(s=>[s.source.gameId,s]));
  for(const g of gs.docs){
    const expected=byId.get(g.id);
    if(!expected||currentToken(g.data())!==currentToken(expected.game)||
@@ -309,7 +316,16 @@ export async function actOnMyChronicleInvitation(input:Input,r:Bag){
          if(ss.data()?.state!=='READY'||currentToken(ss.data())!==bound.sourceDigest){active=false;break;}
        }
      }
-     if(active)return {success:true,revision:slot.revision,state:slot.state,idempotent:true};
+     if(active){
+        const match=m.data(),event=await tx.get(input.db.doc('events/'+match.eventId));
+        const planId=event.data()?.approvedMatchPlanId;
+        const plan=typeof planId==='string'&&planId?
+          await tx.get(input.db.doc('events/'+match.eventId+'/matchPlans/'+planId)):null;
+        const games=await tx.get(mr.collection('games').orderBy('__name__').limit(65));
+        active=sameApprovedSchedule(r.battleId,match,event.data()??null,plan?.data()??null,
+          planId??null,games.docs.map((g:any)=>({gameId:g.id,game:g.data()})),slot.selected.scheduleRevisions);
+      }
+      if(active)return {success:true,revision:slot.revision,state:slot.state,idempotent:true};
      const changed=transitionInvitation(slot,slot.revision,r.opportunityRevision,'WITHDRAWN');
      tx.set(ref,{...slot,...changed,withdrawnAt:new Date()});
      tx.create(auditRef,{kind:'SOURCE_WITHDRAWN',requestDigest:bindingDigest(r),
@@ -423,7 +439,16 @@ export async function readMyChronicleInvitations(input:Input,r:Bag){
      const sr=await g.ref.collection('replaySources').doc(g.data()?.activeReplayStatisticsId).get();
      if(sr.data()?.state!=='READY'||currentToken(sr.data())!==bound.sourceDigest){current=false;break;}
    }
-   invitations.push({...visibility(data),sourceCurrent:!!current});
+   if(current){
+      const match=m.data(),event=await input.db.doc('events/'+match.eventId).get();
+      const planId=event.data()?.approvedMatchPlanId;
+      const plan=typeof planId==='string'&&planId?
+        await input.db.doc('events/'+match.eventId+'/matchPlans/'+planId).get():null;
+      const games=await m.ref.collection('games').orderBy('__name__').limit(65).get();
+      current=sameApprovedSchedule(m.id,match,event.data()??null,plan?.data()??null,
+        planId??null,games.docs.map((g:any)=>({gameId:g.id,game:g.data()})),data.selected.scheduleRevisions);
+    }
+    invitations.push({...visibility(data),sourceCurrent:!!current});
  }
  return {version:CHRONICLE_INTERACTION_VERSION,visibility:'OWNER_ONLY',
    ownerPlayerId:input.actor.playerId,invitations,officialEffects:[],
