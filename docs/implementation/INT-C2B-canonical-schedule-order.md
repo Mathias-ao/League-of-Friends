@@ -1,0 +1,13 @@
+# #168-A — canonical social schedule order
+
+Base `b6a1024a478df119546daa0e691b6018ff20de39`. This is the first implementation slice for #168. It provides source-fenced scheduling evidence for the emulator-only private progression pipeline; it is not source-method admission, scoring or a new historical evaluator.
+
+`AOF_SOCIAL_SCHEDULE_ORDER_1` derives canonical league chapter positions from server-read authoritative Event `startsAt`, the Event's current approved match plan and exact official `matchNumber` slot, and explicit contiguous Game `gameNumber`. The order key/revision bind these scheduling facts and identities. This is the **approved planned chapter sequence**, not a claim about actual wall-clock play. Other players' parallel approved plan slots do not invent a chronological relation between their command streams.
+
+No upload, Firestore `createdAt`, result `completedAt`/`firstCompletedAt`, document-ID sorting, replay command clock or guessed Game number participates. Distinct Events with identical schedule timestamps are ambiguous. Missing/revoked/mismatched plans, missing/duplicate/gapped Game numbering and warmups whose play windows overlap main and lack an explicit total-order witness return **Pending/null order**. No warmup-before-main ordering is invented. Source-compatible private movement for such chapters must remain Pending; the progression adapter uses these bindings, not a timestamp shortcut.
+
+The accepted authenticated current-source/history collector exposes this optional **server-only** collection mode. Existing public/C1/C2A history reads do not enable it and retain their wire and limits. Event schedule timestamps are explicitly normalized for fencing; the referenced approved plan and entire current Match/Game/source/access set are revalidated in the existing final read-only transaction after work. Schedule/plan changes therefore invalidate mixed reads. No client arguments, database writes, flags or callable are added here.
+
+Tests prove Event/Battle/Game sequencing, reversed IDs/upload times, schedule corrections, tied Events, inconsistent plan slots, warmup ambiguity, missing Game sequences, linked-owner authorization and post-work plan/schedule mutation. Full backend suite is run at the PR head. This does not establish source-grade positives or private stages by itself; the next #168 slice connects Worker 4 #167 and merged #166's PROPOSED E2E calibration to the existing #139 evaluator.
+
+Ownership: Sol's source/history collector, a pure chronology adapter, focused tests and this handover. #139, #141, #167, #166 calibration, Worker 5 and production ordering/scoring services are unchanged. No staging, deployment, grants, public progression or activation.
