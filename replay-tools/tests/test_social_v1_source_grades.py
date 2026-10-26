@@ -291,6 +291,13 @@ class AuthenticSourceAdmissionTests(unittest.TestCase):
                     positives=[(group,g) for group in out["episodes"]
                         for g in group["perTrackGrades"] if g["decision"]=="SOURCE_ADMITTED"]
                     counts[fmt]=(len(out["episodes"]),len(positives))
+                    by_track={k:sum(1 for _,grade in positives if grade["track"]==k)
+                              for k in METHODS}
+                    print("AUTHENTIC_SOC_V1E_TRACK_MATRIX "+json.dumps({
+                        "recording":fmt,"episodes":len(out["episodes"]),
+                        "sourceAdmittedByTrack":by_track,
+                        "allMethodsRetainLIMITEDOriginals":True,
+                        "officialWrites":False},sort_keys=True),flush=True)
                     for group,admitted in positives:
                         self.assertEqual(admitted["sourceCoverage"],"LIMITED")
                         self.assertEqual(admitted["methodCoverage"],"ADMITTED")
