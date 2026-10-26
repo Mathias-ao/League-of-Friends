@@ -118,6 +118,16 @@ class PilotGradeAdmissionTests(unittest.TestCase):
         stats["matchFacts"]["players"][1]["lobbyTeamIdRaw"]=1
         out=run(b,stats,events)
         self.assertEqual(out["sourceAdmittedCount"],0)
+        b,stats,events=synthetic(people=(1,2,3))
+        # A partial decoded lobby cannot prove pair mode even if p1/p2
+        # happen to have distinct raw team IDs.
+        stats["matchFacts"]["players"]=[
+            row for row in stats["matchFacts"]["players"]
+            if row["playerId"] != 3]
+        out=run(b,stats,events)
+        self.assertEqual(out["sourceAdmittedCount"],0)
+        self.assertIn("PAIR_OPPOSITION_NOT_FIXED_OR_EFFECTIVE_DIPLOMACY_UNPROVEN",
+                      lane(out,"RIVALRY")["missingEvidence"])
 
     def test_noop_missing_original_ordinal_and_tightening_threshold_fall_pending(self):
         b,stats,events=synthetic()
