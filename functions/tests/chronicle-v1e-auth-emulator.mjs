@@ -20,7 +20,15 @@ const uid='intb-owner-uid',otherUid='intb-other-uid',outsider='intb-outsider',
 process.env.AOF_CHRONICLE_INTERACTIONS_V1E='emulator-only';
 const req=(uid,data)=>({auth:{uid},data});
 const match=db.doc('matches/'+battleId);
-await match.update({firstCompletedAt:Timestamp.fromMillis(1000)});
+// Historical invitation order is the approved Event/MatchPlan, not the
+// completion timestamp or the upload order. Seed canonical server authority.
+const event=db.doc('events/intb-event');
+await event.update({startsAt:Timestamp.fromMillis(1000),
+  approvedMatchPlanId:'intb-plan',matchPlanStatus:'APPROVED'});
+await event.collection('matchPlans').doc('intb-plan').set({
+  status:'APPROVED',officialMatchIds:[battleId],matches:[{}]});
+await match.update({sourceMatchPlanId:'intb-plan',matchNumber:1,
+  firstCompletedAt:Timestamp.fromMillis(999999)});
 const owner=await getMyPersonalityHistory.run(req(uid,{}));
 const other=await getMyPersonalityHistory.run(req(otherUid,{}));
 assert.equal(owner.coverage.ownGames,2);
