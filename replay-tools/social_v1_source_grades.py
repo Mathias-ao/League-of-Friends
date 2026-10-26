@@ -342,6 +342,11 @@ def admit_contextual_source_grades(*, statistics, context, source_measurements,
         _check(producer == canonical, "SUPPLIED_PRODUCER_NOT_REPRODUCIBLE")
     originals = _original_index(action_events, 600000)
     entries = []
+    # One original raid/skirmish/help detector may overlap several distinct
+    # #158 source components. Anti-farming must extend across those components
+    # within the same Game+actor→counterpart+track, not merely de-duplicate
+    # row representations *inside* one component.
+    consumed_detector = {}
     for group in canonical["candidateEpisodeGroups"]:
         # Fail closed for any source method revisions outside the known neutral
         # source grammar. This module adds separate admitted conduct methods.
@@ -352,6 +357,29 @@ def admit_contextual_source_grades(*, statistics, context, source_measurements,
         grades = [_grade(track, group=group, statistics=statistics, context=context,
                          originals=originals, policy=p)
                   for track in ("RIVALRY", "BOND", "CHIVALRY", "GALLANTRY", "CRUELTY", "HOSTILITY")]
+        for grade in grades:
+            if grade["decision"] != "SOURCE_ADMITTED":
+                continue
+            marker = (group["actorReplayPlayerId"],
+                      group["counterpartReplayPlayerId"], grade["track"])
+            ids = {(e["kind"], e["sourceDetectorId"])
+                   for e in grade["corroboration"]
+                   if e["kind"].startswith(("RAID_", "ENGAGEMENT_", "HELP_"))}
+            _check(bool(ids), "ADMITTED_WITHOUT_INDEPENDENT_DETECTOR")
+            consumed = consumed_detector.setdefault(marker, set())
+            if consumed.intersection(ids):
+                # Another source-connected component from the *same* raid,
+                # promoted skirmish/Battle or helper detector is not another
+                # independent social deed. Keep its full evidence for the
+                # owner-private Pending explanation, not a second grade.
+                grade.update(
+                    decision="PENDING", gradeBandId=None, methodCoverage="PENDING",
+                    materialMeaning=None,
+                    missingEvidence=["CORRELATED_DETECTOR_EPISODE_ALREADY_ADMITTED"],
+                    reasonCodes=["CROSS_COMPONENT_SOCIAL_ANTIMULTIPLICATION"],
+                )
+            else:
+                consumed.update(ids)
         accepted = [g for g in grades if g["decision"] == "SOURCE_ADMITTED"]
         entries.append({
             "sourceCandidateId": group["candidateId"],
