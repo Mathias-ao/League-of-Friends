@@ -173,6 +173,57 @@ class PilotGradeAdmissionTests(unittest.TestCase):
         self.assertEqual(lane(out,"CHIVALRY")["decision"],"PENDING")
         self.assertEqual(out["sourceAdmittedCount"],0)
 
+    def test_exact_threat_linked_recipient_assistance_admits_bond_and_chivalry(self):
+        b, stats, events = fixture_bundle("help", people=(1,2,3))
+        # Synthetic *proof-shaped* test only. Real corpus decides whether the
+        # actual recorded source independently supplies these witnesses.
+        for row in stats["matchFacts"]["players"]:
+            row["lobbyTeamIdRaw"] = 1 if row["playerId"] in (1,2) else 2
+        deed = stats["pairSocialEvidence"]["deeds"][0]
+        deed["sourceEventIds"] += ["help2","help3"]
+        deed["facets"][0]["sourceEventIds"] += ["help2","help3"]
+        b["context"]["deedContexts"][0]["sourceEventIds"] += ["help2","help3"]
+        for c in b["context"]["engagementContexts"]:
+            if c["kind"] == "DEFENSIVE_ASSIST":
+                c["sourceEventIds"] += ["help2","help3"]
+        events.extend([
+            {"eventId":"help2","actorPlayerId":1,"timestampMs":11500,
+             "operationOrdinal":40,"sourceActionName":"ORDER"},
+            {"eventId":"help3","actorPlayerId":1,"timestampMs":11600,
+             "operationOrdinal":41,"sourceActionName":"ORDER"},
+            {"eventId":"enemy-threat1","actorPlayerId":3,"timestampMs":7000,
+             "operationOrdinal":4,"sourceActionName":"ORDER"},
+            {"eventId":"enemy-threat2","actorPlayerId":3,"timestampMs":8000,
+             "operationOrdinal":5,"sourceActionName":"ORDER"},
+        ])
+        aggressor=next(p for p in stats["participants"] if p["playerId"]==3)
+        aggressor["military"]={"engagements":{
+            "modelVersion":"AOF_RAID_DETECTION_V3",
+            "raidEvidence":{"initiatedEpisodes":[{
+                "raidId":"prior-third-party-raid","startedAtMs":7000,
+                "endedAtMs":8000,"attackerPlayerId":3,"victimPlayerId":2,
+                "sourceEventIds":["enemy-threat1","enemy-threat2"],
+                "strongCommandCount":2}]}}}
+        admitted=run(b,stats,events)
+        self.assertEqual(lane(admitted,"BOND")["decision"],"SOURCE_ADMITTED")
+        self.assertEqual(lane(admitted,"CHIVALRY")["decision"],"SOURCE_ADMITTED")
+        self.assertEqual(admitted["sourceAdmittedCount"],2)
+        self.assertEqual(admitted["episodes"][0]["sourceEventIds"],
+                         ["cmd1","help2","help3"])
+        self.assertEqual(admitted["episodes"][0]["sourceIndependentContributionKey"],
+                         admitted["episodes"][0]["perTrackGrades"][1]
+                         ["independentContributionKey"])
+        self.assertEqual(admitted["claims"],[])
+        neg=deepcopy(stats)
+        neg_attacker=next(p for p in neg["participants"] if p["playerId"]==3)
+        neg_attacker["military"]["engagements"]["raidEvidence"]["initiatedEpisodes"][
+            0]["victimPlayerId"]=1  # wrong threatened beneficiary
+        refused=run(b,neg,events)
+        self.assertEqual(lane(refused,"BOND")["decision"],"PENDING")
+        self.assertEqual(lane(refused,"CHIVALRY")["decision"],"PENDING")
+        self.assertEqual(refused["sourceAdmittedCount"],0)
+        self.assertFalse(refused["officialWrites"])
+
     def test_standalone_weakening_victim_disadvantage_and_selective_hostility_are_pending(self):
         b,stats,events=synthetic()
         out=run(b,stats,events)
