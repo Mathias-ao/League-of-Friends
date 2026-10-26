@@ -137,13 +137,15 @@ assert.equal((await offerChronicleInvitation.run(req(otherUid,{battleId}))).offe
 assert.equal((await slot.collection('judgments').get()).size,2);
 assert.equal((await db.collection('leaguePointLedger').get()).size,0);
 assert.equal((await db.collection('goldLedger').get()).size,0);
-// Sibling Game result revision invalidates the pair×Battle invitation even
-// though the selected g1 recording/incident itself has not changed.
+// Sibling Game source/statistics revision invalidates the pair×Battle invitation
+// even when the selected g1 recording and rare incident have not changed.
+// This genuine READY g2 has no canonicalResult object; never fabricate one.
 const sibling=match.collection('games').doc('g2'),originalSibling=(await sibling.get()).data();
-await sibling.update({'canonicalResult.revision':originalSibling.canonicalResult.revision+1});
+assert.ok(Number.isSafeInteger(originalSibling.replayStatisticsRevision));
+await sibling.update({replayStatisticsRevision:originalSibling.replayStatisticsRevision+1});
 assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,false);
 await assert.rejects(act(uid,{requestId:'stale-sibling',action:'CORRECTION_REQUEST',expectedRevision:6,
- reason:'Unrelated sibling result revision changed.'}));
+ reason:'Unrelated sibling source revision changed.'}));
 await sibling.set(originalSibling);
 assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,true);
 // A source withdrawal disables responses, preserves tombstone+old private audit.
