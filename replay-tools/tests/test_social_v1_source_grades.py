@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import unittest
+from jsonschema import Draft202012Validator
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from social_v1_source_grades import (
@@ -17,6 +18,9 @@ from social_v1_source_measurements import project_social_source_measurements
 from test_social_v1_metric_grade_candidates import bundle as fixture_bundle, PINS
 
 ROOT = Path(__file__).resolve().parents[2]
+METHOD_SCHEMA = json.loads((ROOT / "contracts/social-v1/source-grade-methods-v1.schema.json").read_text())
+Draft202012Validator.check_schema(METHOD_SCHEMA)
+SCHEMA_VALIDATOR = Draft202012Validator(METHOD_SCHEMA)
 SCOPE = {"battleId":"battle-pilot","gameId":"game-1",
          "gameGuid":"GUID-INERT","authorityRevision":"UNTRUSTED_TEST"}
 
@@ -38,9 +42,11 @@ def synthetic(*, locked=True, raid=True, engagement=True, people=(1,2)):
 def run(b,stats,events,*,scope=None,policy=None,producer=None):
     measurements = project_social_source_measurements(
         statistics=stats,context=b["context"],action_events=events,lookback_ms=5000)
-    return admit_contextual_source_grades(
+    result = admit_contextual_source_grades(
         statistics=stats,context=b["context"],source_measurements=measurements,
         action_events=events,game_scope=scope or SCOPE,policy=policy,producer=producer)
+    SCHEMA_VALIDATOR.validate(result)
+    return result
 
 
 def lane(result,track):
@@ -224,6 +230,23 @@ class PilotGradeAdmissionTests(unittest.TestCase):
         self.assertEqual(refused["sourceAdmittedCount"],0)
         self.assertFalse(refused["officialWrites"])
 
+    def test_closed_pilot_schema_rejects_forged_receipt_or_final_weight(self):
+        b,stats,events=synthetic()
+        out=run(b,stats,events)
+        for modify in ("receipt","approved","too_low","fake_claim","band"):
+            altered=deepcopy(out)
+            if modify=="receipt":
+                altered["receipts"]=[{"id":"synthetic"}]
+            elif modify=="approved":
+                altered["policy"]["status"]="APPROVED"
+            elif modify=="too_low":
+                altered["policy"]["minOriginalCommands"]=1
+            elif modify=="fake_claim":
+                altered["episodes"][0]["canonicalClaim"]={"effect":"STRENGTHEN"}
+            elif modify=="band":
+                altered["episodes"][0]["perTrackGrades"][0]["gradeBandId"]="SUBSTANTIAL"
+            self.assertTrue(list(SCHEMA_VALIDATOR.iter_errors(altered)),modify)
+
     def test_standalone_weakening_victim_disadvantage_and_selective_hostility_are_pending(self):
         b,stats,events=synthetic()
         out=run(b,stats,events)
@@ -264,6 +287,7 @@ class AuthenticSourceAdmissionTests(unittest.TestCase):
                     out=admit_contextual_source_grades(
                         statistics=stats,context=ctx,source_measurements=metrics,
                         action_events=original,game_scope=scope)
+                    SCHEMA_VALIDATOR.validate(out)
                     positives=[(group,g) for group in out["episodes"]
                         for g in group["perTrackGrades"] if g["decision"]=="SOURCE_ADMITTED"]
                     counts[fmt]=(len(out["episodes"]),len(positives))
@@ -303,9 +327,31 @@ class AuthenticSourceAdmissionTests(unittest.TestCase):
                     no_raid=admit_contextual_source_grades(
                         statistics=negative,context=ctx,source_measurements=metrics,
                         action_events=original,game_scope=scope)
+                    SCHEMA_VALIDATOR.validate(no_raid)
                     self.assertFalse(any(x["decision"]=="SOURCE_ADMITTED"
                         and x["track"]=="RIVALRY"
                         for g in no_raid["episodes"] for x in g["perTrackGrades"]))
+                    # It really is the nearest control: same original source
+                    # episode ID and source event membership, without raid
+                    # corroboration. No substitution of a different Game.
+                    negative_by_id={g["sourceCandidateId"]:g for g in no_raid["episodes"]}
+                    for original_group, positive in positives:
+                        if positive["track"] != "RIVALRY":
+                            continue
+                        matched=negative_by_id[original_group["sourceCandidateId"]]
+                        self.assertEqual(matched["sourceEventIds"],
+                                         original_group["sourceEventIds"])
+                        negative_lane=next(x for x in matched["perTrackGrades"]
+                                           if x["track"]=="RIVALRY")
+                        self.assertEqual(negative_lane["decision"],"PENDING")
+                        self.assertIn("OPPONENT_RAID_V3_WITH_TWO_OWN_EVENTS_MISSING",
+                                      negative_lane["missingEvidence"])
+                    print("AUTHENTIC_SOC_V1E_NEAREST_NEGATIVE "+json.dumps({
+                        "recording":fmt,"originalGroups":len(out["episodes"]),
+                        "sameSourceGroups":len(no_raid["episodes"]),
+                        "rivalrySourceAdmittedAfterWithholdingRaid":0,
+                        "sourceEventsPreserved":True,"publicationAllowed":False,
+                    },sort_keys=True),flush=True)
                     self.assertFalse(no_raid["officialWrites"])
         print("AUTHENTIC_SOC_V1E_COUNTS "+json.dumps(counts,sort_keys=True),flush=True)
         self.assertTrue(any(g["track"]=="RIVALRY" for _,_,g in verified),
