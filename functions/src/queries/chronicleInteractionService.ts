@@ -431,7 +431,7 @@ export async function readMyChronicleSubmission(input:Input,r:Bag){
  * judgment. No choice is changed in this function and the audit is append-only. */
 export async function reviewChronicleCorrection(input:Input,r:Bag){
  assertChronicleInteractionEmulator(input.env);
- requireFields(r,['battleId','respondentPlayerId','requestId','expectedRevision','decision']);
+ requireFields(r,['battleId','respondentPlayerId','requestId','expectedRevision','decision','reason']);
  if(input.actor.role!=='ADMIN'||!id(r.battleId)||!id(r.respondentPlayerId)||!id(r.requestId)||
     typeof r.reason!=='string'||r.reason.trim().length<12||r.reason.length>500||
     !Number.isSafeInteger(r.expectedRevision)||!['APPROVE','REJECT'].includes(r.decision))
