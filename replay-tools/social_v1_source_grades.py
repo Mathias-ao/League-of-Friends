@@ -187,12 +187,17 @@ def _source_attestation(group, context, originals):
            "SOURCE_MOMENT_MISMATCH")
     _check(moment["order"] != "ORDERED" or moment["operationOrdinal"] ==
            originals[first]["operationOrdinal"], "SOURCE_ORDINAL_MISMATCH")
-    detector_map = {(e["kind"], e["sourceDetectorId"]): e
-                    for e in context.get("engagementContexts") or []}
+    # A promoted skirmish/Battle is repeated in several per-player
+    # projections. #158 deliberately unions their original source refs;
+    # reconstruct that union, never take the last duplicate dictionary row.
+    detector_refs = {}
+    for e in context.get("engagementContexts") or []:
+        key = (e["kind"], e["sourceDetectorId"])
+        detector_refs.setdefault(key, set()).update(e.get("sourceEventIds") or [])
     for linked in group["linkedDetectorCandidates"]:
-        det = detector_map.get((linked["kind"], linked["sourceDetectorId"]))
-        _check(det is not None and set(linked["sharedOriginalEventIds"]) ==
-               set(refs) & set(det.get("sourceEventIds") or []),
+        key = (linked["kind"], linked["sourceDetectorId"])
+        _check(key in detector_refs and
+               set(linked["sharedOriginalEventIds"]) == set(refs) & detector_refs[key],
                "ENGAGEMENT_DETECTOR_SOURCE_MISMATCH")
     return actor, other, set(refs)
 
