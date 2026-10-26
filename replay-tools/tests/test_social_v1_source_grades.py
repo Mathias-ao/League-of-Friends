@@ -148,6 +148,55 @@ class PilotGradeAdmissionTests(unittest.TestCase):
         self.assertNotEqual(first["projectionRevision"],replaced["projectionRevision"])
         self.assertFalse(replaced["officialWrites"])
 
+    def test_same_raid_detector_across_disjoint_deeds_does_not_multiply_rivalry(self):
+        b,stats,events=synthetic()
+        # Two distinct original deed components share one long continuing
+        # original Raid V3 + promoted skirmish detector. They remain separate
+        # #158 source candidates but cannot mint two independent Rivalry grades.
+        prior=deepcopy(stats["pairSocialEvidence"]["deeds"][0])
+        prior["deedId"]="deed-second"
+        prior["incidentIds"]=["incident-second"]
+        prior["sourceEventIds"]=["second1","second2"]
+        prior["startedAt"]={"atMs":15000,"operationOrdinal":50}
+        prior["endedAt"]={"atMs":18000,"operationOrdinal":60}
+        for facet,i in zip(prior["facets"],("second1","second2")):
+            facet["sourceEventIds"]=[i]
+        stats["pairSocialEvidence"]["deeds"].append(prior)
+        context_deed=deepcopy(b["context"]["deedContexts"][0])
+        context_deed.update(sourceDeedId="deed-second",
+                             sourceIncidentIds=["incident-second"],
+                             sourceEventIds=["second1","second2"],
+                             firstAtMs=15000,lastAtMs=18000)
+        b["context"]["deedContexts"].append(context_deed)
+        events.extend([
+            {"eventId":"second1","actorPlayerId":1,"timestampMs":16000,
+             "operationOrdinal":51,"sourceActionName":"ORDER"},
+            {"eventId":"second2","actorPlayerId":1,"timestampMs":17000,
+             "operationOrdinal":52,"sourceActionName":"ORDER"},
+        ])
+        stat_raid=stats["participants"][0]["military"]["engagements"][
+            "raidEvidence"]["initiatedEpisodes"][0]
+        stat_raid["sourceEventIds"]+=["second1","second2"]
+        stat_raid["endedAtMs"]=18000
+        stat_raid["strongCommandCount"]=4
+        for det in b["context"]["engagementContexts"]:
+            if det["kind"]=="SKIRMISH":
+                det["sourceEventIds"]+=["second1","second2"]
+                det["lastAtMs"]=18000
+        result=run(b,stats,events)
+        self.assertEqual(len(result["episodes"]),2)
+        self.assertEqual(result["sourceAdmittedCount"],1)
+        lanes=[next(g for g in e["perTrackGrades"] if g["track"]=="RIVALRY")
+               for e in result["episodes"]]
+        self.assertEqual([g["decision"] for g in lanes],
+                         ["SOURCE_ADMITTED","PENDING"])
+        self.assertIn("CORRELATED_DETECTOR_EPISODE_ALREADY_ADMITTED",
+                      lanes[1]["missingEvidence"])
+        self.assertNotEqual(result["episodes"][0]["sourceIndependentContributionKey"],
+                            result["episodes"][1]["sourceIndependentContributionKey"])
+        self.assertEqual(result["claims"],[])
+        self.assertFalse(result["officialWrites"])
+
     def test_producer_spoof_and_source_actor_spoof_are_rejected(self):
         b,stats,events=synthetic()
         m=project_social_source_measurements(statistics=stats,context=b["context"],
