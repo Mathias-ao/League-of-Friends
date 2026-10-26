@@ -26,7 +26,7 @@ test('private Personality is on-demand, five Developing values and one Battle ac
   await c.render();assert.equal(c.calls(),0);await c.click('Inspect my Personality history');
   assert.ok(document.querySelector('[data-aof-history-owner]'));assert.equal(document.querySelectorAll('li').length,5);
   assert.match(document.body.textContent!,/2 current recordings across 1 Battle/);assert.match(document.body.textContent!,/Developing/);
-  assert.equal(document.querySelector('input[type="range"]'),null);assert.match(document.body.textContent!,/Reputation and Relationships: Pending/);
+  assert.equal(document.querySelector('input[type="range"]'),null);assert.match(document.body.textContent!,/Personality is descriptive/);
   await c.click('Close Personality history');assert.equal(document.querySelector('[data-aof-history-owner]'),null);
  }finally{await c.close();}
 });
@@ -45,4 +45,36 @@ test('UI rollout is default-off and rejects production even with an explicit fla
  assert.equal(privateHistoryEnabled(),false);
  assert.equal(privateHistoryEnabled({VITE_AOF_INT_V1_PRIVATE_HISTORY:'battle-v1',VITE_FIREBASE_PROJECT_ID:'league-of-friends-cc274'}),false);
  assert.equal(privateHistoryEnabled({VITE_AOF_INT_V1_PRIVATE_HISTORY:'battle-v1',VITE_FIREBASE_PROJECT_ID:'demo-test',VITE_USE_EMULATORS:'true'}),true);
+});
+
+test('source-qualified proposed calibration displays finite five-axis numbers including a genuine zero',async()=>{
+ const c=await setup();try{
+  c.value.coverage.measuredIndependentBattles=2;
+  c.value.personality.contextAdmission='SOURCE_QUALIFIED';c.value.personality.calibration='PROPOSED';
+  c.value.personality.personalityProfile.policy={...c.value.personality.personalityProfile.policy,status:'PROPOSED',approvalRef:null};
+  c.value.personality.personalityProfile.sliders=c.value.personality.personalityProfile.sliders.map((s,i)=>
+    ({...s,status:'READY',value:i===0?0:(i+1)*15,independentBattles:2}));
+  await c.render();await c.click('Inspect my Personality history');
+  assert.equal(document.querySelectorAll('meter').length,5);
+  assert.match(document.body.textContent!,/0.0 \/ 100/);
+  assert.match(document.body.textContent!,/30.0 \/ 100/);
+  assert.match(document.body.textContent!,/private, provisional descriptive value/);
+  assert.equal(document.querySelector('input[type="range"]'),null);
+ }finally{await c.close();}
+});
+test('READY labels without verified source context, policy or independent samples display Developing',async()=>{
+ const c=await setup();try{
+  c.value.personality.personalityProfile.sliders=c.value.personality.personalityProfile.sliders.map(s=>
+    ({...s,status:'READY',value:60,independentBattles:1}));
+  await c.render();await c.click('Inspect my Personality history');
+  assert.equal(document.querySelectorAll('meter').length,0);
+  assert.match(document.body.textContent!,/Developing/);
+  await c.click('Close Personality history');
+  c.value.personality.contextAdmission='SOURCE_QUALIFIED';c.value.personality.calibration='PROPOSED';
+  c.value.personality.personalityProfile.policy={...c.value.personality.personalityProfile.policy,status:'PROPOSED',approvalRef:null};
+  c.value.personality.personalityProfile.sliders=c.value.personality.personalityProfile.sliders.map(s=>
+    ({...s,status:'READY',value:60,independentBattles:2}));
+  await c.click('Inspect my Personality history');assert.equal(document.querySelectorAll('meter').length,5);
+  await act(async()=>c.auth());assert.equal(document.querySelectorAll('meter').length,0);
+ }finally{await c.close();}
 });

@@ -32,12 +32,22 @@ export function PrivatePersonalityHistory({repository,ownerId}:{repository:Leagu
     {history&&<div data-aof-history-owner={ownerId} data-aof-history-revision={history.inputDigest}>
       <p>{history.coverage.currentSources} current recordings across {history.coverage.ownBattles} {history.coverage.ownBattles===1?'Battle':'Battles'}. Multiple Games share one Battle identity.</p>
       {history.pending.length>0&&<p>Some Game inputs are Pending. They do not count as qualifying Personality evidence.</p>}
-      <ul>{history.personality.personalityProfile.sliders.map(axis=><li key={axis.axis}>
-        <strong>{LABELS[axis.axis]}</strong>: {axis.status==='CONTEXT_LIMITED'?'Context limited':'Developing'}
-        <p>Context admission and calibration are pending; no slider value is assigned.</p>
-      </li>)}</ul>
+      <ul>{history.personality.personalityProfile.sliders.map(axis=>{
+        // A backend-declared READY label alone must never invent a value.
+        const ready=history.personality.contextAdmission==='SOURCE_QUALIFIED'&&
+          history.personality.calibration==='PROPOSED'&&
+          history.personality.personalityProfile.policy.status==='PROPOSED'&&
+          axis.status==='READY'&&typeof axis.value==='number'&&Number.isFinite(axis.value)&&
+          axis.value>=0&&axis.value<=100&&axis.independentBattles>=2;
+        return <li key={axis.axis}>
+          <strong>{LABELS[axis.axis]}</strong>: {ready?'Provisional':axis.status==='CONTEXT_LIMITED'?'Context limited':'Developing'}
+          {ready?<><p><strong>{axis.value!.toFixed(1)} / 100</strong> from {axis.independentBattles} independent source-qualified Battles. This is a private, provisional descriptive value.</p>
+            <meter min={0} max={100} value={axis.value!} aria-label={LABELS[axis.axis]+' provisional value'}/></>
+            :<p>Comparable source history or opportunity is insufficient; no value assigned.</p>}
+        </li>;
+      })}</ul>
       <p>Guerrilla ↔ Frontline describes military-command posture, not confirmed combat.</p>
-      <p>Reputation and Relationships: Pending. This view grants no social credit or honours.</p>
+      <p>Personality is descriptive, not a Reputation or Relationship award. This private view grants no honours.</p>
       <button onClick={()=>{attempt.current++;setRead(null);}}>Close Personality history</button>
     </div>}
   </section>;
