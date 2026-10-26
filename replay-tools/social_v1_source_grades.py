@@ -124,10 +124,13 @@ def _fixed_pair(statistics, actor, target):
     rule = (mf.get("rules") or {}).get("lockTeams") or {}
     if rule.get("status") != "DECODED" or rule.get("value") is not True:
         return "DYNAMIC_DIPLOMACY_UNPROVEN"
-    teams = {row.get("playerId"): row.get("lobbyTeamIdRaw")
-             for row in mf.get("players") or []}
-    if not all(type(teams.get(pid)) is int and teams[pid] > 0
-               for pid in (actor, target)):
+    rows = mf.get("players") or []
+    teams = {row.get("playerId"): row.get("lobbyTeamIdRaw") for row in rows}
+    roster = {p.get("playerId") for p in statistics.get("participants") or []}
+    # An apparently fixed 1↔2 pair in a malformed/incomplete 4v4 lobby is
+    # not enough. Match #158's full-roster mode-coverage requirement.
+    if (len(teams) != len(rows) or set(teams) != roster or
+            not all(type(v) is int and v > 0 for v in teams.values())):
         return "LOBBY_TEAM_UNVERIFIED"
     return "FIXED_ALLIES" if teams[actor] == teams[target] else "FIXED_OPPONENTS"
 
