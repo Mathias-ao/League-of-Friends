@@ -101,3 +101,4 @@ export {getMySocialExperience} from './queries/getMySocialExperience.js';
 export {getMyPersonalityHistory} from './queries/getMyPersonalityHistory.js';
 export {getMyPrivateChronicle} from './queries/getMyPrivateChronicle.js';
 export {getMyGameplayPreview,getMyGameplayCandidates} from './queries/getMyGameplayPreview.js';
+export {getMySocialProgression} from './queries/getMySocialProgression.js';

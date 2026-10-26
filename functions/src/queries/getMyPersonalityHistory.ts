@@ -1,3 +1,4 @@
+import {deriveSocialScheduleOrders,scheduleTimestampMillis,type ScheduleBattle} from '../integration/socialScheduleOrder.js';
 import {getStorage} from 'firebase-admin/storage';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {requireLeaguePlayer} from '../auth/authorization.js';
@@ -19,7 +20,7 @@ export function assertIntBEnabled(env:NodeJS.ProcessEnv){
 /** Complete-or-error current input collection. This is not an evaluator or a
  * persisted ledger. All source admission/artifact verification reuses INT-A. */
 export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;actor:{playerId:string;authUid:string};
-  request:Record<string,never>;env:NodeJS.ProcessEnv;maxOwnGames?:number}){
+  request:Record<string,never>;env:NodeJS.ProcessEnv;maxOwnGames?:number;includeScheduleOrder?:boolean}){
   const {db,bucket,actor,env}=input;
   assertIntBEnabled(env);
   if(!input.request||Array.isArray(input.request)||typeof input.request!=='object'||Object.keys(input.request).length)
@@ -55,9 +56,10 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
   const own=(docs:any[])=>docs.filter(d=>d.data()?.participants?.some((p:Bag)=>p.playerId===actor.playerId));
   const matchToken=(docs:any[])=>bindingDigest(docs.map(d=>[d.id,
     d.data()?.participants?.some((p:Bag)=>p.playerId===actor.playerId)?d.data():null]));
-  const initialToken=matchToken(initialMatches),checkpoints=new Map<string,{ref:any;token:string}>();
-  const checkpoint=async(ref:any)=>{const snap=await read(ref);checkpoints.set(ref.path,{ref,token:bindingDigest(snap.data()??null)});return snap;};
+  const initialToken=matchToken(initialMatches),checkpoints=new Map<string,{ref:any;token:string;tokenOf:(data:any)=>string}>();
+  const checkpoint=async(ref:any,tokenOf:(data:any)=>string=bindingDigest)=>{const snap=await read(ref);checkpoints.set(ref.path,{ref,tokenOf,token:tokenOf(snap.data()??null)});return snap;};
   const gameSets:Array<{ref:any;token:string}>=[],loaded:Array<Awaited<ReturnType<typeof loadMyCurrentSocialSource>>>=[];
+  const schedules:ScheduleBattle[]=[];
   const battles:PersonalityHistoryBattle[]=[],pending:Array<{battleId:string;gameId:string;reason:string}>=[];
   const seenSources=new Set<string>(),seenGuids=new Set<string>();let count=0;
   const gamesToken=(docs:any[])=>bindingDigest(docs.map(d=>[d.id,d.data()]));
@@ -66,11 +68,19 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
     const games=await read(query);count+=games.docs.length;
     if(count>maxOwnGames)throw new HttpsError('resource-exhausted','Private history exceeds the complete-read Game limit.');
     gameSets.push({ref:query,token:gamesToken(games.docs)});
-    if(games.docs.some((d:any)=>!validId(d.id)||!Number.isSafeInteger(d.data()?.gameNumber)||d.data().gameNumber<1)||
-      new Set(games.docs.map((d:any)=>d.data().gameNumber)).size!==games.docs.length)
+    if(games.docs.some((d:any)=>!validId(d.id)))throw new HttpsError('failed-precondition','Private history has invalid Game identity.');
+    if(!input.includeScheduleOrder&&(games.docs.some((d:any)=>!Number.isSafeInteger(d.data()?.gameNumber)||d.data().gameNumber<1)||
+      new Set(games.docs.map((d:any)=>d.data().gameNumber)).size!==games.docs.length))
       throw new HttpsError('failed-precondition','Private history has ambiguous Game sequence.');
+    let event:Bag|null=null;
     for(const [collection,id] of [['events',m.eventId],['seasons',m.seasonId]])
-      if(validId(id))await checkpoint(db.doc(collection+'/'+id));
+      if(validId(id)){const snap=await checkpoint(db.doc(collection+'/'+id),input.includeScheduleOrder&&collection==='events'?
+        data=>bindingDigest([data,scheduleTimestampMillis(data?.startsAt)]):bindingDigest);if(collection==='events')event=snap.data()??null;}
+    if(input.includeScheduleOrder){
+      const planId=validId(event?.approvedMatchPlanId)?event!.approvedMatchPlanId:null;
+      const plan=planId&&validId(m.eventId)?(await checkpoint(db.doc('events/'+m.eventId+'/matchPlans/'+planId))).data()??null:null;
+      schedules.push({battleId:matchDoc.id,match:m,event,planId,plan,games:games.docs.map((d:any)=>({gameId:d.id,game:d.data()}))});
+    }
     const battle:PersonalityHistoryBattle={battleId:matchDoc.id,gameIds:games.docs.map((d:any)=>d.id).sort(),sources:[]};
     for(const gameDoc of games.docs){
       const g=gameDoc.data();
@@ -103,12 +113,12 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
   const revalidate=async()=>{await db.runTransaction(async(tx:any)=>{
     if(await access(tx)!==accessToken||matchToken(await matches(tx))!==initialToken)throw changed();
     for(const q of gameSets)if(gamesToken((await read(q.ref,tx)).docs)!==q.token)throw changed();
-    for(const p of checkpoints.values())if(bindingDigest((await read(p.ref,tx)).data()??null)!==p.token)throw changed();
+    for(const p of checkpoints.values())if(p.tokenOf((await read(p.ref,tx)).data()??null)!==p.token)throw changed();
     for(const s of loaded)await s.revalidate(tx);
     budget();
   });};
   await revalidate();
-  return {battles,loaded,pending,inputDigest,coverage:{completeEnumeration:true as const,scannedLeagueBattles:initialMatches.length,ownBattles:battles.length,ownGames:count,currentSources:loaded.length,measuredIndependentBattles:0 as const},revalidate};
+  return {battles,loaded,pending,inputDigest,scheduleOrders:input.includeScheduleOrder?deriveSocialScheduleOrders(schedules):[],coverage:{completeEnumeration:true as const,scannedLeagueBattles:initialMatches.length,ownBattles:battles.length,ownGames:count,currentSources:loaded.length,measuredIndependentBattles:0 as const},revalidate};
 }
 /** Existing INT-B wire contract; C1 reuses collection/fencing, not profile values. */
 export async function readMyPersonalityHistory(input:Parameters<typeof collectMyCurrentBattleHistory>[0]){
