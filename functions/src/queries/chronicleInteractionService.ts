@@ -9,6 +9,7 @@ import {selectRareChronicleProposals,type CurrentChronicleBattle,type ReviewedTu
 import {invitationSlotId,planInvitationOffer,transitionInvitation,type InvitationSlot,
   type JudgmentFamily,type Opportunity,type PolicyRef} from '../domain/socialV1.js';
 import {collectMyCurrentBattleHistory} from './getMyPersonalityHistory.js';
+import {deriveSocialScheduleOrders} from '../integration/socialScheduleOrder.js';
 
 /** A functional authenticated *emulator-only* interaction service. Original #165
  * metrics remain PENDING; no real method approval/publication is invented.
@@ -70,30 +71,38 @@ const visibility=(slot:Bag)=>{
  * collection, including actual READY native artifacts, GUID claims and whole
  * league read fences. Reviewer records stay server-only. */
 async function cohort(input:Input){
-  const collected=await collectMyCurrentBattleHistory({...input,request:{},maxOwnGames:64});
+  const collected=await collectMyCurrentBattleHistory({...input,request:{},maxOwnGames:64,includeScheduleOrder:true});
   const items:Array<{battleId:string;battle:CurrentChronicleBattle;candidates:ReviewedTurningPoint[];
-    match:Bag;orderMs:number;ref:any;reviewSnapshots:any[];sources:any[]}> = [];
+    match:Bag;orderTuple:[number,number]|null;scheduleRevisions:Array<[string,string]>;ref:any;reviewSnapshots:any[];sources:any[]}> = [];
   for(const b of collected.battles){
     const ref=input.db.doc('matches/'+b.battleId),snapshot=await ref.get(),match=snapshot.data();
     if(!match?.participants?.some((p:Bag)=>p.playerId===input.actor.playerId))continue;
-    const orderMs=match.firstCompletedAt?.toMillis?.();
-    if(!Number.isSafeInteger(orderMs)||orderMs<0)continue;
+    const orderRows=collected.scheduleOrders.filter(o=>o.battleId===b.battleId);
+    const ordered=orderRows.length===b.gameIds.length&&orderRows.length>0&&
+      orderRows.every(o=>o.status==='ORDERED'&&o.order!==null)&&
+      new Set(orderRows.map(o=>o.gameId)).size===b.gameIds.length;
+    const orderTuple:[number,number]|null=ordered?
+      [orderRows[0].order!.event,orderRows[0].order!.battle]:null;
+    const scheduleRevisions:Array<[string,string]>=orderRows.map(o=>[o.gameId,o.revision] as [string,string])
+      .sort((a,b)=>a[0].localeCompare(b[0]));
     const evidenceComplete=b.gameIds.length>0&&b.sources.length===b.gameIds.length&&
       b.sources.every(s=>s.source.roster.some(p=>p.playerId===input.actor.playerId));
     const battle:CurrentChronicleBattle={battleId:b.battleId,
       playerIds:match.participants.map((p:Bag)=>p.playerId),
       currentGames:b.sources.map(s=>({gameId:s.source.gameId,sourceAuthority:s.source.authorityRevision})),
-      evidenceComplete,chronologyQualified:true};
+      evidenceComplete,chronologyQualified:ordered};
     const reviews=await ref.collection('chronicleRareReviewedMoments').limit(30).get();
     if(reviews.size===30)throw new HttpsError('resource-exhausted','Too many candidate source reviews for one Battle.');
     // This collection has no exposed client write permission; emulator seed
     // must explicitly mark independent original-method review as test-only.
     const candidates=reviews.docs.map((d:any)=>d.data()).filter((c:Bag)=>c.methodReview==='EMULATOR_ONLY'&&
       c.reviewedSource==='ORIGINAL_VERIFIED_TEST_WITNESS'&&c.battleId===b.battleId) as ReviewedTurningPoint[];
-    items.push({battleId:b.battleId,battle,match,orderMs,ref,reviewSnapshots:reviews.docs,
+    items.push({battleId:b.battleId,battle,match,orderTuple,scheduleRevisions,ref,reviewSnapshots:reviews.docs,
       candidates,sources:b.sources});
   }
-  items.sort((a,b)=>a.orderMs-b.orderMs||a.battleId.localeCompare(b.battleId));
+  items.sort((a,b)=>!a.orderTuple||!b.orderTuple?
+    (a.orderTuple?-1:b.orderTuple?1:a.battleId.localeCompare(b.battleId)):
+    a.orderTuple[0]-b.orderTuple[0]||a.orderTuple[1]-b.orderTuple[1]);
   await collected.revalidate();
   return {items,collected};
 }
@@ -103,7 +112,7 @@ const testPolicy=():ApprovedRareSelectionPolicy=>({
   fatiguedPlayerIds:[],blockedPairKeys:[],
 });
 const select=(item:Awaited<ReturnType<typeof cohort>>['items'][number],actorId:string)=>
- selectRareChronicleProposals({battle:item.battle,candidates:item.candidates,policy:testPolicy(),existingSlots:[]})
+ !item.battle.chronologyQualified?null:selectRareChronicleProposals({battle:item.battle,candidates:item.candidates,policy:testPolicy(),existingSlots:[]})
    .find(c=>c.respondentPlayerId===actorId)??null;
 
 /** Read complete owner eligibility order, not number of Games, query order or
@@ -141,6 +150,16 @@ async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
  // withdrawal, remap, authoritative result or changed GUID must revoke eligibility.
  const gs=await tx.get(mr.collection('games').orderBy('__name__').limit(65));
  if(gs.size!==sourceRows.length||gs.size>64)throw stale();
+  const planId=event.data()?.approvedMatchPlanId;
+  const plan=typeof planId==='string'&&planId?
+    await tx.get(input.db.doc('events/'+match.eventId+'/matchPlans/'+planId)):null;
+  const fresh=deriveSocialScheduleOrders([{battleId:selected.battleId,match,
+    event:event.data()??null,plan:plan?.data()??null,planId:planId??null,
+    games:gs.docs.map((g:any)=>({gameId:g.id,game:g.data()}))}]);
+  const revisions=fresh.map(o=>[o.gameId,o.revision] as [string,string])
+    .sort((a,b)=>a[0].localeCompare(b[0]));
+  if(fresh.some(o=>o.status!=='ORDERED')||
+     currentToken(revisions)!==currentToken(selected.scheduleRevisions))throw stale();
  const byId=new Map(sourceRows.map(s=>[s.source.gameId,s]));
  for(const g of gs.docs){
    const expected=byId.get(g.id);
@@ -161,7 +180,9 @@ export async function offerMyChronicleInvitation(input:Input,r:Bag){
  assertChronicleInteractionEmulator(input.env);requireFields(r,['battleId']);
  if(!id(r.battleId))throw invalid();
  const current=await cohort(input),item=current.items.find(x=>x.battleId===r.battleId);
- if(!item)throw fail('No complete chronologically qualified Battle evidence.');
+ if(!item||!item.battle.chronologyQualified||!item.battle.evidenceComplete||
+      current.collected.pending.length||current.items.some(x=>!x.battle.chronologyQualified))
+    throw fail('A complete approved Event/MatchPlan/Game history is required for rare Chronicle offers.');
  const proposed=select(item,input.actor.playerId);
  if(!proposed)return {offered:false,reason:'NO_RARE_SOURCE_QUALIFIED_TURNING_POINT'};
  const eligible=current.items.filter(x=>select(x,input.actor.playerId)).map(x=>x.battleId);
@@ -173,7 +194,7 @@ export async function offerMyChronicleInvitation(input:Input,r:Bag){
      '/replaySources/'+s.source.sourceHash).get()).data()
  })));
  await current.collected.revalidate(); // prevent drift between selected source and the transaction source snapshots
- const proposalDigest=bindingDigest([proposed,item.candidates,item.orderMs,eligible]);
+ const proposalDigest=bindingDigest([proposed,item.candidates,item.orderTuple,item.scheduleRevisions,eligible]);
  const plan=await input.db.runTransaction(async(tx:any)=>{
    await actorInTransaction(tx,input);
    const [existing,marker,review]=await Promise.all([tx.get(slotRef),tx.get(markerRef),
@@ -182,7 +203,7 @@ export async function offerMyChronicleInvitation(input:Input,r:Bag){
    if(!review.exists||currentToken(review.data())!==currentToken(item.reviewSnapshots.find(d=>d.id===proposed.incidentId)?.data()))
      throw stale();
    chronicleEligibleCooldown(eligible,r.battleId,marker.data()?.lastOfferedBattleId??null);
-   await verifyCurrent(tx,input,{battleId:r.battleId},savedSources);
+   await verifyCurrent(tx,input,{battleId:r.battleId,scheduleRevisions:item.scheduleRevisions},savedSources);
    if(currentToken((await tx.get(item.ref)).data())!==currentToken(item.match))throw stale();
    const opRevision=bindingDigest([proposalDigest,review.data(),TEST_POLICY]);
    const opportunity:Opportunity={slotId:proposed.slotId,opportunityRevision:opRevision,
@@ -197,7 +218,7 @@ export async function offerMyChronicleInvitation(input:Input,r:Bag){
        battleAuthorities:savedSources.map(s=>({gameId:s.source.gameId,authorityRevision:s.source.authorityRevision,
          gameDigest:currentToken(s.game),sourceDigest:currentToken(s.sourceDoc)}))
          .sort((a,b)=>a.gameId.localeCompare(b.gameId)),
-       matchDigest:currentToken(item.match),
+       matchDigest:currentToken(item.match),scheduleRevisions:item.scheduleRevisions,
        reviewedDigest:currentToken(review.data()),proposalDigest,approvalRef:TEST_POLICY.approvalRef},
      createdAt:new Date(),testOnly:true};
    tx.create(slotRef,slot);
@@ -239,7 +260,7 @@ export async function actOnMyChronicleInvitation(input:Input,r:Bag){
  if(r.action!=='REFRESH'){
    const current=await cohort(input);
    selectedItem=current.items.find(x=>x.battleId===r.battleId);
-   if(!selectedItem||!selectedItem.battle.evidenceComplete)throw stale();
+   if(!selectedItem||!selectedItem.battle.evidenceComplete||!selectedItem.battle.chronologyQualified)throw stale();
    verifiedSources=await Promise.all(selectedItem.sources.map(async s=>({
      source:s.source,game:s.game,
      sourceDoc:(await input.db.doc('matches/'+r.battleId+'/games/'+s.source.gameId+
@@ -305,7 +326,7 @@ export async function actOnMyChronicleInvitation(input:Input,r:Bag){
      .sort((a,b)=>a.gameId.localeCompare(b.gameId));
    if(currentToken(currentBinding)!==currentToken(slot.selected.battleAuthorities)||
       currentToken(selectedItem?.match)!==slot.selected.matchDigest)throw stale();
-   await verifyCurrent(tx,input,{battleId:r.battleId},verifiedSources);
+   await verifyCurrent(tx,input,{battleId:r.battleId,scheduleRevisions:slot.selected.scheduleRevisions},verifiedSources);
    const reviewed=await tx.get(input.db.doc('matches/'+r.battleId+
      '/chronicleRareReviewedMoments/'+slot.selected.incidentId));
    if(currentToken(reviewed.data())!==slot.selected.reviewedDigest||
