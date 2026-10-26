@@ -65,6 +65,26 @@ for(const feature of initial.personality.battleFeatures){validateSharedRecord('B
 assert.ok(initial.personality.personalityProfile.sliders.every(s=>s.status==='DEVELOPING'&&s.value===null));
 assert.equal(new Set(initial.sources.map(s=>s.gameGuid)).size,2);assert.equal(new Set(initial.sources.map(s=>s.sourceHash)).size,2);
 assert.deepEqual(await ownRead(),initial);
+// PERS-V1E: genuine two-source, ONE-Battle authenticated pilot. Source-scoped
+// original metadata can qualify raw context; it must NEVER manufacture the
+// second independent Battle needed for any longitudinal numeric value.
+process.env.AOF_PERSONALITY_PRIVATE_E2E='source-proposed-v1';
+const authenticPersonality=await ownRead();
+assert.equal(authenticPersonality.personality.calibration,'PROPOSED');
+assert.equal(authenticPersonality.personality.personalityProfile.policy.status,'PROPOSED');
+assert.equal(authenticPersonality.personality.battleFeatures.length,5);
+assert.equal(authenticPersonality.coverage.ownBattles,1);
+assert.ok(authenticPersonality.personality.personalityProfile.sliders.every(axis=>
+ axis.status==='DEVELOPING'&&axis.value===null));
+assert.equal(new Set(authenticPersonality.sources.map(s=>s.sourceHash)).size,2);
+const genuineAxisRaw=Object.fromEntries(authenticPersonality.personality.battleFeatures.map(axis=>
+ [axis.featureId,{measured:axis.numerator!==null,
+   missing:axis.coverage.missing.slice(0,4)}]));
+console.log(JSON.stringify({contract:'AOF_PERS_V1E_GENUINE_SOURCE_READ_1',
+  authenticOriginals:2,independentBattles:1,
+  sourceReview:'EXACT_HASH_ONLY',sampleThreshold:2,
+  axes:genuineAxisRaw,noNumericFromSingleBattle:true}));
+delete process.env.AOF_PERSONALITY_PRIVATE_E2E;
 const initialGameplay=await gameplayRead();assert.equal(initialGameplay.coverage.currentSources,2);
 assert.equal(initialGameplay.coverage.ownBattles,1);assert.ok(initialGameplay.episodes.length>0&&initialGameplay.legacyPending.claimIds.length>0);
 assert.equal(new Set(initialGameplay.sources.map(s=>s.gameGuid)).size,2);

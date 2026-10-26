@@ -7,6 +7,8 @@ import {callableOptions} from '../config/runtime.js';
 import {SOCIAL_V1_CONTRACT} from '../domain/socialV1.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
 import {projectPrivatePersonalityHistory,type PersonalityHistoryBattle} from '../integration/personalityHistory.js';
+import {privatePersonalityE2EEnabled,privatePersonalityPolicy,
+  PRIVATE_SOURCE_TAXONOMY,type PrivateTaxonomy} from '../engines/personalityV1/privateE2EPolicy.js';
 import {loadMyCurrentSocialSource,assertIntV1PrivateReadEnabled} from './getMySocialExperience.js';
 
 type Bag=Record<string,any>;
@@ -121,13 +123,27 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
   return {battles,loaded,pending,inputDigest,scheduleOrders:input.includeScheduleOrder?deriveSocialScheduleOrders(schedules):[],coverage:{completeEnumeration:true as const,scannedLeagueBattles:initialMatches.length,ownBattles:battles.length,ownGames:count,currentSources:loaded.length,measuredIndependentBattles:0 as const},revalidate};
 }
 /** Existing INT-B wire contract; C1 reuses collection/fencing, not profile values. */
-export async function readMyPersonalityHistory(input:Parameters<typeof collectMyCurrentBattleHistory>[0]){
+export async function readMyPersonalityHistory(input:Parameters<typeof collectMyCurrentBattleHistory>[0] & {
+  /** Isolated emulator-only test injection. Never present in callable data. */
+  personalityTaxonomy?:PrivateTaxonomy;
+}){
+  if(input.personalityTaxonomy && !privatePersonalityE2EEnabled(input.env))
+    throw new HttpsError('failed-precondition','Private Personality test policy disabled.');
   const current=await collectMyCurrentBattleHistory(input);
-  const personality=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,current.inputDigest);
+  // Only the authenticated complete current-source reader may supply history
+  // and the actor. Entire-set revision fencing remains INT-B's responsibility.
+  const pilot=privatePersonalityE2EEnabled(input.env)?
+    privatePersonalityPolicy(input.actor.playerId,current.loaded,
+      input.personalityTaxonomy??PRIVATE_SOURCE_TAXONOMY):null;
+  const personality=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,
+    current.inputDigest,pilot?.context,pilot?.calibration??null);
   const response={version:'AOF_INT_B_PRIVATE_HISTORY_1' as const,contract:SOCIAL_V1_CONTRACT,
     visibility:'OWNER_ONLY' as const,ownerPlayerId:input.actor.playerId,inputDigest:current.inputDigest,
     status:current.pending.length?'PENDING_INPUTS' as const:'CURRENT_INPUTS' as const,
-    coverage:current.coverage,sources:current.loaded.map(s=>s.source),pending:current.pending,personality,
+    coverage:{...current.coverage,
+      measuredIndependentBattles:new Set(personality.battleFeatures.filter(f=>f.numerator!==null)
+        .map(f=>f.battleId)).size},
+    sources:current.loaded.map(s=>s.source),pending:current.pending,personality,
     social:{status:'PENDING' as const,reason:'SOURCE_QUALIFIER_AND_APPROVED_RULES_PENDING'},
     effects:{officialWrites:false as const,receiptPublication:false as const,entitlementGrants:false as const}};
   if(Buffer.byteLength(JSON.stringify(response))>INT_B_LIMITS.maxResponseBytes)
