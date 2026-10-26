@@ -154,8 +154,13 @@ class PilotGradeAdmissionTests(unittest.TestCase):
             admit_contextual_source_grades(statistics=stats,context=b["context"],
                  source_measurements=m,action_events=events,game_scope=SCOPE,producer=prod)
         events[0]["actorPlayerId"]=2
-        with self.assertRaisesRegex(ValueError,"SOURCE_EVENT_ACTOR_CLOCK_MISMATCH"):
-            run(b,stats,events)
+        # #149 legitimately drops an unowned facet rather than raising. The
+        # new admission layer must remain empty, never reattribute it to p2.
+        withheld=run(b,stats,events)
+        self.assertEqual(withheld["sourceAdmittedCount"],0)
+        self.assertFalse(any(g["actorReplayPlayerId"]==2
+                             for g in withheld["episodes"]))
+        self.assertFalse(withheld["officialWrites"])
 
     def test_assistance_requires_independent_third_party_prior_threat(self):
         # Genuine helper->recipient facet, but one unthreatened generic help
