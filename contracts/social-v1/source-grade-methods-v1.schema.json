@@ -1,0 +1,878 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mathias-ao/League-of-Friends/contracts/social-v1/source-grade-methods-v1.schema.json",
+  "title": "AOF_SOC_V1E_BOUNDED_GRADE_METHODS_1 — PRIVATE, METHOD-ADMITTED, NEVER LEAGUE AUTHENTICATED",
+  "description": "Typed, source-method-specific inferred conduct only. Retains original LIMITed source and forbids canonical Claims, receipts and stage credits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "policy",
+    "privatePilot",
+    "sourceMethodRegistry",
+    "originalProducerVersion",
+    "producerProjectionRevision",
+    "sourceRevision",
+    "sourceContextRevision",
+    "sourceMeasurementsRevision",
+    "gameScope",
+    "gameScopeAuthenticated",
+    "projectionRevision",
+    "episodes",
+    "sourceAdmittedCount",
+    "publicationAllowed",
+    "officialWrites",
+    "claims",
+    "effects",
+    "actorWitnesses",
+    "receipts",
+    "noAutomaticHistoricalImport",
+    "limitations"
+  ],
+  "properties": {
+    "version": {
+      "const": "AOF_SOC_V1E_BOUNDED_GRADE_METHODS_1"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "status",
+        "minOriginalCommands",
+        "maxPreentryMs",
+        "gradeLabels",
+        "approvalRef"
+      ],
+      "properties": {
+        "version": {
+          "const": "AOF_SOC_V1E_PILOT_TUNING_1"
+        },
+        "status": {
+          "const": "PROPOSED_EMULATOR_ONLY"
+        },
+        "minOriginalCommands": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 20
+        },
+        "maxPreentryMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 180000
+        },
+        "gradeLabels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ordinary",
+            "substantial"
+          ],
+          "properties": {
+            "ordinary": {
+              "const": "ORDINARY"
+            },
+            "substantial": {
+              "type": "null"
+            }
+          }
+        },
+        "approvalRef": {
+          "type": "null"
+        }
+      }
+    },
+    "privatePilot": {
+      "const": true
+    },
+    "sourceMethodRegistry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "RIVALRY",
+        "BOND",
+        "CHIVALRY",
+        "GALLANTRY",
+        "CRUELTY",
+        "HOSTILITY"
+      ],
+      "properties": {
+        "RIVALRY": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "methodVersion",
+            "ruleId",
+            "familyId",
+            "sourceMethodVersion",
+            "metricIds",
+            "independentContext"
+          ],
+          "properties": {
+            "methodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ruleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "familyId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceMethodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "metricIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "independentContext": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "BOND": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "methodVersion",
+            "ruleId",
+            "familyId",
+            "sourceMethodVersion",
+            "metricIds",
+            "independentContext"
+          ],
+          "properties": {
+            "methodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ruleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "familyId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceMethodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "metricIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "independentContext": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "CHIVALRY": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "methodVersion",
+            "ruleId",
+            "familyId",
+            "sourceMethodVersion",
+            "metricIds",
+            "independentContext"
+          ],
+          "properties": {
+            "methodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ruleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "familyId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceMethodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "metricIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "independentContext": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "GALLANTRY": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "methodVersion",
+            "ruleId",
+            "familyId",
+            "sourceMethodVersion",
+            "metricIds",
+            "independentContext"
+          ],
+          "properties": {
+            "methodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ruleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "familyId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceMethodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "metricIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "independentContext": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "CRUELTY": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "methodVersion",
+            "ruleId",
+            "familyId",
+            "sourceMethodVersion",
+            "metricIds",
+            "independentContext"
+          ],
+          "properties": {
+            "methodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ruleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "familyId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceMethodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "metricIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "independentContext": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "HOSTILITY": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "methodVersion",
+            "ruleId",
+            "familyId",
+            "sourceMethodVersion",
+            "metricIds",
+            "independentContext"
+          ],
+          "properties": {
+            "methodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ruleId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "familyId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourceMethodVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "metricIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "independentContext": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "originalProducerVersion": {
+      "const": "AOF_SOCIAL_METRIC_GRADE_CANDIDATES_1"
+    },
+    "producerProjectionRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceRevision": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "sourceContextRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceMeasurementsRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gameScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "battleId",
+        "gameId",
+        "gameGuid",
+        "authorityRevision"
+      ],
+      "properties": {
+        "battleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gameId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gameGuid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorityRevision": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "gameScopeAuthenticated": {
+      "const": false
+    },
+    "projectionRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "episodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceCandidateId",
+          "sourceIndependentContributionKey",
+          "gameScope",
+          "sourceRevision",
+          "sourceContextRevision",
+          "sourceMeasurementsRevision",
+          "actorReplayPlayerId",
+          "counterpartReplayPlayerId",
+          "sourceDeedIds",
+          "sourceEventIds",
+          "sourcePosition",
+          "perTrackGrades",
+          "eligibleSourceMethods",
+          "overlapRule",
+          "originalSourceCoverage",
+          "currentGameAuthorityVerified",
+          "canonicalClaim",
+          "canonicalContributionKey"
+        ],
+        "properties": {
+          "sourceCandidateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceIndependentContributionKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gameScope": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "battleId",
+              "gameId",
+              "gameGuid",
+              "authorityRevision"
+            ],
+            "properties": {
+              "battleId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "gameId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "gameGuid": {
+                "type": "string",
+                "minLength": 1
+              },
+              "authorityRevision": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "sourceRevision": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": true
+          },
+          "sourceContextRevision": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceMeasurementsRevision": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actorReplayPlayerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "counterpartReplayPlayerId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sourceDeedIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "sourceEventIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "sourcePosition": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "recordingAtMs",
+              "operationOrdinal",
+              "order"
+            ],
+            "properties": {
+              "recordingAtMs": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "operationOrdinal": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "order": {
+                "enum": [
+                  "ORDERED",
+                  "PARTIAL"
+                ]
+              }
+            }
+          },
+          "perTrackGrades": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "track",
+                "system",
+                "sourceMethodVersion",
+                "methodVersion",
+                "familyId",
+                "pilotRuleId",
+                "actorReplayPlayerId",
+                "counterpartReplayPlayerId",
+                "decision",
+                "gradeBandId",
+                "sourceCoverage",
+                "methodCoverage",
+                "materialMeaning",
+                "sourceEventIds",
+                "corroboration",
+                "missingEvidence",
+                "independentContributionKey",
+                "canonicalContributionKey",
+                "originalPosition",
+                "reasonCodes"
+              ],
+              "properties": {
+                "track": {
+                  "enum": [
+                    "RIVALRY",
+                    "BOND",
+                    "CHIVALRY",
+                    "GALLANTRY",
+                    "CRUELTY",
+                    "HOSTILITY"
+                  ]
+                },
+                "system": {
+                  "enum": [
+                    "REPUTATION",
+                    "RELATIONSHIP"
+                  ]
+                },
+                "sourceMethodVersion": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "methodVersion": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "familyId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "pilotRuleId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "actorReplayPlayerId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "counterpartReplayPlayerId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "decision": {
+                  "enum": [
+                    "PENDING",
+                    "SOURCE_ADMITTED"
+                  ]
+                },
+                "gradeBandId": {
+                  "anyOf": [
+                    {
+                      "const": "ORDINARY"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "sourceCoverage": {
+                  "const": "LIMITED"
+                },
+                "methodCoverage": {
+                  "enum": [
+                    "ADMITTED",
+                    "PENDING"
+                  ]
+                },
+                "materialMeaning": {
+                  "anyOf": [
+                    {
+                      "const": "SOURCE_LINKED_BOUNDED_INFERRED_COMMITMENT_NOT_DAMAGE_OR_AID_RECEIPT"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "sourceEventIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "corroboration": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "sourceDetectorId",
+                      "sourceEventIds"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sourceDetectorId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sourceEventIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "uniqueItems": true
+                      }
+                    }
+                  }
+                },
+                "missingEvidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "independentContributionKey": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "canonicalContributionKey": {
+                  "type": "null"
+                },
+                "originalPosition": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "recordingAtMs",
+                    "operationOrdinal",
+                    "order"
+                  ],
+                  "properties": {
+                    "recordingAtMs": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "operationOrdinal": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "order": {
+                      "enum": [
+                        "ORDERED",
+                        "PARTIAL"
+                      ]
+                    }
+                  }
+                },
+                "reasonCodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "decision": {
+                        "const": "SOURCE_ADMITTED"
+                      }
+                    },
+                    "required": [
+                      "decision"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "gradeBandId": {
+                        "const": "ORDINARY"
+                      },
+                      "methodCoverage": {
+                        "const": "ADMITTED"
+                      },
+                      "missingEvidence": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "decision": {
+                        "const": "PENDING"
+                      }
+                    },
+                    "required": [
+                      "decision"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "gradeBandId": {
+                        "type": "null"
+                      },
+                      "methodCoverage": {
+                        "const": "PENDING"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "eligibleSourceMethods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "overlapRule": {
+            "const": "ONE_SOURCE_CONNECTED_EPISODE_PER_DIRECTION_PER_TRACK"
+          },
+          "originalSourceCoverage": {
+            "const": "LIMITED"
+          },
+          "currentGameAuthorityVerified": {
+            "const": false
+          },
+          "canonicalClaim": {
+            "type": "null"
+          },
+          "canonicalContributionKey": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    "sourceAdmittedCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "publicationAllowed": {
+      "const": false
+    },
+    "officialWrites": {
+      "const": false
+    },
+    "claims": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "effects": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "actorWitnesses": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "receipts": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "noAutomaticHistoricalImport": {
+      "const": true
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}
