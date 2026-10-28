@@ -48,8 +48,9 @@ test('Season Statistics renders tactical families, records, quiet controls and e
     await act(async()=>{root.render(React.createElement(SeasonStatisticsView,{repository:repo,snapshot,preview:true,openMatch:()=>{},openPlayer:()=>{}}));await new Promise(resolve=>setTimeout(resolve,0));});
 
     assert.ok(document.querySelector('.sx-archive-records'));
+    assert.match(document.querySelector('.sx-records-heading')?.textContent??'',/Provisional Game observations/);
     assert.equal(document.querySelector('.sx-scope-switch button[aria-pressed="true"]')?.textContent,'Per Battle');
-    assert.match(document.querySelector('.sx-record-plaque-grid')?.textContent??'',/Fastest Feudal/);
+    assert.match(document.querySelector('.sx-record-plaque-grid')?.textContent??'',/Earliest Inferred Feudal Age/);
     assert.match(document.querySelector('.sx-season-table')?.textContent??'',/Age Progression/);
     assert.equal(document.querySelector('.sx-metric-title[tabindex]'),null,'metric labels themselves must not be tooltip triggers');
     const infoTrigger=document.querySelector('.sx-metric-info-trigger');assert.ok(infoTrigger,'harder metrics should expose an explicit information trigger');
