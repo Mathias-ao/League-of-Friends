@@ -282,3 +282,19 @@ test('Event SUM preserves historical cumulative contribution but discloses expos
  i.games.find(g=>g.matchId==='W0').eligible=false;
  assert.equal(find(i,'farmsPlaced'),undefined,'incomplete all-Game total cannot become zero');
 });
+
+test('unverified tribute request does not reappear as a historical record or personal best',()=>{
+ const input=fixture(false);
+ set(input,'M1','p0','tributeSent',12000);set(input,'W0','p0','tributeSent',0);
+ const previous=structuredClone(input.games[0]);
+ previous.matchId='HISTORY';previous.eventId='OLD';previous.orderAtMs=input.games[0].orderAtMs-86400000;
+ previous.sourceHash='b'.repeat(64);previous.players=previous.players.map(p=>({...p,values:{...p.values,tributeSent:500}}));
+ input.publishedHistory=[previous];
+ assert.ok(!selectEventShowcase(input).some(c=>c.sources.some(s=>s.model==='QUALIFIED_TEST_V1')&&/Tribute request/i.test(c.detail)));
+ assert.equal(find(input,'league-record'),undefined,'history record cannot arise from tribute request alone');
+ assert.equal(find(input,'season-record'),undefined,'Season history record cannot arise from tribute request alone');
+ // Under three independent prior Games, even a tenfold request is not a PB.
+ for(let k=1;k<4;k++)input.publishedHistory.push({...previous,matchId:'HISTORY'+k,
+  sourceHash:(100+k).toString(16).padStart(64,'0'),orderAtMs:previous.orderAtMs-k*86400000});
+ assert.equal(find(input,'personal-best'),undefined);
+});

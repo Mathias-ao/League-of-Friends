@@ -141,6 +141,8 @@ function selectShowcase(input:EventShowcaseInput,battle=false,pendingBattleSourc
   const eventStart=Math.min(...games.map(g=>g.orderAtMs));
   const history=(input.publishedHistory??[]).filter(g=>g.eventId!==input.eventId&&g.orderAtMs<eventStart&&basicGame(g,illustrative)&&!games.some(e=>e.sourceHash===g.sourceHash)&&(input.publishedHistory??[]).filter(q=>key(q)===key(g)).length===1&&!(input.publishedHistory??[]).some(q=>q.sourceHash===g.sourceHash&&key(q)!==key(g)));
   for(const g of (battle?[]:games))for(const p of g.players)for(const rule of EVENT_SHOWCASE_METRICS){
+    // Unverified tribute requests cannot re-enter as league/Season/PB history.
+    if(rule.showcasePolicy==='SOURCE_BLOCKED')continue;
     if(!measured(p,rule.id,illustrative)||p.values[rule.id]===0||(rule.teamOnly&&!allied(g,p))||(rule.age&&(matchMap.get(g.matchId)?.standardStart!==true||p.values[rule.id]!>g.durationMs))||(rule.checkpoint&&g.durationMs<rule.checkpoint))continue;
     for(const scope of ['league-record','season-record','personal-best'] as const){
       if(scope==='league-record'&&!g.affectsLifetime||scope==='season-record'&&!g.affectsSeason)continue;
