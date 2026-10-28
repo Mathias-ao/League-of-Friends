@@ -61,6 +61,11 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
             with self.subTest(term=term):
                 self.assertIn(term, p)
         self.assertIn("Result-pending does NOT itself disqualify", p)
+        self.assertIn("executionScore >75", p)
+        self.assertIn("hard maximum", p)
+        self.assertIn("not pre-approved achievement thresholds", p)
+        self.assertIn("22:10", p)
+        self.assertIn("plain 22:10 Castle research+projection", p)
         self.assertIn("no automatic trophy", p.lower())
 
     def test_trophy_maturity_rules_are_explicitly_unapproved(self) -> None:
