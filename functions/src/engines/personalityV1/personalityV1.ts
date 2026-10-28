@@ -146,6 +146,21 @@ const missing = (axis: PersonalityAxis, semantic: Feature['semantic'], why: stri
   feature(axis, semantic, null, null, [], [], why);
 const keyOf = (c: GameContext): string =>
   [c.format, c.mapFamily, c.startFamily, c.mapId, c.durationFamily, c.civilizationOpportunityKey].join('|');
+/**
+ * Personality describes habits across ordinary civilizations, maps and game lengths.
+ * These remain exact source/context evidence, but not a reason to divide a player's
+ * *entire* longitudinal comparison into incomparable one-game samples.
+ *
+ * A special start changes the starting opportunity itself. Until reviewed
+ * per-axis normalization exists, keep Nomad/custom starts map-specific and
+ * separate from ordinary initial-TC Games. Modes remain distinct because
+ * their interaction opportunities differ.
+ */
+export function personalityComparisonGroup(c: GameContext): string {
+  return c.startFamily === 'STANDARD'
+    ? [c.format, 'STANDARD_START'].join('|')
+    : [c.format, c.startFamily, c.mapId].join('|');
+}
 const known = (c: GameContext): boolean => !!c.mapId && !!c.durationFamily && !!c.civilization &&
   !!c.civilizationOpportunityKey && num(c.observedUntilMs) !== null &&
   num(c.durationMs) !== null && c.observedUntilMs >= c.durationMs &&
@@ -337,11 +352,21 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
     if(new Set(parts.map(x => x.gameNumber)).size !== parts.length)throw new Error('PERSONALITY_DUPLICATE_GAME_NUMBER');
     const observations=parts.map(x => measurePersonalityGame(x,config));
     const contextKey = observations[0].contextKey;
+    const comparisonGroup = personalityComparisonGroup(parts[0].context);
     const features={} as Record<PersonalityAxis,Feature>;
     for(const axis of AXES) {
       const values=observations.map(x => x.features[axis]);
-      const okay=observations.every(x => x.eligible && x.contextKey===contextKey) &&
-        values.every(x => x.fraction !== null);
+      // Game-level admission already protects source, slot and exact opportunity.
+      // Raw fractions may be averaged only within one start/mode opportunity
+      // and with identical explicitly configured per-axis normalization bounds.
+      const anchors=parts.map(x => config?.anchors[keyOf(x.context)]?.[axis]);
+      const bounds=anchors[0];
+      const comparable=anchors.every(x => !!x && !!bounds &&
+        x.comparisonGroup===comparisonGroup &&
+        x.lower===bounds.lower && x.upper===bounds.upper);
+      const okay=observations.every((x,i) => x.eligible &&
+        personalityComparisonGroup(parts[i].context)===comparisonGroup) &&
+        values.every(x => x.fraction !== null) && comparable;
       features[axis]=okay ? feature(axis,values[0].semantic,
         mean(values.map(x => x.fraction!)),1,values.flatMap(x => x.evidenceIds),
         values.flatMap(x => x.modelVersions)) :
@@ -375,14 +400,25 @@ export function projectPersonalityPreview(playerId: string,games: AuthorizedGame
       records.push({battle,value,group:anchor.comparisonGroup});
     }
     const mixed=contexts.size>1;
-    const supported=!!config && !mixed && records.length>=config.minimumIndependentBattles;
+    // Incompatible unusual starts must not invalidate an otherwise sufficient
+    // standard-start career. Pick one independently sufficient opportunity group,
+    // preferring ordinary starts on ties; never combine unrelated groups.
+    const byGroup=new Map<string,typeof records>();
+    for(const record of records)byGroup.set(record.group,[...(byGroup.get(record.group)??[]),record]);
+    const ordered=[...byGroup.entries()].sort(([left,ls],[right,rs])=>
+      rs.length-ls.length || Number(right.endsWith('|STANDARD_START'))-Number(left.endsWith('|STANDARD_START')) ||
+      left.localeCompare(right));
+    const selected=ordered.find(([,rows])=>!!config && rows.length>=config.minimumIndependentBattles);
+    const admitted=selected?.[1]??[];
+    const supported=!!selected;
+    if(mixed && selected)reasonSet.add('OTHER_START_OR_MODE_CONTEXT_NOT_AGGREGATED');
     // Reuse the existing versioned playstyle evaluator after qualification and
     // independent-Battle/context normalization; no hidden scoring rules.
     let value:number|null=null;
     if(supported){
       const aggregate=config!.aggregationMethod==='MEDIAN'?median:mean;
-      const career=aggregate(records.map(r=>r.value));
-      const recent=aggregate(records.slice(-config!.recentBattleCount).map(r=>r.value));
+      const career=aggregate(admitted.map(r=>r.value));
+      const recent=aggregate(admitted.slice(-config!.recentBattleCount).map(r=>r.value));
       const blended=config!.careerWeight*career+(1-config!.careerWeight)*recent;
       const ruleSet:PlaystyleRuleSet={ruleVersion:config!.configurationVersion,sliders:[{
         sliderId:axis,leftLabel:PERSONALITY_AXES[axis][0],rightLabel:PERSONALITY_AXES[axis][1],
@@ -390,19 +426,19 @@ export function projectPersonalityPreview(playerId: string,games: AuthorizedGame
         components:[{metricId:axis,weight:1,direction:'RIGHT'}]
       }]};
       value=evaluatePlaystyleProfile(playerId,'CAREER',
-        [{metricId:axis,value:blended,samples:records.length,sourceVersion:PERSONALITY_FEATURE_VERSION}],
+        [{metricId:axis,value:blended,samples:admitted.length,sourceVersion:PERSONALITY_FEATURE_VERSION}],
         ruleSet).sliders[0].value;
     }else if(mixed)reasonSet.add('INCOMPATIBLE_CONTEXT_COMPARISON_GROUPS');
     else if(!config)reasonSet.add('CALIBRATION_NOT_CONFIGURED');
     else reasonSet.add('INSUFFICIENT_DISTINCT_BATTLES');
     sliders.push({axis,left:PERSONALITY_AXES[axis][0],right:PERSONALITY_AXES[axis][1],
-      status:mixed?'CONTEXT_LIMITED':value===null?'DEVELOPING':'READY',
-      value,independentBattles:records.length,
+      status:value!==null?'READY':mixed?'CONTEXT_LIMITED':'DEVELOPING',
+      value,independentBattles:supported?admitted.length:records.length,
       coverage:{source:qualified.length?'VERIFIED_INPUT':'NO_ELIGIBLE_INPUT',
         semantic:axis==='GUERRILLA_FRONTLINE'?'INFERRED_COMMAND':
           qualified.length?'RECORDED':'UNAVAILABLE',sample:supported?'SUPPORTED':'DEVELOPING'},
-      contextKey:contexts.size===1?[...contexts][0]:null,
-      reasons:[...reasonSet].sort(),sourceRevisions:records.map(r=>r.battle.sourceRevision)});
+      contextKey:supported?selected![0]:contexts.size===1?[...contexts][0]:null,
+      reasons:[...reasonSet].sort(),sourceRevisions:(supported?admitted:records).map(r=>r.battle.sourceRevision)});
   }
   return {featureVersion:PERSONALITY_FEATURE_VERSION,
     configurationVersion:config?.configurationVersion??null,
