@@ -21,7 +21,7 @@ export interface SeasonMetricDefinition {
   allTime?:'sum';
 }
 
-const numeric=(id:string,label:string,category:Category,unit:SeasonMetricUnit='number',aggregation:SeasonAggregation='mean',extra:Partial<SeasonMetricDefinition>={}):SeasonMetricDefinition=>({id,label,category,kind:'number',unit,aggregation,eligibility:'all',hint:aggregation==='median'?'Median across eligible Battles':aggregation==='sum'?'Season total':'Average per eligible Battle',...extra});
+const numeric=(id:string,label:string,category:Category,unit:SeasonMetricUnit='number',aggregation:SeasonAggregation='mean',extra:Partial<SeasonMetricDefinition>={}):SeasonMetricDefinition=>({id,label,category,kind:'number',unit,aggregation,eligibility:'all',hint:aggregation==='median'?'Median of one timing observation per Battle':aggregation==='sum'?'Season total':'Battle-weighted mean of Game measurements',...extra});
 const category=(id:string,label:string,group:Category,extra:Partial<SeasonMetricDefinition>={}):SeasonMetricDefinition=>({id,label,category:group,kind:'category',unit:'number',aggregation:'mode',eligibility:'all',hint:'Most common result across eligible Battles',...extra});
 
 /** Exact player-facing Season catalogue. Metrics remain measurements, never player grades. */
@@ -67,7 +67,7 @@ export const SEASON_METRICS:SeasonMetricDefinition[]=[
   numeric('militaryBuildingsCastle','Military Buildings @ Castle','Military','number','mean',{record:'max',allTime:'sum',hint:'Placements observed before the Castle Age click'}),
   numeric('battlesFought','Detected Battles','Military','number','mean',{record:'max',allTime:'sum',hint:'Promoted engagement episodes with opposing command contributors'}),
   numeric('battleTime','Detected Battle Time','Military','ms','mean',{record:'max',allTime:'sum',hint:'Time inside promoted Battle episodes; command-inference context, not engine combat telemetry'}),
-  numeric('greatBattles','Detected Great Battles','Military','number','mean',{leader:'max',record:'max',allTime:'sum',hint:'Promoted exceptional multiplayer engagement episodes; Per Battle averages Battle totals, All-time sums them'}),
+  numeric('greatBattles','Detected Great Battles','Military','number','mean',{leader:'max',record:'max',allTime:'sum',hint:'Promoted exceptional multiplayer engagement episodes; Per Battle averages Game counts within each Battle, All-time sums confirmed episode counts'}),
   numeric('raidsOut','Detected Raids Initiated','Military','number','mean',{record:'max',allTime:'sum',hint:'Detected raid episodes; does not assert damage or kills'}),
   numeric('raidsIn','Detected Raids Received','Military','number','mean',{record:'max',allTime:'sum'}),
   numeric('reinforcements','Reinforcements Sent','Military','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · qualified allied military-control evidence'}),
