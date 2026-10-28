@@ -343,8 +343,11 @@ test('special Nomad or Migration-like starts are separate, but do not erase ordi
   for(const axis of axisNames){
     assert.equal(slider(out,axis).status,'READY',axis);
     assert.equal(slider(out,axis).independentBattles,2,axis);
-    assert.ok(slider(out,axis).reasons.includes('OTHER_START_OR_MODE_CONTEXT_NOT_AGGREGATED'));
-    assert.equal(slider(out,axis).contextKey,ordinaryGroup);
+    // Ineligible special-start axes must not manufacture a competing group.
+    // When special-context observations *are* qualified, they remain separate.
+    if(['BOOMER_AGGRESSOR','GUERRILLA_FRONTLINE','SPECIALIST_IMPROVISER'].includes(axis))
+      assert.ok(slider(out,axis).reasons.includes('OTHER_START_OR_MODE_CONTEXT_NOT_AGGREGATED'),axis);
+    assert.equal(slider(out,axis).contextKey,personalityComparisonGroup(a.context));
   }
   const insufficient=projectPersonalityPreview('playerA',[a,special,nomad],c);
   for(const axis of axisNames){
