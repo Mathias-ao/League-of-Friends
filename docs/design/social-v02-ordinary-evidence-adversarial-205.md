@@ -34,7 +34,7 @@ A genuine deed can **independently qualify two different tracks** (Gallantry + C
 
 ## Deed-by-deed adversarial audit (20 original row references + eight v0.2 extensions)
 
-The row IDs **M01–M20 refer to the original owner-v0.1 catalogue**, not revised approval; `V02-Sx` are **new design reference IDs, not implemented metricDefinitionIds**. “Current” means existing **method-level original-source** bounded positive, not authorised live scoring. Entries without a proven source method remain `PENDING`, even when plausible gameplay. Exact measured fields come from `statisticsExperience.ts` and `seasonShowcaseProjection.ts` plus the canonical per-player statistics JSON; summary values never by themselves qualify an actor→counterpart deed. Abbreviations: R = Rivalry A→B, H = Hostility A→B, B = Bond A→B, G = Gallantry player-wide, C = Cruelty player-wide, Ch = Chivalry player-wide.
+The row IDs **M01–M20 refer to the original owner-v0.1 catalogue** (`OWNER_V0_1_M01` through `OWNER_V0_1_M20`), not revised approval; `V02-Sx` are **new design reference IDs, not implemented metricDefinitionIds**. “Current” means existing **method-level original-source** bounded positive, not authorised live scoring. Entries without a proven source method remain `PENDING`, even when plausible gameplay. Exact measured fields come from `statisticsExperience.ts` and `seasonShowcaseProjection.ts` plus the canonical per-player statistics JSON; summary values never by themselves qualify an actor→counterpart deed. Abbreviations: R = Rivalry A→B, H = Hostility A→B, B = Bond A→B, G = Gallantry player-wide, C = Cruelty player-wide, Ch = Chivalry player-wide.
 
 | Original/deed | Existing exact metric or model and modality | Realistic positive / correct direction | Track status / proposed meaning | Closest false positive and unproven execution | Opportunity, comparability and dedup | Player-facing source-honest interpretation |
 |---|---|---|---|---|---|---|
@@ -169,8 +169,8 @@ Proposed public-contract **name only**: `AOF_SOCIAL_RELATIONSHIP_INTERPRETATION_
 
 **These are design test cases, not claims that code was run during this review.** They are deliberately structured as product acceptance and replay-evidence gates, **not just tests of a pre-selected formula**. A candidate method must pass the real pinned original corpus *and* a closest source-preserving counterexample, with any synthetic fixture clearly labelled CONTROLLED.
 
-| # | Source situation | Must remain true | Nearest failure to detect |
-|---:|---|---|---|
+| # | Source situation | Original evidence or context | Expected meaning / behavior | Nearest false positive or failure |
+|---:|---|---|---|---|
 | 01 | Different normal map/civ across two true Battles | A's genuine source-qualified A→B pair contests on Arabia (civ X) and Arena (civ Y), with valid current Game authority. | Both individual R deeds count toward legitimate longitudinal A→B history under #139 caps; do **not** require identical map/civ/length bucket. | Separate episode-local map/start comparability for neutral/home placement and opening skill; no fabricated extra Event credit. |
 | 02 | Special start affects only relevant route | Nomad/Migration or custom settings lack exhaustive standard starting TC, but A→B original source raid+engagement has independently valid direction/method. | Spatial home/forward Castle and standard FC performance stay Pending; unrelated valid R/assistance should remain available when mode method supports. | Never globally invalidate all social evidence for one special-start unknown. |
 | 03 | Water map / fishing targets | Raid V3 economic target Fishing Ship or trade-cog original controller, no land starting TC/neutral geometry. | Retain genuine directed economy-pressure command observation, but land B-home location or unit-kill inference Pending; adapt opportunity to water map. | No universal land-zone requirement for all longitudinal conduct. |
