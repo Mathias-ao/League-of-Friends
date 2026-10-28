@@ -44,7 +44,20 @@ test('Mixed versions are partitioned; compatible observations remain usable but 
   const engine=new SeasonStatisticsExperience(games),sample=engine.aggregate()[0].values.apm;
   assert.equal(sample.value,25);assert.equal(sample.samples,2);assert.equal(sample.eligibleBattles,3);
   assert.equal(sample.selectedModel,'old');assert.deepEqual(sample.excludedModels,['new']);
-  assert.deepEqual(engine.leaders('apm',2),[]); // partial player cannot win a lead
+  assert.deepEqual(engine.leaders('apm',3),[]); // only two complete Battles use the comparable model
+});
+test('five fully comparable method Battles survive a separate method version, not a partial Game in those Battles',()=>{
+  const games=Array.from({length:6},(_,i)=>game('battle'+(i+1)));
+  for(const g of games){amount(g,'a','buildOrderExecution',90);amount(g,'b','buildOrderExecution',70);}
+  amount(games[5],'a','buildOrderExecution',10,'v2');
+  const engine=new SeasonStatisticsExperience(games),row=engine.aggregate().find(r=>r.playerId==='a')!;
+  assert.equal(row.values.buildOrderExecution.samples,5);
+  assert.equal(row.values.buildOrderExecution.eligibleBattles,6);
+  assert.deepEqual(engine.leaders('buildOrderExecution',5),['a']);
+  const partial=game('battle1','G2');
+  amount(partial,'a','buildOrderExecution',null);
+  assert.deepEqual(new SeasonStatisticsExperience([...games,partial]).leaders('buildOrderExecution',5),[],
+    'a partially observed Game inside one of the selected Battles cannot establish a fully qualified lead');
 });
 test('Five distinct fully measured Battles qualify peers despite newcomer and ordinary contexts',()=>{
   const games=Array.from({length:5},(_,i)=>game('battle'+(i+1),'G1',i%2?'other-ordinary-map':'standard'));
