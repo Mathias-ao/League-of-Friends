@@ -1,0 +1,167 @@
+{
+  "version": "AOF_CHRONICLE_HIERARCHY_DESIGN_FIXTURE_V1",
+  "synthetic": true,
+  "implementation": "NOT_INSTALLED",
+  "purpose": "Review-only five-Battle target for #205 B1, #202, #195",
+  "ownerId": "aldric",
+  "counterpartId": "beren",
+  "battles": [
+    {
+      "battleId": "H1",
+      "format": "ONE_V_ONE",
+      "games": [
+        "H1-G1"
+      ],
+      "accepted": true,
+      "chronologyQualified": true,
+      "sourceRevision": "r1",
+      "side": "OPPOSED",
+      "result": "UNRESOLVED",
+      "winner": null,
+      "sourceBeats": [],
+      "socialMarks": [],
+      "externalExceptionalIds": [],
+      "expectedTier": "ORDINARY_LEDGER"
+    },
+    {
+      "battleId": "H2",
+      "format": "ONE_V_ONE",
+      "games": [
+        "H2-G1"
+      ],
+      "accepted": true,
+      "chronologyQualified": true,
+      "sourceRevision": "r1",
+      "side": "OPPOSED",
+      "result": "OFFICIAL",
+      "winner": "beren",
+      "sourceBeats": [],
+      "socialMarks": [],
+      "externalExceptionalIds": [],
+      "expectedTier": "ORDINARY_LEDGER"
+    },
+    {
+      "battleId": "H3",
+      "format": "ONE_V_ONE",
+      "games": [
+        "H3-G1",
+        "H3-G2"
+      ],
+      "accepted": true,
+      "chronologyQualified": true,
+      "sourceRevision": "r2",
+      "side": "OPPOSED",
+      "result": "OFFICIAL",
+      "winner": "aldric",
+      "sourceBeats": [
+        {
+          "id": "H3-A-to-B-pressure",
+          "kind": "DIRECTED_POSITION_PRESSURE",
+          "actor": "aldric",
+          "target": "beren",
+          "modality": "BOUNDED_INFERENCE",
+          "admitted": true
+        }
+      ],
+      "socialMarks": [],
+      "externalExceptionalIds": [],
+      "historicalCallback": {
+        "type": "ACCEPTED_RESULT_REVERSAL",
+        "earlierBattleId": "H2",
+        "previousWinner": "beren",
+        "newWinner": "aldric"
+      },
+      "expectedTier": "DEVELOPING_HISTORY"
+    },
+    {
+      "battleId": "H4",
+      "format": "FFA",
+      "games": [
+        "H4-G1"
+      ],
+      "accepted": true,
+      "chronologyQualified": true,
+      "sourceRevision": "r1",
+      "side": "OPEN_DIPLOMACY",
+      "result": "UNRESOLVED",
+      "winner": null,
+      "sourceBeats": [
+        {
+          "id": "H4-A-to-B-ally-mark",
+          "kind": "DECLARATION_ESTABLISHED",
+          "actor": "aldric",
+          "target": "beren",
+          "modality": "RECORDED_COMMAND",
+          "admitted": true
+        }
+      ],
+      "socialMarks": [],
+      "externalExceptionalIds": [],
+      "expectedTier": "ORDINARY_LEDGER"
+    },
+    {
+      "battleId": "H5",
+      "format": "FOUR_V_FOUR",
+      "games": [
+        "H5-G1"
+      ],
+      "accepted": true,
+      "chronologyQualified": true,
+      "sourceRevision": "r1",
+      "side": "LOCKED_TEAMMATES",
+      "result": "UNRESOLVED",
+      "winner": null,
+      "sourceBeats": [
+        {
+          "id": "H5-defence",
+          "kind": "SUPPORT_PARTICIPATION",
+          "actor": "aldric",
+          "target": "beren",
+          "modality": "BOUNDED_INFERENCE",
+          "supportKind": "DEFENSIVE_PARTICIPATION",
+          "admitted": true
+        }
+      ],
+      "socialMarks": [],
+      "externalExceptionalIds": [
+        "E-CHI-01"
+      ],
+      "exceptionalQualification": "HYPOTHETICAL_EXTERNALLY_APPROVED_ONLY",
+      "expectedTier": "EXTRAORDINARY_CHAPTER"
+    }
+  ],
+  "correction": {
+    "battleId": "H2",
+    "fromRevision": "r1",
+    "toRevision": "r2",
+    "newResult": "UNRESOLVED",
+    "expectedTierH3": "ORDINARY_LEDGER",
+    "removeExceptionalFrom": "H5",
+    "expectedTierH5WithoutExceptional": "DEVELOPING_HISTORY",
+    "sameSceneIds": true,
+    "seenHistoryUnchanged": true
+  },
+  "expected": {
+    "visibleSceneCount": 5,
+    "distinctBattleCount": 5,
+    "ordinaryCount": 3,
+    "developingCount": 1,
+    "extraordinaryCount": 1,
+    "gameCount": 6,
+    "ordinaryOnNoBeat": true,
+    "oneScenePerBattle": true,
+    "sourceCorrectionCanDowngrade": true,
+    "privacy": "PUBLIC_NARRATOR_HAS_NO_AUTHOR_TESTIMONY",
+    "allowRealClaims": false
+  },
+  "adversarialCases": [
+    "beatless H2 admitted rather than omitted",
+    "pending H1/H4 outcomes not inferred",
+    "H3 two Games one Battle",
+    "H3 result reversal recomputed when H2 result withdrawn",
+    "H5 exceptional receipt external-only and downgrade",
+    "legacy scene seen migration stable",
+    "A/B emotional interpretation owner-private and source-linked",
+    "mixed maps/civs do not suppress ordinary pair history"
+  ]
+}
