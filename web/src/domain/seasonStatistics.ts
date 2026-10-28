@@ -59,15 +59,15 @@ export const SEASON_METRICS:SeasonMetricDefinition[]=[
   numeric('marketSales','Market Sales','Economy','number','mean',{record:'max',allTime:'sum'}),
   numeric('marketPurchases','Market Purchases','Economy','number','mean',{record:'max',allTime:'sum'}),
   numeric('tradeUnits','Trade Units Queued','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · positive trade-unit queue requests'}),
-  numeric('tributeSent','Tribute Sent','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · decoded resource amount sent'}),
-  numeric('tributeReceived','Tribute Received','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · decoded resource amount received'}),
+  numeric('tributeSent','Tribute Amount Requested (Outgoing)','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · decoded outgoing tribute-request amounts; delivery, fees and receipt unverified'}),
+  numeric('tributeReceived','Tribute Amount Requested (Incoming)','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · decoded incoming tribute-request amounts; receipt not independently verified'}),
 
   numeric('unitRequests','Military Units Queued','Military','number','mean',{leader:'max',record:'max',allTime:'sum',hint:'Positive military queue requests; not proof every unit completed'}),
   numeric('militaryCommitment','Military Unit Commitment','Military','number','mean',{record:'max',allTime:'sum',hint:'Pinned base-catalog value of positive military unit queues'}),
   numeric('militaryBuildingsCastle','Military Buildings @ Castle','Military','number','mean',{record:'max',allTime:'sum',hint:'Placements observed before the Castle Age click'}),
   numeric('battlesFought','Detected Battles','Military','number','mean',{record:'max',allTime:'sum',hint:'Promoted engagement episodes with opposing command contributors'}),
   numeric('battleTime','Detected Battle Time','Military','ms','mean',{record:'max',allTime:'sum',hint:'Time inside promoted Battle episodes; command-inference context, not engine combat telemetry'}),
-  numeric('greatBattles','Detected Great Battles','Military','number','sum',{leader:'max',record:'max',hint:'Season total · exceptional multiplayer-only promoted Battles'}),
+  numeric('greatBattles','Detected Great Battles','Military','number','mean',{leader:'max',record:'max',allTime:'sum',hint:'Promoted exceptional multiplayer engagement episodes; Per Battle averages Battle totals, All-time sums them'}),
   numeric('raidsOut','Detected Raids Initiated','Military','number','mean',{record:'max',allTime:'sum',hint:'Detected raid episodes; does not assert damage or kills'}),
   numeric('raidsIn','Detected Raids Received','Military','number','mean',{record:'max',allTime:'sum'}),
   numeric('reinforcements','Reinforcements Sent','Military','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · qualified allied military-control evidence'}),
@@ -108,8 +108,9 @@ export const seasonMetric=(id:string)=>SEASON_METRICS.find(metric=>metric.id===i
 export const seasonMetricsFor=(category:Category)=>SEASON_METRICS.filter(metric=>metric.category===category);
 
 interface SeasonTextPlayer extends PlayerMeasurement {seasonText?:Record<string,string|null>}
-export interface SeasonAggregateValue {value:number|null;text:string|null;sharePercent:number|null;samples:number;eligibleGames:number;models:string[];}
-export interface SeasonAggregatePlayer {playerId:string;name:string;games:number;values:Record<string,SeasonAggregateValue>;}
+export interface SeasonAggregateValue {value:number|null;text:string|null;sharePercent:number|null;samples:number;eligibleGames:number;models:string[];/** Samples are distinct Battles, never individual Games. */eligibleBattles?:number;observedGames?:number;completeBattles?:number;selectedModel?:string|null;excludedModels?:string[];}
+
+export interface SeasonAggregatePlayer {playerId:string;name:string;games:number;battles:number;values:Record<string,SeasonAggregateValue>;}
 export interface SeasonRecord {metricId:string;value:number;playerId:string;name:string;matchId:string;gameId:string;civilization:string|null;orderAtMs:number;contextKey:string;model:string;}
 
 export function seasonMetricEligible(metric:SeasonMetricDefinition,game:GameStatistics,player:PlayerMeasurement):boolean{
@@ -126,6 +127,16 @@ function categoryMode(values:string[]):{text:string|null;sharePercent:number|nul
   return {text:modes.join(' / '),sharePercent:100*max/values.length};
 }
 
+/**
+ * Season read-model: each distinct matchId (Battle) has one vote.
+ * Additive per-Game contributions are summed *inside* their Battle; timing,
+ * snapshots, percentages, ratios and rates are first normalized within the
+ * Battle. All-time sums only explicitly marked additive metrics.
+ *
+ * A measurement model is a method, not an opportunity/context marker.
+ * We never average incompatible model strings. The largest comparable
+ * Battle-supported slice remains visible, with the omitted slice disclosed.
+ */
 export class SeasonStatisticsExperience{
   readonly games:GameStatistics[];
   constructor(games:GameStatistics[]){
@@ -134,6 +145,7 @@ export class SeasonStatisticsExperience{
     const hashes=new Set<string>();
     this.games=[...revisions.values()].sort((a,b)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId)).filter(game=>{if(!game.eligible)return false;if(game.sourceHash&&hashes.has(game.sourceHash))return false;if(game.sourceHash)hashes.add(game.sourceHash);return true;});
   }
+  get battleCount():number{return new Set(this.games.map(game=>game.matchId)).size;}
   aggregate(mode:SeasonDisplayMode='perBattle'):SeasonAggregatePlayer[]{
     const ids=[...new Set(this.games.flatMap(game=>game.players.map(player=>player.playerId)))];
     return ids.map(playerId=>{
@@ -141,34 +153,81 @@ export class SeasonStatisticsExperience{
       const values:Record<string,SeasonAggregateValue>={};
       for(const metric of SEASON_METRICS){
         const eligible=pairs.filter(({game,player})=>seasonMetricEligible(metric,game,player));
-        const models=[...new Set(eligible.map(({player})=>player.models[metric.id]).filter(Boolean))].sort();
+        const grouped=new Map<string,typeof eligible>();
+        for(const pair of eligible)grouped.set(pair.game.matchId,[...(grouped.get(pair.game.matchId)??[]),pair]);
+        const observation=(pair:typeof eligible[number]):number|string|null=>{
+          if(metric.kind==='category')return pair.player.seasonText?.[metric.id]??null;
+          const candidate=pair.player.values[metric.id];
+          return typeof candidate==='number'&&Number.isFinite(candidate)?candidate:null;
+        };
+        const observed=eligible.filter(pair=>observation(pair)!==null&&observation(pair)!=='');
+        const modelGroups=new Map<string,{battles:Set<string>;games:number}>();
+        for(const pair of observed){
+          const model=pair.player.models[metric.id]||'unknown',previous=modelGroups.get(model)??{battles:new Set<string>(),games:0};
+          previous.battles.add(pair.game.matchId);previous.games++;modelGroups.set(model,previous);
+        }
+        const chosen=[...modelGroups].sort((a,b)=>
+          Number(a[0]==='unknown')-Number(b[0]==='unknown')||
+          b[1].battles.size-a[1].battles.size||b[1].games-a[1].games||a[0].localeCompare(b[0]))[0]?.[0]??null;
+        const selected=observed.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen);
+        const modelNames=chosen?[chosen]:[];
+        const excludedModels=[...modelGroups.keys()].filter(model=>model!==chosen).sort();
+        const byBattle=[...grouped.values()].map(group=>{
+          const members=group.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen&&observation(pair)!==null&&observation(pair)!=='');
+          if(!members.length)return null;
+          const raw=members.map(observation);
+          if(metric.kind==='category')return categoryMode(raw as string[]).text;
+          const numbers=raw as number[];
+          // Only volume/episode counts are additive across Games, not rates,
+          // timings, percentages, snapshots or point-in-time measurements.
+          if(metric.allTime==='sum'||metric.aggregation==='sum')return numbers.reduce((sum,item)=>sum+item,0);
+          return metric.aggregation==='median'?median(numbers):numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
+        }).filter((value):value is number|string=>value!==null);
+        const completeBattles=[...grouped.values()].filter(group=>group.every(pair=>selected.includes(pair))).length;
+        let value:number|null=null,text:string|null=null,sharePercent:number|null=null;
         if(metric.kind==='category'){
-          const texts=eligible.map(({player})=>player.seasonText?.[metric.id]??null).filter((value):value is string=>!!value);
-          const modeValue=categoryMode(texts);
-          values[metric.id]={value:null,text:modeValue.text,sharePercent:modeValue.sharePercent,samples:texts.length,eligibleGames:eligible.length,models};
-          continue;
+          const chosenMode=categoryMode(byBattle as string[]);
+          text=chosenMode.text;sharePercent=chosenMode.sharePercent;
+        }else{
+          const numbers=byBattle as number[];
+          if(numbers.length){
+            if(mode==='allTime'&&(metric.allTime==='sum'||metric.aggregation==='sum'))value=numbers.reduce((sum,item)=>sum+item,0);
+            else if(metric.aggregation==='median')value=median(numbers);
+            else value=numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
+          }
         }
-        const numbers=eligible.map(({player})=>player.values[metric.id]).filter((value):value is number=>typeof value==='number'&&Number.isFinite(value));
-        let value:number|null=null;
-        if(numbers.length){
-          if(metric.aggregation==='sum'||(mode==='allTime'&&metric.allTime==='sum'))value=numbers.reduce((sum,item)=>sum+item,0);
-          else if(metric.aggregation==='median')value=median(numbers);
-          else value=numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
-        }
-        values[metric.id]={value,text:null,sharePercent:null,samples:numbers.length,eligibleGames:eligible.length,models};
+        values[metric.id]={value,text,sharePercent,samples:byBattle.length,eligibleGames:eligible.length,eligibleBattles:grouped.size,observedGames:selected.length,completeBattles,models:modelNames,selectedModel:chosen,excludedModels};
       }
-      return {playerId,name:pairs.at(-1)?.player.name??playerId,games:pairs.length,values};
+      return {playerId,name:pairs.at(-1)?.player.name??playerId,games:pairs.length,battles:new Set(pairs.map(pair=>pair.game.matchId)).size,values};
     }).sort((a,b)=>a.name.localeCompare(b.name));
   }
-  leaders(metricId:string,minimumGames=5,mode:SeasonDisplayMode='perBattle'):string[]{
-    const metric=seasonMetric(metricId);if(!metric?.leader||metric.kind==='category')return [];
-    const rows=this.aggregate(mode),values=rows.map(row=>row.values[metricId]);
-    if(rows.length<2||values.some(value=>value.value===null||value.samples!==value.eligibleGames))return [];
-    if(metric.aggregation!=='sum'&&(values.some(value=>value.samples<minimumGames)||new Set(this.games.map(game=>game.contextKey)).size!==1))return [];
-    const modelSet=new Set(values.flatMap(value=>value.models));if(modelSet.size!==1||modelSet.has('unknown'))return [];
-    const extreme=(metric.leader==='max'?Math.max:Math.min)(...values.map(value=>value.value!));
-    if(values.every(value=>value.value===extreme))return [];
-    return rows.filter(row=>row.values[metricId].value===extreme).map(row=>row.playerId);
+  /**
+   * Qualified peers, NOT a claim of an absolute Season champion.
+   * A newcomer, unrelated missing measurement or different ordinary settings
+   * never vetoes comparisons between two complete five-Battle peers.
+   * Method cohorts are never numerically merged.
+   */
+  leaderComparison(metricId:string,minimumBattles=5,mode:SeasonDisplayMode='perBattle'):{ids:string[];qualifiedPlayers:number;model:string|null}{
+    const metric=seasonMetric(metricId);
+    if(!metric?.leader||metric.kind==='category')return {ids:[],qualifiedPlayers:0,model:null};
+    const qualified=this.aggregate(mode).filter(row=>{
+      const sample=row.values[metricId];
+      return sample.value!==null&&sample.selectedModel!==null&&sample.selectedModel!=='unknown'&&
+        sample.samples>=minimumBattles&&sample.samples===sample.eligibleBattles&&
+        sample.observedGames===sample.eligibleGames&&sample.completeBattles===sample.eligibleBattles;
+    });
+    const byModel=new Map<string,typeof qualified>();
+    for(const row of qualified){const model=row.values[metricId].selectedModel!;byModel.set(model,[...(byModel.get(model)??[]),row]);}
+    const cohorts=[...byModel].filter(([,rows])=>rows.length>=2).sort((a,b)=>b[1].length-a[1].length||
+      Math.min(...b[1].map(row=>row.values[metricId].samples))-Math.min(...a[1].map(row=>row.values[metricId].samples))||a[0].localeCompare(b[0]));
+    if(!cohorts.length)return {ids:[],qualifiedPlayers:0,model:null};
+    const [model,rows]=cohorts[0];
+    const extreme=(metric.leader==='max'?Math.max:Math.min)(...rows.map(row=>row.values[metricId].value!));
+    const ids=rows.every(row=>row.values[metricId].value===extreme)?[]:rows.filter(row=>row.values[metricId].value===extreme).map(row=>row.playerId);
+    return {ids,qualifiedPlayers:rows.length,model};
+  }
+  leaders(metricId:string,minimumBattles=5,mode:SeasonDisplayMode='perBattle'):string[]{
+    return this.leaderComparison(metricId,minimumBattles,mode).ids;
   }
   records():SeasonRecord[]{
     const result=new Map<string,SeasonRecord[]>();
