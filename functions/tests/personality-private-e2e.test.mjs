@@ -159,7 +159,7 @@ test('forged reviewed proof, wrong patch, map, start and subject aliases fail cl
     x=>x.statistics.matchFacts.map.id=17,
     x=>x.statistics.matchFacts.rules.startingAgeId.value=1,
     x=>x.source.roster[0].playerId='outsider',
-    x=>x.source.outcome.qualification='UNRESOLVED'
+    x=>x.source.outcome.qualification='UNKNOWN_NOT_IN_CANONICAL_CONTRACT'
   ]){
     const changed=game('battle-A','g1',1);mutation(changed);
     const response=project([changed,b],known).view;
@@ -235,4 +235,26 @@ test('reviewed STANDARD-start source contexts compare across ordinary map, civ a
     .find(x=>x.axis==='SPECIALIST_IMPROVISER').value,null);
   assert.equal(incomplete.personalityProfile.sliders
     .find(x=>x.axis==='BOOMER_AGGRESSOR').status,'READY');
+});
+
+test('unresolved winner does not invalidate source-qualified behavior if Battle history is ordered',()=>{
+  const a=game('battle-A','g1',1),b=game('battle-B','g1',1);
+  b.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  const {policy,view}=project([a,b]);
+  assert.equal(policy.diagnostics.acceptedGameSources,2);
+  assert.equal(view.battleFeatures.length,10);
+  for(const slider of view.personalityProfile.sliders){
+    assert.equal(slider.status,'READY',slider.axis);
+    assert.equal(slider.independentBattles,2,slider.axis);
+  }
+  const removedClock=game('battle-B','g1',1);
+  removedClock.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  removedClock.match.firstCompletedAt=null;
+  const notHistoricallyOrdered=project([a,removedClock]).view;
+  assert.ok(notHistoricallyOrdered.personalityProfile.sliders.every(x=>x.value===null));
+  // Unresolved without exactly canonical null winner/revision cannot forge admission.
+  const forged=game('battle-B','g1',1);
+  forged.source.outcome={qualification:'UNRESOLVED',resultRevision:1,winningPlayerIds:['p1']};
+  assert.equal(privatePersonalityPolicy(actor,[a,forged],taxonomy([a,forged]))
+    .diagnostics.acceptedGameSources,1);
 });
