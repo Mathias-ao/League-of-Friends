@@ -14,7 +14,12 @@ export function BattleAccomplishments({game,data,preview}:{game:GameStatistics;d
       statisticsRevision:record.replay?.statisticsRevision??null}}):[];
   // A result dispute does not authenticate the underlying source. Without
   // independent source-dispute authority, this path fails closed on disputes.
-  if(!record||record.resultDisputeOpen||!items.length)return null;
+  // Bind even officially qualified Game cards to the *current* READY source.
+  // A result correction can refresh the Game pointer before UI stats refresh.
+  const currentSource=record?.replay?.statisticsState==='READY'&&
+    record.replay.statisticsId===game.sourceHash&&
+    record.replay.statisticsRevision===game.revision;
+  if(!record||record.resultDisputeOpen||(!preview&&!currentSource)||!items.length)return null;
   return <section className="battle-accomplishments" aria-label="Battle accomplishments"><span className="eyebrow">DISTINCTIONS OF THE BATTLE</span><ol>{items.map(item=><li key={item.id}><button onClick={()=>setEvidence(item)} aria-label={`View evidence for ${item.title}`}><AccomplishmentEmblem kind={item.emblem}/><span><strong>{item.title}</strong><b>{item.value}</b><small>{item.playerIds.map(id=>game.players.find(player=>player.playerId===id)?.name??id).join(' · ')}</small><em>{item.tier.toLowerCase()}</em></span></button></li>)}</ol>
     {evidence&&<BattleOverlay title={evidence.title} onClose={()=>setEvidence(null)}><p>{evidence.detail}</p><p>{evidence.playerIds.map(id=>game.players.find(player=>player.playerId===id)?.name??id).join(' · ')} · {evidence.value}</p><small>Game {data.games.find(row=>row.gameId===game.gameId)?.gameNumber} · Recording revision {game.revision}</small></BattleOverlay>}
   </section>;

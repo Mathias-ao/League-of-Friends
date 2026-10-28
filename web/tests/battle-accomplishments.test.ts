@@ -48,7 +48,10 @@ test('UI renders four source-current Battle cards when official winner is pendin
   assert.ok(cards.every(c=>!/(Emperor defeated|unbeaten|The alliance supplied|Tribute requests)/i.test(c.textContent??'')));
   // Match result not necessary for true source-measurement cards.
   data.games[0].result={revision:4,winningPlayerIds:['b']};
-  assert.equal((await ctx.paint({...game,eligible:true,exclusionReason:null},data)).length,4);
+  const qualified={...game,eligible:true,exclusionReason:null};
+  assert.equal((await ctx.paint(qualified,data)).length,4);
+  data.games[0].replay!.statisticsId='b'.repeat(64);
+  assert.equal((await ctx.paint(qualified,data)).length,0,'an old accepted source cannot survive an active pointer correction');
  }finally{await ctx.close();}
 });
 
