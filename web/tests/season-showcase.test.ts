@@ -77,7 +77,7 @@ test('Season Statistics renders tactical families, records, quiet controls and e
     assert.equal(evidence.getAttribute('aria-modal'),'true');
     assert.match(evidence.textContent??'',/Evidence Docket/);
     assert.match(evidence.textContent??'',/Team Battles with a same-team ally/);
-    assert.match(evidence.textContent??'',/Contributing Battle Sources/);
+    assert.match(evidence.textContent??'',/Game Evidence by Battle/);
     await click(document.querySelector('[aria-label="Close evidence"]'));
 
     await click(category('Map Presence'));
