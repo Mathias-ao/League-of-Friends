@@ -45,11 +45,28 @@ test('leader ties share stars, while all-equal, unknown and mixed models get non
   g.players[0].values.raidsOut=2;g.players[0].models.raidsOut='other';assert.deepEqual(new StatisticsExperience([g]).leaders('raidsOut'),[]);
   for(const p of g.players)p.models.raidsOut='unknown';assert.deepEqual(new StatisticsExperience([g]).leaders('raidsOut'),[]);
 });
-test('typical-performance stars require five comparable Games, unlike Battle stars',()=>{
+test('typical-performance stars require five measured Games, but not identical ordinary context keys',()=>{
   assert.deepEqual(new StatisticsExperience([game()]).leaders('castle'),[]);
   assert.deepEqual(new StatisticsExperience([game()]).leaders('castle','total',1),['a']);
   const games=Array.from({length:5},(_,i)=>game(i));assert.deepEqual(new StatisticsExperience(games).leaders('castle'),['a']);
-  games[4].contextKey='different start';assert.deepEqual(new StatisticsExperience(games).leaders('castle'),[]);
+  games[4].contextKey='other ordinary map';assert.deepEqual(new StatisticsExperience(games).leaders('castle'),['a']);
+});
+test('legacy compatible method slices remain visible without numerical version mixing',()=>{
+  const games=[game(),game(1),game(2)];
+  games[0].players[0].values.raidsOut=20;games[1].players[0].values.raidsOut=30;games[2].players[0].values.raidsOut=100;
+  games[2].players[0].models.raidsOut='model-2';
+  const sample=new StatisticsExperience(games).aggregate('average').find(row=>row.playerId==='a').values.raidsOut;
+  assert.equal(sample.value,25);assert.equal(sample.samples,2);assert.equal(sample.eligibleGames,3);
+  assert.deepEqual(sample.models,['model-1']);
+  assert.deepEqual(new StatisticsExperience(games).leaders('raidsOut','average',2),[]);
+});
+test('legacy qualified peers survive a newcomer, absent unrelated metric and ordinary context changes',()=>{
+  const games=Array.from({length:5},(_,i)=>game(i,{contextKey:i%2?'ordinary-map-A':'ordinary-map-B'}));
+  for(const g of games){g.players=g.players.filter(p=>p.playerId!=='c');g.players[0].values.castle=600000;g.players[1].values.castle=700000;}
+  const newcomer=game(5);newcomer.players=[newcomer.players[2]];newcomer.players[0].values.castle=400000;
+  assert.deepEqual(new StatisticsExperience([...games,newcomer]).leaders('castle'),['a']);
+  games[4].players[0].values.castle=null;
+  assert.deepEqual(new StatisticsExperience([...games,newcomer]).leaders('castle'),[]);
 });
 test('response latency pools episodes, timings use medians and opportunity counts stay totals',()=>{
   const games=[game(),game(1)];games[0].players[0].responseTimes=[2,4,6];games[1].players[0].responseTimes=[100];
