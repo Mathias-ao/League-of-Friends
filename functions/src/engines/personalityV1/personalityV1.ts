@@ -186,7 +186,11 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   }
   const c = game.context, p = obj(game.statistics);
   const validPlayer = p.replaySlot === game.replaySlot && p.playerId === game.replaySlot;
-  const eligible = game.sourceStatus === 'READY' && game.outcome === 'OFFICIAL' &&
+  // Winning is not a prerequisite for a source-bound behavioral observation.
+  // PENDING refers solely to result resolution; withdrawn/disputed records and
+  // non-admitted sources remain ineligible. The authenticated source/context
+  // adapter retains its independent current-source/roster/proof checks.
+  const eligible = game.sourceStatus === 'READY' && game.outcome !== 'DISPUTED' &&
     game.admitted && validPlayer && known(c);
   const result = {} as Record<PersonalityAxis, Feature>;
   if (!eligible) {
