@@ -59,8 +59,8 @@ export const SEASON_METRICS:SeasonMetricDefinition[]=[
   numeric('marketSales','Market Sales','Economy','number','mean',{record:'max',allTime:'sum'}),
   numeric('marketPurchases','Market Purchases','Economy','number','mean',{record:'max',allTime:'sum'}),
   numeric('tradeUnits','Trade Units Queued','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · positive trade-unit queue requests'}),
-  numeric('tributeSent','Tribute Amount Requested (Outgoing)','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · decoded outgoing tribute-request amounts; delivery, fees and receipt unverified'}),
-  numeric('tributeReceived','Tribute Amount Requested (Incoming)','Economy','number','mean',{eligibility:'team',record:'max',allTime:'sum',hint:'Team Battles only · decoded incoming tribute-request amounts; receipt not independently verified'}),
+  numeric('tributeSent','Tribute Amount Requested (Outgoing)','Economy','number','mean',{record:'max',allTime:'sum',hint:'Any format, including FFA diplomacy · decoded outgoing tribute-request amounts; delivery, fees and receipt unverified'}),
+  numeric('tributeReceived','Tribute Amount Requested (Incoming)','Economy','number','mean',{record:'max',allTime:'sum',hint:'Any format, including FFA diplomacy · decoded incoming tribute-request amounts; receipt not independently verified'}),
 
   numeric('unitRequests','Military Units Queued','Military','number','mean',{leader:'max',record:'max',allTime:'sum',hint:'Positive military queue requests; not proof every unit completed'}),
   numeric('militaryCommitment','Military Unit Commitment','Military','number','mean',{record:'max',allTime:'sum',hint:'Pinned base-catalog value of positive military unit queues'}),
