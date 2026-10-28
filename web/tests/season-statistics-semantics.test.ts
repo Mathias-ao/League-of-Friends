@@ -74,15 +74,19 @@ test('Missing Game measurement does not become zero or complete a leadership sam
   assert.equal(sample.eligibleGames,2);assert.equal(sample.observedGames,1);assert.equal(sample.completeBattles,0);
 });
 
-test('Team-only requests use actual teammates and never infer FFA aid',()=>{
+test('FFA diplomacy tribute requests remain visible without being declared delivered aid',()=>{
   const team=game('battle7'),ffa=game('battle8');
   team.format='TWO_V_TWO';team.players[0].team=1;team.players[1].team=1;
-  ffa.format='FFA';ffa.players.forEach(p=>{p.team=null;});
-  for(const g of [team,ffa]){amount(g,'a','tributeSent',2346);g.players[0].models.tributeSent='request-model';}
-  const sample=new SeasonStatisticsExperience([team,ffa]).aggregate().find(row=>row.playerId==='a')!.values.tributeSent;
-  assert.equal(sample.value,2346);assert.equal(sample.eligibleBattles,1);assert.equal(sample.eligibleGames,1);
+  ffa.format='FFA_DIPLO';ffa.players.forEach(p=>{p.team=null;});
+  amount(team,'a','tributeSent',2346,'request-model');
+  amount(ffa,'a','tributeSent',1000,'request-model');
+  const engine=new SeasonStatisticsExperience([team,ffa]);
+  const sample=engine.aggregate().find(row=>row.playerId==='a')!.values.tributeSent;
+  assert.equal(sample.value,1673);assert.equal(sample.eligibleBattles,2);assert.equal(sample.eligibleGames,2);
+  assert.equal(engine.aggregate('allTime').find(row=>row.playerId==='a')!.values.tributeSent.value,3346);
   assert.match(seasonMetric('tributeSent').label,/requested/i);
-  assert.doesNotMatch(seasonMetric('tributeReceived').hint,/verified resource delivery/i);
+  assert.match(seasonMetric('tributeReceived').hint,/receipt not independently verified/i);
+  assert.equal(seasonMetric('tradeUnits').eligibility,'team','team-only trade remains separate');
 });
 test('Normal civilization/map variation does not erase observations; special-start best stays only provisional',()=>{
   const standard=game('battle9','G1','ordinary map A');
