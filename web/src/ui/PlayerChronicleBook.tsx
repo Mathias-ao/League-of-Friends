@@ -57,148 +57,11 @@ function uniqueBookmarkTones(players:PlayerRecord[],ownerId:string){
   return result;
 }
 
-type RelationshipDepth={rank:number;dormant:boolean};
-type RelationshipTrackKey='rivalry'|'hostility'|'bond';
-
-const CHRONICLE_STAGE_DEPTHS:Record<RelationshipTrackKey,Record<string,number>>={
-  rivalry:{friction:1,contest:2,rivalry:3,nemesis:4},
-  hostility:{tension:1,grudge:2,feud:3,'blood feud':4,'internecine strife':5},
-  bond:{fellowship:1,comrades:2,'trusted allies':3,oathbound:4},
-};
-
-function relationshipDepth(track:{status:string;state:string;stageId:string|null;historicalPeakStageId:string|null},key:RelationshipTrackKey):RelationshipDepth{
-  if(track.status!=='READY')return {rank:0,dormant:false};
-  const stage=(track.stageId??track.historicalPeakStageId??'').trim().toLowerCase();
-  const rank=CHRONICLE_STAGE_DEPTHS[key][stage]??0;
-  return {rank,dormant:rank>0&&(track.state==='DORMANT'||(!track.stageId&&!!track.historicalPeakStageId))};
-}
-
-function pickLine(lines:readonly string[],seed:string){
-  return lines[hashValue(seed)%lines.length]!;
-}
-
-function depthBucket(value:number){return value<=1?0:value===2?1:value===3?2:3;}
-
-const RIVALRY_LINES=[
-  ['Something between them has begun to sharpen.','The first edge of competition has begun to show.'],
-  ['Neither has gone long without measuring the other.','The measure between them is becoming a habit.'],
-  ['Each meeting now carries the weight of the last.','The contest now arrives with history behind it.'],
-  ['Too much has passed between them for any meeting to feel ordinary.','Neither enters another meeting without history already waiting on the page.'],
-] as const;
-
-const HOSTILITY_LINES=[
-  ['There is already an edge between them.','A little strain has already found its way onto the page.'],
-  ['The quarrel has found enough history to endure.','What lies between them is no longer a passing irritation.'],
-  ['What began as strain has become difficult to leave behind.','Each new meeting inherits something from the quarrel before it.'],
-  ['The old quarrel now follows them from battle to battle.','The quarrel has become one of the book’s enduring wounds.'],
-  ['The quarrel has passed beyond any ordinary measure.','Whatever this once was, the ordinary scale no longer contains it.'],
-] as const;
-
-const BOND_LINES=[
-  ['They have begun to stand well together.','The first signs of dependable company are already on the page.'],
-  ['Standing together is no longer unusual.','Shared cause has begun to become familiar ground.'],
-  ['Again and again, they have answered the same call.','Their history now carries the weight of repeated support.'],
-  ['What binds their histories has become difficult to separate.','Few pages between them can be read without seeing what binds them.'],
-] as const;
-
-function dormantEpigraph(r:RelationshipDepth,h:RelationshipDepth,b:RelationshipDepth,seed:string){
-  const activeR=r.rank>0&&!r.dormant,activeH=h.rank>0&&!h.dormant,activeB=b.rank>0&&!b.dormant;
-  if(!activeR&&!activeH&&!activeB){
-    if(h.dormant&&h.rank>=5)return pickLine(['The fiercest chapter has gone still, but not out of the book.','The worst of the quarrel is quiet now. The page has not erased it.'],seed);
-    if(h.dormant&&r.dormant)return pickLine(['The old contest and quarrel are quiet now. Neither has been erased.','Both contest and grievance lie still beneath the newer ink.'],seed);
-    if(h.dormant)return pickLine(['The quarrel has gone quiet, not clean.','The old strain is sleeping; the page has not forgotten it.'],seed);
-    if(r.dormant)return pickLine(['The contest sleeps, but the page has not forgotten it.','The old measure between them has gone quiet, not vanished.'],seed);
-    if(b.dormant)return pickLine(['What once bound them belongs to the older pages now.','What once bound them remains in the book, though it no longer leads the page.'],seed);
-  }
-  if(h.dormant&&activeB&&!activeR)return pickLine(['They stand better together now, though an older quarrel still stains the margin.','What binds them is present; an older strain still lies beneath the ink.'],seed);
-  if(h.dormant&&activeR&&!activeB)return pickLine(['The contest remains awake; the older quarrel has gone quiet, not clean.','Competition continues while the old grievance lies quieter beneath it.'],seed);
-  if(r.dormant&&activeB&&!activeH)return pickLine(['They stand together now, with an old contest further back on the page.','What binds them is current; the older contest has receded into the margins.'],seed);
-  if(r.dormant&&activeH&&!activeB)return pickLine(['The quarrel remains awake while the older contest has fallen quiet.','Grievance still speaks where the older contest has gone still.'],seed);
-  if(h.dormant&&activeR&&activeB)return pickLine(['They still stand together and measure one another; an older quarrel lies quiet beneath it.','Company and contest remain, while an older grievance has gone still.'],seed);
-  if(r.dormant&&activeH&&activeB)return pickLine(['They stand together uneasily; the old contest now sits further back on the page.','What binds them and what strains them remain while an older contest has receded.'],seed);
-  if(b.dormant&&(activeR||activeH))return pickLine(['Contest and strain remain where what once bound them has receded into the earlier pages.','The sharper parts of the history remain awake; what once bound them sits further back.'],seed);
-  return null;
-}
-
-function rivalryBondEpigraph(r:number,b:number,seed:string){
-  if(r>=b+2)return pickLine(['Whatever goodwill has formed, the contest still sets the terms.','What binds them has grown in the shadow of a contest neither escapes.'],seed);
-  if(b>=r+2)return pickLine(['They stand close; the contest between them remains the lesser part of the story.','What binds them runs deeper than the contest that still tests it.'],seed);
-  const lines=[
-    ['They have begun to stand together—and already measure one another.','Company has begun to form without ending the contest.'],
-    ['Familiar company has done little to dull the contest.','They stand together often enough to matter, and still test one another.'],
-    ['They have shared enough battles to matter, and enough contests to remember.','What binds them has grown alongside a contest neither has put aside.'],
-    ['They have become both dependable company and unavoidable competition.','What binds them and what tests them have both become part of the history.'],
-  ] as const;
-  return pickLine(lines[depthBucket(Math.max(r,b))],seed);
-}
-
-function rivalryHostilityEpigraph(r:number,h:number,seed:string){
-  if(h>=5)return r>0?pickLine(['The contest has been overtaken by a quarrel with no ordinary measure left.','What began as contest now lives beneath a quarrel beyond the usual scale.'],seed):pickLine(HOSTILITY_LINES[4],seed);
-  if(r>=h+2)return pickLine(['The contest still sets the rhythm, though an edge now follows it.','Competition remains the greater force, but the quarrel has learned to keep pace.'],seed);
-  if(h>=r+2)return pickLine(['The quarrel now weighs heavier than the contest that first sharpened it.','Competition remains, but grievance has become the heavier inheritance.'],seed);
-  const lines=[
-    ['The contest has begun to carry an edge.','Competition has already picked up a sharper tone.'],
-    ['What was competition is becoming harder to call courteous.','The contest is no longer entirely clean of grievance.'],
-    ['Every new contest now arrives carrying an older grievance.','Competition and grievance have begun to travel together.'],
-    ['Neither meeting begins entirely where the last one ended.','The contest now carries too much old weight to start afresh.'],
-  ] as const;
-  return pickLine(lines[depthBucket(Math.max(r,h))],seed);
-}
-
-function hostilityBondEpigraph(h:number,b:number,seed:string){
-  if(h>=5)return b>0?pickLine(['Even what binds them now lies beneath a quarrel that has gone far beyond ordinary grievance.','What binds them survives, but the quarrel has passed beyond the book’s ordinary measure.'],seed):pickLine(HOSTILITY_LINES[4],seed);
-  if(h>=b+2)return pickLine(['What binds them survives beneath a quarrel that has grown harder to ignore.','Whatever cooperation remains, the quarrel now carries more of the weight.'],seed);
-  if(b>=h+2)return pickLine(['What binds them holds the stronger place, though an old strain still works against it.','What binds them runs deeper than the quarrel that still marks the page.'],seed);
-  const lines=[
-    ['They have stood together without ever standing easy.','Company has formed, but comfort has not followed.'],
-    ['Cooperation survives where comfort does not.','They can stand together, though the strain between them has begun to last.'],
-    ['They still answer the same cause, though the old strain remains.','What binds them persists beside a quarrel that refuses to disappear.'],
-    ['They can stand together and still carry a quarrel worth remembering.','Strong ties and an old quarrel now occupy the same page.'],
-  ] as const;
-  return pickLine(lines[depthBucket(Math.max(h,b))],seed);
-}
-
-export function relationshipEpigraph(relationship:PlayerRelationshipSummary|null){
-  if(!relationship?.relationshipRulesConfigured)return 'Little has yet been settled between them.';
-  const r=relationshipDepth(relationship.tracks.rivalry,'rivalry');
-  const h=relationshipDepth(relationship.tracks.hostility,'hostility');
-  const b=relationshipDepth(relationship.tracks.bond,'bond');
-  const seed=relationship.pairId+'|r'+r.rank+(r.dormant?'d':'a')+'|h'+h.rank+(h.dormant?'d':'a')+'|b'+b.rank+(b.dormant?'d':'a');
-
-  const dormant=dormantEpigraph(r,h,b,seed);
-  if(dormant)return dormant;
-
-  const activeR=r.rank>0&&!r.dormant,activeH=h.rank>0&&!h.dormant,activeB=b.rank>0&&!b.dormant;
-  const count=Number(activeR)+Number(activeH)+Number(activeB);
-  if(count===0)return pickLine(['Little has yet been settled between them.','The page between them is still mostly unwritten.','Too little has passed between them for the ink to choose a shape.'],seed);
-
-  if(activeH&&h.rank>=5&&activeR&&activeB){
-    return pickLine(['Whatever has bound or tested them now stands beneath a quarrel beyond the ordinary scale.','What binds them, what tests them, and the grievance all remain—but the quarrel has passed beyond the book’s ordinary measure.'],seed);
-  }
-
-  if(count===1){
-    if(activeR)return pickLine(RIVALRY_LINES[Math.min(3,r.rank-1)],seed);
-    if(activeH)return pickLine(HOSTILITY_LINES[Math.min(4,h.rank-1)],seed);
-    return pickLine(BOND_LINES[Math.min(3,b.rank-1)],seed);
-  }
-
-  if(count===2){
-    if(activeR&&activeB)return rivalryBondEpigraph(r.rank,b.rank,seed);
-    if(activeR&&activeH)return rivalryHostilityEpigraph(r.rank,h.rank,seed);
-    return hostilityBondEpigraph(h.rank,b.rank,seed);
-  }
-
-  const highest=Math.max(r.rank,h.rank,b.rank);
-  if(r.rank>=Math.max(h.rank,b.rank)+2)return pickLine(['Whatever else binds or divides them, the contest still sets the rhythm.','The contest remains the strongest current running through everything else between them.'],seed);
-  if(h.rank>=Math.max(r.rank,b.rank)+2)return pickLine(['Cooperation and contest remain, but the quarrel now casts the longest shadow.','What binds and tests them remains visible, though grievance carries the greater weight.'],seed);
-  if(b.rank>=Math.max(r.rank,h.rank)+2)return pickLine(['Contest and strain remain, yet what binds them still carries the greater weight.','Whatever tests or strains them, what binds them remains the strongest part of the story.'],seed);
-  const lines=[
-    ['Nothing between them has stayed entirely simple.','Already, more than one kind of history is taking shape between them.'],
-    ['They have stood together, crossed wills, and carried both forward.','Shared cause and sharp contest have both found room on the same page.'],
-    ['Shared cause, contest and old strain have all earned a place on the page.','What binds, tests and strains them now belongs to one continuous history.'],
-    ['No single word now fits what has grown between them.','Too many different histories now meet whenever they do.'],
-  ] as const;
-  return pickLine(lines[depthBucket(highest)],seed);
+/** Track scalars do not establish another player's feelings, manners or intent.
+ * Source-specific narration belongs to the accepted scene; author perspective
+ * stays separately attributed and private. */
+export function relationshipEpigraph(_relationship:PlayerRelationshipSummary|null){
+  return 'These pages follow their recorded league encounters.';
 }
 
 type ChronicleFlavor='neutral'|'rivalry'|'hostility'|'bond'|'mixed';
@@ -438,7 +301,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
         {pageLoading?<div className="chronicle-loading" role="status"><BookOpen size={30}/><p>Opening the record…</p></div>
           :pageError?<div className="chronicle-loading" role="alert"><p>{pageError}</p></div>
           :ownerProfile&&selectedPlayer?(isSelf
-            ?<><SelfPage profile={ownerProfile}/>{privateProgressionEnabled(import.meta.env)&&<PrivateProgression repository={repository} ownerId={ownerId}/>}{privateHistoryEnabled(import.meta.env)&&<PrivatePersonalityHistory repository={repository} ownerId={ownerId}/>}{privateChronicleInteractionsEnabled(import.meta.env)&&<PrivateChronicleInteractions repository={repository} ownerId={ownerId}/>}{(gameplayCandidatesEnabled(import.meta.env)||gameplayPreviewEnabled(import.meta.env))&&<PrivateGameplayPreview repository={repository} sourceCandidates={gameplayCandidatesEnabled(import.meta.env)} ownerId={ownerId}/>}</>
+            ?<><SelfPage profile={ownerProfile}/>{privateProgressionEnabled(import.meta.env)&&<PrivateProgression repository={repository} ownerId={ownerId}/>}{privateHistoryEnabled(import.meta.env)&&<PrivatePersonalityHistory repository={repository} ownerId={ownerId}/>}{privateChronicleInteractionsEnabled(import.meta.env)&&<PrivateChronicleInteractions repository={repository} ownerId={ownerId} counterpartNames={Object.fromEntries(players.map(p=>[p.playerId,p.steamName]))}/>}{(gameplayCandidatesEnabled(import.meta.env)||gameplayPreviewEnabled(import.meta.env))&&<PrivateGameplayPreview repository={repository} sourceCandidates={gameplayCandidatesEnabled(import.meta.env)} ownerId={ownerId}/>}</>
             :<RelationshipPage owner={ownerProfile.player} counterpart={selectedPlayer} page={page} official={official} snapshot={snapshot} partial={chronicleRead?.status==='PARTIAL'} freshEntryIds={freshEntryIds}/>)
           :<div className="chronicle-loading"><p>The Chronicle has no page to show.</p></div>}
       </article>
