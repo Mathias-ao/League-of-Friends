@@ -200,3 +200,37 @@ test('production and normal private history cannot activate provisional numerica
   await assert.rejects(readMyPersonalityHistory({...enabled,request:{calibration:'forged'}}),
     e=>e.code==='invalid-argument');
 });
+
+test('reviewed STANDARD-start source contexts compare across ordinary map, civ and observed interval',()=>{
+  const a=game('battle-A','g1',1),b=game('battle-B','g1',1);
+  b.statistics.matchFacts.map.id=140;
+  b.statistics.matchFacts.rules.mapId.value=140;
+  b.statistics.matchFacts.players[0].civilization.rawId=3;
+  b.statistics.scope.observedUntilMs=960000;
+  b.statistics.matchFacts.game.observedDurationMs=960000;
+  const tax=taxonomy([a,b]);
+  tax.sourceProofs[b.source.sourceHash].mapId=140;
+  tax.sourceProofs[b.source.sourceHash].durationBucket={
+    id:'TEST_REVIEWED_UNDER_30',lowerObservedMs:0,upperObservedMsExclusive:1800000,
+    meaning:'OBSERVED_RECORDING_INTERVAL_ONLY'};
+  tax.militaryFamiliesByExactCiv.BUILD_185872_CIV_3=['infantry','archers','cavalry'];
+  const {view,policy}=project([a,b],tax);
+  assert.equal(policy.diagnostics.acceptedGameSources,2);
+  assert.equal(new Set(Object.keys(policy.calibration.anchors)).size,2);
+  assert.equal(new Set(Object.values(policy.calibration.anchors)
+    .map(x=>x.BOOMER_AGGRESSOR.comparisonGroup)).size,1);
+  for(const axis of axes){
+    const slider=view.personalityProfile.sliders.find(x=>x.axis===axis);
+    assert.equal(slider.status,'READY',axis);
+    assert.equal(slider.independentBattles,2,axis);
+  }
+  assert.equal(view.publication,'PRIVATE_PREVIEW_ONLY');
+  // The exact civilization family can be withheld independently of every
+  // other source-admitted axis; no fabricated civ opportunity is assumed.
+  delete tax.militaryFamiliesByExactCiv.BUILD_185872_CIV_3;
+  const incomplete=project([a,b],tax).view;
+  assert.equal(incomplete.personalityProfile.sliders
+    .find(x=>x.axis==='SPECIALIST_IMPROVISER').value,null);
+  assert.equal(incomplete.personalityProfile.sliders
+    .find(x=>x.axis==='BOOMER_AGGRESSOR').status,'READY');
+});
