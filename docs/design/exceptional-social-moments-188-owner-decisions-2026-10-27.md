@@ -1,5 +1,7 @@
 # The Six Deeds of the Annals — Exceptional Social Moments V1
 
+> **28 October 2026 update, issues #199/#205:** The [updated extraordinary Chronicle vs permanent Distinction owner review](exceptional-social-history-199-205-owner-review-2026-10-28.md) **supersedes this earlier sheet's prestige, Watchkeeper's Seal and V1 readiness recommendations**. All six names and original candidate evidence remain documented here. The later review retires Watchkeeper's Seal as a duplicate medal path in favor of Worker C's SOURCE_BLOCKED Shield of the Fellowship and Star of the Unbroken Line; no permanent medal eligibility or grant is authorized.
+
 **Owner decision package · Worker D · #188 (parent #183) · 27 October 2026 · DESIGN ONLY.** Verified main `0a57c58f5aae1a1ed01a19e8ce2ea3f55a651cdd`. Carries forward [#130/#133](https://github.com/Mathias-ao/League-of-Friends/pull/133), without modifying that still-draft historical document; aligns with #152/#164's **unapproved** 20×6 grading matrix, merged #173 source methods, merged #177 private evaluator wiring, #182 open source gaps, #186 honours and #187 Chronicle design assignments. **No event recognizer, scores, reward definition, invitation policy or production grant is approved here.**
 
 ## Decision at a glance
