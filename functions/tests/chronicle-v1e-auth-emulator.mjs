@@ -148,6 +148,12 @@ await assert.rejects(act(uid,{requestId:'stale-sibling',action:'CORRECTION_REQUE
  reason:'Unrelated sibling source revision changed.'}));
 await sibling.set(originalSibling);
 assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,true);
+// The combined acceptance must run against this SAME live, authenticated,
+// source-current two-Game fixture before the test deliberately withdraws g1.
+// Running the read in a second Node process loses fixture-scoped private gates;
+// running it after the withdrawal would incorrectly demand live source access.
+if(process.env.AOF_V1_COMBINED_PRIVATE_READ==='1')
+  await import('./aof-v1-combined-private-read.mjs');
 // A source withdrawal disables responses, preserves tombstone+old private audit.
 const gr=match.collection('games').doc('g1'),game=(await gr.get()).data();
 await gr.collection('replaySources').doc(game.activeReplayStatisticsId).update({state:'WITHDRAWN'});
