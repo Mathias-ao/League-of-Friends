@@ -70,7 +70,8 @@ test('genuine pinned T90 Games exercise five Personality axes and private Reputa
       replaySlot:g.t90ReplaySlot,sourceHash:g.sourceHash,
       sourceAuthority:sha('TEST_SOURCE_AUTHORITY_'+g.sourceHash),
       mappingDigest:sha('TEST_MAPPING_'+g.sourceHash),
-      authorityRevision:1,sourceStatus:'READY',outcome:'OFFICIAL',admitted:true,
+      // No authoritative Age of Friends winner is fabricated by this fixture.
+      authorityRevision:1,sourceStatus:'READY',outcome:'PENDING',admitted:true,
       episodeChronologyComplete:g.episodeChronologyComplete,
       playedAtMs:g.recordedAtMs,context,statistics:g.statistics
     };
