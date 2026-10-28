@@ -276,6 +276,8 @@ test('ordinary map, civilization and observed-duration differences do not divide
     c.availableMilitaryFamilies[context.civilizationOpportunityKey]=['infantry','archers','cavalry'];
   }
   const games=contexts.map((context,i)=>game(i+1,{context}));
+  // Synthetic command episodes must fit within the shortest observed interval.
+  games[0].statistics.military.engagements.raidEvidence.initiatedEpisodes[1].startedAtMs=900100;
   const result=projectPersonalityPreview('playerA',games,c);
   assert.equal(new Set(games.map(g=>key(g.context))).size,3);
   assert.equal(new Set(games.map(g=>personalityComparisonGroup(g.context))).size,1);
