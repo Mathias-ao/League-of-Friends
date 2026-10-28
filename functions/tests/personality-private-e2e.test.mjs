@@ -165,9 +165,11 @@ test('forged reviewed proof, wrong patch, map, start and subject aliases fail cl
     const response=project([changed,b],known).view;
     assert.ok(response.personalityProfile.sliders.every(x=>x.value===null));
   }
-  const different=game('battle-B','g1',1);
-  different.statistics.matchFacts.players[0].civilization.rawId=3;
-  const out=project([a,different],known).view;
+  // An invalid source civilization remains unqualified. A genuine DIFFERENT
+  // civilization is not a cross-Game comparison failure (covered separately).
+  const invalidCivilization=game('battle-B','g1',1);
+  invalidCivilization.statistics.matchFacts.players[0].civilization.rawId=0;
+  const out=project([a,invalidCivilization],known).view;
   assert.ok(out.personalityProfile.sliders.every(x=>x.value===null));
   assert.equal(admitPersonalityContext(a,'not-the-owner',proof(a)).context,null);
 });
