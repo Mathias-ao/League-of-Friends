@@ -113,8 +113,8 @@
         "why": "Dark Age discipline and deliberate early infantry plan, accessible before winning.",
         "formula": "One eligible standard-start Game: qualified Barracks before Feudal click; exactly three positive net distinct Dark Age Militia queue requests; Loom before Feudal click; cancellation-aware single-starting-TC workload continuity. Age clock from opening.ageUp.feudal is projected.",
         "reject": "A BUILD placement without supported Barracks identity; two Militia plus Men-at-Arms; three queued then cancelled; apparent perfect idle derived from V2 proxy alone.",
-        "expert": "Drush Flush: additionally source-attributed Feudal follow-up involving correct military progression, not assumed damage.",
-        "elite": "Elite Club requires exceptional fixed clock+macro gate and discipline; whether Drush Flush must be mandatory is OWNER_OPEN.",
+        "expert": "Drush Flush branch requires separately source-qualified Feudal military continuation with attributable commands and clock, not assumed attacks, unit creation or kills. For Elite Club this branch is mandatory (owner 2A).",
+        "elite": "Owner 2A: ELITE CLUB REQUIRES BOTH source-qualified disciplined Dark Age Drush AND independently witnessed Drush Flush Feudal continuation in the SAME admitted Game, plus future owner-calibrated elite performance predicates. Never infer executed damage.",
         "anti": "Match Militia queue/cancellation and producer identity; unique Game; no repetition-only award.",
         "pacing": "Base exact-Drush qualification; calibrated Feudal clock/macro efficiency cutoffs for Practiced/Expert/Elite."
       },
@@ -1351,21 +1351,24 @@
       "name": "Thorn in the Emperor's Crown",
       "eligibility": "Designated WARMUP 1v1 pinned reigning Emperor at Match approval; non-Emperor sole official winner, verified current accepted result and correct Event/Match identity.",
       "status": "RESULT_VERIFIED_PATH_IF_SOURCE_FINAL",
-      "anti": "Exactly one per eligible Emperor designation + Match, unranked substitutes/FFA/AI excluded; no automatic grant from 64-card Roundoff Emperor feature; independent policy."
+      "anti": "Exactly one per eligible Emperor designation + Match, unranked substitutes/FFA/AI excluded; no automatic grant from 64-card Roundoff Emperor feature; independent policy.",
+      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT"
     },
     {
       "id": "AR2_TROPHY_SWIFT_ASCENT",
       "name": "The Swift Ascent",
-      "eligibility": "First strict improvement to an ALREADY published, compatible official all-time AR2_REC_CASTLE projected arrival benchmark with a qualifying Game, minimum comparable history and owner approved model; source explicitly says 'modelled Castle Age arrival'.",
-      "status": "RECORD_RESOLVER_AND_PUBLIC_BASELINE_PENDING",
-      "anti": "No founding record trophy, no equal tie as new break, no record spam from repeat upload or correction; retain dated 'once broken' status when fairly surpassed, revoke on invalidated original source."
+      "eligibility": "Owner 3A + #196/#197: strict source-qualified projected FC timing, owner-approved extraordinary ABSOLUTE speed gate AND owner-approved MATURE Season/league comparison gate with sufficient eligible comparable players/Games/Battles and elapsed official competitive history. Source `opening.ageUp.castle.ageUpAtMs` / AR2_REC_CASTLE, not raw research-start or actual engine-observed age completion. No automatic early record-holder trophy; maturation, retroactive eligibility, ties and vintage are STILL OPEN.",
+      "status": "SOURCE_ELIGIBILITY_WITH_ABSOLUTE_TIME_AND_SEASON_MATURITY_UNAPPROVED",
+      "anti": "No founding record trophy, no equal tie as new break, no record spam from repeat upload or correction; retain dated 'once broken' status when fairly surpassed, revoke on invalidated original source.",
+      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT"
     },
     {
       "id": "AR2_TROPHY_ANNALS_REWRITTEN",
       "name": "Breaker of the Annals",
       "eligibility": "Strict break of prior official published all-time record in a second owner-approved high-significance metric OTHER THAN AR2_REC_CASTLE. Historical previously published baseline, minimum admitted field and normalized comparable cohort.",
       "status": "RECORD_AUTHORITY_AND_OWNER_METRIC_SELECTION_PENDING",
-      "anti": "Never stack with Swift Ascent for same Castle Game/metric; cap one trophy instance per approved record metric, no first-holder founding trophies."
+      "anti": "Never stack with Swift Ascent for same Castle Game/metric; cap one trophy instance per approved record metric, no first-holder founding trophies.",
+      "ownerSelection": "RESERVED_FUTURE_CONCEPT_NOT_V1"
     }
   ],
   "distinctionCandidates": [
@@ -1378,7 +1381,8 @@
         "actor-owned actual defensive transition/repair/garrison effect",
         "relative force/context and bounded material consequence"
       ],
-      "status": "SOURCE_BLOCKED"
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "PRIORITY_CONCEPT_ONLY_SOURCE_BLOCKED"
     },
     {
       "id": "AR2_DIST_LAST_STANDARD",
@@ -1389,7 +1393,8 @@
         "verified actual impact specifically attributable to recipient",
         "official current win and chronology"
       ],
-      "status": "SOURCE_BLOCKED"
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED"
     },
     {
       "id": "AR2_DIST_FELLOWSHIP",
@@ -1400,7 +1405,9 @@
         "observed actually executed material aid/protective impact",
         "verified severe beneficiary exposure"
       ],
-      "status": "SOURCE_BLOCKED"
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "PRIORITY_CONCEPT_ONLY_SOURCE_BLOCKED",
+      "antiOverlap": "Worker D's proposed Watchkeeper's Seal and exceptional Shield at the Gate social scene may describe the SAME help incident: prohibit duplicate permanent medals from equivalent proof. Independently corroborated executed material benefit mandatory; no Season assists count or Bond/Chivalry threshold automatically grants this medal."
     },
     {
       "id": "AR2_DIST_LONE_VANGUARD",
@@ -1411,7 +1418,8 @@
         "exact actor/controller ownership and known unit classes",
         "engine-observed attributed impact, with negatives for auto-fire"
       ],
-      "status": "SOURCE_BLOCKED"
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED"
     }
   ],
   "epithetCandidates": [
@@ -1422,7 +1430,8 @@
       "availability": "OFFICIAL_RESULT_AND_CHRONOLOGY_ADMIT",
       "display": "Erik the Sworn Campaigner",
       "equip": "VOLUNTARY_ONE_ONLY",
-      "note": "Five is a PROPOSED calibration gate, not active owner cutoff."
+      "note": "Five is a PROPOSED calibration gate, not active owner cutoff.",
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT"
     },
     {
       "id": "AR2_EPITHET_WARDEN_BORDER",
@@ -1431,7 +1440,8 @@
       "availability": "NEW_DEFENSIVE_EPISODE_DERIVATION",
       "display": "Erik, Warden of the Border",
       "equip": "VOLUNTARY_ONE_ONLY",
-      "note": "Title is distinct from Shield at Gate rare social event; scope intentionally defence not score."
+      "note": "Title is distinct from Shield at Gate rare social event; scope intentionally defence not score.",
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT"
     },
     {
       "id": "AR2_EPITHET_THREE_SCHOOLS",
@@ -1440,7 +1450,8 @@
       "availability": "ELITE_SCHOOL_DERIVATION_OWNER_CALIBRATION",
       "display": "Erik, Master of the Three Schools",
       "equip": "VOLUNTARY_ONE_ONLY",
-      "note": "No automatic equip; only currently active component entitlements, source corrections suspend; later weaker play never removes valid mastery."
+      "note": "No automatic equip; only currently active component entitlements, source corrections suspend; later weaker play never removes valid mastery.",
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT"
     }
   ],
   "honourGates": {
@@ -1466,20 +1477,96 @@
   "plannedPRs": [
     {
       "id": "186-A",
-      "boundary": "Design-only eligibility/pacing/comparability tests and UI copy; version-pinned public/private read contract and owner activation-off configuration; do not modify #172 pure record resolver or #162 baseline registry.",
+      "boundary": "After owner policy review: default-OFF read-only collection metadata and source-status copy for 15 selected families, public earned tier-only visibility contract and 1 epithet/1 trophy/1 Distinction display cap; no #172 records/PB resolver change, no entitlement publication, grants or seeding.",
       "canShipWithoutThresholds": true
     },
     {
       "id": "186-B",
-      "boundary": "After authentic corpus and owner approvals: pure School/achievement branch evaluator with explicit negative, correction, distinct Battle and source-completeness tests; default OFF with no entitlement persistence or public decoration.",
+      "boundary": "After authentic source and owner-calibrated predicate review: default-OFF pure School qualifier for Drush+MANDATORY Drush Flush Feudal continuation on Elite Club, Scout OR Archer Rush, and Fast Castle Boom with two distinct early TC BUILD sites; test corrections, duplicate POV/multi-Game, no persistence/medal/entitlements.",
       "canShipWithoutThresholds": false
     }
   ],
   "ownerQuestions": [
-    "Approve 15-family priority and first seven measurement-backed collection shells versus eight source-qualified detector-gated families?",
-    "Approve final four tier names, whether elite Drush must specifically include Drush Flush, and corpus method to freeze fixed cutoffs?",
-    "Approve three proposed trophy paths (especially whether non-FC All-time Record Breaker is worth a separate trophy) and prevent duplicate record/event credit?",
-    "Reserve all four military Distinctions until independently proven executed effects, and approve or trim three epithet concepts?",
-    "Approve minimum sample/season/format cohorts and private/public honour visibility; do not approve individual thresholds here."
-  ]
+    "Calibrate and explicitly approve all numerical tier gates and authentic source witnesses, including mandatory Feudal Drush Flush Elite Club; no percentile-based dynamic grants.",
+    "Choose Fast Castle trophy absolute projected-time standard, Season maturity clock+sample, retroactive eligibility, tie policy and former holder-vintage state in #196/#197.",
+    "Approve independent effect proof and mutual exclusivity with Worker D Watchkeeper's Seal for the two prioritised Distinctions; currently both SOURCE_BLOCKED.",
+    "Confirm public achievement rank text/consent/details and owner-only PB separation; approve publication only after trusted entitlement pipeline.",
+    "Decide later whether a separate cross-Event recognition meta-family in #198 joins the 37-family frozen baseline and specify genuine Event receipt admission."
+  ],
+  "ownerDecisions2026Oct28": {
+    "source": "Owner five multiple-choice selections 1A/2A/3A/4C/5A in Worker C #186; read with owner #196/#197 milestone and FC maturity requirements and separate #198 Event extension",
+    "policyStatus": "OWNER_SELECTED_DESIGN_DIRECTION_ONLY_NOT_TRIGGER_RULE_OR_RELEASE",
+    "selectedCodes": [
+      "1A",
+      "2A",
+      "3A",
+      "4C",
+      "5A"
+    ],
+    "selection1A": {
+      "familyCount": 15,
+      "measurementBacked": 7,
+      "pureDerivation": 8,
+      "allOriginalFamiliesPreserved": 37,
+      "twoWaveDelivery": true
+    },
+    "selection2A": {
+      "eliteClubRequiresDrushFlush": true,
+      "drushSignature": "Exactly three source-qualified net Dark Age Militia queue orders, Barracks, Loom, independently defensible TC macro continuity",
+      "flushingSignature": "In SAME Game, independently attributable Feudal military continuation and owner-approved clock/patch context; command evidence is not proof of combat effect",
+      "newAchievementFamily": false,
+      "sourceReady": false
+    },
+    "selection3A": {
+      "initialNamedTrophyIds": [
+        "AR2_TROPHY_THORN_EMPEROR",
+        "AR2_TROPHY_SWIFT_ASCENT"
+      ],
+      "reserveIds": [
+        "AR2_TROPHY_ANNALS_REWRITTEN"
+      ],
+      "swiftAscentPolicy": "AND of separately owner-approved exceptional absolute projected Castle timing plus mature comparative Season/league cohort; no first-upload trophy and no ordinary Season-holder grant",
+      "swiftAscentPerformanceTimeThreshold": null,
+      "swiftAscentMaturityThreshold": null,
+      "retroactiveEligibility": "OPEN",
+      "tieAndVintagePolicy": "OPEN",
+      "sourceReady": false
+    },
+    "selection4C": {
+      "priorityDistinctionIds": [
+        "AR2_DIST_UNBROKEN_LINE",
+        "AR2_DIST_FELLOWSHIP"
+      ],
+      "reservedIds": [
+        "AR2_DIST_LAST_STANDARD",
+        "AR2_DIST_LONE_VANGUARD"
+      ],
+      "bothEffectProofBlocked": true,
+      "workerDCollision": "Watchkeeper's Seal / The Shield at the Gate overlap must be disambiguated; no equivalent deed double-medal."
+    },
+    "selection5A": {
+      "epithetIds": [
+        "AR2_EPITHET_SWORN_CAMPAIGNER",
+        "AR2_EPITHET_WARDEN_BORDER",
+        "AR2_EPITHET_THREE_SCHOOLS"
+      ],
+      "singleVoluntarilyEquippedEpithet": true,
+      "publicDisplay": "Only accepted earned family/tier badges after approved grants; no unapproved or pending ranks",
+      "nameplateMaxSelectedTrophies": 1,
+      "nameplateMaxSelectedDistinctions": 1,
+      "personalBestPrivacy": "private, owner-only Chronicle personal-best ledger, never public via badge detail or source value",
+      "unverifiedEmblemsShownAsEarned": false
+    },
+    "tierMeanings": {
+      "INITIATE": "Genuine first qualified milestone, immediate upon accepted source+owner-approved criterion; not a scheduled quota.",
+      "PRACTICED": "Competence achievable with diligent improvement, not mere attendance.",
+      "EXPERT": "Genuinely difficult and not universal.",
+      "ELITE": "Rare extraordinary skill; not automatically reached through repeated Games or shifting leaderboards."
+    },
+    "rankNamesAccepted": true,
+    "unapprovedNumericTierThresholds": 148,
+    "isLiveGrantAuthority": false,
+    "recordsUnchanged": true,
+    "futureEventMetaAchievement": "#198 separately pending; no 38th family without separate extension approval"
+  }
 }
