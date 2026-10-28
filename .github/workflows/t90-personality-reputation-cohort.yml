@@ -5,6 +5,8 @@ on:
     paths:
       - "functions/src/engines/personalityV1/personalityV1.ts"
       - "functions/src/engines/personalityV1/privateE2EPolicy.ts"
+      - "functions/src/engines/personalityV1/contextAdmission.ts"
+      - "functions/src/integration/personalityHistory.ts"
       - "functions/tests/personalityV1.test.mjs"
       - "functions/tests/personality-private-e2e.test.mjs"
       - "functions/tests/t90-original-cohort.test.mjs"
