@@ -359,3 +359,49 @@ test('special Nomad or Migration-like starts are separate, but do not erase ordi
     assert.equal(measurePersonalityGame(nomad,c).features[axis].fraction,null);
   }
 });
+
+test('water-specific opportunity does not erase valid source-backed economic behavior',()=>{
+  const standard=game(),another=game(2);
+  const water=game(3,{context:{...baseContext(),mapFamily:'WATER',mapId:'water-reviewed',
+    civilization:'WATER_CIV',civilizationOpportunityKey:'WATER_CIV_BUILD'}});
+  const c=config();
+  c.anchors[key(water.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
+    lower:0,upper:1,comparisonGroup:personalityComparisonGroup(water.context,axis)}]));
+  c.availableMilitaryFamilies.WATER_CIV_BUILD=['infantry','archers','cavalry'];
+  const p=projectPersonalityPreview('playerA',[standard,another,water],c);
+  assert.equal(slider(p,'BOOMER_AGGRESSOR').status,'READY');
+  assert.equal(slider(p,'BOOMER_AGGRESSOR').independentBattles,3);
+  for(const axis of axisNames.filter(a=>a!=='BOOMER_AGGRESSOR')){
+    assert.equal(slider(p,axis).status,'READY',axis);
+    assert.equal(slider(p,axis).independentBattles,2,axis);
+    assert.ok(slider(p,axis).reasons.includes('OTHER_START_OR_MODE_CONTEXT_NOT_AGGREGATED'),axis);
+  }
+  const onlyLandAndWater=projectPersonalityPreview('playerA',[standard,water],c);
+  assert.equal(slider(onlyLandAndWater,'BOOMER_AGGRESSOR').status,'READY');
+  for(const axis of axisNames.filter(a=>a!=='BOOMER_AGGRESSOR')){
+    assert.equal(slider(onlyLandAndWater,axis).value,null,axis);
+    assert.equal(slider(onlyLandAndWater,axis).status,'CONTEXT_LIMITED',axis);
+  }
+});
+test('source-bound game behavioral measurements need not wait for winner resolution',()=>{
+  const pending={...game(),outcome:'PENDING'};
+  const c=config();
+  const observed=measurePersonalityGame(pending,c);
+  assert.equal(observed.eligible,true);
+  assert.equal(observed.features.BOOMER_AGGRESSOR.fraction,.3);
+  const preview=projectPersonalityPreview('playerA',[pending,game(2)],c);
+  assert.equal(slider(preview,'BOOMER_AGGRESSOR').status,'READY');
+  assert.equal(slider(preview,'BOOMER_AGGRESSOR').value,30);
+  // This pure engine input is ALREADY server-admitted. The actual authenticated
+  // context adapter still requires its own current-source source/proof authority.
+  for(const invalid of [
+    {...pending,outcome:'DISPUTED'},
+    {...pending,sourceStatus:'WITHDRAWN'},
+    {...pending,admitted:false},
+    {...pending,statistics:{...baseStats(),replaySlot:2}}
+  ]){
+    assert.equal(measurePersonalityGame(invalid,c).eligible,false);
+    assert.equal(projectPersonalityPreview('playerA',[invalid,game(2)],c)
+      .sliders.find(x=>x.axis==='BOOMER_AGGRESSOR').value,null);
+  }
+});
