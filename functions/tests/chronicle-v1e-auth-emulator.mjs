@@ -20,7 +20,15 @@ const uid='intb-owner-uid',otherUid='intb-other-uid',outsider='intb-outsider',
 process.env.AOF_CHRONICLE_INTERACTIONS_V1E='emulator-only';
 const req=(uid,data)=>({auth:{uid},data});
 const match=db.doc('matches/'+battleId);
-await match.update({firstCompletedAt:Timestamp.fromMillis(1000)});
+// Historical invitation order is the approved Event/MatchPlan, not the
+// completion timestamp or the upload order. Seed canonical server authority.
+const event=db.doc('events/intb-event');
+await event.update({startsAt:Timestamp.fromMillis(1000),
+  approvedMatchPlanId:'intb-plan',matchPlanStatus:'APPROVED'});
+await event.collection('matchPlans').doc('intb-plan').set({
+  status:'APPROVED',officialMatchIds:[battleId],matches:[{}]});
+await match.update({sourceMatchPlanId:'intb-plan',matchNumber:1,
+  firstCompletedAt:Timestamp.fromMillis(999999)});
 const owner=await getMyPersonalityHistory.run(req(uid,{}));
 const other=await getMyPersonalityHistory.run(req(otherUid,{}));
 assert.equal(owner.coverage.ownGames,2);
@@ -137,6 +145,15 @@ assert.equal((await offerChronicleInvitation.run(req(otherUid,{battleId}))).offe
 assert.equal((await slot.collection('judgments').get()).size,2);
 assert.equal((await db.collection('leaguePointLedger').get()).size,0);
 assert.equal((await db.collection('goldLedger').get()).size,0);
+// Canonical schedule mutation invalidates the invitation even if every
+// recording and its completion time are unchanged.
+const approvedEvent=(await event.get()).data();
+await event.update({startsAt:Timestamp.fromMillis(3000)});
+assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,false);
+await assert.rejects(act(uid,{requestId:'stale-approved-schedule',action:'CORRECTION_REQUEST',
+  expectedRevision:6,reason:'Approved Event schedule was changed after the response.'}),e=>e.code==='aborted');
+await event.set(approvedEvent);
+assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,true);
 // Sibling Game source/statistics revision invalidates the pair×Battle invitation
 // even when the selected g1 recording and rare incident have not changed.
 // This genuine READY g2 has no canonicalResult object; never fabricate one.
