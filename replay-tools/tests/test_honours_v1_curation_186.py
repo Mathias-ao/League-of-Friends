@@ -145,5 +145,67 @@ class HonoursCuration186Tests(unittest.TestCase):
         self.assertLessEqual(len(d["ownerQuestions"]), 5)
 
 
+    def test_owner_five_selected_directions_are_binding_only_as_design(self) -> None:
+        d = self.curated
+        owner = d["ownerDecisions2026Oct28"]
+        self.assertEqual(owner["selectedCodes"], ["1A", "2A", "3A", "4C", "5A"])
+        self.assertFalse(owner["isLiveGrantAuthority"])
+        self.assertEqual(owner["unapprovedNumericTierThresholds"], 148)
+        self.assertTrue(owner["recordsUnchanged"])
+
+        p = owner["selection1A"]
+        self.assertEqual((p["familyCount"], p["measurementBacked"],
+                          p["pureDerivation"], p["allOriginalFamiliesPreserved"]),
+                         (15, 7, 8, 37))
+        self.assertTrue(p["twoWaveDelivery"])
+
+        club = owner["selection2A"]
+        self.assertTrue(club["eliteClubRequiresDrushFlush"])
+        self.assertFalse(club["newAchievementFamily"])
+        self.assertFalse(club["sourceReady"])
+        self.assertIn(
+            "SAME admitted Game",
+            d["familyDispositions"]["DRUSH"]["provisionalPlan"]["elite"],
+        )
+
+        trophies = owner["selection3A"]
+        self.assertEqual(set(trophies["initialNamedTrophyIds"]), {
+            "AR2_TROPHY_THORN_EMPEROR", "AR2_TROPHY_SWIFT_ASCENT"
+        })
+        self.assertEqual(trophies["reserveIds"],
+                         ["AR2_TROPHY_ANNALS_REWRITTEN"])
+        self.assertIsNone(trophies["swiftAscentPerformanceTimeThreshold"])
+        self.assertIsNone(trophies["swiftAscentMaturityThreshold"])
+        self.assertFalse(trophies["sourceReady"])
+        self.assertEqual(
+            {t["id"] for t in d["trophyCandidates"]
+             if t["ownerSelection"] == "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT"},
+            set(trophies["initialNamedTrophyIds"]),
+        )
+
+        merits = owner["selection4C"]
+        self.assertEqual(set(merits["priorityDistinctionIds"]), {
+            "AR2_DIST_UNBROKEN_LINE", "AR2_DIST_FELLOWSHIP"
+        })
+        self.assertEqual(set(merits["reservedIds"]), {
+            "AR2_DIST_LAST_STANDARD", "AR2_DIST_LONE_VANGUARD"
+        })
+        self.assertTrue(merits["bothEffectProofBlocked"])
+        self.assertTrue(all(m["status"] == "SOURCE_BLOCKED"
+                            for m in d["distinctionCandidates"]))
+
+        display = owner["selection5A"]
+        self.assertEqual(len(display["epithetIds"]), 3)
+        self.assertTrue(display["singleVoluntarilyEquippedEpithet"])
+        self.assertEqual(display["nameplateMaxSelectedTrophies"], 1)
+        self.assertEqual(display["nameplateMaxSelectedDistinctions"], 1)
+        self.assertIn("owner-only", display["personalBestPrivacy"])
+        self.assertFalse(display["unverifiedEmblemsShownAsEarned"])
+        self.assertTrue(owner["rankNamesAccepted"])
+        self.assertEqual(set(owner["tierMeanings"]),
+                         {"INITIATE", "PRACTICED", "EXPERT", "ELITE"})
+        self.assertEqual(len(d["ownerQuestions"]), 5)
+
+
 if __name__ == "__main__":
     unittest.main()
