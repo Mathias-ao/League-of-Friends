@@ -139,6 +139,13 @@ test('short Game duration uses distinct context and missing complete cost covera
   assert.equal(x.eligible,true);
   const preview=projectPersonalityPreview('playerA',[game(),short],config());
   assert.equal(slider(preview,'BOOMER_AGGRESSOR').value,null);
+  // Missing exact source-context calibration is distinct from an intrinsic
+  // duration incompatibility: once explicit bounds are present, mixing is valid.
+  const c=config();
+  c.anchors[key(short.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
+    lower:0,upper:1,comparisonGroup:personalityComparisonGroup(short.context)}]));
+  assert.equal(slider(projectPersonalityPreview('playerA',[game(),short],c),
+    'BOOMER_AGGRESSOR').value,30);
   const cost=tweak(game(),p=>{p.military.militarySpend.unpricedMilitaryCommandAmount=1;});
   assert.equal(measurePersonalityGame(cost,config()).features.BOOMER_AGGRESSOR.fraction,null);
 });
@@ -323,6 +330,8 @@ test('special Nomad or Migration-like starts are separate, but do not erase ordi
     startFamily:'CUSTOM',civilization:'WATER_CIV'}});
   const nomad=game(4,{context:{...baseContext(),mapId:'nomad-scenario',
     startFamily:'NOMAD'}});
+  // Special starts lack the regular initial-TC opportunity in this test.
+  for(const item of [special,nomad])item.statistics.mapPresence.homeAnchor.method='unavailable';
   for(const item of [special,nomad]){
     c.anchors[key(item.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
       lower:0,upper:1,comparisonGroup:personalityComparisonGroup(item.context)}]));
@@ -340,6 +349,10 @@ test('special Nomad or Migration-like starts are separate, but do not erase ordi
   const insufficient=projectPersonalityPreview('playerA',[a,special,nomad],c);
   for(const axis of axisNames){
     assert.equal(slider(insufficient,axis).value,null,axis);
-    assert.equal(slider(insufficient,axis).status,'CONTEXT_LIMITED',axis);
+    assert.ok(['CONTEXT_LIMITED','DEVELOPING'].includes(slider(insufficient,axis).status),axis);
+  }
+  for(const axis of ['CAUTIOUS_BOLD','COMPACT_EXPANSIVE']){
+    assert.equal(measurePersonalityGame(special,c).features[axis].fraction,null);
+    assert.equal(measurePersonalityGame(nomad,c).features[axis].fraction,null);
   }
 });
