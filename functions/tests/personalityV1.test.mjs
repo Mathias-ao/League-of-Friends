@@ -47,7 +47,7 @@ const config=(context=baseContext())=>({
   configurationVersion:'PERSONALITY_CANDIDATE_TEST_ONLY',status:'PROPOSED',
   minimumIndependentBattles:2,recentBattleCount:2,careerWeight:.5,aggregationMethod:'MEDIAN',
   strategicBuildingIds:[80],availableMilitaryFamilies:{LAND_STANDARD:['infantry','archers','cavalry']},
-  anchors:{[key(context)]:Object.fromEntries(axisNames.map(a=>[a,{lower:0,upper:1,comparisonGroup:'standard-land'}]))},
+  anchors:{[key(context)]:Object.fromEntries(axisNames.map(a=>[a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context)}]))},
   minimumIndependentCommandEpisodes:2
 });
 const slider=(p,a)=>p.sliders.find(x=>x.axis===a);
