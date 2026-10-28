@@ -73,3 +73,27 @@ test('Missing Game measurement does not become zero or complete a leadership sam
   assert.equal(sample.value,10);assert.equal(sample.samples,1);
   assert.equal(sample.eligibleGames,2);assert.equal(sample.observedGames,1);assert.equal(sample.completeBattles,0);
 });
+
+test('Team-only requests use actual teammates and never infer FFA aid',()=>{
+  const team=game('battle7'),ffa=game('battle8');
+  team.format='TWO_V_TWO';team.players[0].team=1;team.players[1].team=1;
+  ffa.format='FFA';ffa.players.forEach(p=>{p.team=null;});
+  for(const g of [team,ffa]){amount(g,'a','tributeSent',2346);g.players[0].models.tributeSent='request-model';}
+  const sample=new SeasonStatisticsExperience([team,ffa]).aggregate().find(row=>row.playerId==='a')!.values.tributeSent;
+  assert.equal(sample.value,2346);assert.equal(sample.eligibleBattles,1);assert.equal(sample.eligibleGames,1);
+  assert.match(seasonMetric('tributeSent').label,/requested/i);
+  assert.doesNotMatch(seasonMetric('tributeReceived').hint,/verified resource delivery/i);
+});
+test('Normal civilization/map variation does not erase observations; special-start best stays only provisional',()=>{
+  const standard=game('battle9','G1','ordinary map A');
+  const ordinary=game('battle10','G1','ordinary map B');
+  const special=game('battle11','G1','Nomad');
+  ordinary.players[0].civilization='Mongols';special.players[0].civilization='Malians';
+  amount(standard,'a','castle',850000);amount(ordinary,'a','castle',830000);amount(special,'a','castle',600000);
+  const engine=new SeasonStatisticsExperience([standard,ordinary,special]);
+  const observations=engine.records().filter(record=>record.metricId==='castle'&&record.playerId==='a');
+  assert.equal(observations.length,3,'different contexts retain all evidence; no same-map/civ gate');
+  assert.equal(engine.aggregate().find(row=>row.playerId==='a')!.values.castle.samples,3);
+  // No start-equivalence field exists in GameStatistics, so UI must call these provisional
+  // observations rather than publishing the nominal 600000 as a certified League FC record.
+});
