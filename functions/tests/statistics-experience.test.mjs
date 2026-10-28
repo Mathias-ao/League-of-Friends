@@ -2,6 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EXPERIENCE_VERSION,METRICS,StatisticsExperience,projectStatistics} from '../lib/engines/statisticsExperience.js';
 
+test('decoded tribute request metrics remain applicable in FFA diplomacy, unlike fixed-team cooperation',()=>{
+  const ffa=game(21,{format:'FFA_DIPLO'});
+  for(const p of ffa.players){p.team=null;p.values.tributeSent=2346;p.values.tributeReceived=1000;}
+  const row=new StatisticsExperience([ffa]).aggregate('average').find(player=>player.playerId==='a');
+  assert.equal(row.values.tributeSent.value,2346);
+  assert.equal(row.values.tributeReceived.value,1000);
+  assert.equal(row.values.cooperation.value,null);
+});
+
 test('Statistics labels describe commands and requests, never completed tribute or combat outcomes',()=>{
   const labels=Object.fromEntries(METRICS.map(metric=>[metric.id,metric.label]));
   assert.match(labels.tributeSent,/outgoing tribute amount requested/i);
