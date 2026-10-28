@@ -205,7 +205,9 @@ export class SeasonStatisticsExperience{
    * Qualified peers, NOT a claim of an absolute Season champion.
    * A newcomer, unrelated missing measurement or different ordinary settings
    * never vetoes comparisons between two complete five-Battle peers.
-   * Method cohorts are never numerically merged.
+   * Method cohorts are never numerically merged. Unrelated out-of-method
+ * Battles do not cancel five fully observed in-method Battles; however a
+ * Battle missing one of its own expected Games cannot qualify as complete.
    */
   leaderComparison(metricId:string,minimumBattles=5,mode:SeasonDisplayMode='perBattle'):{ids:string[];qualifiedPlayers:number;model:string|null}{
     const metric=seasonMetric(metricId);
@@ -213,8 +215,7 @@ export class SeasonStatisticsExperience{
     const qualified=this.aggregate(mode).filter(row=>{
       const sample=row.values[metricId];
       return sample.value!==null&&sample.selectedModel!==null&&sample.selectedModel!=='unknown'&&
-        sample.samples>=minimumBattles&&sample.samples===sample.eligibleBattles&&
-        sample.observedGames===sample.eligibleGames&&sample.completeBattles===sample.eligibleBattles;
+        sample.samples>=minimumBattles&&sample.completeBattles===sample.samples;
     });
     const byModel=new Map<string,typeof qualified>();
     for(const row of qualified){const model=row.values[metricId].selectedModel!;byModel.set(model,[...(byModel.get(model)??[]),row]);}
