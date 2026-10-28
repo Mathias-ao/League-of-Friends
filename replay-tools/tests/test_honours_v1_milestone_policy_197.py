@@ -68,7 +68,6 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         self.assertIn("End-of-Season laureate (RECOMMENDED)", p)
         self.assertIn("Post-maturity record-breaker", p)
         self.assertIn("Mature checkpoint champion + Season end", p)
-        self.assertIn("No one meets", p) if False else None
         self.assertIn("no Swift Ascent trophy", p)
         self.assertIn("T_FC", p)
         self.assertIn("N_distinctEligibleBattles", p)
@@ -102,11 +101,7 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         p = self.policy
         self.assertIn("FOUR", p)
         for term in ("#206 Worker S", "Worker D #199", "Worker 1 #201",
-                     "#172", "No points", "No one", "No grants"):
-            # Last two are not implementation guarantees; negative assertions
-            # live in prose and the separate no-seeding contracts.
-            if term in ("No one", "No grants"):
-                continue
+                     "#172", "No points"):
             self.assertIn(term.lower(), p.lower())
         owner = OWNER.read_text("utf-8")
         self.assertIn("honours-v1-milestone-record-policy-197.md", owner)
