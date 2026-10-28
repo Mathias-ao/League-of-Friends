@@ -101,7 +101,15 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     SHA.test(source.authorityRevision)&&SHA.test(source.mappingDigest)&&
     source.matchId===source.battleId&&name(source.matchId)&&
     safe(game.gameNumber)&&game.gameNumber>=1&&
-    source.outcome?.qualification==='OFFICIAL'&&name(source.gameId)&&
+    // Match winner authority is separate from the authenticity of behavior
+    // recorded in a currently accepted replay. Unresolved result does not
+    // invalidate source-bound map/start/slot/civilization evidence.
+    ((source.outcome?.qualification==='OFFICIAL' &&
+      Number.isSafeInteger(source.outcome.resultRevision) &&
+      Array.isArray(source.outcome.winningPlayerIds)) ||
+     (source.outcome?.qualification==='UNRESOLVED' &&
+      source.outcome.resultRevision===null &&
+      source.outcome.winningPlayerIds===null))&&name(source.gameId)&&
     (game.id===undefined||game.id===source.gameId)&&
     (game.matchId===undefined||game.matchId===source.matchId)&&
     (match.id===undefined||match.id===source.matchId)&&
