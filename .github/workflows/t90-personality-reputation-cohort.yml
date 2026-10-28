@@ -6,6 +6,7 @@ on:
       - "functions/src/engines/personalityV1/personalityV1.ts"
       - "functions/src/engines/personalityV1/privateE2EPolicy.ts"
       - "functions/tests/personalityV1.test.mjs"
+      - "functions/tests/personality-private-e2e.test.mjs"
       - "functions/tests/t90-original-cohort.test.mjs"
       - "replay-tools/t90_original_cohort.py"
       - ".github/workflows/t90-personality-reputation-cohort.yml"
@@ -42,4 +43,5 @@ jobs:
           AOF_T90_SOURCE_REPORT: ${{ runner.temp }}/t90-source.json
         run: |
           node --test functions/tests/personalityV1.test.mjs
+          node --test functions/tests/personality-private-e2e.test.mjs
           node --test functions/tests/t90-original-cohort.test.mjs
