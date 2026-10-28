@@ -156,10 +156,17 @@ const keyOf = (c: GameContext): string =>
  * separate from ordinary initial-TC Games. Modes remain distinct because
  * their interaction opportunities differ.
  */
-export function personalityComparisonGroup(c: GameContext): string {
-  return c.startFamily === 'STANDARD'
-    ? [c.format, 'STANDARD_START'].join('|')
-    : [c.format, c.startFamily, c.mapId].join('|');
+export function personalityComparisonGroup(c: GameContext, axis?: PersonalityAxis): string {
+  // Economy's proportion of *recorded resource commitments* remains comparable
+  // across ordinary starts on land or water, with complete cost coverage.
+  // Tactical, military-family and expansion opportunities can change on
+  // WATER/HYBRID. Only those axes are segregated; do not erase economy data.
+  const specialMapOpportunity=axis && axis!=='BOOMER_AGGRESSOR' &&
+    (c.mapFamily==='WATER' || c.mapFamily==='HYBRID');
+  if(c.startFamily==='STANDARD')return [
+    c.format,'STANDARD_START',...(specialMapOpportunity?[c.mapFamily+'_OPPORTUNITY']:[])
+  ].join('|');
+  return [c.format,c.startFamily,c.mapFamily,c.mapId].join('|');
 }
 const known = (c: GameContext): boolean => !!c.mapId && !!c.durationFamily && !!c.civilization &&
   !!c.civilizationOpportunityKey && num(c.observedUntilMs) !== null &&
@@ -352,9 +359,9 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
     if(new Set(parts.map(x => x.gameNumber)).size !== parts.length)throw new Error('PERSONALITY_DUPLICATE_GAME_NUMBER');
     const observations=parts.map(x => measurePersonalityGame(x,config));
     const contextKey = observations[0].contextKey;
-    const comparisonGroup = personalityComparisonGroup(parts[0].context);
     const features={} as Record<PersonalityAxis,Feature>;
     for(const axis of AXES) {
+      const comparisonGroup = personalityComparisonGroup(parts[0].context,axis);
       const values=observations.map(x => x.features[axis]);
       // Game-level admission already protects source, slot and exact opportunity.
       // Raw fractions may be averaged only within one start/mode opportunity
@@ -366,7 +373,7 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
         x.comparisonGroup===comparisonGroup &&
         x.lower===bounds.lower && x.upper===bounds.upper);
       const okay=observations.every((x,i) => x.eligible &&
-        personalityComparisonGroup(parts[i].context)===comparisonGroup) &&
+        personalityComparisonGroup(parts[i].context,axis)===comparisonGroup) &&
         values.every(x => x.fraction !== null) && comparable;
       features[axis]=okay ? feature(axis,values[0].semantic,
         mean(values.map(x => x.fraction!)),1,values.flatMap(x => x.evidenceIds),
