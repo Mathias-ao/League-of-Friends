@@ -24,8 +24,8 @@ test('Per Battle uses two independent observations for a 3-Game plus 1-Game seri
   amount(games[3],'a','apm',30);amount(games[3],'a','unitRequests',30);amount(games[3],'a','scouting',90);
   const engine=new SeasonStatisticsExperience(games),row=engine.aggregate().find(r=>r.playerId==='a')!;
   assert.equal(row.games,4);assert.equal(row.battles,2);assert.equal(engine.battleCount,2);
-  assert.equal(row.values.apm.value,20); // NOT (10+10+10+30)/4 = 15
-  assert.equal(row.values.unitRequests.value,30); // (3*10 + 30)/2
+  assert.equal(row.values.apm.value,20); // Battle means: 10 and 30; not raw Game mean 15
+  assert.equal(row.values.unitRequests.value,20); // (mean(10,10,10) + 30)/2; not 40 or 30
   assert.equal(row.values.scouting.value,70); // mean of Battle rates, not sum
   assert.equal(row.values.apm.samples,2);assert.equal(row.values.apm.eligibleBattles,2);
   assert.equal(engine.aggregate('allTime').find(r=>r.playerId==='a')!.values.unitRequests.value,60);
