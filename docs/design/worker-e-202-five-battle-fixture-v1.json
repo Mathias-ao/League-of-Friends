@@ -123,11 +123,17 @@
         }
       ],
       "socialMarks": [],
-      "externalExceptionalIds": [
-        "E-CHI-01"
-      ],
-      "exceptionalQualification": "HYPOTHETICAL_EXTERNALLY_APPROVED_ONLY",
-      "expectedTier": "EXTRAORDINARY_CHAPTER"
+      "externalExceptionalIds": [],
+      "expectedTier": "EXTRAORDINARY_CHAPTER",
+      "syntheticExternalReceipt": {
+        "eventId": "E-CHI-01",
+        "qualification": "QUALIFIED_OWNER_APPROVED_TEST_ONLY",
+        "sourceEventRefs": [
+          "H5-defence",
+          "H5-C-to-B-threat"
+        ],
+        "testOnly": true
+      }
     }
   ],
   "correction": {
@@ -152,7 +158,8 @@
     "oneScenePerBattle": true,
     "sourceCorrectionCanDowngrade": true,
     "privacy": "PUBLIC_NARRATOR_HAS_NO_AUTHOR_TESTIMONY",
-    "allowRealClaims": false
+    "allowRealClaims": false,
+    "exceptionalRequiresSyntheticExternalReceipt": true
   },
   "adversarialCases": [
     "beatless H2 admitted rather than omitted",
