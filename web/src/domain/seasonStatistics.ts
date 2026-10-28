@@ -129,9 +129,10 @@ function categoryMode(values:string[]):{text:string|null;sharePercent:number|nul
 
 /**
  * Season read-model: each distinct matchId (Battle) has one vote.
- * Additive per-Game contributions are summed *inside* their Battle; timing,
- * snapshots, percentages, ratios and rates are first normalized within the
- * Battle. All-time sums only explicitly marked additive metrics.
+ * Each Battle contributes one representative observation, including one
+ * mean for repeatable per-Game counts. A BO3 must not win a typical-performance
+ * comparison merely by playing three Games. All-time preserves the actual
+ * compatible additive Game totals.
  *
  * A measurement model is a method, not an opportunity/context marker.
  * We never average incompatible model strings. The largest comparable
@@ -178,9 +179,8 @@ export class SeasonStatisticsExperience{
           const raw=members.map(observation);
           if(metric.kind==='category')return categoryMode(raw as string[]).text;
           const numbers=raw as number[];
-          // Only volume/episode counts are additive across Games, not rates,
-          // timings, percentages, snapshots or point-in-time measurements.
-          if(metric.allTime==='sum'||metric.aggregation==='sum')return numbers.reduce((sum,item)=>sum+item,0);
+          // Each multi-Game Battle has one representative typical Game value.
+          // Historic cumulative counts are handled separately in All-time.
           return metric.aggregation==='median'?median(numbers):numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
         }).filter((value):value is number|string=>value!==null);
         const completeBattles=[...grouped.values()].filter(group=>group.every(pair=>selected.includes(pair))).length;
@@ -191,7 +191,7 @@ export class SeasonStatisticsExperience{
         }else{
           const numbers=byBattle as number[];
           if(numbers.length){
-            if(mode==='allTime'&&(metric.allTime==='sum'||metric.aggregation==='sum'))value=numbers.reduce((sum,item)=>sum+item,0);
+            if(mode==='allTime'&&(metric.allTime==='sum'||metric.aggregation==='sum'))value=selected.reduce((sum,pair)=>sum+(observation(pair) as number),0);
             else if(metric.aggregation==='median')value=median(numbers);
             else value=numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
           }
