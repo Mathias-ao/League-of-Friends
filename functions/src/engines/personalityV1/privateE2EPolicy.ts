@@ -1,6 +1,6 @@
 import {admitPersonalityContext, PERSONALITY_CONTEXT_PROOF_VERSION,
   type ContextSourceInput,type ReviewedContextProof} from './contextAdmission.js';
-import {PERSONALITY_AXES,type GameContext,type PersonalityAxis,
+import {PERSONALITY_AXES,personalityComparisonGroup,type GameContext,type PersonalityAxis,
   type PersonalityCalibration} from './personalityV1.js';
 
 /**
@@ -27,8 +27,10 @@ export type ReviewedSourceRegistry=Readonly<Record<string,Readonly<ReviewedConte
  * dobb = Glade/map 188, measured water share 0, unmodded source.
  * Both decode dark-age/resources 0. The actual START is still qualified by
  * our exact-source initial-TC witness in #159; metadata labels alone never
- * establish STANDARD. Distinct maps/civilizations remain distinct contexts,
- * so these TWO genuine 1v1s alone CANNOT yield a longitudinal score.
+ * establish STANDARD. Map and civilization remain *factual metadata* but do
+ * not split comparable STANDARD-start longitudinal Personality samples.
+ * These genuine files still need independent eligible Battle authority and
+ * measured per-axis opportunity to support a genuine READY score.
  *
  * These are source-specific emulator-only reference assertions, not blanket
  * map ID equivalence for other replays or approved production policy.
@@ -123,10 +125,12 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
   const strategicBuildingIds=new Set<number>();
   for(const context of bySource.values()){
     const contextKey=identity(context);
-    // Every axis retains its own natural fraction normalization. The bounds
-    // 0..1 are explicit PROPOSED E2E anchors, not empirically fitted poles.
+    // Keep exact source-context anchor keys for traceability, but ordinary
+    // map/civilization/duration differences no longer split the *comparison*.
+    // Each axis keeps its own source-qualified fraction/opportunity.
+    // These 0..1 bounds are PROPOSED private E2E anchors, not final league poles.
     anchors[contextKey]=Object.fromEntries(axes.map(a=>[
-      a,{lower:0,upper:1,comparisonGroup:contextKey}]));
+      a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context)}]));
     const build=context.civilizationOpportunityKey.match(/^BUILD_([0-9]+)_CIV_[0-9]+$/)?.[1];
     if(build){
       for(const id of taxonomy.strategicBuildingsByBuild[build]??[]){
