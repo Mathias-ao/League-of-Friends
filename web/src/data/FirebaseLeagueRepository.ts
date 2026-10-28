@@ -150,6 +150,10 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   }
   mySocialExperience(request:{matchId:string;gameId:string}){return this.call<import('../domain/intV1Experience').IntV1PrivateExperience>('getMySocialExperience',request);}
   myPrivateChronicle(){return this.call<PlayerChronicleResponse>('getMyPrivateChronicle');}
+  myChronicleInvitations(){return this.call<import('../domain/privateChronicleInteractions').PrivateChronicleInvitations>('getMyChronicleInvitations',{});}
+  actOnChronicleInvitation(input:import('../domain/privateChronicleInteractions').ChronicleInvitationAction){
+    return this.call<{success:true;revision:number;state:string;idempotent:boolean}>('actOnChronicleInvitation',input);
+  }
   myPersonalityHistory(){return this.call<import('../domain/privateHistory').PrivatePersonalityHistory>('getMyPersonalityHistory');}
   myGameplayPreview(){return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');}
   mySocialProgression(){return this.call<import('../domain/privateProgression').PrivateProgression>('getMySocialProgression');}

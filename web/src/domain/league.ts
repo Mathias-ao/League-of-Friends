@@ -240,6 +240,8 @@ export interface LeagueRepository {
   uploadReplay(matchId:string,gameId:string,file:File):Promise<ReplayUploadResult>;replayStatistics(matchId:string,gameId:string):Promise<ReplayStatisticsResult>;activeNativeBattleDetail?(query:ActiveNativeDetailRequest):Promise<ActiveNativeDetailResult>;activeNativeBattleRecord?(query:ActiveNativeBattleRecordQuery):Promise<ActiveNativeBattleRecordResult>;statisticsExperience(scope:import('./statistics').StatisticsScope):Promise<import('./statistics').StatisticsDataset>;
   mySocialExperience?(request:{matchId:string;gameId:string}):Promise<import('./intV1Experience').IntV1PrivateExperience>;
   myPrivateChronicle?():Promise<PlayerChronicleResponse>;
+  myChronicleInvitations?():Promise<import('./privateChronicleInteractions').PrivateChronicleInvitations>;
+  actOnChronicleInvitation?(input:import('./privateChronicleInteractions').ChronicleInvitationAction):Promise<{success:true;revision:number;state:string;idempotent:boolean}>;
   myPersonalityHistory?():Promise<import('./privateHistory').PrivatePersonalityHistory>;
   myGameplayPreview?():Promise<import('./gameplayPreview').PrivateGameplayPreview>;
   mySocialProgression?():Promise<import('./privateProgression').PrivateProgression>;
