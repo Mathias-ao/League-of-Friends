@@ -10,7 +10,7 @@ import {PERSONALITY_AXES,personalityComparisonGroup,type GameContext,type Person
  * Never derive reviewed evidence from the expected map name, decoded numeric
  * map/starting-age ID alone, source-provided display labels or draft civ.
  */
-export const PRIVATE_PERSONALITY_E2E_VERSION='AOF_PERSONALITY_PRIVATE_E2E_V1';
+export const PRIVATE_PERSONALITY_E2E_VERSION='AOF_PERSONALITY_PRIVATE_E2E_V2';
 export const PRIVATE_PERSONALITY_CONTEXT_REGISTRY_VERSION='AOF_PERSONALITY_SOURCE_REVIEW_V1';
 const axes=Object.keys(PERSONALITY_AXES) as PersonalityAxis[];
 const identity=(c:GameContext)=>[
