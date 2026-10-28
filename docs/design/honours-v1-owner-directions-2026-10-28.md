@@ -2,6 +2,8 @@
 
 **Authority:** Explicit owner choices **1A, 2A, 3A, 4C, 5A** in the Worker C #186 discussion, read with newer owner policy notes #196/#197 and separate #198. This addendum **supersedes the five open choice questions in** [`honours-v1-curation-186.md`](honours-v1-curation-186.md) **only where the owner answered them**. All exact triggers, thresholds, final recognitions, source admission and production activation remain separate approvals.
 
+**28 October #196/#197/#205 semantic follow-up:** The [milestone, comparability and mature-record trophy decision packet](honours-v1-milestone-record-policy-197.md) refines *how* the already chosen two trophy paths and four achievement tiers behave. Its recommended **end-of-Season laureate** remains **NOT owner approved**; absolute time, maturity sample, retroactive and record-cohort rules remain open. It keeps everyday achievements immediate when source-qualified. The owner-selected 1A/2A/3A/4C/5A remain unchanged.
+
 **Design-only.** Do not modify the merged #162 baseline `awards-records-v2-registry.json` (37 families; 148 null, owner-unapproved four-tier plans; 26 Record Book candidates; 11 comparability cohorts; three provisional featured plaques per each of five Statistics tabs = 15). Do not seed entitlements, publish records, mint trophies/medals, score social tracks, deploy or stage.
 
 ## Five recorded choices
