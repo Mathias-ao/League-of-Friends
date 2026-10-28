@@ -379,10 +379,19 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
       const okay=observations.every((x,i) => x.eligible &&
         personalityComparisonGroup(parts[i].context,axis)===comparisonGroup) &&
         values.every(x => x.fraction !== null) && comparable;
+      const reasons = new Set<string>();
+      if(!observations.every(x=>x.eligible))reasons.add('SOURCE_CONTEXT_RESULT_OR_MAPPING_UNQUALIFIED');
+      if(!observations.every((x,i)=>
+        personalityComparisonGroup(parts[i].context,axis)===comparisonGroup))
+        reasons.add('INCOMPATIBLE_FORMAT_START_OR_MAP_OPPORTUNITY');
+      if(!comparable)reasons.add('INCOMPATIBLE_AXIS_CALIBRATION');
+      for(const value of values)
+        if(value.fraction===null)reasons.add(value.reason??'MISSING_AXIS_OPPORTUNITY');
       features[axis]=okay ? feature(axis,values[0].semantic,
         mean(values.map(x => x.fraction!)),1,values.flatMap(x => x.evidenceIds),
         values.flatMap(x => x.modelVersions)) :
-        missing(axis,values[0].semantic,'MULTI_GAME_INCOMPLETE_OR_INCOMPATIBLE');
+        missing(axis,values[0].semantic,[...reasons].sort().join(';')||
+          'MULTI_GAME_INCOMPLETE_OR_INCOMPATIBLE');
     }
     result.push({battleId:parts[0].battleId,playerId:parts[0].playerId,
       playedAtMs:Math.min(...parts.map(x => x.playedAtMs)),contextKey,
