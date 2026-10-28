@@ -39,7 +39,7 @@ export function projectPrivatePersonalityHistory(ownerPlayerId:string,battles:Pe
   const games:AuthorizedGame[]=[],pending:BattleFeature[]=[];
   for(const battle of battles){
     const complete=battle.sources.length===battle.gameIds.length&&battle.sources.every(s=>
-      s.source.outcome.qualification==='OFFICIAL'&&
+      ['OFFICIAL','UNRESOLVED'].includes(s.source.outcome.qualification)&&
       Number.isSafeInteger(s.match.firstCompletedAt?.toMillis?.())&&
       s.source.roster.some(p=>p.playerId===ownerPlayerId));
     const contexts=battle.sources.map(s=>contextAdmission?.(s)??null);
@@ -51,7 +51,8 @@ export function projectPrivatePersonalityHistory(ownerPlayerId:string,battles:Pe
           gameNumber:item.game.gameNumber,playerId:ownerPlayerId,replaySlot:mapped.replaySlot,
           sourceHash:item.source.sourceHash,sourceAuthority:item.source.authorityRevision,
           mappingDigest:item.source.mappingDigest,authorityRevision:item.source.statisticsRevision,
-          sourceStatus:'READY',outcome:'OFFICIAL',admitted:true,
+          sourceStatus:'READY',
+          outcome:item.source.outcome.qualification==='OFFICIAL'?'OFFICIAL':'PENDING',admitted:true,
           episodeChronologyComplete:verifiedCommandChronology(item.statistics,participant,mapped.replaySlot),
           playedAtMs:item.match.firstCompletedAt.toMillis(),
           context:contexts[index]!,statistics:participant});
