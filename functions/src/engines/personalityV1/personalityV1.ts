@@ -361,7 +361,8 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
       // and with identical explicitly configured per-axis normalization bounds.
       const anchors=parts.map(x => config?.anchors[keyOf(x.context)]?.[axis]);
       const bounds=anchors[0];
-      const comparable=anchors.every(x => !!x && !!bounds &&
+      const sameExactContext=observations.every(x=>x.contextKey===contextKey);
+      const comparable=sameExactContext || anchors.every(x => !!x && !!bounds &&
         x.comparisonGroup===comparisonGroup &&
         x.lower===bounds.lower && x.upper===bounds.upper);
       const okay=observations.every((x,i) => x.eligible &&
