@@ -82,7 +82,39 @@ test('genuine pinned T90 Games exercise five Personality axes and private Reputa
     features:measurePersonalityGame(g,calibration).features,
     reputation:source.games[i].sourceGrades,
   }));
+  const factualExpected=[
+    {BOOMER_AGGRESSOR:[2159,7909],CAUTIOUS_BOLD:[2,4],COMPACT_EXPANSIVE:[2,6],rivalry:0},
+    {BOOMER_AGGRESSOR:[18003,32538],CAUTIOUS_BOLD:[2,6],COMPACT_EXPANSIVE:[8,17],rivalry:1},
+    {BOOMER_AGGRESSOR:[19100,40225],CAUTIOUS_BOLD:[0,12],COMPACT_EXPANSIVE:[7,13],rivalry:1},
+  ];
+  gameMeasurements.forEach((measurement,i)=>{
+    const expected=factualExpected[i];
+    for(const axis of ['BOOMER_AGGRESSOR','CAUTIOUS_BOLD','COMPACT_EXPANSIVE']){
+      const [n,d]=expected[axis];
+      assert.equal(measurement.features[axis].numerator,n,measurement.original+':'+axis);
+      assert.equal(measurement.features[axis].denominator,d,measurement.original+':'+axis);
+      assert.equal(measurement.features[axis].fraction,n/d,measurement.original+':'+axis);
+    }
+    assert.equal(measurement.features.GUERRILLA_FRONTLINE.fraction,null);
+    assert.equal(measurement.features.GUERRILLA_FRONTLINE.reason,
+      'INSUFFICIENT_ATTRIBUTABLE_COMMAND_EPISODES');
+    assert.equal(measurement.features.SPECIALIST_IMPROVISER.fraction,null);
+    assert.equal(measurement.features.SPECIALIST_IMPROVISER.reason,
+      'CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE');
+    assert.equal(measurement.reputation.RIVALRY.sourceAdmitted,expected.rivalry);
+    for(const track of ['GALLANTRY','CRUELTY','CHIVALRY']){
+      assert.equal(measurement.reputation[track].sourceAdmitted,0,measurement.original+':'+track);
+    }
+  });
   const career=projectPersonalityPreview(testPlayer,games,calibration);
+  // These expected numerics are conditional on isolated test Battle IDs,
+  // source-unreviewed LAND test label and PROPOSED anchors — not live scores.
+  const projected=Object.fromEntries(career.sliders.map(x=>[x.axis,x.value]));
+  assert.equal(projected.BOOMER_AGGRESSOR,49.44);
+  assert.equal(projected.CAUTIOUS_BOLD,25);
+  assert.equal(projected.COMPACT_EXPANSIVE,48.76);
+  assert.equal(projected.GUERRILLA_FRONTLINE,null);
+  assert.equal(projected.SPECIALIST_IMPROVISER,null);
   assert.equal(career.publication,'PRIVATE_PREVIEW_ONLY');
   assert.equal(career.policyStatus,'PROPOSED');
   assert.equal(career.battles.length,3);
