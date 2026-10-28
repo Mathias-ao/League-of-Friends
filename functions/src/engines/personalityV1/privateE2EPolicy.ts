@@ -130,7 +130,7 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
     // Each axis keeps its own source-qualified fraction/opportunity.
     // These 0..1 bounds are PROPOSED private E2E anchors, not final league poles.
     anchors[contextKey]=Object.fromEntries(axes.map(a=>[
-      a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context)}]));
+      a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context,a)}]));
     const build=context.civilizationOpportunityKey.match(/^BUILD_([0-9]+)_CIV_[0-9]+$/)?.[1];
     if(build){
       for(const id of taxonomy.strategicBuildingsByBuild[build]??[]){
