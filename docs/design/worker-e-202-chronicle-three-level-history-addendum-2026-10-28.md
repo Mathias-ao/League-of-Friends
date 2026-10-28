@@ -134,3 +134,12 @@ No live staging, runtime LLM, scorer or award changes. Worker D's six E IDs rema
 3. **One scene, conditionally expanded:** preserve stable pair×Battle identity with a richer rendition for genuinely developing history or extraordinary actual deeds. No automatic extra story, question, trophy or effect.
 
 **Outcome:** a complete quiet Battle ledger, a meaningful selective social history, and rarely illuminated extraordinary chapters, all traceable to source and corrections.
+
+
+## 12. Reproducible five-Battle reference tests and status
+
+The adjacent **synthetic** JSON fixture (worker-e-202-five-battle-fixture-v1.json) and standalone executable JavaScript reference (worker-e-202-five-battle-design.test.mjs) encode the exact five-Battle scenarios, externally supplied **test-only** rare receipt, source correction and tier downgrade. Any hypothetical DIRECTED_POSITION_PRESSURE descriptor is a **design-only witness shape**, not an existing production-qualified Chronicle beat kind and not permission to publish that language. The E receipt is an injected synthetic external qualification and must not be inferred from the presence of an event ID.
+
+**Execution evidence, 28 Oct:** eight of eight isolated source-fetched JavaScript reference assertions passed through the execution runtime, including the accepted current filter's four-of-five omission, desired five-of-five, a two-Game Battle counting once, correct pending winner, result correction downgrading the dependent historical chapter, scene-key identity retention, external-rare receipt withdrawal and no private testimony in objective output. The reference file is authored as a Node built-in test and can be run from the repo with: node --test docs/design/worker-e-202-five-battle-design.test.mjs.
+
+**Honest limitation:** these eight passed *reference-model* checks **do not** mean the accepted core has been repaired, that Node repository CI ran, that an authentic original produced any exceptional event, or that Sol's real Book changed. The source-code-confirmed product bug remains open until an E1 PR uses the accepted factual admission contract and passes backend plus real Book/correction/privacy integration. This document's exact git revision/CI should be reported separately from any future code PR.
