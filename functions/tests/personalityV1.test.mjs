@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PERSONALITY_FEATURE_VERSION,PERSONALITY_AXES,
-  measurePersonalityGame,buildPersonalityBattles,projectPersonalityPreview}
+  measurePersonalityGame,buildPersonalityBattles,projectPersonalityPreview,personalityComparisonGroup}
   from '../lib/engines/personalityV1/personalityV1.js';
 
 const hex = n => n.toString(16).padStart(64,'0');
@@ -251,4 +251,93 @@ test('saved authentic corpus identifies independent 1v1 and FFA; formats are cal
   // Metadata-only corpus lacks league Battle ID, authoritative mapping and eligible result.
   // It is forbidden to manufacture the missing fields to assert a REAL personality score.
   assert.equal(PERSONALITY_FEATURE_VERSION,'AOF_PERSONALITY_FEATURES_V1');
+});
+
+test('ordinary map, civilization and observed-duration differences do not divide Personality',()=>{
+  // Distinct original-context metadata is retained, like the T90 cohort
+  // (185872, map 140/140/9, civ 3/5/1, observed 16/33/40 minutes).
+  // This test supplies synthetic *eligible statistics* and explicit per-civ
+  // opportunity; it does not assert those original Games are already admitted.
+  const contexts=[
+    {...baseContext(),mapId:'140',civilization:'RAW_AOE2_CIV_3',
+      civilizationOpportunityKey:'BUILD_185872_CIV_3',durationFamily:'OBSERVED_0_TO_30',
+      durationMs:963949,observedUntilMs:963949},
+    {...baseContext(),mapId:'140',civilization:'RAW_AOE2_CIV_5',
+      civilizationOpportunityKey:'BUILD_185872_CIV_5',durationFamily:'OBSERVED_30_TO_60',
+      durationMs:1976299,observedUntilMs:1976299},
+    {...baseContext(),mapId:'9',civilization:'RAW_AOE2_CIV_1',
+      civilizationOpportunityKey:'BUILD_185872_CIV_1',durationFamily:'OBSERVED_30_TO_60',
+      durationMs:2412551,observedUntilMs:2412551},
+  ];
+  const c=config();
+  for(const context of contexts){
+    c.anchors[key(context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
+      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context)}]));
+    c.availableMilitaryFamilies[context.civilizationOpportunityKey]=['infantry','archers','cavalry'];
+  }
+  const games=contexts.map((context,i)=>game(i+1,{context}));
+  const result=projectPersonalityPreview('playerA',games,c);
+  assert.equal(new Set(games.map(g=>key(g.context))).size,3);
+  assert.equal(new Set(games.map(g=>personalityComparisonGroup(g.context))).size,1);
+  assert.equal(result.battles.length,3);
+  for(const axis of axisNames){
+    assert.equal(slider(result,axis).status,'READY',axis);
+    assert.equal(slider(result,axis).independentBattles,3,axis);
+  }
+  assert.equal(slider(result,'BOOMER_AGGRESSOR').value,30);
+  assert.equal(slider(result,'CAUTIOUS_BOLD').value,50);
+  assert.equal(slider(result,'COMPACT_EXPANSIVE').value,33.33);
+  // Missing one civilization-specific opportunity affects its own axis,
+  // not source-backed economic, spatial and command components.
+  delete c.availableMilitaryFamilies.BUILD_185872_CIV_5;
+  const developing=projectPersonalityPreview('playerA',games.slice(0,2),c);
+  assert.equal(slider(developing,'SPECIALIST_IMPROVISER').value,null);
+  assert.equal(slider(developing,'BOOMER_AGGRESSOR').status,'READY');
+  assert.equal(slider(developing,'GUERRILLA_FRONTLINE').status,'READY');
+});
+test('two differently classified Games in one Battle remain one opportunity after normalization',()=>{
+  const first=game(),second={...game(),gameId:'other-game',gameNumber:2,
+    sourceHash:hex(701),sourceAuthority:hex(702),mappingDigest:hex(703),
+    context:{...baseContext(),mapId:'140',civilization:'OTHER_CIV',
+      civilizationOpportunityKey:'OTHER_CIV_OPPORTUNITY',durationFamily:'DIFFERENT'}};
+  const c=config();
+  c.availableMilitaryFamilies.OTHER_CIV_OPPORTUNITY=['infantry','archers','cavalry'];
+  c.anchors[key(second.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
+    lower:0,upper:1,comparisonGroup:personalityComparisonGroup(second.context)}]));
+  const projected=projectPersonalityPreview('playerA',[first,second,game(2)],c);
+  assert.equal(projected.battles.length,2);
+  assert.deepEqual(projected.battles[0].gameIds,['game-1','other-game']);
+  for(const axis of axisNames)assert.equal(slider(projected,axis).status,'READY',axis);
+  // Never average raw fractions whose context-specific calibration bounds differ.
+  c.anchors[key(second.context)].BOOMER_AGGRESSOR={lower:.1,upper:.9,
+    comparisonGroup:personalityComparisonGroup(second.context)};
+  const mismatch=projectPersonalityPreview('playerA',[first,second,game(2)],c);
+  assert.equal(slider(mismatch,'BOOMER_AGGRESSOR').value,null);
+  assert.equal(slider(mismatch,'CAUTIOUS_BOLD').status,'READY');
+});
+test('special Nomad or Migration-like starts are separate, but do not erase ordinary-sample progress',()=>{
+  const a=game(),b=game(2),c=config();
+  const special=game(3,{context:{...baseContext(),mapId:'migration-scenario',
+    startFamily:'CUSTOM',civilization:'WATER_CIV'}});
+  const nomad=game(4,{context:{...baseContext(),mapId:'nomad-scenario',
+    startFamily:'NOMAD'}});
+  for(const item of [special,nomad]){
+    c.anchors[key(item.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
+      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(item.context)}]));
+  }
+  const ordinaryGroup=personalityComparisonGroup(a.context);
+  assert.notEqual(ordinaryGroup,personalityComparisonGroup(special.context));
+  assert.notEqual(ordinaryGroup,personalityComparisonGroup(nomad.context));
+  const out=projectPersonalityPreview('playerA',[a,b,special,nomad],c);
+  for(const axis of axisNames){
+    assert.equal(slider(out,axis).status,'READY',axis);
+    assert.equal(slider(out,axis).independentBattles,2,axis);
+    assert.ok(slider(out,axis).reasons.includes('OTHER_START_OR_MODE_CONTEXT_NOT_AGGREGATED'));
+    assert.equal(slider(out,axis).contextKey,ordinaryGroup);
+  }
+  const insufficient=projectPersonalityPreview('playerA',[a,special,nomad],c);
+  for(const axis of axisNames){
+    assert.equal(slider(insufficient,axis).value,null,axis);
+    assert.equal(slider(insufficient,axis).status,'CONTEXT_LIMITED',axis);
+  }
 });
