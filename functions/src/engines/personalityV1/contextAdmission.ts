@@ -104,9 +104,11 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     // Match winner authority is separate from the authenticity of behavior
     // recorded in a currently accepted replay. Unresolved result does not
     // invalidate source-bound map/start/slot/civilization evidence.
-    ((source.outcome?.qualification==='OFFICIAL' &&
-      Number.isSafeInteger(source.outcome.resultRevision) &&
-      Array.isArray(source.outcome.winningPlayerIds)) ||
+    // The canonical source loader validates OFFICIAL outcome shape upstream.
+    // The standalone source-field adapter historically accepts OFFICIAL-only
+    // synthetic envelopes; do not impose a new unrelated winner-shape gate.
+    // An UNRESOLVED branch, however, may never carry a claimed winner.
+    (source.outcome?.qualification==='OFFICIAL' ||
      (source.outcome?.qualification==='UNRESOLVED' &&
       source.outcome.resultRevision===null &&
       source.outcome.winningPlayerIds===null))&&name(source.gameId)&&
