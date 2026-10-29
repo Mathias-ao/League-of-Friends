@@ -292,8 +292,50 @@ function storyIdentity(beats,first,context){
   return {rubric:first?'FIRST RECORD':'RECORDED BATTLE',title:first?'First recorded meeting':'Another shared Battle',primary:null};
 }
 
+/** A canonical league Battle can be source-accepted without a social deed.
+ * Log its actual pair exposure, never invent a technical combat episode, outcome
+ * or inferred interaction merely to fill an otherwise quiet historical page.
+ */
+function ordinaryBattleLedger(group,first,ownerName,counterpartName){
+  const relation=group?.firstExposure?.context;
+  const pair=ownerName+' and '+counterpartName;
+  const firstRecorded=first===true&&group?.chronologyQualified===true;
+  let phrase;
+  if(relation==='OPPOSED')
+    phrase=firstRecorded?'Their first recorded league Battle placed '+pair+' on opposing sides':
+      pair+' appeared on opposing sides in a league Battle';
+  else if(relation==='LOCKED_TEAMMATES')
+    phrase=firstRecorded?'Their first recorded league Battle placed '+pair+' on the same team':
+      pair+' appeared on the same team in a league Battle';
+  else if(relation==='OPEN_DIPLOMACY')
+    phrase=firstRecorded?'Their first recorded league Battle placed '+pair+' in an open-diplomacy contest':
+      pair+' appeared in the same open-diplomacy league Battle';
+  else
+    phrase=firstRecorded?'Their first recorded league Battle included '+pair:
+      pair+' appeared in the same league Battle';
+  // Unknown or disputed *aggregate* result never prevents accepted exposure,
+  // and a Game winner cannot be elevated into a league-Battle winner.
+  const pending=group?.result?.qualification!=='OFFICIAL';
+  return {
+    rubric:'BATTLE LEDGER',
+    title:firstRecorded?'First recorded Battle':'Recorded league Battle',
+    paragraphs:[phrase+(pending?'; the official result is pending.':'.')],
+    storyTier:'ORDINARY_LEDGER',
+  };
+}
+
 export function writeBattleNarrative({group,first=false,ownerName,counterpartName,context,names={}}={}){
   const visible=rows(group?.beats).filter(beat=>beat?.kind!=='DECLARATION_KNOWLEDGE_INTERRUPTED');
+  if(!visible.length){
+    const ledger=ordinaryBattleLedger(group,first,ownerName,counterpartName);
+    return {...ledger,narrativeContext:{
+      priorFamilyCounts:context?.familyCounts??{},
+      priorDirectedFamilyCounts:context?.directedFamilyCounts??{},
+      priorRelationshipEvidence:context?.relationship??{},
+      priorRelationshipActors:context?.relationshipActors??{},
+      priorReputationEvidence:context?.reputation??{},
+    }};
+  }
   const identity=storyIdentity(visible,first,context);
   const sentences=[];
   if(first)sentences.push(firstMeetingSentence(group?.firstExposure?.context??'UNKNOWN',ownerName,counterpartName));
@@ -331,6 +373,9 @@ export function writeBattleNarrative({group,first=false,ownerName,counterpartNam
     rubric:identity.rubric,
     title:authored.title,
     paragraphs:[authored.sentences.filter(Boolean).slice(0,5).join(' ')],
+    // Classification is editorial, not a new source method or recognition grant.
+    storyTier:identity.primary?.kind==='QUALIFIED_KING_LOSS_TREACHERY'?'EXTRAORDINARY_CHAPTER':
+      pattern?'DEVELOPING_HISTORY':'ORDINARY_LEDGER',
     narrativeContext:{
       priorFamilyCounts:context?.familyCounts??{},
       priorDirectedFamilyCounts:context?.directedFamilyCounts??{},
