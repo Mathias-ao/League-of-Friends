@@ -73,6 +73,16 @@ test('withdrawn known sibling prevents a false complete Battle; another partial 
   assert.deepEqual(insufficient.leaders('buildOrderExecution',5),[]);
   assert.equal(insufficient.aggregate('allTime')[0].values.buildOrderExecution.value,90);
 });
+test('scope filtering does not lose withdrawn siblings or resurrect revised out-of-season Games',()=>{
+  const first=game('battle1','G1'),withdrawn=game('battle1','G2');
+  withdrawn.eligible=false;withdrawn.affectsSeason=false;withdrawn.players=[];
+  const e=new SeasonStatisticsExperience([first],[first,withdrawn]);
+  assert.equal(e.games.length,1);
+  assert.equal(e.aggregate()[0].values.buildOrderExecution.completeBattles,0);
+  const revised=game('battle1','G1','standard',2);revised.affectsSeason=false;
+  const corrected=new SeasonStatisticsExperience([first],[first,withdrawn,revised]);
+  assert.equal(corrected.games.length,0,'new revision outside Season may not revive the old accepted Game');
+});
 test('explicit authoritative missing sibling manifest prevents invented completeness',()=>{
   const source=game('battle1') as GameStatistics&{knownGameIds?:string[]};
   source.knownGameIds=['G1','G2'];
