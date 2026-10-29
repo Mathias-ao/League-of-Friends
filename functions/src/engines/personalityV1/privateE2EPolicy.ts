@@ -99,6 +99,8 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
   sources:ReadonlyArray<ContextSourceInput>,taxonomy:PrivateTaxonomy=PRIVATE_SOURCE_TAXONOMY):ProvisionalPrivatePolicy {
   if(!ownerPlayerId)throw new Error('PERSONALITY_OWNER_NOT_AUTHENTICATED');
   const bySource=new Map<string,GameContext>();
+  const measurableBySource=new Map<string,GameContext>();
+  const verifiedBuilds=new Map<string,number>();
   const reasons:string[]=[];let rejected=0;
   for(const input of sources){
     const hash=input.source.sourceHash;
@@ -109,8 +111,15 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
       candidate.status==='REVIEWED_SOURCE_CLASSIFICATION' && candidate.sourceHash===hash ?
       candidate:null;
     const result=admitPersonalityContext(input,ownerPlayerId,reviewed);
+    if(result.behaviorContext)measurableBySource.set(result.provenanceDigest,result.behaviorContext);
     if(result.context)bySource.set(result.provenanceDigest,result.context);
     else {rejected++;reasons.push(...result.missing);}
+    // The source's authenticated build is independently verified by the
+    // context adapter. Classifying strategic BUILD IDs does not require a
+    // player's civilization to be independently decoded.
+    if(reviewed&&result.behaviorContext&&reviewed.mapId===Number(result.behaviorContext.mapId)&&
+      result.behaviorContext.startFamily&&result.behaviorContext.mapFamily)
+      verifiedBuilds.set(result.provenanceDigest,reviewed.gameBuild);
   }
   const getContext=(input:ContextSourceInput):GameContext|null=>{
     const hash=input.source.sourceHash;
@@ -118,12 +127,15 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
     const admitted=admitPersonalityContext(input,ownerPlayerId,
       reviewed?.version===PERSONALITY_CONTEXT_PROOF_VERSION&&reviewed.sourceHash===hash?
       reviewed:null);
-    return bySource.has(admitted.provenanceDigest)?admitted.context:null;
+    return measurableBySource.has(admitted.provenanceDigest)?admitted.behaviorContext:null;
   };
   const anchors:PersonalityCalibration['anchors']={};
   const availableMilitaryFamilies:Record<string,string[]>={};
   const strategicBuildingIds=new Set<number>();
-  for(const context of bySource.values()){
+  for(const [sourceDigest,context] of measurableBySource){
+    // Unknown starts/map-families have source-factual raw measurements but no
+    // approved cross-Battle comparison opportunity. Never mint their anchors.
+    if(!context.startFamily||!context.mapFamily||!context.mapId)continue;
     const contextKey=identity(context);
     // Keep exact source-context anchor keys for traceability, but ordinary
     // map/civilization/duration differences no longer split the *comparison*.
@@ -131,16 +143,18 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
     // These 0..1 bounds are PROPOSED private E2E anchors, not final league poles.
     anchors[contextKey]=Object.fromEntries(axes.map(a=>[
       a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context,a)}]));
-    const build=context.civilizationOpportunityKey.match(/^BUILD_([0-9]+)_CIV_[0-9]+$/)?.[1];
+    const build=verifiedBuilds.get(sourceDigest)?.toString() ??
+      context.civilizationOpportunityKey?.match(/^BUILD_([0-9]+)_CIV_[0-9]+$/)?.[1];
     if(build){
       for(const id of taxonomy.strategicBuildingsByBuild[build]??[]){
         if(Number.isSafeInteger(id)&&id>=0)strategicBuildingIds.add(id);
       }
     }
-    const families=taxonomy.militaryFamiliesByExactCiv[context.civilizationOpportunityKey]??[];
-    if(families.length>1&&families.every(f=>typeof f==='string'&&f.length)){
+    const families=context.civilizationOpportunityKey ?
+      (taxonomy.militaryFamiliesByExactCiv[context.civilizationOpportunityKey]??[]) : [];
+    if(context.civilizationOpportunityKey&&families.length>1&&
+      families.every(f=>typeof f==='string'&&f.length))
       availableMilitaryFamilies[context.civilizationOpportunityKey]=[...new Set(families)];
-    }
   }
   const calibration:PersonalityCalibration={
     configurationVersion:PRIVATE_PERSONALITY_E2E_VERSION,
