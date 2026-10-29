@@ -117,6 +117,16 @@ test('Correction replaces superseded Game; POV duplicate does not add a Battle o
   latest.eligible=false;
   assert.equal(new SeasonStatisticsExperience([first,latest]).games.length,0);
 });
+test('a withdrawn duplicate POV cannot suppress the one source-qualified Game',()=>{
+  const invalid=game('battle0','G1'),valid=game('battle1','G1');
+  invalid.eligible=false;invalid.sourceHash='identical-original';valid.sourceHash=invalid.sourceHash;
+  amount(valid,'a','unitRequests',42);
+  const e=new SeasonStatisticsExperience([invalid,valid]);
+  assert.equal(e.games.length,1);
+  assert.equal(e.knownGames.length,1);
+  assert.equal(e.games[0].matchId,'battle1');
+  assert.equal(e.aggregate()[0].values.unitRequests.value,42);
+});
 test('Missing Game measurement does not become zero or complete a leadership sample',()=>{
   const first=game('battle1','G1'),missing=game('battle1','G2');
   amount(missing,'a','unitRequests',null);
