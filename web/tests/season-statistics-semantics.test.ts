@@ -59,6 +59,44 @@ test('five fully comparable method Battles survive a separate method version, no
   assert.deepEqual(new SeasonStatisticsExperience([...games,partial]).leaders('buildOrderExecution',5),[],
     'a partially observed Game inside one of the selected Battles cannot establish a fully qualified lead');
 });
+test('withdrawn known sibling prevents a false complete Battle; another partial Battle cannot veto five good ones',()=>{
+  const games=Array.from({length:6},(_,i)=>game('battle'+(i+1)));
+  for(const g of games){amount(g,'a','buildOrderExecution',90);amount(g,'b','buildOrderExecution',70);}
+  const withdrawn=game('battle6','G2');withdrawn.eligible=false;
+  const reduced=new SeasonStatisticsExperience([...games,withdrawn]),a=reduced.aggregate()[0].values.buildOrderExecution;
+  assert.equal(a.completeBattles,5);assert.equal(a.partialBattles,1);
+  assert.equal(a.samples,5);assert.equal(a.value,90);
+  assert.deepEqual(reduced.leaders('buildOrderExecution',5),['a']);
+  const earlier=game('battle1','G2');earlier.eligible=false;
+  const insufficient=new SeasonStatisticsExperience([...games,withdrawn,earlier]);
+  assert.equal(insufficient.aggregate()[0].values.buildOrderExecution.completeBattles,4);
+  assert.deepEqual(insufficient.leaders('buildOrderExecution',5),[]);
+  assert.equal(insufficient.aggregate('allTime')[0].values.buildOrderExecution.value,90);
+});
+test('explicit authoritative missing sibling manifest prevents invented completeness',()=>{
+  const source=game('battle1') as GameStatistics&{knownGameIds?:string[]};
+  source.knownGameIds=['G1','G2'];
+  const e=new SeasonStatisticsExperience([source]);
+  assert.equal(e.aggregate()[0].values.buildOrderExecution.completeBattles,0);
+  assert.equal(e.aggregate()[0].values.buildOrderExecution.partialBattles,1);
+});
+test('within-Battle APM uses observed duration, raid response pools qualified episode evidence',()=>{
+  const short=game('battle1','G1'),long=game('battle1','G2');
+  short.durationMs=10*60_000;long.durationMs=100*60_000;
+  amount(short,'a','apm',120);amount(long,'a','apm',20);
+  amount(short,'a','response',3);amount(long,'a','response',100);
+  short.players[0].responseTimes=[2,3,4];long.players[0].responseTimes=[100];
+  short.players[0].models.response='response-model';long.players[0].models.response='response-model';
+  const values=new SeasonStatisticsExperience([short,long]).aggregate()[0].values;
+  assert.ok(Math.abs(values.apm.value!-29.09090909090909)<1e-8);
+  assert.equal(values.response.value,3.5);
+  assert.equal(values.response.samples,1);
+  assert.equal(values.response.completeBattles,1);
+  const missingDuration=game('battle1','G2','standard',2);missingDuration.durationMs=0;
+  amount(missingDuration,'a','apm',20);
+  const partial=new SeasonStatisticsExperience([short,missingDuration]).aggregate()[0].values.apm;
+  assert.equal(partial.value,120);assert.equal(partial.completeBattles,0);
+});
 test('Five distinct fully measured Battles qualify peers despite newcomer and ordinary contexts',()=>{
   const games=Array.from({length:5},(_,i)=>game('battle'+(i+1),'G1',i%2?'other-ordinary-map':'standard'));
   for(const g of games){amount(g,'a','buildOrderExecution',90);amount(g,'b','buildOrderExecution',70);}
