@@ -134,16 +134,16 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
   const availableMilitaryFamilies:Record<string,string[]>={};
   const strategicBuildingIds=new Set<number>();
   for(const [sourceDigest,context] of measurableBySource){
-    // Unknown starts/map-families have source-factual raw measurements but no
-    // approved cross-Battle comparison opportunity. Never mint their anchors.
-    if(!context.startFamily||!context.mapFamily||!context.mapId)continue;
+    const reviewedSpatial=!!context.startFamily&&!!context.mapFamily&&!!context.mapId;
     const contextKey=identity(context);
-    // Keep exact source-context anchor keys for traceability, but ordinary
-    // map/civilization/duration differences no longer split the *comparison*.
-    // Each axis keeps its own source-qualified fraction/opportunity.
-    // These 0..1 bounds are PROPOSED private E2E anchors, not final league poles.
-    anchors[contextKey]=Object.fromEntries(axes.map(a=>[
+    // Boomer/Aggressor has a genuinely source-verifiable denominator even
+    // when exact map/start is unknown. All other comparison anchors require
+    // their reviewed start/map opportunity (and axis-local model coverage).
+    // These 0..1 bounds remain PROPOSED private E2E, never final league poles.
+    anchors[contextKey]=Object.fromEntries(axes.filter(a=>
+      a==='BOOMER_AGGRESSOR'||reviewedSpatial).map(a=>[
       a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context,a)}]));
+    if(!reviewedSpatial)continue;
     const build=verifiedBuilds.get(sourceDigest)?.toString() ??
       context.civilizationOpportunityKey?.match(/^BUILD_([0-9]+)_CIV_[0-9]+$/)?.[1];
     if(build){
