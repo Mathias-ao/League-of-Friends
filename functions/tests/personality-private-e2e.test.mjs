@@ -383,7 +383,11 @@ test('Sol #203 axis isolation: source-proven observation without reviewed durati
   // commitment remains visible but no READY cohort may be manufactured.
   tax.sourceProofs[b.source.sourceHash].startFamily='INVALID_NOT_REVIEWED';
   const pending=project([a,b],tax).view;
-  assert.equal(pending.personalityProfile.sliders.find(v=>v.axis==='BOOMER_AGGRESSOR').value,null);
+  // Only the source-supported resource-commitment axis remains comparable;
+  // the unknown start must not be called STANDARD for tactical/army axes.
+  assert.equal(pending.personalityProfile.sliders.find(v=>v.axis==='BOOMER_AGGRESSOR').status,'READY');
+  for(const axis of ['CAUTIOUS_BOLD','GUERRILLA_FRONTLINE','SPECIALIST_IMPROVISER','COMPACT_EXPANSIVE'])
+    assert.equal(pending.personalityProfile.sliders.find(v=>v.axis===axis).value,null,axis);
   const raw=admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]);
   assert.equal(raw.behaviorContext.startFamily,null);
   assert.equal(raw.behaviorContext.mapFamily,'LAND');
