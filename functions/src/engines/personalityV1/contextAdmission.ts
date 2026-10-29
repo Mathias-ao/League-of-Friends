@@ -207,8 +207,20 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const fields={format,mapId,mapFamily,startFamily,civilization,civilizationOpportunityKey,
     durationMs,observedUntilMs,durationFamily,dynamicDiplomacyQualified};
   const missing=missingOf(fields);
-  const behaviorContext:GameContext|null=trust&&name(subjectPlayerId)&&
-    boundSubject&&format.value&&clockValid ?{
+  // A missing map/start classification is *not* an invented zero, but a direct
+  // contradiction between decoded source facts or the exact-hash reviewed
+  // original is an authority conflict, not merely a missing axis denominator.
+  const mapContradiction=rawMapId.status==='DECODED'&&safe(rawMapId.value)&&
+    (!agrees(rawMapId.value,factMap.id)||!agrees(rawMapId.value,factMap.mapId)||
+     !agrees(rawMapId.value,header['de.rms_map_id'])||
+     !agrees(rawMapId.value,header['scenario.map_id']));
+  const proofContradiction=!!reviewed&&reviewed.sourceHash===source.sourceHash&&
+    ((replayBuild!==null&&reviewed.gameBuild!==replayBuild)||
+     (sourceMapId!==null&&reviewed.mapId!==sourceMapId)||
+     (age!==null&&reviewed.startingAgeId!==age)||
+     (resources!==null&&reviewed.startingResourcesId!==resources));
+  const behaviorContext:GameContext|null=trust&&!mapContradiction&&!proofContradiction&&
+    name(subjectPlayerId)&&boundSubject&&format.value&&clockValid ?{
       format:format.value,mapFamily:mapFamily.value,startFamily:startFamily.value,
       mapId:mapId.value,durationFamily:durationFamily.value,
       civilization:civilization.value,
