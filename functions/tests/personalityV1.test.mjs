@@ -47,7 +47,7 @@ const config=(context=baseContext())=>({
   configurationVersion:'PERSONALITY_CANDIDATE_TEST_ONLY',status:'PROPOSED',
   minimumIndependentBattles:2,recentBattleCount:2,careerWeight:.5,aggregationMethod:'MEDIAN',
   strategicBuildingIds:[80],availableMilitaryFamilies:{LAND_STANDARD:['infantry','archers','cavalry']},
-  anchors:{[key(context)]:Object.fromEntries(axisNames.map(a=>[a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context)}]))},
+  anchors:{[key(context)]:Object.fromEntries(axisNames.map(a=>[a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context,a)}]))},
   minimumIndependentCommandEpisodes:2
 });
 const slider=(p,a)=>p.sliders.find(x=>x.axis===a);
@@ -279,7 +279,7 @@ test('ordinary map, civilization and observed-duration differences do not divide
   const c=config();
   for(const context of contexts){
     c.anchors[key(context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
-      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context)}]));
+      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context,axis)}]));
     c.availableMilitaryFamilies[context.civilizationOpportunityKey]=['infantry','archers','cavalry'];
   }
   const games=contexts.map((context,i)=>game(i+1,{context}));
@@ -312,7 +312,7 @@ test('two differently classified Games in one Battle remain one opportunity afte
   const c=config();
   c.availableMilitaryFamilies.OTHER_CIV_OPPORTUNITY=['infantry','archers','cavalry'];
   c.anchors[key(second.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
-    lower:0,upper:1,comparisonGroup:personalityComparisonGroup(second.context)}]));
+    lower:0,upper:1,comparisonGroup:personalityComparisonGroup(second.context,axis)}]));
   const projected=projectPersonalityPreview('playerA',[first,second,game(2)],c);
   assert.equal(projected.battles.length,2);
   assert.deepEqual(projected.battles[0].gameIds,['game-1','other-game']);
@@ -334,7 +334,7 @@ test('special Nomad or Migration-like starts are separate, but do not erase ordi
   for(const item of [special,nomad])item.statistics.mapPresence.homeAnchor.method='unavailable';
   for(const item of [special,nomad]){
     c.anchors[key(item.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
-      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(item.context)}]));
+      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(item.context,axis)}]));
   }
   const ordinaryGroup=personalityComparisonGroup(a.context);
   assert.notEqual(ordinaryGroup,personalityComparisonGroup(special.context));
@@ -342,15 +342,17 @@ test('special Nomad or Migration-like starts are separate, but do not erase ordi
   const out=projectPersonalityPreview('playerA',[a,b,special,nomad],c);
   for(const axis of axisNames){
     assert.equal(slider(out,axis).status,'READY',axis);
-    assert.equal(slider(out,axis).independentBattles,2,axis);
-    // Ineligible special-start axes must not manufacture a competing group.
-    // When special-context observations *are* qualified, they remain separate.
-    if(['BOOMER_AGGRESSOR','GUERRILLA_FRONTLINE','SPECIALIST_IMPROVISER'].includes(axis))
+    // Proven full-game cost-share denominators apply even to unconventional
+    // starts; tactical and spatial opportunities remain separately qualified.
+    assert.equal(slider(out,axis).independentBattles,axis==='BOOMER_AGGRESSOR'?4:2,axis);
+    if(['GUERRILLA_FRONTLINE','SPECIALIST_IMPROVISER'].includes(axis))
       assert.ok(slider(out,axis).reasons.includes('OTHER_START_OR_MODE_CONTEXT_NOT_AGGREGATED'),axis);
-    assert.equal(slider(out,axis).contextKey,personalityComparisonGroup(a.context));
+    assert.equal(slider(out,axis).contextKey,personalityComparisonGroup(a.context,axis));
   }
   const insufficient=projectPersonalityPreview('playerA',[a,special,nomad],c);
-  for(const axis of axisNames){
+  assert.equal(slider(insufficient,'BOOMER_AGGRESSOR').status,'READY');
+  assert.equal(slider(insufficient,'BOOMER_AGGRESSOR').independentBattles,3);
+  for(const axis of axisNames.filter(a=>a!=='BOOMER_AGGRESSOR')){
     assert.equal(slider(insufficient,axis).value,null,axis);
     assert.ok(['CONTEXT_LIMITED','DEVELOPING'].includes(slider(insufficient,axis).status),axis);
   }
