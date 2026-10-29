@@ -73,7 +73,11 @@ export interface AuthorizedGame {
   admitted: boolean;
   /** True only when the complete eligible engagement/raid episode arrays were read from the retained artifact. */
   episodeChronologyComplete: boolean;
+  /** A real completion time, or the factual start of an approved Event schedule.
+   * This is an ordering timestamp, not a claim the Battle was completed then. */
   playedAtMs: number;
+  /** Server-derived approved Event/plan/explicit-Game ordering; never upload time. */
+  historicalOrder?: {event: number; battle: number; game: number; revision: string};
   context: GameContext;
   /** The already-qualified participant row from Canonical Statistics V1. */
   statistics: unknown;
@@ -95,6 +99,7 @@ export interface GameEvidence {
 }
 export interface BattleEvidence {
   battleId: string; playerId: string; playedAtMs: number; contextKey: string;
+  historicalOrder?: {event: number; battle: number; revision: string};
   /** Stable, sorted canonical hashes/revisions, not POV or upload count. */
   sourceRevision: string; gameIds: string[];
   features: Record<PersonalityAxis, Feature>;
@@ -395,12 +400,26 @@ export function buildPersonalityBattles(games: AuthorizedGame[], config: Persona
     }
     result.push({battleId:parts[0].battleId,playerId:parts[0].playerId,
       playedAtMs:Math.min(...parts.map(x => x.playedAtMs)),contextKey,
-      sourceRevision:digest(parts.map(x => [x.gameId,x.gameNumber,x.playedAtMs,x.context,
+      historicalOrder:parts.every(x=>x.historicalOrder &&
+        x.historicalOrder.event===parts[0].historicalOrder?.event &&
+        x.historicalOrder.battle===parts[0].historicalOrder?.battle &&
+        x.historicalOrder.game===x.gameNumber)
+        ?{event:parts[0].historicalOrder!.event,battle:parts[0].historicalOrder!.battle,
+          revision:digest(parts.map(x=>x.historicalOrder))}:undefined,
+      sourceRevision:digest(parts.map(x => [x.gameId,x.gameNumber,x.playedAtMs,
+        x.historicalOrder??null,x.context,
         x.sourceHash,x.sourceAuthority,x.mappingDigest,x.authorityRevision,
         x.sourceStatus,x.outcome,x.admitted])),
       gameIds:parts.map(x => x.gameId),features});
   }
-  return result.sort((a,b)=>a.playedAtMs-b.playedAtMs||a.battleId.localeCompare(b.battleId));
+  return result.sort((a,b)=>{
+    // Approved canonical Event/plan order is authoritative even when two
+    // Battles share the same scheduled Event start. Never sort those by IDs.
+    if(a.historicalOrder&&b.historicalOrder)
+      return a.historicalOrder.event-b.historicalOrder.event ||
+        a.historicalOrder.battle-b.historicalOrder.battle;
+    return a.playedAtMs-b.playedAtMs||a.battleId.localeCompare(b.battleId);
+  });
 }
 export function projectPersonalityPreview(playerId: string,games: AuthorizedGame[],
     config: PersonalityCalibration | null): PersonalityPreview {
