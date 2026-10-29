@@ -67,7 +67,7 @@ test('withdrawn known sibling prevents a false complete Battle; another partial 
   assert.equal(a.completeBattles,5);assert.equal(a.partialBattles,1);
   assert.equal(a.samples,5);assert.equal(a.value,90);
   assert.deepEqual(reduced.leaders('buildOrderExecution',5),['a']);
-  const earlier=game('battle1','G2');earlier.eligible=false;
+  const earlier=game('battle1','G2');earlier.eligible=false;earlier.players=[]; // source withdrawn before roster mapping
   const insufficient=new SeasonStatisticsExperience([...games,withdrawn,earlier]);
   assert.equal(insufficient.aggregate()[0].values.buildOrderExecution.completeBattles,4);
   assert.deepEqual(insufficient.leaders('buildOrderExecution',5),[]);
