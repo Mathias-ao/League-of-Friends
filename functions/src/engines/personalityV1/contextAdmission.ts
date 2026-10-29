@@ -61,6 +61,10 @@ export type PersonalityContextAdmission={
   version:typeof PERSONALITY_CONTEXT_ADAPTER_VERSION;
   status:'ADMITTED'|'PENDING';
   context:GameContext|null;
+  /** Exact-source verified partial metadata; no inferred map/start/army fields.
+   * Raw feature extraction may proceed but unreviewed comparison groups cannot
+   * create private READY values. */
+  behaviorContext:GameContext|null;
   provenanceDigest:string;
   fields:{
     format:AdmissionField<Format>;
@@ -203,16 +207,22 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const fields={format,mapId,mapFamily,startFamily,civilization,civilizationOpportunityKey,
     durationMs,observedUntilMs,durationFamily,dynamicDiplomacyQualified};
   const missing=missingOf(fields);
-  const context=missing.length===0?{
-    format:format.value!,mapFamily:mapFamily.value!,startFamily:startFamily.value!,
-    mapId:mapId.value!,durationFamily:durationFamily.value!,civilization:civilization.value!,
-    civilizationOpportunityKey:civilizationOpportunityKey.value!,
-    observedUntilMs:observedUntilMs.value!,durationMs:durationMs.value!,
-    dynamicDiplomacyQualified:dynamicDiplomacyQualified.value!,
-  }:null;
+  const behaviorContext:GameContext|null=trust&&name(subjectPlayerId)&&
+    boundSubject&&format.value&&clockValid ?{
+      format:format.value,mapFamily:mapFamily.value,startFamily:startFamily.value,
+      mapId:mapId.value,durationFamily:durationFamily.value,
+      civilization:civilization.value,
+      civilizationOpportunityKey:civilizationOpportunityKey.value,
+      observedUntilMs:observedUntilMs.value!,durationMs:durationMs.value!,
+      // Never infer an FFA effective alliance from missing evidence.
+      dynamicDiplomacyQualified:dynamicDiplomacyQualified.value===true,
+    }:null;
+  // Full reviewed classification remains an independent provenance assertion.
+  // Missing *civ family* / duration category must not delete verified economy.
+  const context=missing.length===0?behaviorContext:null;
   return {
     version:PERSONALITY_CONTEXT_ADAPTER_VERSION,
-    status:context?'ADMITTED':'PENDING',context,
+    status:context?'ADMITTED':'PENDING',context,behaviorContext,
     provenanceDigest:hash([PERSONALITY_CONTEXT_ADAPTER_VERSION,source.authorityRevision,
       source.mappingDigest,source.sourceHash,source.statisticsRevision,source.matchId,
       source.gameId,match.format,game.players,subjectPlayerId,subjectSlot,
