@@ -63,7 +63,7 @@ test('genuine pinned T90 Games exercise five Personality axes and private Reputa
       dynamicDiplomacyQualified:false,
     };
     calibration.anchors[exact(context)]=Object.fromEntries(axes.map(axis=>[axis,{
-      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context)}]));
+      lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context,axis)}]));
     return {
       battleId:'TEST-T90-BATTLE-'+(i+1),matchId:'TEST-T90-BATTLE-'+(i+1),
       gameId:'G1',gameNumber:1,playerId:testPlayer,
