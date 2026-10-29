@@ -67,7 +67,7 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         self.assertIn("22:10", p)
         self.assertIn("22:10", p)
         self.assertIn("Castle research", p)
-        self.assertIn("not enough to be called Fast Castle", p)
+        self.assertIn("is plainly not a plausible Fast Castle milestone", p)
         self.assertIn("no automatic trophy", p.lower())
 
     def test_transferable_competitive_trophy_policy_is_owner_corrected(self) -> None:
@@ -139,7 +139,7 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         p = self.policy
         self.assertIn("FOUR", p)
         for term in ("#206 Worker S", "Worker D #199", "Worker 1 #201",
-                     "#172", "no points, Firestore"):
+                     "#172", "do not create trophy writes, grants, badges, points, Firestore changes"):
             self.assertIn(term.lower(), p.lower())
         owner = OWNER.read_text("utf-8")
         self.assertIn("honours-v1-milestone-record-policy-197.md", owner)
