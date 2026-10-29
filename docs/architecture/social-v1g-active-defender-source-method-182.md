@@ -12,7 +12,7 @@
 4. Complete decoded **fixed opponents** across the whole Game roster; reliable source clock/ordinal; no disqualifying same-component STOP/CANCEL ambiguity; source revision Context V2 matches original #149/#158 producer. FFA effective relationship and uncertain teams stay Pending.
 5. Existing accepted #173 R must **not** have already admitted this original source-connected candidate; across all candidates, the same earlier Raid/Skirmish detector cannot support repeated B→A Rivalry grades, including source components with disjoint original event IDs.
 
-A passed candidate's meaning is exactly **`SOURCE_ADMITTED` method-level inferred actor-owned counter-target *request***, original coverage still `LIMITED`, private `ORDINARY` only. The output has `canonicalContributionKey=null`, `canonicalClaim=null`, no effects/actor witnesses/receipts or writes, `gameScopeAuthenticated=false`. It is **not** Sol's already authenticated READY Battle/Game/GUID wrapper, historical Claim, production rule, outcome, stage or permanent recognition.
+A passed **proposed source-match** means exactly **`SOURCE_MATCH_PROPOSED`**: actor-owned counter-target *request* inference, original coverage still `LIMITED`, **`sourceAdmittedCount=0`, `gradeBandId=null` and no new `SOURCE_ADMITTED` method** until the genuine corpus positive/negative is verified and the method is separately approved. The output has `canonicalContributionKey=null`, `canonicalClaim=null`, no effects/actor witnesses/receipts or writes, `gameScopeAuthenticated=false`. It is **not** Sol's already authenticated READY Battle/Game/GUID wrapper, historical Claim, production rule, outcome, stage or permanent recognition.
 
 ### Nearest negatives to demand
 
