@@ -10,7 +10,7 @@ import type {GameContext,Format,MapFamily,StartFamily} from './personalityV1.js'
  * A decoded label/ID is NOT a reviewed equivalence class: missing source-owned
  * map/start/clock classifications leave a PENDING result.
  */
-export const PERSONALITY_CONTEXT_ADAPTER_VERSION = 'AOF_PERSONALITY_CONTEXT_ADMISSION_V1' as const;
+export const PERSONALITY_CONTEXT_ADAPTER_VERSION = 'AOF_PERSONALITY_CONTEXT_ADMISSION_V2' as const;
 export const PERSONALITY_CONTEXT_PROOF_VERSION = 'AOF_PERSONALITY_CONTEXT_PROOF_V1' as const;
 const SHA=/^[a-f0-9]{64}$/;
 type Bag=Record<string,any>;
