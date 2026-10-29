@@ -182,7 +182,7 @@ class ControlledProofShapeTests(unittest.TestCase):
                                        list(reversed(actions+deepcopy(actions)))))
         corrected=deepcopy(b)
         corrected["context"]["sourceRevision"]["replaySha256"]="f"*64
-        with self.assertRaisesRegex(ValueError,"STALE_SOURCE_OR_CONTEXT_REVISION"):
+        with self.assertRaisesRegex(ValueError,"STALE_OR_INCONSISTENT_SOURCE_REVISION"):
             method(corrected,stats,actions)
         next_scope={**SCOPE,"gameGuid":"another-unique-game"}
         now=method(b,stats,actions,scope=next_scope)
