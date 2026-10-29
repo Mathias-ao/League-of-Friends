@@ -204,7 +204,25 @@ class HonoursCuration186Tests(unittest.TestCase):
         self.assertTrue(owner["rankNamesAccepted"])
         self.assertEqual(set(owner["tierMeanings"]),
                          {"INITIATE", "PRACTICED", "EXPERT", "ELITE"})
-        self.assertEqual(len(d["ownerQuestions"]), 5)
+        self.assertEqual(len(d["ownerQuestions"]), 4)
+        correction = d["ownerDecisions2026Oct29"]
+        self.assertEqual(correction["retainedOwnerDirections"],
+                         ["1A", "2A", "3A", "4C", "5A"])
+        self.assertEqual(correction["internalTrophyId"],
+                         "AR2_TROPHY_SWIFT_ASCENT")
+        self.assertEqual(correction["rejectedPublicLabel"],
+                         "The Swift Ascent")
+        self.assertEqual(correction["publicName"], "NOT_APPROVED")
+        self.assertFalse(correction["grantOrPublicationAuthorised"])
+        self.assertTrue(all(v is None
+                            for v in correction["thresholds"].values()))
+        self.assertIn("STRICTLY_LOWER", correction["transferRule"])
+        trophy = next(t for t in d["trophyCandidates"]
+                      if t["id"] == correction["internalTrophyId"])
+        self.assertEqual(trophy["firstTieWithoutIncumbent"],
+                         "PENDING_OWNER_TIE_POLICY_NO_GRANT")
+        self.assertEqual(trophy["name"], "UNAPPROVED_PLAYER_FACING_NAME")
+        self.assertEqual(len(trophy["displayNameCandidates"]), 3)
 
 
 if __name__ == "__main__":
