@@ -196,5 +196,7 @@ test('Sol #203 authenticated reader: two current READY unresolved Games with no 
   // Rebind the current source roster, retaining the old synthetic source:
   // complete authentication must fail; never silently credit the prior owner.
   f.rows.get('matches/m2/games/g2').players[0].playerId='not-the-owner';
-  await assert.rejects(readMyPersonalityHistory(options));
+  const rebinding=await readMyPersonalityHistory(options);
+  assert.ok(rebinding.personality.personalityProfile.sliders.every(x=>x.value===null));
+  assert.ok(rebinding.pending.some(x=>x.reason==='NOT_A_GAME_PARTICIPANT'));
 });
