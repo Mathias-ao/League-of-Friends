@@ -95,7 +95,7 @@ test('within-Battle APM uses observed duration, raid response pools qualified ep
   const missingDuration=game('battle1','G2','standard',2);missingDuration.durationMs=0;
   amount(missingDuration,'a','apm',20);
   const partial=new SeasonStatisticsExperience([short,missingDuration]).aggregate()[0].values.apm;
-  assert.equal(partial.value,120);assert.equal(partial.completeBattles,0);
+  assert.equal(partial.value,null);assert.equal(partial.completeBattles,0);
 });
 test('Five distinct fully measured Battles qualify peers despite newcomer and ordinary contexts',()=>{
   const games=Array.from({length:5},(_,i)=>game('battle'+(i+1),'G1',i%2?'other-ordinary-map':'standard'));
