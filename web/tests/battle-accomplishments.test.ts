@@ -44,6 +44,9 @@ test('UI renders four source-current Battle cards when official winner is pendin
   const {game,data}=sourceCase();
   const cards=await ctx.paint(game,data);
   assert.equal(cards.length,4,'single Game has at most four qualified cards');
+  assert.equal(document.querySelector('.battle-accomplishments')?.getAttribute('aria-label'),'Battle highlights · Game 1');
+  assert.match(document.querySelector('.battle-accomplishments .eyebrow')?.textContent??'',/^BATTLE HIGHLIGHTS · GAME 1$/);
+  assert.doesNotMatch(document.querySelector('.battle-accomplishments .eyebrow')?.textContent??'',/DISTINCTIONS/i);
   assert.match(cards[0].textContent??'',/Raiding pressure/);
   assert.ok(cards.every(c=>!/(Emperor defeated|unbeaten|The alliance supplied|Tribute requests)/i.test(c.textContent??'')));
   // Match result not necessary for true source-measurement cards.
@@ -90,5 +93,32 @@ test('UI shows corrected Game source independently, withdraws stale or insuffici
   data.games[0].replay!.statisticsId=revised.sourceHash;
   data.games[0].replay!.statisticsRevision=4;
   assert.equal((await ctx.paint(revised,data)).length,0,'no metric card or tribute card can be invented');
+ }finally{await ctx.close();}
+});
+
+test('one canonical multi-Game Battle presents highlights for each selected Game, without mixing Game facts',async()=>{
+ const ctx=await mounted();
+ try{
+  const {game,data}=sourceCase();
+  const first=await ctx.paint(game,data);
+  assert.equal(first.length,4);
+  assert.match(first.map(x=>x.textContent).join(' '),/Raiding pressure/);
+  // One parent Battle, two independently sourced Games. Game 2 has no raids,
+  // but its other qualified measurements must still be shown.
+  const hash2='b'.repeat(64);
+  data.games.push({...data.games[0],gameId:'G2',gameNumber:2,
+    replay:{statisticsState:'READY',statisticsId:hash2,statisticsRevision:1}});
+  const game2={...game,gameId:'G2',revision:1,sourceHash:hash2,
+    players:game.players.map(p=>({...p,values:{...p.values,raidsOut:0}}))};
+  const second=await ctx.paint(game2,data);
+  assert.equal(second.length,4);
+  assert.ok(second.every(c=>!(/Raiding pressure/.test(c.textContent??''))),
+    'Game 2 does not inherit Game 1 raid episodes');
+  assert.equal(document.querySelector('.battle-accomplishments')?.getAttribute('aria-label'),'Battle highlights · Game 2');
+  assert.match(document.querySelector('.battle-accomplishments .eyebrow')?.textContent??'',/^BATTLE HIGHLIGHTS · GAME 2$/);
+  const back=await ctx.paint(game,data);
+  assert.equal(back.length,4);
+  assert.match(back.map(x=>x.textContent).join(' '),/Raiding pressure/);
+  assert.match(document.querySelector('.battle-accomplishments .eyebrow')?.textContent??'',/GAME 1/);
  }finally{await ctx.close();}
 });
