@@ -46,7 +46,7 @@ def _relation(stats, actor, other):
             else "SAME_FIXED_TEAM")
 
 
-def _own_target_refs(group, originals, statistics):
+def _own_target_refs(group, originals, statistics, raw_events):
     actor, other = group["actorReplayPlayerId"], group["counterpartReplayPlayerId"]
     allowed = set().union(*(set(m["sourceEventIds"]) for m in group["rawMeasurements"]
                             if m["metricDefinitionId"] == TARGET))
@@ -68,6 +68,7 @@ def _own_target_refs(group, originals, statistics):
                     and original["actorReplayPlayerId"] == actor
                     and original["operationOrdinal"] is not None
                     and original["originalAction"] == "ORDER"
+                    and raw_events[ref].get("targetInstanceId") == detail.get("targetInstanceId")
                     and type(detail.get("targetInstanceId")) is int
                     and controller.get("controllerPlayerId") == other
                     and isinstance(controller.get("sourceEventId"), str)
@@ -151,8 +152,18 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
         game_scope=game_scope)
     groups = {g["candidateId"]: g for g in canonical["candidateEpisodeGroups"]}
     originals = _original_index(action_events, 600000)
+    raw_events = {e["eventId"]: e for e in action_events
+                  if isinstance(e.get("eventId"), str) and e["eventId"] in originals}
     episodes = []
+    # New target-counterplay cannot re-award a Skirmish already used by the
+    # accepted #173 Rivalry method in another source-connected component.
     consumed = {}
+    for row in old["episodes"]:
+        grade = next(g for g in row["perTrackGrades"] if g["track"] == "RIVALRY")
+        if grade["decision"] == "SOURCE_ADMITTED":
+            key = (row["actorReplayPlayerId"], row["counterpartReplayPlayerId"])
+            consumed.setdefault(key, set()).update(
+                (e["kind"], e["sourceDetectorId"]) for e in grade["corroboration"])
     for old_entry in old["episodes"]:
         group = groups[old_entry["sourceCandidateId"]]
         actor, other = group["actorReplayPlayerId"], group["counterpartReplayPlayerId"]
@@ -168,7 +179,7 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
         if any(x["kind"] == "STOP_OR_CANCEL_CONTEXT_NOT_PROVEN_CANCELLATION"
                for x in group.get("counterevidenceCandidates", [])):
             reasons.append("NONCOMMITTAL_STOP_CANCEL_PRESENT")
-        own = _own_target_refs(group, originals, statistics)
+        own = _own_target_refs(group, originals, statistics, raw_events)
         if len(own) < 2:
             reasons.append("TWO_CONTROLLER_BOUND_DEFENDER_OWN_TARGET_ORDERS_MISSING")
         engagement = _engagement(group, context, own, actor)
