@@ -4,6 +4,7 @@ import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
 import {PERSONALITY_AXES,projectPersonalityPreview,type AuthorizedGame,type GameContext,type PersonalityCalibration}
   from '../engines/personalityV1/personalityV1.js';
 import {toPrivateShared1Personality} from '../engines/personalityV1/shared1Adapter.js';
+import type {SocialScheduleOrder} from './socialScheduleOrder.js';
 
 type Bag=Record<string,any>;
 export interface PersonalityHistoryBattle {
@@ -35,13 +36,42 @@ export type AdmittedPersonalityContext=(input:PersonalityHistoryBattle['sources'
 
 export function projectPrivatePersonalityHistory(ownerPlayerId:string,battles:PersonalityHistoryBattle[],
   inputDigest:string,contextAdmission?:AdmittedPersonalityContext,
-  calibration:PersonalityCalibration|null=null){
+  calibration:PersonalityCalibration|null=null,
+  scheduleOrders:readonly SocialScheduleOrder[]=[]){
   const games:AuthorizedGame[]=[],pending:BattleFeature[]=[];
+  const schedules=new Map<string,SocialScheduleOrder>();
+  for(const order of scheduleOrders){
+    const k=JSON.stringify([order.battleId,order.gameId]);
+    if(schedules.has(k))throw Error('DUPLICATE_PERSONALITY_SCHEDULE_ORDER');
+    schedules.set(k,order);
+  }
+  // All sources must agree on the scheduling authority before a missing
+  // completion timestamp can be replaced by *actual approved schedule order*.
+  // Neither uploading order nor invented completion time is a valid witness.
+  const verifiedOrder=(battle:PersonalityHistoryBattle,item:PersonalityHistoryBattle['sources'][number])=>{
+    const row=schedules.get(JSON.stringify([battle.battleId,item.source.gameId]));
+    const o=row?.order;
+    return row?.status==='ORDERED'&&row.basis==='APPROVED_EVENT_SCHEDULE_AND_PLAN_GAME_NUMBER'&&
+      row.battleId===battle.battleId&&row.gameId===item.source.gameId&&
+      row.eventId===item.source.eventId&&row.seasonId===item.source.seasonId&&
+      o&&Number.isSafeInteger(o.event)&&o.event>0&&
+      Number.isSafeInteger(o.battle)&&o.battle>0&&
+      Number.isSafeInteger(o.game)&&o.game===item.game.gameNumber&&
+      typeof row.revision==='string'&&/^[a-f0-9]{64}$/.test(row.revision)?o:null;
+  };
   for(const battle of battles){
-    const complete=battle.sources.length===battle.gameIds.length&&battle.sources.every(s=>
-      s.source.outcome.qualification==='OFFICIAL'&&
-      Number.isSafeInteger(s.match.firstCompletedAt?.toMillis?.())&&
-      s.source.roster.some(p=>p.playerId===ownerPlayerId));
+    const scheduled=battle.sources.map(s=>verifiedOrder(battle,s));
+    const completed=battle.sources.map(s=>s.match.firstCompletedAt?.toMillis?.());
+    // Prefer the canonical plan even with firstCompletedAt present, so recency
+    // does not change when a result is later accepted or a completion appears.
+    const allScheduled=scheduled.length>0&&scheduled.every(Boolean);
+    const allCompleted=completed.length>0&&completed.every(t=>Number.isSafeInteger(t)&&t>0);
+    const historic=allScheduled||allCompleted;
+    const complete=battle.sources.length===battle.gameIds.length&&
+      new Set(battle.sources.map(s=>s.source.gameId)).size===battle.gameIds.length&&
+      battle.sources.every(s=>battle.gameIds.includes(s.source.gameId)&&
+        ['OFFICIAL','UNRESOLVED'].includes(s.source.outcome.qualification)&&
+        s.source.roster.some(p=>p.playerId===ownerPlayerId))&&historic;
     const contexts=battle.sources.map(s=>contextAdmission?.(s)??null);
     if(complete&&contexts.every(c=>c!==null)){
       battle.sources.forEach((item,index)=>{
@@ -51,9 +81,13 @@ export function projectPrivatePersonalityHistory(ownerPlayerId:string,battles:Pe
           gameNumber:item.game.gameNumber,playerId:ownerPlayerId,replaySlot:mapped.replaySlot,
           sourceHash:item.source.sourceHash,sourceAuthority:item.source.authorityRevision,
           mappingDigest:item.source.mappingDigest,authorityRevision:item.source.statisticsRevision,
-          sourceStatus:'READY',outcome:'OFFICIAL',admitted:true,
+          sourceStatus:'READY',
+          outcome:item.source.outcome.qualification==='OFFICIAL'?'OFFICIAL':'PENDING',admitted:true,
           episodeChronologyComplete:verifiedCommandChronology(item.statistics,participant,mapped.replaySlot),
-          playedAtMs:item.match.firstCompletedAt.toMillis(),
+          playedAtMs:allScheduled?scheduled[index]!.event:completed[index],
+          historicalOrder:allScheduled?{event:scheduled[index]!.event,battle:scheduled[index]!.battle,
+            game:scheduled[index]!.game,
+            revision:schedules.get(JSON.stringify([battle.battleId,item.source.gameId]))!.revision}:undefined,
           context:contexts[index]!,statistics:participant});
       });
     }else if(battle.sources.length){
@@ -66,7 +100,10 @@ export function projectPrivatePersonalityHistory(ownerPlayerId:string,battles:Pe
         evidenceRefs:battle.sources.map(s=>({kind:'CONTEXT',id:battle.battleId+'/'+s.source.gameId,
           revision:String(s.source.statisticsRevision),digest:s.source.authorityRevision})),
         coverage:{tier:'INSUFFICIENT',ruleId:'AOF_INT_B_PENDING_FEATURE_1',
-          missing:[...(!complete?['INCOMPLETE_OR_UNORDERED_BATTLE_INPUT']:[]),'CONTEXT_ADMISSION_PENDING','CALIBRATION_NOT_CONFIGURED'],
+          missing:[...(!historic?['APPROVED_SCHEDULE_OR_SOURCE_COMPLETION_ORDER_UNAVAILABLE']:[]),
+            ...(!complete?['INCOMPLETE_OR_UNORDERED_BATTLE_INPUT']:[]),
+            ...(contexts.some(c=>c===null)?['CONTEXT_ADMISSION_PENDING']:[]),
+            ...(calibration?[]:['CALIBRATION_NOT_CONFIGURED'])],
           limitations:['UNMEASURED_SOURCE_INTAKE_NOT_A_PERSONALITY_SCORE']},
       }));
     }

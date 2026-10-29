@@ -10,6 +10,7 @@ import {privatePersonalityE2EEnabled,privatePersonalityPolicy,PRIVATE_PERSONALIT
 import {validateSharedRecord} from '../lib/domain/socialV1Validation.js';
 import {ready} from './support/private-history-fixture.mjs';
 import {readMyPersonalityHistory} from '../lib/queries/getMyPersonalityHistory.js';
+import {deriveSocialScheduleOrders} from '../lib/integration/socialScheduleOrder.js';
 
 const hex=n=>createHash('sha256').update(String(n)).digest('hex');
 const actor='p1';
@@ -136,7 +137,10 @@ test('corrected source, missing sibling and missing opportunity remove evidence,
   assert.notEqual(correction.personalityProfile.projectionRevision,initial.personalityProfile.projectionRevision);
   const missingCivilization=game('battle-B','g1',1);
   delete missingCivilization.statistics.matchFacts.players[0].civilization.rawId;
-  assert.ok(project([a,missingCivilization],approved).view.personalityProfile.sliders.every(s=>s.value===null));
+  const civGap=project([a,missingCivilization],approved).view;
+  assert.equal(civGap.personalityProfile.sliders.find(s=>s.axis==='SPECIALIST_IMPROVISER').value,null);
+  for(const axis of ['BOOMER_AGGRESSOR','CAUTIOUS_BOLD','COMPACT_EXPANSIVE'])
+    assert.equal(civGap.personalityProfile.sliders.find(s=>s.axis===axis).status,'READY',axis);
   const missingSector=game('battle-B','g1',1);
   delete missingSector.statistics.participants[0].mapPresence.buildingSectors;
   const partial=project([a,missingSector],approved).view;
@@ -159,16 +163,19 @@ test('forged reviewed proof, wrong patch, map, start and subject aliases fail cl
     x=>x.statistics.matchFacts.map.id=17,
     x=>x.statistics.matchFacts.rules.startingAgeId.value=1,
     x=>x.source.roster[0].playerId='outsider',
-    x=>x.source.outcome.qualification='UNRESOLVED'
+    x=>x.source.outcome.qualification='UNKNOWN_NOT_IN_CANONICAL_CONTRACT'
   ]){
     const changed=game('battle-A','g1',1);mutation(changed);
     const response=project([changed,b],known).view;
     assert.ok(response.personalityProfile.sliders.every(x=>x.value===null));
   }
-  const different=game('battle-B','g1',1);
-  different.statistics.matchFacts.players[0].civilization.rawId=3;
-  const out=project([a,different],known).view;
-  assert.ok(out.personalityProfile.sliders.every(x=>x.value===null));
+  // An invalid source civilization remains unqualified. A genuine DIFFERENT
+  // civilization is not a cross-Game comparison failure (covered separately).
+  const invalidCivilization=game('battle-B','g1',1);
+  invalidCivilization.statistics.matchFacts.players[0].civilization.rawId=0;
+  const out=project([a,invalidCivilization],known).view;
+  assert.equal(out.personalityProfile.sliders.find(x=>x.axis==='SPECIALIST_IMPROVISER').value,null);
+  assert.equal(out.personalityProfile.sliders.find(x=>x.axis==='BOOMER_AGGRESSOR').status,'READY');
   assert.equal(admitPersonalityContext(a,'not-the-owner',proof(a)).context,null);
 });
 test('unreviewed military taxonomy and compact chronology leave only their axes Developing',()=>{
@@ -199,4 +206,192 @@ test('production and normal private history cannot activate provisional numerica
     e=>e.code==='failed-precondition');
   await assert.rejects(readMyPersonalityHistory({...enabled,request:{calibration:'forged'}}),
     e=>e.code==='invalid-argument');
+});
+
+test('reviewed STANDARD-start source contexts compare across ordinary map, civ and observed interval',()=>{
+  const a=game('battle-A','g1',1),b=game('battle-B','g1',1);
+  b.statistics.matchFacts.map.id=140;
+  b.statistics.matchFacts.rules.mapId.value=140;
+  b.statistics.matchFacts.players[0].civilization.rawId=3;
+  b.statistics.scope.observedUntilMs=960000;
+  b.statistics.matchFacts.game.observedDurationMs=960000;
+  const tax=taxonomy([a,b]);
+  tax.sourceProofs[b.source.sourceHash].mapId=140;
+  tax.sourceProofs[b.source.sourceHash].durationBucket={
+    id:'TEST_REVIEWED_UNDER_30',lowerObservedMs:0,upperObservedMsExclusive:1800000,
+    meaning:'OBSERVED_RECORDING_INTERVAL_ONLY'};
+  tax.militaryFamiliesByExactCiv.BUILD_185872_CIV_3=['infantry','archers','cavalry'];
+  const {view,policy}=project([a,b],tax);
+  assert.equal(policy.diagnostics.acceptedGameSources,2);
+  assert.equal(new Set(Object.keys(policy.calibration.anchors)).size,2);
+  assert.equal(new Set(Object.values(policy.calibration.anchors)
+    .map(x=>x.BOOMER_AGGRESSOR.comparisonGroup)).size,1);
+  for(const axis of axes){
+    const slider=view.personalityProfile.sliders.find(x=>x.axis===axis);
+    assert.equal(slider.status,'READY',axis);
+    assert.equal(slider.independentBattles,2,axis);
+  }
+  assert.equal(view.publication,'PRIVATE_PREVIEW_ONLY');
+  // The exact civilization family can be withheld independently of every
+  // other source-admitted axis; no fabricated civ opportunity is assumed.
+  delete tax.militaryFamiliesByExactCiv.BUILD_185872_CIV_3;
+  const incomplete=project([a,b],tax).view;
+  assert.equal(incomplete.personalityProfile.sliders
+    .find(x=>x.axis==='SPECIALIST_IMPROVISER').value,null);
+  assert.equal(incomplete.personalityProfile.sliders
+    .find(x=>x.axis==='BOOMER_AGGRESSOR').status,'READY');
+});
+
+test('unresolved winner does not invalidate source-qualified behavior if Battle history is ordered',()=>{
+  const a=game('battle-A','g1',1),b=game('battle-B','g1',1);
+  b.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  const {policy,view}=project([a,b]);
+  assert.equal(policy.diagnostics.acceptedGameSources,2);
+  assert.equal(view.battleFeatures.length,10);
+  for(const slider of view.personalityProfile.sliders){
+    assert.equal(slider.status,'READY',slider.axis);
+    assert.equal(slider.independentBattles,2,slider.axis);
+  }
+  const removedClock=game('battle-B','g1',1);
+  removedClock.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  removedClock.match.firstCompletedAt=null;
+  const notHistoricallyOrdered=project([a,removedClock]).view;
+  assert.ok(notHistoricallyOrdered.personalityProfile.sliders.every(x=>x.value===null));
+  // Unresolved without exactly canonical null winner/revision cannot forge admission.
+  const forged=game('battle-B','g1',1);
+  forged.source.outcome={qualification:'UNRESOLVED',resultRevision:1,winningPlayerIds:['p1']};
+  assert.equal(privatePersonalityPolicy(actor,[a,forged],taxonomy([a,forged]))
+    .diagnostics.acceptedGameSources,1);
+});
+
+
+const tick=n=>({toMillis:()=>n});
+function approvedPersonalitySchedule(sources, override=()=>{}){
+  // Two Battles in one Event. Their IDs are deliberately reverse-alphabetic:
+  // chronological order must follow APPROVED match-plan slots, not IDs.
+  const ids=sources.map(s=>s.source.battleId);
+  const event={seasonId:'test-season',startsAt:tick(1000000),
+    approvedMatchPlanId:'approved-plan',matchPlanStatus:'APPROVED',
+    officialMatchIds:ids,warmupMatchIds:[]};
+  const plan={status:'APPROVED',officialMatchIds:ids,matches:ids.map(()=>({}))};
+  const sourceBattles=sources.map((s,i)=>{
+    s.source.eventId='approved-event';s.source.seasonId='test-season';
+    s.match.eventId='approved-event';s.match.seasonId='test-season';
+    s.match.sourceMatchPlanId='approved-plan';s.match.matchNumber=i+1;
+    return {battleId:s.source.battleId,match:s.match,event,planId:'approved-plan',
+      plan,games:[{gameId:s.source.gameId,game:s.game}]};
+  });
+  override({sourceBattles,event,plan});
+  return deriveSocialScheduleOrders(sourceBattles);
+}
+const scheduleProject=(sources,orders)=>{
+  const policy=privatePersonalityPolicy(actor,sources,taxonomy(sources));
+  return projectPrivatePersonalityHistory(actor,grouped(sources),
+    bindingDigest([sources.map(s=>s.source),policy.calibration,orders]),
+    policy.context,policy.calibration,orders);
+};
+test('Sol #203 exact positive: two genuine-shaped READY UNRESOLVED Battles without firstCompletedAt are source-behavior READY with approved schedule',()=>{
+  const a=game('z-earlier','g1',1),b=game('a-later','g1',1);
+  for(const x of [a,b]){
+    x.match.firstCompletedAt=null;
+    x.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  }
+  const orders=approvedPersonalitySchedule([a,b]);
+  assert.ok(orders.every(x=>x.status==='ORDERED'&&x.order));
+  assert.deepEqual(orders.map(x=>x.order.battle),[1,2]);
+  const {personalityProfile,battleFeatures}=scheduleProject([b,a],orders);
+  assert.equal(battleFeatures.length,10);
+  const actual=Object.fromEntries(personalityProfile.sliders.map(x=>[x.axis,x.value]));
+  assert.deepEqual(actual,{
+    BOOMER_AGGRESSOR:30,CAUTIOUS_BOLD:50,GUERRILLA_FRONTLINE:0,
+    SPECIALIST_IMPROVISER:0,COMPACT_EXPANSIVE:33.33
+  });
+  assert.ok(personalityProfile.sliders.every(x=>x.status==='READY'&&x.independentBattles===2));
+  assert.equal(personalityProfile.policy.status,'PROPOSED');
+  // Wrong alpha/order or timestamp cannot influence approved plan chronology.
+  a.match.uploadedAt=tick(9000000);b.match.uploadedAt=tick(500);
+  b.match.createdAt=tick(100);a.match.createdAt=tick(9999999);
+  const repeated=scheduleProject([a,b],orders);
+  assert.deepEqual(repeated.personalityProfile.sliders.map(x=>x.value),
+    personalityProfile.sliders.map(x=>x.value));
+});
+test('Sol #203 nearest negatives: missing, wrong, revoked or ambiguous approved schedule cannot replace missing completion',()=>{
+  const cases=[
+    ({event})=>{event.matchPlanStatus='PROPOSED';},
+    ({plan})=>{plan.status='REVOKED';},
+    ({sourceBattles})=>{sourceBattles[0].match.matchNumber=2;},
+    ({sourceBattles})=>{sourceBattles[1].match.sourceMatchPlanId='unapproved';},
+    ({event})=>{delete event.startsAt;},
+    ({event})=>{event.warmupMatchIds.push('z-earlier');}
+  ];
+  for(let i=0;i<cases.length;i++){
+    const a=game('z-earlier','g1',1),b=game('a-later','g1',1);
+    for(const x of [a,b]){
+      x.match.firstCompletedAt=null;
+      x.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+    }
+    const orders=approvedPersonalitySchedule([a,b],cases[i]);
+    assert.ok(orders.some(x=>x.status==='PENDING'),String(i));
+    const view=scheduleProject([a,b],orders);
+    assert.ok(view.personalityProfile.sliders.every(x=>x.value===null),String(i));
+  }
+  const a=game('z-earlier','g1',1),b=game('a-later','g1',1);
+  for(const x of [a,b]){
+    x.match.firstCompletedAt=null;
+    x.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  }
+  const good=approvedPersonalitySchedule([a,b]);
+  for(const corrupt of [
+    order=>{order[1].eventId='wrong-event';},
+    order=>{order[1].seasonId='wrong-season';},
+    order=>{order[1].gameId='different-game';},
+    order=>{order[1].order.game=2;},
+    order=>{order[1].revision='untrusted';}
+  ]){
+    const modified=structuredClone(good);corrupt(modified);
+    assert.ok(scheduleProject([a,b],modified).personalityProfile.sliders.every(x=>x.value===null));
+  }
+  const fraudulent=structuredClone(b);
+  fraudulent.source.roster[0].playerId='somebody-else';
+  assert.ok(scheduleProject([a,fraudulent],good).personalityProfile.sliders.every(x=>x.value===null));
+});
+
+
+test('Sol #203 axis isolation: source-proven observation without reviewed duration bucket or civ family keeps unrelated axes',()=>{
+  const a=game('battle-A','g1',1),b=game('battle-B','g1',1);
+  const tax=taxonomy([a,b]);
+  // A true recorded clock does not become false simply because its exact
+  // REVIEWED duration bucket no longer covers it.
+  tax.sourceProofs[b.source.sourceHash].durationBucket.lowerObservedMs=3600000;
+  delete b.statistics.matchFacts.players[0].civilization.rawId;
+  const context=admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]);
+  assert.equal(context.context,null);
+  assert.equal(context.status,'PENDING');
+  assert.equal(context.behaviorContext.startFamily,'STANDARD');
+  assert.equal(context.behaviorContext.mapFamily,'LAND');
+  assert.equal(context.behaviorContext.civilizationOpportunityKey,null);
+  assert.equal(context.behaviorContext.durationFamily,null);
+  assert.equal(context.behaviorContext.observedUntilMs,2400000);
+  const view=project([a,b],tax).view;
+  for(const axis of ['BOOMER_AGGRESSOR','CAUTIOUS_BOLD','GUERRILLA_FRONTLINE','COMPACT_EXPANSIVE']){
+    const s=view.personalityProfile.sliders.find(v=>v.axis===axis);
+    assert.equal(s.status,'READY',axis);
+    assert.equal(s.independentBattles,2,axis);
+  }
+  assert.equal(view.personalityProfile.sliders.find(v=>v.axis==='SPECIALIST_IMPROVISER').value,null);
+  // A *missing reviewed start* is categorically different: raw source
+  // commitment remains visible but no READY cohort may be manufactured.
+  tax.sourceProofs[b.source.sourceHash].startFamily='INVALID_NOT_REVIEWED';
+  const pending=project([a,b],tax).view;
+  // Only the source-supported resource-commitment axis remains comparable;
+  // the unknown start must not be called STANDARD for tactical/army axes.
+  assert.equal(pending.personalityProfile.sliders.find(v=>v.axis==='BOOMER_AGGRESSOR').status,'READY');
+  for(const axis of ['CAUTIOUS_BOLD','GUERRILLA_FRONTLINE','SPECIALIST_IMPROVISER','COMPACT_EXPANSIVE'])
+    assert.equal(pending.personalityProfile.sliders.find(v=>v.axis===axis).value,null,axis);
+  const raw=admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]);
+  assert.equal(raw.behaviorContext.startFamily,null);
+  assert.equal(raw.behaviorContext.mapFamily,'LAND');
+  // A forged roster is not a partial opportunity; it destroys source binding.
+  b.source.roster[0].playerId='forged-subject';
+  assert.equal(admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]).behaviorContext,null);
 });
