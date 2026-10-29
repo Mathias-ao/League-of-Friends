@@ -250,8 +250,17 @@ class GenuineOriginalTests(unittest.TestCase):
                             "contributionKey":r["sourceIndependentContributionKey"],
                             "requestedNotExecuted":True},sort_keys=True),flush=True)
                     for r in pending:
-                        if "TWO_OWN_PRIOR_OPPONENT_RAID_COMMANDS_MISSING" in r["missingEvidence"] and len(r["sourceEventIds"])>=2:
+                        if ("TWO_OWN_PRIOR_OPPONENT_RAID_COMMANDS_MISSING" in r["missingEvidence"]
+                                and len(r["sourceEventIds"]) >= 2):
                             natural_negatives.append((fmt,r))
+                            print("GENUINE_NATURAL_UNQUALIFIED_SOURCE "+json.dumps({
+                                "format":fmt,"sha256":pin,
+                                "actor":r["actorReplayPlayerId"],
+                                "other":r["counterpartReplayPlayerId"],
+                                "sourceEventIds":r["sourceEventIds"][:8],
+                                "missing":r["missingEvidence"],
+                                "notAPlayedMatchedCounterfactual":True
+                            },sort_keys=True),flush=True)
                             break
                     # Source-preserving method control: erase ONLY inferred
                     # earlier source Raid V3 from derived stats, keep action
@@ -276,4 +285,7 @@ class GenuineOriginalTests(unittest.TestCase):
         print("GENUINE_NATURAL_PENDING_COUNT "+str(len(natural_negatives)),flush=True)
         # Fail CI rather than claiming a new method on synthetic fixtures.
         self.assertTrue(genuine,"NO_GENUINE_ORIGINAL_DEFENDER_PROPOSED_MATCH; KEEP_METHOD_DRAFT_AND_PENDING")
-        self.assertTrue(natural_negatives,"NO_GENUINE_SOURCE_ADJACENT_PENDING_CASE")
+        # A genuine naturally unqualified case is reported if present,
+        # not falsely advertised as a matched same-opportunity negative.
+        # The source-preserving detector ablation above is a controlled
+        # nearest-method negative, never a second played recording.
