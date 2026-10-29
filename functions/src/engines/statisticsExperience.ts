@@ -197,8 +197,14 @@ export class StatisticsExperience {
       const values:Record<string,AggregateValue>={};
       for(const m of METRICS){
         const eligible=pairs.filter(({game,player})=>metricEligible(m,game,player));
-        const qualified=eligible.filter(({player})=>player.values[m.id]!=null),numbers=qualified.map(({player})=>player.values[m.id]!);
-        const models=[...new Set(qualified.map(({player})=>player.models[m.id]))].sort();
+        const observed=eligible.filter(({player})=>player.values[m.id]!=null&&Number.isFinite(player.values[m.id]));
+        // A version label is a measurement method, not a map/civ key.
+        // Keep the largest compatible observed subset; never blend methods.
+        const methodGroups=new Map<string,typeof observed>();
+        for(const pair of observed){const version=pair.player.models[m.id]||'unknown';methodGroups.set(version,[...(methodGroups.get(version)??[]),pair]);}
+        const chosen=[...methodGroups].sort((a,b)=>Number(a[0]==='unknown')-Number(b[0]==='unknown')||b[1].length-a[1].length||a[0].localeCompare(b[0]))[0];
+        const qualified=chosen?.[1]??[],numbers=qualified.map(({player})=>player.values[m.id]!);
+        const models=chosen?[chosen[0]]:[];
         let value:number|null=null;
         if(numbers.length){
           if(m.aggregation==='median')value=median(numbers);
@@ -215,15 +221,57 @@ export class StatisticsExperience {
       return {playerId,name:samples.at(-1)!.name,games:samples.length,values,opening:mode(samples.map(p=>p.opening)),mainUnit:mode(samples.map(p=>p.mainUnit)),composition:compositions.length?composition:null};
     }).sort((a,b)=>a.name.localeCompare(b.name));
   }
+  /**
+   * Qualified method peers only, never an assertion about an incompletely
+   * measured entire league. Ordinary contextKey/civilization differences
+   * cannot veto comparable players or turn a newcomer into a universal gate.
+   * This legacy reader keeps its per-Game sample requirement; the Season Hall
+   * uses distinct-Battle qualification in SeasonStatisticsExperience.
+   */
+  private ageStartCohort(game:GameStatistics):string|null{
+    const start=(game as GameStatistics&{startOpportunity?:{status:string;startMode:string;startingAge:string;startingTownCenters:number;resourceMode:string;gameSpeed:string;environment:string;patch:string;evidenceVersion:string}}).startOpportunity;
+    if(start?.status!=='VERIFIED_SOURCE'||start.startMode!=='STANDARD'||start.startingAge!=='DARK'||
+      start.startingTownCenters!==1||start.resourceMode!=='STANDARD'||start.gameSpeed!=='NORMAL'||
+      start.environment!=='LAND'||!start.patch?.trim()||!start.evidenceVersion?.trim())return null;
+    return [start.startMode,start.startingAge,start.startingTownCenters,start.resourceMode,start.gameSpeed,start.environment,start.patch,start.evidenceVersion].join('|');
+  }
   leaders(metricId:string,modeValue:AggregationMode='total',minimumGames=5):string[]{
-    const m=METRICS.find(m=>m.id===metricId);if(!m?.leader)return [];
-    const rows=this.aggregate(modeValue),values=rows.map(p=>p.values[metricId]);
-    if(rows.length<2||values.some(v=>v.value===null||v.samples!==v.eligibleGames)||new Set(values.flatMap(v=>v.models)).size!==1||values.some(v=>v.models.includes('unknown')))return [];
+    const m=METRICS.find(metric=>metric.id===metricId);if(!m?.leader)return [];
     const typical=modeValue==='average'||m.aggregation!=='volume';
-    if(typical&&(values.some(v=>v.samples<minimumGames)||new Set(this.games.map(g=>g.contextKey)).size!==1))return [];
-    const extreme=(m.leader==='max'?Math.max:Math.min)(...values.map(v=>v.value!));
-    if(extreme===0||values.every(v=>v.value===extreme))return [];
-    return rows.filter(p=>p.values[metricId].value===extreme).map(p=>p.playerId);
+    const ageMetric=['feudal','castle','imperial'].includes(metricId);
+    // Age timings demand genuine source-qualified starting opportunity.
+    // Group by *start*, not exact ordinary map or civilization. A sixth
+    // Nomad/unknown Game does not poison five valid standard-start Games.
+    const gameGroups=new Map<string,GameStatistics[]>();
+    for(const game of this.games){
+      const start=ageMetric?this.ageStartCohort(game):'all';
+      if(!start)continue;
+      gameGroups.set(start,[...(gameGroups.get(start)??[]),game]);
+    }
+    const cohorts:{key:string;rows:AggregatePlayer[]}[]=[];
+    for(const [start,games] of gameGroups){
+      const candidates=new StatisticsExperience(games).aggregate(modeValue).filter(row=>{
+        const value=row.values[metricId];
+        return value.value!==null&&value.samples===value.eligibleGames&&
+          value.models.length===1&&value.models[0]!=='unknown'&&
+          (!typical||value.samples>=minimumGames);
+      });
+      const byModel=new Map<string,typeof candidates>();
+      for(const row of candidates){
+        const model=row.values[metricId].models[0];
+        byModel.set(model,[...(byModel.get(model)??[]),row]);
+      }
+      for(const [model,rows] of byModel)if(rows.length>=2)
+        cohorts.push({key:start+'|'+model,rows});
+    }
+    cohorts.sort((a,b)=>b.rows.length-a.rows.length||
+      Math.min(...b.rows.map(row=>row.values[metricId].samples))-
+        Math.min(...a.rows.map(row=>row.values[metricId].samples))||a.key.localeCompare(b.key));
+    if(!cohorts.length)return [];
+    const cohort=cohorts[0].rows;
+    const extreme=(m.leader==='max'?Math.max:Math.min)(...cohort.map(row=>row.values[metricId].value!));
+    if(extreme===0||cohort.every(row=>row.values[metricId].value===extreme))return [];
+    return cohort.filter(row=>row.values[metricId].value===extreme).map(row=>row.playerId);
   }
   records():StatisticRecord[]{
     const result=new Map<string,StatisticRecord[]>();

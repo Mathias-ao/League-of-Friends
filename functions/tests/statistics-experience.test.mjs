@@ -23,7 +23,7 @@ test('Statistics labels describe commands and requests, never completed tribute 
 
 export function game(index=0,patch={}){
   const players=['a','b','c'].map((id,i)=>({playerId:id,name:id.toUpperCase(),team:i===0?1:2,civilization:'FRANKS',opening:'Scout Rush',mainUnit:'Scout Cavalry',values:Object.fromEntries(METRICS.map(m=>[m.id,m.id==='response'?10:m.unit==='ms'?600000+i*10000:2+i])),models:Object.fromEntries(METRICS.map(m=>[m.id,'model-1'])),unavailable:{},composition:{cavalry:100},responseTimes:[10],byAge:{},details:[]}));
-  return {version:EXPERIENCE_VERSION,matchId:'match-'+index,gameId:'G1',seasonId:'s',eventId:'e',format:'TWO_V_TWO',contextKey:'same-settings',orderAtMs:index+1,revision:1,sourceHash:'hash-'+index,eligible:true,exclusionReason:null,affectsSeason:true,affectsLifetime:true,durationMs:1800000,players,episodes:[],evidenceTruncated:false,warnings:[],...patch};
+  return {startOpportunity:{status:'VERIFIED_SOURCE',startMode:'STANDARD',startingAge:'DARK',startingTownCenters:1,resourceMode:'STANDARD',gameSpeed:'NORMAL',environment:'LAND',patch:'P1',evidenceVersion:'source-V1'},version:EXPERIENCE_VERSION,matchId:'match-'+index,gameId:'G1',seasonId:'s',eventId:'e',format:'TWO_V_TWO',contextKey:'same-settings',orderAtMs:index+1,revision:1,sourceHash:'hash-'+index,eligible:true,exclusionReason:null,affectsSeason:true,affectsLifetime:true,durationMs:1800000,players,episodes:[],evidenceTruncated:false,warnings:[],...patch};
 }
 test('duplicate source, retried delivery and corrected revisions never double count',()=>{
   const original=game(),duplicate=game(1,{sourceHash:original.sourceHash}),correction=game(0,{revision:2});
@@ -36,7 +36,7 @@ test('missing values remain unavailable; volume uses available sample denominato
   const first=game(),second=game(1);second.players[0].values.raidsOut=null;
   const engine=new StatisticsExperience([first,second]);
   assert.deepEqual(engine.aggregate('average')[0].values.raidsOut,{value:2,samples:1,eligibleGames:2,models:['model-1']});
-  assert.deepEqual(engine.leaders('raidsOut'),[]);
+  assert.deepEqual(engine.leaders('raidsOut'),['c'],'complete comparable peers must not vanish because a third player is incomplete');
 });
 test('leader ties share stars, while all-equal, unknown and mixed models get none',()=>{
   const g=game();g.players[1].values.raidsOut=4;
@@ -45,11 +45,49 @@ test('leader ties share stars, while all-equal, unknown and mixed models get non
   g.players[0].values.raidsOut=2;g.players[0].models.raidsOut='other';assert.deepEqual(new StatisticsExperience([g]).leaders('raidsOut'),[]);
   for(const p of g.players)p.models.raidsOut='unknown';assert.deepEqual(new StatisticsExperience([g]).leaders('raidsOut'),[]);
 });
-test('typical-performance stars require five comparable Games, unlike Battle stars',()=>{
+test('typical-performance stars require five measured Games, but not identical ordinary context keys',()=>{
   assert.deepEqual(new StatisticsExperience([game()]).leaders('castle'),[]);
   assert.deepEqual(new StatisticsExperience([game()]).leaders('castle','total',1),['a']);
   const games=Array.from({length:5},(_,i)=>game(i));assert.deepEqual(new StatisticsExperience(games).leaders('castle'),['a']);
-  games[4].contextKey='different start';assert.deepEqual(new StatisticsExperience(games).leaders('castle'),[]);
+  games[4].contextKey='other ordinary map';assert.deepEqual(new StatisticsExperience(games).leaders('castle'),['a']);
+});
+test('legacy compatible method slices remain visible without numerical version mixing',()=>{
+  const games=[game(),game(1),game(2)];
+  games[0].players[0].values.raidsOut=20;games[1].players[0].values.raidsOut=30;games[2].players[0].values.raidsOut=100;
+  games[2].players[0].models.raidsOut='model-2';
+  const sample=new StatisticsExperience(games).aggregate('average').find(row=>row.playerId==='a').values.raidsOut;
+  assert.equal(sample.value,25);assert.equal(sample.samples,2);assert.equal(sample.eligibleGames,3);
+  assert.deepEqual(sample.models,['model-1']);
+  assert.deepEqual(new StatisticsExperience(games).leaders('raidsOut','average',2),['c'],'compatible peers remain available when a third player has a model split');
+});
+test('Castle leader is not inferred from Nomad, Migration or unverified start despite same model',()=>{
+  const games=Array.from({length:5},(_,i)=>game(i));
+  for(const g of games){g.players[0].values.castle=600000;g.players[1].values.castle=800000;}
+  assert.deepEqual(new StatisticsExperience(games).leaders('castle'),['a']);
+  games[4].startOpportunity={...games[4].startOpportunity,startMode:'NOMAD',startingTownCenters:0};
+  assert.deepEqual(new StatisticsExperience(games).leaders('castle'),[]);
+  games[4].startOpportunity=null;
+  assert.deepEqual(new StatisticsExperience(games).leaders('castle'),[]);
+  // A non-age metric with admissible observations remains unaffected.
+  assert.deepEqual(new StatisticsExperience(games).aggregate('average')[0].values.raidsOut.value,2);
+});
+test('five source-qualified standard Games survive separate sixth special-start Game',()=>{
+  const games=Array.from({length:6},(_,i)=>game(i));
+  for(const g of games){g.players[0].values.castle=600000;g.players[1].values.castle=800000;}
+  games[5].startOpportunity={...games[5].startOpportunity,startMode:'NOMAD',startingTownCenters:0};
+  games[5].players[0].values.castle=200000;
+  const engine=new StatisticsExperience(games);
+  assert.deepEqual(engine.leaders('castle'),['a'],'special start cannot outrank or erase the five comparable standard Games');
+  const original=games[4];original.startOpportunity=null;
+  assert.deepEqual(new StatisticsExperience(games).leaders('castle'),[],'four standard Games fail the five-Game qualification');
+});
+test('legacy qualified peers survive a newcomer, absent unrelated metric and ordinary context changes',()=>{
+  const games=Array.from({length:5},(_,i)=>game(i,{contextKey:i%2?'ordinary-map-A':'ordinary-map-B'}));
+  for(const g of games){g.players=g.players.filter(p=>p.playerId!=='c');g.players[0].values.castle=600000;g.players[1].values.castle=700000;}
+  const newcomer=game(5);newcomer.players=[newcomer.players[2]];newcomer.players[0].values.castle=400000;
+  assert.deepEqual(new StatisticsExperience([...games,newcomer]).leaders('castle'),['a']);
+  games[4].players[0].values.castle=null;
+  assert.deepEqual(new StatisticsExperience([...games,newcomer]).leaders('castle'),[]);
 });
 test('response latency pools episodes, timings use medians and opportunity counts stay totals',()=>{
   const games=[game(),game(1)];games[0].players[0].responseTimes=[2,4,6];games[1].players[0].responseTimes=[100];
