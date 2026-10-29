@@ -111,7 +111,7 @@ def _prior_raids(statistics, originals, attacker, victim, first, lookback_ms):
             continue
         for raid in ((mil.get("raidEvidence") or {}).get("initiatedEpisodes") or []):
             if (raid.get("attackerPlayerId"), raid.get("victimPlayerId")) != (
-                    attacker, victim):
+                    attacker, victim) or raid.get("modelVersion") != "AOF_RAID_DETECTION_V3":
                 continue
             start = raid.get("startedAtMs")
             if type(start) is not int or not earliest <= start < first["recordingAtMs"]:
@@ -152,8 +152,14 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
         game_scope=game_scope)
     groups = {g["candidateId"]: g for g in canonical["candidateEpisodeGroups"]}
     originals = _original_index(action_events, 600000)
-    raw_events = {e["eventId"]: e for e in action_events
-                  if isinstance(e.get("eventId"), str) and e["eventId"] in originals}
+    raw_events = {}
+    for e in action_events:
+        ref = e.get("eventId")
+        if not isinstance(ref, str) or ref not in originals:
+            continue
+        if ref in raw_events:
+            _check(raw_events[ref] == e, "CONFLICTING_ORIGINAL_TARGET_METADATA")
+        raw_events[ref] = e
     episodes = []
     # New target-counterplay cannot re-award a Skirmish already used by the
     # accepted #173 Rivalry method in another source-connected component.
@@ -176,9 +182,9 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
             reasons.append("EXISTING_RAID_RIVALRY_ALREADY_ADMITTED")
         if group["firstSourceMoment"]["order"] != "ORDERED":
             reasons.append("ORIGINAL_EVENT_ORDER_UNAVAILABLE")
-        if any(x["kind"] == "STOP_OR_CANCEL_CONTEXT_NOT_PROVEN_CANCELLATION"
-               for x in group.get("counterevidenceCandidates", [])):
-            reasons.append("NONCOMMITTAL_STOP_CANCEL_PRESENT")
+        # STOP/CANCEL elsewhere in the broad episode may be tactical
+        # repositioning, not cancellation of two actual target ORDERs.
+        stop_context = bool(group.get("counterevidenceCandidates"))
         own = _own_target_refs(group, originals, statistics, raw_events)
         if len(own) < 2:
             reasons.append("TWO_CONTROLLER_BOUND_DEFENDER_OWN_TARGET_ORDERS_MISSING")
@@ -214,6 +220,7 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
             "missingEvidence": sorted(set(reasons)),
             "opportunity": {"pastOnlyAttackerPressureAvailable": bool(prior),
                             "observedResponseOrders": len(own),
+                            "stopCancelContextObservedNotProvenCancellation": stop_context,
                             "approvedDenominator": None,
                             "mode": relation,
                             "meaning": "PAST_INFERRED_RAID_PLUS_DEFENDER_ORIGINAL_TARGET_REQUEST_NOT_DAMAGE"},
