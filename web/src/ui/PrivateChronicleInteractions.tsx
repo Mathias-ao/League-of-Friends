@@ -56,7 +56,10 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
         expectedRevision:i.revision,opportunityRevision:i.opportunityRevision,action};
       if(action==='SUBMIT'){request.choiceId=choiceId;request.confirmed=true;
         const note=notes[i.battleId];if(note)request.privateNote=note;}
-      await repository.actOnChronicleInvitation!(request);await load(token);setNotes({});
+      await repository.actOnChronicleInvitation!(request);
+      if(token!==attempt.current)return;
+      await load(token);
+      if(token===attempt.current)setNotes({});
     }catch(e){if(token===attempt.current){setRead(null);setNotes({});
       setError(e instanceof Error?e.message:'Invitation changed. Refresh your Chronicle.');}}
     finally{if(token===attempt.current)setBusy(false);}
@@ -96,7 +99,7 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
                 </label>
               </details>
               {selected&&<div role="group" aria-label="Review your private perspective">
-                <p>Your choice: {copy![selected]}. Your perspective will be saved privately, linked to this Battle’s current source.</p>
+                <p>Your choice: {copy![selected]}. You are making a binding private statement about this Battle and {counterpartNames[i.counterpartPlayerId]??'this league opponent'}, linked to the current source. Changing it later requires correction review.</p>
                 <button type="button" disabled={busy} onClick={()=>void answer(i,'SUBMIT',selected)}>Save my private perspective</button>
                 <button type="button" disabled={busy} onClick={()=>setDraft(null)}>Change my choice</button>
               </div>}

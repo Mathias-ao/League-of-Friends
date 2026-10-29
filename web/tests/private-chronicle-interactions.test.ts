@@ -41,6 +41,7 @@ test('a choice is a private draft until a separate confirmation; revision CAS is
   assert.doesNotMatch(document.body.textContent!,/ACKNOWLEDGED_HELP|ASSISTANCE|Optional perspective on a source-bounded/);
   await c.click('It mattered to me');assert.equal(c.calls.length,0);
   assert.ok(document.querySelector('[aria-label="Review your private perspective"]'));
+  assert.match(document.body.textContent!,/binding private statement/);assert.match(document.body.textContent!,/Changing it later requires correction review/);
   await c.click('Change my choice');assert.equal(c.calls.length,0);assert.equal(document.querySelector('[aria-label="Review your private perspective"]'),null);
   await c.click('It mattered to me');await c.click('Save my private perspective');
   assert.equal(c.calls.length,1);assert.equal(c.calls[0].action,'SUBMIT');assert.equal(c.calls[0].battleId,'battle-1');
@@ -100,4 +101,25 @@ test('correction rejection clears the confirmed private draft and foreign speake
   const v=view();v.invitations[0].speaker={authorPlayerId:'other',choiceId:'FELT_PERSONAL',qualification:'PENDING',presentation:'ATTRIBUTED_SPEAKER_NOT_OBJECTIVE_NARRATOR'};c.set(v);
   await c.click('Review my invitations');assert.equal(document.querySelector('[data-aof-chronicle-invitations-owner]'),null);
  }finally{await c.close();}
+});
+
+test('stale action or refresh completion cannot erase a note in a reopened invitation',async()=>{
+ for(const phase of ['action','refresh']){const c=await setup();try{
+  let finish!:()=>void;
+  const read=c.repository.myChronicleInvitations!,action=c.repository.actOnChronicleInvitation!;
+  if(phase==='action')c.repository.actOnChronicleInvitation=async()=>new Promise(resolve=>{finish=()=>resolve({success:true,revision:2,state:'DEFERRED',idempotent:false});});
+  else {let reads=0;c.repository.myChronicleInvitations=async()=>{
+   const v=await read();if(++reads===2)return new Promise(resolve=>{finish=()=>resolve(v);});return v;
+  };}
+  await c.render();await c.click('Review my invitations');await c.click('Not now');
+  assert.equal(typeof finish,'function');
+  await c.click('Close private invitations');await c.click('Review my invitations');
+  const field=document.querySelector('textarea')!;
+  await act(async()=>{const key=Object.keys(field).find(k=>k.startsWith('__reactProps$'))!;
+   (field as any)[key].onChange({target:{value:'A new private note'}});});
+  assert.equal(field.value,'A new private note');
+  await act(async()=>finish());
+  assert.equal(document.querySelector('textarea')!.value,'A new private note',phase+' response must not mutate a later view');
+  c.repository.actOnChronicleInvitation=action;
+ }finally{await c.close();}}
 });
