@@ -78,7 +78,7 @@ class ControlledProofShapeTests(unittest.TestCase):
         got=counter(out)
         self.assertEqual(out["version"],VERSION)
         self.assertEqual(got["methodVersion"],METHOD)
-        self.assertEqual(got["decision"],"SOURCE_ADMITTED")
+        self.assertEqual(got["decision"],"SOURCE_MATCH_PROPOSED")
         self.assertEqual(got["sourceEventIds"],["counter1","counter2"])
         self.assertEqual(got["actorReplayPlayerId"],2)
         self.assertEqual(got["counterpartReplayPlayerId"],1)
@@ -87,7 +87,9 @@ class ControlledProofShapeTests(unittest.TestCase):
         self.assertTrue(any(x["kind"]=="ENGAGEMENT_SKIRMISH"
                             for x in got["corroboration"]))
         self.assertEqual(got["sourceCoverage"],"LIMITED")
-        self.assertEqual(got["gradeBandId"],"ORDINARY")
+        self.assertIsNone(got["gradeBandId"])
+        self.assertEqual(out["sourceCandidateCount"],1)
+        self.assertEqual(out["sourceAdmittedCount"],0)
         self.assertIsNone(got["canonicalContributionKey"])
         self.assertFalse(out["officialWrites"])
         self.assertFalse(out["publicationAllowed"])
@@ -163,7 +165,7 @@ class ControlledProofShapeTests(unittest.TestCase):
         out=method(b,stats,actions)
         directed=[x for x in out["episodes"] if x["actorReplayPlayerId"]==2]
         self.assertEqual(len(directed),2)
-        self.assertEqual(sum(x["decision"]=="SOURCE_ADMITTED" for x in directed),1)
+        self.assertEqual(sum(x["decision"]=="SOURCE_MATCH_PROPOSED" for x in directed),1)
         self.assertTrue(any("CORRELATED_SOURCE_DETECTOR_ALREADY_ADMITTED"
                             in x["missingEvidence"] for x in directed))
         self.assertEqual(out["claims"],[])
@@ -225,7 +227,7 @@ class GenuineOriginalTests(unittest.TestCase):
                         statistics=stats,context=ctx,source_measurements=metric,
                         action_events=original,game_scope=scope)
                     admitted=[r for r in out["episodes"]
-                              if r["decision"]=="SOURCE_ADMITTED"]
+                              if r["decision"]=="SOURCE_MATCH_PROPOSED"]
                     pending=[r for r in out["episodes"]
                               if r["decision"]=="PENDING"]
                     totals[fmt]={"admitted":len(admitted),"pending":len(pending)}
@@ -258,6 +260,7 @@ class GenuineOriginalTests(unittest.TestCase):
                     refused=prepare_active_defender_counterplay(
                         statistics=no_raid,context=ctx,source_measurements=metric,
                         action_events=original,game_scope=scope)
+                    self.assertEqual(refused["sourceCandidateCount"],0)
                     self.assertEqual(refused["sourceAdmittedCount"],0)
                     same={r["sourceCandidateId"]:r for r in refused["episodes"]}
                     for r in admitted:
@@ -268,5 +271,5 @@ class GenuineOriginalTests(unittest.TestCase):
         print("GENUINE_DEFENDER_COUNTS "+json.dumps(totals,sort_keys=True),flush=True)
         print("GENUINE_NATURAL_PENDING_COUNT "+str(len(natural_negatives)),flush=True)
         # Fail CI rather than claiming a new method on synthetic fixtures.
-        self.assertTrue(genuine,"NO_GENUINE_ORIGINAL_DEFENDER_POSITIVE; KEEP_METHOD_DRAFT_AND_PENDING")
+        self.assertTrue(genuine,"NO_GENUINE_ORIGINAL_DEFENDER_PROPOSED_MATCH; KEEP_METHOD_DRAFT_AND_PENDING")
         self.assertTrue(natural_negatives,"NO_GENUINE_SOURCE_ADJACENT_PENDING_CASE")
