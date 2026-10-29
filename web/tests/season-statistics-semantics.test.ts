@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SeasonStatisticsExperience,seasonMetric} from '../src/domain/seasonStatistics';
+import {SeasonStatisticsExperience,seasonMetric,recordStartCohort} from '../src/domain/seasonStatistics';
 import type {GameStatistics,PlayerMeasurement} from '../src/domain/statistics';
 
 function game(matchId:string,gameId='G1',contextKey='standard',revision=1):GameStatistics{
@@ -151,4 +151,27 @@ test('Normal civilization/map variation does not erase observations; special-sta
   assert.equal(engine.aggregate().find(row=>row.playerId==='a')!.values.castle.samples,3);
   // No start-equivalence field exists in GameStatistics, so UI must call these provisional
   // observations rather than publishing the nominal 600000 as a certified League FC record.
+});
+
+test('verified same-start age records compare across ordinary map and civilization, never Nomad or unknown',()=>{
+  const a=game('record1','G1','Arabia'),b=game('record2','G1','Acropolis'),nomad=game('record3','G1','Nomad'),unknown=game('record4');
+  const verified={status:'VERIFIED_SOURCE',startMode:'STANDARD',startingAge:'DARK',startingTownCenters:1,
+    resourceMode:'STANDARD',gameSpeed:'NORMAL',environment:'LAND',patch:'P1',evidenceVersion:'record-start-V1'} as const;
+  for(const g of [a,b])Object.assign(g,{startOpportunity:{...verified}});
+  Object.assign(nomad,{startOpportunity:{...verified,startMode:'NOMAD',startingTownCenters:0}});
+  a.players[0].civilization='Franks';b.players[0].civilization='Mongols';
+  amount(a,'a','castle',850000);amount(b,'a','castle',820000);amount(nomad,'a','castle',590000);amount(unknown,'a','castle',550000);
+  assert.equal(recordStartCohort(a),recordStartCohort(b));
+  assert.notEqual(recordStartCohort(a),recordStartCohort(nomad));
+  assert.equal(recordStartCohort(unknown),null);
+  const records=new SeasonStatisticsExperience([a,b,nomad,unknown]).records().filter(r=>r.metricId==='castle'&&r.playerId==='a');
+  assert.equal(records.filter(r=>r.startCohort===recordStartCohort(a)).length,2);
+  assert.equal(records.filter(r=>r.startCohort===recordStartCohort(nomad)).length,1);
+  assert.equal(records.filter(r=>r.startCohort===null).length,1);
+  const amended=game('record2','G1','Acropolis',2);Object.assign(amended,{startOpportunity:{...verified}});
+  amount(amended,'a','castle',810000);
+  const corrected=new SeasonStatisticsExperience([a,b,nomad,unknown,amended]).records().filter(r=>r.metricId==='castle'&&r.playerId==='a');
+  assert.equal(corrected.find(r=>r.matchId==='record2')?.value,810000);
+  amended.eligible=false;
+  assert.ok(!new SeasonStatisticsExperience([a,b,nomad,unknown,amended]).records().some(r=>r.matchId==='record2'));
 });
