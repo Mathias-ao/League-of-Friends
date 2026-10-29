@@ -65,7 +65,9 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         self.assertIn("hard maximum", p)
         self.assertIn("not pre-approved achievement thresholds", p)
         self.assertIn("22:10", p)
-        self.assertIn("plain 22:10 Castle research+projection", p)
+        self.assertIn("22:10", p)
+        self.assertIn("Castle research", p)
+        self.assertIn("not enough to be called Fast Castle", p)
         self.assertIn("no automatic trophy", p.lower())
 
     def test_transferable_competitive_trophy_policy_is_owner_corrected(self) -> None:
@@ -95,8 +97,8 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         p = self.policy
         for key in ("T_FC", "D_elapsed", "N_distinctEligibleBattles",
                     "N_comparablePlayers", "PENDING_MATURITY",
-                    "initial true tie", "source revision",
-                    "later strictly better", "Season end archives"):
+                    "first maturity crossing", "true tie", "source revision",
+                    "strictly lower", "Season end archives"):
             self.assertIn(key.lower(), p.lower())
         self.assertIn("Distinctions", p)
         o = self.curated["ownerDecisions2026Oct29"]
@@ -137,7 +139,7 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         p = self.policy
         self.assertIn("FOUR", p)
         for term in ("#206 Worker S", "Worker D #199", "Worker 1 #201",
-                     "#172", "No points"):
+                     "#172", "no points, Firestore"):
             self.assertIn(term.lower(), p.lower())
         owner = OWNER.read_text("utf-8")
         self.assertIn("honours-v1-milestone-record-policy-197.md", owner)
