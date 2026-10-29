@@ -10,6 +10,7 @@ import {privatePersonalityE2EEnabled,privatePersonalityPolicy,PRIVATE_PERSONALIT
 import {validateSharedRecord} from '../lib/domain/socialV1Validation.js';
 import {ready} from './support/private-history-fixture.mjs';
 import {readMyPersonalityHistory} from '../lib/queries/getMyPersonalityHistory.js';
+import {deriveSocialScheduleOrders} from '../lib/integration/socialScheduleOrder.js';
 
 const hex=n=>createHash('sha256').update(String(n)).digest('hex');
 const actor='p1';
@@ -257,4 +258,96 @@ test('unresolved winner does not invalidate source-qualified behavior if Battle 
   forged.source.outcome={qualification:'UNRESOLVED',resultRevision:1,winningPlayerIds:['p1']};
   assert.equal(privatePersonalityPolicy(actor,[a,forged],taxonomy([a,forged]))
     .diagnostics.acceptedGameSources,1);
+});
+
+
+const tick=n=>({toMillis:()=>n});
+function approvedPersonalitySchedule(sources, override=()=>{}){
+  // Two Battles in one Event. Their IDs are deliberately reverse-alphabetic:
+  // chronological order must follow APPROVED match-plan slots, not IDs.
+  const ids=sources.map(s=>s.source.battleId);
+  const event={seasonId:'test-season',startsAt:tick(1000000),
+    approvedMatchPlanId:'approved-plan',matchPlanStatus:'APPROVED',
+    officialMatchIds:ids,warmupMatchIds:[]};
+  const plan={status:'APPROVED',officialMatchIds:ids,matches:ids.map(()=>({}))};
+  const sourceBattles=sources.map((s,i)=>{
+    s.source.eventId='approved-event';s.source.seasonId='test-season';
+    s.match.eventId='approved-event';s.match.seasonId='test-season';
+    s.match.sourceMatchPlanId='approved-plan';s.match.matchNumber=i+1;
+    return {battleId:s.source.battleId,match:s.match,event,planId:'approved-plan',
+      plan,games:[{gameId:s.source.gameId,game:s.game}]};
+  });
+  override({sourceBattles,event,plan});
+  return deriveSocialScheduleOrders(sourceBattles);
+}
+const scheduleProject=(sources,orders)=>{
+  const policy=privatePersonalityPolicy(actor,sources,taxonomy(sources));
+  return projectPrivatePersonalityHistory(actor,grouped(sources),
+    bindingDigest([sources.map(s=>s.source),policy.calibration,orders]),
+    policy.context,policy.calibration,orders);
+};
+test('Sol #203 exact positive: two genuine-shaped READY UNRESOLVED Battles without firstCompletedAt are source-behavior READY with approved schedule',()=>{
+  const a=game('z-earlier','g1',1),b=game('a-later','g1',1);
+  for(const x of [a,b]){
+    x.match.firstCompletedAt=null;
+    x.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  }
+  const orders=approvedPersonalitySchedule([a,b]);
+  assert.ok(orders.every(x=>x.status==='ORDERED'&&x.order));
+  assert.deepEqual(orders.map(x=>x.order.battle),[1,2]);
+  const {personalityProfile,battleFeatures}=scheduleProject([b,a],orders);
+  assert.equal(battleFeatures.length,10);
+  const actual=Object.fromEntries(personalityProfile.sliders.map(x=>[x.axis,x.value]));
+  assert.deepEqual(actual,{
+    BOOMER_AGGRESSOR:30,CAUTIOUS_BOLD:50,GUERRILLA_FRONTLINE:0,
+    SPECIALIST_IMPROVISER:0,COMPACT_EXPANSIVE:33.33
+  });
+  assert.ok(personalityProfile.sliders.every(x=>x.status==='READY'&&x.independentBattles===2));
+  assert.equal(personalityProfile.policy.status,'PROPOSED');
+  // Wrong alpha/order or timestamp cannot influence approved plan chronology.
+  a.match.uploadedAt=tick(9000000);b.match.uploadedAt=tick(500);
+  b.match.createdAt=tick(100);a.match.createdAt=tick(9999999);
+  const repeated=scheduleProject([a,b],orders);
+  assert.deepEqual(repeated.personalityProfile.sliders.map(x=>x.value),
+    personalityProfile.sliders.map(x=>x.value));
+});
+test('Sol #203 nearest negatives: missing, wrong, revoked or ambiguous approved schedule cannot replace missing completion',()=>{
+  const cases=[
+    ({event})=>{event.matchPlanStatus='PROPOSED';},
+    ({plan})=>{plan.status='REVOKED';},
+    ({sourceBattles})=>{sourceBattles[0].match.matchNumber=2;},
+    ({sourceBattles})=>{sourceBattles[1].match.sourceMatchPlanId='unapproved';},
+    ({event})=>{delete event.startsAt;},
+    ({event})=>{event.warmupMatchIds.push('z-earlier');}
+  ];
+  for(let i=0;i<cases.length;i++){
+    const a=game('z-earlier','g1',1),b=game('a-later','g1',1);
+    for(const x of [a,b]){
+      x.match.firstCompletedAt=null;
+      x.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+    }
+    const orders=approvedPersonalitySchedule([a,b],cases[i]);
+    assert.ok(orders.some(x=>x.status==='PENDING'),String(i));
+    const view=scheduleProject([a,b],orders);
+    assert.ok(view.personalityProfile.sliders.every(x=>x.value===null),String(i));
+  }
+  const a=game('z-earlier','g1',1),b=game('a-later','g1',1);
+  for(const x of [a,b]){
+    x.match.firstCompletedAt=null;
+    x.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  }
+  const good=approvedPersonalitySchedule([a,b]);
+  for(const corrupt of [
+    order=>{order[1].eventId='wrong-event';},
+    order=>{order[1].seasonId='wrong-season';},
+    order=>{order[1].gameId='different-game';},
+    order=>{order[1].order.game=2;},
+    order=>{order[1].revision='untrusted';}
+  ]){
+    const modified=structuredClone(good);corrupt(modified);
+    assert.ok(scheduleProject([a,b],modified).personalityProfile.sliders.every(x=>x.value===null));
+  }
+  const fraudulent=structuredClone(b);
+  fraudulent.source.roster[0].playerId='somebody-else';
+  assert.ok(scheduleProject([a,fraudulent],good).personalityProfile.sliders.every(x=>x.value===null));
 });
