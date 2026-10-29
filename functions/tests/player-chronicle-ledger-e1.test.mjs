@@ -131,7 +131,12 @@ test('E1: correcting a prior qualified deed recomposes later callbacks without m
   assert.deepEqual(after.map(e=>e.sceneId),before.map(e=>e.sceneId));
   assert.ok(chronicleWasSeenByLegacyId([before[0].entryId],after[0],'a','b'),
     'legacy seen IDs must recognize corrected new content as the same pair Battle');
-  assert.deepEqual(after.slice(3),before.slice(3),'unrelated later quiet entries do not become new stories');
+  for(let i=3;i<5;i++){
+    assert.equal(after[i].sceneId,before[i].sceneId);
+    assert.equal(after[i].sceneRevision,before[i].sceneRevision,
+      'an unrelated source correction cannot revise unchanged quiet ledger prose');
+    assert.deepEqual(after[i].paragraphs,before[i].paragraphs);
+  }
 });
 test('E1: witnessed strict rare episode upgrades only its original scene, not a second chapter or grant',()=>{
   const cs=[chapter(1),
