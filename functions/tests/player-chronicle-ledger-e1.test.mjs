@@ -154,3 +154,21 @@ test('E1: witnessed strict rare episode upgrades only its original scene, not a 
   assert.doesNotMatch(JSON.stringify(corrected[1].paragraphs),/king|betrayal|alliance broke/i);
   assert.equal(Object.prototype.hasOwnProperty.call(corrected[1],'award'),false);
 });
+
+test('E1: unknown semantic beat or incomplete declaration never creates an empty or invented history',()=>{
+  const cs=[
+    chapter(1),
+    chapter(2,{beats:[beat('unknown','UNRECOGNIZED_TECHNICAL_BATTLE_EPISODE')]}),
+    chapter(3,{beats:[beat('declaration','DECLARATION_ESTABLISHED')]}),
+  ];
+  const es=entries(cs);
+  assert.equal(es.length,3);
+  for(const e of es){
+    assert.equal(e.storyTier,'ORDINARY_LEDGER');
+    assert.equal(e.rubric,'BATTLE LEDGER');
+    assert.ok(e.paragraphs[0].trim().length>0);
+    assert.doesNotMatch(e.paragraphs[0],/won|damaged|completed|rescued|betrayed|alliance/i);
+  }
+  assert.deepEqual(es[1].evidenceKinds,['UNRECOGNIZED_TECHNICAL_BATTLE_EPISODE'],
+    'source provenance remains traceable without inventing a literary event');
+});
