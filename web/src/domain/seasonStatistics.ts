@@ -169,8 +169,16 @@ export class SeasonStatisticsExperience{
   constructor(games:GameStatistics[]){
     const revisions=new Map<string,GameStatistics>();
     for(const game of games){const key=game.matchId+'/'+game.gameId,previous=revisions.get(key);if(!previous||game.revision>previous.revision)revisions.set(key,game);}
-    const hashes=new Set<string>();
-    this.knownGames=[...revisions.values()].sort((a,b)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId)).filter(game=>{if(game.sourceHash&&hashes.has(game.sourceHash))return false;if(game.sourceHash)hashes.add(game.sourceHash);return true;});
+    const order=(a:GameStatistics,b:GameStatistics)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId);
+    const byHash=new Map<string,GameStatistics>(),noHash:GameStatistics[]=[];
+    for(const game of [...revisions.values()].sort(order)){
+      if(!game.sourceHash){noHash.push(game);continue;}
+      const previous=byHash.get(game.sourceHash);
+      // Duplicate POV uploads are one source. Prefer its valid current
+      // projection; an ineligible duplicate must never mask accepted evidence.
+      if(!previous||(!previous.eligible&&game.eligible))byHash.set(game.sourceHash,game);
+    }
+    this.knownGames=[...noHash,...byHash.values()].sort(order);
     this.games=this.knownGames.filter(game=>game.eligible);
   }
   get battleCount():number{return new Set(this.games.map(game=>game.matchId)).size;}
