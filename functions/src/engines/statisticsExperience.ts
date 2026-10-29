@@ -236,29 +236,40 @@ export class StatisticsExperience {
     return [start.startMode,start.startingAge,start.startingTownCenters,start.resourceMode,start.gameSpeed,start.environment,start.patch,start.evidenceVersion].join('|');
   }
   leaders(metricId:string,modeValue:AggregationMode='total',minimumGames=5):string[]{
-    const m=METRICS.find(m=>m.id===metricId);if(!m?.leader)return [];
+    const m=METRICS.find(metric=>metric.id===metricId);if(!m?.leader)return [];
     const typical=modeValue==='average'||m.aggregation!=='volume';
-    const qualified=this.aggregate(modeValue).filter(row=>{
-      const value=row.values[metricId];
-      return value.value!==null&&value.samples===value.eligibleGames&&
-        value.models.length===1&&value.models[0]!=='unknown'&&
-        (!typical||value.samples>=minimumGames);
-    });
     const ageMetric=['feudal','castle','imperial'].includes(metricId);
-    const byModel=new Map<string,typeof qualified>();
-    for(const row of qualified){
-      const playerGames=this.games.filter(g=>g.players.some(p=>p.playerId===row.playerId&&metricEligible(m,g,p)&&p.values[metricId]!=null));
-      const startKeys=ageMetric?new Set<string|null>(playerGames.map(g=>this.ageStartCohort(g))):new Set<string|null>();
-      // Same measurement version alone cannot compare a Nomad start to an
-      // ordinary Dark Age opening. Withhold age leadership without verified
-      // start opportunity. Other metric peers are independent of this field.
-      if(ageMetric&&(startKeys.size!==1||startKeys.has(null)))continue;
-      const model=[row.values[metricId].models[0],...(ageMetric?[...startKeys]:[])].join('|');
-      byModel.set(model,[...(byModel.get(model)??[]),row]);
+    // Age timings demand genuine source-qualified starting opportunity.
+    // Group by *start*, not exact ordinary map or civilization. A sixth
+    // Nomad/unknown Game does not poison five valid standard-start Games.
+    const gameGroups=new Map<string,GameStatistics[]>();
+    for(const game of this.games){
+      const start=ageMetric?this.ageStartCohort(game):'all';
+      if(!start)continue;
+      gameGroups.set(start,[...(gameGroups.get(start)??[]),game]);
     }
-    const cohorts=[...byModel].filter(([,rows])=>rows.length>=2).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
+    const cohorts:{key:string;rows:AggregatePlayer[]}[]=[];
+    for(const [start,games] of gameGroups){
+      const candidates=new StatisticsExperience(games).aggregate(modeValue).filter(row=>{
+        const value=row.values[metricId];
+        return value.value!==null&&value.samples===value.eligibleGames&&
+          value.models.length===1&&value.models[0]!=='unknown'&&
+          (!typical||value.samples>=minimumGames);
+      });
+      const byModel=new Map<string,typeof candidates>();
+      for(const row of candidates){
+        const model=row.values[metricId].models[0];
+        byModel.set(model,[...(byModel.get(model)??[]),row]);
+      }
+      for(const [model,rows] of byModel)if(rows.length>=2)
+        cohorts.push({key:start+'|'+model,rows});
+    }
+    cohorts.sort((a,b)=>b.rows.length-a.rows.length||
+      Math.min(...b.rows.map(row=>row.values[metricId].samples))-
+        Math.min(...a.rows.map(row=>row.values[metricId].samples))||a.key.localeCompare(b.key));
     if(!cohorts.length)return [];
-    const cohort=cohorts[0][1],extreme=(m.leader==='max'?Math.max:Math.min)(...cohort.map(row=>row.values[metricId].value!));
+    const cohort=cohorts[0].rows;
+    const extreme=(m.leader==='max'?Math.max:Math.min)(...cohort.map(row=>row.values[metricId].value!));
     if(extreme===0||cohort.every(row=>row.values[metricId].value===extreme))return [];
     return cohort.filter(row=>row.values[metricId].value===extreme).map(row=>row.playerId);
   }
