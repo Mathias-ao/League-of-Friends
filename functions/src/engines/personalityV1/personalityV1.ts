@@ -163,13 +163,14 @@ const keyOf = (c: GameContext | null): string =>
  * their interaction opportunities differ.
  */
 export function personalityComparisonGroup(c: GameContext | null, axis?: PersonalityAxis): string {
-  // An unreviewed start/family cannot silently become an ordinary cohort.
-  if(!c||!c.startFamily||!c.mapFamily)return 'SOURCE_OPPORTUNITY_NOT_CLASSIFIED';
-  // Economy's proportion of *recorded resource commitments* remains comparable
-  // across ordinary starts on land or water, with complete cost coverage.
-  // Tactical, military-family and expansion opportunities can change on
-  // WATER/HYBRID. Only those axes are segregated; do not erase economy data.
-  const specialMapOpportunity=axis && axis!=='BOOMER_AGGRESSOR' &&
+  if(!c)return 'SOURCE_OPPORTUNITY_NOT_CLASSIFIED';
+  // A source-complete *share of recorded resource commitments* has its own
+  // valid denominator irrespective of map family, starting TC or civ choice.
+  // Never borrow this qualification for tactical/spatial or family axes.
+  if(axis==='BOOMER_AGGRESSOR')return [c.format,'VERIFIED_RESOURCE_COMMITMENT_SHARE'].join('|');
+  // The other axes cannot silently treat unknown map/start as ordinary.
+  if(!c.startFamily||!c.mapFamily)return 'SOURCE_OPPORTUNITY_NOT_CLASSIFIED';
+  const specialMapOpportunity=axis &&
     (c.mapFamily==='WATER' || c.mapFamily==='HYBRID');
   if(c.startFamily==='STANDARD')return [
     c.format,'STANDARD_START',...(specialMapOpportunity?[c.mapFamily+'_OPPORTUNITY']:[])
