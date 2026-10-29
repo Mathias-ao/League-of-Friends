@@ -64,11 +64,13 @@ test('Season showcase catalogue exposes the requested metrics', () => {
   ]) assert.ok(metricIds.has(id), `missing ${id}`);
 
   assert.equal(METRICS.find(metric => metric.id === 'tradeUnits')?.eligibility, 'team');
-  assert.equal(METRICS.find(metric => metric.id === 'tributeSent')?.eligibility, 'team');
-  assert.equal(METRICS.find(metric => metric.id === 'tributeReceived')?.eligibility, 'team');
+  assert.equal(METRICS.find(metric => metric.id === 'tributeSent')?.eligibility, 'all');
+  assert.equal(METRICS.find(metric => metric.id === 'cooperation')?.eligibility, 'team');
+  assert.equal(METRICS.find(metric => metric.id === 'assistsOut')?.eligibility, 'team');
+  assert.equal(METRICS.find(metric => metric.id === 'tributeReceived')?.eligibility, 'all');
 });
 
-test('team-only Season averages exclude 1v1 Games from the denominator', () => {
+test('genuinely team-only averages exclude 1v1, while tribute requests include source-qualified 1v1/FFA', () => {
   const games = [
     game('m1', [player('p1', 1, {tradeUnits: 99, tributeSent: 999}), player('x1', 2)]),
     game('m2', [player('p1', 1, {tradeUnits: 10, tributeSent: 300}), player('ally-a', 1), player('x2', 2), player('x3', 2)]),
@@ -78,7 +80,8 @@ test('team-only Season averages exclude 1v1 Games from the denominator', () => {
   assert.ok(row);
   assert.equal(row.games, 3);
   assert.deepEqual(row.values.tradeUnits, {value: 15, samples: 2, eligibleGames: 2, models: ['TEST_MODEL_V1']});
-  assert.deepEqual(row.values.tributeSent, {value: 400, samples: 2, eligibleGames: 2, models: ['TEST_MODEL_V1']});
+  assert.deepEqual(row.values.tributeSent, {value: 1799/3, samples: 3, eligibleGames: 3, models: ['TEST_MODEL_V1']});
+  assert.equal(row.values.tributeReceived.value,null,'absent receipt-request observation stays unavailable');
 });
 
 test('canonical projection maps successor Battle fields into Season measurements', () => {
