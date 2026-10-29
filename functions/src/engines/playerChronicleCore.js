@@ -129,7 +129,10 @@ function composeEntry(group,first,ownerName,counterpartName,history,ownerPlayerI
     eventId:group.eventId,seasonId:group.seasonId,playedAtMs:group.playedAtMs,
     firstExposureContext:group.firstExposure?.context??null,
     sourceLineage:[...group.sourceLineage].sort((a,b)=>a.gameIdentity.localeCompare(b.gameIdentity)),
-    sourceBeatIds,sourceEventIds,priorOnlyContext:context,
+    sourceBeatIds,sourceEventIds,
+    // Prior history is not used to write a quiet factual ledger line. A
+    // correction to another Battle must not revise unrelated ordinary prose.
+    priorOnlyContext:narrative.rubric==='BATTLE LEDGER'?null:context,
     rendered:{rubric:narrative.rubric,title:narrative.title,paragraphs:narrative.paragraphs}
   })).digest('hex');
   return {
