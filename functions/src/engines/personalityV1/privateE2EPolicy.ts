@@ -14,7 +14,8 @@ export const PRIVATE_PERSONALITY_E2E_VERSION='AOF_PERSONALITY_PRIVATE_E2E_V2';
 export const PRIVATE_PERSONALITY_CONTEXT_REGISTRY_VERSION='AOF_PERSONALITY_SOURCE_REVIEW_V1';
 const axes=Object.keys(PERSONALITY_AXES) as PersonalityAxis[];
 const identity=(c:GameContext)=>[
-  c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,c.civilizationOpportunityKey].join('|');
+  c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,c.civilizationOpportunityKey]
+  .map(x=>x??'UNKNOWN').join('|');
 
 /** Strict fixed classification: registry key is the *original recording SHA*,
  * never a bare map ID, patch, generated fixture label or untrusted input. */
