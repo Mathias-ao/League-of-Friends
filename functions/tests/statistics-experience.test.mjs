@@ -2,6 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EXPERIENCE_VERSION,METRICS,StatisticsExperience,projectStatistics} from '../lib/engines/statisticsExperience.js';
 
+test('decoded tribute request metrics remain applicable in FFA diplomacy, unlike fixed-team cooperation',()=>{
+  const ffa=game(21,{format:'FFA_DIPLO'});
+  for(const p of ffa.players){p.team=null;p.values.tributeSent=2346;p.values.tributeReceived=1000;}
+  const row=new StatisticsExperience([ffa]).aggregate('average').find(player=>player.playerId==='a');
+  assert.equal(row.values.tributeSent.value,2346);
+  assert.equal(row.values.tributeReceived.value,1000);
+  assert.equal(row.values.cooperation.value,null);
+});
+
+test('Statistics labels describe commands and requests, never completed tribute or combat outcomes',()=>{
+  const labels=Object.fromEntries(METRICS.map(metric=>[metric.id,metric.label]));
+  assert.match(labels.tributeSent,/outgoing tribute amount requested/i);
+  assert.match(labels.tributeReceived,/incoming tribute amount requested/i);
+  assert.doesNotMatch(labels.tributeReceived,/\b(received|delivered|supplied)\b/i);
+  assert.match(labels.unitRequests,/requests/i);
+  assert.match(labels.assistsOut,/detected.*commands/i);
+  assert.match(labels.skirmishes,/detected/i);
+});
+
 export function game(index=0,patch={}){
   const players=['a','b','c'].map((id,i)=>({playerId:id,name:id.toUpperCase(),team:i===0?1:2,civilization:'FRANKS',opening:'Scout Rush',mainUnit:'Scout Cavalry',values:Object.fromEntries(METRICS.map(m=>[m.id,m.id==='response'?10:m.unit==='ms'?600000+i*10000:2+i])),models:Object.fromEntries(METRICS.map(m=>[m.id,'model-1'])),unavailable:{},composition:{cavalry:100},responseTimes:[10],byAge:{},details:[]}));
   return {version:EXPERIENCE_VERSION,matchId:'match-'+index,gameId:'G1',seasonId:'s',eventId:'e',format:'TWO_V_TWO',contextKey:'same-settings',orderAtMs:index+1,revision:1,sourceHash:'hash-'+index,eligible:true,exclusionReason:null,affectsSeason:true,affectsLifetime:true,durationMs:1800000,players,episodes:[],evidenceTruncated:false,warnings:[],...patch};
