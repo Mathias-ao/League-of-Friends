@@ -326,16 +326,17 @@ function ordinaryBattleLedger(group,first,ownerName,counterpartName){
 
 export function writeBattleNarrative({group,first=false,ownerName,counterpartName,context,names={}}={}){
   const visible=rows(group?.beats).filter(beat=>beat?.kind!=='DECLARATION_KNOWLEDGE_INTERRUPTED');
-  if(!visible.length){
-    const ledger=ordinaryBattleLedger(group,first,ownerName,counterpartName);
-    return {...ledger,narrativeContext:{
-      priorFamilyCounts:context?.familyCounts??{},
-      priorDirectedFamilyCounts:context?.directedFamilyCounts??{},
-      priorRelationshipEvidence:context?.relationship??{},
-      priorRelationshipActors:context?.relationshipActors??{},
-      priorReputationEvidence:context?.reputation??{},
-    }};
-  }
+  const narrativeContext={
+    priorFamilyCounts:context?.familyCounts??{},
+    priorDirectedFamilyCounts:context?.directedFamilyCounts??{},
+    priorRelationshipEvidence:context?.relationship??{},
+    priorRelationshipActors:context?.relationshipActors??{},
+    priorReputationEvidence:context?.reputation??{},
+  };
+  const ordinary=()=>({...ordinaryBattleLedger(group,first,ownerName,counterpartName),narrativeContext});
+  // Unknown/unsupported source kinds are not evidence of an interaction.
+  // They must not prevent an otherwise accepted league Battle's ledger line.
+  if(!visible.some(beat=>narrativeFamily(beat)))return ordinary();
   const identity=storyIdentity(visible,first,context);
   const sentences=[];
   if(first)sentences.push(firstMeetingSentence(group?.firstExposure?.context??'UNKNOWN',ownerName,counterpartName));
@@ -369,6 +370,9 @@ export function writeBattleNarrative({group,first=false,ownerName,counterpartNam
     group,context,identity,primarySentence:episodeSentence(identity.primary),
     patternSentence:pattern,sentences,
   });
+  // A recognizable but incomplete declaration can still yield no safe
+  // sentence. Do not emit an empty dramatic card for it.
+  if(!authored.sentences.some(Boolean))return ordinary();
   return {
     rubric:identity.rubric,
     title:authored.title,
@@ -376,12 +380,6 @@ export function writeBattleNarrative({group,first=false,ownerName,counterpartNam
     // Classification is editorial, not a new source method or recognition grant.
     storyTier:identity.primary?.kind==='QUALIFIED_KING_LOSS_TREACHERY'?'EXTRAORDINARY_CHAPTER':
       pattern?'DEVELOPING_HISTORY':'ORDINARY_LEDGER',
-    narrativeContext:{
-      priorFamilyCounts:context?.familyCounts??{},
-      priorDirectedFamilyCounts:context?.directedFamilyCounts??{},
-      priorRelationshipEvidence:context?.relationship??{},
-      priorRelationshipActors:context?.relationshipActors??{},
-      priorReputationEvidence:context?.reputation??{},
-    },
+    narrativeContext,
   };
 }
