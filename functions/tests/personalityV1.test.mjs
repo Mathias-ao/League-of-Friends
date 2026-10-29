@@ -143,7 +143,7 @@ test('short Game duration uses distinct context and missing complete cost covera
   // duration incompatibility: once explicit bounds are present, mixing is valid.
   const c=config();
   c.anchors[key(short.context)]=Object.fromEntries(axisNames.map(axis=>[axis,{
-    lower:0,upper:1,comparisonGroup:personalityComparisonGroup(short.context)}]));
+    lower:0,upper:1,comparisonGroup:personalityComparisonGroup(short.context,axis)}]));
   assert.equal(slider(projectPersonalityPreview('playerA',[game(),short],c),
     'BOOMER_AGGRESSOR').value,30);
   const cost=tweak(game(),p=>{p.military.militarySpend.unpricedMilitaryCommandAmount=1;});
@@ -319,7 +319,7 @@ test('two differently classified Games in one Battle remain one opportunity afte
   for(const axis of axisNames)assert.equal(slider(projected,axis).status,'READY',axis);
   // Never average raw fractions whose context-specific calibration bounds differ.
   c.anchors[key(second.context)].BOOMER_AGGRESSOR={lower:.1,upper:.9,
-    comparisonGroup:personalityComparisonGroup(second.context)};
+    comparisonGroup:personalityComparisonGroup(second.context,'BOOMER_AGGRESSOR')};
   const mismatch=projectPersonalityPreview('playerA',[first,second,game(2)],c);
   assert.equal(slider(mismatch,'BOOMER_AGGRESSOR').value,null);
   assert.equal(slider(mismatch,'CAUTIOUS_BOLD').status,'READY');
