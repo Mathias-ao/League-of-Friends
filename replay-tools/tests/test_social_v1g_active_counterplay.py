@@ -20,6 +20,10 @@ from test_social_v1_metric_grade_candidates import PINS, ROOT
 def source_case():
     """CONTROLLED proof-shaped synthetic pair only; not a played recording."""
     b, stats, actions = synthetic()
+    # Controlled source-shape must carry the genuine Raid V3 model identity;
+    # unlike the old #173 fixture, this new method refuses unversioned raids.
+    stats["participants"][0]["military"]["engagements"]["raidEvidence"][
+        "initiatedEpisodes"][0]["modelVersion"] = "AOF_RAID_DETECTION_V3"
     source = deepcopy(stats["pairSocialEvidence"]["deeds"][0])
     source.update(deedId="B-owned-counterplay", incidentIds=["B-owned-independent"],
                   sourceEventIds=["counter1", "counter2"],
