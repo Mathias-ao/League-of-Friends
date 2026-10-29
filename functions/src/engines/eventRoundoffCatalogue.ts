@@ -6,6 +6,8 @@ export interface MetricRule {
   id:string;title:string;category:ShowcaseCategory;emblem:ShowcaseEmblem;family:string;
   aggregation:Aggregation;thresholds:[number,number,number];unit:string;meaning:string;
   lower?:boolean;teamOnly?:boolean;checkpoint?:number;age?:boolean;
+  /** Preserve ranked catalogue IDs even when a claimed effect has no receipt-quality source. */
+  showcasePolicy?:'SOURCE_BLOCKED';
 }
 /** Editorial guesses approved for V1. No grants or points come from these thresholds. */
 export const EVENT_SHOWCASE_METRICS:readonly MetricRule[]=[
@@ -14,7 +16,7 @@ export const EVENT_SHOWCASE_METRICS:readonly MetricRule[]=[
   {id:'battlesFought',title:'Battle-hardened',category:'Army',emblem:'helmet',family:'battle-participation',aggregation:'SUM',thresholds:[16,30,50],unit:'detected Battles',meaning:'Participation in detected Battle episodes; not confirmed Battle victories.'},
   {id:'assistsOut',title:'At the defence of allies',category:'Support',emblem:'shield',family:'defence',aggregation:'SUM',thresholds:[3,6,10],unit:'defensive assists',teamOnly:true,meaning:'Detected allied contributions inside a defended base; not confirmed rescues.'},
   {id:'cooperation',title:'A united offensive',category:'Support',emblem:'swords',family:'cooperation',aggregation:'SUM',thresholds:[3,6,10],unit:'cooperative attacks',teamOnly:true,meaning:'Detected episodes of allied contributors attacking the same opponent.'},
-  {id:'tributeSent',title:'The alliance supplied',category:'Support',emblem:'coins',family:'tribute',aggregation:'SUM',thresholds:[1000,3000,6000],unit:'resources sent',teamOnly:true,meaning:'Decoded resources sent through tribute in applicable team Games.'},
+  {id:'tributeSent',title:'Tribute requests recorded',category:'Support',emblem:'coins',family:'tribute',aggregation:'SUM',thresholds:[1000,3000,6000],unit:'decoded resource amount requested',teamOnly:true,showcasePolicy:'SOURCE_BLOCKED',meaning:'Decoded TRIBUTE/DE_TRIBUTE requested resource amounts. No receipt, delivery, fee settlement or ally assistance is established; withheld from awarded Event/Battle spotlights.'},
   {id:'castle',title:'Castle ascent',category:'Development',emblem:'castle',family:'age',aggregation:'BEST',thresholds:[1020000,900000,780000],unit:'',lower:true,age:true,meaning:'Best inferred Castle Age completion in a qualified standard-start Game.'},
   {id:'imperial',title:'Imperial ascent',category:'Development',emblem:'tower',family:'age',aggregation:'BEST',thresholds:[1920000,1680000,1440000],unit:'',lower:true,age:true,meaning:'Best inferred Imperial Age completion in a qualified standard-start Game.'},
   {id:'army20',title:'An army taking shape',category:'Army',emblem:'banner',family:'army',aggregation:'BEST',thresholds:[3000,5000,8000],unit:'resources at 20:00',checkpoint:1200000,meaning:'Best net military queue investment at 20:00, at base catalogue costs; not surviving army value.'},
