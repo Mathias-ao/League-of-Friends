@@ -122,6 +122,53 @@ class ControlledProofShapeTests(unittest.TestCase):
         self.assertEqual(counter(method(b,stats,half))["decision"],"PENDING")
         self.assertEqual(counter(method(b,stats,half))["sourceCoverage"],"LIMITED")
 
+    def test_passive_move_and_garrison_only_cannot_mint_reverse_action(self):
+        b,stats,actions=source_case()
+        passive=deepcopy(actions)
+        for e in passive:
+            if e["eventId"] in ("counter1","counter2"):
+                e["sourceActionName"]="MOVE"
+        pending=counter(method(b,stats,passive))
+        self.assertEqual(pending["decision"],"PENDING")
+        self.assertIn("TWO_CONTROLLER_BOUND_DEFENDER_OWN_TARGET_ORDERS_MISSING",
+                      pending["missingEvidence"])
+
+    def test_correlated_new_components_share_only_one_source_method(self):
+        b,stats,actions=source_case()
+        d=deepcopy(stats["pairSocialEvidence"]["deeds"][-1])
+        d.update(deedId="counter-again",incidentIds=["counter-again-independent"],
+                 sourceEventIds=["counter3","counter4"],
+                 startedAt={"atMs":15500,"operationOrdinal":55},
+                 endedAt={"atMs":15700,"operationOrdinal":56})
+        for f in d["facets"]:
+            f["sourceEventIds"]=["counter3","counter4"]
+            for i,detail in enumerate(f["targetEvidence"],start=3):
+                detail["sourceEventId"]="counter"+str(i)
+        stats["pairSocialEvidence"]["deeds"].append(d)
+        nc=deepcopy(b["context"]["deedContexts"][-1])
+        nc.update(sourceDeedId="counter-again",
+                  sourceIncidentIds=["counter-again-independent"],
+                  sourceEventIds=["counter3","counter4"],
+                  firstAtMs=15500,lastAtMs=15700)
+        b["context"]["deedContexts"].append(nc)
+        actions.extend([
+            {"eventId":"counter3","actorPlayerId":2,"timestampMs":15500,
+             "operationOrdinal":55,"sourceActionName":"ORDER","targetInstanceId":77},
+            {"eventId":"counter4","actorPlayerId":2,"timestampMs":15700,
+             "operationOrdinal":56,"sourceActionName":"ORDER","targetInstanceId":77},
+        ])
+        for det in b["context"]["engagementContexts"]:
+            if det["kind"] in ("SKIRMISH","TECHNICAL_BATTLE"):
+                det["sourceEventIds"]+=["counter3","counter4"]
+        out=method(b,stats,actions)
+        directed=[x for x in out["episodes"] if x["actorReplayPlayerId"]==2]
+        self.assertEqual(len(directed),2)
+        self.assertEqual(sum(x["decision"]=="SOURCE_ADMITTED" for x in directed),1)
+        self.assertTrue(any("CORRELATED_SOURCE_DETECTOR_ALREADY_ADMITTED"
+                            in x["missingEvidence"] for x in directed))
+        self.assertEqual(out["claims"],[])
+        self.assertFalse(out["officialWrites"])
+
     def test_no_new_credit_from_duplicate_pov_or_stale_source(self):
         b,stats,actions=source_case()
         before=method(b,stats,actions)
