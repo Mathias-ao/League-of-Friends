@@ -129,14 +129,16 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
 }){
   if(input.personalityTaxonomy && !privatePersonalityE2EEnabled(input.env))
     throw new HttpsError('failed-precondition','Private Personality test policy disabled.');
-  const current=await collectMyCurrentBattleHistory(input);
+  // Reuse the authenticated, transaction-fenced approved schedule/plan seam.
+  // Missing firstCompletedAt must not be substituted by upload/document order.
+  const current=await collectMyCurrentBattleHistory({...input,includeScheduleOrder:true});
   // Only the authenticated complete current-source reader may supply history
   // and the actor. Entire-set revision fencing remains INT-B's responsibility.
   const pilot=privatePersonalityE2EEnabled(input.env)?
     privatePersonalityPolicy(input.actor.playerId,current.loaded,
       input.personalityTaxonomy??PRIVATE_SOURCE_TAXONOMY):null;
   const personality=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,
-    current.inputDigest,pilot?.context,pilot?.calibration??null);
+    current.inputDigest,pilot?.context,pilot?.calibration??null,current.scheduleOrders);
   const response={version:'AOF_INT_B_PRIVATE_HISTORY_1' as const,contract:SOCIAL_V1_CONTRACT,
     visibility:'OWNER_ONLY' as const,ownerPlayerId:input.actor.playerId,inputDigest:current.inputDigest,
     status:current.pending.length?'PENDING_INPUTS' as const:'CURRENT_INPUTS' as const,
