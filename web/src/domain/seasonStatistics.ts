@@ -204,8 +204,11 @@ export class SeasonStatisticsExperience{
         // Current known Game identities survive source withdrawal. A missing
         // Game can only be detected when an authoritative manifest names it.
         for(const game of this.knownGames){
+          if(!grouped.has(game.matchId))continue;
           const player=game.players.find(p=>p.playerId===playerId);
-          if(!player||!seasonMetricEligible(metric,game,player))continue;
+          // An unusable sibling may have no projected roster. Its known Game
+          // identity still prevents this Battle being declared complete.
+          if(player&&!seasonMetricEligible(metric,game,player))continue;
           const ids=expected.get(game.matchId)??new Set<string>();
           ids.add(game.gameId);
           for(const sibling of (game as GameStatistics&{knownGameIds?:string[]}).knownGameIds??[])
