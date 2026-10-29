@@ -68,21 +68,52 @@ class MilestoneRecordPolicy197DesignTests(unittest.TestCase):
         self.assertIn("plain 22:10 Castle research+projection", p)
         self.assertIn("no automatic trophy", p.lower())
 
-    def test_trophy_maturity_rules_are_explicitly_unapproved(self) -> None:
+    def test_transferable_competitive_trophy_policy_is_owner_corrected(self) -> None:
         p = self.policy
-        self.assertIn("End-of-Season laureate (RECOMMENDED)", p)
-        self.assertIn("Post-maturity record-breaker", p)
-        self.assertIn("Mature checkpoint champion + Season end", p)
-        self.assertIn("no Swift Ascent trophy", p)
-        self.assertIn("T_FC", p)
-        self.assertIn("N_distinctEligibleBattles", p)
-        self.assertIn("N_comparablePlayers", p)
-        self.assertIn("null", p)
-        self.assertIn("early", p)
-        self.assertIn("Retrospective early Games", p)
-        self.assertIn("Ties and correction", p)
-        self.assertFalse(self.curated["ownerDecisions2026Oct28"]
-                         ["selection3A"]["sourceReady"])
+        self.assertIn("SUPERSEDES the former end-of-Season-only", p)
+        self.assertIn("transferable possession", p)
+        self.assertIn("STRICTLY_BETTER_GAME", p)
+        self.assertIn("TRANSFERS", p.upper())
+        self.assertIn("PENDING_TIE_POLICY", p)
+        self.assertIn("REBUILD_SOURCE_LEDGER", p)
+        self.assertIn("RESTORE_RIGHTFUL_HOLDER_OR_UNCLAIMED", p)
+        self.assertIn("SEASON_ARCHIVED", p)
+        self.assertIn("Alice → Bruno → Clara", p)
+        self.assertIn("Nomad 13:40", p)
+        self.assertIn("Migration 13:50", p)
+        self.assertIn("no automatic trophy", p.lower())
+        self.assertIn("The Castle Crown", p)
+        self.assertIn("Crown of the Castle Age", p)
+        self.assertIn("The Castle Vanguard", p)
+        self.assertIn("display name unapproved", p.lower())
+        self.assertIn("The Swift Ascent", p)
+        self.assertIn("rejected", p.lower())
+        self.assertNotIn("End-of-Season laureate (RECOMMENDED)", p)
+        self.assertNotIn("SEASON_FINALIZED ∧", p)
+
+    def test_maturity_absolute_thresholds_are_null_and_historical_distinctions_separate(self) -> None:
+        p = self.policy
+        for key in ("T_FC", "D_elapsed", "N_distinctEligibleBattles",
+                    "N_comparablePlayers", "PENDING_MATURITY",
+                    "initial true tie", "source revision",
+                    "later strictly better", "Season end archives"):
+            self.assertIn(key.lower(), p.lower())
+        self.assertIn("Distinctions", p)
+        o = self.curated["ownerDecisions2026Oct29"]
+        self.assertFalse(o["grantOrPublicationAuthorised"])
+        self.assertEqual(o["internalTrophyId"], "AR2_TROPHY_SWIFT_ASCENT")
+        self.assertEqual(o["recordId"], "AR2_REC_CASTLE")
+        self.assertEqual(o["publicName"], "NOT_APPROVED")
+        self.assertEqual(len(o["nameCandidates"]), 3)
+        self.assertTrue(all(v is None for v in o["thresholds"].values()))
+        self.assertEqual(len(o["retainedOwnerDirections"]), 5)
+        candidate = next(t for t in self.curated["trophyCandidates"]
+                         if t["id"] == "AR2_TROPHY_SWIFT_ASCENT")
+        self.assertEqual(candidate["name"], "UNAPPROVED_PLAYER_FACING_NAME")
+        self.assertEqual(candidate["rejectedLegacyDisplayName"], "The Swift Ascent")
+        self.assertEqual(candidate["firstTieWithoutIncumbent"],
+                         "PENDING_OWNER_TIE_POLICY_NO_GRANT")
+        self.assertIn("TRANSFERABLE", candidate["status"])
 
     def test_opportunity_not_same_map_civ_and_regression_negatives(self) -> None:
         p = self.policy
