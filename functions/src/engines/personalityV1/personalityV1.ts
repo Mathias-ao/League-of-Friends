@@ -209,6 +209,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
       sourceHash:game.sourceHash,authorityRevision:game.authorityRevision,sourceAuthority:game.sourceAuthority,
       contextKey:keyOf(c),eligible:false,features:result};
   }
+  if(!c)throw new Error('PERSONALITY_CONTEXT_ADMISSION_INVARIANT');
   const military = obj(p.military), economy = obj(p.economy), mp = obj(p.mapPresence);
   const commitment = obj(economy.resourceCommitment), spend = obj(military.militarySpend);
   const total = num(obj(commitment.resourcesCommitted).total);
