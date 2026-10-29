@@ -166,9 +166,10 @@ export class SeasonStatisticsExperience{
   readonly games:GameStatistics[];
   /** Current manifest before invalid/withdrawn Game measurements are hidden. */
   readonly knownGames:GameStatistics[];
-  constructor(games:GameStatistics[]){
+  constructor(games:GameStatistics[],knownSourceGames:GameStatistics[]=games){
+    const selectedKeys=new Set(games.map(game=>game.matchId+'/'+game.gameId));
     const revisions=new Map<string,GameStatistics>();
-    for(const game of games){const key=game.matchId+'/'+game.gameId,previous=revisions.get(key);if(!previous||game.revision>previous.revision)revisions.set(key,game);}
+    for(const game of knownSourceGames){const key=game.matchId+'/'+game.gameId,previous=revisions.get(key);if(!previous||game.revision>previous.revision)revisions.set(key,game);}
     const order=(a:GameStatistics,b:GameStatistics)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId);
     const byHash=new Map<string,GameStatistics>(),noHash:GameStatistics[]=[];
     for(const game of [...revisions.values()].sort(order)){
@@ -179,7 +180,7 @@ export class SeasonStatisticsExperience{
       if(!previous||(!previous.eligible&&game.eligible))byHash.set(game.sourceHash,game);
     }
     this.knownGames=[...noHash,...byHash.values()].sort(order);
-    this.games=this.knownGames.filter(game=>game.eligible);
+    this.games=this.knownGames.filter(game=>selectedKeys.has(game.matchId+'/'+game.gameId)&&game.eligible&&game.affectsSeason);
   }
   get battleCount():number{return new Set(this.games.map(game=>game.matchId)).size;}
   aggregate(mode:SeasonDisplayMode='perBattle'):SeasonAggregatePlayer[]{
