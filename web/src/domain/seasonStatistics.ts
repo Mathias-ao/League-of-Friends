@@ -111,7 +111,31 @@ interface SeasonTextPlayer extends PlayerMeasurement {seasonText?:Record<string,
 export interface SeasonAggregateValue {value:number|null;text:string|null;sharePercent:number|null;samples:number;eligibleGames:number;models:string[];/** Samples and completeBattles count independent source-complete Battles. */eligibleBattles?:number;observedGames?:number;completeBattles?:number;selectedModel?:string|null;excludedModels?:string[];partialBattles?:number;}
 
 export interface SeasonAggregatePlayer {playerId:string;name:string;games:number;battles:number;values:Record<string,SeasonAggregateValue>;}
-export interface SeasonRecord {metricId:string;value:number;playerId:string;name:string;matchId:string;gameId:string;civilization:string|null;orderAtMs:number;contextKey:string;model:string;}
+/** Optional *source-qualified* starting opportunity; absent is never inferred from map/civ. */
+export interface VerifiedRecordStart {
+  status:'VERIFIED_SOURCE';
+  startMode:'STANDARD'|'NOMAD'|'MIGRATION'|'CUSTOM';
+  startingAge:'DARK'|'OTHER';
+  startingTownCenters:number;
+  resourceMode:'STANDARD'|'ALTERED';
+  gameSpeed:'NORMAL'|'OTHER';
+  environment:'LAND'|'HYBRID'|'WATER'|'OTHER';
+  patch:string;
+  evidenceVersion:string;
+}
+export function recordStartCohort(game:GameStatistics):string|null{
+  const start=(game as GameStatistics&{startOpportunity?:VerifiedRecordStart}).startOpportunity;
+  if(start?.status!=='VERIFIED_SOURCE'||!['STANDARD','NOMAD','MIGRATION','CUSTOM'].includes(start.startMode)||
+    !Number.isInteger(start.startingTownCenters)||start.startingTownCenters<0||
+    !['DARK','OTHER'].includes(start.startingAge)||!['STANDARD','ALTERED'].includes(start.resourceMode)||
+    !['NORMAL','OTHER'].includes(start.gameSpeed)||!['LAND','HYBRID','WATER','OTHER'].includes(start.environment)||
+    !start.patch?.trim()||!start.evidenceVersion?.trim())return null;
+  // Only equivalent verified opening opportunities compare. The identity is
+  // deliberately independent of civilization and ordinary map name.
+  return [start.startMode,start.startingAge,start.startingTownCenters,start.resourceMode,
+    start.gameSpeed,start.environment,start.patch,start.evidenceVersion].join('|');
+}
+export interface SeasonRecord {metricId:string;value:number;playerId:string;name:string;matchId:string;gameId:string;civilization:string|null;orderAtMs:number;contextKey:string;model:string;startCohort:string|null;}
 
 export function seasonMetricEligible(metric:SeasonMetricDefinition,game:GameStatistics,player:PlayerMeasurement):boolean{
   if(metric.eligibility!=='team')return true;
@@ -267,8 +291,8 @@ export class SeasonStatisticsExperience{
     for(const game of this.games)for(const metric of SEASON_METRICS.filter(metric=>metric.record&&metric.kind==='number'))for(const player of game.players){
       if(!seasonMetricEligible(metric,game,player))continue;
       const value=player.values[metric.id],model=player.models[metric.id];if(value==null||!model||model==='unknown')continue;
-      const key=[metric.id,game.contextKey,model].join('|'),previous=result.get(key)??[];
-      const record={metricId:metric.id,value,playerId:player.playerId,name:player.name,matchId:game.matchId,gameId:game.gameId,civilization:player.civilization,orderAtMs:game.orderAtMs,contextKey:game.contextKey,model};
+      const startCohort=recordStartCohort(game),key=[metric.id,game.contextKey,model,startCohort??'UNVERIFIED_START'].join('|'),previous=result.get(key)??[];
+      const record={metricId:metric.id,value,playerId:player.playerId,name:player.name,matchId:game.matchId,gameId:game.gameId,civilization:player.civilization,orderAtMs:game.orderAtMs,contextKey:game.contextKey,model,startCohort};
       if(!previous.length||(metric.record==='max'?value>previous[0].value:value<previous[0].value))result.set(key,[record]);
       else if(value===previous[0].value&&!previous.some(row=>row.playerId===player.playerId))result.set(key,[...previous,record]);
     }
