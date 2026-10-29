@@ -11,6 +11,7 @@ from hashlib import sha256
 import json
 
 from social_v1_source_grades import admit_contextual_source_grades
+from social_v1_metric_grade_candidates import prepare_social_metric_grade_candidates
 from social_v1_source_measurements import _original_index
 
 VERSION = "AOF_SOC_V1G_DEFENDER_COUNTER_TARGET_V1_PROPOSED"
@@ -144,19 +145,25 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
     old = admit_contextual_source_grades(
         statistics=statistics, context=context, source_measurements=source_measurements,
         action_events=action_events, game_scope=game_scope)
+    canonical = prepare_social_metric_grade_candidates(
+        statistics=statistics, context=context,
+        source_measurements=source_measurements, action_events=action_events,
+        game_scope=game_scope)
+    groups = {g["candidateId"]: g for g in canonical["candidateEpisodeGroups"]}
     originals = _original_index(action_events, 600000)
     episodes = []
     consumed = {}
-    for group in old["episodes"]:
+    for old_entry in old["episodes"]:
+        group = groups[old_entry["sourceCandidateId"]]
         actor, other = group["actorReplayPlayerId"], group["counterpartReplayPlayerId"]
         reasons = []
         relation = _relation(statistics, actor, other)
         if relation != "FIXED_OPPONENTS":
             reasons.append("FIXED_OPPONENT_RELATION_OR_ROSTER_UNAVAILABLE")
-        current = next(g for g in group["perTrackGrades"] if g["track"] == "RIVALRY")
+        current = next(g for g in old_entry["perTrackGrades"] if g["track"] == "RIVALRY")
         if current["decision"] == "SOURCE_ADMITTED":
             reasons.append("EXISTING_RAID_RIVALRY_ALREADY_ADMITTED")
-        if group["sourcePosition"]["order"] != "ORDERED":
+        if group["firstSourceMoment"]["order"] != "ORDERED":
             reasons.append("ORIGINAL_EVENT_ORDER_UNAVAILABLE")
         if any(x["kind"] == "STOP_OR_CANCEL_CONTEXT_NOT_PROVEN_CANCELLATION"
                for x in group.get("counterevidenceCandidates", [])):
@@ -183,11 +190,11 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
                 consumed.setdefault(k, set()).update(detectors)
         decision = "SOURCE_ADMITTED" if not reasons else "PENDING"
         episodes.append({
-            "sourceCandidateId": group["sourceCandidateId"],
-            "sourceIndependentContributionKey": group["sourceIndependentContributionKey"],
+            "sourceCandidateId": old_entry["sourceCandidateId"],
+            "sourceIndependentContributionKey": old_entry["sourceIndependentContributionKey"],
             "actorReplayPlayerId": actor, "counterpartReplayPlayerId": other,
             "sourceEventIds": own, "sourceDeedIds": deepcopy(group["sourceDeedIds"]),
-            "sourcePosition": deepcopy(group["sourcePosition"]),
+            "sourcePosition": deepcopy(old_entry["sourcePosition"]),
             "methodVersion": METHOD, "track": "RIVALRY",
             "decision": decision, "sourceCoverage": "LIMITED",
             "methodCoverage": "ADMITTED" if decision == "SOURCE_ADMITTED" else "PENDING",
