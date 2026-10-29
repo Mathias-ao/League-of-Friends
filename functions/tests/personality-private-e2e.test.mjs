@@ -137,7 +137,10 @@ test('corrected source, missing sibling and missing opportunity remove evidence,
   assert.notEqual(correction.personalityProfile.projectionRevision,initial.personalityProfile.projectionRevision);
   const missingCivilization=game('battle-B','g1',1);
   delete missingCivilization.statistics.matchFacts.players[0].civilization.rawId;
-  assert.ok(project([a,missingCivilization],approved).view.personalityProfile.sliders.every(s=>s.value===null));
+  const civGap=project([a,missingCivilization],approved).view;
+  assert.equal(civGap.personalityProfile.sliders.find(s=>s.axis==='SPECIALIST_IMPROVISER').value,null);
+  for(const axis of ['BOOMER_AGGRESSOR','CAUTIOUS_BOLD','COMPACT_EXPANSIVE'])
+    assert.equal(civGap.personalityProfile.sliders.find(s=>s.axis===axis).status,'READY',axis);
   const missingSector=game('battle-B','g1',1);
   delete missingSector.statistics.participants[0].mapPresence.buildingSectors;
   const partial=project([a,missingSector],approved).view;
@@ -171,7 +174,8 @@ test('forged reviewed proof, wrong patch, map, start and subject aliases fail cl
   const invalidCivilization=game('battle-B','g1',1);
   invalidCivilization.statistics.matchFacts.players[0].civilization.rawId=0;
   const out=project([a,invalidCivilization],known).view;
-  assert.ok(out.personalityProfile.sliders.every(x=>x.value===null));
+  assert.equal(out.personalityProfile.sliders.find(x=>x.axis==='SPECIALIST_IMPROVISER').value,null);
+  assert.equal(out.personalityProfile.sliders.find(x=>x.axis==='BOOMER_AGGRESSOR').status,'READY');
   assert.equal(admitPersonalityContext(a,'not-the-owner',proof(a)).context,null);
 });
 test('unreviewed military taxonomy and compact chronology leave only their axes Developing',()=>{
