@@ -71,6 +71,16 @@ test('Castle leader is not inferred from Nomad, Migration or unverified start de
   // A non-age metric with admissible observations remains unaffected.
   assert.deepEqual(new StatisticsExperience(games).aggregate('average')[0].values.raidsOut.value,2);
 });
+test('five source-qualified standard Games survive separate sixth special-start Game',()=>{
+  const games=Array.from({length:6},(_,i)=>game(i));
+  for(const g of games){g.players[0].values.castle=600000;g.players[1].values.castle=800000;}
+  games[5].startOpportunity={...games[5].startOpportunity,startMode:'NOMAD',startingTownCenters:0};
+  games[5].players[0].values.castle=200000;
+  const engine=new StatisticsExperience(games);
+  assert.deepEqual(engine.leaders('castle'),['a'],'special start cannot outrank or erase the five comparable standard Games');
+  const original=games[4];original.startOpportunity=null;
+  assert.deepEqual(new StatisticsExperience(games).leaders('castle'),[],'four standard Games fail the five-Game qualification');
+});
 test('legacy qualified peers survive a newcomer, absent unrelated metric and ordinary context changes',()=>{
   const games=Array.from({length:5},(_,i)=>game(i,{contextKey:i%2?'ordinary-map-A':'ordinary-map-B'}));
   for(const g of games){g.players=g.players.filter(p=>p.playerId!=='c');g.players[0].values.castle=600000;g.players[1].values.castle=700000;}
