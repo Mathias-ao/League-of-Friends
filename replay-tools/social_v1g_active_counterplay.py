@@ -1,6 +1,6 @@
 """#182 narrow default-OFF defender-owned Rivalry source method.
 
-This module is NOT a new scorer, historical claim converter, deployed method,
+This module is NOT an ADMITTED source method, scorer, historical claim converter, deployed method,
 executed-combat witness, or subjective relationship path selector. It
 reconstructs the #158/#173 producer from the unchanged original source and
 emits only a versioned PRIVATE source-method candidate. Sol owns READY
@@ -205,7 +205,9 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
                 reasons.append("CORRELATED_SOURCE_DETECTOR_ALREADY_ADMITTED")
             else:
                 consumed.setdefault(k, set()).update(detectors)
-        decision = "SOURCE_ADMITTED" if not reasons else "PENDING"
+        # No owner-reviewed method admission or #139 conversion until a
+        # hash-pinned original positive and adjacent real negative pass.
+        decision = "SOURCE_MATCH_PROPOSED" if not reasons else "PENDING"
         episodes.append({
             "sourceCandidateId": old_entry["sourceCandidateId"],
             "sourceIndependentContributionKey": old_entry["sourceIndependentContributionKey"],
@@ -214,8 +216,8 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
             "sourcePosition": deepcopy(old_entry["sourcePosition"]),
             "methodVersion": METHOD, "track": "RIVALRY",
             "decision": decision, "sourceCoverage": "LIMITED",
-            "methodCoverage": "ADMITTED" if decision == "SOURCE_ADMITTED" else "PENDING",
-            "gradeBandId": "ORDINARY" if decision == "SOURCE_ADMITTED" else None,
+            "methodCoverage": "PROPOSED" if decision == "SOURCE_MATCH_PROPOSED" else "PENDING",
+            "gradeBandId": None,
             "corroboration": engagement + prior,
             "missingEvidence": sorted(set(reasons)),
             "opportunity": {"pastOnlyAttackerPressureAvailable": bool(prior),
@@ -235,7 +237,8 @@ def prepare_active_defender_counterplay(*, statistics, context, source_measureme
         "gameScope": deepcopy(old["gameScope"]),
         "gameScopeAuthenticated": False,
         "episodes": episodes,
-        "sourceAdmittedCount": sum(x["decision"] == "SOURCE_ADMITTED" for x in episodes),
+        "sourceCandidateCount": sum(x["decision"] == "SOURCE_MATCH_PROPOSED" for x in episodes),
+        "sourceAdmittedCount": 0,
         "sourceProjectionRevision": _digest([VERSION, old["projectionRevision"], episodes]),
         "claims": [], "effects": [], "actorWitnesses": [], "receipts": [],
         "publicationAllowed": False, "officialWrites": False,
