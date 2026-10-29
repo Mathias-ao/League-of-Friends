@@ -151,13 +151,22 @@ class TransferableFastCastleTrophyPolicyTests(unittest.TestCase):
         self.assertEqual(reference_projection([a, b], maturity_approved=True,
                                               prior_holder="Alice"),
                          (("Alice",), "Alice", "CURRENT_POSSESSION"))
-        # A better measured time without validated performance qualification
-        # is not automatically an eligible competitive possession.
+        # A faster but withdrawn or source-incomplete Game cannot challenge.
         invalid = ExampleGame("g-c", "b-c", "Clara", 899000, "Arabia", "Celts",
-                              exceptional_time_passed=False)
+                              current_accepted=False)
         self.assertEqual(reference_projection([a, b, invalid],
                                               maturity_approved=True,
-                                              prior_holder="Alice")[1], None)
+                                              prior_holder="Alice"),
+                         (("Alice",), "Alice", "CURRENT_POSSESSION"))
+        # Independently ensure the absolute trophy quality gate is distinct
+        # from becoming a valid public Record Book holder.
+        ordinary_record = ExampleGame(
+            "g-d", "b-d", "David", 900000, "Arabia", "Celts",
+            exceptional_time_passed=False
+        )
+        self.assertEqual(reference_projection([ordinary_record],
+                                              maturity_approved=True),
+                         (("David",), None, "PENDING_ABSOLUTE_PERFORMANCE"))
 
 
 if __name__ == "__main__":
