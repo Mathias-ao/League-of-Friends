@@ -42,14 +42,14 @@ export type MapFamily = 'LAND' | 'WATER' | 'HYBRID';
 export type StartFamily = 'STANDARD' | 'NOMAD' | 'CUSTOM';
 export interface GameContext {
   format: Format;
-  mapFamily: MapFamily;
-  startFamily: StartFamily;
-  mapId: string;
+  mapFamily: MapFamily | null;
+  startFamily: StartFamily | null;
+  mapId: string | null;
   /** Server-classified duration category; numeric cutoffs are an approval decision. */
-  durationFamily: string;
-  civilization: string;
+  durationFamily: string | null;
+  civilization: string | null;
   /** Approved opportunity class, not an assumed equivalence of all civilizations. */
-  civilizationOpportunityKey: string;
+  civilizationOpportunityKey: string | null;
   observedUntilMs: number;
   durationMs: number;
   /** FFA hostile episodes cannot be inferred from static initial diplomacy. */
@@ -78,7 +78,7 @@ export interface AuthorizedGame {
   playedAtMs: number;
   /** Server-derived approved Event/plan/explicit-Game ordering; never upload time. */
   historicalOrder?: {event: number; battle: number; game: number; revision: string};
-  context: GameContext;
+  context: GameContext | null;
   /** The already-qualified participant row from Canonical Statistics V1. */
   statistics: unknown;
 }
@@ -149,8 +149,9 @@ const feature = (axis: PersonalityAxis, semantic: Feature['semantic'], numerator
 };
 const missing = (axis: PersonalityAxis, semantic: Feature['semantic'], why: string): Feature =>
   feature(axis, semantic, null, null, [], [], why);
-const keyOf = (c: GameContext): string =>
-  [c.format, c.mapFamily, c.startFamily, c.mapId, c.durationFamily, c.civilizationOpportunityKey].join('|');
+const keyOf = (c: GameContext | null): string =>
+  c ? [c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,
+    c.civilizationOpportunityKey].map(x=>x??'UNKNOWN').join('|') : 'CONTEXT_UNAVAILABLE';
 /**
  * Personality describes habits across ordinary civilizations, maps and game lengths.
  * These remain exact source/context evidence, but not a reason to divide a player's
@@ -161,7 +162,9 @@ const keyOf = (c: GameContext): string =>
  * separate from ordinary initial-TC Games. Modes remain distinct because
  * their interaction opportunities differ.
  */
-export function personalityComparisonGroup(c: GameContext, axis?: PersonalityAxis): string {
+export function personalityComparisonGroup(c: GameContext | null, axis?: PersonalityAxis): string {
+  // An unreviewed start/family cannot silently become an ordinary cohort.
+  if(!c||!c.startFamily||!c.mapFamily)return 'SOURCE_OPPORTUNITY_NOT_CLASSIFIED';
   // Economy's proportion of *recorded resource commitments* remains comparable
   // across ordinary starts on land or water, with complete cost coverage.
   // Tactical, military-family and expansion opportunities can change on
@@ -173,11 +176,13 @@ export function personalityComparisonGroup(c: GameContext, axis?: PersonalityAxi
   ].join('|');
   return [c.format,c.startFamily,c.mapFamily,c.mapId].join('|');
 }
-const known = (c: GameContext): boolean => !!c.mapId && !!c.durationFamily && !!c.civilization &&
-  !!c.civilizationOpportunityKey && num(c.observedUntilMs) !== null &&
-  num(c.durationMs) !== null && c.observedUntilMs >= c.durationMs &&
-  ['ONE_V_ONE','TEAM','FFA'].includes(c.format) && ['LAND','WATER','HYBRID'].includes(c.mapFamily) &&
-  ['STANDARD','NOMAD','CUSTOM'].includes(c.startFamily);
+// Source/roster/subject admission is independent of an axis' opportunity.
+// Only a verified format/observed clock is universal; reviewed map family,
+// start, civilization and duration bucket qualify individual axes or anchors.
+const known = (c: GameContext | null): c is GameContext => !!c &&
+  num(c.observedUntilMs) !== null && num(c.durationMs) !== null &&
+  c.observedUntilMs >= c.durationMs &&
+  ['ONE_V_ONE','TEAM','FFA'].includes(c.format);
 const ids = (items: Json[]): string[] => items.map(x => id(x.sourceEventId)).filter((x): x is string => !!x);
 
 /** Derive exactly one observation per axis from retained player statistics. No endpoint scoring here. */
@@ -282,7 +287,8 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   // D: family breadth of positive military *queue requests*, with civilization/map
   // opportunity counted from separately reviewed taxonomy (not observed selection).
   const composition = obj(military.composition), requests = obj(military.militaryUnitsTrained);
-  const allowed = config?.availableMilitaryFamilies[c.civilizationOpportunityKey] ?? [];
+  const allowed = c?.civilizationOpportunityKey ?
+    (config?.availableMilitaryFamilies[c.civilizationOpportunityKey] ?? []) : [];
   const amounts = allowed.map(k => num(composition[k]));
   const included = amounts.every(x => x !== null) ? amounts.reduce<number>((s,x) => s+(x as number),0) : 0;
   const totalRequests = num(requests.positiveQueueAmount);
