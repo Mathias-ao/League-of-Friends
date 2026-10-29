@@ -108,7 +108,7 @@ export const seasonMetric=(id:string)=>SEASON_METRICS.find(metric=>metric.id===i
 export const seasonMetricsFor=(category:Category)=>SEASON_METRICS.filter(metric=>metric.category===category);
 
 interface SeasonTextPlayer extends PlayerMeasurement {seasonText?:Record<string,string|null>}
-export interface SeasonAggregateValue {value:number|null;text:string|null;sharePercent:number|null;samples:number;eligibleGames:number;models:string[];/** Samples are distinct Battles, never individual Games. */eligibleBattles?:number;observedGames?:number;completeBattles?:number;selectedModel?:string|null;excludedModels?:string[];}
+export interface SeasonAggregateValue {value:number|null;text:string|null;sharePercent:number|null;samples:number;eligibleGames:number;models:string[];/** Samples and completeBattles count independent source-complete Battles. */eligibleBattles?:number;observedGames?:number;completeBattles?:number;selectedModel?:string|null;excludedModels?:string[];partialBattles?:number;}
 
 export interface SeasonAggregatePlayer {playerId:string;name:string;games:number;battles:number;values:Record<string,SeasonAggregateValue>;}
 export interface SeasonRecord {metricId:string;value:number;playerId:string;name:string;matchId:string;gameId:string;civilization:string|null;orderAtMs:number;contextKey:string;model:string;}
@@ -140,11 +140,14 @@ function categoryMode(values:string[]):{text:string|null;sharePercent:number|nul
  */
 export class SeasonStatisticsExperience{
   readonly games:GameStatistics[];
+  /** Current manifest before invalid/withdrawn Game measurements are hidden. */
+  readonly knownGames:GameStatistics[];
   constructor(games:GameStatistics[]){
     const revisions=new Map<string,GameStatistics>();
     for(const game of games){const key=game.matchId+'/'+game.gameId,previous=revisions.get(key);if(!previous||game.revision>previous.revision)revisions.set(key,game);}
     const hashes=new Set<string>();
-    this.games=[...revisions.values()].sort((a,b)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId)).filter(game=>{if(!game.eligible)return false;if(game.sourceHash&&hashes.has(game.sourceHash))return false;if(game.sourceHash)hashes.add(game.sourceHash);return true;});
+    this.knownGames=[...revisions.values()].sort((a,b)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId)).filter(game=>{if(game.sourceHash&&hashes.has(game.sourceHash))return false;if(game.sourceHash)hashes.add(game.sourceHash);return true;});
+    this.games=this.knownGames.filter(game=>game.eligible);
   }
   get battleCount():number{return new Set(this.games.map(game=>game.matchId)).size;}
   aggregate(mode:SeasonDisplayMode='perBattle'):SeasonAggregatePlayer[]{
@@ -173,30 +176,59 @@ export class SeasonStatisticsExperience{
         const selected=observed.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen);
         const modelNames=chosen?[chosen]:[];
         const excludedModels=[...modelGroups.keys()].filter(model=>model!==chosen).sort();
-        const byBattle=[...grouped.values()].map(group=>{
+        const expected=new Map<string,Set<string>>();
+        // Current known Game identities survive source withdrawal. A missing
+        // Game can only be detected when an authoritative manifest names it.
+        for(const game of this.knownGames){
+          const player=game.players.find(p=>p.playerId===playerId);
+          if(!player||!seasonMetricEligible(metric,game,player))continue;
+          const ids=expected.get(game.matchId)??new Set<string>();
+          ids.add(game.gameId);
+          for(const sibling of (game as GameStatistics&{knownGameIds?:string[]}).knownGameIds??[])
+            if(typeof sibling==='string'&&sibling.trim())ids.add(sibling);
+          expected.set(game.matchId,ids);
+        }
+        const byBattle:{value:number|string;complete:boolean;id:string}[]=[];
+        for(const [battleId,group] of grouped){
           const members=group.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen&&observation(pair)!==null&&observation(pair)!=='');
-          if(!members.length)return null;
-          const raw=members.map(observation);
-          if(metric.kind==='category')return categoryMode(raw as string[]).text;
-          const numbers=raw as number[];
-          // Each multi-Game Battle has one representative typical Game value.
-          // Historic cumulative counts are handled separately in All-time.
-          return metric.aggregation==='median'?median(numbers):numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
-        }).filter((value):value is number|string=>value!==null);
-        const completeBattles=[...grouped.values()].filter(group=>group.every(pair=>selected.includes(pair))).length;
+          if(!members.length)continue;
+          const expectedIds=expected.get(battleId)??new Set(group.map(pair=>pair.game.gameId));
+          const complete=expectedIds.size>0&&[...expectedIds].every(gameId=>members.some(pair=>pair.game.gameId===gameId));
+          const raw=members.map(observation),numbers=raw as number[];
+          let battleValue:number|string|null=null;
+          if(metric.kind==='category')battleValue=categoryMode(raw as string[]).text;
+          else if(metric.id==='apm'){
+            // Replay duration, not number of uploads, is the APM opportunity.
+            const weighted=members.map(pair=>({value:observation(pair) as number,duration:pair.game.durationMs}));
+            if(weighted.every(item=>Number.isFinite(item.duration)&&item.duration>0))
+              battleValue=weighted.reduce((sum,item)=>sum+item.value*item.duration,0)/weighted.reduce((sum,item)=>sum+item.duration,0);
+          }else if(metric.id==='response'){
+            // The median of medians is not the median of all raid responses.
+            const responses=members.flatMap(pair=>pair.player.responseTimes.filter(v=>Number.isFinite(v)&&v>=0));
+            if(members.length===1&&responses.length===0)battleValue=numbers[0];
+            else if(members.every(pair=>pair.player.responseTimes.length>0))battleValue=median(responses);
+          }else battleValue=metric.aggregation==='median'?median(numbers):numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
+          if(battleValue!==null)byBattle.push({value:battleValue,complete,id:battleId});
+        }
+        const full=byBattle.filter(item=>item.complete);
+        // Use independent complete Battles for typical comparison. When none
+        // exists, retain partial observed information as a non-leading hint.
+        const usable=full.length?full:byBattle;
+        const selectedGames=selected.filter(pair=>byBattle.some(item=>item.id===pair.game.matchId));
+        const completeBattles=full.length;
         let value:number|null=null,text:string|null=null,sharePercent:number|null=null;
         if(metric.kind==='category'){
-          const chosenMode=categoryMode(byBattle as string[]);
+          const chosenMode=categoryMode(usable.map(item=>item.value as string));
           text=chosenMode.text;sharePercent=chosenMode.sharePercent;
         }else{
-          const numbers=byBattle as number[];
+          const numbers=usable.map(item=>item.value as number);
           if(numbers.length){
-            if(mode==='allTime'&&(metric.allTime==='sum'||metric.aggregation==='sum'))value=selected.reduce((sum,pair)=>sum+(observation(pair) as number),0);
+            if(mode==='allTime'&&(metric.allTime==='sum'||metric.aggregation==='sum'))value=selectedGames.reduce((sum,pair)=>sum+(observation(pair) as number),0);
             else if(metric.aggregation==='median')value=median(numbers);
             else value=numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
           }
         }
-        values[metric.id]={value,text,sharePercent,samples:byBattle.length,eligibleGames:eligible.length,eligibleBattles:grouped.size,observedGames:selected.length,completeBattles,models:modelNames,selectedModel:chosen,excludedModels};
+        values[metric.id]={value,text,sharePercent,samples:usable.length,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:selectedGames.length,completeBattles,partialBattles:byBattle.length-full.length,models:modelNames,selectedModel:chosen,excludedModels};
       }
       return {playerId,name:pairs.at(-1)?.player.name??playerId,games:pairs.length,battles:new Set(pairs.map(pair=>pair.game.matchId)).size,values};
     }).sort((a,b)=>a.name.localeCompare(b.name));
@@ -215,7 +247,7 @@ export class SeasonStatisticsExperience{
     const qualified=this.aggregate(mode).filter(row=>{
       const sample=row.values[metricId];
       return sample.value!==null&&sample.selectedModel!==null&&sample.selectedModel!=='unknown'&&
-        sample.samples>=minimumBattles&&sample.completeBattles===sample.samples;
+        sample.completeBattles>=minimumBattles;
     });
     const byModel=new Map<string,typeof qualified>();
     for(const row of qualified){const model=row.values[metricId].selectedModel!;byModel.set(model,[...(byModel.get(model)??[]),row]);}
