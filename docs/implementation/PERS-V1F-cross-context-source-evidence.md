@@ -1,6 +1,6 @@
 # PERS-V1F — Owner-corrected ordinary cross-context Personality; genuine T90 witness
 
-**Authority:** owner #204 / #170, Organiser #205; acceptance #132. Private-only policy `AOF_PERSONALITY_PRIVATE_E2E_V2`; original per-Game feature semantics `AOF_PERSONALITY_FEATURES_V1`. No source scoring grants, production sliders, migration, cloud or staging action. Main checkpoint: `1b5711006e70ff0e13b219cd11bbc82a37605706`.
+**Authority:** owner #204 / #170, Organiser #205; acceptance #132. Private-only policy `AOF_PERSONALITY_PRIVATE_E2E_V3` and partial context adapter `AOF_PERSONALITY_CONTEXT_ADMISSION_V2`; original per-Game feature semantics `AOF_PERSONALITY_FEATURES_V1`. No source scoring grants, production sliders, migration, cloud or staging action. Main checkpoint: `1b5711006e70ff0e13b219cd11bbc82a37605706`.
 
 ## Plain player meaning
 
@@ -68,3 +68,35 @@ Shared meaning with #206: **Game is the evidence unit; Battle is the independent
 ## Acceptance
 
 The draft PR must have exact-HEAD green backend + genuine-T90 workflow. Owner semantic review must independently accept the ordinary cross-map/civ rule and its nearest special-start/missing-taxonomy negatives. A previous green test for exact-match contexts cannot count as V2 product acceptance. No staging, cloud, flags, grants or deployment is authorized.
+
+
+## Sol independent review closure — 29 October 2026 (PR #203)
+
+Independent Sol review [#203 comment](https://github.com/Mathias-ao/League-of-Friends/pull/203#issuecomment-6483467641) found: (1) six context-source tests were broken by a newly imposed OFFICIAL proof-object shape in the pure adapter; (2) a missing Match \`firstCompletedAt\` still erased valid READY UNRESOLVED behavior; (3) CIV/duration/source context was still globally all-or-nothing.
+
+### 1. Result vs historical order: explicit source truth, no invented date
+
+The canonical approved schedule already exists at \`deriveSocialScheduleOrders\`, backed by the transaction-fenced \`collectMyCurrentBattleHistory(includeScheduleOrder:true)\`. The owner-private Personality reader now requests that **server-only** schedule evidence and passes it to \`projectPrivatePersonalityHistory(...,scheduleOrders)\`. Every scheduled Game must have:
+
+- matching \`battleId\`, \`gameId\`, \`eventId\`, \`seasonId\`, **explicit Game number**, approved Event/Match plan slot and source-bound actual roster;
+- the **ORDERED** \`AOF_SOCIAL_SCHEDULE_ORDER_1\` authority and a valid source derivation revision;
+- a verified positive Event schedule timestamp and approved Battle/slot ordinal.
+
+The event timestamp is stored as **scheduled Event start**, never claimed to be actual Game completion. \`historicalOrder.event/battle/game\` sorts same-Event Battles by approved plan slot **not alphabetic IDs or upload/created/arrival timestamps**. The Battle source revision includes the authoritative scheduling evidence; later corrections/plan revision produce new projections. Existing verified positive first-completed timestamps remain a compatible fallback for legacy Battle history, **not a fabricated replacement**. A Battle with neither an authoritative complete schedule nor verified completion remains Pending and is not assigned an ordering date. No UI publication or match result is changed.
+
+Sol exact controlled case: 2 distinct current READY source-bound Battles, both \`outcome:{qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null}\` and both \`match.firstCompletedAt=null\`; approved non-tied Event schedule, approved plan, contiguous Game #1, verified roster: **five-axis private controlled** values 30/50/0/0/33.33; independent Battles=2. Unapproved/revoked plan, wrong slot, warmup, missing Event schedule, forged event/season/Game-number/revision, forged roster, no approved order: **no two-Battle READY**. The synthetic inputs demonstrate the history *semantics*, not authenticated original League membership.
+
+### 2. Source admission and per-axis coverage
+
+- \`contextAdmission\` retains its strict **complete** \`context\` / \`ADMITTED\` result and full provenance \`missing[]\` inventory. It now also exposes \`behaviorContext\` only when the immutable current source/roster/subject **and actual verified format + clock** pass. Unreviewed map-family, start, civ, duration bucket or patch do not become fabricated enum values; missing values are \`null\`.
+- The private policy binds that partial context to the exact original source authority/revision digest, but only creates comparison anchors where **both map family and start are independently source-reviewed**. Missing versioned civ family/opportunity makes Specialist Pending only; missing reviewed duration label cannot veto verified cost accounting or strategic placement measurement. Missing start/map family cannot create ready global longitudinal comparisons.
+- \`measurePersonalityGame\` retains READY/revision/subject/slot/roster/format/verified clock and disputed/withdrawn/current source checks, but does not globally require a civ key or an arbitrary duration bucket. The individual axis evaluator retains specific evidence guards for request cost coverage, strategic placement model/build taxonomy, complete independent episode commands/FFA diplomacy, exact military family denominator, or observed expansion/home anchor.
+- Standalone \`admitPersonalityContext\` remains compatible with historical synthetic \`{qualification:'OFFICIAL'}\` test envelopes; the upstream canonical source loader validates full shape. \`UNRESOLVED\` **requires** exactly null \`winningPlayerIds\` and \`resultRevision\`, never a disguised OFFICIAL winner.
+- Provenance is not an approved opportunity: a classifier-less original can produce source-factual per-Game observations, but gets no anonymous standard-land anchor or invented five-axis score.
+
+### 3. Evidence summary and acceptance boundaries
+
+- Ordinary cross-map/civ 1v1 real-source **numerators/denominators** and conditional 3-axis T90 private simulation remain as above.
+- Two pending genuine T90 axes remain: independent attributed command episodes and exact patch×civ military family opportunity. No live T90 identity, reviewed map/start classification or official Battle mapping was synthesized.
+- No changes to Worker S Season Statistics, Sol #181, canonical match scoring, score publication, social reputation awards or deployment.
+- Exact-head CI must prove corrected pure context tests, private schedule positive/negative and the genuine original T90 workflow. A green *intermediate* head does not authorize merging this PR.
