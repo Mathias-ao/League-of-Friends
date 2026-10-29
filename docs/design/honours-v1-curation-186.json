@@ -1322,9 +1322,9 @@
     },
     {
       "type": "TROPHY",
-      "lifetime": "EARNED_HISTORY_UNLESS_SOURCE_INVALIDATED",
-      "unlock": "Separately owner-approved independently qualified major competitive record or official result",
-      "surface": "Prestige collection and optional bounded nameplate emblem"
+      "lifetime": "FOR_COMPETITIVE_RECORD_TROPHIES_TRANSFERABLE_CURRENT_POSSESSION_WITH_VALID_DATED_FORMER_HOLDER_HISTORY",
+      "unlock": "Separately owner-approved meaningful competitive current title, including current fastest compatible FC only after maturity AND absolute quality; other official-result feat trophies require independent exact path.",
+      "surface": "Current competitive trophy emblem only for current holder; valid past possession in dated factual succession, not a permanent medal. Other type-specific historic feat trophy semantics need separate policy."
     },
     {
       "type": "DISTINCTION",
@@ -1356,11 +1356,35 @@
     },
     {
       "id": "AR2_TROPHY_SWIFT_ASCENT",
-      "name": "The Swift Ascent",
-      "eligibility": "Owner 3A + #196/#197: strict source-qualified projected FC timing, owner-approved extraordinary ABSOLUTE speed gate AND owner-approved MATURE Season/league comparison gate with sufficient eligible comparable players/Games/Battles and elapsed official competitive history. Source `opening.ageUp.castle.ageUpAtMs` / AR2_REC_CASTLE, not raw research-start or actual engine-observed age completion. No automatic early record-holder trophy; maturation, retroactive eligibility, ties and vintage are STILL OPEN.",
-      "status": "SOURCE_ELIGIBILITY_WITH_ABSOLUTE_TIME_AND_SEASON_MATURITY_UNAPPROVED",
-      "anti": "No founding record trophy, no equal tie as new break, no record spam from repeat upload or correction; retain dated 'once broken' status when fairly surpassed, revoke on invalidated original source.",
-      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT"
+      "name": "UNAPPROVED_PLAYER_FACING_NAME",
+      "eligibility": "Owner #205 29 Oct supersedes end-of-Season laureate: transfer-capable competitive current trophy. After separately owner-approved early-Season maturity and extraordinary absolute FC time gates, current source-qualified strictly fastest comparable AR2_REC_CASTLE projected timing receives possession on actual qualification date. Each later strictly better accepted comparable result transfers immediately while Season is active. First uploader/early provisional holder receives none until mature. End Season archives succession, not trophy-only award.",
+      "status": "TRANSFERABLE_COMPETITIVE_POSSESSION_POLICY_DESIGN_ONLY_UNCONFIGURED",
+      "anti": "Equality never dethrones incumbent; initial true tie with no incumbent PENDING_TIE_POLICY (no upload-order arbitrary winner). Corrected/withdrawn Game restores next rightful current holder; former holder retains only valid dated possession history, never current nameplate trophy. Match/Game/POV and source model revision correction; no first-uploader maturity shortcut.",
+      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT",
+      "rejectedLegacyDisplayName": "The Swift Ascent",
+      "displayNameCandidates": [
+        {
+          "label": "The Castle Crown",
+          "subtitle": "Fastest Castle Age",
+          "status": "CANDIDATE_PREFERRED_NOT_APPROVED"
+        },
+        {
+          "label": "Crown of the Castle Age",
+          "subtitle": "Fastest Castle Age",
+          "status": "CANDIDATE_NOT_APPROVED"
+        },
+        {
+          "label": "The Castle Vanguard",
+          "subtitle": "Fastest Castle Age",
+          "status": "CANDIDATE_NOT_APPROVED"
+        }
+      ],
+      "scope": "PROPOSED_CURRENT_SEASON_COMPARABLE_STANDARD_START_COHORT_OWNER_SCOPE_PENDING",
+      "activePossessionModel": "MATURE_AND_ABSOLUTE_QUALIFIED_UNIQUE_RECORD_CURRENT_INCUMBENT_STRICT_BETTER_TRANSFER",
+      "firstTieWithoutIncumbent": "PENDING_OWNER_TIE_POLICY_NO_GRANT",
+      "seasonEnd": "ARCHIVE_FINAL_CURRENT_HOLDER_AND_VALID_SUCCESSION_WITH_CORRECTION_LOG",
+      "numericPerformanceGateMs": null,
+      "numericMaturityGates": null
     },
     {
       "id": "AR2_TROPHY_ANNALS_REWRITTEN",
@@ -1482,16 +1506,15 @@
     },
     {
       "id": "186-B",
-      "boundary": "After authentic source and owner-calibrated predicate review: default-OFF pure School qualifier for Drush+MANDATORY Drush Flush Feudal continuation on Elite Club, Scout OR Archer Rush, and Fast Castle Boom with two distinct early TC BUILD sites; test corrections, duplicate POV/multi-Game, no persistence/medal/entitlements.",
+      "boundary": "AFTER owner maturity/absolute/cohort approval: default-OFF pure qualifiers for strict three-Militia plus mandatory Drush Flush, Scout OR Archer, FC Boom; separately pure transfer-possession rule over source-current records (no grants/seeds/write/UI). Never assume end-of-Season-only laureate. Source correction/tie tests mandatory.",
       "canShipWithoutThresholds": false
     }
   ],
   "ownerQuestions": [
-    "Calibrate and explicitly approve all numerical tier gates and authentic source witnesses, including mandatory Feudal Drush Flush Elite Club; no percentile-based dynamic grants.",
-    "Choose Fast Castle trophy absolute projected-time standard, Season maturity clock+sample, retroactive eligibility, tie policy and former holder-vintage state in #196/#197.",
-    "Approve independent effect proof and mutual exclusivity with Worker D Watchkeeper's Seal for the two prioritised Distinctions; currently both SOURCE_BLOCKED.",
-    "Confirm public achievement rank text/consent/details and owner-only PB separation; approve publication only after trusted entitlement pipeline.",
-    "Decide later whether a separate cross-Event recognition meta-family in #198 joins the 37-family frozen baseline and specify genuine Event receipt admission."
+    "Owner approval of actual eligible absolute projected FC clock and maturation (elapsed official Events/time AND distinct independent eligible comparable players/Battles); all numbers null.",
+    "Owner policy for initial no-incumbent exact tie at maturity; equality never transfers an existing crown.",
+    "Select one player-facing Fast Castle trophy name from three candidates, retaining AR2_TROPHY_SWIFT_ASCENT stable internal ID until separately approved versioned migration.",
+    "Confirm Season standard-start compatible scope (ordinary maps/civs comparable where starts materially alike; unusual Nomad/Migration separate), and future league-wide scope if independently wanted."
   ],
   "ownerDecisions2026Oct28": {
     "source": "Owner five multiple-choice selections 1A/2A/3A/4C/5A in Worker C #186; read with owner #196/#197 milestone and FC maturity requirements and separate #198 Event extension",
@@ -1525,12 +1548,15 @@
       "reserveIds": [
         "AR2_TROPHY_ANNALS_REWRITTEN"
       ],
-      "swiftAscentPolicy": "AND of separately owner-approved exceptional absolute projected Castle timing plus mature comparative Season/league cohort; no first-upload trophy and no ordinary Season-holder grant",
+      "swiftAscentPolicy": "SUPERSEDED_BY_OWNER_29_OCT_TRANSFERABLE_COMPETITIVE_CURRENT_POSSESSION_AFTER_MATURITY_AND_EXCELLENCE",
       "swiftAscentPerformanceTimeThreshold": null,
       "swiftAscentMaturityThreshold": null,
-      "retroactiveEligibility": "OPEN",
-      "tieAndVintagePolicy": "OPEN",
-      "sourceReady": false
+      "retroactiveEligibility": "CURRENT_VALID_EARLY_GAME_MAY_CLAIM_AT_MATURITY_NOT_BACKDATED",
+      "tieAndVintagePolicy": "EQUALITY_NO_TRANSFER; FIRST_NO_INCUMBENT_TIE_PENDING; CORRECTION_RECOMPUTES_SUCCESSION",
+      "sourceReady": false,
+      "transferDuringSeason": true,
+      "endOfSeasonOnly": false,
+      "publicNameStatus": "REJECTED_THE_SWIFT_ASCENT; THREE_ALTERNATIVES_UNAPPROVED"
     },
     "selection4C": {
       "priorityDistinctionIds": [
@@ -1568,5 +1594,52 @@
     "isLiveGrantAuthority": false,
     "recordsUnchanged": true,
     "futureEventMetaAchievement": "#198 separately pending; no 38th family without separate extension approval"
+  },
+  "ownerDecisions2026Oct29": {
+    "source": "Owner binding correction #205 comment 6484715014 (29 Oct), corroborated by PR #193 comment 6484729730",
+    "policyState": "OWNER_APPROVED_PRODUCT_SEMANTICS_ONLY_NO_GRANTS_OR_RULE_NUMBERS",
+    "supersedes": "Former end-of-Season-only permanent Fast Castle laureate recommendation in #196/#197/#193",
+    "internalTrophyId": "AR2_TROPHY_SWIFT_ASCENT",
+    "rejectedPublicLabel": "The Swift Ascent",
+    "publicName": "NOT_APPROVED",
+    "nameCandidates": [
+      {
+        "label": "The Castle Crown",
+        "subtitle": "Fastest Castle Age",
+        "status": "CANDIDATE_PREFERRED_NOT_APPROVED"
+      },
+      {
+        "label": "Crown of the Castle Age",
+        "subtitle": "Fastest Castle Age",
+        "status": "CANDIDATE_NOT_APPROVED"
+      },
+      {
+        "label": "The Castle Vanguard",
+        "subtitle": "Fastest Castle Age",
+        "status": "CANDIDATE_NOT_APPROVED"
+      }
+    ],
+    "recordId": "AR2_REC_CASTLE",
+    "scopeStatus": "CURRENT_SEASON_COMPETITIVE_RECORD_SCOPE_PROPOSED; EXACT_COHORT_POLICY_OPEN",
+    "transferRule": "After approved maturity and absolute time gates, current fastest eligible comparable holder possesses; each later STRICTLY_LOWER accepted Game clock transfers. Equality never transfers.",
+    "priorHolder": "LOSES_CURRENT_EMBLEM_REMAINS_VALID_DATED_FACTUAL_SUCCESSION_ONLY",
+    "maturityRule": "PENDING_MATURITY before sufficient calendar/event AND independent comparable player/Battle sample; historical eligible early Game considered at first mature evaluation but not backdated award",
+    "firstTie": "PENDING_TIE_POLICY_NO_ARBITRARY_HOLDER",
+    "correctionRule": "Recompute source-authoritative current extrema and legitimate holder; amend invalid succession, retain separate immutable correction audit; no upload-order chronology",
+    "seasonEnd": "ARCHIVE_CURRENT_HOLDER_VALID_SUCCESSION_NO_END_ONLY_AWARD",
+    "thresholds": {
+      "absoluteProjectedCastleAgeMs": null,
+      "elapsedOrEvents": null,
+      "minDistinctComparablePlayers": null,
+      "minDistinctEligibleBattles": null
+    },
+    "grantOrPublicationAuthorised": false,
+    "retainedOwnerDirections": [
+      "1A",
+      "2A",
+      "3A",
+      "4C",
+      "5A"
+    ]
   }
 }
