@@ -355,3 +355,39 @@ test('Sol #203 nearest negatives: missing, wrong, revoked or ambiguous approved 
   fraudulent.source.roster[0].playerId='somebody-else';
   assert.ok(scheduleProject([a,fraudulent],good).personalityProfile.sliders.every(x=>x.value===null));
 });
+
+
+test('Sol #203 axis isolation: source-proven observation without reviewed duration bucket or civ family keeps unrelated axes',()=>{
+  const a=game('battle-A','g1',1),b=game('battle-B','g1',1);
+  const tax=taxonomy([a,b]);
+  // A true recorded clock does not become false simply because its exact
+  // REVIEWED duration bucket no longer covers it.
+  tax.sourceProofs[b.source.sourceHash].durationBucket.lowerObservedMs=3600000;
+  delete b.statistics.matchFacts.players[0].civilization.rawId;
+  const context=admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]);
+  assert.equal(context.context,null);
+  assert.equal(context.status,'PENDING');
+  assert.equal(context.behaviorContext.startFamily,'STANDARD');
+  assert.equal(context.behaviorContext.mapFamily,'LAND');
+  assert.equal(context.behaviorContext.civilizationOpportunityKey,null);
+  assert.equal(context.behaviorContext.durationFamily,null);
+  assert.equal(context.behaviorContext.observedUntilMs,2400000);
+  const view=project([a,b],tax).view;
+  for(const axis of ['BOOMER_AGGRESSOR','CAUTIOUS_BOLD','GUERRILLA_FRONTLINE','COMPACT_EXPANSIVE']){
+    const s=view.personalityProfile.sliders.find(v=>v.axis===axis);
+    assert.equal(s.status,'READY',axis);
+    assert.equal(s.independentBattles,2,axis);
+  }
+  assert.equal(view.personalityProfile.sliders.find(v=>v.axis==='SPECIALIST_IMPROVISER').value,null);
+  // A *missing reviewed start* is categorically different: raw source
+  // commitment remains visible but no READY cohort may be manufactured.
+  tax.sourceProofs[b.source.sourceHash].startFamily='INVALID_NOT_REVIEWED';
+  const pending=project([a,b],tax).view;
+  assert.equal(pending.personalityProfile.sliders.find(v=>v.axis==='BOOMER_AGGRESSOR').value,null);
+  const raw=admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]);
+  assert.equal(raw.behaviorContext.startFamily,null);
+  assert.equal(raw.behaviorContext.mapFamily,'LAND');
+  // A forged roster is not a partial opportunity; it destroys source binding.
+  b.source.roster[0].playerId='forged-subject';
+  assert.equal(admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]).behaviorContext,null);
+});
