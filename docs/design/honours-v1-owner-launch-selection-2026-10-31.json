@@ -206,5 +206,30 @@
     "Confirm the Unbroken current Season/non-FFA 4 Game semantics and whether FFA wins count toward four",
     "Choose sole official FFA winner versus truly never-ally unaided FFA solo feat",
     "Calibrate Boomer/Explorer/Gold/Aggression/Defence thresholds and whether Chronicle acknowledgements are optional context or a separately reviewed consent gate"
-  ]
+  ],
+  "distinctionMeaning2026Oct31": {
+    "supersedes": "NARROW_BATTLEFIELD_ONLY_MERIT_RULE_FOR_THE_SIX_OWNER_SELECTED_V1_CONCEPTS",
+    "categories": {
+      "officialOutcome": [
+        "FFA_SOLO_WIN"
+      ],
+      "rareCompositeEconomyAndMap": [
+        "BOOMER",
+        "EXPLORER",
+        "GOLD"
+      ],
+      "exceptionalMilitaryAndDefence": [
+        "AGGRESSION",
+        "DEFENSIVE"
+      ]
+    },
+    "commonRule": "RARE_INDEPENDENT_SOURCE_QUALIFIED_ATTRIBUTABLE_DEED_WITH_QUALITY_AND_OPPORTUNITY_GATES",
+    "sourceProofByType": "Official source-accepted win; versioned bounded inference for economy/map; military executed-effects only where such effect is actually claimed",
+    "noAutoFrom": [
+      "Battle/Event editorial spotlights",
+      "Reputation/Relationship points",
+      "Uncorroborated subjective Chronicle interpretation",
+      "Raw repeated command volume"
+    ]
+  }
 }
