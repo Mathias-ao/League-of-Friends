@@ -1641,5 +1641,30 @@
       "4C",
       "5A"
     ]
+  },
+  "ownerLaunch2026Oct31": {
+    "selectionAuthority": "Owner 31 October 2026 direct selection in Worker C chat supersedes former launch honour curation, not original achievement/record families",
+    "sourceDocument": "docs/design/honours-v1-owner-launch-selection-2026-10-31.md",
+    "machineSource": "docs/design/honours-v1-owner-launch-selection-2026-10-31.json",
+    "selectedTrophies": [
+      "AR2_TROPHY_SWIFT_ASCENT",
+      "AR2_TROPHY_WONDER_V1_CANDIDATE"
+    ],
+    "selectedEpithets": [
+      "AR2_EPITHET_UNBROKEN_V1_CANDIDATE",
+      "AR2_EPITHET_THREE_SCHOOLS"
+    ],
+    "selectedDistinctions": [
+      "AR2_DIST_FFA_SOLE_WIN_CANDIDATE",
+      "AR2_DIST_BOOMER_CANDIDATE",
+      "AR2_DIST_EXPLORER_CANDIDATE",
+      "AR2_DIST_GOLD_CANDIDATE",
+      "AR2_DIST_AGGRESSION_CANDIDATE",
+      "AR2_DIST_DEFENSIVE_CANDIDATE"
+    ],
+    "olderSelectedHonoursDisposition": "RESERVED_NON_LAUNCH_DESIGN_PROPOSALS_EXCEPT_FAST_CASTLE_AND_THREE_SCHOOLS",
+    "frozenExistingAchievementFamilies": 37,
+    "frozenExistingRecordBookDefinitions": 26,
+    "publishOrGrant": false
   }
 }
