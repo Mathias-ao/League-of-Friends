@@ -41,6 +41,20 @@ class OwnerHonoursLaunchSelection20261031Tests(unittest.TestCase):
             self.curation["ownerLaunch2026Oct31"]["publishOrGrant"],
             False,
         )
+        self.assertEqual(
+            [t["id"] for t in self.curation["trophyCandidates"]
+             if t["current31OctLaunchPriority"]],
+            ["AR2_TROPHY_SWIFT_ASCENT"],
+        )
+        self.assertEqual(
+            [e["id"] for e in self.curation["epithetCandidates"]
+             if e["current31OctLaunchPriority"]],
+            ["AR2_EPITHET_THREE_SCHOOLS"],
+        )
+        self.assertFalse(
+            any(d["current31OctLaunchPriority"]
+                for d in self.curation["distinctionCandidates"])
+        )
 
     def test_frozen_baseline_is_untouched_and_school_elite_still_required(self) -> None:
         b = self.base
