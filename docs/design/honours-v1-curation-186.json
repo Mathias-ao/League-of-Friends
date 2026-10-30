@@ -1352,7 +1352,8 @@
       "eligibility": "Designated WARMUP 1v1 pinned reigning Emperor at Match approval; non-Emperor sole official winner, verified current accepted result and correct Event/Match identity.",
       "status": "RESULT_VERIFIED_PATH_IF_SOURCE_FINAL",
       "anti": "Exactly one per eligible Emperor designation + Match, unranked substitutes/FFA/AI excluded; no automatic grant from 64-card Roundoff Emperor feature; independent policy.",
-      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT"
+      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT",
+      "current31OctLaunchPriority": false
     },
     {
       "id": "AR2_TROPHY_SWIFT_ASCENT",
@@ -1384,7 +1385,8 @@
       "firstTieWithoutIncumbent": "PENDING_OWNER_TIE_POLICY_NO_GRANT",
       "seasonEnd": "ARCHIVE_FINAL_CURRENT_HOLDER_AND_VALID_SUCCESSION_WITH_CORRECTION_LOG",
       "numericPerformanceGateMs": null,
-      "numericMaturityGates": null
+      "numericMaturityGates": null,
+      "current31OctLaunchPriority": true
     },
     {
       "id": "AR2_TROPHY_ANNALS_REWRITTEN",
@@ -1392,7 +1394,8 @@
       "eligibility": "Strict break of prior official published all-time record in a second owner-approved high-significance metric OTHER THAN AR2_REC_CASTLE. Historical previously published baseline, minimum admitted field and normalized comparable cohort.",
       "status": "RECORD_AUTHORITY_AND_OWNER_METRIC_SELECTION_PENDING",
       "anti": "Never stack with Swift Ascent for same Castle Game/metric; cap one trophy instance per approved record metric, no first-holder founding trophies.",
-      "ownerSelection": "RESERVED_FUTURE_CONCEPT_NOT_V1"
+      "ownerSelection": "RESERVED_FUTURE_CONCEPT_NOT_V1",
+      "current31OctLaunchPriority": false
     }
   ],
   "distinctionCandidates": [
@@ -1406,7 +1409,8 @@
         "relative force/context and bounded material consequence"
       ],
       "status": "SOURCE_BLOCKED",
-      "ownerSelection": "PRIORITY_CONCEPT_ONLY_SOURCE_BLOCKED"
+      "ownerSelection": "PRIORITY_CONCEPT_ONLY_SOURCE_BLOCKED",
+      "current31OctLaunchPriority": false
     },
     {
       "id": "AR2_DIST_LAST_STANDARD",
@@ -1418,7 +1422,8 @@
         "official current win and chronology"
       ],
       "status": "SOURCE_BLOCKED",
-      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED"
+      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED",
+      "current31OctLaunchPriority": false
     },
     {
       "id": "AR2_DIST_FELLOWSHIP",
@@ -1431,7 +1436,8 @@
       ],
       "status": "SOURCE_BLOCKED",
       "ownerSelection": "PRIORITY_CONCEPT_ONLY_SOURCE_BLOCKED",
-      "antiOverlap": "Worker D's proposed Watchkeeper's Seal and exceptional Shield at the Gate social scene may describe the SAME help incident: prohibit duplicate permanent medals from equivalent proof. Independently corroborated executed material benefit mandatory; no Season assists count or Bond/Chivalry threshold automatically grants this medal."
+      "antiOverlap": "Worker D's proposed Watchkeeper's Seal and exceptional Shield at the Gate social scene may describe the SAME help incident: prohibit duplicate permanent medals from equivalent proof. Independently corroborated executed material benefit mandatory; no Season assists count or Bond/Chivalry threshold automatically grants this medal.",
+      "current31OctLaunchPriority": false
     },
     {
       "id": "AR2_DIST_LONE_VANGUARD",
@@ -1443,7 +1449,8 @@
         "engine-observed attributed impact, with negatives for auto-fire"
       ],
       "status": "SOURCE_BLOCKED",
-      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED"
+      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED",
+      "current31OctLaunchPriority": false
     }
   ],
   "epithetCandidates": [
@@ -1455,7 +1462,8 @@
       "display": "Erik the Sworn Campaigner",
       "equip": "VOLUNTARY_ONE_ONLY",
       "note": "Five is a PROPOSED calibration gate, not active owner cutoff.",
-      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT"
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT",
+      "current31OctLaunchPriority": false
     },
     {
       "id": "AR2_EPITHET_WARDEN_BORDER",
@@ -1465,7 +1473,8 @@
       "display": "Erik, Warden of the Border",
       "equip": "VOLUNTARY_ONE_ONLY",
       "note": "Title is distinct from Shield at Gate rare social event; scope intentionally defence not score.",
-      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT"
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT",
+      "current31OctLaunchPriority": false
     },
     {
       "id": "AR2_EPITHET_THREE_SCHOOLS",
@@ -1475,7 +1484,8 @@
       "display": "Erik, Master of the Three Schools",
       "equip": "VOLUNTARY_ONE_ONLY",
       "note": "No automatic equip; only currently active component entitlements, source corrections suspend; later weaker play never removes valid mastery.",
-      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT"
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT",
+      "current31OctLaunchPriority": true
     }
   ],
   "honourGates": {
@@ -1665,6 +1675,7 @@
     "olderSelectedHonoursDisposition": "RESERVED_NON_LAUNCH_DESIGN_PROPOSALS_EXCEPT_FAST_CASTLE_AND_THREE_SCHOOLS",
     "frozenExistingAchievementFamilies": 37,
     "frozenExistingRecordBookDefinitions": 26,
-    "publishOrGrant": false
+    "publishOrGrant": false,
+    "legacyHistoricalSelections": "Old ownerSelection fields capture superseded 28 Oct design decisions. current31OctLaunchPriority is the effective launch indicator for the existing legacy entries; Wonder, Unbroken and six current distinction concepts are in the separate 31 Oct owner launch registry as proposal IDs (NOT live award definition IDs)."
   }
 }
