@@ -140,7 +140,7 @@ class OwnerHonoursLaunchSelection20261031Tests(unittest.TestCase):
                       defensive["acknowledgement"])
         self.assertEqual(len(defensive["overlapReserved"]), 2)
         self.assertIn("SOURCE", defensive["status"])
-        self.assertIn("source-observed", self.doc.lower())
+        self.assertIn("source-supported", self.doc.lower())
 
 
 if __name__ == "__main__":
