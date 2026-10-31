@@ -104,23 +104,18 @@ function relationshipForStages(rivalry:string|null,hostility:string|null,bond:st
   };
 }
 
-test('Chronicle epigraphs cover every relationship depth and combination without exposing mechanics',()=>{
+test('Chronicle epigraph never infers feelings, moral conduct or reciprocity from track scalars',()=>{
+  const neutral='These pages follow their recorded league encounters.';
+  assert.equal(relationshipEpigraph(null),neutral);
   const rivalry=[null,'Friction','Contest','Rivalry','Nemesis'];
   const hostility=[null,'Tension','Grudge','Feud','Blood Feud','Internecine Strife'];
   const bond=[null,'Fellowship','Comrades','Trusted Allies','Oathbound'];
   for(const r of rivalry)for(const h of hostility)for(const b of bond){
-    const line=relationshipEpigraph(relationshipForStages(r,h,b,'pair:'+String(r)+':'+String(h)+':'+String(b)));
-    assert.ok(line.length>=20&&line.length<=170,`epigraph length should stay manuscript-like for ${r}/${h}/${b}`);
-    assert.doesNotMatch(line,/Their record shows|The record shows|Present Standing/);
-    assert.doesNotMatch(line,/\b(rivalry|hostility|bond|tension|grudge|feud|fellowship|comrades|trusted allies|oathbound|internecine strife)\b/i);
+    const relationship=relationshipForStages(r,h,b,'pair:'+String(r)+':'+String(h)+':'+String(b));
+    assert.equal(relationshipEpigraph(relationship),neutral);
+    relationship.tracks.hostility={status:'READY',state:'DORMANT',stageId:null,historicalPeakStageId:'Blood Feud'};
+    assert.equal(relationshipEpigraph(relationship),neutral);
+    relationship.relationshipRulesConfigured=false;
+    assert.equal(relationshipEpigraph(relationship),neutral);
   }
-
-  const legendary=relationshipEpigraph(relationshipForStages(null,'Internecine Strife',null,'legendary'));
-  assert.match(legendary,/ordinary|scale/i,'Internecine Strife receives a distinct legendary escalation voice without naming the stage');
-
-  const dormant=relationshipForStages(null,null,'Fellowship','dormant');
-  dormant.tracks.hostility={status:'READY',state:'DORMANT',stageId:null,historicalPeakStageId:'Blood Feud'};
-  const dormantLine=relationshipEpigraph(dormant);
-  assert.match(dormantLine,/older|quarrel|strain|ink/i);
-  assert.doesNotMatch(dormantLine,/Blood Feud|Hostility|Bond/);
 });
