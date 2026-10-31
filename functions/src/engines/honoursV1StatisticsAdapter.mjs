@@ -40,7 +40,8 @@ function officialWinnerIds(match,canonical) {
 }
 
 export function normalizeTrustedHonoursGame(input) {
-  const {statistics:stats,match,source,canonicalResult,opportunityReview,metricReviews,wonderMethodReview}=input??{};
+  const {statistics:stats,match,source,canonicalResult,opportunityReview,metricReviews,
+    wonderMethodReview,wonderConstructionReviews,wonderChallengeReview}=input??{};
   if(!stats||!match||!source||!text(stats.gameId)||!text(stats.matchId)||
      !text(match.seasonId)||stats.seasonId!==match.seasonId||
      !text(source.activeSourceHash)||!int(source.activeStatisticsRevision)||
@@ -94,21 +95,58 @@ export function normalizeTrustedHonoursGame(input) {
     }
     measurements[playerId]=metrics;
   }
+  // A BUILD request is not a completed Wonder. These witnesses must be
+  // reviewed and tied to the current original Game/hash/model revision.
+  const wonderConstructions=ready&&Array.isArray(wonderConstructionReviews)?
+    wonderConstructionReviews.filter(w=>
+      w?.gameId===stats.gameId&&w.sourceHash===stats.sourceHash&&
+      w.sourceRevision===source.activeStatisticsRevision&&
+      text(w.buildingInstanceId)&&roster.includes(w.ownerPlayerId)&&
+      w.complete===true&&w.verifiedBy==="INDEPENDENT_CONSTRUCTION_REVIEW"
+    ).map(w=>({buildingInstanceId:w.buildingInstanceId,
+      ownerPlayerId:w.ownerPlayerId,complete:true,
+      verifiedBy:"INDEPENDENT_CONSTRUCTION_REVIEW",
+      sourceHash:stats.sourceHash,sourceRevision:source.activeStatisticsRevision})):[];
   let wonderVictory=null;
   if(resultFinal&&match.gameConfigSnapshot?.victory?.wonder===true&&
      wonderMethodReview?.method==="WONDER_VICTORY"&&
      wonderMethodReview?.verifiedBy==="OFFICIAL_METHOD_REVIEW"&&
      wonderMethodReview?.gameId===stats.gameId&&
      wonderMethodReview?.sourceHash===stats.sourceHash&&
+     wonderMethodReview?.sourceRevision===source.activeStatisticsRevision&&
      wonderMethodReview?.resultRevision===canonicalResult.revision&&
-     wonderMethodReview?.winnerId&&winners.length===1&&
-     winners[0]===wonderMethodReview.winnerId&&
-     wonderMethodReview?.completeTimerWitness===true&&
-     time(wonderMethodReview.gameEndAtMs)) {
+     text(wonderMethodReview?.winnerId)&&winners.includes(wonderMethodReview.winnerId)&&
+     text(wonderMethodReview?.winningWonderId)&&
+     wonderMethodReview?.winningWonderOwnerPlayerId===wonderMethodReview.winnerId&&
+     wonderMethodReview?.winningWonderCompleted===true) {
+    const ffaAllies=f==="FFA"&&
+      wonderMethodReview.ffaAllianceReview==="SOURCE_VERIFIED_EFFECTIVE_ALLIANCE"&&
+      Array.isArray(wonderMethodReview.qualifiedAllyPlayerIds)&&
+      wonderMethodReview.qualifiedAllyPlayerIds.every(id=>
+        winners.includes(id)&&id!==wonderMethodReview.winnerId)?
+      [...new Set(wonderMethodReview.qualifiedAllyPlayerIds)]:[];
     wonderVictory={method:"WONDER_VICTORY",verifiedBy:"OFFICIAL_METHOD_REVIEW",
-      resultRevision:canonicalResult.revision,winnerId:winners[0],
-      completeTimerWitness:true,gameEndAtMs:wonderMethodReview.gameEndAtMs};
+      winnerId:wonderMethodReview.winnerId,
+      winningWonderId:wonderMethodReview.winningWonderId,
+      winningWonderOwnerPlayerId:wonderMethodReview.winnerId,
+      winningWonderCompleted:true,resultRevision:canonicalResult.revision,
+      sourceRevision:source.activeStatisticsRevision,sourceHash:stats.sourceHash,
+      ffaAllianceReview:ffaAllies.length?"SOURCE_VERIFIED_EFFECTIVE_ALLIANCE":null,
+      qualifiedAllyPlayerIds:ffaAllies};
   }
+  const wonderChallenge=ready&&wonderVictory&&
+    wonderChallengeReview?.gameId===stats.gameId&&
+    wonderChallengeReview?.sourceHash===stats.sourceHash&&
+    wonderChallengeReview?.sourceRevision===source.activeStatisticsRevision&&
+    wonderChallengeReview?.resultRevision===canonicalResult.revision&&
+    wonderChallengeReview?.status==="OFFICIALLY_COMPLETED"&&
+    wonderChallengeReview?.review==="VERIFIED_WONDER_RACE_RESULT"&&
+    wonderChallengeReview?.winnerId===wonderVictory.winnerId&&
+    text(wonderChallengeReview?.challengeId)?
+    {gameId:stats.gameId,challengeId:wonderChallengeReview.challengeId,
+      sourceHash:stats.sourceHash,sourceRevision:source.activeStatisticsRevision,
+      resultRevision:canonicalResult.revision,status:"OFFICIALLY_COMPLETED",
+      review:"VERIFIED_WONDER_RACE_RESULT",winnerId:wonderVictory.winnerId}:null;
   return {
     gameId:stats.gameId,battleId:stats.matchId,seasonId:match.seasonId,
     format:f,roster,winners:resultFinal?winners:[],
@@ -121,7 +159,8 @@ export function normalizeTrustedHonoursGame(input) {
     startClass:reviewedStart?mapClass(opportunityReview.startClass):null,
     gameSpeed:reviewedStart?opportunityReview.gameSpeed:null,
     victoryRules:match.gameConfigSnapshot?.victory?.wonder===true?"WONDER":"CONQUEST",
-    measurements,wonderVictory,adapterVersion:HONOURS_STATISTICS_ADAPTER_TEST_VERSION,
+    measurements,wonderVictory,wonderConstructions,wonderChallenge,
+    adapterVersion:HONOURS_STATISTICS_ADAPTER_TEST_VERSION,
     sourceHash:ready?stats.sourceHash:null,
   };
 }
