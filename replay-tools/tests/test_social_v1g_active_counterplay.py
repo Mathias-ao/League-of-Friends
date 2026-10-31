@@ -184,10 +184,36 @@ class ControlledProofShapeTests(unittest.TestCase):
         corrected["context"]["sourceRevision"]["replaySha256"]="f"*64
         with self.assertRaisesRegex(ValueError,"STALE_OR_INCONSISTENT_SOURCE_REVISION"):
             method(corrected,stats,actions)
-        next_scope={**SCOPE,"gameGuid":"another-unique-game"}
-        now=method(b,stats,actions,scope=next_scope)
-        self.assertNotEqual(counter(before)["sourceIndependentContributionKey"],
-                            counter(now)["sourceIndependentContributionKey"])
+
+    def test_untrusted_scope_relabel_is_not_a_new_original_contribution(self):
+        b,stats,actions=source_case()
+        before=method(b,stats,actions)
+        # #158's source key binds the canonical Battle/Game and source deed.
+        # GUID and authority labels are separately authenticated by Sol's
+        # consumer, never a reason to mint another original contribution.
+        for field in ("gameGuid","authorityRevision"):
+            next_scope={**SCOPE,field:"another-untrusted-label"}
+            now=method(b,stats,actions,scope=next_scope)
+            self.assertEqual(counter(before)["sourceIndependentContributionKey"],
+                             counter(now)["sourceIndependentContributionKey"])
+            self.assertEqual(now["gameScope"],next_scope)
+            self.assertNotEqual(before["sourceProjectionRevision"],
+                                now["sourceProjectionRevision"])
+            self.assertFalse(now["gameScopeAuthenticated"])
+            self.assertEqual(now["sourceAdmittedCount"],0)
+            self.assertEqual(now["claims"],[])
+            self.assertEqual(now["receipts"],[])
+            self.assertFalse(now["officialWrites"])
+
+    def test_distinct_canonical_game_or_battle_has_a_distinct_source_key(self):
+        b,stats,actions=source_case()
+        before=method(b,stats,actions)
+        for field in ("gameId","battleId"):
+            now=method(b,stats,actions,scope={**SCOPE,field:"another-canonical-id"})
+            self.assertNotEqual(counter(before)["sourceIndependentContributionKey"],
+                                counter(now)["sourceIndependentContributionKey"])
+            self.assertFalse(now["gameScopeAuthenticated"])
+            self.assertEqual(now["sourceAdmittedCount"],0)
 
     def test_no_ffa_or_friendly_credit(self):
         b,stats,actions=source_case()

@@ -46,4 +46,24 @@ A passed **proposed source-match** means exactly **`SOURCE_MATCH_PROPOSED`**: ac
 
 **Sol interface:** this proposal does not modify `AOF_SOC_V1E_BOUNDED_GRADE_METHODS_1`, SHARED_1, C1/C2A key mapping, #141 or #139. After genuine evidence and owner method admission review, Sol would separately map the **same original source-connected contribution** to the authoritative Game/Battle/Event timeline and apply existing #139 per-track per-direction budgets/reciprocal actor-source requirements. In all cases one deed can be counted as a Statistics fact and a restrained Chronicle sentence without new same-track credit or automatic Battle/Event/accolade/trophy.
 
+### Sol 1B independent identity review
+
+The original failing `test_no_new_credit_from_duplicate_pov_or_stale_source`
+changed only the **caller-supplied, untrusted `gameGuid`**, while retaining the
+same canonical Battle, Game, source revision, actors and original deeds. It
+incorrectly expected a new source-independent contribution key. The unchanged
+#158 key deliberately binds version + canonical Battle/Game + source/context
+revision + actors + deeds/events. Re-labelling only GUID or authority must not
+create an additional original contribution.
+
+The corrected tests preserve that key, require a changed full projection
+revision and the exact changed untrusted scope, and verify zero admission,
+claims, receipts and writes. Changing the canonical Game or Battle does change
+the source key. The separate stale original/context revision still rejects,
+and duplicate/permuted original inputs remain identical. The existing
+`validateC2AWorker` consumer separately requires the complete scope (including
+GUID and authority revision) to equal its authenticated current source before
+accepting the projection. This test correction does not add a source method to
+that consumer or admit this proposed defender method to history/scoring.
+
 No deployment, cloud, staging, production scoring, grants or changed allocator.
