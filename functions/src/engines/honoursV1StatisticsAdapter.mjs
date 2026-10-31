@@ -73,7 +73,7 @@ export function normalizeTrustedHonoursGame(input) {
     const metrics={};
     const fcApproved=metricReviews?.[playerId]?.fastCastle;
     const castleMs=p.values?.castle;
-    if(time(castleMs)&&p.models?.castle==="AOF_OPENING_STATISTICS_V6" &&
+    if(ready&&time(castleMs)&&p.models?.castle==="AOF_OPENING_STATISTICS_V6" &&
        fcApproved?.sourceHash===stats.sourceHash&&
        fcApproved?.gameId===stats.gameId&&
        fcApproved?.sourceRevision===source.activeStatisticsRevision&&
@@ -83,7 +83,7 @@ export function normalizeTrustedHonoursGame(input) {
     }
     for(const key of ["boomer","explorer","gold","aggression","defensive"]) {
       const reviewed=metricReviews?.[playerId]?.[key];
-      if(reviewed?.sourceHash!==stats.sourceHash||
+      if(!ready||reviewed?.sourceHash!==stats.sourceHash||
          reviewed?.gameId!==stats.gameId||
          reviewed?.sourceRevision!==source.activeStatisticsRevision||
          reviewed?.proof!=="SOURCE_REVIEWED_METRIC"||!reviewed.evidence)continue;
