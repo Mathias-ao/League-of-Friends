@@ -231,7 +231,7 @@ test("Boomer: one-game 30 minute four-part requirement, not spliced from other G
   const fail=at(g,"Alice","boomer",{...evidence,expansionZoneClusters:2});
   assert.equal(evaluateBoomer(season([fail]),"Alice").state,"NOT_YET_QUALIFIED");
   const huns=at(g,"Alice","boomer",{...evidence,civilization:"Huns"});
-  assert.notEqual(evaluateBoomer(season([huns]),"Alice").state,"QUALIFIED");
+  assert.equal(evaluateBoomer(season([huns]),"Alice").state,"PENDING_EVIDENCE","Huns need a fair alternate branch; not an impossible failed House count");
   const early=at(g,"Alice","boomer",{...evidence,windowMs:20*60000});
   assert.notEqual(evaluateBoomer(season([early]),"Alice").state,"QUALIFIED");
 });
@@ -240,7 +240,7 @@ test("Explorer: existing command-route proxy cannot earn 90% despite inflated pe
   const e=source({modelVersion:"AOF_MAP_PRESENCE_V6",
     modelValidatedAgainstFog:false,coverageLowerBoundPercent:99,confidence:1});
   const g=at(game("explorer","be",3),"Alice","explorer",e);
-  assert.notEqual(evaluateExplorer(season([g]),"Alice").state,"QUALIFIED");
+  assert.equal(evaluateExplorer(season([g]),"Alice").state,"PENDING_EVIDENCE","Existing command-route proxy is missing required validation");
   const proper=at(g,"Alice","explorer",{...e,
     modelVersion:"AOF_ESTIMATED_EXPLORATION_V1",
     modelValidatedAgainstFog:true,coverageLowerBoundPercent:91,confidence:0.9});
@@ -322,7 +322,7 @@ test("draft gates are explicitly provisional and cannot change production grants
   const e=projectTenHonours(season([]),"Alice");
   assert.equal(e.anyGrantWritten,false);
   assert.equal(e.trophies.FAST_CASTLE.holder,null);
-  assert.equal(e.distinctions.EXPLORER.state,"NOT_YET_QUALIFIED");
+  assert.equal(e.distinctions.EXPLORER.state,"PENDING_EVIDENCE");
 });
 
 test("Chronicle acknowledgement round trip is restricted to exact source and authenticated recipient in demo emulator",()=>{
