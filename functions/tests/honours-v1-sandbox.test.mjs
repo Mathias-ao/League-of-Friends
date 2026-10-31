@@ -43,7 +43,7 @@ const wonder=(time, winner)=>({method:"WONDER_VICTORY",
   winnerId:winner,completeTimerWitness:true,gameEndAtMs:time});
 const source=(more={})=>({sourceQualified:true,modelState:"SOURCE_VALIDATED",
   sourceClockComplete:true,windowMs:30*60000,...more});
-const at=(e,p,key)=>({...e,measurements:{...e.measurements,[p]:{...e.measurements?.[p],[key]}}});
+const at=(e,p,key,value)=>({...e,measurements:{...e.measurements,[p]:{...e.measurements?.[p],[key]:value}}});
 
 test("all ten candidate honour outputs are present and test-only, with no grant write",()=>{
   const p=projectTenHonours(season(baseline()),"Alice");
