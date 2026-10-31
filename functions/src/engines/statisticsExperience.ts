@@ -252,7 +252,13 @@ export class StatisticsExperience {
     for(const [start,games] of gameGroups){
       const candidates=new StatisticsExperience(games).aggregate(modeValue).filter(row=>{
         const value=row.values[metricId];
-        return value.value!==null&&value.samples===value.eligibleGames&&
+        // Completeness belongs to the chosen method. An excluded method is
+        // still disclosed by eligibleGames, but cannot veto qualified peers.
+        const model=value.models[0];
+        const compatibleGames=games.flatMap(game=>game.players.filter(player=>
+          player.playerId===row.playerId&&metricEligible(m,game,player)&&
+          (player.models[metricId]||'unknown')===model)).length;
+        return value.value!==null&&value.samples===compatibleGames&&
           value.models.length===1&&value.models[0]!=='unknown'&&
           (!typical||value.samples>=minimumGames);
       });

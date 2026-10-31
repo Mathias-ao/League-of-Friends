@@ -58,7 +58,24 @@ test('legacy compatible method slices remain visible without numerical version m
   const sample=new StatisticsExperience(games).aggregate('average').find(row=>row.playerId==='a').values.raidsOut;
   assert.equal(sample.value,25);assert.equal(sample.samples,2);assert.equal(sample.eligibleGames,3);
   assert.deepEqual(sample.models,['model-1']);
-  assert.deepEqual(new StatisticsExperience(games).leaders('raidsOut','average',2),['c'],'compatible peers remain available when a third player has a model split');
+  assert.deepEqual(new StatisticsExperience(games).leaders('raidsOut','average',2),['a'],'the complete two-Game compatible slice is admitted and its value 25 leads the peers');
+});
+test('five compatible legacy Games retain qualified peers despite an excluded-model sixth',()=>{
+  const games=Array.from({length:6},(_,i)=>game(i));
+  for(const g of games){g.players=g.players.filter(p=>p.playerId!=='c');for(const p of g.players){p.values.forward=p.playerId==='a'?9:7;p.models.forward=g===games[5]?'v2':'v1';}}
+  for(const input of [games.slice(0,5),games]){
+    const engine=new StatisticsExperience(input),a=engine.aggregate('average')[0].values.forward;
+    assert.equal(a.value,9);assert.equal(a.samples,5);assert.deepEqual(a.models,['v1']);
+    assert.deepEqual(engine.leaders('forward','average',5),['a']);
+  }
+  assert.equal(new StatisticsExperience(games).aggregate('average')[0].values.forward.eligibleGames,6);
+  assert.deepEqual(new StatisticsExperience(games.slice(1)).leaders('forward','average',5),[],
+    'four compatible Games plus one excluded version do not meet the five-Game minimum');
+  games[4].players[0].values.forward=null;
+  assert.deepEqual(new StatisticsExperience(games).leaders('forward','average',5),[],
+    'missing own-model source cannot count as the fifth measured Game');
+  assert.deepEqual(new StatisticsExperience(games).leaders('forward','average',4),[],
+    'missing own-model source still prevents that method slice being complete');
 });
 test('Castle leader is not inferred from Nomad, Migration or unverified start despite same model',()=>{
   const games=Array.from({length:5},(_,i)=>game(i));
