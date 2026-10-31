@@ -61,6 +61,10 @@ jobs:
       - name: Controlled ten-honour policy and trophy succession simulations
         run: node --test .honours-sandbox/functions/tests/honours-v1-*.test.mjs
       - name: Integrated backend and component regression suites
+        env:
+          # Existing Steam tests mock this origin. Keep the demo project and
+          # unknown-origin denial; scope the test origin to this unit-test step.
+          STEAM_AUTH_ALLOWED_ORIGINS: https://league-of-friends-cc274.web.app
         run: |
           npm test --prefix functions
           npm test --prefix web
