@@ -11,7 +11,7 @@ node --test tests/honours-v1-sandbox.test.mjs tests/honours-v1-source-adapter.te
 npm run lint && npm run build && npm test
 ```
 
-The first command exercises **43 focused scenarios** across all **10 owner-selected honours** including the Chronicle private-response simulator. Tests import the test-only `functions/src/engines/honoursV1Sandbox.mjs` and `honoursV1ChronicleSandbox.mjs` directly, independent of existing production `processAchievements.ts`.
+The first command exercises **44 focused scenarios** across all **10 owner-selected honours** including the Chronicle private-response simulator. Tests import the test-only `functions/src/engines/honoursV1Sandbox.mjs` and `honoursV1ChronicleSandbox.mjs` directly, independent of existing production `processAchievements.ts`.
 
 All ten are represented by one pure `projectTenHonours(input, playerId)` collection response. Outputs include `state`, typed proposed values, source-game context where available, and `anyGrantWritten:false`. `projectCompetitiveTrophy()` also returns current holder, mutable qualified current record, current mature/provisional state, and a valid source-rebuilt succession ledger. It is a reference **rebuild projection**, not a persistent award transaction.
 
