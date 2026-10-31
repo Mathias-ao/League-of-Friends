@@ -94,24 +94,64 @@ test("Official FFA PLAYER_WIN is sole winner; coalition remains excluded from so
   assert.equal(evaluateFFASoleWinner(season([coalition]),"Alice").state,"NOT_YET_QUALIFIED");
 });
 
-test("Wonder result requires exact official winner+result revision and independent method review",()=>{
+test("Wonder victory method is reviewed and owner-bound, independent of Game duration",()=>{
   const x=base();
   const w={...x,match:{...x.match,
     gameConfigSnapshot:{...x.match.gameConfigSnapshot,victory:{wonder:true}}}};
   const none=normalizeTrustedHonoursGame(w);
   assert.equal(none.wonderVictory,null);
   const approved={method:"WONDER_VICTORY",verifiedBy:"OFFICIAL_METHOD_REVIEW",
-    gameId:"g1",sourceHash:"sha-current",resultRevision:2,
-    winnerId:"Alice",completeTimerWitness:true,gameEndAtMs:52*60000};
+    gameId:"g1",sourceHash:"sha-current",sourceRevision:5,
+    resultRevision:2,winnerId:"Alice",winningWonderId:"wonder-g1",
+    winningWonderOwnerPlayerId:"Alice",winningWonderCompleted:true};
   const yes=normalizeTrustedHonoursGame({...w,wonderMethodReview:approved});
   assert.equal(yes.victoryRules,"WONDER");
-  assert.equal(yes.wonderVictory.gameEndAtMs,52*60000);
+  assert.equal(yes.wonderVictory.winningWonderId,"wonder-g1");
+  assert.equal(yes.wonderVictory.gameEndAtMs,undefined,
+    "Wonder win has no victory-time eligibility requirement");
+  assert.equal(projectCompetitiveTrophy({
+    ...season([yes]),nowMs:1800000000000+86400000
+  },"WONDER").holder,"Alice");
   assert.equal(normalizeTrustedHonoursGame({...w,wonderMethodReview:
     {...approved,winnerId:"Bruno"}}).wonderVictory,null);
   assert.equal(normalizeTrustedHonoursGame({...w,wonderMethodReview:
     {...approved,resultRevision:1}}).wonderVictory,null);
   assert.equal(normalizeTrustedHonoursGame({...w,wonderMethodReview:
+    {...approved,sourceRevision:4}}).wonderVictory,null);
+  assert.equal(normalizeTrustedHonoursGame({...w,wonderMethodReview:
     {...approved,verifiedBy:"CLAIMED_IN_CHAT"}}).wonderVictory,null);
+  assert.equal(normalizeTrustedHonoursGame({...w,wonderMethodReview:
+    {...approved,winningWonderOwnerPlayerId:"Bruno"}}).wonderVictory,null);
+});
+
+test("Source-approved completed Wonder and official race review produce additive but non-time-based points",()=>{
+  const x=base();
+  const w={...x,match:{...x.match,
+    gameConfigSnapshot:{...x.match.gameConfigSnapshot,victory:{wonder:true}}}};
+  const method={method:"WONDER_VICTORY",verifiedBy:"OFFICIAL_METHOD_REVIEW",
+    gameId:"g1",sourceHash:"sha-current",sourceRevision:5,
+    resultRevision:2,winnerId:"Alice",winningWonderId:"wonder-1",
+    winningWonderOwnerPlayerId:"Alice",winningWonderCompleted:true};
+  const built={gameId:"g1",sourceHash:"sha-current",sourceRevision:5,
+    buildingInstanceId:"wonder-1",ownerPlayerId:"Alice",complete:true,
+    verifiedBy:"INDEPENDENT_CONSTRUCTION_REVIEW"};
+  const challenge={gameId:"g1",sourceHash:"sha-current",sourceRevision:5,
+    challengeId:"race-1",winnerId:"Alice",resultRevision:2,
+    status:"OFFICIALLY_COMPLETED",review:"VERIFIED_WONDER_RACE_RESULT"};
+  const approved=normalizeTrustedHonoursGame({...w,wonderMethodReview:method,
+    wonderConstructionReviews:[built,built],
+    wonderChallengeReview:challenge});
+  const result=projectCompetitiveTrophy(season([approved]),"WONDER");
+  assert.equal(result.holder,"Alice");
+  assert.equal(result.wonderVictories,1);
+  assert.equal(result.wonderPoints,5.5,"0.5 built + 2 own win + 3 challenge");
+  assert.equal(approved.wonderConstructions.length,2,
+    "source adapter preserves rows; scorer dedupes building instances");
+  assert.equal(normalizeTrustedHonoursGame({...w,wonderConstructionReviews:[{
+    ...built,verifiedBy:"BUILD_REQUEST"}]}).wonderConstructions.length,0);
+  const unreviewed=normalizeTrustedHonoursGame({...w,wonderMethodReview:method,
+    wonderChallengeReview:{...challenge,review:"PLAYER_DECLARED_WONDER_RACE"}});
+  assert.equal(projectCompetitiveTrophy(season([unreviewed]),"WONDER").wonderPoints,2.5);
 });
 
 test("Only source-reviewed per-metric facts are admitted, not arbitrary player-provided stats",()=>{
