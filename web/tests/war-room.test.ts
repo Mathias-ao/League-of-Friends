@@ -123,3 +123,33 @@ test('signed-out visitors cannot load War Room history or issue a challenge',asy
     assert.equal(queries,0);
   }finally{await ui.close();}
 });
+
+
+test('verified incoming invitation can be declined without opening or scoring a Battle',async()=>{
+  const data=fake('B');data.status='OPEN';
+  data.qualification={status:'VERIFIED',canIssueChallenges:false,canRespond:true};
+  data.viewerChallenges=[challenge('PENDING',{canRespond:true,eligibilityReview:'VERIFIED'})];
+  const answers:string[]=[];
+  const repo={warRoom:async()=>structuredClone(data),onAuthChange:()=>()=>{},
+    respondWarRoomChallenge:async(_id:string,response:string)=>{
+      answers.push(response);data.viewerChallenges=[challenge('DECLINED',{canRespond:false,eligibilityReview:'VERIFIED'})];
+    }};
+  const ui=await mount(data,{id:'B',repo});
+  try{
+    await ui.click('Decline');
+    assert.deepEqual(answers,['DECLINE']);
+    assert.match(document.body.textContent!,/Declined/);
+    assert.equal(document.body.textContent!.includes('View Battle'),false);
+  }finally{await ui.close();}
+});
+test('a mismatched season response is never displayed and refresh errors remain actionable',async()=>{
+  const data=fake();data.activeSeason={seasonId:'OTHER',name:'Other Season'};
+  const ui=await mount(data);
+  try{
+    assert.match(document.body.textContent!,/season or league identity changed/i);
+    assert.equal(document.body.textContent!.includes('Alice'),false);
+    assert.equal(document.body.textContent!.includes('Issue challenge'),false);
+    await ui.click('Refresh records');
+    assert.match(document.body.textContent!,/season or league identity changed/i);
+  }finally{await ui.close();}
+});
