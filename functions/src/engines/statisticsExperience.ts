@@ -194,7 +194,7 @@ export class StatisticsExperience {
     this.games=[...revisions.values()].sort((a,b)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId)).filter(g=>{if(!g.eligible)return false;if(g.sourceHash&&hashes.has(g.sourceHash))return false;if(g.sourceHash)hashes.add(g.sourceHash);return true;});
   }
   aggregate(modeValue:AggregationMode='total',minimumGames=5):AggregatePlayer[]{
-    const modelValues=new Map<string,Map<string,{key:string;sample:AggregateValue;complete:boolean}[]>>();
+    const modelValues=new Map<string,Map<string,{key:string;sample:AggregateValue}[]>>();
     const ids=[...new Set(this.games.flatMap(g=>g.players.map(p=>p.playerId)))];
     const rows=ids.map(playerId=>{
       const pairs=this.games.flatMap(game=>game.players.filter(player=>player.playerId===playerId).map(player=>({game,player})));
@@ -204,8 +204,9 @@ export class StatisticsExperience {
         const eligible=pairs.filter(({game,player})=>metricEligible(m,game,player));
         const observed=eligible.filter(({player})=>player.values[m.id]!=null&&Number.isFinite(player.values[m.id]));
         const models=[...new Set(observed.map(({player})=>player.models[m.id]||'unknown'))];
-        // Evaluate each method before choosing it, as in the Season Battle
-        // reader. Missing own-method inputs never count as complete samples.
+        // Each finite, source-qualified Game observation is a valid legacy
+        // sample. Missing Games stay in the disclosed denominator; they do
+        // not erase independent measured Games or supply a missing sample.
         const summarize=(pool:typeof eligible)=>{
           const methodGroups=new Map<string,typeof observed>();
           for(const pair of pool.filter(({player})=>player.values[m.id]!=null&&Number.isFinite(player.values[m.id]))){
@@ -223,10 +224,9 @@ export class StatisticsExperience {
             if(['responded','received'].includes(m.id))value=numbers.length?numbers.reduce((a,b)=>a+b,0):null;
             const excludedModels=models.filter(version=>version!==model).sort();
             const sample:AggregateValue={value,samples:numbers.length,eligibleGames:eligible.length,models:[model],contributingGameKeys:qualified.map(({game})=>JSON.stringify([game.matchId,game.gameId])),...(excludedModels.length?{excludedModels}:{})};
-            const compatibleGames=pool.filter(({player})=>(player.models[m.id]||'unknown')===model).length;
-            return {sample,complete:value!==null&&numbers.length===compatibleGames};
+            return {sample};
           }).sort((a,b)=>Number(a.sample.models[0]==='unknown')-Number(b.sample.models[0]==='unknown')||
-            Number(b.complete)-Number(a.complete)||b.sample.samples-a.sample.samples||a.sample.models[0].localeCompare(b.sample.models[0]));
+            b.sample.samples-a.sample.samples||a.sample.models[0].localeCompare(b.sample.models[0]));
         };
         const summaries=summarize(eligible);
         values[m.id]=summaries[0]?.sample??{value:null,samples:0,eligibleGames:eligible.length,models:[],contributingGameKeys:[]};
@@ -253,8 +253,8 @@ export class StatisticsExperience {
       const required=modeValue==='average'||m.aggregation!=='volume'?minimumGames:1;
       const cohorts=new Map<string,{row:AggregatePlayer;sample:AggregateValue}[]>();
       for(const row of rows)for(const summary of modelValues.get(m.id)?.get(row.playerId)??[]){
-        const {sample,complete,key}=summary;
-        if(!complete||sample.models[0]==='unknown'||sample.samples<required)continue;
+        const {sample,key}=summary;
+        if(sample.value===null||sample.models[0]==='unknown'||sample.samples<required)continue;
         cohorts.set(key,[...(cohorts.get(key)??[]),{row,sample}]);
       }
       const chosen=[...cohorts].filter(([,members])=>members.length>=2).sort((a,b)=>b[1].length-a[1].length||
@@ -294,13 +294,10 @@ export class StatisticsExperience {
     for(const [start,games] of gameGroups){
       const candidates=new StatisticsExperience(games).aggregate(modeValue,minimumGames).filter(row=>{
         const value=row.values[metricId];
-        // Completeness belongs to the chosen method. An excluded method is
-        // still disclosed by eligibleGames, but cannot veto qualified peers.
-        const model=value.models[0];
-        const compatibleGames=games.flatMap(game=>game.players.filter(player=>
-          player.playerId===row.playerId&&metricEligible(m,game,player)&&
-          (player.models[metricId]||'unknown')===model)).length;
-        return value.value!==null&&value.samples===compatibleGames&&
+        // This is a comparison among measured peers, never an absolute
+        // whole-Season leader. Missing observations remain disclosed and do
+        // not cancel the independently valid minimum sample.
+        return value.value!==null&&
           value.models.length===1&&value.models[0]!=='unknown'&&
           (!typical||value.samples>=minimumGames);
       });

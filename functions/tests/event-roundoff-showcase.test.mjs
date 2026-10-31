@@ -39,8 +39,8 @@ test('five cards prioritize ranks and count both acts rather than only the main 
   assert.deepEqual(items[3].sources.map(s=>s.matchId),['M1','W2']);
   assert.equal(items[3].sources[0].revision,3);assert.equal(items[3].sources[0].sourceHash,input.games[0].sourceHash);
 });
-test('all numerical tiers are inclusive, rank exactly, and lower tiers collapse',()=>{
-  for(const rule of EVENT_SHOWCASE_METRICS)for(const [t,threshold] of rule.thresholds.entries()){
+test('all source-eligible numerical tiers are inclusive, rank exactly, and lower tiers collapse',()=>{
+  for(const rule of EVENT_SHOWCASE_METRICS.filter(r=>r.showcasePolicy!=='SOURCE_BLOCKED'))for(const [t,threshold] of rule.thresholds.entries()){
     const input=fixture(false),main=player(input,'M1','p0'),warm=player(input,'W0','p0');
     main.values[rule.id]=threshold;
     if(rule.aggregation==='GOLD'){main.values.goldControl=threshold*100/8;warm.values.goldControl=threshold*100/2;}
@@ -205,4 +205,96 @@ test('uncounted extra warmups contribute to statistics-based accomplishments wit
  assert.equal(find(input,'farmsPlaced'),undefined,'ineligible extra Game is not treated as zero or a complete aggregate');
  Object.assign(input,JSON.parse(saved));input.games.push({...input.games.find(g=>g.matchId==='EXTRA'),matchId:'DUPLICATE'});input.matches.push({...extra,matchId:'DUPLICATE'});
  assert.equal(find(input,'farmsPlaced'),undefined,'duplicate recording identity cannot inflate accomplishments');
+});
+
+test('source-current result-pending Battle retains four earned Game cards, not victory',async()=>{
+ const {selectBattleShowcase}=await import('../lib/engines/eventRoundoffShowcase.js');
+ const i=fixture(false),m={...i.matches[0],status:'ACTIVE',result:null},g={...i.games[0],eligible:false,exclusionReason:'Official Game result pending'};
+ for(const [id,n] of [['raidsOut',35],['battlesFought',50],['farmsPlaced',200],['unitRequests',700],['castles',10]])g.players[0].values[id]=n;
+ const proof={gameStatus:'READY',resultPending:true,resultDisputeOpen:false,statisticsState:'READY',statisticsId:g.sourceHash,statisticsRevision:g.revision};
+ const cards=selectBattleShowcase({match:m,game:g,pendingResultSource:proof});
+ assert.deepEqual(cards.map(x=>x.rank),[5,6,14,17]);
+ assert.ok(cards.every(x=>x.sources.every(z=>z.gameId===g.gameId&&z.revision===g.revision&&z.sourceHash===g.sourceHash)));
+ assert.ok(cards.every(x=>!['emperor','unbeaten','league-record','season-record','personal-best'].includes(x.catalogueId.split(':')[0])));
+ for(const change of [{statisticsState:'PENDING'},{statisticsId:'f'.repeat(64)},{statisticsRevision:4},{resultDisputeOpen:true},{resultPending:false},{gameStatus:'DISPUTED'},{gameStatus:'CANCELLED'}]){
+   assert.deepEqual(selectBattleShowcase({match:m,game:g,pendingResultSource:{...proof,...change}}),[],JSON.stringify(change));
+ }
+ assert.deepEqual(selectBattleShowcase({match:m,game:g}),[]);
+ for(const reason of ['Result disputed','Source disputed','Unverified recording'])assert.deepEqual(selectBattleShowcase({match:m,game:{...g,exclusionReason:reason},pendingResultSource:proof}),[]);
+ for(const status of ['DISPUTED','CANCELLED','VOID','PROPOSED'])assert.deepEqual(selectBattleShowcase({match:{...m,status},game:g,pendingResultSource:proof}),[]);
+ assert.deepEqual(selectBattleShowcase({match:m,game:{...g,evidenceTruncated:true},pendingResultSource:proof}),[]);
+ assert.deepEqual(selectBattleShowcase({match:m,game:{...g,players:g.players.slice(1)},pendingResultSource:proof}),[]);
+});
+
+test('corrections, source replacement, series identity and duplicate POV are fenced',async()=>{
+ const {selectBattleShowcase}=await import('../lib/engines/eventRoundoffShowcase.js');
+ const i=fixture(false),m={...i.matches[0],status:'ACTIVE',result:null};
+ const g={...i.games[0],eligible:false,exclusionReason:'Official Game result pending'};g.players[0].values.raidsOut=10;
+ const proof={gameStatus:'COMPLETED',resultPending:true,resultDisputeOpen:false,statisticsState:'READY',statisticsId:g.sourceHash,statisticsRevision:g.revision};
+ assert.ok(selectBattleShowcase({match:m,game:g,pendingResultSource:proof}).some(x=>x.catalogueId==='raidsOut:NOTABLE'));
+ const revised={...g,revision:g.revision+1,sourceHash:'c'.repeat(64),players:g.players.map(p=>({...p,values:{...p.values,raidsOut:2}}))};
+ assert.deepEqual(selectBattleShowcase({match:m,game:revised,pendingResultSource:proof}),[]);
+ assert.equal(selectBattleShowcase({match:m,game:revised,pendingResultSource:{...proof,statisticsId:revised.sourceHash,statisticsRevision:revised.revision}}).some(x=>x.catalogueId.startsWith('raidsOut:')),false);
+ const other={...g,gameId:'G2',sourceHash:'d'.repeat(64)};
+ assert.ok(selectBattleShowcase({match:m,game:other,pendingResultSource:{...proof,statisticsId:other.sourceHash}}).every(c=>c.sources.every(s=>s.gameId==='G2')));
+ const dup=fixture(false);dup.matches[0].acceptedGameIds=['G1','G2'];dup.games.push({...dup.games[0],gameId:'G2'});
+ set(dup,'M1','p0','farmsPlaced',200);
+ assert.equal(find(dup,'farmsPlaced'),undefined,'duplicate POV source cannot double count Game');
+});
+
+test('all three legacy tribute ranks are withheld as requests without verified receipt',async()=>{
+ const {selectBattleShowcase}=await import('../lib/engines/eventRoundoffShowcase.js');
+ const rule=EVENT_SHOWCASE_METRICS.find(x=>x.id==='tributeSent');
+ assert.equal(EVENT_SHOWCASE_CATALOGUE.length,64);
+ assert.equal(rule.showcasePolicy,'SOURCE_BLOCKED');
+ assert.match(rule.title,/request/i);assert.doesNotMatch(rule.unit,/resources sent|delivered/i);
+ for(const amount of [0,1000,3000,6000,12000]){
+  const i=fixture(false);set(i,'M1','p0','tributeSent',amount);set(i,'W0','p0','tributeSent',amount);
+  assert.equal(find(i,'tributeSent'),undefined);
+  assert.ok(!selectBattleShowcase({match:i.matches[0],game:i.games[0]}).some(c=>c.catalogueId.startsWith('tributeSent:')));
+  set(i,'M1','p1','raidsOut',12);assert.ok(find(i,'raidsOut'),'other sourced feats survive');
+ }
+});
+
+test('team coactions stay tied to real allies; 1v1 and FFA never assume support',async()=>{
+ const {selectBattleShowcase}=await import('../lib/engines/eventRoundoffShowcase.js');
+ const i=fixture(false),g=i.games[0],m=i.matches[0];
+ g.players[0].values.assistsOut=10;g.players[0].values.cooperation=10;
+ const team=selectBattleShowcase({match:m,game:g});
+ assert.ok(team.some(c=>c.catalogueId==='assistsOut:EXTRAORDINARY'));
+ assert.ok(team.some(c=>c.catalogueId==='cooperation:EXTRAORDINARY'));
+ const duel=i.games[1];duel.players[0].values.assistsOut=10;duel.players[0].values.cooperation=10;
+ assert.ok(!selectBattleShowcase({match:i.matches[1],game:duel}).some(c=>/^(assistsOut|cooperation):/.test(c.catalogueId)));
+ const ffa={...g,format:'FFA',players:g.players.map(p=>({...p,team:null}))};
+ const fm={...m,format:'FFA',participants:m.participants.map(p=>({...p,team:null}))};
+ assert.ok(!selectBattleShowcase({match:fm,game:ffa}).some(c=>/^(assistsOut|cooperation):/.test(c.catalogueId)));
+});
+
+test('Event SUM preserves historical cumulative contribution but discloses exposure',()=>{
+ const i=fixture(false);set(i,'M1','p0','farmsPlaced',130);set(i,'W0','p0','farmsPlaced',80);
+ const c=find(i,'farmsPlaced');assert.equal(c.catalogueId,'farmsPlaced:EXTRAORDINARY');
+ assert.match(c.value,/210 farm placements/);assert.match(c.detail,/2 applicable Games/);
+ assert.match(c.detail,/80\.0 observed player-Game minutes/);
+ assert.match(c.detail,/cumulative detected activity/);
+ assert.match(c.detail,/not a per-minute skill comparison/);
+ set(i,'W0','p0','farmsPlaced',5);
+ assert.equal(find(i,'farmsPlaced').catalogueId,'farmsPlaced:NOTABLE');
+ i.games.find(g=>g.matchId==='W0').eligible=false;
+ assert.equal(find(i,'farmsPlaced'),undefined,'incomplete all-Game total cannot become zero');
+});
+
+test('unverified tribute request does not reappear as a historical record or personal best',()=>{
+ const input=fixture(false);
+ set(input,'M1','p0','tributeSent',12000);set(input,'W0','p0','tributeSent',0);
+ const previous=structuredClone(input.games[0]);
+ previous.matchId='HISTORY';previous.eventId='OLD';previous.orderAtMs=Math.min(...input.games.map(g=>g.orderAtMs))-86400000;
+ previous.sourceHash='b'.repeat(64);previous.players=previous.players.map(p=>({...p,values:{...p.values,tributeSent:500}}));
+ input.publishedHistory=[previous];
+ assert.ok(!selectEventShowcase(input).some(c=>c.sources.some(s=>s.model==='QUALIFIED_TEST_V1')&&/Tribute request/i.test(c.detail)));
+ assert.equal(find(input,'league-record'),undefined,'history record cannot arise from tribute request alone');
+ assert.equal(find(input,'season-record'),undefined,'Season history record cannot arise from tribute request alone');
+ // Under three independent prior Games, even a tenfold request is not a PB.
+ for(let k=1;k<4;k++)input.publishedHistory.push({...previous,matchId:'HISTORY'+k,
+  sourceHash:(100+k).toString(16).padStart(64,'0'),orderAtMs:previous.orderAtMs-k*86400000});
+ assert.equal(find(input,'personal-best'),undefined);
 });

@@ -20,6 +20,11 @@ export interface ShowcaseMatch {
   participants:Array<{playerId:string;team?:number|null}>;
   result?:{winningPlayerIds?:string[];revision?:number}|null;
 }
+/** A result-pending Game may be showcased ONLY with a matching current READY source pointer. */
+export interface PendingBattleSource {
+  gameStatus:string;resultPending:boolean;resultDisputeOpen:boolean;
+  statisticsState:string|null;statisticsId:string|null;statisticsRevision:number|null;
+}
 export interface EventShowcaseInput {
   eventId:string;matches:ShowcaseMatch[];games:GameStatistics[];
   /** Only already published, qualified history, supplied by the release producer. */
@@ -33,7 +38,7 @@ const median=(values:number[])=>{const a=[...values].sort((x,y)=>x-y);return a.l
 const sourceSort=(a:ShowcaseSource,b:ShowcaseSource)=>a.matchId.localeCompare(b.matchId)||(a.gameId??'').localeCompare(b.gameId??'')||a.revision-b.revision;
 const uniqueSources=(sources:ShowcaseSource[])=>[...new Map(sources.map(s=>[`${s.role}:${s.matchId}:${s.gameId??''}:${s.revision}`,s])).values()].sort(sourceSort);
 const measured=(p:PlayerMeasurement,id:string,illustrative:boolean)=>typeof p.values[id]==='number'&&Number.isFinite(p.values[id])&&p.values[id]!>=0&&typeof p.models[id]==='string'&&!!p.models[id]&&!/unknown/i.test(p.models[id])&&(illustrative||!/^ILLUSTRATIVE/i.test(p.models[id]));
-const basicGame=(g:GameStatistics,illustrative:boolean)=>g.eligible&&!g.exclusionReason&&g.version===EXPERIENCE_VERSION&&!!g.contextKey&&!!g.gameId&&!!g.matchId&&Number.isInteger(g.revision)&&g.revision>0&&!g.evidenceTruncated&&Number.isFinite(g.durationMs)&&g.durationMs>0&&(illustrative||/^[a-f0-9]{64}$/i.test(g.sourceHash));
+const basicGame=(g:GameStatistics,illustrative:boolean,allowPendingResult=false)=>(g.eligible&&!g.exclusionReason||allowPendingResult&&g.eligible===false&&g.exclusionReason==='Official Game result pending')&&g.version===EXPERIENCE_VERSION&&!!g.contextKey&&!!g.gameId&&!!g.matchId&&Number.isInteger(g.revision)&&g.revision>0&&!g.evidenceTruncated&&Number.isFinite(g.durationMs)&&g.durationMs>0&&(illustrative||/^[a-f0-9]{64}$/i.test(g.sourceHash));
 const allied=(g:GameStatistics,p:PlayerMeasurement)=>p.team!=null&&g.players.some(q=>q.playerId!==p.playerId&&q.team===p.team);
 const resultValid=(m:ShowcaseMatch)=>Number.isInteger(m.result?.revision)&&m.result!.revision!>0&&!!m.result?.winningPlayerIds?.length&&new Set(m.result.winningPlayerIds).size===m.result.winningPlayerIds.length&&m.result.winningPlayerIds.length<m.participants.length&&m.result.winningPlayerIds.every(id=>m.participants.some(p=>p.playerId===id));
 type Candidate=EventShowcaseItem&{family:string;score:number;lower?:boolean;model?:string};
@@ -50,12 +55,21 @@ const gameLabel=(r:MetricRule,value:number)=>r.aggregation==='GOLD'?`≈ ${value
 export function selectEventShowcase(input:EventShowcaseInput):EventShowcaseItem[]{return selectShowcase(input);}
 
 /** One accepted Game, using the Event catalogue without campaign or historical claims. */
-export function selectBattleShowcase(input:{match:ShowcaseMatch;game:GameStatistics;illustrative?:boolean}):EventShowcaseItem[]{
-  if(input.match.status==='DISPUTED'||input.match.status==='CANCELLED'||input.match.status==='VOID')return [];
-  return selectShowcase({eventId:input.game.eventId??'',matches:[{...input.match,acceptedGameIds:[input.game.gameId]}],games:[input.game],illustrative:input.illustrative},true).slice(0,4);
+export function selectBattleShowcase(input:{match:ShowcaseMatch;game:GameStatistics;illustrative?:boolean;pendingResultSource?:PendingBattleSource}):EventShowcaseItem[]{
+  if(['DISPUTED','CANCELLED','VOID','PROPOSED'].includes(input.match.status))return [];
+  const g=input.game,p=input.pendingResultSource;
+  // A READY active statistics source is separate from official outcome authority.
+  // Never admit a source dispute, stale pointer, cancelled Game or an unverified
+  // winner. These cards describe measured Game performance, not victory.
+  const pendingSource=!!p&&p.resultPending===true&&p.resultDisputeOpen===false&&
+    ['READY','COMPLETED'].includes(p.gameStatus)&&p.statisticsState==='READY'&&
+    p.statisticsId===g.sourceHash&&p.statisticsRevision===g.revision&&
+    g.eligible===false&&g.exclusionReason==='Official Game result pending';
+  if(!g.eligible&&!pendingSource)return [];
+  return selectShowcase({eventId:g.eventId??'',matches:[{...input.match,acceptedGameIds:[g.gameId]}],games:[g],illustrative:input.illustrative},true,pendingSource).slice(0,4);
 }
 
-function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem[]{
+function selectShowcase(input:EventShowcaseInput,battle=false,pendingBattleSource=false):EventShowcaseItem[]{
   const illustrative=input.illustrative===true,candidates:Candidate[]=[];
   const eventMatches=input.matches.filter(m=>(battle||m.eventId===input.eventId)&&m.status!=='CANCELLED');
   const matches=eventMatches.filter(m=>(battle||m.status==='COMPLETED')&&eventMatches.filter(q=>q.matchId===m.matchId).length===1&&m.participants.length>=2&&new Set(m.participants.map(p=>p.playerId)).size===m.participants.length);
@@ -65,7 +79,7 @@ function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem
   const manifestValid=(m:ShowcaseMatch)=>Array.isArray(m.acceptedGameIds)&&m.acceptedGameIds.length>0&&new Set(m.acceptedGameIds).size===m.acceptedGameIds.length;
   const games=input.games.filter(g=>{
     const m=matchMap.get(g.matchId);
-    return !!m&&manifestValid(m)&&m.acceptedGameIds!.includes(g.gameId)&&(battle?g.eventId===(m.eventId??null):g.eventId===input.eventId)&&basicGame(g,illustrative)&&(!m.format||m.format===g.format)&&input.games.filter(q=>key(q)===key(g)).length===1&&input.games.filter(q=>q.sourceHash===g.sourceHash&&key(q)!==key(g)).length===0&&g.players.length===m.participants.length&&new Set(g.players.map(p=>p.playerId)).size===g.players.length&&g.players.every(p=>m.participants.some(q=>q.playerId===p.playerId&&(q.team??null)===p.team));
+    return !!m&&manifestValid(m)&&m.acceptedGameIds!.includes(g.gameId)&&(battle?g.eventId===(m.eventId??null):g.eventId===input.eventId)&&basicGame(g,illustrative,battle&&pendingBattleSource)&&(!m.format||m.format===g.format)&&input.games.filter(q=>key(q)===key(g)).length===1&&input.games.filter(q=>q.sourceHash===g.sourceHash&&key(q)!==key(g)).length===0&&g.players.length===m.participants.length&&new Set(g.players.map(p=>p.playerId)).size===g.players.length&&g.players.every(p=>m.participants.some(q=>q.playerId===p.playerId&&(q.team??null)===p.team));
   }).sort((a,b)=>key(a).localeCompare(key(b)));
   const gameMap=new Map(games.map(g=>[key(g),g]));
   const playerIds=[...new Set(eventMatches.flatMap(m=>m.participants.map(p=>p.playerId)))].sort();
@@ -80,6 +94,9 @@ function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem
   if(!battle&&unbeaten.length)candidates.push(make('unbeaten','EXCEPTIONAL','Victory',unbeaten,'2 wins · 2 Matches','Won both their designated warm-up and main Match, from confirmed result revisions.',matches.filter(m=>['WARMUP','MAIN'].includes(m.scoringAct??'')&&m.participants.some(p=>unbeaten.includes(p.playerId)&&countsForVictory(m,p.playerId))).map(resultSource),'victory'));
   const great:MetricRule={id:'greatBattles',title:'',category:'Army',emblem:'swords',family:'great-battle',aggregation:'SUM',thresholds:[Infinity,1,2],unit:'detected Great Battles',meaning:battle?'Participation in detected Great Battle episodes in this Game.':'Participation in detected Great Battle episodes across Event Games.'};
   for(const rule of [...EVENT_SHOWCASE_METRICS,great]){
+    // V1 tribute is a decoded request, not delivered resources. Keep the 64
+    // catalogue IDs for historical stability, but withhold these three cards.
+    if(rule.showcasePolicy==='SOURCE_BLOCKED')continue;
     const field:Candidate[]=[];
     for(const id of playerIds){
       const all=games.filter(g=>g.players.some(p=>p.playerId===id));
@@ -110,8 +127,9 @@ function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem
       if(tierIndex===undefined)continue;
       const tier=(['NOTABLE','EXCEPTIONAL','EXTRAORDINARY'] as const)[tierIndex];
       const coverage=battle?'Qualified measurement from this Game.':rule.aggregation==='BEST'?`Best eligible performance across ${applicable.length} Game${applicable.length===1?'':'s'}.`:`Event ${rule.aggregation==='SUM'?'total':'measurement'} across ${valid.length} applicable Game${valid.length===1?'':'s'}. Warm-up and main Games are considered.`;
+      const contributionDetail=!battle&&rule.aggregation==='SUM'?` This is cumulative detected activity over ${(valid.reduce((n,{g})=>n+g.durationMs,0)/60000).toFixed(1)} observed player-Game minutes, not a per-minute skill comparison or equal-opportunity ranking.`:'';
       const goldDetail=rule.aggregation==='GOLD'?` ${battle?'Game':'Event'} index ${value.toFixed(2)} × equal share. ${valid.map(({g,p})=>`${matchMap.get(g.matchId)?.scoringAct==='WARMUP'?'Warm-up':'Game'}: ≈ ${p.values.goldControl!.toFixed(1)}%`).join('; ')}.`:'';
-      const card=make(rule.id,tier,rule.category,[id],rule.aggregation==='GOLD'?`≈ ${peak.toFixed(1)}% peak influence`:label(rule,value),`${coverage} ${battle?rule.meaning.replaceAll('across Event Games','in this Game').replaceAll('summed across Games','in this Game'):rule.meaning}${goldDetail}`,used.map(({g,p})=>source(g,rule.id,p)),rule.family,value);
+      const card=make(rule.id,tier,rule.category,[id],rule.aggregation==='GOLD'?`≈ ${peak.toFixed(1)}% peak influence`:label(rule,value),`${coverage}${contributionDetail} ${battle?rule.meaning.replaceAll('across Event Games','in this Game').replaceAll('summed across Games','in this Game'):rule.meaning}${goldDetail}`,used.map(({g,p})=>source(g,rule.id,p)),rule.family,value);
       if(battle&&rule.id==='raidsOut')card.title='Raiding pressure';
       card.lower=rule.lower;card.model=valid[0].p.models[rule.id];field.push(card);
     }
@@ -123,6 +141,8 @@ function selectShowcase(input:EventShowcaseInput,battle=false):EventShowcaseItem
   const eventStart=Math.min(...games.map(g=>g.orderAtMs));
   const history=(input.publishedHistory??[]).filter(g=>g.eventId!==input.eventId&&g.orderAtMs<eventStart&&basicGame(g,illustrative)&&!games.some(e=>e.sourceHash===g.sourceHash)&&(input.publishedHistory??[]).filter(q=>key(q)===key(g)).length===1&&!(input.publishedHistory??[]).some(q=>q.sourceHash===g.sourceHash&&key(q)!==key(g)));
   for(const g of (battle?[]:games))for(const p of g.players)for(const rule of EVENT_SHOWCASE_METRICS){
+    // Unverified tribute requests cannot re-enter as league/Season/PB history.
+    if(rule.showcasePolicy==='SOURCE_BLOCKED')continue;
     if(!measured(p,rule.id,illustrative)||p.values[rule.id]===0||(rule.teamOnly&&!allied(g,p))||(rule.age&&(matchMap.get(g.matchId)?.standardStart!==true||p.values[rule.id]!>g.durationMs))||(rule.checkpoint&&g.durationMs<rule.checkpoint))continue;
     for(const scope of ['league-record','season-record','personal-best'] as const){
       if(scope==='league-record'&&!g.affectsLifetime||scope==='season-record'&&!g.affectsSeason)continue;

@@ -74,8 +74,8 @@ test('five compatible legacy Games retain qualified peers despite an excluded-mo
   games[4].players[0].values.forward=null;
   assert.deepEqual(new StatisticsExperience(games).leaders('forward','average',5),[],
     'missing own-model source cannot count as the fifth measured Game');
-  assert.deepEqual(new StatisticsExperience(games).leaders('forward','average',4),[],
-    'missing own-model source still prevents that method slice being complete');
+  assert.deepEqual(new StatisticsExperience(games).leaders('forward','average',4),['a'],
+    'four valid observations can compare when the explicit minimum is four; null does not erase them');
 });
 test('shared legacy model keeps displayed values and qualified leaders aligned despite a larger individual method',()=>{
   const shared=Array.from({length:5},(_,i)=>game(i)),separate=Array.from({length:6},(_,i)=>game(i+5));
@@ -91,8 +91,15 @@ test('shared legacy model keeps displayed values and qualified leaders aligned d
     'a missing own-model observation cannot establish a fifth complete shared sample');
   const missing=game(20);missing.players=[missing.players[0]];missing.players[0].values.forward=null;missing.players[0].models.forward='old';
   shared[4].players[0].values.forward=9;
+  const partial=new StatisticsExperience([...shared,...separate,missing]);
+  assert.deepEqual(partial.leaders('forward','average',5),['a'],
+    'five measured Game observations retain a scoped comparison beside a sixth missing observation');
+  const sample=partial.aggregate('average')[0].values.forward;
+  assert.equal(sample.samples,5);assert.equal(sample.eligibleGames,12);
+  assert.deepEqual(sample.contributingGameKeys,shared.map(g=>JSON.stringify([g.matchId,g.gameId])));
+  shared[4].players[0].values.forward=null;
   assert.deepEqual(new StatisticsExperience([...shared,...separate,missing]).leaders('forward','average',5),[],
-    'five observed values cannot conceal a sixth missing observation inside their own model');
+    'four measured Games plus two nulls never fulfil the minimum of five');
 });
 test('shared legacy age model uses its verified start cohort for both the displayed value and leadership',()=>{
   const standard=Array.from({length:5},(_,i)=>game(i)),nomad=Array.from({length:6},(_,i)=>game(i+5));
