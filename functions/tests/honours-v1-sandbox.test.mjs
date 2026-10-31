@@ -87,6 +87,19 @@ test("fast Castle: immature provisional, mature holder, two transfers mid-Season
   assert.equal(result.history.length,3);
 });
 
+test("same champion improving their own record updates history but never transfers title to themselves",()=>{
+  const first=baseline();
+  const better=game("self-improve","b-self",8,{roster:["Alice","Dora"],
+    measurements:{Alice:{fastCastle:fc(14*60000+58000)}}});
+  const r=projectCompetitiveTrophy(season([...first,better]),"FAST_CASTLE");
+  assert.equal(r.holder,"Alice");
+  assert.equal(r.history.length,1,"historical holder succession has one legitimate possessor");
+  assert.equal(r.history[0].fromMs,season0+7*day);
+  assert.equal(r.history[0].toMs,null);
+  assert.equal(r.history[0].improvements.length,1);
+  assert.equal(r.history[0].improvements[0].valueMs,14*60000+58000);
+});
+
 test("corrected and withdrawn sources recalculate legitimate possession and erase invalid succession",()=>{
   const bruno=game("gf","bf",8,{roster:["Bruno","Clara"],
     measurements:{Bruno:{fastCastle:fc(898000)}}});
