@@ -43,8 +43,11 @@ const baseline=()=>{
   return [a,b,c,d,e];
 };
 const wonder=(time, winner)=>({method:"WONDER_VICTORY",
-  verifiedBy:"OFFICIAL_METHOD_REVIEW",resultRevision:1,
-  winnerId:winner,completeTimerWitness:true,gameEndAtMs:time});
+  verifiedBy:"OFFICIAL_METHOD_REVIEW",resultRevision:1,sourceRevision:1,
+  winnerId:winner,winningWonderId:"W-"+winner,
+  winningWonderOwnerPlayerId:winner,winningWonderCompleted:true,
+  gameEndAtMs:time // retained for negative test only; never a qualifying threshold
+});
 const source=(more={})=>({sourceQualified:true,modelState:"SOURCE_VALIDATED",
   sourceClockComplete:true,windowMs:30*60000,...more});
 const at=(e,p,key,value)=>({...e,measurements:{...e.measurements,[p]:{...e.measurements?.[p],[key]:value}}});
@@ -150,29 +153,34 @@ test("qualified normal Castle research is distinct from Elite trophy performance
   assert.equal(result.recordValueMs,17*60000+45000);
 });
 
-test("Wonder: source-verified victory method required; BUILD request and usual win never enough",()=>{
+test("Wonder: first verified victory activates crown; equal win/points cannot dethrone",()=>{
   const w1=game("w1","bw1",2,{victoryRules:"WONDER",
     wonderVictory:wonder(55*60000,"Alice")});
-  const w2=game("w2","bw2",3,{victoryRules:"WONDER",
-    roster:["Alice","Clara"],winners:["Clara"]});
-  const w3=game("w3","bw3",4,{victoryRules:"WONDER",
-    roster:["Alice","Dora"],winners:["Dora"]});
-  const base=[w1,w2,w3];
-  let r=projectCompetitiveTrophy(season(base),"WONDER");
-  assert.equal(r.holder,"Alice");
+  let r=projectCompetitiveTrophy(season([w1]),"WONDER");
+  assert.equal(r.holder,"Alice","no clock or maturity gate after verified Wonder victory");
+  assert.equal(r.wonderVictories,1);
+  assert.equal(r.wonderPoints,2.5);
   const fake=game("w4","bw4",8,{victoryRules:"WONDER",
     roster:["Bruno","Dora"],winners:["Bruno"],wonderBuildRequested:true});
-  r=projectCompetitiveTrophy(season([...base,fake]),"WONDER");
+  r=projectCompetitiveTrophy(season([w1,fake]),"WONDER");
   assert.equal(r.holder,"Alice");
   const verified=game("w5","bw5",9,{victoryRules:"WONDER",
     roster:["Bruno","Dora"],winners:["Bruno"],wonderVictory:wonder(50*60000,"Bruno")});
-  r=projectCompetitiveTrophy(season([...base,verified]),"WONDER");
-  assert.equal(r.holder,"Bruno");
+  r=projectCompetitiveTrophy(season([w1,fake,verified]),"WONDER");
+  assert.equal(r.holder,"Alice","faster win time cannot break same victory/points tie");
+  assert.deepEqual(r.recordHolders,["Alice","Bruno"]);
+  const bonus=game("w6","bw6",10,{winners:["Bruno"],
+    roster:["Bruno","Dora"],wonderConstructions:[{
+      buildingInstanceId:"extra-B",ownerPlayerId:"Bruno",complete:true,
+      verifiedBy:"INDEPENDENT_CONSTRUCTION_REVIEW",sourceRevision:1,
+    }]});
+  r=projectCompetitiveTrophy(season([w1,fake,verified,bonus]),"WONDER");
+  assert.equal(r.holder,"Bruno","0.5 verified construction point breaks victory tie");
   assert.deepEqual(r.history.map(h=>h.playerId),["Alice","Bruno"]);
-  const wrong=game("w6","bw6",10,{victoryRules:"WONDER",
+  const wrong=game("w7","bw7",11,{victoryRules:"WONDER",
     roster:["Bruno","Dora"],winners:["Bruno"],
-    wonderVictory:{...wonder(40*60000,"Bruno"),verifiedBy:"REPLAY_BUILD_REQUEST"}});
-  assert.equal(projectCompetitiveTrophy(season([...base,verified,wrong]),"WONDER").holder,"Bruno");
+    wonderVictory:{...wonder(10*60000,"Bruno"),verifiedBy:"REPLAY_BUILD_REQUEST"}});
+  assert.equal(projectCompetitiveTrophy(season([w1,fake,verified,bonus,wrong]),"WONDER").holder,"Bruno");
 });
 
 test("Unbroken: four verified 1v1/team Games, FFA loss ignored, next normal loss revokes",()=>{
