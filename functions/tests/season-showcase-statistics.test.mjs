@@ -79,8 +79,8 @@ test('genuinely team-only averages exclude 1v1, while tribute requests include s
   const row = new StatisticsExperience(games).aggregate('average').find(item => item.playerId === 'p1');
   assert.ok(row);
   assert.equal(row.games, 3);
-  assert.deepEqual(row.values.tradeUnits, {value: 15, samples: 2, eligibleGames: 2, models: ['TEST_MODEL_V1']});
-  assert.deepEqual(row.values.tributeSent, {value: 1799/3, samples: 3, eligibleGames: 3, models: ['TEST_MODEL_V1']});
+  assert.deepEqual(row.values.tradeUnits, {value: 15, samples: 2, eligibleGames: 2, models: ['TEST_MODEL_V1'], contributingGameKeys: ['m2','m3'].map(id=>JSON.stringify([id,'g1']))});
+  assert.deepEqual(row.values.tributeSent, {value: 1799/3, samples: 3, eligibleGames: 3, models: ['TEST_MODEL_V1'], contributingGameKeys: ['m1','m2','m3'].map(id=>JSON.stringify([id,'g1']))});
   assert.equal(row.values.tributeReceived.value,null,'absent receipt-request observation stays unavailable');
 });
 

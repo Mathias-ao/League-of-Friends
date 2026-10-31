@@ -35,7 +35,7 @@ test('duplicate source, retried delivery and corrected revisions never double co
 test('missing values remain unavailable; volume uses available sample denominator',()=>{
   const first=game(),second=game(1);second.players[0].values.raidsOut=null;
   const engine=new StatisticsExperience([first,second]);
-  assert.deepEqual(engine.aggregate('average')[0].values.raidsOut,{value:2,samples:1,eligibleGames:2,models:['model-1']});
+  assert.deepEqual(engine.aggregate('average')[0].values.raidsOut,{value:2,samples:1,eligibleGames:2,models:['model-1'],contributingGameKeys:[JSON.stringify(['match-0','G1'])]});
   assert.deepEqual(engine.leaders('raidsOut'),['c'],'complete comparable peers must not vanish because a third player is incomplete');
 });
 test('leader ties share stars, while all-equal, unknown and mixed models get none',()=>{
@@ -76,6 +76,40 @@ test('five compatible legacy Games retain qualified peers despite an excluded-mo
     'missing own-model source cannot count as the fifth measured Game');
   assert.deepEqual(new StatisticsExperience(games).leaders('forward','average',4),[],
     'missing own-model source still prevents that method slice being complete');
+});
+test('shared legacy model keeps displayed values and qualified leaders aligned despite a larger individual method',()=>{
+  const shared=Array.from({length:5},(_,i)=>game(i)),separate=Array.from({length:6},(_,i)=>game(i+5));
+  for(const g of shared){g.players=g.players.filter(p=>p.playerId!=='c');for(const p of g.players){p.values.forward=p.playerId==='a'?9:7;p.models.forward='old';}}
+  for(const g of separate){g.players=g.players.filter(p=>p.playerId==='a');g.players[0].values.forward=1;g.players[0].models.forward='new';}
+  const engine=new StatisticsExperience([...shared,...separate]),a=engine.aggregate('average')[0].values.forward;
+  assert.equal(a.value,9);assert.equal(a.samples,5);assert.equal(a.eligibleGames,11);
+  assert.deepEqual(a.models,['old']);assert.deepEqual(a.excludedModels,['new']);
+  assert.deepEqual(a.contributingGameKeys,shared.map(g=>JSON.stringify([g.matchId,g.gameId])));
+  assert.deepEqual(engine.leaders('forward','average',5),['a']);
+  shared[4].players[0].values.forward=null;
+  assert.deepEqual(new StatisticsExperience([...shared,...separate]).leaders('forward','average',5),[],
+    'a missing own-model observation cannot establish a fifth complete shared sample');
+  const missing=game(20);missing.players=[missing.players[0]];missing.players[0].values.forward=null;missing.players[0].models.forward='old';
+  shared[4].players[0].values.forward=9;
+  assert.deepEqual(new StatisticsExperience([...shared,...separate,missing]).leaders('forward','average',5),[],
+    'five observed values cannot conceal a sixth missing observation inside their own model');
+});
+test('shared legacy age model uses its verified start cohort for both the displayed value and leadership',()=>{
+  const standard=Array.from({length:5},(_,i)=>game(i)),nomad=Array.from({length:6},(_,i)=>game(i+5));
+  for(const g of standard){g.players=g.players.filter(p=>p.playerId!=='c');for(const p of g.players){p.values.castle=p.playerId==='a'?600000:800000;p.models.castle='old';}}
+  for(const g of nomad){g.startOpportunity={...g.startOpportunity,startMode:'NOMAD',startingTownCenters:0};g.players=g.players.filter(p=>p.playerId==='a');g.players[0].values.castle=200000;g.players[0].models.castle='new';}
+  const engine=new StatisticsExperience([...standard,...nomad]),a=engine.aggregate()[0].values.castle;
+  assert.equal(a.value,600000);assert.deepEqual(a.models,['old']);assert.deepEqual(a.excludedModels,['new']);
+  assert.deepEqual(a.contributingGameKeys,standard.map(g=>JSON.stringify([g.matchId,g.gameId])));
+  for(const g of nomad)g.players[0].models.castle='old';
+  const sameMethod=new StatisticsExperience([...standard,...nomad]).aggregate()[0].values.castle;
+  assert.equal(sameMethod.value,600000);assert.equal(sameMethod.samples,5);assert.equal(sameMethod.eligibleGames,11);
+  assert.deepEqual(sameMethod.contributingGameKeys,standard.map(g=>JSON.stringify([g.matchId,g.gameId])));
+  assert.deepEqual(new StatisticsExperience([...standard,...nomad]).leaders('castle'),['a']);
+  assert.deepEqual(engine.leaders('castle'),['a']);
+  standard[4].startOpportunity=null;
+  assert.deepEqual(new StatisticsExperience([...standard,...nomad]).leaders('castle'),[],
+    'four verified standard observations cannot borrow the unrelated sixth Nomad method');
 });
 test('Castle leader is not inferred from Nomad, Migration or unverified start despite same model',()=>{
   const games=Array.from({length:5},(_,i)=>game(i));
