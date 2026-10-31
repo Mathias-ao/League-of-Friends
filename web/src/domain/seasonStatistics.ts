@@ -211,7 +211,7 @@ export class SeasonStatisticsExperience{
           if(player&&!seasonMetricEligible(metric,game,player))continue;
           const ids=expected.get(game.matchId)??new Set<string>();
           ids.add(game.gameId);
-          for(const sibling of (game as GameStatistics&{knownGameIds?:string[]}).knownGameIds??[])
+          for(const sibling of game.knownGameIds??[])
             if(typeof sibling==='string'&&sibling.trim())ids.add(sibling);
           expected.set(game.matchId,ids);
         }
@@ -224,7 +224,8 @@ export class SeasonStatisticsExperience{
             const members=group.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen&&observation(pair)!==null&&observation(pair)!=='');
             if(!members.length)continue;
             const expectedIds=expected.get(battleId)??new Set(group.map(pair=>pair.game.gameId));
-            const complete=expectedIds.size>0&&[...expectedIds].every(gameId=>members.some(pair=>pair.game.gameId===gameId));
+            const complete=expectedIds.size>0&&group.every(pair=>pair.game.gameManifestComplete!==false)&&
+              [...expectedIds].every(gameId=>members.some(pair=>pair.game.gameId===gameId));
             const raw=members.map(observation),numbers=raw as number[];
             let battleValue:number|string|null=null;
             if(metric.kind==='category')battleValue=categoryMode(raw as string[]).text;

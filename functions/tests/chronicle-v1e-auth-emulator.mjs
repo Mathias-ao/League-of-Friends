@@ -64,6 +64,14 @@ assert.equal((await offer()).offered,false,'same Battle cannot mint a second inv
 const own=await getMyChronicleInvitations.run(req(uid,{})),opponent=await getMyChronicleInvitations.run(req(otherUid,{})),
  out=await getMyChronicleInvitations.run(req(outsider,{}));
 assert.equal(own.invitations.length,1);
+assert.equal(own.invitations[0].context.version,'AOF_CHRONICLE_INVITATION_CONTEXT_V1');
+assert.equal(own.invitations[0].context.status,'CURRENT_GAME_ONLY');
+assert.equal(own.invitations[0].context.gameId,'g1');
+assert.equal(own.invitations[0].context.gameNumber,1);
+assert.equal(own.invitations[0].context.opportunityRevision,created.opportunityRevision);
+assert.equal(own.invitations[0].context.incidentAccount,null,
+ 'synthetic exceptional meaning must not supply a factual incident account');
+assert.equal(own.invitations[0].context.recordingAtMs,null);
 assert.equal(opponent.invitations.length,0);
 assert.equal(out.invitations.length,0);
 assert.equal(JSON.stringify(own).includes('privateNote'),false);
@@ -160,11 +168,17 @@ assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].s
 const sibling=match.collection('games').doc('g2'),originalSibling=(await sibling.get()).data();
 assert.ok(Number.isSafeInteger(originalSibling.replayStatisticsRevision));
 await sibling.update({replayStatisticsRevision:originalSibling.replayStatisticsRevision+1});
-assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,false);
+const staleContext=(await getMyChronicleInvitations.run(req(uid,{}))).invitations[0];
+assert.equal(staleContext.sourceCurrent,false);
+assert.equal(staleContext.context.status,'PENDING');assert.equal(staleContext.context.gameNumber,null);
 await assert.rejects(act(uid,{requestId:'stale-sibling',action:'CORRECTION_REQUEST',expectedRevision:6,
  reason:'Unrelated sibling source revision changed.'}));
 await sibling.set(originalSibling);
 assert.equal((await getMyChronicleInvitations.run(req(uid,{}))).invitations[0].sourceCurrent,true);
+// The joined read shares this exact live authenticated two-Game fixture and
+// its explicit demo-only gates, before withdrawal below. It is not a browser.
+if(process.env.AOF_V1_COMBINED_PRIVATE_READ==='1')
+  await import('./aof-v1-combined-private-read.mjs');
 // A source withdrawal disables responses, preserves tombstone+old private audit.
 const gr=match.collection('games').doc('g1'),game=(await gr.get()).data();
 await gr.collection('replaySources').doc(game.activeReplayStatisticsId).update({state:'WITHDRAWN'});

@@ -49,7 +49,21 @@ const slotPath=(battleId:string,actorId:string)=>
   'matches/'+battleId+'/socialV1InvitationSlots/'+invitationSlotId(battleId,actorId);
 const note=(v:unknown)=>typeof v==='string'&&v.length<=1000&&!/[\u0000-\u0008]/.test(v);
 const currentToken=(v:any)=>bindingDigest(v??null);
-const visibility=(slot:Bag)=>{
+/** The existing reviewed moment has no admitted factual excerpt or timestamp.
+ * Expose only its already-fenced canonical Game identity. Neither a family
+ * label, reviewer prose nor a command request supplies the missing account. */
+export function chronicleInvitationContext(slot:Bag,currentGame:Bag|null){
+  const gameNumber=currentGame&&currentGame.activeReplayStatisticsId===slot.selected.sourceHash&&
+    Number.isSafeInteger(currentGame.gameNumber)&&
+    currentGame.gameNumber>0?currentGame.gameNumber:null;
+  return {version:'AOF_CHRONICLE_INVITATION_CONTEXT_V1' as const,
+    status:gameNumber!==null?'CURRENT_GAME_ONLY' as const:'PENDING' as const,
+    battleId:slot.battleId,gameId:slot.selected.gameId,
+    opportunityRevision:slot.currentOpportunityRevision,gameNumber,
+    incidentAccount:null,recordingAtMs:null,
+    missing:['SOURCE_QUALIFIED_INCIDENT_ACCOUNT','SOURCE_QUALIFIED_INCIDENT_TIME']};
+}
+const visibility=(slot:Bag,currentGame:Bag|null=null)=>{
   const speaker=slot.judgment?
     {authorPlayerId:slot.respondentPlayerId,counterpartPlayerId:slot.selected.counterpartPlayerId,
       battleId:slot.battleId,gameId:slot.selected.gameId,
@@ -60,6 +74,7 @@ const visibility=(slot:Bag)=>{
     revision:slot.revision,state:slot.state,opportunityRevision:slot.currentOpportunityRevision,
     family:slot.selected.family,counterpartPlayerId:slot.selected.counterpartPlayerId,
     questionContext:'Optional perspective on a separately recorded Battle moment.',
+    context:chronicleInvitationContext(slot,currentGame),
     choices:CHOICES[slot.selected.family as JudgmentFamily],speaker,
     // Private notes and audit are never in the standard private invite list;
     // author can explicitly retrieve their own submission detail.
@@ -236,7 +251,8 @@ export async function offerMyChronicleInvitation(input:Input,r:Bag){
    return {created:true,slot};
  });
  if(!plan.created)return {offered:false,reason:'BATTLE_SLOT_ALREADY_CONSUMED'};
- return {offered:true,invitation:visibility(plan.slot)};
+ return {offered:true,invitation:visibility(plan.slot,
+   savedSources.find(s=>s.source.gameId===plan.slot.selected.gameId)?.game??null)};
 }
 
 /** Ordinary respondent operations, never direct Firestore client writes.
@@ -448,7 +464,7 @@ export async function readMyChronicleInvitations(input:Input,r:Bag){
       current=sameApprovedSchedule(m.id,match,event.data()??null,plan?.data()??null,
         planId??null,games.docs.map((g:any)=>({gameId:g.id,game:g.data()})),data.selected.scheduleRevisions);
     }
-    invitations.push({...visibility(data),sourceCurrent:!!current});
+    invitations.push({...visibility(data,current?game.data():null),sourceCurrent:!!current});
  }
  return {version:CHRONICLE_INTERACTION_VERSION,visibility:'OWNER_ONLY',
    ownerPlayerId:input.actor.playerId,invitations,officialEffects:[],

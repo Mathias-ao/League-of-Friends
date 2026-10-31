@@ -34,6 +34,13 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
     v.narratorAuthority==='FACTUAL_SOURCE_ONLY'&&Array.isArray(v.officialEffects)&&!v.officialEffects.length&&
     v.invitations.every(i=>i.respondentPlayerId===ownerId&&i.effects.officialWrites===false&&
       i.effects.relationshipDelta===null&&i.effects.negativeForSilence===false&&
+      (!i.context||i.context.version==='AOF_CHRONICLE_INVITATION_CONTEXT_V1'&&
+        i.context.battleId===i.battleId&&i.context.opportunityRevision===i.opportunityRevision&&
+        typeof i.context.gameId==='string'&&i.context.gameId.length>0&&
+        i.context.incidentAccount===null&&i.context.recordingAtMs===null&&
+        (i.context.status==='PENDING'&&i.context.gameNumber===null||
+          i.sourceCurrent&&i.context.status==='CURRENT_GAME_ONLY'&&
+          Number.isSafeInteger(i.context.gameNumber)&&i.context.gameNumber!>0))&&
       (i.speaker===null||i.speaker.authorPlayerId===ownerId&&i.speaker.qualification==='PENDING'&&
         i.speaker.presentation==='ATTRIBUTED_SPEAKER_NOT_OBJECTIVE_NARRATOR'));
   async function load(token:number){
@@ -78,9 +85,15 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
         const known=typeof questions[i.family]==='string'&&!!copy&&i.choices.every(c=>c==='UNDECIDED'||typeof copy[c]==='string');
         const selected=eligible&&known&&draft?.slotId===i.slotId&&draft.revision===i.revision&&
           draft.opportunityRevision===i.opportunityRevision?draft.choiceId:null;
+        const gameNumber=i.sourceCurrent&&i.context?.status==='CURRENT_GAME_ONLY'?i.context.gameNumber:null;
+        const gameContext=gameNumber!==null?`Game ${gameNumber} of this Battle`:'The Game context is Pending';
         return <li key={i.slotId}>
           <strong>Your encounter with {counterpartNames[i.counterpartPlayerId]??'this league opponent'}</strong>
           <small> · Battle {i.battleId}</small>
+          <p aria-label="Recorded moment context" data-aof-invitation-game={i.sourceCurrent?i.context?.gameId:undefined}>
+            {i.sourceCurrent?gameContext:'The earlier Game context is no longer current'}.
+            {' '}Details of this recorded moment and its time are Pending.
+          </p>
           {!i.sourceCurrent&&<p>Its supporting source has changed; responses are disabled.</p>}
           {i.speaker&&<p>{i.sourceCurrent?'Your private perspective':'Earlier private reflection'}: {typeof copy?.[i.speaker.choiceId]==='string'?copy[i.speaker.choiceId]:'Saved privately'}.
             {i.sourceCurrent?' This is your account, not the narrator’s finding.':' Its supporting source changed; it is not used in current interpretation.'}</p>}
@@ -99,7 +112,7 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
                 </label>
               </details>
               {selected&&<div role="group" aria-label="Review your private perspective">
-                <p>Your choice: {copy![selected]}. You are making a binding private statement about this Battle and {counterpartNames[i.counterpartPlayerId]??'this league opponent'}, linked to the current source. Changing it later requires correction review.</p>
+                <p>Your choice: {copy![selected]}. You are making a binding private statement about this Battle and {counterpartNames[i.counterpartPlayerId]??'this league opponent'}, linked to the current source. {gameContext}. Details and timing remain Pending. Changing it later requires correction review.</p>
                 <button type="button" disabled={busy} onClick={()=>void answer(i,'SUBMIT',selected)}>Save my private perspective</button>
                 <button type="button" disabled={busy} onClick={()=>setDraft(null)}>Change my choice</button>
               </div>}
