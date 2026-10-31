@@ -24,10 +24,10 @@ test('Record Cabinet keeps single-Battle records while ledger shows best Battle 
     const filters=[...document.querySelectorAll('.sx-quiet-filters select')];assert.equal(filters.length,2);
     const format=filters[0] as HTMLSelectElement,comparison=filters[1] as HTMLSelectElement;
     assert.ok(document.querySelector('.sx-league-records'));
-    assert.match(document.querySelector('.sx-records-heading')?.textContent??'',/League Record Cabinet/);
+    assert.match(document.querySelector('.sx-records-heading')?.textContent??'',/Observed League Bests.*Provisional Game observations/);
     const leagueRecords=document.querySelector('.sx-record-plaque-grid')?.textContent??'';
     assert.doesNotMatch(leagueRecords,/Narrow scope/i);
-    assert.match(leagueRecords,/Fastest Feudal/);
+    assert.match(leagueRecords,/Earliest Inferred Feudal Age/);
 
     assert.ok(comparison.options.length>1,'preview should expose more than one approved comparison context');
     await change(comparison,comparison.options[1].value);
@@ -66,8 +66,8 @@ test('Record Cabinet keeps single-Battle records while ledger shows best Battle 
 
     await change(format,'TWO_V_TWO');
     assert.ok(document.querySelector('.sx-format-records'));
-    assert.match(document.querySelector('.sx-records-heading')?.textContent??'',/2v2 Records/);
-    assert.ok(document.querySelector('.sx-record-benchmark'),'format records should show the absolute League benchmark');
+    assert.match(document.querySelector('.sx-records-heading')?.textContent??'',/2v2 Observed Bests/);
+    assert.ok(document.querySelector('.sx-record-benchmark'),'format observations should show the provisional League benchmark');
     const updatedFilters=[...document.querySelectorAll('.sx-quiet-filters select')];
     assert.equal((updatedFilters[1] as HTMLSelectElement).value,'all','changing Format should reset only the ledger Comparison scope');
   }finally{await act(async()=>root.unmount());dom.window.close();}
