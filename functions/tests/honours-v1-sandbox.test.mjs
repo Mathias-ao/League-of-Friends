@@ -388,7 +388,7 @@ test("optional Chronicle statements never substitute for Wonder method, fog mode
       explorer:source({modelVersion:"AOF_MAP_PRESENCE_V6",modelValidatedAgainstFog:false,
         coverageLowerBoundPercent:99,confidence:1}),
       defensive:source({gameId:"no-proof",battleId:"b",episodeId:"def-1",
-        sourceRevision:"S1",windowMs:35*60000,sourceQualifiedResponses:2,
+        sourceRevision:"S1",windowMs:35*60000,qualifiedResponseOrders:2,
         incomingThreatLevel:3,directionVerified:true,witnessIds:["Bruno"]})
     }}});
   const c=projectTenHonours(season([g],{eligibleBattleOrder:["b"]}),"Alice");
