@@ -1,6 +1,6 @@
 import {admitPersonalityContext, PERSONALITY_CONTEXT_PROOF_VERSION,
   type ContextSourceInput,type ReviewedContextProof} from './contextAdmission.js';
-import {PERSONALITY_AXES,type GameContext,type PersonalityAxis,
+import {PERSONALITY_AXES,personalityComparisonGroup,type GameContext,type PersonalityAxis,
   type PersonalityCalibration} from './personalityV1.js';
 
 /**
@@ -10,11 +10,12 @@ import {PERSONALITY_AXES,type GameContext,type PersonalityAxis,
  * Never derive reviewed evidence from the expected map name, decoded numeric
  * map/starting-age ID alone, source-provided display labels or draft civ.
  */
-export const PRIVATE_PERSONALITY_E2E_VERSION='AOF_PERSONALITY_PRIVATE_E2E_V1';
+export const PRIVATE_PERSONALITY_E2E_VERSION='AOF_PERSONALITY_PRIVATE_E2E_V3';
 export const PRIVATE_PERSONALITY_CONTEXT_REGISTRY_VERSION='AOF_PERSONALITY_SOURCE_REVIEW_V1';
 const axes=Object.keys(PERSONALITY_AXES) as PersonalityAxis[];
 const identity=(c:GameContext)=>[
-  c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,c.civilizationOpportunityKey].join('|');
+  c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,c.civilizationOpportunityKey]
+  .map(x=>x??'UNKNOWN').join('|');
 
 /** Strict fixed classification: registry key is the *original recording SHA*,
  * never a bare map ID, patch, generated fixture label or untrusted input. */
@@ -27,8 +28,10 @@ export type ReviewedSourceRegistry=Readonly<Record<string,Readonly<ReviewedConte
  * dobb = Glade/map 188, measured water share 0, unmodded source.
  * Both decode dark-age/resources 0. The actual START is still qualified by
  * our exact-source initial-TC witness in #159; metadata labels alone never
- * establish STANDARD. Distinct maps/civilizations remain distinct contexts,
- * so these TWO genuine 1v1s alone CANNOT yield a longitudinal score.
+ * establish STANDARD. Map and civilization remain *factual metadata* but do
+ * not split comparable STANDARD-start longitudinal Personality samples.
+ * These genuine files still need independent eligible Battle authority and
+ * measured per-axis opportunity to support a genuine READY score.
  *
  * These are source-specific emulator-only reference assertions, not blanket
  * map ID equivalence for other replays or approved production policy.
@@ -97,6 +100,8 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
   sources:ReadonlyArray<ContextSourceInput>,taxonomy:PrivateTaxonomy=PRIVATE_SOURCE_TAXONOMY):ProvisionalPrivatePolicy {
   if(!ownerPlayerId)throw new Error('PERSONALITY_OWNER_NOT_AUTHENTICATED');
   const bySource=new Map<string,GameContext>();
+  const measurableBySource=new Map<string,GameContext>();
+  const verifiedBuilds=new Map<string,number>();
   const reasons:string[]=[];let rejected=0;
   for(const input of sources){
     const hash=input.source.sourceHash;
@@ -107,8 +112,15 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
       candidate.status==='REVIEWED_SOURCE_CLASSIFICATION' && candidate.sourceHash===hash ?
       candidate:null;
     const result=admitPersonalityContext(input,ownerPlayerId,reviewed);
+    if(result.behaviorContext)measurableBySource.set(result.provenanceDigest,result.behaviorContext);
     if(result.context)bySource.set(result.provenanceDigest,result.context);
     else {rejected++;reasons.push(...result.missing);}
+    // The source's authenticated build is independently verified by the
+    // context adapter. Classifying strategic BUILD IDs does not require a
+    // player's civilization to be independently decoded.
+    if(reviewed&&result.behaviorContext&&reviewed.mapId===Number(result.behaviorContext.mapId)&&
+      result.behaviorContext.startFamily&&result.behaviorContext.mapFamily)
+      verifiedBuilds.set(result.provenanceDigest,reviewed.gameBuild);
   }
   const getContext=(input:ContextSourceInput):GameContext|null=>{
     const hash=input.source.sourceHash;
@@ -116,27 +128,34 @@ export function privatePersonalityPolicy(ownerPlayerId:string,
     const admitted=admitPersonalityContext(input,ownerPlayerId,
       reviewed?.version===PERSONALITY_CONTEXT_PROOF_VERSION&&reviewed.sourceHash===hash?
       reviewed:null);
-    return bySource.has(admitted.provenanceDigest)?admitted.context:null;
+    return measurableBySource.has(admitted.provenanceDigest)?admitted.behaviorContext:null;
   };
   const anchors:PersonalityCalibration['anchors']={};
   const availableMilitaryFamilies:Record<string,string[]>={};
   const strategicBuildingIds=new Set<number>();
-  for(const context of bySource.values()){
+  for(const [sourceDigest,context] of measurableBySource){
+    const reviewedSpatial=!!context.startFamily&&!!context.mapFamily&&!!context.mapId;
     const contextKey=identity(context);
-    // Every axis retains its own natural fraction normalization. The bounds
-    // 0..1 are explicit PROPOSED E2E anchors, not empirically fitted poles.
-    anchors[contextKey]=Object.fromEntries(axes.map(a=>[
-      a,{lower:0,upper:1,comparisonGroup:contextKey}]));
-    const build=context.civilizationOpportunityKey.match(/^BUILD_([0-9]+)_CIV_[0-9]+$/)?.[1];
+    // Boomer/Aggressor has a genuinely source-verifiable denominator even
+    // when exact map/start is unknown. All other comparison anchors require
+    // their reviewed start/map opportunity (and axis-local model coverage).
+    // These 0..1 bounds remain PROPOSED private E2E, never final league poles.
+    anchors[contextKey]=Object.fromEntries(axes.filter(a=>
+      a==='BOOMER_AGGRESSOR'||reviewedSpatial).map(a=>[
+      a,{lower:0,upper:1,comparisonGroup:personalityComparisonGroup(context,a)}]));
+    if(!reviewedSpatial)continue;
+    const build=verifiedBuilds.get(sourceDigest)?.toString() ??
+      context.civilizationOpportunityKey?.match(/^BUILD_([0-9]+)_CIV_[0-9]+$/)?.[1];
     if(build){
       for(const id of taxonomy.strategicBuildingsByBuild[build]??[]){
         if(Number.isSafeInteger(id)&&id>=0)strategicBuildingIds.add(id);
       }
     }
-    const families=taxonomy.militaryFamiliesByExactCiv[context.civilizationOpportunityKey]??[];
-    if(families.length>1&&families.every(f=>typeof f==='string'&&f.length)){
+    const families=context.civilizationOpportunityKey ?
+      (taxonomy.militaryFamiliesByExactCiv[context.civilizationOpportunityKey]??[]) : [];
+    if(context.civilizationOpportunityKey&&families.length>1&&
+      families.every(f=>typeof f==='string'&&f.length))
       availableMilitaryFamilies[context.civilizationOpportunityKey]=[...new Set(families)];
-    }
   }
   const calibration:PersonalityCalibration={
     configurationVersion:PRIVATE_PERSONALITY_E2E_VERSION,

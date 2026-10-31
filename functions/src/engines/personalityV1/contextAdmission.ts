@@ -10,7 +10,7 @@ import type {GameContext,Format,MapFamily,StartFamily} from './personalityV1.js'
  * A decoded label/ID is NOT a reviewed equivalence class: missing source-owned
  * map/start/clock classifications leave a PENDING result.
  */
-export const PERSONALITY_CONTEXT_ADAPTER_VERSION = 'AOF_PERSONALITY_CONTEXT_ADMISSION_V1' as const;
+export const PERSONALITY_CONTEXT_ADAPTER_VERSION = 'AOF_PERSONALITY_CONTEXT_ADMISSION_V2' as const;
 export const PERSONALITY_CONTEXT_PROOF_VERSION = 'AOF_PERSONALITY_CONTEXT_PROOF_V1' as const;
 const SHA=/^[a-f0-9]{64}$/;
 type Bag=Record<string,any>;
@@ -61,6 +61,10 @@ export type PersonalityContextAdmission={
   version:typeof PERSONALITY_CONTEXT_ADAPTER_VERSION;
   status:'ADMITTED'|'PENDING';
   context:GameContext|null;
+  /** Exact-source verified partial metadata; no inferred map/start/army fields.
+   * Raw feature extraction may proceed but unreviewed comparison groups cannot
+   * create private READY values. */
+  behaviorContext:GameContext|null;
   provenanceDigest:string;
   fields:{
     format:AdmissionField<Format>;
@@ -101,7 +105,17 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     SHA.test(source.authorityRevision)&&SHA.test(source.mappingDigest)&&
     source.matchId===source.battleId&&name(source.matchId)&&
     safe(game.gameNumber)&&game.gameNumber>=1&&
-    source.outcome?.qualification==='OFFICIAL'&&name(source.gameId)&&
+    // Match winner authority is separate from the authenticity of behavior
+    // recorded in a currently accepted replay. Unresolved result does not
+    // invalidate source-bound map/start/slot/civilization evidence.
+    // The canonical source loader validates OFFICIAL outcome shape upstream.
+    // The standalone source-field adapter historically accepts OFFICIAL-only
+    // synthetic envelopes; do not impose a new unrelated winner-shape gate.
+    // An UNRESOLVED branch, however, may never carry a claimed winner.
+    (source.outcome?.qualification==='OFFICIAL' ||
+     (source.outcome?.qualification==='UNRESOLVED' &&
+      source.outcome.resultRevision===null &&
+      source.outcome.winningPlayerIds===null))&&name(source.gameId)&&
     (game.id===undefined||game.id===source.gameId)&&
     (game.matchId===undefined||game.matchId===source.matchId)&&
     (match.id===undefined||match.id===source.matchId)&&
@@ -193,16 +207,34 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const fields={format,mapId,mapFamily,startFamily,civilization,civilizationOpportunityKey,
     durationMs,observedUntilMs,durationFamily,dynamicDiplomacyQualified};
   const missing=missingOf(fields);
-  const context=missing.length===0?{
-    format:format.value!,mapFamily:mapFamily.value!,startFamily:startFamily.value!,
-    mapId:mapId.value!,durationFamily:durationFamily.value!,civilization:civilization.value!,
-    civilizationOpportunityKey:civilizationOpportunityKey.value!,
-    observedUntilMs:observedUntilMs.value!,durationMs:durationMs.value!,
-    dynamicDiplomacyQualified:dynamicDiplomacyQualified.value!,
-  }:null;
+  // A missing map/start classification is *not* an invented zero, but a direct
+  // contradiction between decoded source facts or the exact-hash reviewed
+  // original is an authority conflict, not merely a missing axis denominator.
+  const mapContradiction=rawMapId.status==='DECODED'&&safe(rawMapId.value)&&
+    (!agrees(rawMapId.value,factMap.id)||!agrees(rawMapId.value,factMap.mapId)||
+     !agrees(rawMapId.value,header['de.rms_map_id'])||
+     !agrees(rawMapId.value,header['scenario.map_id']));
+  const proofContradiction=!!reviewed&&reviewed.sourceHash===source.sourceHash&&
+    ((replayBuild!==null&&reviewed.gameBuild!==replayBuild)||
+     (sourceMapId!==null&&reviewed.mapId!==sourceMapId)||
+     (age!==null&&reviewed.startingAgeId!==age)||
+     (resources!==null&&reviewed.startingResourcesId!==resources));
+  const behaviorContext:GameContext|null=trust&&!mapContradiction&&!proofContradiction&&
+    name(subjectPlayerId)&&boundSubject&&format.value&&clockValid ?{
+      format:format.value,mapFamily:mapFamily.value,startFamily:startFamily.value,
+      mapId:mapId.value,durationFamily:durationFamily.value,
+      civilization:civilization.value,
+      civilizationOpportunityKey:civilizationOpportunityKey.value,
+      observedUntilMs:observedUntilMs.value!,durationMs:durationMs.value!,
+      // Never infer an FFA effective alliance from missing evidence.
+      dynamicDiplomacyQualified:dynamicDiplomacyQualified.value===true,
+    }:null;
+  // Full reviewed classification remains an independent provenance assertion.
+  // Missing *civ family* / duration category must not delete verified economy.
+  const context=missing.length===0?behaviorContext:null;
   return {
     version:PERSONALITY_CONTEXT_ADAPTER_VERSION,
-    status:context?'ADMITTED':'PENDING',context,
+    status:context?'ADMITTED':'PENDING',context,behaviorContext,
     provenanceDigest:hash([PERSONALITY_CONTEXT_ADAPTER_VERSION,source.authorityRevision,
       source.mappingDigest,source.sourceHash,source.statisticsRevision,source.matchId,
       source.gameId,match.format,game.players,subjectPlayerId,subjectSlot,
