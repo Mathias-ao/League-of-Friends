@@ -1,0 +1,275 @@
+{
+  "schemaVersion": "AOF_HONOURS_V1_OWNER_LAUNCH_SELECTION_2026_10_31_V1",
+  "policyState": "OWNER_SELECTED_CONCEPTS_ONLY_DESIGN_UNAPPROVED_GATES_NO_GRANTS",
+  "ownerDecision": "Owner explicit 31 Oct 2026 selection: 2 trophies, 2 epithets, 6 distinctions",
+  "inheritedAuthority": {
+    "parentIssue": 186,
+    "sourceIssue": 205,
+    "mergedRegistryPR": 162,
+    "workingDesignPR": 193,
+    "ownerPriorSelections": [
+      "1A",
+      "2A",
+      "3A",
+      "4C",
+      "5A"
+    ],
+    "previous29OctTransfer": "TRANSFERABLE_IN_SEASON_CROWN",
+    "baselineAchievementFamilies": 37,
+    "baselineTierPlansNull": 148,
+    "baselineRecords": 26,
+    "baselineRecordCohorts": 11,
+    "baselineFeaturedSlots": 15
+  },
+  "selectedTrophies": [
+    {
+      "key": "FAST_CASTLE",
+      "internalId": "AR2_TROPHY_SWIFT_ASCENT",
+      "displayName": null,
+      "status": "POLICY_READY_NUMERIC_AND_SOURCE_ADMISSION_PENDING",
+      "claim": "Source-qualified current fastest comparable AR2_REC_CASTLE projected Castle Age after approved Season maturity AND exceptional absolute time",
+      "transfer": "STRICTLY_LOWER_SOURCE_CURRENT_COMPARABLE_GAME_DURING_SEASON",
+      "historicalSuccession": true,
+      "ownerNameTbd": true,
+      "source": "AOF_OPENING_STATISTICS_V6 / recordedEvents research/current Game",
+      "not": "The Swift Ascent is rejected as a public name; research order not completed age",
+      "thresholds": {
+        "absoluteTimeMs": null,
+        "maturity": null
+      }
+    },
+    {
+      "key": "WONDER",
+      "proposalId": "AR2_TROPHY_WONDER_V1_CANDIDATE",
+      "displayName": null,
+      "status": "OWNER_APPROVED_COMPETITION_AND_POINT_RULE_SOURCE_REVIEW_PENDING",
+      "transfer": "STRICTLY_GREATER_LEXICOGRAPHIC_PAIR_WONDER_VICTORIES_THEN_POINTS",
+      "source": "Wonder BUILD catalog building 276 is observed request; resultEngine GameOutcome lacks explicit wonder-victory method",
+      "not": "Wonder placement request != constructed Wonder, hold timer, or victory method",
+      "primaryRanking": "COUNT_VERIFIED_OWN_WONDER_VICTORY_GAMES_DESC",
+      "tieBreakRanking": "ACCUMULATED_WONDER_POINTS_DESC_HALF_UNIT_INTEGER",
+      "activation": "ON_FIRST_VERIFIED_OWN_WONDER_VICTORY_IMMEDIATELY_NO_MATURITY_OR_CLOCK_GATE",
+      "ownerApprovedPoints": {
+        "completedWonder": 0.5,
+        "ownWonderVictory": 2,
+        "alliedWonderVictory": 1,
+        "wonderRaceChallengeVictory": 3
+      },
+      "pointAddition": "A verified Wonder Race win earns Wonder victory points AND additional race points; an independently completed Wonder adds 0.5 once per verified entity/Game",
+      "requiredOfficialSources": [
+        "Independent completed-Wonder ownership/construction review; source BUILD request never proves completion",
+        "Official result + distinct Wonder-victory method and credited winning Wonder owner",
+        "Official co-winning team players or source-verified effective allied FFA winner for ally points",
+        "Official approved Wonder Race challenge identity, exact final Wonder victory and declared race winner"
+      ],
+      "trophyRequiresOwnWonderVictory": true,
+      "victoryTimeCanAffectEligibilityOrRanking": false,
+      "noIncumbentExactTies": "PENDING_TIE_POLICY_NO_UPLOAD_ORDER_WINNER",
+      "equalityWithIncumbent": "RETAIN_INCUMBENT",
+      "scoringUnit": "INTEGER_HALF_POINT",
+      "wonderRaceStatus": "FUTURE_EXPLICIT_CHALLENGE_PROTOCOL_SOURCE_REVIEW_NOT_YET_CONNECTED",
+      "gameDedupe": "SOURCE_CURRENT_CANONICAL_GAME_IN_SEASON_ONE_WIN_PER_GAME_NOT_POV",
+      "sourceCorrection": "REBUILD_POINTS_WINS_AND_VALID_DATED_POSSESSION_FROM_CURRENT_AUTHORITY"
+    }
+  ],
+  "selectedEpithets": [
+    {
+      "key": "UNBROKEN",
+      "proposalId": "AR2_EPITHET_UNBROKEN_V1_CANDIDATE",
+      "publicName": "the Unbroken",
+      "scopeProposal": "CURRENT_SEASON_UNBEATEN",
+      "minQualifyingGameCount": 4,
+      "eligibleResults": "NON_FFA_OFFICIAL_ACCEPTED_GAMES",
+      "failOn": "ANY_CURRENT_SEASON_NON_FFA_ACCEPTED_LOSS",
+      "ffaLossDisqualifies": false,
+      "ffaWinCountsTowardsMinimum": "OPEN_RECOMMEND_NO",
+      "ownerUnselectedSeasonReset": "RECOMMEND_NEXT_SEASON_RESET_NO_REGAIN_SAME_SEASON_AFTER_LOSS",
+      "dedupe": "CANONICAL_GAME_ID_NOT_UPLOAD_OR_SERIES",
+      "source": "Official GameOutcome TEAM_WIN/PLAYER_WIN and current result revision",
+      "correction": "RECOMPUTE_AND_AUTOMATICALLY_UNEQUIP_IF_NOT_ELIGIBLE",
+      "display": "ONE_VOLUNTARILY_EQUIPPED_EPITHET",
+      "status": "PURE_OFFICIAL_RESULT_ELIGIBILITY_DESIGN_UNAPPROVED"
+    },
+    {
+      "key": "THREE_SCHOOLS",
+      "internalId": "AR2_EPITHET_THREE_SCHOOLS",
+      "publicName": "Master of the Three Schools",
+      "source": "ACTIVE_ELITE(disciplined DRUSH+DRUSH_FLUSH) AND (ACTIVE_ELITE(SCOUT_RUSH) OR ACTIVE_ELITE(ARCHER_RUSH)) AND ACTIVE_ELITE(FAST_CASTLE_BOOM)",
+      "status": "ELITE_BRANCH_PREDICATES_AND_OWNER_CUTOFFS_PENDING",
+      "correction": "ACTIVE_VALID_COMPONENTS_ONLY",
+      "display": "ONE_VOLUNTARILY_EQUIPPED_EPITHET"
+    }
+  ],
+  "selectedDistinctions": [
+    {
+      "key": "FFA_SOLO_WIN",
+      "proposalId": "AR2_DIST_FFA_SOLE_WIN_CANDIDATE",
+      "displayName": null,
+      "upgradeable": true,
+      "status": "OFFICIAL_SOLE_WIN_SOURCE_SEAM_AVAILABLE_SOLO_SEMANTICS_OPEN",
+      "source": "FFA official final GameOutcome PLAYER_WIN, not COALITION_WIN; distinct canonical Battles counted once",
+      "awardUnit": "CUMULATIVE_DISTINCT_ACCEPTED_BATTLES",
+      "currentUpgradeThresholds": null,
+      "limits": "Does NOT prove never allied or never aided; effective diplomacy unavailable"
+    },
+    {
+      "key": "BOOMER",
+      "proposalId": "AR2_DIST_BOOMER_CANDIDATE",
+      "displayName": "Boomer",
+      "upgradeable": false,
+      "status": "COMPOSITE_NEW_DERIVATION_PARTIAL_SOURCES",
+      "source": [
+        "Distinct additional Town Center BUILD site orders",
+        "Net reconstructed Villager queue + qualified initial count",
+        "Distinct House BUILD placement orders",
+        "Inferred remote economic expansion zones"
+      ],
+      "sameGame": true,
+      "sameTimeframe": true,
+      "clockThresholdMs": null,
+      "metricThresholds": {
+        "additionalTCs": null,
+        "villagerProjection": null,
+        "housePlacementRequests": null,
+        "expansionZones": null
+      },
+      "limits": "Huns no Houses; buildings not necessarily completed; villagers not confirmed; geo clusters not actual extraction"
+    },
+    {
+      "key": "EXPLORER",
+      "proposalId": "AR2_DIST_EXPLORER_CANDIDATE",
+      "displayName": "Explorer",
+      "upgradeable": false,
+      "status": "MODELLED_EXPLORATION_NEW_METHOD_AND_VALIDATION_REQUIRED",
+      "source": "Proposed AOF_ESTIMATED_EXPLORATION_V1 command/known-unit route + plausible movement + versioned visibility radii + map geometry, independent genuine fog validation",
+      "displayMetric": "Estimated map exploration",
+      "suggestedCoveragePercentApprox": 90,
+      "clockThresholdMs": null,
+      "numericCutoffApproved": false,
+      "limits": "Do not grant from commandMapCoverage or early 3.25-tile 0:00–5:00 scoutCoverage alone"
+    },
+    {
+      "key": "GOLD",
+      "proposalId": "AR2_DIST_GOLD_CANDIDATE",
+      "displayName": null,
+      "upgradeable": false,
+      "status": "COMPOSITE_PARTIAL_SOURCE_TRADE_RECEIPT_BLOCKED",
+      "source": [
+        "gold-denominated resource commitment estimated from source",
+        "mapPresence.goldControl.controlSharePercent source-infrastructure influence"
+      ],
+      "optionalBlockedBranch": "Trade-route gold received not present; MARKET lot volume is not trade income",
+      "metricThresholds": null,
+      "clockThresholdMs": null,
+      "limits": "Does not imply gold mined, received from trade, or literal deposit possession"
+    },
+    {
+      "key": "AGGRESSION",
+      "proposalId": "AR2_DIST_AGGRESSION_CANDIDATE",
+      "displayName": null,
+      "upgradeable": false,
+      "status": "INFERRED_ENGAGEMENT_SOURCE_WITH_EFFECT_GAP",
+      "source": "Source-attributed engagement/skirmish/raid episodes, actor/target/opportunity and rare multi-aspect difficult military participation",
+      "acknowledgement": "OPTIONAL_PRIVATE_CHRONICLE_CONTEXT_ONLY_UNLESS_SEPARATE_OWNER_APPROVES_GATE",
+      "limits": "No kills, combat outcome, aggressive moral intent, or public accusation proven by inference or a private response",
+      "thresholds": null
+    },
+    {
+      "key": "DEFENSIVE",
+      "proposalId": "AR2_DIST_DEFENSIVE_CANDIDATE",
+      "displayName": null,
+      "upgradeable": false,
+      "status": "INFERRED_HELP_SOURCE_WITH_EXECUTED_EFFECT_GAP",
+      "source": "Exact defender/helper/opponent source incidence, incoming attack and qualified response orders",
+      "acknowledgement": "OPTIONAL_NON_LEADING_BENEFICIARY_AND_OPPONENT_PRIVATE_PERSPECTIVES; CANNOT_INVENT_EXECUTED_EFFECT",
+      "overlapReserved": [
+        "AR2_DIST_UNBROKEN_LINE",
+        "AR2_DIST_FELLOWSHIP"
+      ],
+      "limits": "Do not grant claimed actual rescue without independent effect proof, and no medal from mere Bond or Chivalry points",
+      "thresholds": null
+    }
+  ],
+  "reservedNotLaunch": {
+    "trophies": [
+      "AR2_TROPHY_THORN_EMPEROR",
+      "AR2_TROPHY_ANNALS_REWRITTEN"
+    ],
+    "epithets": [
+      "AR2_EPITHET_SWORN_CAMPAIGNER",
+      "AR2_EPITHET_WARDEN_BORDER"
+    ],
+    "distinctions": [
+      "AR2_DIST_UNBROKEN_LINE",
+      "AR2_DIST_FELLOWSHIP",
+      "AR2_DIST_LAST_STANDARD",
+      "AR2_DIST_LONE_VANGUARD"
+    ]
+  },
+  "hardNoAction": [
+    "No entitlement seeding",
+    "No public holder publication",
+    "No public proof of actual completion from command requests",
+    "No scoring/social track change",
+    "No automated Chronicle questions",
+    "No deployment/staging",
+    "No live threshold changes",
+    "No new production IDs imported from these design proposal IDs"
+  ],
+  "ownerRemainingDecisions": [
+    "Wonder trophy metric and point values are owner-decided; confirm authentic Wonder construction/completion, winner-owner review and official future Wonder Race scheduling/proof before public activation.",
+    "Confirm the Unbroken current Season/non-FFA 4 Game semantics and whether FFA wins count toward four",
+    "Choose sole official FFA winner versus truly never-ally unaided FFA solo feat",
+    "Calibrate Boomer/Explorer/Gold/Aggression/Defence thresholds and whether Chronicle acknowledgements are optional context or a separately reviewed consent gate"
+  ],
+  "distinctionMeaning2026Oct31": {
+    "supersedes": "NARROW_BATTLEFIELD_ONLY_MERIT_RULE_FOR_THE_SIX_OWNER_SELECTED_V1_CONCEPTS",
+    "categories": {
+      "officialOutcome": [
+        "FFA_SOLO_WIN"
+      ],
+      "rareCompositeEconomyAndMap": [
+        "BOOMER",
+        "EXPLORER",
+        "GOLD"
+      ],
+      "exceptionalMilitaryAndDefence": [
+        "AGGRESSION",
+        "DEFENSIVE"
+      ]
+    },
+    "commonRule": "RARE_INDEPENDENT_SOURCE_QUALIFIED_ATTRIBUTABLE_DEED_WITH_QUALITY_AND_OPPORTUNITY_GATES",
+    "sourceProofByType": "Official source-accepted win; versioned bounded inference for economy/map; military executed-effects only where such effect is actually claimed",
+    "noAutoFrom": [
+      "Battle/Event editorial spotlights",
+      "Reputation/Relationship points",
+      "Uncorroborated subjective Chronicle interpretation",
+      "Raw repeated command volume"
+    ]
+  },
+  "ownerCorrectionWonder2026Oct31": {
+    "authority": "Owner explicit Wonder trophy correction in Worker C conversation, 31 Oct 2026",
+    "decision": "NOT_TIME_BASED; FIRST_VERIFIED_WONDER_VICTORY_ACTIVATES; WINS_PRIMARY_POINTS_TIEBREAK",
+    "internalProposalId": "AR2_TROPHY_WONDER_V1_CANDIDATE",
+    "playerFacingName": null,
+    "ownerApprovedScoreValues": {
+      "completedWonder": 0.5,
+      "wonderVictory": 2,
+      "allyWonderVictory": 1,
+      "wonWonderChallenge": 3
+    },
+    "noWinDurationGate": true,
+    "noSeasonMaturityGate": true,
+    "challengeAdditionalToVictory": true,
+    "firstWinActivates": true,
+    "chronologicalAcceptanceUsedForHistoryOnly": true,
+    "firstUnbrokenTieNoGrant": true,
+    "sourceRequirements": [
+      "Independent completed-Wonder ownership/construction review; source BUILD request never proves completion",
+      "Official result + distinct Wonder-victory method and credited winning Wonder owner",
+      "Official co-winning team players or source-verified effective allied FFA winner for ally points",
+      "Official approved Wonder Race challenge identity, exact final Wonder victory and declared race winner"
+    ],
+    "liveGrantAuthorized": false
+  }
+}

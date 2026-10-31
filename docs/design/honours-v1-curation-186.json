@@ -1,0 +1,1681 @@
+{
+  "version": "AOF_HONOURS_V1_CURATION_DESIGN_186_V1",
+  "sourceAuthority": {
+    "issue": 186,
+    "parent": 183,
+    "baselineIssue": 157,
+    "baselineMergedPR": 162,
+    "baseCommit": "0a57c58f5aae1a1ed01a19e8ce2ea3f55a651cdd",
+    "baselineRegistrySchema": "AOF_AWARDS_RECORDS_DESIGN_REGISTRY_V1"
+  },
+  "state": "NON_EXECUTABLE_DESIGN_PROPOSAL_DO_NOT_SEED",
+  "ownerFinalThresholdsRetainedInBaseline": "ALL_148_NULL",
+  "calibrationOnly": {
+    "definition": "Never dynamic percentile tier grants; use representative authentic comparable Games to select FIXED owner-approved cutoffs.",
+    "suggestedAnchorsForBestGame": [
+      "P50",
+      "P80",
+      "P97"
+    ],
+    "direction": "After stratified admission, for lower-is-better reverse quantiles; rare elite can also require qualitatively different predicates.",
+    "careerBattleIllustrations": [
+      "1",
+      "2",
+      "4",
+      "8"
+    ],
+    "ownerApproved": false,
+    "anti": "Minimum opportunities, map/civ/mode cohort, per-Battle cap, no synthetic fixture positive awards"
+  },
+  "tiers": [
+    {
+      "rank": "INITIATE",
+      "level": 1,
+      "gate": "First complete, fully eligible qualified performance; not a raw classifier label.",
+      "numericThreshold": null
+    },
+    {
+      "rank": "PRACTICED",
+      "level": 2,
+      "gate": "Stricter source-qualified performance or sustained consistency on same axis.",
+      "numericThreshold": null
+    },
+    {
+      "rank": "EXPERT",
+      "level": 3,
+      "gate": "Difficult performance and additional validity/quality gate where appropriate.",
+      "numericThreshold": null
+    },
+    {
+      "rank": "ELITE",
+      "level": 4,
+      "gate": "Exceptionally hard corpus-calibrated performance plus relevant structural predicates; no elite from mere volume spam.",
+      "numericThreshold": null
+    }
+  ],
+  "composition": {
+    "launchProposal15": [
+      "AR2_ACH_DRUSH",
+      "AR2_ACH_ARCHER_RUSH",
+      "AR2_ACH_SCOUT_RUSH",
+      "AR2_ACH_FAST_CASTLE",
+      "AR2_ACH_FISH_BOOM",
+      "AR2_ACH_RELIC_TOUCH",
+      "AR2_ACH_GOLD_CONTROL",
+      "AR2_ACH_FARMS_AT_20",
+      "AR2_ACH_WALLS",
+      "AR2_ACH_TC_COUNT",
+      "AR2_ACH_MILITARY_INVESTMENT_20",
+      "AR2_ACH_RAIDS",
+      "AR2_ACH_SCOUT_ENEMY",
+      "AR2_ACH_DEFENSIVE_ASSISTS",
+      "AR2_ACH_FISH_TRAPPER"
+    ],
+    "immediateProjectedInput7": [
+      "AR2_ACH_RELIC_TOUCH",
+      "AR2_ACH_GOLD_CONTROL",
+      "AR2_ACH_WALLS",
+      "AR2_ACH_TC_COUNT",
+      "AR2_ACH_MILITARY_INVESTMENT_20",
+      "AR2_ACH_RAIDS",
+      "AR2_ACH_FISH_TRAPPER"
+    ],
+    "derivationTarget8": [
+      "AR2_ACH_DRUSH",
+      "AR2_ACH_ARCHER_RUSH",
+      "AR2_ACH_SCOUT_RUSH",
+      "AR2_ACH_FAST_CASTLE",
+      "AR2_ACH_FISH_BOOM",
+      "AR2_ACH_FARMS_AT_20",
+      "AR2_ACH_SCOUT_ENEMY",
+      "AR2_ACH_DEFENSIVE_ASSISTS"
+    ]
+  },
+  "familyDispositions": {
+    "DRUSH": {
+      "canonicalId": "AR2_ACH_DRUSH",
+      "originalFamilyName": "Drush",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "modelIds": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.opening.ageUp.feudal",
+        "recordedEvents.actionEvents[RESEARCH/BUILD/DE_QUEUE]",
+        "player.opening.villagersBeforeFeudalAge"
+      ],
+      "provisionalPlan": {
+        "name": "Drush",
+        "why": "Dark Age discipline and deliberate early infantry plan, accessible before winning.",
+        "formula": "One eligible standard-start Game: qualified Barracks before Feudal click; exactly three positive net distinct Dark Age Militia queue requests; Loom before Feudal click; cancellation-aware single-starting-TC workload continuity. Age clock from opening.ageUp.feudal is projected.",
+        "reject": "A BUILD placement without supported Barracks identity; two Militia plus Men-at-Arms; three queued then cancelled; apparent perfect idle derived from V2 proxy alone.",
+        "expert": "Drush Flush branch requires separately source-qualified Feudal military continuation with attributable commands and clock, not assumed attacks, unit creation or kills. For Elite Club this branch is mandatory (owner 2A).",
+        "elite": "Owner 2A: ELITE CLUB REQUIRES BOTH source-qualified disciplined Dark Age Drush AND independently witnessed Drush Flush Feudal continuation in the SAME admitted Game, plus future owner-calibrated elite performance predicates. Never infer executed damage.",
+        "anti": "Match Militia queue/cancellation and producer identity; unique Game; no repetition-only award.",
+        "pacing": "Base exact-Drush qualification; calibrated Feudal clock/macro efficiency cutoffs for Practiced/Expert/Elite."
+      },
+      "reason": "Dark Age discipline and deliberate early infantry plan, accessible before winning."
+    },
+    "ARCHER_RUSH": {
+      "canonicalId": "AR2_ACH_ARCHER_RUSH",
+      "originalFamilyName": "Archer Rush",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "modelIds": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.opening.ageUp.feudal",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "provisionalPlan": {
+        "name": "Archer Rush",
+        "why": "Recognizable opening with a clear skill curve.",
+        "formula": "Game qualifies from source-identified Barracks→Archery Range placements and >=3 appropriate positive Archer-line unit queue requests within approved early Feudal window; score a clocked third qualified request; Age arrival is projected.",
+        "reject": "Starting scout, Skirmishers, invalid unit identities, building BUILD retries or queued Archer cancellations masquerading as units produced.",
+        "expert": "Early Archer continuation: correct additional ranged production/positioned directed commands attributed to same player, no alleged hits.",
+        "elite": "Exceptional early-clock execution plus correct building/queue sequence and source-covered military intent.",
+        "anti": "Dedupe repeated building sites and require queue windows; no proxy of units completed.",
+        "pacing": "Qualified early rush; proposed fixed cutoffs calibrated to top half / top fifth / top few percent of eligible comparable openings."
+      },
+      "reason": "Recognizable opening with a clear skill curve."
+    },
+    "SCOUT_RUSH": {
+      "canonicalId": "AR2_ACH_SCOUT_RUSH",
+      "originalFamilyName": "Scout Rush",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "modelIds": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.opening.ageUp.feudal",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "provisionalPlan": {
+        "name": "Scout Rush",
+        "why": "Recognizable mobile Feudal opening.",
+        "formula": "Game qualifies from source-identified Barracks→Stable placements and >=3 positive new Scout-line unit requests in the approved early Feudal window; rank by third qualified queue clock (not starting Scout).",
+        "reject": "Starting Scout counts as trained; stable queues outside window; cancelled unit requests; no source-identifiable actor.",
+        "expert": "Continued pressure signature from properly selected Scouts directed towards attributed enemy economic zone, not confirmed raid damage.",
+        "elite": "Fast qualifying Feudal+Stable+Scout requests with tactical-continuation proof.",
+        "anti": "Same actor/civ/patch production and at most one Game-best; no repeated clicks.",
+        "pacing": "Qualified rush; fixed timing candidates derived from percentile anchors among ordinary standard-start Scout rushes."
+      },
+      "reason": "Recognizable mobile Feudal opening."
+    },
+    "FAST_CASTLE": {
+      "canonicalId": "AR2_ACH_FAST_CASTLE",
+      "originalFamilyName": "Fast Castle",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "modelIds": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.opening.ageUp.castle.ageUpAtMs",
+        "player.economy.townCenters",
+        "recordedEvents.actionEvents[BUILD]"
+      ],
+      "provisionalPlan": {
+        "name": "Fast Castle",
+        "why": "Classic AoE2 opening and an advanced economic expansion branch.",
+        "formula": "Game qualifies under NORMAL_START_OPENING for lowest modelled opening.ageUp.castle.ageUpAtMs (latest Castle RESEARCH request + nominal 160s), provided click cancellation/clock are qualified.",
+        "reject": "Project age arrival past source duration, canceled Castle research, same-site extra TC placement repeated, or claims of completed Castle Age/operating Town Centers.",
+        "expert": "Fast Castle Boom branch: two distinct *additional* Town Center BUILD site placements in approved post-projected-Castle window.",
+        "elite": "Elite Opulence requires BOTH elite Castle speed and Fast Castle Boom branch; two placed sites not finished Town Centers.",
+        "anti": "Require distinct TC geometry/starting TC exclusion, qualified research trace and compatible starts.",
+        "pacing": "Base valid projected FC; proposed fixed clock breakpoints from qualified normal-start Games; two-TC branch separately gated; candidate two-minute branch window not approved."
+      },
+      "reason": "Classic AoE2 opening and an advanced economic expansion branch."
+    },
+    "FISH_BOOM": {
+      "canonicalId": "AR2_ACH_FISH_BOOM",
+      "originalFamilyName": "Fish Boom",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "WATER_OPENING_START",
+      "modelIds": [
+        "AOF_BUILD_ORDER_V2",
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.buildOrder",
+        "player.economy.economyBuildings.byType.fishTraps.count",
+        "recordedEvents.actionEvents[DE_QUEUE/GAME]"
+      ],
+      "provisionalPlan": {
+        "name": "Fish Boom",
+        "why": "Water maps have a legitimate economic mastery path.",
+        "formula": "On approved water-start Game, player.buildOrder candidate Fish Boom validated against Dock placement plus timed positive Fishing Ship queue requests and continued distinct fishing-economy signature.",
+        "reject": "Dock alone, non-fishing Warship queues, Fish Traps requested but not produced/earning food, land-only random-map comparator.",
+        "expert": "Two-stage sustained Fish Boom: early Dock/ship signature plus additional later economically classified water queues, not fish gathered.",
+        "elite": "Exceptionally fast and varied water-economy request plan under supported water-access cohort.",
+        "anti": "Water-map opportunity cohort; dedupe Dock placement retries, unit queues and source POV.",
+        "pacing": "Separate water cohort timing quantiles; minimum source-covered first part of the Game; advanced branch adds continuation."
+      },
+      "reason": "Water maps have a legitimate economic mastery path."
+    },
+    "WATER_OPENING": {
+      "canonicalId": "AR2_ACH_WATER_OPENING",
+      "originalFamilyName": "Water Opening",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "WATER_OPENING_START",
+      "modelIds": [
+        "AOF_BUILD_ORDER_V2",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.buildOrder",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "TOWER_RUSH": {
+      "canonicalId": "AR2_ACH_TOWER_RUSH",
+      "originalFamilyName": "Tower Rush",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "modelIds": [
+        "AOF_BUILD_ORDER_V2",
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.buildOrder",
+        "player.mapPresence.towers",
+        "recordedEvents.actionEvents[BUILD]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "PERFECT_DARK_AGE": {
+      "canonicalId": "AR2_ACH_PERFECT_DARK_AGE",
+      "originalFamilyName": "Perfect Dark Age",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "modelIds": [
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourcePaths": [
+        "player.opening.villagersBeforeFeudalAge",
+        "player.opening.ageUp.feudal",
+        "player.economy.tcIdleTimeDarkAge"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "PERSIAN_DOUCHE": {
+      "canonicalId": "AR2_ACH_PERSIAN_DOUCHE",
+      "originalFamilyName": "Persian Douche",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "PERSIAN_TC_RELOCATE",
+      "modelIds": [
+        "SOURCE_MODEL_NOT_YET_QUALIFIED",
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourcePaths": [
+        "participant.civilizationId",
+        "recordedEvents.actionEvents[DELETE/BUILD]",
+        "player.mapPresence.startingTownCenters"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "MONK_SIEGE": {
+      "canonicalId": "AR2_ACH_MONK_SIEGE",
+      "originalFamilyName": "Monk–Siege Build Order",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "NORMAL_START_OPENING",
+      "modelIds": [
+        "AOF_MILITARY_STATISTICS_V4",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.military.composition.monks",
+        "player.military.firstMonk",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "RELIC_TOUCH": {
+      "canonicalId": "AR2_ACH_RELIC_TOUCH",
+      "originalFamilyName": "Relic Touch",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "V1_MEASUREMENT_CANDIDATE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "modelIds": [
+        "AOF_RELIC_TARGETING_V1"
+      ],
+      "sourcePaths": [
+        "player.mapPresence.relicControl.uniqueRelicsTouched"
+      ],
+      "provisionalPlan": {
+        "name": "Relic Touch",
+        "why": "Distinct map objective count rewards initiative, not raw APM.",
+        "formula": "Best eligible Game max player.mapPresence.relicControl.uniqueRelicsTouched with known initial relic identities and complete event attribution.",
+        "reject": "Repeated ORDER to same relic, inferred touch labelled as relic collected or secured.",
+        "expert": "Earlier first source-qualified distinct relic touch in addition to more unique known relic interactions.",
+        "elite": "High unique-relic coverage relative to available known relics with minimum distinct count; not impossible on sparse-relic maps.",
+        "anti": "Deduplicate original relic instance ID; denominator known initial relic inventory and map class.",
+        "pacing": "Base >=1 qualified unique relic interaction; later levels calibrated by number and share of available known relics."
+      },
+      "reason": "Distinct map objective count rewards initiative, not raw APM."
+    },
+    "GOLD_CONTROL": {
+      "canonicalId": "AR2_ACH_GOLD_CONTROL",
+      "originalFamilyName": "Gold Control",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "V1_MEASUREMENT_CANDIDATE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "modelIds": [
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourcePaths": [
+        "player.mapPresence.goldControl.controlSharePercent"
+      ],
+      "provisionalPlan": {
+        "name": "Gold Control",
+        "why": "Territorial macro/contestation distinct from offensive kills.",
+        "formula": "Best comparable eligible Game max player.mapPresence.goldControl.controlSharePercent from deposit-weighted infrastructure influence; minimum known gold-source coverage.",
+        "reject": "Claim actual gold mined, secured resources, continuous gold possession, or compare gold-light and gold-rich maps unpartitioned.",
+        "expert": "Sustained gold influence variant requires newly modelled multi-time-window source geometry, not available from single snapshot.",
+        "elite": "Gold influence margin above normalized equal starting share on compatible gold-spawn map with multiple qualifying influence opportunities.",
+        "anti": "Map/deposit count normalization, duration floor, comparable 1v1/team/FFA split; no one-building spam.",
+        "pacing": "Base qualified above an opportunity-aware baseline; freeze quantile-inspired fixed share thresholds after map cohort analysis."
+      },
+      "reason": "Territorial macro/contestation distinct from offensive kills."
+    },
+    "FARMS_AT_20": {
+      "canonicalId": "AR2_ACH_FARMS_AT_20",
+      "originalFamilyName": "Farms at 20 Minutes",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "ECO_GAME",
+      "modelIds": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD:Farm]",
+        "player.economy.farmsPlaced.count"
+      ],
+      "provisionalPlan": {
+        "name": "Farms at 20",
+        "why": "Simple early economic development goal, useful for casual progression.",
+        "formula": "From one Game's deduped Farm BUILD placements with timestamp <=1,200,000ms and recording length >=20m; no claim construction completion.",
+        "reject": "Whole-Game farms substituted for at20, duplicate same-site orders, 19-minute Game treated as 0 farms.",
+        "expert": "Early granary development: higher farm density by 20m with defensible Villager queue economy context; never claim food income.",
+        "elite": "Exceptionally high unique Farm placement count at20 in compatible non-water-focused starts.",
+        "anti": "Deduplicate placement intent and at20 cutoff; duration/excessive rebuild farming, civ/map opportunity normalization.",
+        "pacing": "Owner to set four fixed 20m placement count cutoffs after corpus, no raw complete-from-one-spam."
+      },
+      "reason": "Simple early economic development goal, useful for casual progression."
+    },
+    "RESOURCES_AT_20": {
+      "canonicalId": "AR2_ACH_RESOURCES_AT_20",
+      "originalFamilyName": "Resources Committed at 20",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "ECO_GAME",
+      "modelIds": [
+        "AOF_RESOURCE_COMMITMENT_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.economy.resourceCommitment.resourcesCommitted.total",
+        "recordedEvents.actionEvents[DE_QUEUE/RESEARCH/BUILD/WALL]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "WALLS": {
+      "canonicalId": "AR2_ACH_WALLS",
+      "originalFamilyName": "Walls",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "V1_MEASUREMENT_CANDIDATE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "modelIds": [
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourcePaths": [
+        "player.mapPresence.wallTiles.totalWallTiles"
+      ],
+      "provisionalPlan": {
+        "name": "Walls",
+        "why": "Accessible defensive preparation with potential expert craftsmanship.",
+        "formula": "Game-best player.mapPresence.wallTiles.totalWallTiles with unique WALL tile geometry and admissible map geometry.",
+        "reject": "Wall order == completed enclosure, repeated same tiles/cancellation, thousands of tiles ordered in late turtle Game as elite tactical skill.",
+        "expert": "Early structured walling variation: >=2 distinct wall segments begun before a qualified attack or age-clock checkpoint, not confirmed closure.",
+        "elite": "High-quality early defensive plan with diversity of wall segments/time, requiring proof beyond raw total count.",
+        "anti": "Unique tile dedupe, bounded early window, no late Game count farming; avoid map size bias.",
+        "pacing": "Base meaningful unique wall-tile placement; other tiers emphasize early timing+quality, not only absolute tile maximum."
+      },
+      "reason": "Accessible defensive preparation with potential expert craftsmanship."
+    },
+    "CASTLE_COUNT": {
+      "canonicalId": "AR2_ACH_CASTLE_COUNT",
+      "originalFamilyName": "Castle Count",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "DEFER_ANTIFARM_OR_WEAK_SIGNIFICANCE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "modelIds": [
+        "AOF_MILITARY_STATISTICS_V4",
+        "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1"
+      ],
+      "sourcePaths": [
+        "player.military.castles.count",
+        "player.mapPresence.castlePlacementCommands.evidence"
+      ],
+      "provisionalPlan": null,
+      "reason": "Raw count makes an easy/spammable or non-prestigious unlock; retain catalogue only."
+    },
+    "TC_COUNT": {
+      "canonicalId": "AR2_ACH_TC_COUNT",
+      "originalFamilyName": "Town Center Count",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "V1_MEASUREMENT_CANDIDATE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "ECO_GAME",
+      "modelIds": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_MAP_PRESENCE_V8"
+      ],
+      "sourcePaths": [
+        "player.economy.townCenters.count",
+        "player.mapPresence.startingTownCenters"
+      ],
+      "provisionalPlan": {
+        "name": "Town Center Count",
+        "why": "Expansion identity with clear operational planning.",
+        "formula": "Count observed initially sourced starting TCs plus unique extra TC BUILD placement sites in one eligible Game, source field player.economy.townCenters.count under engine conventions; must reconcile initial+extra semantics.",
+        "reject": "Claims completed/surviving TCs, same-site placement retries, count inflation from TC relocation or different starting TC cohorts.",
+        "expert": "Fast expansion: additional TC distinct sites near projected Castle time under correct source identity.",
+        "elite": "Exceptionally fast separate expansion sites with feasible building placement geometry; not completed boom.",
+        "anti": "Starting TC count cohort, unique site dedupe, exclude Persian rebuild if model cannot disambiguate.",
+        "pacing": "Base additional TC placement(s), progression by distinct extra sites plus timing; same-number retried build never advances."
+      },
+      "reason": "Expansion identity with clear operational planning."
+    },
+    "TC_IDLE_20": {
+      "canonicalId": "AR2_ACH_TC_IDLE_20",
+      "originalFamilyName": "Town Center Idle at 20",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "ECO_GAME",
+      "modelIds": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_OPENING_STATISTICS_V6",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.economy.tcIdleTimeDarkAge",
+        "player.opening.villagersBeforeFeudalAge",
+        "recordedEvents.actionEvents[DE_QUEUE/RESEARCH]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "MILITARY_INVESTMENT_20": {
+      "canonicalId": "AR2_ACH_MILITARY_INVESTMENT_20",
+      "originalFamilyName": "Military Investment at 20",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "V1_MEASUREMENT_CANDIDATE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "ECO_GAME",
+      "modelIds": [
+        "AOF_MILITARY_STATISTICS_V4"
+      ],
+      "sourcePaths": [
+        "player.military.armyCommitmentCheckpoints.at20Minutes"
+      ],
+      "provisionalPlan": {
+        "name": "Military Investment at 20",
+        "why": "Early military commitment with readable clock and build style.",
+        "formula": "Game-best military.armyCommitmentCheckpoints.at20Minutes.netQueueResources through 20:00, model AOF_MILITARY_STATISTICS_V4; only if coverageStatus is observed_interval and unpriced/unknown queue amounts=0.",
+        "reject": "Label as army size, trained troops, military power or actual resources spent; partial unit prices reported as zero.",
+        "expert": "Broad commitment: stricter at20 cost threshold AND at least two source-qualified military class families/producer requests.",
+        "elite": "Exceptional comparable investment plus source-evidenced unit mix; explicit civ discount and 20m window.",
+        "anti": "Separate pure quantity from strategy; use comparable format/civ and minimum opening coverage.",
+        "pacing": "Fixed resource-commitment thresholds after corpus; base >= meaningful catalogued requests with no unpriced units."
+      },
+      "reason": "Early military commitment with readable clock and build style."
+    },
+    "ECO_ZONES_30": {
+      "canonicalId": "AR2_ACH_ECO_ZONES_30",
+      "originalFamilyName": "Eco Zones at 30",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "modelIds": [
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.mapPresence.expansionZones.count",
+        "recordedEvents.actionEvents[BUILD]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "RAIDS": {
+      "canonicalId": "AR2_ACH_RAIDS",
+      "originalFamilyName": "Raids Performed",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "V1_MEASUREMENT_CANDIDATE",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "modelIds": [
+        "AOF_RAID_DETECTION_V3"
+      ],
+      "sourcePaths": [
+        "player.military.engagements.raidsInitiated",
+        "player.military.engagements.raidEvidence.initiatedEpisodes"
+      ],
+      "provisionalPlan": {
+        "name": "Raids Performed",
+        "why": "A sustained military style, not number of villagers killed.",
+        "formula": "CUMULATIVE_DISTINCT_BATTLES: one admitted opponent-attributed AOF_RAID_DETECTION_V3 raid-episode signature per distinct official Battle, with meaningful qualified hostile source commands; track number of distinct Battles with qualifying raids and separately display episodes.",
+        "reject": "One Game 40 inferred episodes automatically becomes 40 career steps, or raid labels assert kills, damage, confirmed success or Cruelty.",
+        "expert": "Campaign raiding: credible qualifying episodes in multiple Battles and vs more than one opponent where opportunities permit.",
+        "elite": "Long-term repeated qualified campaign across varied independent Battles; no advantage from multiple POVs or single opponent farming.",
+        "anti": "At most one career Battle contribution per matchId, optional per-opponent cap, minimum opportunities in fixed cohorts; no same-episode reputation inflation.",
+        "pacing": "Illustrative calibration candidates for ranks: 1 / 2 / 4 / 8 distinct qualifying Battles (NOT APPROVED; Season length may require 1 / 2 / 3 / 5)."
+      },
+      "reason": "A sustained military style, not number of villagers killed."
+    },
+    "FORWARD_CASTLE": {
+      "canonicalId": "AR2_ACH_FORWARD_CASTLE",
+      "originalFamilyName": "Forward Castle",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "ENGAGEMENT_GAME",
+      "modelIds": [
+        "AOF_CASTLE_BUILD_COMMAND_SOURCE_V1",
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.mapPresence.castlePlacementCommands.evidence",
+        "player.mapPresence.startingTownCenters",
+        "recordedEvents.actionEvents[DE_QUEUE]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "SCOUT_ENEMY": {
+      "canonicalId": "AR2_ACH_SCOUT_ENEMY",
+      "originalFamilyName": "Scout Enemy",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "MAP_GEOMETRY_GAME",
+      "modelIds": [
+        "AOF_MAP_PRESENCE_V8",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.mapPresence.scoutCoverageAt5Minutes",
+        "player.mapPresence.enemyBaseContact.atMs",
+        "recordedEvents.actionEvents[MOVE/ORDER/PATROL]"
+      ],
+      "provisionalPlan": {
+        "name": "Scout Enemy",
+        "why": "Scouting is strategic skill that beginners can improve.",
+        "formula": "Game-best earlier starting-scout-selected MOVE/ORDER position within qualified unambiguous opponent-home geometry; supported known identity/clock; not generic any-unit player.mapPresence.enemyBaseContact.atMs.",
+        "reject": "Near enemy via an Archer or Villager counts as Scout contact; position command means player saw opponent in fog; unidentified starting Scout.",
+        "expert": "Earlier source-supported opponent-side Scout command contact plus coverage of distinct safe starting Scout command destinations.",
+        "elite": "Elite early actionable scouting window in same start/map speed cohort and source-supported starting Scout identity.",
+        "anti": "Comparable map distances/TC starts, no fake 0:00 contact from close spawns, one event per Game.",
+        "pacing": "Four fixed clock thresholds derived per map-distance/start cohort, lower is faster."
+      },
+      "reason": "Scouting is strategic skill that beginners can improve."
+    },
+    "DEFENSIVE_ASSISTS": {
+      "canonicalId": "AR2_ACH_DEFENSIVE_ASSISTS",
+      "originalFamilyName": "Defensive Assists",
+      "baselineAvailability": "DERIVE",
+      "disposition": "V1_AFTER_PURE_DERIVATION",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "modelIds": [
+        "AOF_ENGAGEMENT_STATISTICS_V4"
+      ],
+      "sourcePaths": [
+        "player.military.engagements.defensiveAssistsGiven",
+        "player.military.engagements.engagementEvidence.defensiveAssistsGiven"
+      ],
+      "provisionalPlan": {
+        "name": "Defensive Assists",
+        "why": "A real fixed-team cooperative mastery track.",
+        "formula": "CUMULATIVE_DISTINCT_BATTLES: count distinct official Battles with source-attributed helper->named teammate assists in verified ally-threat windows (engagementEvidence.defensiveAssistsGiven) under FIXED_TEAM_GAME; disclose 'detected intervention', not proven rescue.",
+        "reject": "Being in same army area, attacking common enemy elsewhere, any ally-scored relationship Bond or a solo 1v1 equals assist.",
+        "expert": "Distinctly directed assistance to more than one ally under separate real incoming threat opportunities; minimum actor command participation.",
+        "elite": "Repeated independent qualified intervention across varying Battles/opponents with meaningful threat exposure; true life-saving outcome not asserted.",
+        "anti": "Normalize by episodes where an eligible ally is threatened, count at most once per helper-beneficiary-raid incident per Battle and cap repeated victim farming.",
+        "pacing": "Illustrative calibration 1 / 2 / 4 / 6 distinct qualifying Battles with opportunity minimum; may need lower thresholds for short Seasons."
+      },
+      "reason": "A real fixed-team cooperative mastery track."
+    },
+    "BATTLE_PARTICIPATION_SHARE": {
+      "canonicalId": "AR2_ACH_BATTLE_PARTICIPATION_SHARE",
+      "originalFamilyName": "Part of Battles %",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "modelIds": [
+        "AOF_ENGAGEMENT_STATISTICS_V4",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.military.engagements.engagementEvidence.battles",
+        "recordedEvents.actionEvents"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "TRIBUTE_TO_ALLIES": {
+      "canonicalId": "AR2_ACH_TRIBUTE_TO_ALLIES",
+      "originalFamilyName": "Tribute to Allies",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "modelIds": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.economy.tributeSent",
+        "recordedEvents.actionEvents[DE_TRIBUTE/TRIBUTE]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "SETUP_TRADE_TEAM": {
+      "canonicalId": "AR2_ACH_SETUP_TRADE_TEAM",
+      "originalFamilyName": "Set Up Trade",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "modelIds": [
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourcePaths": [
+        "player.economy.tradeUnitsTrained",
+        "player.economy.economyBuildings.byType.markets.count"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "FISH_TRAPPER": {
+      "canonicalId": "AR2_ACH_FISH_TRAPPER",
+      "originalFamilyName": "Fish Trapper",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "disposition": "V1_MEASUREMENT_CANDIDATE",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "modelIds": [
+        "AOF_ECONOMY_STATISTICS_V5"
+      ],
+      "sourcePaths": [
+        "player.economy.economyBuildings.byType.fishTraps.count"
+      ],
+      "provisionalPlan": {
+        "name": "Fish Trapper",
+        "why": "Unusual water-economy mastery especially for larger team games.",
+        "formula": "Fixed-team water Game best player.economy.economyBuildings.byType.fishTraps.count, net supported GAME fishtrap_queue minus fishtrap_unqueue requests; valid water opportunity.",
+        "reject": "Claim completed operating Fish Traps or money/food income, count unknown amount or repeated queue/undo as activity.",
+        "expert": "Earlier net Fish Trap commitment plus verified adjacent Dock/water-economy support request signature.",
+        "elite": "Substantial distinct net Fish Trap plans across an eligible water cohort, not merely spamming same object.",
+        "anti": "Bounded net queue, cancellation/unknown amount guard, water-start eligibility and distinct productive opportunities.",
+        "pacing": "Qualify base net requested traps; propose separately calibrated small/medium/large thresholds for water maps; no fixed numbers until corpus."
+      },
+      "reason": "Unusual water-economy mastery especially for larger team games."
+    },
+    "UNDER_20_WIN_TEAM": {
+      "canonicalId": "AR2_ACH_UNDER_20_WIN_TEAM",
+      "originalFamilyName": "Win in Under 20 Minutes",
+      "baselineAvailability": "DERIVE",
+      "disposition": "DERIVATION_BACKLOG",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "OFFICIAL_RESULT_GAME",
+      "modelIds": [
+        "AOF_OFFICIAL_MATCH_RESULT_CURRENT_REVISION",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "official.matchResult",
+        "recordedEvents.postgameEvents",
+        "recordedEvents.scope.observedUntilMs"
+      ],
+      "provisionalPlan": null,
+      "reason": "Reasonable statistic but defer to avoid 37 concurrent launch grants or unvalidated composite detector."
+    },
+    "SPIES": {
+      "canonicalId": "AR2_ACH_SPIES",
+      "originalFamilyName": "Research Spies",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "FIXED_TEAM_GAME",
+      "modelIds": [
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "recordedEvents.actionEvents[RESEARCH:Spies]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "TURN_ON_ALLY": {
+      "canonicalId": "AR2_ACH_TURN_ON_ALLY",
+      "originalFamilyName": "Turn on Ally",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "modelIds": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1.directedDeclarations",
+        "recordedEvents.actionEvents[GAME:diplomacy]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "WIN_DIPLO": {
+      "canonicalId": "AR2_ACH_WIN_DIPLO",
+      "originalFamilyName": "Win Diplomacy Game",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "modelIds": [
+        "AOF_OFFICIAL_MATCH_RESULT_CURRENT_REVISION",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "official.matchResult",
+        "recordedEvents.postgameEvents"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "NEUTRAL_DIPLO": {
+      "canonicalId": "AR2_ACH_NEUTRAL_DIPLO",
+      "originalFamilyName": "Neutral",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "modelIds": [
+        "AOF_DIPLOMACY_TIMELINE_V2",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "AOF_DIPLOMACY_TIMELINE_V2.effectiveIntervals[UNQUALIFIED_IN_PRODUCTION]",
+        "recordedEvents.actionEvents[GAME:diplomacy]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "HOUSE_KING": {
+      "canonicalId": "AR2_ACH_HOUSE_KING",
+      "originalFamilyName": "House an Allied King",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "modelIds": [
+        "AOF_RECORDED_EVENTS_V1",
+        "AOF_DIPLOMACY_TIMELINE_V2"
+      ],
+      "sourcePaths": [
+        "recordedEvents.actionEvents[ORDER/UNGARRISON]",
+        "AOF_DIPLOMACY_TIMELINE_V2.effectiveIntervals[UNQUALIFIED_IN_PRODUCTION]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "SETUP_TRADE_DIPLO": {
+      "canonicalId": "AR2_ACH_SETUP_TRADE_DIPLO",
+      "originalFamilyName": "Set Up Trade in Diplomacy",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "BEST_QUALIFIED_GAME",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "modelIds": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_DIPLOMACY_TIMELINE_V2"
+      ],
+      "sourcePaths": [
+        "player.economy.tradeUnitsTrained",
+        "AOF_DIPLOMACY_TIMELINE_V2.effectiveIntervals[UNQUALIFIED_IN_PRODUCTION]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "ALLY_N_TIMES": {
+      "canonicalId": "AR2_ACH_ALLY_N_TIMES",
+      "originalFamilyName": "Successfully Ally N Times",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "modelIds": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "AOF_DECLARED_DIPLOMACY_HISTORY_V1.directedDeclarations",
+        "recordedEvents.actionEvents[GAME:diplomacy]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    },
+    "EXTORTION": {
+      "canonicalId": "AR2_ACH_EXTORTION",
+      "originalFamilyName": "Extortion",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "disposition": "SOURCE_BLOCKED",
+      "progression": "CUMULATIVE_DISTINCT_BATTLES",
+      "comparisonProfile": "DIPLO_FFA_GAME",
+      "modelIds": [
+        "AOF_ECONOMY_STATISTICS_V5",
+        "AOF_RECORDED_EVENTS_V1"
+      ],
+      "sourcePaths": [
+        "player.economy.tributeReceived",
+        "recordedEvents.actionEvents[DE_TRIBUTE/TRIBUTE]"
+      ],
+      "provisionalPlan": null,
+      "reason": "Named deed requires verified execution/effective-state evidence not now available."
+    }
+  },
+  "recordDispositions": {
+    "DRUSH_FLUSH": {
+      "canonicalId": "AR2_REC_DRUSH_FLUSH",
+      "name": "Fastest Drush Flush",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_STRATEGY_SIGNATURE_MS",
+      "profile": "NORMAL_START_OPENING",
+      "baselineAvailability": "DERIVE",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE/RESEARCH/MILITARY_ACTION]",
+        "player.opening.ageUp.feudal"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "SCOUT_RUSH": {
+      "canonicalId": "AR2_REC_SCOUT_RUSH",
+      "name": "Fastest Scout Rush",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_STRATEGY_SIGNATURE_MS",
+      "profile": "NORMAL_START_OPENING",
+      "baselineAvailability": "DERIVE",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]",
+        "player.opening.ageUp.feudal"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "ARCHER_RUSH": {
+      "canonicalId": "AR2_REC_ARCHER_RUSH",
+      "name": "Fastest Archer Rush",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_STRATEGY_SIGNATURE_MS",
+      "profile": "NORMAL_START_OPENING",
+      "baselineAvailability": "DERIVE",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE]",
+        "player.opening.ageUp.feudal"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "FEUDAL": {
+      "canonicalId": "AR2_REC_FEUDAL",
+      "name": "Fastest Feudal Age",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MIN",
+      "checkpoint": "PROJECTED_AGE_MS",
+      "profile": "NORMAL_START_OPENING",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "player.opening.ageUp.feudal.ageUpAtMs"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "CASTLE": {
+      "canonicalId": "AR2_REC_CASTLE",
+      "name": "Fastest Castle Age / Fast Castle",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MIN",
+      "checkpoint": "PROJECTED_AGE_MS",
+      "profile": "NORMAL_START_OPENING",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "player.opening.ageUp.castle.ageUpAtMs"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "IMPERIAL": {
+      "canonicalId": "AR2_REC_IMPERIAL",
+      "name": "Fastest Imperial Age",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MIN",
+      "checkpoint": "PROJECTED_AGE_MS",
+      "profile": "NORMAL_START_OPENING",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "player.opening.ageUp.imperial.ageUpAtMs"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "FC_BOOM": {
+      "canonicalId": "AR2_REC_FC_BOOM",
+      "name": "Fastest Fast Castle Boom",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_POST_CASTLE_TC_SIGNATURE_MS",
+      "profile": "NORMAL_START_OPENING",
+      "baselineAvailability": "DERIVE",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "player.opening.ageUp.castle.ageUpAtMs",
+        "recordedEvents.actionEvents[BUILD:TownCenter]"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "FISH_BOOM": {
+      "canonicalId": "AR2_REC_FISH_BOOM",
+      "name": "Fastest Fish Boom",
+      "tab": "Opening",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MIN",
+      "checkpoint": "QUALIFIED_FISHING_SIGNATURE_MS",
+      "profile": "WATER_OPENING_START",
+      "baselineAvailability": "DERIVE",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "player.buildOrder",
+        "recordedEvents.actionEvents[BUILD/DE_QUEUE/GAME]"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "FARMS": {
+      "canonicalId": "AR2_REC_FARMS",
+      "name": "Most Farms Placed",
+      "tab": "Economy",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "ECO_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "farm_placement_requests",
+      "sourcePaths": [
+        "player.economy.farmsPlaced.count"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "VILLAGERS_20": {
+      "canonicalId": "AR2_REC_VILLAGERS_20",
+      "name": "Highest Villager Queue Estimate @20",
+      "tab": "Economy",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "profile": "ECO_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "reconstructed_villager_queue_estimate",
+      "sourcePaths": [
+        "player.economy.villagersBy20Minutes.count"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "COMMITTED_20": {
+      "canonicalId": "AR2_REC_COMMITTED_20",
+      "name": "Most Resources Committed @20",
+      "tab": "Economy",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "profile": "ECO_GAME",
+      "baselineAvailability": "DERIVE",
+      "unit": "pinned_catalog_resource_units",
+      "sourcePaths": [
+        "player.economy.resourceCommitment",
+        "recordedEvents.actionEvents[QUEUE/BUILD/WALL/RESEARCH]"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "COMMITTED_GAME": {
+      "canonicalId": "AR2_REC_COMMITTED_GAME",
+      "name": "Most Resources Committed in One Game",
+      "tab": "Economy",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "ECO_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "pinned_catalog_resource_units",
+      "sourcePaths": [
+        "player.economy.resourceCommitment.resourcesCommitted.total"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "RAIDS": {
+      "canonicalId": "AR2_REC_RAIDS",
+      "name": "Most Detected Raids Initiated",
+      "tab": "Military",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "ENGAGEMENT_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "inferred_raid_episodes",
+      "sourcePaths": [
+        "player.military.engagements.raidsInitiated"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "ASSISTS": {
+      "canonicalId": "AR2_REC_ASSISTS",
+      "name": "Most Qualified Defensive Assists",
+      "tab": "Military",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "FIXED_TEAM_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "inferred_defensive_assist_episodes",
+      "sourcePaths": [
+        "player.military.engagements.defensiveAssistsGiven"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "CASTLES": {
+      "canonicalId": "AR2_REC_CASTLES",
+      "name": "Most Castle Placement Orders",
+      "tab": "Military",
+      "disposition": "DEFER_COMPETITIVE_FAIRNESS",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "QUALIFIED_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "castle_placement_requests",
+      "sourcePaths": [
+        "player.military.castles.count"
+      ],
+      "reason": "BUILD placement count is spammable and not finished Castles; preserve row without promoting as a prestigious record."
+    },
+    "BATTLES": {
+      "canonicalId": "AR2_REC_BATTLES",
+      "name": "Most Detected Engagement Battles",
+      "tab": "Military",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "ENGAGEMENT_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "inferred_battle_episodes",
+      "sourcePaths": [
+        "player.military.engagements.engagementEvidence.battles"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "SCOUT_CONTACT": {
+      "canonicalId": "AR2_REC_SCOUT_CONTACT",
+      "name": "Earliest Scout-Attributed Enemy-Base Contact",
+      "tab": "Map Presence",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MIN",
+      "checkpoint": "FIRST_QUALIFIED_SCOUT_COMMAND_MS",
+      "profile": "MAP_GEOMETRY_GAME",
+      "baselineAvailability": "DERIVE",
+      "unit": "game_milliseconds",
+      "sourcePaths": [
+        "player.mapPresence.enemyBaseContact.atMs",
+        "player.mapPresence.scoutCoverageAt5Minutes",
+        "recordedEvents.actionEvents[MOVE/ORDER]"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "WALLS_20": {
+      "canonicalId": "AR2_REC_WALLS_20",
+      "name": "Most Unique Wall Tile Orders @20",
+      "tab": "Map Presence",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "profile": "MAP_GEOMETRY_GAME",
+      "baselineAvailability": "DERIVE",
+      "unit": "unique_placed_wall_tiles",
+      "sourcePaths": [
+        "recordedEvents.actionEvents[WALL]",
+        "player.mapPresence.wallTiles.totalWallTiles"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "MAP_EXPLORED_20": {
+      "canonicalId": "AR2_REC_MAP_EXPLORED_20",
+      "name": "Map Explored @20",
+      "tab": "Map Presence",
+      "disposition": "SOURCE_BLOCKED_LITERAL_CLAIM",
+      "direction": "MAX",
+      "checkpoint": "20_MINUTES",
+      "profile": "MAP_GEOMETRY_GAME",
+      "baselineAvailability": "ENGINE_WITNESS",
+      "unit": "percent_of_map_explored_UNAVAILABLE",
+      "sourcePaths": [
+        "player.mapPresence.commandMapCoverage.percent",
+        "recordedEvents.actionEvents[position]"
+      ],
+      "reason": "Literal fog-of-war exploration unproven; any command coverage proxy needs separate owner-approved name."
+    },
+    "FORWARD": {
+      "canonicalId": "AR2_REC_FORWARD",
+      "name": "Most Forward Building Placements",
+      "tab": "Map Presence",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "MAP_GEOMETRY_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "forward_building_placement_requests",
+      "sourcePaths": [
+        "player.mapPresence.forwardBuildings.count"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "GOLD": {
+      "canonicalId": "AR2_REC_GOLD",
+      "name": "Highest Gold Infrastructure Influence",
+      "tab": "Map Presence",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "MAP_GEOMETRY_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "percent_inferred_infrastructure_gold_control",
+      "sourcePaths": [
+        "player.mapPresence.goldControl.controlSharePercent"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "RELICS": {
+      "canonicalId": "AR2_REC_RELICS",
+      "name": "Most Unique Relic Touches",
+      "tab": "Map Presence",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "MAP_GEOMETRY_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "unique_source_qualified_relic_target_instances",
+      "sourcePaths": [
+        "player.mapPresence.relicControl.uniqueRelicsTouched"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "ECO_ZONES": {
+      "canonicalId": "AR2_REC_ECO_ZONES",
+      "name": "Most Economic Expansion Zones",
+      "tab": "Map Presence",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "MAP_GEOMETRY_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "inferred_economic_expansion_zones",
+      "sourcePaths": [
+        "player.mapPresence.expansionZones.count"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "APM": {
+      "canonicalId": "AR2_REC_APM",
+      "name": "Highest Average Full-Game Raw APM",
+      "tab": "Execution",
+      "disposition": "RECORD_BOOK_ADMIT_IF_QUALIFIED",
+      "direction": "MAX",
+      "checkpoint": "FULL_GAME",
+      "profile": "QUALIFIED_GAME",
+      "baselineAvailability": "EXISTING_MEASUREMENT",
+      "unit": "raw_actions_per_minute",
+      "sourcePaths": [
+        "player.execution.apm"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "WIN_STREAK": {
+      "canonicalId": "AR2_REC_WIN_STREAK",
+      "name": "Longest Official Season Win Streak",
+      "tab": "Competition",
+      "disposition": "RECORD_BOOK_AFTER_DERIVATION",
+      "direction": "MAX",
+      "checkpoint": "SEASON_OFFICIAL_MATCH_SEQUENCE",
+      "profile": "OFFICIAL_RESULT_SEQUENCE",
+      "baselineAvailability": "DERIVE",
+      "unit": "consecutive_official_matches",
+      "sourcePaths": [
+        "official.matchResult",
+        "season.standings"
+      ],
+      "reason": "Exact source/civ/format/clock admission required; no automatically worthy extrema from raw record flags."
+    },
+    "FASTEST_WIN": {
+      "canonicalId": "AR2_REC_FASTEST_WIN",
+      "name": "Fastest Official Win",
+      "tab": "Competition",
+      "disposition": "DEFER_COMPETITIVE_FAIRNESS",
+      "direction": "MIN",
+      "checkpoint": "OFFICIAL_WINNING_MATCH_OR_GAME_DURATION",
+      "profile": "OFFICIAL_RESULT_GAME",
+      "baselineAvailability": "DERIVE",
+      "unit": "verified_official_game_or_match_milliseconds_UNDECIDED",
+      "sourcePaths": [
+        "official.matchResult",
+        "recordedEvents.postgameEvents",
+        "recordedEvents.scope.observedUntilMs"
+      ],
+      "reason": "Before publishing, define Game-vs-Match finish, fixed-team/FFA official outcomes and anti-collusion/minimum duration."
+    }
+  },
+  "honourTaxonomy": [
+    {
+      "type": "ACHIEVEMENT",
+      "lifetime": "PERMANENT_WHILE_EVIDENCE_VALID",
+      "unlock": "Fixed tier and qualified variants; independent of league holder",
+      "surface": "Achievement collection; earned highest and past steps; owner-controlled sharing"
+    },
+    {
+      "type": "PUBLIC_RECORD",
+      "lifetime": "MUTABLE_CURRENT_HOLDER_AND_HISTORIC_PROVENANCE",
+      "unlock": "Compatible Season current extreme with ties; separately eventual true cross-Season all-time",
+      "surface": "Statistics / 3 source-qualified plaques per five tabs / complete record book"
+    },
+    {
+      "type": "PERSONAL_BEST",
+      "lifetime": "CURRENT_BEST_WITH_CORRECTION",
+      "unlock": "Owner's own eligible Game best, not competitive result",
+      "surface": "private, owner-only Chronicle self-leaf; optional 3 highlighted records are a subset"
+    },
+    {
+      "type": "TROPHY",
+      "lifetime": "FOR_COMPETITIVE_RECORD_TROPHIES_TRANSFERABLE_CURRENT_POSSESSION_WITH_VALID_DATED_FORMER_HOLDER_HISTORY",
+      "unlock": "Separately owner-approved meaningful competitive current title, including current fastest compatible FC only after maturity AND absolute quality; other official-result feat trophies require independent exact path.",
+      "surface": "Current competitive trophy emblem only for current holder; valid past possession in dated factual succession, not a permanent medal. Other type-specific historic feat trophy semantics need separate policy."
+    },
+    {
+      "type": "DISTINCTION",
+      "lifetime": "EARNED_HISTORY_UNLESS_SOURCE_INVALIDATED",
+      "unlock": "Exceptionally difficult corroborated battlefield deed with independent proof of actor, duress, action and consequential effect",
+      "surface": "Very scarce decoration + Chronicle deed; no raw social score"
+    },
+    {
+      "type": "EPITHET",
+      "lifetime": "EARNED_AND_MANUALLY_EQUIPPED_IF_ACTIVE",
+      "unlock": "Fixed achievement combination or separate verified season/participation condition",
+      "surface": "One active pre/sobriquet/post name expression"
+    },
+    {
+      "type": "EVENT_OR_SEASON_HONOUR",
+      "lifetime": "DATE_SCOPED_RESULT",
+      "unlock": "Approved source event/season result and policy; not automatic conversion from 64 roundoff spots",
+      "surface": "Event/Season archive; optional presentation only after owner decision"
+    }
+  ],
+  "trophyCandidates": [
+    {
+      "id": "AR2_TROPHY_THORN_EMPEROR",
+      "name": "Thorn in the Emperor's Crown",
+      "eligibility": "Designated WARMUP 1v1 pinned reigning Emperor at Match approval; non-Emperor sole official winner, verified current accepted result and correct Event/Match identity.",
+      "status": "RESULT_VERIFIED_PATH_IF_SOURCE_FINAL",
+      "anti": "Exactly one per eligible Emperor designation + Match, unranked substitutes/FFA/AI excluded; no automatic grant from 64-card Roundoff Emperor feature; independent policy.",
+      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT",
+      "current31OctLaunchPriority": false
+    },
+    {
+      "id": "AR2_TROPHY_SWIFT_ASCENT",
+      "name": "UNAPPROVED_PLAYER_FACING_NAME",
+      "eligibility": "Owner #205 29 Oct supersedes end-of-Season laureate: transfer-capable competitive current trophy. After separately owner-approved early-Season maturity and extraordinary absolute FC time gates, current source-qualified strictly fastest comparable AR2_REC_CASTLE projected timing receives possession on actual qualification date. Each later strictly better accepted comparable result transfers immediately while Season is active. First uploader/early provisional holder receives none until mature. End Season archives succession, not trophy-only award.",
+      "status": "TRANSFERABLE_COMPETITIVE_POSSESSION_POLICY_DESIGN_ONLY_UNCONFIGURED",
+      "anti": "Equality never dethrones incumbent; initial true tie with no incumbent PENDING_TIE_POLICY (no upload-order arbitrary winner). Corrected/withdrawn Game restores next rightful current holder; former holder retains only valid dated possession history, never current nameplate trophy. Match/Game/POV and source model revision correction; no first-uploader maturity shortcut.",
+      "ownerSelection": "V1_PRIORITY_CONCEPT_SELECTED_NO_GRANT",
+      "rejectedLegacyDisplayName": "The Swift Ascent",
+      "displayNameCandidates": [
+        {
+          "label": "The Castle Crown",
+          "subtitle": "Fastest Castle Age",
+          "status": "CANDIDATE_PREFERRED_NOT_APPROVED"
+        },
+        {
+          "label": "Crown of the Castle Age",
+          "subtitle": "Fastest Castle Age",
+          "status": "CANDIDATE_NOT_APPROVED"
+        },
+        {
+          "label": "The Castle Vanguard",
+          "subtitle": "Fastest Castle Age",
+          "status": "CANDIDATE_NOT_APPROVED"
+        }
+      ],
+      "scope": "PROPOSED_CURRENT_SEASON_COMPARABLE_STANDARD_START_COHORT_OWNER_SCOPE_PENDING",
+      "activePossessionModel": "MATURE_AND_ABSOLUTE_QUALIFIED_UNIQUE_RECORD_CURRENT_INCUMBENT_STRICT_BETTER_TRANSFER",
+      "firstTieWithoutIncumbent": "PENDING_OWNER_TIE_POLICY_NO_GRANT",
+      "seasonEnd": "ARCHIVE_FINAL_CURRENT_HOLDER_AND_VALID_SUCCESSION_WITH_CORRECTION_LOG",
+      "numericPerformanceGateMs": null,
+      "numericMaturityGates": null,
+      "current31OctLaunchPriority": true
+    },
+    {
+      "id": "AR2_TROPHY_ANNALS_REWRITTEN",
+      "name": "Breaker of the Annals",
+      "eligibility": "Strict break of prior official published all-time record in a second owner-approved high-significance metric OTHER THAN AR2_REC_CASTLE. Historical previously published baseline, minimum admitted field and normalized comparable cohort.",
+      "status": "RECORD_AUTHORITY_AND_OWNER_METRIC_SELECTION_PENDING",
+      "anti": "Never stack with Swift Ascent for same Castle Game/metric; cap one trophy instance per approved record metric, no first-holder founding trophies.",
+      "ownerSelection": "RESERVED_FUTURE_CONCEPT_NOT_V1",
+      "current31OctLaunchPriority": false
+    }
+  ],
+  "distinctionCandidates": [
+    {
+      "id": "AR2_DIST_UNBROKEN_LINE",
+      "name": "Star of the Unbroken Line",
+      "deed": "Verified repeated direct protective action under independently observed severe attack with time-bounded material protective effect, not merely raidResponse command or routine defensive stand.",
+      "requires": [
+        "independent combat-state threat magnitude at entry",
+        "actor-owned actual defensive transition/repair/garrison effect",
+        "relative force/context and bounded material consequence"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "PRIORITY_CONCEPT_ONLY_SOURCE_BLOCKED",
+      "current31OctLaunchPriority": false
+    },
+    {
+      "id": "AR2_DIST_LAST_STANDARD",
+      "name": "Order of the Last Standard",
+      "deed": "Extraordinary documented reversal from independently witnessed serious military disadvantage with actor's attributable decisive contribution, not just winning after a low raw score.",
+      "requires": [
+        "verified state at earlier disadvantage time",
+        "verified actual impact specifically attributable to recipient",
+        "official current win and chronology"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED",
+      "current31OctLaunchPriority": false
+    },
+    {
+      "id": "AR2_DIST_FELLOWSHIP",
+      "name": "Shield of the Fellowship",
+      "deed": "Exceptional executed intervention by helper with independently witnessed material effect on an ally under extreme threat, more than Worker D's social scene 'The Shield at the Gate'.",
+      "requires": [
+        "specific helper->beneficiary->third party mapping",
+        "observed actually executed material aid/protective impact",
+        "verified severe beneficiary exposure"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "PRIORITY_CONCEPT_ONLY_SOURCE_BLOCKED",
+      "antiOverlap": "Worker D's proposed Watchkeeper's Seal and exceptional Shield at the Gate social scene may describe the SAME help incident: prohibit duplicate permanent medals from equivalent proof. Independently corroborated executed material benefit mandatory; no Season assists count or Bond/Chivalry threshold automatically grants this medal.",
+      "current31OctLaunchPriority": false
+    },
+    {
+      "id": "AR2_DIST_LONE_VANGUARD",
+      "name": "Star of the Lone Vanguard",
+      "deed": "Outnumbered personal military intervention with independent pre-fight force snapshot and executed material result, not simply high queue value, APM or social Gallantry score.",
+      "requires": [
+        "verified entry force imbalance",
+        "exact actor/controller ownership and known unit classes",
+        "engine-observed attributed impact, with negatives for auto-fire"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "ownerSelection": "RESERVED_CONCEPT_SOURCE_BLOCKED",
+      "current31OctLaunchPriority": false
+    }
+  ],
+  "epithetCandidates": [
+    {
+      "id": "AR2_EPITHET_SWORN_CAMPAIGNER",
+      "name": "the Sworn Campaigner",
+      "formula": "Five distinct accepted official league Matches/Battles with qualified participation; count MATCH IDs, not Games or replay uploads; no requirement to win.",
+      "availability": "OFFICIAL_RESULT_AND_CHRONOLOGY_ADMIT",
+      "display": "Erik the Sworn Campaigner",
+      "equip": "VOLUNTARY_ONE_ONLY",
+      "note": "Five is a PROPOSED calibration gate, not active owner cutoff.",
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT",
+      "current31OctLaunchPriority": false
+    },
+    {
+      "id": "AR2_EPITHET_WARDEN_BORDER",
+      "name": "Warden of the Border",
+      "formula": "At least Expert Walls and a qualified source-attributed Reactive Defence (quickwall/garrison threat response) episode across at least two distinct Battles; no claim of successful lifesaving.",
+      "availability": "NEW_DEFENSIVE_EPISODE_DERIVATION",
+      "display": "Erik, Warden of the Border",
+      "equip": "VOLUNTARY_ONE_ONLY",
+      "note": "Title is distinct from Shield at Gate rare social event; scope intentionally defence not score.",
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT",
+      "current31OctLaunchPriority": false
+    },
+    {
+      "id": "AR2_EPITHET_THREE_SCHOOLS",
+      "name": "Master of the Three Schools",
+      "formula": "ACTIVE ELITE disciplined Drush AND (ACTIVE ELITE Scout Rush OR Archer Rush) AND ACTIVE ELITE Fast Castle Boom; no fourth detector.",
+      "availability": "ELITE_SCHOOL_DERIVATION_OWNER_CALIBRATION",
+      "display": "Erik, Master of the Three Schools",
+      "equip": "VOLUNTARY_ONE_ONLY",
+      "note": "No automatic equip; only currently active component entitlements, source corrections suspend; later weaker play never removes valid mastery.",
+      "ownerSelection": "ONE_OF_THREE_SELECTED_CANDIDATE_TITLES_NO_EQUIPMENT_OR_GRANT",
+      "current31OctLaunchPriority": true
+    }
+  ],
+  "honourGates": {
+    "sourceReceipt": "QUALIFIED | NOT_QUALIFIED | PENDING_EVIDENCE; no zero-for-missing",
+    "identity": "Verified current READY artifact, one canonical Game, Battle /matches/{matchId}, participant mapping and accepted result revision",
+    "privacy": "private, owner-only Chronicle full PB ledger; only independently approved trophy/title/display public",
+    "multiSurface": "Same event can update Stats/PB/Achievement/Chronicle separately but one deduped incident key; never social-track auto trophy",
+    "guard": "No engine-observed kills, conversions, delivered tribute, actual fog explored, completed buildings or trade-route earnings from command requests"
+  },
+  "highlightedRecordRule": {
+    "tabs": [
+      "Opening",
+      "Economy",
+      "Military",
+      "Map Presence",
+      "Execution"
+    ],
+    "perTab": 3,
+    "selection": "Keep #162 existing 15 provisional slots unchanged; exact editorial winners later",
+    "recordBook": "Complete approved compatible qualified records; 26 candidate definitions retained",
+    "roundoff": "Existing 64 rank Event spotlights and 4-card Battle spotlights never auto-grant permanent honours"
+  },
+  "plannedPRs": [
+    {
+      "id": "186-A",
+      "boundary": "After owner policy review: default-OFF read-only collection metadata and source-status copy for 15 selected families, public earned tier-only visibility contract and 1 epithet/1 trophy/1 Distinction display cap; no #172 records/PB resolver change, no entitlement publication, grants or seeding.",
+      "canShipWithoutThresholds": true
+    },
+    {
+      "id": "186-B",
+      "boundary": "AFTER owner maturity/absolute/cohort approval: default-OFF pure qualifiers for strict three-Militia plus mandatory Drush Flush, Scout OR Archer, FC Boom; separately pure transfer-possession rule over source-current records (no grants/seeds/write/UI). Never assume end-of-Season-only laureate. Source correction/tie tests mandatory.",
+      "canShipWithoutThresholds": false
+    }
+  ],
+  "ownerQuestions": [
+    "Owner approval of actual eligible absolute projected FC clock and maturation (elapsed official Events/time AND distinct independent eligible comparable players/Battles); all numbers null.",
+    "Owner policy for initial no-incumbent exact tie at maturity; equality never transfers an existing crown.",
+    "Select one player-facing Fast Castle trophy name from three candidates, retaining AR2_TROPHY_SWIFT_ASCENT stable internal ID until separately approved versioned migration.",
+    "Confirm Season standard-start compatible scope (ordinary maps/civs comparable where starts materially alike; unusual Nomad/Migration separate), and future league-wide scope if independently wanted."
+  ],
+  "ownerDecisions2026Oct28": {
+    "source": "Owner five multiple-choice selections 1A/2A/3A/4C/5A in Worker C #186; read with owner #196/#197 milestone and FC maturity requirements and separate #198 Event extension",
+    "policyStatus": "OWNER_SELECTED_DESIGN_DIRECTION_ONLY_NOT_TRIGGER_RULE_OR_RELEASE",
+    "selectedCodes": [
+      "1A",
+      "2A",
+      "3A",
+      "4C",
+      "5A"
+    ],
+    "selection1A": {
+      "familyCount": 15,
+      "measurementBacked": 7,
+      "pureDerivation": 8,
+      "allOriginalFamiliesPreserved": 37,
+      "twoWaveDelivery": true
+    },
+    "selection2A": {
+      "eliteClubRequiresDrushFlush": true,
+      "drushSignature": "Exactly three source-qualified net Dark Age Militia queue orders, Barracks, Loom, independently defensible TC macro continuity",
+      "flushingSignature": "In SAME Game, independently attributable Feudal military continuation and owner-approved clock/patch context; command evidence is not proof of combat effect",
+      "newAchievementFamily": false,
+      "sourceReady": false
+    },
+    "selection3A": {
+      "initialNamedTrophyIds": [
+        "AR2_TROPHY_THORN_EMPEROR",
+        "AR2_TROPHY_SWIFT_ASCENT"
+      ],
+      "reserveIds": [
+        "AR2_TROPHY_ANNALS_REWRITTEN"
+      ],
+      "swiftAscentPolicy": "SUPERSEDED_BY_OWNER_29_OCT_TRANSFERABLE_COMPETITIVE_CURRENT_POSSESSION_AFTER_MATURITY_AND_EXCELLENCE",
+      "swiftAscentPerformanceTimeThreshold": null,
+      "swiftAscentMaturityThreshold": null,
+      "retroactiveEligibility": "CURRENT_VALID_EARLY_GAME_MAY_CLAIM_AT_MATURITY_NOT_BACKDATED",
+      "tieAndVintagePolicy": "EQUALITY_NO_TRANSFER; FIRST_NO_INCUMBENT_TIE_PENDING; CORRECTION_RECOMPUTES_SUCCESSION",
+      "sourceReady": false,
+      "transferDuringSeason": true,
+      "endOfSeasonOnly": false,
+      "publicNameStatus": "REJECTED_THE_SWIFT_ASCENT; THREE_ALTERNATIVES_UNAPPROVED"
+    },
+    "selection4C": {
+      "priorityDistinctionIds": [
+        "AR2_DIST_UNBROKEN_LINE",
+        "AR2_DIST_FELLOWSHIP"
+      ],
+      "reservedIds": [
+        "AR2_DIST_LAST_STANDARD",
+        "AR2_DIST_LONE_VANGUARD"
+      ],
+      "bothEffectProofBlocked": true,
+      "workerDCollision": "Watchkeeper's Seal / The Shield at the Gate overlap must be disambiguated; no equivalent deed double-medal."
+    },
+    "selection5A": {
+      "epithetIds": [
+        "AR2_EPITHET_SWORN_CAMPAIGNER",
+        "AR2_EPITHET_WARDEN_BORDER",
+        "AR2_EPITHET_THREE_SCHOOLS"
+      ],
+      "singleVoluntarilyEquippedEpithet": true,
+      "publicDisplay": "Only accepted earned family/tier badges after approved grants; no unapproved or pending ranks",
+      "nameplateMaxSelectedTrophies": 1,
+      "nameplateMaxSelectedDistinctions": 1,
+      "personalBestPrivacy": "private, owner-only Chronicle personal-best ledger, never public via badge detail or source value",
+      "unverifiedEmblemsShownAsEarned": false
+    },
+    "tierMeanings": {
+      "INITIATE": "Genuine first qualified milestone, immediate upon accepted source+owner-approved criterion; not a scheduled quota.",
+      "PRACTICED": "Competence achievable with diligent improvement, not mere attendance.",
+      "EXPERT": "Genuinely difficult and not universal.",
+      "ELITE": "Rare extraordinary skill; not automatically reached through repeated Games or shifting leaderboards."
+    },
+    "rankNamesAccepted": true,
+    "unapprovedNumericTierThresholds": 148,
+    "isLiveGrantAuthority": false,
+    "recordsUnchanged": true,
+    "futureEventMetaAchievement": "#198 separately pending; no 38th family without separate extension approval"
+  },
+  "ownerDecisions2026Oct29": {
+    "source": "Owner binding correction #205 comment 6484715014 (29 Oct), corroborated by PR #193 comment 6484729730",
+    "policyState": "OWNER_APPROVED_PRODUCT_SEMANTICS_ONLY_NO_GRANTS_OR_RULE_NUMBERS",
+    "supersedes": "Former end-of-Season-only permanent Fast Castle laureate recommendation in #196/#197/#193",
+    "internalTrophyId": "AR2_TROPHY_SWIFT_ASCENT",
+    "rejectedPublicLabel": "The Swift Ascent",
+    "publicName": "NOT_APPROVED",
+    "nameCandidates": [
+      {
+        "label": "The Castle Crown",
+        "subtitle": "Fastest Castle Age",
+        "status": "CANDIDATE_PREFERRED_NOT_APPROVED"
+      },
+      {
+        "label": "Crown of the Castle Age",
+        "subtitle": "Fastest Castle Age",
+        "status": "CANDIDATE_NOT_APPROVED"
+      },
+      {
+        "label": "The Castle Vanguard",
+        "subtitle": "Fastest Castle Age",
+        "status": "CANDIDATE_NOT_APPROVED"
+      }
+    ],
+    "recordId": "AR2_REC_CASTLE",
+    "scopeStatus": "CURRENT_SEASON_COMPETITIVE_RECORD_SCOPE_PROPOSED; EXACT_COHORT_POLICY_OPEN",
+    "transferRule": "After approved maturity and absolute time gates, current fastest eligible comparable holder possesses; each later STRICTLY_LOWER accepted Game clock transfers. Equality never transfers.",
+    "priorHolder": "LOSES_CURRENT_EMBLEM_REMAINS_VALID_DATED_FACTUAL_SUCCESSION_ONLY",
+    "maturityRule": "PENDING_MATURITY before sufficient calendar/event AND independent comparable player/Battle sample; historical eligible early Game considered at first mature evaluation but not backdated award",
+    "firstTie": "PENDING_TIE_POLICY_NO_ARBITRARY_HOLDER",
+    "correctionRule": "Recompute source-authoritative current extrema and legitimate holder; amend invalid succession, retain separate immutable correction audit; no upload-order chronology",
+    "seasonEnd": "ARCHIVE_CURRENT_HOLDER_VALID_SUCCESSION_NO_END_ONLY_AWARD",
+    "thresholds": {
+      "absoluteProjectedCastleAgeMs": null,
+      "elapsedOrEvents": null,
+      "minDistinctComparablePlayers": null,
+      "minDistinctEligibleBattles": null
+    },
+    "grantOrPublicationAuthorised": false,
+    "retainedOwnerDirections": [
+      "1A",
+      "2A",
+      "3A",
+      "4C",
+      "5A"
+    ]
+  },
+  "ownerLaunch2026Oct31": {
+    "selectionAuthority": "Owner 31 October 2026 direct selection in Worker C chat supersedes former launch honour curation, not original achievement/record families",
+    "sourceDocument": "docs/design/honours-v1-owner-launch-selection-2026-10-31.md",
+    "machineSource": "docs/design/honours-v1-owner-launch-selection-2026-10-31.json",
+    "selectedTrophies": [
+      "AR2_TROPHY_SWIFT_ASCENT",
+      "AR2_TROPHY_WONDER_V1_CANDIDATE"
+    ],
+    "selectedEpithets": [
+      "AR2_EPITHET_UNBROKEN_V1_CANDIDATE",
+      "AR2_EPITHET_THREE_SCHOOLS"
+    ],
+    "selectedDistinctions": [
+      "AR2_DIST_FFA_SOLE_WIN_CANDIDATE",
+      "AR2_DIST_BOOMER_CANDIDATE",
+      "AR2_DIST_EXPLORER_CANDIDATE",
+      "AR2_DIST_GOLD_CANDIDATE",
+      "AR2_DIST_AGGRESSION_CANDIDATE",
+      "AR2_DIST_DEFENSIVE_CANDIDATE"
+    ],
+    "olderSelectedHonoursDisposition": "RESERVED_NON_LAUNCH_DESIGN_PROPOSALS_EXCEPT_FAST_CASTLE_AND_THREE_SCHOOLS",
+    "frozenExistingAchievementFamilies": 37,
+    "frozenExistingRecordBookDefinitions": 26,
+    "publishOrGrant": false,
+    "legacyHistoricalSelections": "Old ownerSelection fields capture superseded 28 Oct design decisions. current31OctLaunchPriority is the effective launch indicator for the existing legacy entries; Wonder, Unbroken and six current distinction concepts are in the separate 31 Oct owner launch registry as proposal IDs (NOT live award definition IDs)."
+  }
+}
