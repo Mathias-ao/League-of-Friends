@@ -47,7 +47,15 @@ test('Chronicle V2 groups Games into one Battle story and keeps declarations dis
   ]),names:{a:'D’Karius',b:'Ragnar'}});
   assert.equal(result.modelVersion,'AOF_PLAYER_CHRONICLE_V2');
   assert.equal(result.modelVersion,PLAYER_CHRONICLE_VERSION);
-  assert.equal(result.pages[0].entries.length,1,'later co-presence alone must not create Chronicle spam');
+  assert.equal(result.pages[0].entries.length,2,'a later accepted quiet Battle stays in the ledger');
+  const quiet=result.pages[0].entries[1];
+  assert.equal(quiet.battleId,'battle-2');
+  assert.equal(quiet.storyTier,'ORDINARY_LEDGER');
+  assert.equal(quiet.rubric,'BATTLE LEDGER');
+  assert.equal(quiet.paragraphs.length,1);
+  assert.ok(quiet.paragraphs[0].length<160,'anti-spam means concise wording, not deleting history');
+  assert.deepEqual(quiet.sourceBeatIds,[],'quiet co-presence never fabricates an incident');
+  assert.equal(result.policy.coPresenceCreatesOnlyFirstRecord,false);
   const entry=result.pages[0].entries[0],text=entry.paragraphs[0];
   assert.equal(entry.title,'A hand in the defence');
   assert.match(text,/first shared page/i);
