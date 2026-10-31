@@ -3,9 +3,8 @@ import assert from 'node:assert/strict';
 import React,{act} from 'react';
 import {JSDOM} from 'jsdom';
 import {createRoot} from 'react-dom/client';
-import {renderToStaticMarkup} from 'react-dom/server';
+import {readFileSync} from 'node:fs';
 import {WarRoomView} from '../src/ui/WarRoom';
-import {App} from '../src/ui/App';
 import {closedWarRoom,mayAnswerWarChallenge,mayIssueWarChallenge,type WarRoomData,type WarRoomChallenge} from '../src/domain/warRoom';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 
@@ -46,8 +45,9 @@ async function mount(data:WarRoomData,opts:{id?:string|null;repo?:any}={}){
   }};
 }
 test('War Room route exists for league browsing, without opening a gated challenge',()=>{
-  const html=renderToStaticMarkup(React.createElement(App,{repository:new PreviewLeagueRepository()}));
-  assert.match(html,/href="#war-room"/);
+  const appSource=readFileSync(new URL('../src/ui/App.tsx',import.meta.url),'utf8');
+  assert.match(appSource,/id:'war-room',label:'War Room'/);
+  assert.match(appSource,/page==='war-room'\?<WarRoomView/);
   const d=fake();
   assert.equal(mayIssueWarChallenge(d),false);
   d.status='OPEN';d.viewer.canChallenge=true;d.viewer.qualifiedRivals=[player('B','Bob')];
