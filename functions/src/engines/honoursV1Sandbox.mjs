@@ -182,13 +182,28 @@ export function evaluateThreeSchools(input,playerId) {
       ...(!codes.has("FAST_CASTLE_BOOM")?["FAST_CASTLE_BOOM"]:[])
     ]});
 }
+/** Lifetime Distinction: a win in a previous Season remains valid.
+ * A trusted adapter must deliver complete authoritative *career* history to
+ * activate any grade. One Battle is at most one contribution across its Games. */
 export function evaluateFFASoleWinner(input,playerId,rules=DRAFT_TEST_RULES) {
-  const wins=admitted(input).filter(g=>g.format==="FFA"&&finalGame(g)&&
+  const history=input.careerGames??input.games??[];
+  const seen=new Map();
+  for(const g of history) {
+    if(!g||!validText(g.gameId)||!validText(g.battleId)||!validText(g.seasonId))continue;
+    const key=g.seasonId+"|"+g.gameId;
+    const old=seen.get(key);
+    if(old&&JSON.stringify(old)!==JSON.stringify(g))
+      throw new Error("Conflicting career Game/POV evidence requires current authority");
+    seen.set(key,g);
+  }
+  const wins=[...seen.values()].filter(g=>g.format==="FFA"&&finalGame(g)&&
     g.outcomeType==="PLAYER_WIN"&&g.winners.length===1&&g.winners[0]===playerId);
-  const distinctBattles=unique(wins.map(g=>g.battleId)).length;
+  const distinctBattles=unique(wins.map(g=>g.seasonId+"|"+g.battleId)).length;
   const grade=rules.ffaGrades.find(t=>distinctBattles>=t.wins)?.grade??null;
-  return status(grade?"QUALIFIED":"NOT_YET_QUALIFIED",{
-    grade,distinctBattles,sourceGameIds:wins.map(g=>g.gameId).sort(),
+  const coverageComplete=input.careerHistoryComplete===true;
+  return status(!coverageComplete?"PENDING_CAREER_HISTORY":grade?"QUALIFIED":"NOT_YET_QUALIFIED",{
+    grade:coverageComplete?grade:null,previewGrade:grade,
+    distinctBattles,sourceGameIds:wins.map(g=>g.seasonId+"|"+g.gameId).sort(),
     claim:"SOLE_OFFICIAL_FFA_WINNER_NOT_UNAIDED"});
 }
 
@@ -311,17 +326,23 @@ export function planHonourChronicleCandidates(input,rawCandidates) {
     a.respondentPlayerId.localeCompare(b.respondentPlayerId)||
     (a.kind==="DEFENCE"?-1:1)-(b.kind==="DEFENCE"?-1:1)||
     a.episodeId.localeCompare(b.episodeId));
-  const seen=new Set(),planned=[];
+  const seen=new Set(),planned=[],lastOffer=new Map();
+  for(const o of offered) {
+    if(!validText(o.respondentPlayerId)||!sortIndex.has(o.battleId))continue;
+    const last=lastOffer.get(o.respondentPlayerId);
+    if(last==null||sortIndex.get(o.battleId)>last)
+      lastOffer.set(o.respondentPlayerId,sortIndex.get(o.battleId));
+  }
   for(const c of candidates) {
     const k=c.battleId+"|"+c.respondentPlayerId;
     if(seen.has(k))continue;
-    const last=offered.filter(o=>o.respondentPlayerId===c.respondentPlayerId&&
-      sortIndex.has(o.battleId)).sort((a,b)=>sortIndex.get(b.battleId)-sortIndex.get(a.battleId))[0];
-    if(last&&sortIndex.get(c.battleId)>sortIndex.get(last.battleId)&&
-      sortIndex.get(c.battleId)-sortIndex.get(last.battleId)<=3)continue;
-    if(last&&sortIndex.get(c.battleId)<=sortIndex.get(last.battleId))continue;
+    const n=sortIndex.get(c.battleId),last=lastOffer.get(c.respondentPlayerId);
+    if(last!=null&&n-last<=3)continue;
     seen.add(k);
     planned.push(c);
+    // Also reserve the candidate's cooldown within the same projection batch,
+    // while still NOT actually offering or persisting a question.
+    lastOffer.set(c.respondentPlayerId,n);
   }
   return planned;
 }
