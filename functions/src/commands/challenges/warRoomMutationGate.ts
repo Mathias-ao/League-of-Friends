@@ -9,7 +9,7 @@ import { HttpsError } from "firebase-functions/v2/https";
  * original activation authority, pending/correction revocation and closed-
  * Season War Room ledger rebuilding (SOC-030–041).
  */
-export function assertWarRoomMutationsApproved(): never {
+export function assertWarRoomMutationsApproved(): void {
   throw new HttpsError(
     "failed-precondition",
     "War Room invitations and responses are paused pending verified Relationship eligibility and historical correction support.",
