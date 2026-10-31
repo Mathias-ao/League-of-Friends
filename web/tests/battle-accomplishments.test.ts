@@ -30,12 +30,21 @@ async function mounted(){
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost'});
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,
   HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+ dom.window.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};
+ dom.window.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
  const root=createRoot(document.getElementById('app')!);
  const paint=async(game:GameStatistics,data:MatchDetail)=>{await act(async()=>
    root.render(React.createElement(BattleAccomplishments,{game,data,preview:false})));
    return [...document.querySelectorAll('.battle-accomplishments li')];};
  const close=async()=>{await act(async()=>root.unmount());dom.window.close();};
- return {paint,close};
+ const openEvidence=async(title='Raiding pressure')=>{
+  const button=document.querySelector(`button[aria-label="View evidence for ${title}"]`) as HTMLButtonElement|null;
+  assert.ok(button,`qualified ${title} card exists`);
+  await act(async()=>button.click());
+  const dialog=document.querySelector('dialog[open]');
+  assert.ok(dialog,'evidence opens');return dialog;
+ };
+ return {paint,openEvidence,close};
 }
 
 test('UI renders four source-current Battle cards when official winner is pending',async()=>{
@@ -120,5 +129,100 @@ test('one canonical multi-Game Battle presents highlights for each selected Game
   assert.equal(back.length,4);
   assert.match(back.map(x=>x.textContent).join(' '),/Raiding pressure/);
   assert.match(document.querySelector('.battle-accomplishments .eyebrow')?.textContent??'',/GAME 1/);
+ }finally{await ctx.close();}
+});
+
+
+test('opened evidence belongs to the selected Game and never returns when switching back',async()=>{
+ const ctx=await mounted();
+ try{
+  const {game,data}=sourceCase();
+  await ctx.paint(game,data);
+  const dialog=await ctx.openEvidence();
+  assert.match(dialog.textContent??'',/10 detected raids/);
+  assert.match(dialog.textContent??'',/Game 1 · Recording revision 3/);
+  const hash2='b'.repeat(64);
+  data.games.push({...data.games[0],gameId:'G2',gameNumber:2,
+    replay:{statisticsState:'READY',statisticsId:hash2,statisticsRevision:1}});
+  const game2={...game,gameId:'G2',revision:1,sourceHash:hash2,
+    players:game.players.map(p=>({...p,values:{...p.values,raidsOut:0}}))};
+  assert.equal((await ctx.paint(game2,data)).length,4,'unrelated Game 2 cards remain');
+  assert.equal(!!document.querySelector('dialog'),false,'Game 1 evidence is removed, not relabelled Game 2');
+  await ctx.paint(game,data);
+  assert.equal(!!document.querySelector('dialog'),false,'returning to Game 1 requires a fresh evidence action');
+  assert.match((await ctx.openEvidence()).textContent??'',/Game 1 · Recording revision 3/);
+ }finally{await ctx.close();}
+});
+
+test('opened evidence is revoked by current-source corrections, even while other cards remain',async()=>{
+ for(const change of ['hash','revision','hash and revision'] as const){
+  const ctx=await mounted();
+  try{
+   const {game,data}=sourceCase();await ctx.paint(game,data);await ctx.openEvidence();
+   const revised={...game,sourceHash:change==='revision'?game.sourceHash:'c'.repeat(64),
+     revision:change==='hash'?game.revision:game.revision+1,
+     players:game.players.map(p=>({...p,values:{...p.values,raidsOut:0}}))};
+   data.games[0].replay!.statisticsId=revised.sourceHash;
+   data.games[0].replay!.statisticsRevision=revised.revision;
+   assert.equal((await ctx.paint(revised,data)).length,4,change);
+   assert.equal(!!document.querySelector('dialog'),false,change+' invalidates old evidence');
+   const next=await ctx.openEvidence('Battle-hardened');
+   assert.match(next.textContent??'',new RegExp('Recording revision '+revised.revision));
+   assert.doesNotMatch(next.textContent??'',/10 detected raids/);
+  }finally{await ctx.close();}
+ }
+});
+
+test('opened evidence cannot survive source withdrawal, dispute or lost eligibility and return',async()=>{
+ const changes=[
+  (game:GameStatistics,data:MatchDetail)=>{data.games[0].replay!.statisticsState='PENDING';},
+  (game:GameStatistics,data:MatchDetail)=>{data.games[0].replay!.statisticsId='f'.repeat(64);},
+  (game:GameStatistics,data:MatchDetail)=>{data.games[0].replay!.statisticsRevision=99;},
+  (game:GameStatistics,data:MatchDetail)=>{data.games[0].resultDisputeOpen=true;},
+  (game:GameStatistics,data:MatchDetail)=>{data.games[0].status='DISPUTED';},
+  (game:GameStatistics,data:MatchDetail)=>{game.evidenceTruncated=true;},
+  (game:GameStatistics,data:MatchDetail)=>{game.exclusionReason='Unqualified source';},
+ ];
+ for(const change of changes){
+  const ctx=await mounted();
+  try{
+   const {game,data}=sourceCase();await ctx.paint(game,data);await ctx.openEvidence();
+   const lost=structuredClone({game,data});change(lost.game,lost.data);
+   assert.equal((await ctx.paint(lost.game,lost.data)).length,0);
+   assert.equal(!!document.querySelector('dialog'),false);
+   assert.equal((await ctx.paint(game,data)).length,4);
+   assert.equal(!!document.querySelector('dialog'),false,'restored source does not resurrect an opened claim');
+  }finally{await ctx.close();}
+ }
+});
+
+test('opened evidence is scoped to the current viewer and participation context',async()=>{
+ for(const viewer of [{playerId:'b',isParticipant:true},{playerId:'a',isParticipant:false},{playerId:'',isParticipant:false}]){
+  const ctx=await mounted();
+  try{
+   const {game,data}=sourceCase();await ctx.paint(game,data);await ctx.openEvidence();
+   assert.equal((await ctx.paint(game,{...data,viewer})).length,4,'qualified public measurements remain');
+   assert.equal(!!document.querySelector('dialog'),false,'prior viewer action does not carry into the next auth context');
+   await ctx.paint(game,data);
+   assert.equal(!!document.querySelector('dialog'),false,'returning viewer must open evidence again');
+  }finally{await ctx.close();}
+ }
+});
+
+
+test('opened evidence resets when result qualification or its selected measurement changes',async()=>{
+ const ctx=await mounted();
+ try{
+  const {game,data}=sourceCase();await ctx.paint(game,data);await ctx.openEvidence();
+  data.games[0].result={revision:4,winningPlayerIds:['b']};
+  const qualified={...game,eligible:true,exclusionReason:null};
+  assert.equal((await ctx.paint(qualified,data)).length,4,'confirmed result preserves measured cards');
+  assert.equal(!!document.querySelector('dialog'),false,'new qualification requires a fresh evidence action');
+  await ctx.openEvidence();
+  const missingRaid={...qualified,players:qualified.players.map(p=>({...p,values:{...p.values,raidsOut:0}}))};
+  assert.equal((await ctx.paint(missingRaid,data)).length,4,'unrelated cards remain when an item is withdrawn');
+  assert.equal(!!document.querySelector('dialog'),false,'a withdrawn selected item cannot retain its opened evidence');
+  await ctx.paint(qualified,data);
+  assert.equal(!!document.querySelector('dialog'),false,'restoring an item does not reopen it');
  }finally{await ctx.close();}
 });
