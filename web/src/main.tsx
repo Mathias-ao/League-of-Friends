@@ -38,6 +38,7 @@ import './event-details.css';
 import './front-page-notifications.css';
 import './ruby-scrollbar.css';
 import './battle-details.css';
+import './war-room.css';
 import {App} from './ui/App';
 import {PreviewLeagueRepository} from './data/PreviewLeagueRepository';
 import type {LeagueRepository} from './domain/league';
