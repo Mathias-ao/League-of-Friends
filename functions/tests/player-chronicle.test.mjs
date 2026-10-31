@@ -48,7 +48,7 @@ test('dynamic diplomacy is narrated as directed declarations, never invented all
   assert.doesNotMatch(prose,/\b\d{1,2}:\d{2}\b|\bqualified\b|became allies|betray(ed|al)|refused|saved|rescued|conspired|successful raid/i);
 });
 
-test('one pair and Battle becomes one coherent entry across Games and later co-presence alone stays unwritten',()=>{
+test('one pair and Battle becomes one coherent entry across Games and a later quiet Battle gets its own terse ledger',()=>{
   const chapters=[
     chapter({order:1,gameIdentity:'battle-1/game-1',chronicle:[]}),
     chapter({order:2,gameIdentity:'battle-1/game-2',chronicle:[
@@ -57,12 +57,25 @@ test('one pair and Battle becomes one coherent entry across Games and later co-p
     chapter({order:3,battleId:'battle-2',gameIdentity:'battle-2/game-1',playedAtMs:2000,chronicle:[]}),
   ];
   const result=projectPlayerChronicle({ownerPlayerId:'a',chapters,history:baseHistory(),names:{a:'Aldric',b:'Beren'}});
-  assert.equal(result.pages[0].entries.length,1,'two Games from one Battle must not create duplicate Chronicle entries');
-  const entry=result.pages[0].entries[0];
+  const [entry,quiet]=result.pages[0].entries;
+  assert.equal(result.pages[0].entries.length,2,'two Games share one scene and the later accepted Battle has its own');
+  assert.deepEqual(result.pages[0].entries.map(e=>e.sceneId),[
+    chronicleSceneId('battle-1','a','b'),chronicleSceneId('battle-2','a','b'),
+  ]);
   assert.equal(entry.battleId,'battle-1');
   assert.match(entry.paragraphs[0],/first shared page/i);
   assert.match(entry.paragraphs[0],/directed support toward Beren/);
   assert.doesNotMatch(entry.paragraphs[0],/support-command participation|\bqualified\b|\b\d{1,2}:\d{2}\b/i);
+  assert.equal(quiet.battleId,'battle-2');
+  assert.equal(quiet.storyTier,'ORDINARY_LEDGER');
+  assert.equal(quiet.rubric,'BATTLE LEDGER');
+  assert.equal(quiet.paragraphs.length,1);
+  assert.ok(quiet.paragraphs[0].length<=160,'anti-spam means terse factual copy, not omitting accepted Battles');
+  assert.match(quiet.paragraphs[0],/open-diplomacy league Battle.*official result is pending/i);
+  assert.deepEqual(quiet.sourceBeatIds,[],'quiet co-presence must not invent an incident');
+  assert.deepEqual(quiet.sourceEventIds,[]);
+  assert.deepEqual(quiet.relationshipMarks,[]);
+  assert.deepEqual(quiet.reputationMarks,[]);
 });
 
 test('material aid remains an order in the prose and retains exact qualified resource amounts',()=>{
