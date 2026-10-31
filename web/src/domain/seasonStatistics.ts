@@ -159,8 +159,8 @@ function categoryMode(values:string[]):{text:string|null;sharePercent:number|nul
  * compatible additive Game totals.
  *
  * A measurement model is a method, not an opportunity/context marker.
- * We never average incompatible model strings. The largest comparable
- * Battle-supported slice remains visible, with the omitted slice disclosed.
+ * We never average incompatible model strings. Qualified shared methods and
+ * complete Battle support precede partial fallback; omitted slices stay disclosed.
  */
 export class SeasonStatisticsExperience{
   readonly games:GameStatistics[];
@@ -183,9 +183,10 @@ export class SeasonStatisticsExperience{
     this.games=this.knownGames.filter(game=>selectedKeys.has(game.matchId+'/'+game.gameId)&&game.eligible&&game.affectsSeason);
   }
   get battleCount():number{return new Set(this.games.map(game=>game.matchId)).size;}
-  aggregate(mode:SeasonDisplayMode='perBattle'):SeasonAggregatePlayer[]{
+  aggregate(mode:SeasonDisplayMode='perBattle',minimumBattles=5):SeasonAggregatePlayer[]{
+    const modelValues=new Map<string,Map<string,SeasonAggregateValue[]>>();
     const ids=[...new Set(this.games.flatMap(game=>game.players.map(player=>player.playerId)))];
-    return ids.map(playerId=>{
+    const rows=ids.map(playerId=>{
       const pairs=this.games.flatMap(game=>game.players.filter(player=>player.playerId===playerId).map(player=>({game,player:player as SeasonTextPlayer})));
       const values:Record<string,SeasonAggregateValue>={};
       for(const metric of SEASON_METRICS){
@@ -198,17 +199,7 @@ export class SeasonStatisticsExperience{
           return typeof candidate==='number'&&Number.isFinite(candidate)?candidate:null;
         };
         const observed=eligible.filter(pair=>observation(pair)!==null&&observation(pair)!=='');
-        const modelGroups=new Map<string,{battles:Set<string>;games:number}>();
-        for(const pair of observed){
-          const model=pair.player.models[metric.id]||'unknown',previous=modelGroups.get(model)??{battles:new Set<string>(),games:0};
-          previous.battles.add(pair.game.matchId);previous.games++;modelGroups.set(model,previous);
-        }
-        const chosen=[...modelGroups].sort((a,b)=>
-          Number(a[0]==='unknown')-Number(b[0]==='unknown')||
-          b[1].battles.size-a[1].battles.size||b[1].games-a[1].games||a[0].localeCompare(b[0]))[0]?.[0]??null;
-        const selected=observed.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen);
-        const modelNames=chosen?[chosen]:[];
-        const excludedModels=[...modelGroups.keys()].filter(model=>model!==chosen).sort();
+        const models=[...new Set(observed.map(pair=>pair.player.models[metric.id]||'unknown'))];
         const expected=new Map<string,Set<string>>();
         // Current known Game identities survive source withdrawal. A missing
         // Game can only be detected when an authoritative manifest names it.
@@ -224,66 +215,90 @@ export class SeasonStatisticsExperience{
             if(typeof sibling==='string'&&sibling.trim())ids.add(sibling);
           expected.set(game.matchId,ids);
         }
-        const byBattle:{value:number|string;complete:boolean;id:string}[]=[];
-        for(const [battleId,group] of grouped){
-          const members=group.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen&&observation(pair)!==null&&observation(pair)!=='');
-          if(!members.length)continue;
-          const expectedIds=expected.get(battleId)??new Set(group.map(pair=>pair.game.gameId));
-          const complete=expectedIds.size>0&&[...expectedIds].every(gameId=>members.some(pair=>pair.game.gameId===gameId));
-          const raw=members.map(observation),numbers=raw as number[];
-          let battleValue:number|string|null=null;
-          if(metric.kind==='category')battleValue=categoryMode(raw as string[]).text;
-          else if(metric.id==='apm'){
-            // Replay duration, not number of uploads, is the APM opportunity.
-            const weighted=members.map(pair=>({value:observation(pair) as number,duration:pair.game.durationMs}));
-            if(weighted.every(item=>Number.isFinite(item.duration)&&item.duration>0))
-              battleValue=weighted.reduce((sum,item)=>sum+item.value*item.duration,0)/weighted.reduce((sum,item)=>sum+item.duration,0);
-          }else if(metric.id==='response'){
-            // The median of medians is not the median of all raid responses.
-            const responses=members.flatMap(pair=>pair.player.responseTimes.filter(v=>Number.isFinite(v)&&v>=0));
-            if(members.length===1&&responses.length===0)battleValue=numbers[0];
-            else if(members.every(pair=>pair.player.responseTimes.length>0))battleValue=median(responses);
-          }else battleValue=metric.aggregation==='median'?median(numbers):numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
-          if(battleValue!==null)byBattle.push({value:battleValue,complete,id:battleId});
-        }
-        const full=byBattle.filter(item=>item.complete);
-        // Use independent complete Battles for typical comparison. When none
-        // exists, retain partial observed information as a non-leading hint.
-        const usable=full.length?full:byBattle;
-        const selectedGames=selected.filter(pair=>byBattle.some(item=>item.id===pair.game.matchId));
-        const completeBattles=full.length;
-        let value:number|null=null,text:string|null=null,sharePercent:number|null=null;
-        if(metric.kind==='category'){
-          const chosenMode=categoryMode(usable.map(item=>item.value as string));
-          text=chosenMode.text;sharePercent=chosenMode.sharePercent;
-        }else{
-          const numbers=usable.map(item=>item.value as number);
-          if(numbers.length){
-            if(mode==='allTime'&&(metric.allTime==='sum'||metric.aggregation==='sum'))value=selectedGames.reduce((sum,pair)=>sum+(observation(pair) as number),0);
-            else if(metric.aggregation==='median')value=median(numbers);
-            else value=numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
+        // Evaluate actual Battle usability before ranking methods. A larger
+        // observed-but-partial method cannot erase complete older evidence.
+        const summaries=models.map(chosen=>{
+          const selected=observed.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen);
+          const byBattle:{value:number|string;complete:boolean;id:string}[]=[];
+          for(const [battleId,group] of grouped){
+            const members=group.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen&&observation(pair)!==null&&observation(pair)!=='');
+            if(!members.length)continue;
+            const expectedIds=expected.get(battleId)??new Set(group.map(pair=>pair.game.gameId));
+            const complete=expectedIds.size>0&&[...expectedIds].every(gameId=>members.some(pair=>pair.game.gameId===gameId));
+            const raw=members.map(observation),numbers=raw as number[];
+            let battleValue:number|string|null=null;
+            if(metric.kind==='category')battleValue=categoryMode(raw as string[]).text;
+            else if(metric.id==='apm'){
+              // Replay duration, not number of uploads, is the APM opportunity.
+              const weighted=members.map(pair=>({value:observation(pair) as number,duration:pair.game.durationMs}));
+              if(weighted.every(item=>Number.isFinite(item.duration)&&item.duration>0))
+                battleValue=weighted.reduce((sum,item)=>sum+item.value*item.duration,0)/weighted.reduce((sum,item)=>sum+item.duration,0);
+            }else if(metric.id==='response'){
+              // The median of medians is not the median of all raid responses.
+              const responses=members.flatMap(pair=>pair.player.responseTimes.filter(v=>Number.isFinite(v)&&v>=0));
+              if(members.length===1&&responses.length===0)battleValue=numbers[0];
+              else if(members.every(pair=>pair.player.responseTimes.length>0))battleValue=median(responses);
+            }else battleValue=metric.aggregation==='median'?median(numbers):numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
+            if(battleValue!==null)byBattle.push({value:battleValue,complete,id:battleId});
           }
-        }
-        values[metric.id]={value,text,sharePercent,samples:usable.length,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:selectedGames.length,completeBattles,partialBattles:byBattle.length-full.length,models:modelNames,selectedModel:chosen,excludedModels};
+          const full=byBattle.filter(item=>item.complete);
+          // Use independent complete Battles for typical comparison. When none
+          // exists, retain partial observed information as a non-leading hint.
+          const usable=full.length?full:byBattle;
+          const selectedGames=selected.filter(pair=>byBattle.some(item=>item.id===pair.game.matchId));
+          const completeBattles=full.length;
+          let value:number|null=null,text:string|null=null,sharePercent:number|null=null;
+          if(metric.kind==='category'){
+            const chosenMode=categoryMode(usable.map(item=>item.value as string));
+            text=chosenMode.text;sharePercent=chosenMode.sharePercent;
+          }else{
+            const numbers=usable.map(item=>item.value as number);
+            if(numbers.length){
+              if(mode==='allTime'&&(metric.allTime==='sum'||metric.aggregation==='sum'))value=selectedGames.reduce((sum,pair)=>sum+(observation(pair) as number),0);
+              else if(metric.aggregation==='median')value=median(numbers);
+              else value=numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
+            }
+          }
+          return {value,text,sharePercent,samples:usable.length,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:selectedGames.length,completeBattles,partialBattles:byBattle.length-full.length,models:[chosen],selectedModel:chosen,excludedModels:models.filter(model=>model!==chosen).sort()};
+        }).sort((a,b)=>Number(a.selectedModel==='unknown')-Number(b.selectedModel==='unknown')||
+          b.completeBattles-a.completeBattles||b.samples-a.samples||b.observedGames-a.observedGames||a.selectedModel.localeCompare(b.selectedModel));
+        const metricModels=modelValues.get(metric.id)??new Map<string,SeasonAggregateValue[]>();
+        metricModels.set(playerId,summaries);modelValues.set(metric.id,metricModels);
+        values[metric.id]=summaries[0]??{value:null,text:null,sharePercent:null,samples:0,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:0,completeBattles:0,partialBattles:0,models:[],selectedModel:null,excludedModels:[]};
       }
       return {playerId,name:pairs.at(-1)?.player.name??playerId,games:pairs.length,battles:new Set(pairs.map(pair=>pair.game.matchId)).size,values};
     }).sort((a,b)=>a.name.localeCompare(b.name));
+    // Choose a qualified shared method before each player's individual fallback.
+    // Keep the displayed value and its comparison on the same method, even if
+    // one player also has a larger unrelated complete method in their archive.
+    for(const metric of SEASON_METRICS.filter(metric=>metric.leader&&metric.kind==='number')){
+      const byModel=new Map<string,{row:SeasonAggregatePlayer;sample:SeasonAggregateValue}[]>();
+      for(const row of rows)for(const sample of modelValues.get(metric.id)?.get(row.playerId)??[]){
+        const model=sample.selectedModel;
+        if(!model||model==='unknown'||sample.value===null||(sample.completeBattles??0)<minimumBattles)continue;
+        byModel.set(model,[...(byModel.get(model)??[]),{row,sample}]);
+      }
+      const cohort=[...byModel].filter(([,members])=>members.length>=2).sort((a,b)=>b[1].length-a[1].length||
+        Math.min(...b[1].map(item=>item.sample.completeBattles??0))-Math.min(...a[1].map(item=>item.sample.completeBattles??0))||a[0].localeCompare(b[0]))[0];
+      for(const {row,sample} of cohort?.[1]??[])row.values[metric.id]=sample;
+    }
+    return rows;
   }
   /**
    * Qualified peers, NOT a claim of an absolute Season champion.
    * A newcomer, unrelated missing measurement or different ordinary settings
    * never vetoes comparisons between two complete five-Battle peers.
    * Method cohorts are never numerically merged. Unrelated out-of-method
- * Battles do not cancel five fully observed in-method Battles; however a
- * Battle missing one of its own expected Games cannot qualify as complete.
+   * Battles do not cancel five fully observed in-method Battles; however a
+   * Battle missing one of its own expected Games cannot qualify as complete.
    */
   leaderComparison(metricId:string,minimumBattles=5,mode:SeasonDisplayMode='perBattle'):{ids:string[];qualifiedPlayers:number;model:string|null}{
     const metric=seasonMetric(metricId);
     if(!metric?.leader||metric.kind==='category')return {ids:[],qualifiedPlayers:0,model:null};
-    const qualified=this.aggregate(mode).filter(row=>{
+    const qualified=this.aggregate(mode,minimumBattles).filter(row=>{
       const sample=row.values[metricId];
       return sample.value!==null&&sample.selectedModel!==null&&sample.selectedModel!=='unknown'&&
-        sample.completeBattles>=minimumBattles;
+        (sample.completeBattles??0)>=minimumBattles;
     });
     const byModel=new Map<string,typeof qualified>();
     for(const row of qualified){const model=row.values[metricId].selectedModel!;byModel.set(model,[...(byModel.get(model)??[]),row]);}

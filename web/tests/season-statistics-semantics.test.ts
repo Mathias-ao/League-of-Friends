@@ -59,6 +59,43 @@ test('five fully comparable method Battles survive a separate method version, no
   assert.deepEqual(new SeasonStatisticsExperience([...games,partial]).leaders('buildOrderExecution',5),[],
     'a partially observed Game inside one of the selected Battles cannot establish a fully qualified lead');
 });
+test('five complete old-method Battles survive six incomplete new-method Battles',()=>{
+  const complete=Array.from({length:5},(_,i)=>game('complete'+i));
+  const partial=Array.from({length:6},(_,i)=>[game('partial'+i,'G1'),game('partial'+i,'G2')]).flat();
+  for(const g of complete)for(const id of ['a','b'])amount(g,id,'buildOrderExecution',id==='a'?90:70,'old');
+  for(const g of partial)for(const id of ['a','b'])amount(g,id,'buildOrderExecution',g.gameId==='G2'?null:id==='a'?90:70,'new');
+  for(const games of [complete,[...complete,...partial]]){
+    const engine=new SeasonStatisticsExperience(games),sample=engine.aggregate()[0].values.buildOrderExecution;
+    assert.equal(sample.selectedModel,'old');assert.equal(sample.completeBattles,5);assert.equal(sample.samples,5);
+    assert.equal(sample.value,90);assert.deepEqual(engine.leaders('buildOrderExecution'),['a']);
+  }
+  const reduced=complete.slice(0,4),engine=new SeasonStatisticsExperience([...reduced,...partial]);
+  assert.equal(engine.aggregate()[0].values.buildOrderExecution.completeBattles,4);
+  assert.deepEqual(engine.leaders('buildOrderExecution'),[],'partial new-method Battles cannot supply a fifth complete observation');
+  assert.deepEqual(engine.aggregate()[0].values.buildOrderExecution.excludedModels,['new']);
+  assert.equal(engine.games.filter(g=>g.matchId.startsWith('partial')).length,12,'excluded partial source remains inspectable');
+});
+test('a numerically unusable majority cannot displace complete duration-backed APM evidence',()=>{
+  const complete=game('duration1');amount(complete,'a','apm',120,'old');
+  const unusable=Array.from({length:6},(_,i)=>game('duration'+(i+2)));
+  for(const g of unusable){g.durationMs=0;amount(g,'a','apm',999,'new');}
+  const sample=new SeasonStatisticsExperience([complete,...unusable]).aggregate()[0].values.apm;
+  assert.equal(sample.selectedModel,'old');assert.equal(sample.completeBattles,1);assert.equal(sample.value,120);
+  assert.deepEqual(sample.excludedModels,['new']);
+});
+test('a shared five-Battle method cohort survives one player having a larger separate complete method',()=>{
+  const shared=Array.from({length:5},(_,i)=>game('shared'+i));
+  const separate=Array.from({length:6},(_,i)=>game('separate'+i));
+  for(const g of shared)for(const id of ['a','b'])amount(g,id,'buildOrderExecution',id==='a'?90:70,'old');
+  for(const g of separate){g.players=g.players.filter(p=>p.playerId==='a');amount(g,'a','buildOrderExecution',10,'new');}
+  const engine=new SeasonStatisticsExperience([...shared,...separate]);
+  assert.deepEqual(engine.leaderComparison('buildOrderExecution'),{ids:['a'],qualifiedPlayers:2,model:'old'});
+  const a=engine.aggregate()[0].values.buildOrderExecution;
+  assert.equal(a.selectedModel,'old');assert.equal(a.value,90);assert.equal(a.completeBattles,5);
+  amount(shared[4],'b','buildOrderExecution',null);
+  assert.deepEqual(new SeasonStatisticsExperience([...shared,...separate]).leaders('buildOrderExecution'),[],
+    'a shared cohort needs five complete observations for each peer');
+});
 test('withdrawn known sibling prevents a false complete Battle; another partial Battle cannot veto five good ones',()=>{
   const games=Array.from({length:6},(_,i)=>game('battle'+(i+1)));
   for(const g of games){amount(g,'a','buildOrderExecution',90);amount(g,'b','buildOrderExecution',70);}
