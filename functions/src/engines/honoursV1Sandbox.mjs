@@ -289,6 +289,43 @@ export function evaluateDefensive(input,playerId,rules=DRAFT_TEST_RULES) {
     numeric(e.qualifiedResponseOrders)>=r.sourceQualifiedResponses&&
     e.directionVerified===true);
 }
+/**
+ * Chronicle honour-perspective review PLANNER ONLY; does not offer or send.
+ * The actual #165/V1E service remains production-disabled, and the separate
+ * approved Chronicle opportunity selection controls whether a candidate
+ * can ever be considered for a real question. This is an emulator adapter.
+ */
+export function planHonourChronicleCandidates(input,rawCandidates) {
+  const order=input.eligibleBattleOrder;
+  if(!Array.isArray(order)||new Set(order).size!==order.length||
+     order.some(id=>!validText(id)))return [];
+  const offered=input.chronicleOfferHistory??[];
+  const sortIndex=new Map(order.map((id,i)=>[id,i]));
+  const candidates=rawCandidates.filter(c=>
+    c.testOnly===true&&c.offered===false&&c.grantEffect===false&&
+    c.visibility==="AUTHOR_ONLY"&&sortIndex.has(c.battleId)&&
+    validText(c.respondentPlayerId)&&validText(c.sourceRevision));
+  // Stable event priority: source-qualified defensive support is a more
+  // specifically human incident than a general engagement statistic.
+  candidates.sort((a,b)=>sortIndex.get(a.battleId)-sortIndex.get(b.battleId)||
+    a.respondentPlayerId.localeCompare(b.respondentPlayerId)||
+    (a.kind==="DEFENCE"?-1:1)-(b.kind==="DEFENCE"?-1:1)||
+    a.episodeId.localeCompare(b.episodeId));
+  const seen=new Set(),planned=[];
+  for(const c of candidates) {
+    const k=c.battleId+"|"+c.respondentPlayerId;
+    if(seen.has(k))continue;
+    const last=offered.filter(o=>o.respondentPlayerId===c.respondentPlayerId&&
+      sortIndex.has(o.battleId)).sort((a,b)=>sortIndex.get(b.battleId)-sortIndex.get(a.battleId))[0];
+    if(last&&sortIndex.get(c.battleId)>sortIndex.get(last.battleId)&&
+      sortIndex.get(c.battleId)-sortIndex.get(last.battleId)<=3)continue;
+    if(last&&sortIndex.get(c.battleId)<=sortIndex.get(last.battleId))continue;
+    seen.add(k);
+    planned.push(c);
+  }
+  return planned;
+}
+
 export function projectTenHonours(input,playerId,rules=DRAFT_TEST_RULES) {
   if(!validText(playerId)||!validText(input?.seasonId))throw new Error("Player and Season required");
   const fastCastle=projectCompetitiveTrophy(input,"FAST_CASTLE",rules);
@@ -308,6 +345,9 @@ export function projectTenHonours(input,playerId,rules=DRAFT_TEST_RULES) {
     epithets:{UNBROKEN:unbroken,THREE_SCHOOLS:master},
     distinctions:{FFA_SOLO_WIN:solo,BOOMER:boomer,EXPLORER:explorer,
       GOLD:gold,AGGRESSION:aggression,DEFENSIVE:defensive},
+    plannedChronicleCandidates:planHonourChronicleCandidates(input,[
+      ...aggression.invitationCandidates??[],...defensive.invitationCandidates??[]
+    ]),
     anyGrantWritten:false,
   };
 }
