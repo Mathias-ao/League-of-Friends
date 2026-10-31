@@ -176,7 +176,11 @@ export function projectStatistics(raw:unknown, metadata:ProjectionMetadata):Game
     warnings:array(data.warnings).map(w=>String(w.message??w.code)).slice(0,30)};
 }
 
-export interface AggregateValue {value:number|null;samples:number;eligibleGames:number;models:string[];}
+export interface AggregateValue {
+  value:number|null;samples:number;eligibleGames:number;models:string[];excludedModels?:string[];
+  /** Exact contributing canonical Game keys: JSON.stringify([matchId,gameId]). */
+  contributingGameKeys?:string[];
+}
 export interface AggregatePlayer {playerId:string;name:string;games:number;values:Record<string,AggregateValue>;opening:string|null;mainUnit:string|null;composition:Record<string,number>|null;}
 export interface StatisticRecord {metricId:string;value:number;playerId:string;name:string;matchId:string;gameId:string;civilization:string|null;orderAtMs:number;contextKey:string;model:string;}
 export interface Highlight {id:string;category:Category;title:string;detail:string;matchId:string;gameId:string;playerId:string;priority:number;}
@@ -189,41 +193,130 @@ export class StatisticsExperience {
     const hashes=new Set<string>();
     this.games=[...revisions.values()].sort((a,b)=>a.orderAtMs-b.orderAtMs||a.matchId.localeCompare(b.matchId)||a.gameId.localeCompare(b.gameId)).filter(g=>{if(!g.eligible)return false;if(g.sourceHash&&hashes.has(g.sourceHash))return false;if(g.sourceHash)hashes.add(g.sourceHash);return true;});
   }
-  aggregate(modeValue:AggregationMode='total'):AggregatePlayer[]{
+  aggregate(modeValue:AggregationMode='total',minimumGames=5):AggregatePlayer[]{
+    const modelValues=new Map<string,Map<string,{key:string;sample:AggregateValue}[]>>();
     const ids=[...new Set(this.games.flatMap(g=>g.players.map(p=>p.playerId)))];
-    return ids.map(playerId=>{
+    const rows=ids.map(playerId=>{
       const pairs=this.games.flatMap(game=>game.players.filter(player=>player.playerId===playerId).map(player=>({game,player})));
       const samples=pairs.map(pair=>pair.player);
       const values:Record<string,AggregateValue>={};
       for(const m of METRICS){
         const eligible=pairs.filter(({game,player})=>metricEligible(m,game,player));
-        const qualified=eligible.filter(({player})=>player.values[m.id]!=null),numbers=qualified.map(({player})=>player.values[m.id]!);
-        const models=[...new Set(qualified.map(({player})=>player.models[m.id]))].sort();
-        let value:number|null=null;
-        if(numbers.length){
-          if(m.aggregation==='median')value=median(numbers);
-          else if(m.aggregation==='responses')value=median(qualified.flatMap(({player})=>player.responseTimes));
-          else {value=numbers.reduce((a,b)=>a+b,0);if(m.aggregation==='mean'||modeValue==='average')value/=numbers.length;}
+        const observed=eligible.filter(({player})=>player.values[m.id]!=null&&Number.isFinite(player.values[m.id]));
+        const models=[...new Set(observed.map(({player})=>player.models[m.id]||'unknown'))];
+        // Each finite, source-qualified Game observation is a valid legacy
+        // sample. Missing Games stay in the disclosed denominator; they do
+        // not erase independent measured Games or supply a missing sample.
+        const summarize=(pool:typeof eligible)=>{
+          const methodGroups=new Map<string,typeof observed>();
+          for(const pair of pool.filter(({player})=>player.values[m.id]!=null&&Number.isFinite(player.values[m.id]))){
+            const model=pair.player.models[m.id]||'unknown';methodGroups.set(model,[...(methodGroups.get(model)??[]),pair]);
+          }
+          return [...methodGroups].map(([model,qualified])=>{
+            const numbers=qualified.map(({player})=>player.values[m.id]!);
+            let value:number|null=null;
+            if(numbers.length){
+              if(m.aggregation==='median')value=median(numbers);
+              else if(m.aggregation==='responses')value=median(qualified.flatMap(({player})=>player.responseTimes));
+              else {value=numbers.reduce((a,b)=>a+b,0);if(m.aggregation==='mean'||modeValue==='average')value/=numbers.length;}
+            }
+            // Response opportunity counts remain totals even in per-Game mode.
+            if(['responded','received'].includes(m.id))value=numbers.length?numbers.reduce((a,b)=>a+b,0):null;
+            const excludedModels=models.filter(version=>version!==model).sort();
+            const sample:AggregateValue={value,samples:numbers.length,eligibleGames:eligible.length,models:[model],contributingGameKeys:qualified.map(({game})=>JSON.stringify([game.matchId,game.gameId])),...(excludedModels.length?{excludedModels}:{})};
+            return {sample};
+          }).sort((a,b)=>Number(a.sample.models[0]==='unknown')-Number(b.sample.models[0]==='unknown')||
+            b.sample.samples-a.sample.samples||a.sample.models[0].localeCompare(b.sample.models[0]));
+        };
+        const summaries=summarize(eligible);
+        values[m.id]=summaries[0]?.sample??{value:null,samples:0,eligibleGames:eligible.length,models:[],contributingGameKeys:[]};
+        if(m.leader){
+          const groups=new Map<string,typeof eligible>();
+          for(const pair of eligible){
+            const start=['feudal','castle','imperial'].includes(m.id)?this.ageStartCohort(pair.game):'all';
+            if(start)groups.set(start,[...(groups.get(start)??[]),pair]);
+          }
+          const metricModels=modelValues.get(m.id)??new Map();
+          metricModels.set(playerId,[...groups].flatMap(([start,pool])=>
+            (start==='all'?summaries:summarize(pool)).map(summary=>({...summary,key:start+'|'+summary.sample.models[0]}))));
+          modelValues.set(m.id,metricModels);
         }
-        // Response opportunity counts remain totals even in per-Game mode.
-        if(['responded','received'].includes(m.id))value=numbers.length?numbers.reduce((a,b)=>a+b,0):null;
-        values[m.id]={value,samples:numbers.length,eligibleGames:eligible.length,models};
       }
       const compositions=samples.map(p=>p.composition).filter((c):c is Record<string,number>=>c!==null&&Object.values(c).reduce((a,b)=>a+b,0)>0);
       const composition:Record<string,number>={};
       for(const family of FAMILIES)composition[family]=compositions.length?compositions.reduce((sum,c)=>sum+(c[family]??0)/Object.values(c).reduce((a,b)=>a+b,0)*100,0)/compositions.length:0;
       return {playerId,name:samples.at(-1)!.name,games:samples.length,values,opening:mode(samples.map(p=>p.opening)),mainUnit:mode(samples.map(p=>p.mainUnit)),composition:compositions.length?composition:null};
     }).sort((a,b)=>a.name.localeCompare(b.name));
+    // Prefer the largest qualified shared cohort over a larger method held by
+    // one player alone. The displayed aggregate and its lead use one method.
+    for(const m of METRICS.filter(metric=>metric.leader)){
+      const required=modeValue==='average'||m.aggregation!=='volume'?minimumGames:1;
+      const cohorts=new Map<string,{row:AggregatePlayer;sample:AggregateValue}[]>();
+      for(const row of rows)for(const summary of modelValues.get(m.id)?.get(row.playerId)??[]){
+        const {sample,key}=summary;
+        if(sample.value===null||sample.models[0]==='unknown'||sample.samples<required)continue;
+        cohorts.set(key,[...(cohorts.get(key)??[]),{row,sample}]);
+      }
+      const chosen=[...cohorts].filter(([,members])=>members.length>=2).sort((a,b)=>b[1].length-a[1].length||
+        Math.min(...b[1].map(item=>item.sample.samples))-Math.min(...a[1].map(item=>item.sample.samples))||a[0].localeCompare(b[0]))[0];
+      for(const {row,sample} of chosen?.[1]??[])row.values[m.id]=sample;
+    }
+    return rows;
+  }
+  /**
+   * Qualified method peers only, never an assertion about an incompletely
+   * measured entire league. Ordinary contextKey/civilization differences
+   * cannot veto comparable players or turn a newcomer into a universal gate.
+   * This legacy reader keeps its per-Game sample requirement; the Season Hall
+   * uses distinct-Battle qualification in SeasonStatisticsExperience.
+   */
+  private ageStartCohort(game:GameStatistics):string|null{
+    const start=(game as GameStatistics&{startOpportunity?:{status:string;startMode:string;startingAge:string;startingTownCenters:number;resourceMode:string;gameSpeed:string;environment:string;patch:string;evidenceVersion:string}}).startOpportunity;
+    if(start?.status!=='VERIFIED_SOURCE'||start.startMode!=='STANDARD'||start.startingAge!=='DARK'||
+      start.startingTownCenters!==1||start.resourceMode!=='STANDARD'||start.gameSpeed!=='NORMAL'||
+      start.environment!=='LAND'||!start.patch?.trim()||!start.evidenceVersion?.trim())return null;
+    return [start.startMode,start.startingAge,start.startingTownCenters,start.resourceMode,start.gameSpeed,start.environment,start.patch,start.evidenceVersion].join('|');
   }
   leaders(metricId:string,modeValue:AggregationMode='total',minimumGames=5):string[]{
-    const m=METRICS.find(m=>m.id===metricId);if(!m?.leader)return [];
-    const rows=this.aggregate(modeValue),values=rows.map(p=>p.values[metricId]);
-    if(rows.length<2||values.some(v=>v.value===null||v.samples!==v.eligibleGames)||new Set(values.flatMap(v=>v.models)).size!==1||values.some(v=>v.models.includes('unknown')))return [];
+    const m=METRICS.find(metric=>metric.id===metricId);if(!m?.leader)return [];
     const typical=modeValue==='average'||m.aggregation!=='volume';
-    if(typical&&(values.some(v=>v.samples<minimumGames)||new Set(this.games.map(g=>g.contextKey)).size!==1))return [];
-    const extreme=(m.leader==='max'?Math.max:Math.min)(...values.map(v=>v.value!));
-    if(extreme===0||values.every(v=>v.value===extreme))return [];
-    return rows.filter(p=>p.values[metricId].value===extreme).map(p=>p.playerId);
+    const ageMetric=['feudal','castle','imperial'].includes(metricId);
+    // Age timings demand genuine source-qualified starting opportunity.
+    // Group by *start*, not exact ordinary map or civilization. A sixth
+    // Nomad/unknown Game does not poison five valid standard-start Games.
+    const gameGroups=new Map<string,GameStatistics[]>();
+    for(const game of this.games){
+      const start=ageMetric?this.ageStartCohort(game):'all';
+      if(!start)continue;
+      gameGroups.set(start,[...(gameGroups.get(start)??[]),game]);
+    }
+    const cohorts:{key:string;rows:AggregatePlayer[]}[]=[];
+    for(const [start,games] of gameGroups){
+      const candidates=new StatisticsExperience(games).aggregate(modeValue,minimumGames).filter(row=>{
+        const value=row.values[metricId];
+        // This is a comparison among measured peers, never an absolute
+        // whole-Season leader. Missing observations remain disclosed and do
+        // not cancel the independently valid minimum sample.
+        return value.value!==null&&
+          value.models.length===1&&value.models[0]!=='unknown'&&
+          (!typical||value.samples>=minimumGames);
+      });
+      const byModel=new Map<string,typeof candidates>();
+      for(const row of candidates){
+        const model=row.values[metricId].models[0];
+        byModel.set(model,[...(byModel.get(model)??[]),row]);
+      }
+      for(const [model,rows] of byModel)if(rows.length>=2)
+        cohorts.push({key:start+'|'+model,rows});
+    }
+    cohorts.sort((a,b)=>b.rows.length-a.rows.length||
+      Math.min(...b.rows.map(row=>row.values[metricId].samples))-
+        Math.min(...a.rows.map(row=>row.values[metricId].samples))||a.key.localeCompare(b.key));
+    if(!cohorts.length)return [];
+    const cohort=cohorts[0].rows;
+    const extreme=(m.leader==='max'?Math.max:Math.min)(...cohort.map(row=>row.values[metricId].value!));
+    if(extreme===0||cohort.every(row=>row.values[metricId].value===extreme))return [];
+    return cohort.filter(row=>row.values[metricId].value===extreme).map(row=>row.playerId);
   }
   records():StatisticRecord[]{
     const result=new Map<string,StatisticRecord[]>();
