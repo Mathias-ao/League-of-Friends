@@ -6,6 +6,7 @@ import {db} from '../config/firebase.js';
 import {callableOptions} from '../config/runtime.js';
 import {SOCIAL_V1_CONTRACT} from '../domain/socialV1.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
+import {battleGameManifest} from '../engines/battleGameManifest.js';
 import {projectPrivatePersonalityHistory,type PersonalityHistoryBattle} from '../integration/personalityHistory.js';
 import {privatePersonalityE2EEnabled,privatePersonalityPolicy,
   PRIVATE_SOURCE_TAXONOMY,type PrivateTaxonomy} from '../engines/personalityV1/privateE2EPolicy.js';
@@ -62,7 +63,7 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
   const checkpoint=async(ref:any,tokenOf:(data:any)=>string=bindingDigest)=>{const snap=await read(ref);checkpoints.set(ref.path,{ref,tokenOf,token:tokenOf(snap.data()??null)});return snap;};
   const gameSets:Array<{ref:any;token:string}>=[],loaded:Array<Awaited<ReturnType<typeof loadMyCurrentSocialSource>>>=[];
   const schedules:ScheduleBattle[]=[];
-  const battles:PersonalityHistoryBattle[]=[],pending:Array<{battleId:string;gameId:string;reason:string}>=[];
+  const battles:PersonalityHistoryBattle[]=[],pending:Array<{battleId:string;gameId:string|null;reason:string}>=[];
   const seenSources=new Set<string>(),seenGuids=new Set<string>();let count=0;
   const gamesToken=(docs:any[])=>bindingDigest(docs.map(d=>[d.id,d.data()]));
   for(const matchDoc of own(initialMatches)){
@@ -74,6 +75,9 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
     if(!input.includeScheduleOrder&&(games.docs.some((d:any)=>!Number.isSafeInteger(d.data()?.gameNumber)||d.data().gameNumber<1)||
       new Set(games.docs.map((d:any)=>d.data().gameNumber)).size!==games.docs.length))
       throw new HttpsError('failed-precondition','Private history has ambiguous Game sequence.');
+    const manifest=battleGameManifest(m,games.docs.map((d:any)=>({...d.data(),gameId:d.id})));
+    const requiredGames=games.docs.filter((d:any)=>manifest.knownGameIds.includes(d.id));
+    if(!manifest.gameManifestComplete)pending.push({battleId:matchDoc.id,gameId:null,reason:'REQUIRED_GAME_MANIFEST_INCOMPLETE'});
     let event:Bag|null=null;
     for(const [collection,id] of [['events',m.eventId],['seasons',m.seasonId]])
       if(validId(id)){const snap=await checkpoint(db.doc(collection+'/'+id),input.includeScheduleOrder&&collection==='events'?
@@ -81,10 +85,11 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
     if(input.includeScheduleOrder){
       const planId=validId(event?.approvedMatchPlanId)?event!.approvedMatchPlanId:null;
       const plan=planId&&validId(m.eventId)?(await checkpoint(db.doc('events/'+m.eventId+'/matchPlans/'+planId))).data()??null:null;
-      schedules.push({battleId:matchDoc.id,match:m,event,planId,plan,games:games.docs.map((d:any)=>({gameId:d.id,game:d.data()}))});
+      schedules.push({battleId:matchDoc.id,match:m,event,planId,plan,games:requiredGames.map((d:any)=>({gameId:d.id,game:d.data()}))});
     }
-    const battle:PersonalityHistoryBattle={battleId:matchDoc.id,gameIds:games.docs.map((d:any)=>d.id).sort(),sources:[]};
-    for(const gameDoc of games.docs){
+    const battle:PersonalityHistoryBattle={battleId:matchDoc.id,gameIds:manifest.knownGameIds,
+      unusedGameIds:manifest.unusedGameIds,gameManifestComplete:manifest.gameManifestComplete,sources:[]};
+    for(const gameDoc of requiredGames){
       const g=gameDoc.data();
       if(/^[a-f0-9]{64}$/.test(g.activeReplayStatisticsId??'')){
         const s=await checkpoint(gameDoc.ref.collection('replaySources').doc(g.activeReplayStatisticsId));

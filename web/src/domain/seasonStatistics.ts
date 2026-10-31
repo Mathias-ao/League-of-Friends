@@ -150,6 +150,8 @@ function categoryMode(values:string[]):{text:string|null;sharePercent:number|nul
   const max=Math.max(...counts.values()),modes=[...counts].filter(([,count])=>count===max).map(([value])=>value).sort();
   return {text:modes.join(' / '),sharePercent:100*max/values.length};
 }
+const measurementEligible=(game:GameStatistics)=>game.eligible||
+  game.sourceMeasurementsEligible===true&&game.exclusionReason==='Official Game result pending';
 
 /**
  * Season read-model: each distinct matchId (Battle) has one vote.
@@ -177,10 +179,11 @@ export class SeasonStatisticsExperience{
       const previous=byHash.get(game.sourceHash);
       // Duplicate POV uploads are one source. Prefer its valid current
       // projection; an ineligible duplicate must never mask accepted evidence.
-      if(!previous||(!previous.eligible&&game.eligible))byHash.set(game.sourceHash,game);
+      if(!previous||(!previous.eligible&&game.eligible)||
+        (!measurementEligible(previous)&&measurementEligible(game)))byHash.set(game.sourceHash,game);
     }
     this.knownGames=[...noHash,...byHash.values()].sort(order);
-    this.games=this.knownGames.filter(game=>selectedKeys.has(game.matchId+'/'+game.gameId)&&game.eligible&&game.affectsSeason);
+    this.games=this.knownGames.filter(game=>selectedKeys.has(game.matchId+'/'+game.gameId)&&measurementEligible(game)&&game.affectsSeason);
   }
   get battleCount():number{return new Set(this.games.map(game=>game.matchId)).size;}
   aggregate(mode:SeasonDisplayMode='perBattle',minimumBattles=5):SeasonAggregatePlayer[]{
@@ -316,7 +319,7 @@ export class SeasonStatisticsExperience{
   }
   records():SeasonRecord[]{
     const result=new Map<string,SeasonRecord[]>();
-    for(const game of this.games)for(const metric of SEASON_METRICS.filter(metric=>metric.record&&metric.kind==='number'))for(const player of game.players){
+    for(const game of this.games.filter(game=>game.eligible))for(const metric of SEASON_METRICS.filter(metric=>metric.record&&metric.kind==='number'))for(const player of game.players){
       if(!seasonMetricEligible(metric,game,player))continue;
       const value=player.values[metric.id],model=player.models[metric.id];if(value==null||!model||model==='unknown')continue;
       const startCohort=recordStartCohort(game),key=[metric.id,game.contextKey,model,startCohort??'UNVERIFIED_START'].join('|'),previous=result.get(key)??[];

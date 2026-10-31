@@ -77,6 +77,9 @@ export interface GameStatistics {
   unusedGameIds?:string[];
   /** False when required series slots have no authoritative Game identity yet. */
   gameManifestComplete?:boolean;
+  /** Collector-qualified current source measurements while the official result is pending.
+   * Never authorizes records, victory claims, scoring or cached legacy totals. */
+  sourceMeasurementsEligible?:boolean;
 }
 export interface StatisticsScope {seasonId?:string;eventId?:string;matchId?:string;}
 export interface StatisticsDataset {version:string;games:GameStatistics[];unavailableGames:number;}

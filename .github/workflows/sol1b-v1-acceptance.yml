@@ -105,6 +105,8 @@ jobs:
           name: sol1b-v1-exact-head-private-acceptance
           path: |
             .replay-lab/social-e2e/*report.json
+            .replay-lab/social-e2e/*-equivalence.json
             .replay-lab/social-e2e/sol1b-source-manifest.json
           if-no-files-found: ignore
+          include-hidden-files: true
           retention-days: 14

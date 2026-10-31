@@ -4,7 +4,7 @@ export interface HonourSourceRef {
 export interface PrivateHonoursPreview {
   version:'AOF_HONOURS_PRIVATE_SOURCE_PREVIEW_1';visibility:'OWNER_ONLY';ownerPlayerId:string;
   inputDigest:string;mode:'READ_ONLY_TESTING';coverage:{currentSources:number;ownBattles:number;completeSourceBattles:number};
-  sources:HonourSourceRef[];pendingSources:Array<{battleId:string;gameId:string;reason:string}>;
+  sources:HonourSourceRef[];pendingSources:Array<{battleId:string;gameId:string|null;reason:string}>;
   honours:Array<{key:string;kind:'TROPHY'|'EPITHET'|'DISTINCTION';label:string;status:'SOURCE_CANDIDATE'|'PENDING';
     reason:string;independentBattles:number|null;evidence:HonourSourceRef[]}>;
   effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};

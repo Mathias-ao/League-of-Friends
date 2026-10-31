@@ -4,7 +4,7 @@ import type {BoundGameplayCandidate} from '../../../functions/src/domain/gamepla
 export interface PrivateGameplayPreview {
   version:'AOF_INT_C1_PRIVATE_PREVIEW_1';visibility:'OWNER_ONLY';ownerPlayerId:string;inputDigest:string;
   status:'PENDING';simulation:{status:'UNAPPROVED_TEST_ONLY';version:string;policyDigest:string};
-  grades:PendingGrade[];sources:SourceSnapshot[];pendingSources:Array<{battleId:string;gameId:string;reason:string}>;
+  grades:PendingGrade[];sources:SourceSnapshot[];pendingSources:Array<{battleId:string;gameId:string|null;reason:string}>;
   coverage:{ownBattles:number;ownGames:number;currentSources:number};
   history:{publicationAllowed:false;officialWrites:false;projections:[];receipts:[]};
   effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};

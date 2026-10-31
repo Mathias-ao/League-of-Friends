@@ -38,7 +38,7 @@ export function projectPrivateHonoursPreview(ownerPlayerId:string,current:Pick<C
   if(new Set(sources.map(s=>s.battleId+'\0'+s.gameId)).size!==sources.length||
     new Set(sources.map(s=>s.gameGuid)).size!==sources.length)
     throw new Error('Duplicate private honour Game source');
-  const completeBattles=new Set(current.battles.filter(b=>b.gameIds.length>0&&
+  const completeBattles=new Set(current.battles.filter(b=>b.gameManifestComplete!==false&&b.gameIds.length>0&&
     !current.pending.some(p=>p.battleId===b.battleId)&&
     b.gameIds.every(id=>sources.some(s=>s.battleId===b.battleId&&s.gameId===id)))
     .map(b=>b.battleId));

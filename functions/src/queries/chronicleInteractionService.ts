@@ -4,6 +4,7 @@ import {requireAdmin,requireLeaguePlayer} from '../auth/authorization.js';
 import {db} from '../config/firebase.js';
 import {callableOptions} from '../config/runtime.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
+import {battleGameManifest} from '../engines/battleGameManifest.js';
 import {selectRareChronicleProposals,type CurrentChronicleBattle,type ReviewedTurningPoint,
   type ApprovedRareSelectionPolicy} from '../engines/chronicleRareSelector.js';
 import {invitationSlotId,planInvitationOffer,transitionInvitation,type InvitationSlot,
@@ -100,7 +101,7 @@ async function cohort(input:Input){
       [orderRows[0].order!.event,orderRows[0].order!.battle]:null;
     const scheduleRevisions:Array<{gameId:string;revision:string}>=orderRows.map(o=>({gameId:o.gameId,revision:o.revision}))
       .sort((a,b)=>a.gameId.localeCompare(b.gameId));
-    const evidenceComplete=b.gameIds.length>0&&b.sources.length===b.gameIds.length&&
+    const evidenceComplete=b.gameManifestComplete!==false&&b.gameIds.length>0&&b.sources.length===b.gameIds.length&&
       b.sources.every(s=>s.source.roster.some(p=>p.playerId===input.actor.playerId));
     const battle:CurrentChronicleBattle={battleId:b.battleId,
       playerIds:match.participants.map((p:Bag)=>p.playerId),
@@ -154,7 +155,11 @@ function sameApprovedSchedule(battleId:string,match:Bag,event:Bag|null,plan:Bag|
   planId:string|null,games:Array<{gameId:string;game:Bag}>,expected:unknown):boolean{
   if(!Array.isArray(expected)||!expected.length)return false;
   try{
-    const rows=deriveSocialScheduleOrders([{battleId,match,event,plan,planId,games}]);
+    const manifest=battleGameManifest(match,games.map(g=>({...g.game,gameId:g.gameId,
+      gameNumber:g.game.gameNumber,status:g.game.status})));
+    if(!manifest.gameManifestComplete)return false;
+    const requiredGames=games.filter(g=>manifest.knownGameIds.includes(g.gameId));
+    const rows=deriveSocialScheduleOrders([{battleId,match,event,plan,planId,games:requiredGames}]);
     const revisions=rows.map(o=>({gameId:o.gameId,revision:o.revision}))
       .sort((a,b)=>a.gameId.localeCompare(b.gameId));
     return rows.length===expected.length&&rows.every(o=>o.status==='ORDERED')&&
@@ -175,7 +180,8 @@ async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
  // All selected Battle Games, not just the selected Game: a new second Game,
  // withdrawal, remap, authoritative result or changed GUID must revoke eligibility.
  const gs=await tx.get(mr.collection('games').orderBy('__name__').limit(65));
- if(gs.size!==sourceRows.length||gs.size>64)throw stale();
+ const manifest=battleGameManifest(match,gs.docs.map((g:any)=>({...g.data(),gameId:g.id})));
+ if(!manifest.gameManifestComplete||manifest.knownGameIds.length!==sourceRows.length||gs.size>64)throw stale();
   const planId=event.data()?.approvedMatchPlanId;
   const plan=typeof planId==='string'&&planId?
     await tx.get(input.db.doc('events/'+match.eventId+'/matchPlans/'+planId)):null;
@@ -184,6 +190,7 @@ async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
       gs.docs.map((g:any)=>({gameId:g.id,game:g.data()})),selected.scheduleRevisions))throw stale();
   const byId=new Map(sourceRows.map(s=>[s.source.gameId,s]));
  for(const g of gs.docs){
+   if(manifest.unusedGameIds.includes(g.id))continue;
    const expected=byId.get(g.id);
    if(!expected||currentToken(g.data())!==currentToken(expected.game)||
       !g.data()?.players?.some((p:Bag)=>p.playerId===input.actor.playerId))throw stale();

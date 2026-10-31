@@ -21,7 +21,7 @@ const recordings=Object.entries(formats).map(([name,format])=>{
   return {name,format,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
 });
 const report={version:'AOF_SOL1B_ACCEPTANCE_MANIFEST_1',testedHead:head,
-  testedTree:git('rev-parse','HEAD^{tree}'),releaseBase:'1c602cf682fb61718a0e68bde2d383f80f50ac57',
+  testedTree:git('rev-parse','HEAD^{tree}'),releaseBase:'e8e69b6f549116af7eaec0929081ad9cdce49187',
   processorRevision:process.env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION,
   fixtureCommit,recordings,isolatedHonoursPolicyCommit:honoursCommit,
   runtimeHonoursSandboxImported:false,

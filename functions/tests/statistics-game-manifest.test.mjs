@@ -51,6 +51,16 @@ test('controlled unused exclusion rejects stale recording-result binding and rec
   assert.deepEqual(statisticsGameManifest(match,games).unusedGameIds,[]);
 });
 
+test('an out-of-plan or fractional Game number cannot masquerade as a lawful unused terminal Game',()=>{
+  for(const number of [4,99,2.5]){
+    const {match,games}=fixture();games[2].gameNumber=number;
+    const manifest=statisticsGameManifest(match,games);
+    assert.deepEqual(manifest.unusedGameIds,[]);
+    assert.ok(manifest.knownGameIds.includes('terminal'));
+    assert.equal(manifest.gameManifestComplete,false);
+  }
+});
+
 test('controlled statistics transport carries fenced expected siblings and rejects concurrent correction',async()=>{
   const {match,games}=fixture(),records=new Map([['matches/m',match],['players/a',{steamName:'A'}],['players/b',{steamName:'B'}]]);
   for(const game of games)records.set('matches/m/games/'+game.gameId,game);
