@@ -89,13 +89,36 @@ class OwnerHonoursLaunchSelection20261031Tests(unittest.TestCase):
         self.assertEqual(fc["transfer"],
                          "STRICTLY_LOWER_SOURCE_CURRENT_COMPARABLE_GAME_DURING_SEASON")
         self.assertTrue(fc["historicalSuccession"])
-        self.assertEqual(wonder["status"], "BLOCKED_VICTORY_METHOD_AND_CONTEST_RULE")
+        self.assertEqual(
+            wonder["status"],
+            "OWNER_APPROVED_COMPETITION_AND_POINT_RULE_SOURCE_REVIEW_PENDING",
+        )
         self.assertIsNone(wonder["displayName"])
-        self.assertIsNone(wonder["thresholds"]["clockMs"])
+        self.assertEqual(wonder["primaryRanking"],
+                         "COUNT_VERIFIED_OWN_WONDER_VICTORY_GAMES_DESC")
+        self.assertEqual(wonder["tieBreakRanking"],
+                         "ACCUMULATED_WONDER_POINTS_DESC_HALF_UNIT_INTEGER")
+        self.assertEqual(wonder["ownerApprovedPoints"],
+                         {"completedWonder": 0.5, "ownWonderVictory": 2,
+                          "alliedWonderVictory": 1,
+                          "wonderRaceChallengeVictory": 3})
+        self.assertEqual(wonder["scoringUnit"], "INTEGER_HALF_POINT")
+        self.assertTrue(wonder["trophyRequiresOwnWonderVictory"])
+        self.assertFalse(wonder["victoryTimeCanAffectEligibilityOrRanking"])
+        self.assertNotIn("thresholds", wonder)
+        self.assertIn("ON_FIRST_VERIFIED", wonder["activation"])
+        self.assertIn("STRICTLY_GREATER", wonder["transfer"])
         self.assertIn("GameOutcome lacks explicit wonder-victory",
                       wonder["source"])
         self.assertIn("Wonder placement request", wonder["not"])
         self.assertIn("Wonder", self.doc)
+        correction = d["ownerCorrectionWonder2026Oct31"]
+        self.assertEqual(correction["ownerApprovedScoreValues"],
+                         {"completedWonder": 0.5, "wonderVictory": 2,
+                          "allyWonderVictory": 1, "wonWonderChallenge": 3})
+        self.assertTrue(correction["noWinDurationGate"])
+        self.assertTrue(correction["noSeasonMaturityGate"])
+        self.assertFalse(correction["liveGrantAuthorized"])
 
     def test_unbroken_is_active_four_non_ffa_games_and_loss_revokes(self) -> None:
         u = next(e for e in self.owner["selectedEpithets"]
