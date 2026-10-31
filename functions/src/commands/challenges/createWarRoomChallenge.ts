@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase-admin/firestore";
+import { assertWarRoomMutationsApproved } from "./warRoomMutationGate.js";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
@@ -32,6 +33,7 @@ interface ExistingChallenge {
 
 export const createWarRoomChallenge = onCall<CreateWarRoomChallengeInput>(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
+  assertWarRoomMutationsApproved();
   const challengedPlayerId = request.data.challengedPlayerId?.trim();
   if (!request.data.requestId || !challengedPlayerId) {
     throw new HttpsError("invalid-argument", "requestId and challengedPlayerId are required.");
