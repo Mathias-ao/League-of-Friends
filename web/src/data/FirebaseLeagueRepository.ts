@@ -20,6 +20,9 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     this.ready=setPersistence(this.auth,browserLocalPersistence).then(()=>this.auth.authStateReady());
   }
   private async call<T>(name:string,data:unknown={}):Promise<T>{return (await httpsCallable<unknown,T>(this.functions,name)(data)).data;}
+  warRoom(){return this.call<import('../domain/warRoom').WarRoomData>('getWarRoom');}
+  async createWarRoomChallenge(challengedPlayerId:string){await this.call('createWarRoomChallenge',{requestId:crypto.randomUUID(),challengedPlayerId});}
+  async respondWarRoomChallenge(challengeId:string,response:'ACCEPT'|'DECLINE'){await this.call('respondToWarRoomChallenge',{challengeId,response});}
   async load():Promise<LeagueSnapshot>{
     await this.ready;
     const empty=emptySnapshot();if(!this.auth.currentUser)return empty;
