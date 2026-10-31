@@ -161,6 +161,22 @@ test("building request, unreviewed victory method and stale winner source cannot
   assert.equal(projectWonderTrophy(season([wrongBuilder])).holder,null);
 });
 
+test("contradictory completed-Wonder ownership cannot create build points or trophy",()=>{
+  const ambiguous=win("conflict",1,"Alice",{
+    wonderConstructions:[
+      construction("wonder-conflict","Bruno"),
+      construction("wonder-conflict","Alice"),
+    ],
+  });
+  const r=projectWonderTrophy(season([ambiguous]));
+  assert.equal(r.holder,null);
+  assert.equal(r.standings.length,0);
+  const wrong=win("wrong-owner",2,"Alice",{
+    wonderConstructions:[construction("wonder-wrong-owner","Bruno")],
+  });
+  assert.equal(projectWonderTrophy(season([wrong])).holder,null);
+});
+
 test("same winning Wonder object is counted once even when also in completed constructions",()=>{
   const g=win("known-wonder",1,"Alice",{
     wonderConstructions:[construction("wonder-known-wonder","Alice"),
