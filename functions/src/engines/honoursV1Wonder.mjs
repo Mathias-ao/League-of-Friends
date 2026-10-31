@@ -69,17 +69,25 @@ function collectGamePoints(g) {
     if(!delta.has(id))delta.set(id,empty(id));
     return delta.get(id);
   };
-  const builds=new Set();
-  for(const row of g.wonderConstructions??[]) {
+  const builds=new Set(),owners=new Map();
+  const rows=Array.isArray(g.wonderConstructions)?g.wonderConstructions:[];
+  for(const row of rows) {
     if(!txt(row?.buildingInstanceId)||!g.roster.includes(row.ownerPlayerId)||
        row.complete!==true||
        !["INDEPENDENT_CONSTRUCTION_REVIEW","OFFICIAL_METHOD_REVIEW"].includes(row.verifiedBy)||
        !bound(row,g))continue;
+    if(owners.has(row.buildingInstanceId)&&
+       owners.get(row.buildingInstanceId)!==row.ownerPlayerId)
+      return {winner:null,delta:new Map(),sourceConflict:true};
+    owners.set(row.buildingInstanceId,row.ownerPlayerId);
     if(builds.has(row.buildingInstanceId))continue;
     builds.add(row.buildingInstanceId);
     tally(own(row.ownerPlayerId),"completedWonders",1);
   }
   const winner=officialWonderVictory(g);
+  if(winner&&owners.has(winner.winningWonderId)&&
+     owners.get(winner.winningWonderId)!==winner.winnerId)
+    return {winner:null,delta:new Map(),sourceConflict:true};
   if(winner) {
     // A verified Wonder-method victory itself proves its winning Wonder was
     // completed. Do not award a second construction point for the same object.
@@ -92,7 +100,7 @@ function collectGamePoints(g) {
     if(g.format==="TEAM") {
       allies=g.winners.filter(p=>p!==winner.winnerId);
     }else if(g.format==="FFA"&&winner.ffaAllianceReview==="SOURCE_VERIFIED_EFFECTIVE_ALLIANCE") {
-      allies=(winner.qualifiedAllyPlayerIds??[]).filter(p=>
+      allies=(Array.isArray(winner.qualifiedAllyPlayerIds)?winner.qualifiedAllyPlayerIds:[]).filter(p=>
         g.winners.includes(p)&&p!==winner.winnerId);
     }
     for(const id of new Set(allies))tally(own(id),"alliedWonderVictories",1);
