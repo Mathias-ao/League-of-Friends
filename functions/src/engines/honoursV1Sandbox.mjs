@@ -143,14 +143,25 @@ export function projectCompetitiveTrophy(input,kind,rules=DRAFT_TEST_RULES) {
     const best=Math.min(...batch.map(c=>c.valueMs));
     const bestPlayers=byId(unique(batch.filter(c=>c.valueMs===best).map(c=>c.playerId)));
     if(lowest==null||best<lowest) {
-      if(incumbent!==null&&started!==null)history[history.length-1].toMs=when;
-      incumbent=bestPlayers.length===1?bestPlayers[0]:null;
-      started=incumbent!==null?when:null;
+      const nextHolder=bestPlayers.length===1?bestPlayers[0]:null;
+      const source=nextHolder===null?null:batch.find(
+        c=>c.playerId===nextHolder&&c.valueMs===best);
+      // A champion improving their own record is NOT a trophy transfer.
+      if(nextHolder!==null&&nextHolder===incumbent&&history.length) {
+        history[history.length-1].improvements.push({
+          atMs:when,valueMs:best,sourceGameId:source.gameId
+        });
+      } else {
+        if(incumbent!==null&&started!==null)history[history.length-1].toMs=when;
+        incumbent=nextHolder;
+        started=incumbent!==null?when:null;
+        if(incumbent!==null)history.push({
+          playerId:incumbent,fromMs:when,toMs:null,valueMs:best,
+          sourceGameId:source.gameId,improvements:[]
+        });
+      }
       lowest=best;
       tiePending=bestPlayers.length>1;
-      if(incumbent!==null)
-        history.push({playerId:incumbent,fromMs:when,toMs:null,valueMs:best,
-          sourceGameId:batch.find(c=>c.playerId===incumbent&&c.valueMs===best).gameId});
     } else if(best===lowest&&incumbent===null)tiePending=true;
   }
   return status(incumbent?"CURRENT_HOLDER":tiePending?"PENDING_TIE_POLICY":"UNCLAIMED_PERFORMANCE",
