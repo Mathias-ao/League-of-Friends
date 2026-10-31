@@ -1,3 +1,4 @@
+import {projectWonderTrophy} from "./honoursV1Wonder.mjs";
 /**
  * AoF V1 honours - pure, TEST-ONLY reference evaluator.
  *
@@ -14,9 +15,6 @@ export const DRAFT_TEST_RULES = Object.freeze({
   maturityDistinctBattles: 5,
   maturityDistinctPlayers: 4,
   fastCastleMaximumMs: 15 * 60000 + 30000,
-  wonderMaturityBattles: 3,
-  wonderMaturityPlayers: 2,
-  wonderMaximumDurationMs: 60 * 60000,
   unbrokenWins: 4,
   ffaGrades: Object.freeze([{wins: 7,grade:"IV"},{wins:4,grade:"III"},{wins:2,grade:"II"},{wins:1,grade:"I"}]),
   boomer: Object.freeze({byMs:30*60000,additionalTCSites:2,villagerQueueEstimate:75,
@@ -67,14 +65,13 @@ const admitted = (input) => canonicalCurrentGames(input.games??[],input.seasonId
 const qualifyingCohort = (g,kind) => readyGame(g)&&
   validText(g.startClass)&&g.gameSpeed==="NORMAL"&&
   g.patchModel==="DE_185872"&&
-  (kind==="WONDER" ? g.victoryRules==="WONDER"&&g.startClass==="STANDARD" :
-    eligibleStart(g));
+  eligibleStart(g);
 
 function matureAt(input,games,kind,rules) {
   const minDays=rules.maturityDays*86400000;
   if(!positive(input.seasonStartedAtMs)||!positive(input.nowMs))return null;
-  const minimumBattles=kind==="WONDER"?rules.wonderMaturityBattles:rules.maturityDistinctBattles;
-  const minimumPlayers=kind==="WONDER"?rules.wonderMaturityPlayers:rules.maturityDistinctPlayers;
+  const minimumBattles=rules.maturityDistinctBattles;
+  const minimumPlayers=rules.maturityDistinctPlayers;
   const ordered=games.filter(g=>qualifyingCohort(g,kind)&&finalGame(g)&&positive(g.acceptedAtMs))
     .sort((a,b)=>a.acceptedAtMs-b.acceptedAtMs||a.gameId.localeCompare(b.gameId));
   const battles=new Set(),players=new Set();
@@ -95,24 +92,16 @@ function castleCandidate(g,p) {
   return {playerId:p,gameId:g.gameId,battleId:g.battleId,
     atMs:g.acceptedAtMs,valueMs:m.projectedCastleAgeMs,model:m.model};
 }
-function wonderCandidate(g,p) {
-  const w=g.wonderVictory;
-  if(!finalGame(g)||!qualifyingCohort(g,"WONDER")||!isWin(g,p)||
-    !w||w.method!=="WONDER_VICTORY"||w.verifiedBy!=="OFFICIAL_METHOD_REVIEW"||
-    w.resultRevision!==g.resultRevision||w.winnerId!==p||
-    w.completeTimerWitness!==true||!positive(w.gameEndAtMs))return null;
-  return {playerId:p,gameId:g.gameId,battleId:g.battleId,atMs:g.acceptedAtMs,
-    valueMs:w.gameEndAtMs,model:"OFFICIALLY_VERIFIED_WONDER_VICTORY"};
-}
 
 /** Rebuild from *current source* and accepted chronology; invalid past possession
  * disappears from the valid succession. Audit of corrections stays separate. */
 export function projectCompetitiveTrophy(input,kind,rules=DRAFT_TEST_RULES) {
-  if(!["FAST_CASTLE","WONDER"].includes(kind))throw new Error("Unknown trophy");
+  if(kind==="WONDER")return projectWonderTrophy(input);
+  if(kind!=="FAST_CASTLE")throw new Error("Unknown trophy");
   const games=admitted(input);
   const candidates=[];
   for(const g of games)for(const p of g.roster??[]) {
-    const c=kind==="FAST_CASTLE"?castleCandidate(g,p):wonderCandidate(g,p);
+    const c=castleCandidate(g,p);
     if(c&&positive(c.atMs))candidates.push(c);
   }
   candidates.sort((a,b)=>a.atMs-b.atMs||a.gameId.localeCompare(b.gameId)||a.playerId.localeCompare(b.playerId));
@@ -123,7 +112,7 @@ export function projectCompetitiveTrophy(input,kind,rules=DRAFT_TEST_RULES) {
     history:[],matureAtMs:mature,scope:"CURRENT_SEASON_STANDARD_START",testOnly:true};
   if(!candidates.length)return status("PENDING_EVIDENCE",base);
   if(mature==null)return status("PROVISIONAL_RECORD",base);
-  const maximum=kind==="FAST_CASTLE"?rules.fastCastleMaximumMs:rules.wonderMaximumDurationMs;
+  const maximum=rules.fastCastleMaximumMs;
   const qualify=c=>c.valueMs<=maximum;
   const qualified=candidates.filter(qualify);
   if(!qualified.length)return status("UNCLAIMED_PERFORMANCE",base);
