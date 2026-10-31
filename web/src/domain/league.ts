@@ -246,6 +246,9 @@ export interface LeagueRepository {
   myGameplayPreview?():Promise<import('./gameplayPreview').PrivateGameplayPreview>;
   mySocialProgression?():Promise<import('./privateProgression').PrivateProgression>;
   myGameplayCandidates?():Promise<import('./gameplayPreview').PrivateGameplayCandidates>;
+  warRoom?():Promise<import('./warRoom').WarRoomData>;
+  createWarRoomChallenge?(challengedPlayerId:string):Promise<void>;
+  respondWarRoomChallenge?(challengeId:string,response:'ACCEPT'|'DECLINE'):Promise<void>;
   playerChronicle?():Promise<PlayerChronicleResponse>;
   socialHistory?():Promise<SocialHistoryResponse>;
   event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;
