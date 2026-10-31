@@ -12,7 +12,7 @@ test('all six sections and three detail surfaces render representative player da
   const nodes=[
     React.createElement(SeasonView,{...props,onRules:()=>{}}),
     React.createElement(EventsView,props),React.createElement(BattlesView,props),
-    React.createElement(PlayersView,props),React.createElement(WarRoomView),React.createElement(StatisticsView)
+    React.createElement(PlayersView,props),React.createElement(WarRoomView,props),React.createElement(StatisticsView)
   ];
   for(const node of nodes)assert.ok(renderToStaticMarkup(node).length>100);
   assert.match(renderToStaticMarkup(React.createElement(EventDialog,{...props,data:await repository.event('E001'),onUpdated:()=>{}})),/The muster/);
