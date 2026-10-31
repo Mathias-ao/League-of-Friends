@@ -8,6 +8,10 @@ import {
   projectTenHonours
 } from "../src/engines/honoursV1Sandbox.mjs";
 
+import {
+  honourChronicleEmulatorEnabled,emulateHonourChronicleResponse
+} from "../src/engines/honoursV1ChronicleSandbox.mjs";
+
 const day=86400000;
 const season0=1_800_000_000_000;
 function game(id,battleId,acceptedDay,more={}) {
@@ -319,4 +323,72 @@ test("draft gates are explicitly provisional and cannot change production grants
   assert.equal(e.anyGrantWritten,false);
   assert.equal(e.trophies.FAST_CASTLE.holder,null);
   assert.equal(e.distinctions.EXPLORER.state,"NOT_YET_QUALIFIED");
+});
+
+test("Chronicle acknowledgement round trip is restricted to exact source and authenticated recipient in demo emulator",()=>{
+  const env={FUNCTIONS_EMULATOR:"true",GCLOUD_PROJECT:"demo-aof",
+    AOF_HONOUR_CHRONICLE_V1:"emulator-only"};
+  assert.equal(honourChronicleEmulatorEnabled(env),true);
+  for(const wrong of [
+    {},{...env,GCLOUD_PROJECT:"age-of-friends-prod"},
+    {...env,FUNCTIONS_EMULATOR:"false"},
+    {...env,AOF_HONOUR_CHRONICLE_V1:"live"}
+  ])assert.equal(honourChronicleEmulatorEnabled(wrong),false);
+
+  const e=at(game("g-private","b-private",3),"Alice","aggression",source({
+    gameId:"g-private",battleId:"b-private",episodeId:"attack",sourceRevision:"S1",
+    windowMs:35*60000,directedPressureEpisodes:6,engagementEpisodes:4,
+    battleParticipationSharePercent:65,opponentIds:["Bruno"]}));
+  const input=season([e],{eligibleBattleOrder:["b-private"]});
+  const projected=projectTenHonours(input,"Alice");
+  const candidate=projected.plannedChronicleCandidates[0];
+  assert.equal(candidate.respondentPlayerId,"Bruno");
+  assert.equal(projected.distinctions.AGGRESSION.state,"PENDING_CHRONICLE");
+  const person={playerId:"Bruno",authenticated:true};
+  const action={choice:"ACKNOWLEDGED",expectedSourceRevision:"S1"};
+  assert.throws(()=>emulateHonourChronicleResponse({candidate,actor:person,action,env:{}}),
+    /emulator-only/);
+  assert.throws(()=>emulateHonourChronicleResponse({candidate,
+    actor:{playerId:"Alice",authenticated:true},action,env}),/exact authenticated/);
+  assert.throws(()=>emulateHonourChronicleResponse({candidate,actor:person,
+    action:{...action,expectedSourceRevision:"OLD"},env}),/Stale/);
+  const response=emulateHonourChronicleResponse({candidate,actor:person,action,env});
+  assert.equal(response.state,"SUBMITTED");
+  assert.equal(response.visibility,"AUTHOR_ONLY");
+  assert.equal(response.invitationSent,false);
+  assert.deepEqual(response.officialEffects,[]);
+  assert.equal(projectTenHonours({...input,chroniclePerspectives:[response]},"Alice")
+    .distinctions.AGGRESSION.state,"QUALIFIED");
+  for(const choice of ["DECLINE","UNSURE","NOT_PERSONALLY_MEANINGFUL"]){
+    const response=emulateHonourChronicleResponse({candidate,actor:person,
+      action:{choice,expectedSourceRevision:"S1"},env});
+    assert.equal(projectTenHonours({...input,chroniclePerspectives:[response]},"Alice")
+      .distinctions.AGGRESSION.state,"PENDING_CHRONICLE");
+  }
+});
+
+test("optional Chronicle statements never substitute for Wonder method, fog model, trade income, or actual rescue",()=>{
+  const env={FUNCTIONS_EMULATOR:"true",GCLOUD_PROJECT:"demo-aof",
+    AOF_HONOUR_CHRONICLE_V1:"emulator-only"};
+  const g=game("no-proof","b",4,{victoryRules:"WONDER",wonderBuildRequested:true,
+    measurements:{Alice:{
+      explorer:source({modelVersion:"AOF_MAP_PRESENCE_V6",modelValidatedAgainstFog:false,
+        coverageLowerBoundPercent:99,confidence:1}),
+      defensive:source({gameId:"no-proof",battleId:"b",episodeId:"def-1",
+        sourceRevision:"S1",windowMs:35*60000,sourceQualifiedResponses:2,
+        incomingThreatLevel:3,directionVerified:true,witnessIds:["Bruno"]})
+    }}});
+  const c=projectTenHonours(season([g],{eligibleBattleOrder:["b"]}),"Alice");
+  assert.equal(c.trophies.WONDER.holder,null);
+  assert.notEqual(c.distinctions.EXPLORER.state,"QUALIFIED");
+  const candidate=c.plannedChronicleCandidates[0];
+  const response=emulateHonourChronicleResponse({candidate,
+    actor:{playerId:"Bruno",authenticated:true},
+    action:{choice:"ACKNOWLEDGED",expectedSourceRevision:"S1"},env});
+  const after=projectTenHonours(season([g],{eligibleBattleOrder:["b"],
+    chroniclePerspectives:[response]}),"Alice");
+  assert.equal(after.distinctions.DEFENSIVE.state,"QUALIFIED");
+  assert.equal(after.trophies.WONDER.holder,null);
+  assert.notEqual(after.distinctions.EXPLORER.state,"QUALIFIED");
+  assert.equal(response.meaning,"AUTHOR_PERSPECTIVE_ONLY_NO_EXECUTED_EFFECT_INFERENCE");
 });
