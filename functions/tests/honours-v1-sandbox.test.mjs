@@ -24,7 +24,7 @@ function game(id,battleId,acceptedDay,more={}) {
 }
 const season=(games,extra={})=>({
   seasonId:"season-1",seasonStartedAtMs:season0,
-  nowMs:season0+12*day,games,...extra
+  nowMs:season0+12*day,games,careerHistoryComplete:true,...extra
 });
 const fc=(ms,extra={})=>({
   sourceQualified:true,model:"AOF_OPENING_STATISTICS_V6",
@@ -200,6 +200,24 @@ test("FFA medal: sole official victor counts one independent Battle, coalition n
   assert.equal(r.claim,"SOLE_OFFICIAL_FFA_WINNER_NOT_UNAIDED");
 });
 
+test("FFA same medal upgrades across Seasons and corrections remove invalid Battle victories",()=>{
+  const a=game("g1","b1",2,{format:"FFA",roster:["Alice","Bruno","Clara"],
+    winners:["Alice"],outcomeType:"PLAYER_WIN",seasonId:"season-1"});
+  const b=game("g2","b2",3,{format:"FFA",roster:["Alice","Bruno","Dora"],
+    winners:["Alice"],outcomeType:"PLAYER_WIN",seasonId:"season-2"});
+  const c=game("g3","b3",4,{format:"FFA",roster:["Alice","Bruno","Clara"],
+    winners:["Alice"],outcomeType:"PLAYER_WIN",seasonId:"season-3"});
+  const input=season([a],{careerGames:[a,b,c],careerHistoryComplete:true});
+  let result=evaluateFFASoleWinner(input,"Alice");
+  assert.equal(result.distinctBattles,3);
+  assert.equal(result.grade,"II","one lifetime medal, upgraded across Seasons");
+  result=evaluateFFASoleWinner({...input,careerGames:[a,b,{...c,sourceState:"WITHDRAWN"}]},"Alice");
+  assert.equal(result.distinctBattles,2);
+  result=evaluateFFASoleWinner({...input,careerHistoryComplete:false},"Alice");
+  assert.equal(result.state,"PENDING_CAREER_HISTORY");
+  assert.equal(result.grade,null,"incomplete historic archive cannot finalize medal grade");
+});
+
 test("Boomer: one-game 30 minute four-part requirement, not spliced from other Games",()=>{
   const evidence=source({additionalTCSites:2,villagerQueueEstimate:78,
     uniqueHouseSites:11,expansionZoneClusters:3,distinctSitesVerified:true,
@@ -278,6 +296,10 @@ test("Chronicle invitations honor three independently eligible Battles cooldown 
   assert.deepEqual(planHonourChronicleCandidates(input,[c("b2"),c("b3"),c("b4")]),[]);
   assert.deepEqual(planHonourChronicleCandidates(input,[c("b5"),c("b5")]).map(x=>x.battleId),["b5"]);
   assert.deepEqual(planHonourChronicleCandidates({eligibleBattleOrder:[]},[c("b5")]),[]);
+  assert.deepEqual(planHonourChronicleCandidates({
+    eligibleBattleOrder:["b1","b2","b3","b4","b5"],chronicleOfferHistory:[]
+  },[c("b1"),c("b2"),c("b5")]).map(x=>x.battleId),
+    ["b1","b5"],"same-batch planned offers must also reserve the cooldown");
   assert.deepEqual(planHonourChronicleCandidates({eligibleBattleOrder:["b1"]},
     [{...c("b1"),testOnly:false}]),[]);
 });
