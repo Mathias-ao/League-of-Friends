@@ -42,19 +42,34 @@
       "key": "WONDER",
       "proposalId": "AR2_TROPHY_WONDER_V1_CANDIDATE",
       "displayName": null,
-      "status": "BLOCKED_VICTORY_METHOD_AND_CONTEST_RULE",
-      "candidateWinMode": "FASTEST_OFFICIAL_WONDER_VICTORY_GAME_WITH_SAME_RULES",
-      "transfer": "STRICTLY_FASTER_ELIGIBLE_RESULT_IF_FASTEST_VICTORY_CHOSEN",
-      "otherPossibleModes": [
-        "MOST_DISTINCT_OFFICIAL_WONDER_VICTORIES_IN_SEASON",
-        "OTHER_OWNER_APPROVED_COMPETITIVE_WONDER_FEAT"
-      ],
+      "status": "OWNER_APPROVED_COMPETITION_AND_POINT_RULE_SOURCE_REVIEW_PENDING",
+      "transfer": "STRICTLY_GREATER_LEXICOGRAPHIC_PAIR_WONDER_VICTORIES_THEN_POINTS",
       "source": "Wonder BUILD catalog building 276 is observed request; resultEngine GameOutcome lacks explicit wonder-victory method",
       "not": "Wonder placement request != constructed Wonder, hold timer, or victory method",
-      "thresholds": {
-        "clockMs": null,
-        "seasonMaturity": null
-      }
+      "primaryRanking": "COUNT_VERIFIED_OWN_WONDER_VICTORY_GAMES_DESC",
+      "tieBreakRanking": "ACCUMULATED_WONDER_POINTS_DESC_HALF_UNIT_INTEGER",
+      "activation": "ON_FIRST_VERIFIED_OWN_WONDER_VICTORY_IMMEDIATELY_NO_MATURITY_OR_CLOCK_GATE",
+      "ownerApprovedPoints": {
+        "completedWonder": 0.5,
+        "ownWonderVictory": 2,
+        "alliedWonderVictory": 1,
+        "wonderRaceChallengeVictory": 3
+      },
+      "pointAddition": "A verified Wonder Race win earns Wonder victory points AND additional race points; an independently completed Wonder adds 0.5 once per verified entity/Game",
+      "requiredOfficialSources": [
+        "Independent completed-Wonder ownership/construction review; source BUILD request never proves completion",
+        "Official result + distinct Wonder-victory method and credited winning Wonder owner",
+        "Official co-winning team players or source-verified effective allied FFA winner for ally points",
+        "Official approved Wonder Race challenge identity, exact final Wonder victory and declared race winner"
+      ],
+      "trophyRequiresOwnWonderVictory": true,
+      "victoryTimeCanAffectEligibilityOrRanking": false,
+      "noIncumbentExactTies": "PENDING_TIE_POLICY_NO_UPLOAD_ORDER_WINNER",
+      "equalityWithIncumbent": "RETAIN_INCUMBENT",
+      "scoringUnit": "INTEGER_HALF_POINT",
+      "wonderRaceStatus": "FUTURE_EXPLICIT_CHALLENGE_PROTOCOL_SOURCE_REVIEW_NOT_YET_CONNECTED",
+      "gameDedupe": "SOURCE_CURRENT_CANONICAL_GAME_IN_SEASON_ONE_WIN_PER_GAME_NOT_POV",
+      "sourceCorrection": "REBUILD_POINTS_WINS_AND_VALID_DATED_POSSESSION_FROM_CURRENT_AUTHORITY"
     }
   ],
   "selectedEpithets": [
@@ -202,7 +217,7 @@
     "No new production IDs imported from these design proposal IDs"
   ],
   "ownerRemainingDecisions": [
-    "Select Wonder trophy competitor metric and evidence authority for actual Wonder victory",
+    "Wonder trophy metric and point values are owner-decided; confirm authentic Wonder construction/completion, winner-owner review and official future Wonder Race scheduling/proof before public activation.",
     "Confirm the Unbroken current Season/non-FFA 4 Game semantics and whether FFA wins count toward four",
     "Choose sole official FFA winner versus truly never-ally unaided FFA solo feat",
     "Calibrate Boomer/Explorer/Gold/Aggression/Defence thresholds and whether Chronicle acknowledgements are optional context or a separately reviewed consent gate"
@@ -231,5 +246,30 @@
       "Uncorroborated subjective Chronicle interpretation",
       "Raw repeated command volume"
     ]
+  },
+  "ownerCorrectionWonder2026Oct31": {
+    "authority": "Owner explicit Wonder trophy correction in Worker C conversation, 31 Oct 2026",
+    "decision": "NOT_TIME_BASED; FIRST_VERIFIED_WONDER_VICTORY_ACTIVATES; WINS_PRIMARY_POINTS_TIEBREAK",
+    "internalProposalId": "AR2_TROPHY_WONDER_V1_CANDIDATE",
+    "playerFacingName": null,
+    "ownerApprovedScoreValues": {
+      "completedWonder": 0.5,
+      "wonderVictory": 2,
+      "allyWonderVictory": 1,
+      "wonWonderChallenge": 3
+    },
+    "noWinDurationGate": true,
+    "noSeasonMaturityGate": true,
+    "challengeAdditionalToVictory": true,
+    "firstWinActivates": true,
+    "chronologicalAcceptanceUsedForHistoryOnly": true,
+    "firstUnbrokenTieNoGrant": true,
+    "sourceRequirements": [
+      "Independent completed-Wonder ownership/construction review; source BUILD request never proves completion",
+      "Official result + distinct Wonder-victory method and credited winning Wonder owner",
+      "Official co-winning team players or source-verified effective allied FFA winner for ally points",
+      "Official approved Wonder Race challenge identity, exact final Wonder victory and declared race winner"
+    ],
+    "liveGrantAuthorized": false
   }
 }
