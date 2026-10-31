@@ -207,37 +207,45 @@ export function evaluateFFASoleWinner(input,playerId,rules=DRAFT_TEST_RULES) {
     claim:"SOLE_OFFICIAL_FFA_WINNER_NOT_UNAIDED"});
 }
 
-function sourceComposite(input,playerId,key,rules,qualify) {
-  let pending=false;
+function sourceComposite(input,playerId,key,rules,qualify,support=()=>true) {
+  let pending=false,completeFailed=false,anyGame=false;
   for(const g of admitted(input)) {
     if(!contains(g,playerId))continue;
+    anyGame=true;
     const evidence=playerMeasure(g,playerId,key);
-    if(!evidence)continue;
-    if(evidence.sourceQualified!==true||evidence.modelState!=="SOURCE_VALIDATED"||
-      !positive(evidence.windowMs)) {pending=true;continue}
+    if(!evidence||evidence.sourceQualified!==true||
+       evidence.modelState!=="SOURCE_VALIDATED"||
+       !positive(evidence.windowMs)||!support(evidence,g)) {
+      // A missing/unsupported metric is UNKNOWN, not a failed attempt/zero.
+      pending=true;
+      continue;
+    }
     if(qualify(evidence,rules,g))
       return status("QUALIFIED",{gameId:g.gameId,battleId:g.battleId,
         evidenceModel:evidence.modelVersion??null});
+    completeFailed=true;
   }
-  return status(pending?"PENDING_EVIDENCE":"NOT_YET_QUALIFIED");
+  return status(completeFailed&&!pending?"NOT_YET_QUALIFIED":"PENDING_EVIDENCE",{
+    metricCoverage:!anyGame?"NO_CURRENT_ELIGIBLE_GAME":pending?"INCOMPLETE_OR_INCOMPATIBLE":"COMPLETE",
+  });
 }
 export function evaluateBoomer(input,playerId,rules=DRAFT_TEST_RULES) {
   return sourceComposite(input,playerId,"boomer",rules.boomer,(e,r,g)=>
-    eligibleStart(g)&&!["Huns"].includes(e.civilization)&&
-    e.windowMs===r.byMs&&
+    eligibleStart(g)&&e.windowMs===r.byMs&&
     numeric(e.additionalTCSites)>=r.additionalTCSites&&
     numeric(e.villagerQueueEstimate)>=r.villagerQueueEstimate&&
     numeric(e.uniqueHouseSites)>=r.uniqueHouseSites&&
     numeric(e.expansionZoneClusters)>=r.expansionZoneClusters&&
-    e.distinctSitesVerified===true&&e.sourceClockComplete===true);
+    e.distinctSitesVerified===true&&e.sourceClockComplete===true,
+    (e,g)=>e.civilization!=="Huns"&&eligibleStart(g));
 }
 export function evaluateExplorer(input,playerId,rules=DRAFT_TEST_RULES) {
   return sourceComposite(input,playerId,"explorer",rules.explorer,(e,r)=>
-    e.modelVersion==="AOF_ESTIMATED_EXPLORATION_V1"&&
-    e.modelValidatedAgainstFog===true&&e.sourceClockComplete===true&&
-    e.windowMs===r.byMs&&
+    e.sourceClockComplete===true&&e.windowMs===r.byMs&&
     numeric(e.coverageLowerBoundPercent)>=r.lowerBoundPercent&&
-    numeric(e.confidence)>=r.minimumConfidence);
+    numeric(e.confidence)>=r.minimumConfidence,
+    e=>e.modelVersion==="AOF_ESTIMATED_EXPLORATION_V1"&&
+      e.modelValidatedAgainstFog===true);
 }
 export function evaluateGold(input,playerId,rules=DRAFT_TEST_RULES) {
   return sourceComposite(input,playerId,"gold",rules.gold,(e,r,g)=>
