@@ -133,7 +133,19 @@ test('corrected source, missing sibling and missing opportunity remove evidence,
   const approved=taxonomy([a,b]),initial=project([a,b],approved).view;
   const changed=game('battle-A','g1-revision',1);
   const correction=project([changed,b],approved).view;
-  assert.ok(correction.personalityProfile.sliders.every(s=>s.status==='DEVELOPING'&&s.value===null));
+  // The replacement source lacks reviewed spatial classification, but its
+  // authenticated complete cost commitment still supports the economic axis.
+  for(const slider of correction.personalityProfile.sliders){
+    if(slider.axis==='BOOMER_AGGRESSOR'){
+      assert.equal(slider.status,'READY');
+      assert.equal(slider.value,30);
+      assert.equal(slider.independentBattles,2);
+    }else{
+      assert.equal(slider.status,'DEVELOPING',slider.axis);
+      assert.equal(slider.value,null,slider.axis);
+      assert.equal(slider.independentBattles,1,slider.axis);
+    }
+  }
   assert.notEqual(correction.personalityProfile.projectionRevision,initial.personalityProfile.projectionRevision);
   const missingCivilization=game('battle-B','g1',1);
   delete missingCivilization.statistics.matchFacts.players[0].civilization.rawId;
