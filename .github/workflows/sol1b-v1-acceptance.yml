@@ -81,6 +81,7 @@ jobs:
       - name: Record actual tested source, processor and original recording hashes
         env:
           AOF_ACCEPTANCE_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          AOF_ACCEPTANCE_BASE_HEAD: ${{ github.event.pull_request.base.sha || github.sha }}
         run: node scripts/sol1b-acceptance-manifest.mjs
       - name: Isolated current-source multiuser progression and ordinary upload parity
         run: |
@@ -94,6 +95,12 @@ jobs:
           worker_pid=$!
           trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
           npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "AOF_V1_COMBINED_PRIVATE_READ=1 node functions/tests/chronicle-v1e-auth-emulator.mjs"
+      - name: Same genuine recorder across two independently approved ordinary Battles
+        run: |
+          python replay-tools/upload_worker.py > "$RUNNER_TEMP/aof-v1-personality-worker.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          npx --yes firebase-tools@14.27.0 emulators:exec --project demo-aof-native-player --only firestore,storage "node functions/tests/personality-original-battles-emulator.mjs"
       - name: Native statistics unchanged for every authentic replay
         run: |
           for fixture in 1v1_t90-deak 1v1_t90-dobb 2v2_arabia 4v4_arabia FFA_7; do
