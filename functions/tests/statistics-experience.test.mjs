@@ -160,7 +160,28 @@ test('army composition gives each Game equal weight and rejects empty compositio
 test('record ties retain provenance, versions separate records, non-reaching rivals do not erase age records',()=>{
   const g=game();g.players[1].values.castle=g.players[0].values.castle;g.players[2].values.castle=null;
   const records=new StatisticsExperience([g,game(1,{contextKey:'other'})]).records().filter(r=>r.metricId==='castle');
-  assert.deepEqual(records.map(r=>r.playerId),['a','b','a']);assert.equal(records[0].matchId,g.matchId);assert.equal(records[0].model,'model-1');
+  assert.deepEqual(records.map(r=>r.playerId),['a','b'],'V1 Castle ties do not split into separate map cohorts');
+  assert.equal(records[0].matchId,g.matchId);assert.equal(records[0].model,'model-1');
+});
+test('legacy V1 Castle record and personal best compare accepted Game times across maps and starts',()=>{
+  const ordinary=Array.from({length:3},(_,i)=>game(i,{contextKey:'Arabia'}));
+  const special=game(3,{contextKey:'Nomad',startOpportunity:null});
+  for(const g of ordinary){g.players[0].values.castle=700000;g.players[1].values.castle=900000;g.players[2].values.castle=950000;}
+  special.players[0].values.castle=500000;special.players[1].values.castle=500000;special.players[2].values.castle=950000;
+  const engine=new StatisticsExperience([...ordinary,special]);
+  const records=engine.records().filter(record=>record.metricId==='castle');
+  assert.deepEqual(new Set(records.map(record=>record.playerId)),new Set(['a','b']),
+    'identical fastest times on special-start Games tie across the entire Season');
+  assert.ok(records.every(record=>record.value===500000&&record.contextKey==='Nomad'));
+  assert.equal(engine.personalBests('a').find(record=>record.metricId==='castle')?.value,500000,
+    'older personal-best presentation must not hold a separate Arabia-only Fast Castle best');
+  const correction={...special,revision:2,sourceHash:'updated-source-hash',
+    players:structuredClone(special.players)};
+  correction.players[0].values.castle=800000;correction.players[1].values.castle=800000;
+  const corrected=new StatisticsExperience([...ordinary,special,correction]);
+  const holders=corrected.records().filter(record=>record.metricId==='castle');
+  assert.deepEqual(holders.map(record=>record.playerId),['a'],'source correction restores the faster Arabia time');
+  assert.equal(holders[0].value,700000);
 });
 test('personal bests use only requested player and compatible prior samples',()=>{
   const games=Array.from({length:4},(_,i)=>game(i));games[3].players[0].values.raidsOut=10;
