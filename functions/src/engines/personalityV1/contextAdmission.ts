@@ -148,13 +148,40 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
     }
   }
   const rawMapId=obj(rules.mapId);
+  // Current native MatchFacts retain decoded header fields through the exact
+  // immutable Recorded Events header section, rather than duplicating build
+  // into facts.source. Candidates alone never establish header provenance.
+  const headerSource=obj(facts.headerSource);
+  const retainedHeader=headerSource.section==='header.recordingHeader'&&
+    SHA.test(headerSource.recordedEventsSha256??'')&&
+    headerSource.recordedEventsSha256===factSource.recordedEventsSha256&&
+    obj(facts.coverage).headerCandidates==='AVAILABLE'&&
+    Array.isArray(source.artifactRefs)&&source.artifactRefs.some(ref=>
+      obj(ref).kind==='RECORDED_EVENTS'&&obj(ref).digest===headerSource.recordedEventsSha256);
+  // The canonical normalizer selects DE rms_map_id when legacy scenario.map_id
+  // is the literal zero placeholder. This is not a general "zero is absent"
+  // rule: Dark Age/resources zero remain real values, and nonzero conflicts
+  // must still deny the source context.
+  const legacyMapPlaceholder=retainedHeader&&header['scenario.map_id']===0&&
+    rawMapId.status==='DECODED'&&safe(rawMapId.value)&&rawMapId.value>0&&
+    rawMapId.sourcePath==='canonical.match.settings.mapId'&&
+    rawMapId.meaning==='parser_reported_header_field'&&
+    safe(header['de.rms_map_id'])&&header['de.rms_map_id']===rawMapId.value&&
+    factMap.mapId===rawMapId.value&&agrees(rawMapId.value,factMap.id);
+  const mapFieldsAgree=agrees(rawMapId.value,factMap.id)&&agrees(rawMapId.value,factMap.mapId)&&
+    agrees(rawMapId.value,header['de.rms_map_id'])&&
+    (legacyMapPlaceholder||agrees(rawMapId.value,header['scenario.map_id']));
   const sourceMapId=rawMapId.status==='DECODED'&&safe(rawMapId.value)&&
-    agrees(rawMapId.value,factMap.id)&&agrees(rawMapId.value,factMap.mapId)&&
-    agrees(rawMapId.value,header['de.rms_map_id'])&&agrees(rawMapId.value,header['scenario.map_id'])
+    mapFieldsAgree
       ?rawMapId.value:null;
   const mapId:AdmissionField<string>=trust&&sourceMapId!==null?ok(String(sourceMapId)):pending('MAP_ID_NOT_SOURCE_QUALIFIED');
-  const replayBuild=safe(factSource.gameBuild)&&factSource.gameBuild>0&&
-    agrees(factSource.gameBuild,header['de.build'])?factSource.gameBuild:null;
+  const canonicalBuildAbsent=factSource.gameBuild===undefined||factSource.gameBuild===null;
+  const headerBuild=safe(header['de.build'])&&header['de.build']>0?header['de.build']:null;
+  const replayBuild=canonicalBuildAbsent
+    ?retainedHeader?headerBuild:null
+    :safe(factSource.gameBuild)&&factSource.gameBuild>0&&
+      (header['de.build']===undefined||header['de.build']===null||
+        headerBuild===factSource.gameBuild)?factSource.gameBuild:null;
   const civEntries=trust&&replayBuild!==null&&
     factPlayers.every((p:Bag)=>safe(obj(obj(p).civilization).rawId)&&obj(obj(p).civilization).rawId>0);
   const civRoster=members.length?factPlayers.filter((p:Bag)=>
@@ -211,9 +238,7 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   // contradiction between decoded source facts or the exact-hash reviewed
   // original is an authority conflict, not merely a missing axis denominator.
   const mapContradiction=rawMapId.status==='DECODED'&&safe(rawMapId.value)&&
-    (!agrees(rawMapId.value,factMap.id)||!agrees(rawMapId.value,factMap.mapId)||
-     !agrees(rawMapId.value,header['de.rms_map_id'])||
-     !agrees(rawMapId.value,header['scenario.map_id']));
+    !mapFieldsAgree;
   const proofContradiction=!!reviewed&&reviewed.sourceHash===source.sourceHash&&
     ((replayBuild!==null&&reviewed.gameBuild!==replayBuild)||
      (sourceMapId!==null&&reviewed.mapId!==sourceMapId)||
@@ -239,6 +264,7 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
       source.mappingDigest,source.sourceHash,source.statisticsRevision,source.matchId,
       source.gameId,match.format,game.players,subjectPlayerId,subjectSlot,
       facts.source,facts.game,facts.map,facts.rules,facts.headerFieldCandidates,
+      facts.headerSource,facts.coverage,source.artifactRefs,
       facts.players,facts.diplomacy,
       statistics.scope,reviewed??null]),
     fields,missing,

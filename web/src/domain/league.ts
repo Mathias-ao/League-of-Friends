@@ -243,6 +243,7 @@ export interface LeagueRepository {
   myChronicleInvitations?():Promise<import('./privateChronicleInteractions').PrivateChronicleInvitations>;
   actOnChronicleInvitation?(input:import('./privateChronicleInteractions').ChronicleInvitationAction):Promise<{success:true;revision:number;state:string;idempotent:boolean}>;
   myPersonalityHistory?():Promise<import('./privateHistory').PrivatePersonalityHistory>;
+  myHonoursPreview?():Promise<import('./privateHonoursPreview').PrivateHonoursPreview>;
   myGameplayPreview?():Promise<import('./gameplayPreview').PrivateGameplayPreview>;
   mySocialProgression?():Promise<import('./privateProgression').PrivateProgression>;
   myGameplayCandidates?():Promise<import('./gameplayPreview').PrivateGameplayCandidates>;

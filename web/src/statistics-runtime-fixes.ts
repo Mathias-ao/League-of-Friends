@@ -27,7 +27,7 @@ function captureBestBattleValues(engine:SeasonStatisticsExperience,rows:SeasonAg
     const playerValues=new Map<string,BestBattlePresentation>();
     for(const metric of SEASON_METRICS){
       if(metric.kind!=='number'||!metric.record)continue;
-      const candidates=engine.games.flatMap(game=>{
+      const candidates=engine.games.filter(game=>game.eligible).flatMap(game=>{
         const player=game.players.find(candidate=>candidate.playerId===row.playerId);
         if(!player||!seasonMetricEligible(metric,game,player))return [];
         const value=player.values[metric.id],model=player.models[metric.id];

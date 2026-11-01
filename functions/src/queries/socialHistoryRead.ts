@@ -9,6 +9,7 @@ import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
 import {activeNativeStatisticsSource,NATIVE_SHARED_DELIVERY} from '../engines/activeNativeStatisticsSource.js';
 import {decodeNativeDetailArtifact,type NativeDetailArtifact} from '../engines/nativeStatisticsDetail.js';
 import {nativeSocialInput} from '../engines/nativeSocialInput.js';
+import {battleGameManifest} from '../engines/battleGameManifest.js';
 
 // Bounded Firestore query pages, not a 100-Battle lifetime ceiling. All pages
 // are re-enumerated after source reads to catch inserted/removed Matches.
@@ -47,7 +48,8 @@ const matchToken=(v:any)=>token({status:v?.status,opponentKind:v?.opponentKind,
 const gameToken=(v:any)=>token({status:v?.status,dispute:v?.activeResultDisputeId??null,
   statisticsId:v?.activeReplayStatisticsId??null,statisticsState:v?.replayStatisticsState??null,
   statisticsRevision:v?.replayStatisticsRevision??null,result:v?.canonicalResult??null,
-  resultBinding:v?.recordingResultBinding??null,players:v?.players??null,number:v?.gameNumber});
+  resultBinding:v?.recordingResultBinding??null,players:v?.players??null,number:v?.gameNumber,
+  resolutionReason:v?.resolutionReason??null});
 const sourceToken=(v:any)=>token({state:v?.state,sourceHash:v?.sourceHash,mapping:v?.playerMapping,
   matchFacts:v?.matchFacts,statistics:v?.statistics,recordedEvents:v?.recordedEvents,
   originalRecording:v?.originalRecording,extraction:v?.extraction,
@@ -133,8 +135,10 @@ export async function readSocialHistory(ownerPlayerId:string){
   const bucket=process.env.REPLAY_BUCKET?.trim()||(project?project+'.appspot.com':null);
   if(!bucket)throw new HttpsError('failed-precondition','Replay evidence bucket is not configured.');
   const chapters:any[]=[],excluded:any[]=[],names:Record<string,string>={};
+  const gameSets:Array<{ref:any;ids:string}>=[];
+  const gameIds=(docs:any[])=>JSON.stringify(docs.map(d=>d.id).sort());
   const duplicateSources=new Set<string>(),duplicateGuids=new Set<string>();
-  let order=0,unresolvedOutcomes=0,chronologyPending=0;
+  let order=0,unresolvedOutcomes=0,chronologyPending=0,manifestPendingBattles=0;
   for(const match of ordered){
     assertBudget();
     const data=match.data;
@@ -151,7 +155,8 @@ export async function readSocialHistory(ownerPlayerId:string){
         eventBlock=linkedEventStatus(event.data(),season.data(),data,match.doc.id);
       }
     }
-    const games=await match.doc.ref.collection('games').get();
+    const gameQuery=match.doc.ref.collection('games'),games=await gameQuery.get();
+    gameSets.push({ref:gameQuery,ids:gameIds(games.docs)});
     const orderedGames=games.docs.map((doc:any)=>({doc,data:doc.data()}));
     scannedGames+=orderedGames.length;
     if(scannedGames>CHRONICLE_QUERY_LIMITS.maxGames)
@@ -160,6 +165,9 @@ export async function readSocialHistory(ownerPlayerId:string){
        new Set(orderedGames.map((g:any)=>g.data.gameNumber)).size!==orderedGames.length)
       throw new HttpsError('failed-precondition','Game sequence is missing or duplicated; Chronicle cannot assign Game order.');
     orderedGames.sort((a:any,b:any)=>a.data.gameNumber-b.data.gameNumber);
+    const manifest=battleGameManifest(data,orderedGames.map((g:any)=>({...g.data,gameId:g.doc.id})));
+    const requiredGames=orderedGames.filter((g:any)=>manifest.knownGameIds.includes(g.doc.id));
+    if(!manifest.gameManifestComplete)manifestPendingBattles++;
     let admittedInMatch=false;
     const matchChapterStart=chapters.length;
     for(const game of orderedGames){
@@ -167,6 +175,7 @@ export async function readSocialHistory(ownerPlayerId:string){
       order++;
       checkpoints.push({ref:game.doc.ref,token:gameToken(game.data),type:'GAME'});
       const gameIdentity=match.doc.id+'/'+game.doc.id;
+      if(manifest.unusedGameIds.includes(game.doc.id))continue;
       const sourceId=game.data.activeReplayStatisticsId;
       if(!sourceId){
         // Planned Matches without an uploaded recording do not have historical
@@ -272,7 +281,7 @@ export async function readSocialHistory(ownerPlayerId:string){
         resultStatus:official.qualification==='OFFICIAL'?'OFFICIAL':'UNRESOLVED',
         sourceRevision:sourceId,accepted:true,review});
     }
-    const battleOutcome=acceptedBattleOutcome(data,orderedGames,chapters.slice(matchChapterStart));
+    const battleOutcome=manifest.gameManifestComplete?acceptedBattleOutcome(data,requiredGames,chapters.slice(matchChapterStart)):unresolvedBattleOutcome();
     for(const chapter of chapters.slice(matchChapterStart))chapter.battleOutcome=battleOutcome;
     if(admittedInMatch&&match.at===null)chronologyPending++;
   }
@@ -290,6 +299,8 @@ export async function readSocialHistory(ownerPlayerId:string){
         throw new HttpsError('aborted','Accepted Chronicle authority changed during the read; retry.');
     }
   }
+  for(const set of gameSets)if(gameIds((await set.ref.get()).docs)!==set.ids)
+    throw new HttpsError('aborted','Chronicle Game population changed during the read; retry.');
   const after=await allMatchPages(assertBudget);
   if(after.length!==matches.length||after.some((doc:any,i:number)=>doc.id!==matches[i].id))
     throw new HttpsError('aborted','Chronicle Match population changed during the read; retry.');
@@ -301,7 +312,7 @@ export async function readSocialHistory(ownerPlayerId:string){
   const chronicle=projectPlayerChronicle({ownerPlayerId,chapters,history,names});
   assertBudget();
   return {success:true,
-    status:excluded.length||chronologyPending?'PARTIAL':'AVAILABLE',
+    status:excluded.length||chronologyPending||manifestPendingBattles?'PARTIAL':'AVAILABLE',
     history,chronicle,names,excluded,
     coverage:{completedBattles:matches.filter(doc=>doc.data().status==='COMPLETED').length,
       scannedBattles:matches.length,scannedGames,
@@ -309,6 +320,7 @@ export async function readSocialHistory(ownerPlayerId:string){
       queryLimits:CHRONICLE_QUERY_LIMITS,
       readableAcceptedGames:chapters.length,excludedGames:excluded.length,
       unresolvedOutcomeGames:unresolvedOutcomes,chronologyPendingBattles:chronologyPending,
+      manifestPendingBattles,
       stageMeaning:'shadow_stages_from_ordered_official_sources_only',
-      opportunityCompleteness:excluded.length===0&&chronologyPending===0}};
+      opportunityCompleteness:excluded.length===0&&chronologyPending===0&&manifestPendingBattles===0}};
 }

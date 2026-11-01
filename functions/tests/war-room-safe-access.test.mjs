@@ -78,3 +78,50 @@ test("Closed season retains only the viewer's original challenge history, not a 
   assert.equal(result.viewerChallenges[0].challengeId,challengeId);
   assert.equal(result.viewer.canChallenge,false);
 });
+
+test("A later invitation retains the archived completed Battle, once per revision and only for its pair",async()=>{
+  const current={seasonId,pairId:"A_B",challengerPlayerId:"A",challengedPlayerId:"B",
+    status:"DECLINED",challengeRevision:2,createdAt:Timestamp.fromMillis(3000)};
+  const archived={...current,status:"COMPLETED",challengeRevision:1,matchId:"M-original",
+    createdAt:Timestamp.fromMillis(1000),completedAt:Timestamp.fromMillis(2000),
+    archivedAt:Timestamp.fromMillis(3000),winningPlayerIds:["A"]};
+  const initial=openData.filter(([path])=>path!=="challenges/"+challengeId).concat([
+    ["challenges/"+challengeId,current],
+    ["challenges/"+challengeId+"/history/R1",archived],
+    // Current revision must not be repeated as an archived record.
+    ["challenges/"+challengeId+"/history/R2",current],
+    // Never accept a duplicate alias, foreign pair/Season, or spoofed revision.
+    ["challenges/"+challengeId+"/history/duplicate-R1",archived],
+    ["challenges/"+challengeId+"/history/R3",{...archived,challengeRevision:3}],
+    ["challenges/"+challengeId+"/history/R4",{...archived,challengeRevision:4,challengedPlayerId:"C"}],
+    ["challenges/"+challengeId+"/history/R5",{...archived,challengeRevision:5,seasonId:"OTHER"}],
+  ]);
+  const db=memoryFirestore(initial),before=[...db.entries()];
+  for(const uid of ["uid-a","uid-b"]){
+    const result=await getWarRoom.run(as(uid));
+    const rows=result.viewerChallenges.filter(x=>x.challengeId===challengeId);
+    assert.deepEqual(rows.map(x=>x.challengeRevision),[2,1]);
+    assert.deepEqual(rows.map(x=>x.challengeEntryId),[challengeId+":R2",challengeId+":R1"]);
+    assert.deepEqual(rows.map(x=>x.historyState),["CURRENT","ARCHIVED"]);
+    assert.equal(rows[1].matchId,"M-original");
+    assert.equal(rows[1].status,"COMPLETED");
+    assert.equal(rows[1].currentChallengeStatus,"DECLINED");
+    assert.equal(rows[1].currentChallengeRevision,2);
+    assert.equal(rows[1].archivedAt,"1970-01-01T00:00:03.000Z");
+    assert.ok(rows.every(x=>x.eligibilityReview==="PENDING_SOURCE"&&!x.canRespond));
+    assert.deepEqual(result.leaderboard,[]);
+  }
+  const outsider=await getWarRoom.run(as("uid-c"));
+  assert.equal(outsider.viewerChallenges.some(x=>x.challengeId===challengeId),false);
+  assert.deepEqual([...db.entries()],before,"History reads cannot restore points or mutate source records");
+  for(const override of [{seasonId:"OTHER"},{challengedPlayerId:"C"},{challengerPlayerId:"C"},
+    {challengeRevision:1.5},{challengeRevision:2}]){
+    memoryFirestore(initial.map(([path,value])=>path==="challenges/"+challengeId+"/history/R1"
+      ?[path,{...value,...override}]:[path,value]));
+    for(const uid of ["uid-a","uid-b"]){
+      const result=await getWarRoom.run(as(uid));
+      assert.equal(result.viewerChallenges.some(x=>x.matchId==="M-original"),false,
+        "Foreign or malformed archived authorization is withheld independently of current pair access");
+    }
+  }
+});

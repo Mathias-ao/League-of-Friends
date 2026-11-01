@@ -5,6 +5,13 @@ export interface PrivateChronicleInvitation {
   state:'OFFERED'|'DEFERRED'|'DECLINED'|'SUBMITTED'|'WITHDRAWN';
   opportunityRevision:string;family:string;counterpartPlayerId:string;
   questionContext:string;choices:string[];sourceCurrent:boolean;
+  /** Optional for older servers. Current service only establishes the selected
+   * canonical Game; an incident account/time remain explicitly unavailable. */
+  context?:{
+    version:'AOF_CHRONICLE_INVITATION_CONTEXT_V1';status:'CURRENT_GAME_ONLY'|'PENDING';
+    battleId:string;gameId:string;opportunityRevision:string;gameNumber:number|null;
+    incidentAccount:null;recordingAtMs:null;missing:string[];
+  };
   speaker:null|{authorPlayerId:string;choiceId:string;qualification:'PENDING';presentation:'ATTRIBUTED_SPEAKER_NOT_OBJECTIVE_NARRATOR'};
   effects:{relationshipDelta:null;officialWrites:false;negativeForSilence:false};
 }

@@ -3,7 +3,7 @@ export interface PrivatePersonalityHistory {
   version:'AOF_INT_B_PRIVATE_HISTORY_1';contract:'AOF_SOCIAL_V1_SHARED_1';visibility:'OWNER_ONLY';ownerPlayerId:string;
   inputDigest:string;status:'CURRENT_INPUTS'|'PENDING_INPUTS';
   coverage:{completeEnumeration:true;scannedLeagueBattles:number;ownBattles:number;ownGames:number;currentSources:number;measuredIndependentBattles:number};
-  sources:SourceSnapshot[];pending:Array<{battleId:string;gameId:string;reason:string}>;
+  sources:SourceSnapshot[];pending:Array<{battleId:string;gameId:string|null;reason:string}>;
   personality:{publication:'PRIVATE_PREVIEW_ONLY';battleFeatures:BattleFeature[];personalityProfile:PersonalityProfile;
     contextAdmission:'PENDING'|'SOURCE_QUALIFIED';calibration:'UNCONFIGURED'|'PROPOSED'};
   social:{status:'PENDING';reason:string};effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};

@@ -99,6 +99,7 @@ export {adminRejectAIWarmup} from './commands/events/verifyAIWarmup.js';
 export {getSocialEvidenceV1a} from "./queries/getSocialEvidenceV1a.js";
 export {getMySocialExperience} from './queries/getMySocialExperience.js';
 export {getMyPersonalityHistory} from './queries/getMyPersonalityHistory.js';
+export {getMyHonoursPreview} from './queries/getMyHonoursPreview.js';
 export {getMyPrivateChronicle} from './queries/getMyPrivateChronicle.js';
 export {getMyGameplayPreview,getMyGameplayCandidates} from './queries/getMyGameplayPreview.js';
 export {getMySocialProgression} from './queries/getMySocialProgression.js';

@@ -300,3 +300,106 @@ test('same Game ID in two Matches, duplicate POVs and multiple Games remain sour
   assert.throws(()=>buildPersonalityBattles([originalOne,{...originalOne,sourceHash:sha(8)}],null),
     /CONFLICTING_AUTHORITY_REVISION/);
 });
+
+// Controlled adapter envelopes shaped exactly like the two unchanged native
+// originals used by personality-original-battles-emulator.mjs. The genuine
+// AUTO/callable witness is separate; these are nearest field-level negatives.
+function nativeHeaderShape(){
+  const x=original(),facts=x.statistics.matchFacts,events=sha(401);
+  delete facts.source.gameBuild;facts.source.recordedEventsSha256=events;
+  x.source.artifactRefs=[{kind:'RECORDED_EVENTS',digest:events,generation:'7'}];
+  facts.headerSource={recordedEventsSha256:events,section:'header.recordingHeader'};
+  facts.coverage={headerCandidates:'AVAILABLE'};
+  facts.headerFieldCandidates={'de.build':185872,'de.rms_map_id':9,'scenario.map_id':0,
+    'de.starting_age_id':0,'de.starting_resources_id':0};
+  facts.map={mapId:9};facts.rules.mapId={value:9,status:'DECODED',
+    sourcePath:'canonical.match.settings.mapId',meaning:'parser_reported_header_field'};
+  const p={...proof(),gameBuild:185872,mapId:9};
+  return {x,p};
+}
+test('current native retained header admits build and DE map while preserving literal legacy scenario zero',()=>{
+  const {x,p}=nativeHeaderShape(),r=admit(x,p);
+  assert.equal(r.status,'ADMITTED');assert.equal(r.fields.mapId.value,'9');
+  assert.equal(r.fields.civilizationOpportunityKey.value,'BUILD_185872_CIV_2');
+  assert.equal(x.statistics.matchFacts.headerFieldCandidates['scenario.map_id'],0,'never rewrite retained facts');
+  assert.equal(x.statistics.matchFacts.source.gameBuild,undefined,'never manufacture source fields');
+  x.statistics.matchFacts.source.gameBuild=null;
+  assert.equal(admit(x,p).status,'ADMITTED','explicit null is absent build, not a conflicting value');
+  x.source.outcome={qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null};
+  assert.equal(admit(x,p).status,'ADMITTED','behavior has no invented result requirement');
+});
+test('legacy map zero needs exact decoded DE/canonical evidence and retained header provenance',()=>{
+  for(const change of [
+    f=>{f.headerFieldCandidates['scenario.map_id']=17;},
+    f=>{f.headerFieldCandidates['scenario.map_id']='0';},
+    f=>{f.headerFieldCandidates['de.rms_map_id']=17;},
+    f=>{f.headerFieldCandidates['de.rms_map_id']=0;},
+    f=>{delete f.headerFieldCandidates['de.rms_map_id'];},
+    f=>{f.headerFieldCandidates['de.rms_map_id']='9';},
+    f=>{f.map.mapId=17;},f=>{f.map.id=17;},
+    f=>{f.rules.mapId.value='9';},f=>{f.rules.mapId.value=0;},f=>{f.rules.mapId.status='UNKNOWN';},
+    f=>{delete f.rules.mapId.sourcePath;},f=>{f.rules.mapId.meaning='display_label';},
+    f=>{delete f.headerSource;},f=>{f.headerSource.section='untrusted';},
+    f=>{f.coverage.headerCandidates='UNAVAILABLE';},
+    f=>{f.headerSource.recordedEventsSha256=sha(402);},
+    f=>{f.source.recordedEventsSha256=sha(402);},
+  ]){
+    const {x,p}=nativeHeaderShape();change(x.statistics.matchFacts);
+    const r=admit(x,p);assert.equal(r.context,null);assert.equal(r.fields.mapId.value,null);
+  }
+  const {x,p}=nativeHeaderShape();x.source.artifactRefs[0].digest=sha(403);
+  assert.equal(admit(x,p).fields.mapId.value,null);
+  for(const refs of [undefined,null,{},[],[null],['invalid']]){
+    const {x,p}=nativeHeaderShape();x.source.artifactRefs=refs;
+    let r;assert.doesNotThrow(()=>{r=admit(x,p);});assert.equal(r.context,null);
+  }
+});
+test('header build fallback refuses missing provenance, malformed build and explicit canonical conflicts',()=>{
+  for(const change of [
+    f=>{delete f.headerSource;},f=>{delete f.coverage.headerCandidates;},
+    f=>{f.headerSource.recordedEventsSha256=sha(402);},
+    f=>{f.source.recordedEventsSha256=sha(402);},
+    f=>{delete f.headerFieldCandidates['de.build'];},
+    ...[0,-1,1.5,Number.MAX_SAFE_INTEGER+1,'185872',null,{},true].map(value=>f=>{f.headerFieldCandidates['de.build']=value;}),
+    ...[0,-1,1.5,'185872',{},true,180059].map(value=>f=>{f.source.gameBuild=value;}),
+  ]){
+    const {x,p}=nativeHeaderShape();change(x.statistics.matchFacts);
+    const r=admit(x,p);assert.equal(r.context,null);assert.equal(r.fields.civilizationOpportunityKey.value,null);
+  }
+  const noEvents=nativeHeaderShape();noEvents.x.source.artifactRefs=[];
+  assert.equal(admit(noEvents.x,noEvents.p).fields.civilizationOpportunityKey.value,null);
+  const explicit=nativeHeaderShape();explicit.x.statistics.matchFacts.source.gameBuild=185872;
+  assert.equal(admit(explicit.x,explicit.p).status,'ADMITTED');
+  explicit.x.statistics.matchFacts.headerFieldCandidates['de.build']=180059;
+  assert.equal(admit(explicit.x,explicit.p).fields.civilizationOpportunityKey.value,null);
+  const unsupported=nativeHeaderShape();unsupported.p.gameBuild=185873;
+  assert.equal(admit(unsupported.x,unsupported.p).behaviorContext,null,'an unreviewed build cannot borrow the pinned source proof');
+});
+
+test('native header provenance changes revision the pure admission receipt without changing source identity',()=>{
+  const {x,p}=nativeHeaderShape(),before=admit(x,p);
+  assert.equal(admit(structuredClone(x),p).provenanceDigest,before.provenanceDigest);
+  for(const change of [
+    y=>{delete y.statistics.matchFacts.headerSource;},
+    y=>{y.statistics.matchFacts.headerSource.recordedEventsSha256=sha(402);},
+    y=>{y.statistics.matchFacts.coverage.headerCandidates='UNAVAILABLE';},
+    y=>{y.source.artifactRefs[0].digest=sha(402);},
+  ]){
+    const corrected=structuredClone(x);change(corrected);const after=admit(corrected,p);
+    assert.equal(corrected.source.sourceHash,x.source.sourceHash);
+    assert.equal(after.context,null);assert.notEqual(after.provenanceDigest,before.provenanceDigest);
+  }
+});
+
+test('legacy explicit canonical build keeps unavailable header compatibility but rejects a contradictory header',()=>{
+  for(const value of [undefined,null]){
+    const x=original(),p=proof(x);x.statistics.matchFacts.headerFieldCandidates={'de.build':value};
+    assert.equal(admit(x,p).status,'ADMITTED');
+    assert.equal(admit(x,p).fields.civilizationOpportunityKey.value,'BUILD_180059_CIV_2');
+  }
+  for(const value of [0,-1,1.5,'180059',185872]){
+    const x=original(),p=proof(x);x.statistics.matchFacts.headerFieldCandidates={'de.build':value};
+    assert.equal(admit(x,p).context,null);
+    assert.equal(admit(x,p).fields.civilizationOpportunityKey.value,null);
+  }
+});

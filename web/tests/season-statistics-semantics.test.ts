@@ -127,6 +127,25 @@ test('explicit authoritative missing sibling manifest prevents invented complete
   assert.equal(e.aggregate()[0].values.buildOrderExecution.completeBattles,0);
   assert.equal(e.aggregate()[0].values.buildOrderExecution.partialBattles,1);
 });
+test('transport manifest keeps absent required series slots partial without suppressing other complete Battles',()=>{
+  const complete=Array.from({length:5},(_,index)=>game('battle'+index));
+  for(const source of complete){amount(source,'a','buildOrderExecution',90);amount(source,'b','buildOrderExecution',70);}
+  const pending=game('battle-pending');pending.knownGameIds=['G1'];pending.gameManifestComplete=false;
+  amount(pending,'a','buildOrderExecution',100);amount(pending,'b','buildOrderExecution',20);
+  const engine=new SeasonStatisticsExperience([...complete,pending]);
+  const value=engine.aggregate()[0].values.buildOrderExecution;
+  assert.equal(value.completeBattles,5);assert.equal(value.partialBattles,1);assert.equal(value.value,90);
+  assert.deepEqual(engine.leaders('buildOrderExecution'),['a']);
+  assert.deepEqual(new SeasonStatisticsExperience([...complete.slice(0,4),pending]).leaders('buildOrderExecution'),[]);
+});
+test('transport manifest excludes only proved unused terminal Games from completed BO3 sampling',()=>{
+  const first=game('battle1','G1'),second=game('battle1','G2');
+  for(const source of [first,second]){source.knownGameIds=['G1','G2'];source.unusedGameIds=['G3'];source.gameManifestComplete=true;}
+  assert.equal(new SeasonStatisticsExperience([first,second]).aggregate()[0].values.apm.completeBattles,1);
+  for(const source of [first,second]){source.knownGameIds=['G1','G2','G3'];source.unusedGameIds=[];}
+  assert.equal(new SeasonStatisticsExperience([first,second]).aggregate()[0].values.apm.completeBattles,0,
+    'an unverified NO_CONTEST terminal identity remains required, not silently skipped');
+});
 test('within-Battle APM uses observed duration, raid response pools qualified episode evidence',()=>{
   const short=game('battle1','G1'),long=game('battle1','G2');
   short.durationMs=10*60_000;long.durationMs=100*60_000;

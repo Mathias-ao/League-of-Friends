@@ -4,6 +4,7 @@ import {requireAdmin,requireLeaguePlayer} from '../auth/authorization.js';
 import {db} from '../config/firebase.js';
 import {callableOptions} from '../config/runtime.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
+import {battleGameManifest} from '../engines/battleGameManifest.js';
 import {selectRareChronicleProposals,type CurrentChronicleBattle,type ReviewedTurningPoint,
   type ApprovedRareSelectionPolicy} from '../engines/chronicleRareSelector.js';
 import {invitationSlotId,planInvitationOffer,transitionInvitation,type InvitationSlot,
@@ -49,7 +50,21 @@ const slotPath=(battleId:string,actorId:string)=>
   'matches/'+battleId+'/socialV1InvitationSlots/'+invitationSlotId(battleId,actorId);
 const note=(v:unknown)=>typeof v==='string'&&v.length<=1000&&!/[\u0000-\u0008]/.test(v);
 const currentToken=(v:any)=>bindingDigest(v??null);
-const visibility=(slot:Bag)=>{
+/** The existing reviewed moment has no admitted factual excerpt or timestamp.
+ * Expose only its already-fenced canonical Game identity. Neither a family
+ * label, reviewer prose nor a command request supplies the missing account. */
+export function chronicleInvitationContext(slot:Bag,currentGame:Bag|null){
+  const gameNumber=currentGame&&currentGame.activeReplayStatisticsId===slot.selected.sourceHash&&
+    Number.isSafeInteger(currentGame.gameNumber)&&
+    currentGame.gameNumber>0?currentGame.gameNumber:null;
+  return {version:'AOF_CHRONICLE_INVITATION_CONTEXT_V1' as const,
+    status:gameNumber!==null?'CURRENT_GAME_ONLY' as const:'PENDING' as const,
+    battleId:slot.battleId,gameId:slot.selected.gameId,
+    opportunityRevision:slot.currentOpportunityRevision,gameNumber,
+    incidentAccount:null,recordingAtMs:null,
+    missing:['SOURCE_QUALIFIED_INCIDENT_ACCOUNT','SOURCE_QUALIFIED_INCIDENT_TIME']};
+}
+const visibility=(slot:Bag,currentGame:Bag|null=null)=>{
   const speaker=slot.judgment?
     {authorPlayerId:slot.respondentPlayerId,counterpartPlayerId:slot.selected.counterpartPlayerId,
       battleId:slot.battleId,gameId:slot.selected.gameId,
@@ -60,6 +75,7 @@ const visibility=(slot:Bag)=>{
     revision:slot.revision,state:slot.state,opportunityRevision:slot.currentOpportunityRevision,
     family:slot.selected.family,counterpartPlayerId:slot.selected.counterpartPlayerId,
     questionContext:'Optional perspective on a separately recorded Battle moment.',
+    context:chronicleInvitationContext(slot,currentGame),
     choices:CHOICES[slot.selected.family as JudgmentFamily],speaker,
     // Private notes and audit are never in the standard private invite list;
     // author can explicitly retrieve their own submission detail.
@@ -85,7 +101,7 @@ async function cohort(input:Input){
       [orderRows[0].order!.event,orderRows[0].order!.battle]:null;
     const scheduleRevisions:Array<{gameId:string;revision:string}>=orderRows.map(o=>({gameId:o.gameId,revision:o.revision}))
       .sort((a,b)=>a.gameId.localeCompare(b.gameId));
-    const evidenceComplete=b.gameIds.length>0&&b.sources.length===b.gameIds.length&&
+    const evidenceComplete=b.gameManifestComplete!==false&&b.gameIds.length>0&&b.sources.length===b.gameIds.length&&
       b.sources.every(s=>s.source.roster.some(p=>p.playerId===input.actor.playerId));
     const battle:CurrentChronicleBattle={battleId:b.battleId,
       playerIds:match.participants.map((p:Bag)=>p.playerId),
@@ -139,7 +155,11 @@ function sameApprovedSchedule(battleId:string,match:Bag,event:Bag|null,plan:Bag|
   planId:string|null,games:Array<{gameId:string;game:Bag}>,expected:unknown):boolean{
   if(!Array.isArray(expected)||!expected.length)return false;
   try{
-    const rows=deriveSocialScheduleOrders([{battleId,match,event,plan,planId,games}]);
+    const manifest=battleGameManifest(match,games.map(g=>({...g.game,gameId:g.gameId,
+      gameNumber:g.game.gameNumber,status:g.game.status})));
+    if(!manifest.gameManifestComplete)return false;
+    const requiredGames=games.filter(g=>manifest.knownGameIds.includes(g.gameId));
+    const rows=deriveSocialScheduleOrders([{battleId,match,event,plan,planId,games:requiredGames}]);
     const revisions=rows.map(o=>({gameId:o.gameId,revision:o.revision}))
       .sort((a,b)=>a.gameId.localeCompare(b.gameId));
     return rows.length===expected.length&&rows.every(o=>o.status==='ORDERED')&&
@@ -160,7 +180,8 @@ async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
  // All selected Battle Games, not just the selected Game: a new second Game,
  // withdrawal, remap, authoritative result or changed GUID must revoke eligibility.
  const gs=await tx.get(mr.collection('games').orderBy('__name__').limit(65));
- if(gs.size!==sourceRows.length||gs.size>64)throw stale();
+ const manifest=battleGameManifest(match,gs.docs.map((g:any)=>({...g.data(),gameId:g.id})));
+ if(!manifest.gameManifestComplete||manifest.knownGameIds.length!==sourceRows.length||gs.size>64)throw stale();
   const planId=event.data()?.approvedMatchPlanId;
   const plan=typeof planId==='string'&&planId?
     await tx.get(input.db.doc('events/'+match.eventId+'/matchPlans/'+planId)):null;
@@ -169,6 +190,7 @@ async function verifyCurrent(tx:any,input:Input,selected:Bag,sourceRows:any[]){
       gs.docs.map((g:any)=>({gameId:g.id,game:g.data()})),selected.scheduleRevisions))throw stale();
   const byId=new Map(sourceRows.map(s=>[s.source.gameId,s]));
  for(const g of gs.docs){
+   if(manifest.unusedGameIds.includes(g.id))continue;
    const expected=byId.get(g.id);
    if(!expected||currentToken(g.data())!==currentToken(expected.game)||
       !g.data()?.players?.some((p:Bag)=>p.playerId===input.actor.playerId))throw stale();
@@ -236,7 +258,8 @@ export async function offerMyChronicleInvitation(input:Input,r:Bag){
    return {created:true,slot};
  });
  if(!plan.created)return {offered:false,reason:'BATTLE_SLOT_ALREADY_CONSUMED'};
- return {offered:true,invitation:visibility(plan.slot)};
+ return {offered:true,invitation:visibility(plan.slot,
+   savedSources.find(s=>s.source.gameId===plan.slot.selected.gameId)?.game??null)};
 }
 
 /** Ordinary respondent operations, never direct Firestore client writes.
@@ -448,7 +471,7 @@ export async function readMyChronicleInvitations(input:Input,r:Bag){
       current=sameApprovedSchedule(m.id,match,event.data()??null,plan?.data()??null,
         planId??null,games.docs.map((g:any)=>({gameId:g.id,game:g.data()})),data.selected.scheduleRevisions);
     }
-    invitations.push({...visibility(data),sourceCurrent:!!current});
+    invitations.push({...visibility(data,current?game.data():null),sourceCurrent:!!current});
  }
  return {version:CHRONICLE_INTERACTION_VERSION,visibility:'OWNER_ONLY',
    ownerPlayerId:input.actor.playerId,invitations,officialEffects:[],
