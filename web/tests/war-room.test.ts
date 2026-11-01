@@ -57,8 +57,11 @@ test('newcomer sees closed and pending states, unavailable standings and no chal
   const data=fake(),ui=await mount(data);
   try{
     assert.match(document.body.textContent!,/The doors remain closed/);
+    assert.match(document.body.textContent!,/ELIGIBILITYClosed/);
     assert.match(document.body.textContent!,/No current challenge permission/);
-    assert.match(document.body.textContent!,/Standings awaiting verification/);
+    assert.match(document.body.textContent!,/Record of challenges/);
+    assert.match(document.body.textContent!,/0 distinct Battle links retained/);
+    assert.doesNotMatch(document.body.textContent!,/War Room Points|War Room standings/i);
     assert.equal(document.body.textContent!.includes('Issue challenge'),false);
     assert.equal(document.body.textContent!.includes('Accept'),false);
     data.status='PENDING_SOURCE';
@@ -79,7 +82,7 @@ test('mock server-verified reciprocal stage enables send; server correction disa
     assert.equal(mayIssueWarChallenge(data),true);
     await ui.click('Issue challenge');
     assert.deepEqual(sent,['B']);
-    assert.match(document.body.textContent!,/Awaiting verification/);
+    assert.match(document.body.textContent!,/Source pending/);
     assert.equal(document.body.textContent!.includes('Issue challenge'),false);
   }finally{await ui.close();}
 });
@@ -105,11 +108,14 @@ test('incoming invitation actions require individual server permission; accepted
 test('source correction keeps accepted Battle visible, blocks fresh response and hides unverified points',async()=>{
   const data=fake('B');data.status='PENDING_SOURCE';
   data.viewerChallenges=[challenge('COMPLETED',{matchId:'M1',eligibilityReview:'INVALIDATED'})];
+  data.standingsStatus='VERIFIED';
   data.leaderboard=[{rank:1,player:player('B','Bob'),warRoomPoints:99}];
   const ui=await mount(data,{id:'B'});
   try{
     assert.match(document.body.textContent!,/historical Battle retained/);
-    assert.equal(document.body.textContent!.includes('99'),false);
+    assert.equal(document.body.textContent!.includes('99'),false,'even a purportedly verified legacy score is not an approved challenge reward');
+    assert.match(document.body.textContent!,/1 distinct Battle link retained/);
+    assert.doesNotMatch(document.body.textContent!,/War Room Points|War Room standings/i);
     assert.equal(document.body.textContent!.includes('Accept'),false);
     await ui.click('View Battle');
     assert.deepEqual(ui.opened,['M1']);
@@ -194,6 +200,7 @@ test('archived completed revision keeps its Battle beside a later declined invit
   try{
     assert.equal(document.querySelectorAll('.war-entry').length,2);
     assert.match(document.body.textContent!,/Archived invitation · revision 1/);
+    assert.match(document.body.textContent!,/1 distinct Battle link retained · 1 archived invitation/);
     assert.match(document.body.textContent!,/Current invitation: revision 2 · Declined/);
     assert.match(document.body.textContent!,/Original qualification pending review/);
     assert.match(document.body.textContent!,/No open invitations/);
@@ -210,6 +217,7 @@ test('an archived pending revision belongs to history and cannot count as an inc
   const ui=await mount(data,{id:'B'});
   try{
     assert.match(document.body.textContent!,/No open invitations/);
+    assert.match(document.body.textContent!,/0 distinct Battle links retained · 1 archived invitation/);
     assert.equal(document.querySelectorAll('.war-entry').length,1);
     assert.equal([...document.querySelectorAll('button')].some(button=>button.textContent==='Accept'),false);
   }finally{await ui.close();}

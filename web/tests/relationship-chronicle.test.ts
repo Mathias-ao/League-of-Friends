@@ -77,6 +77,7 @@ test('Chronicle is one viewer-owned book and profile entry points select the mat
     assert.ok(mblBookmark);
     await act(async()=>mblBookmark!.click());
     assert.ok(document.querySelector('.chronicle-empty-leaf'));
+    assert.match(document.querySelector('.chronicle-empty-leaf')?.textContent??'',/ordinary Battle can receive a brief factual entry/);
     assert.equal(document.querySelectorAll('.chronicle-bookmark').length,snapshot.players.length);
   }finally{
     await act(async()=>root.unmount());
