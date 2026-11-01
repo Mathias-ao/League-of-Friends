@@ -16,20 +16,6 @@ interface SeasonDocument {
   } | null;
 }
 
-interface RivalryDocument {
-  pairId?: string;
-  playerOneId?: string;
-  playerTwoId?: string;
-  encounters?: number;
-  playerOneWins?: number;
-  playerTwoWins?: number;
-  noPairWinnerEncounters?: number;
-  rivalryScore?: number;
-  status?: string;
-  contributingMatchIds?: string[];
-  updatedAt?: Timestamp | null;
-}
-
 interface ChallengeDocument {
   challengeRevision?: number;
   seasonId?: string | null;
@@ -40,125 +26,119 @@ interface ChallengeDocument {
   createdAt?: Timestamp | null;
   respondedAt?: Timestamp | null;
   completedAt?: Timestamp | null;
-  sourceRivalryId?: string | null;
+  archivedAt?: Timestamp | null;
   matchId?: string | null;
   winningPlayerIds?: string[];
 }
 
 export const getWarRoom = onCall(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
-  const leagueStateSnapshot = await db.collection(collections.leagueState).doc(leagueStateDocumentId).get();
-  const activeSeasonId = leagueStateSnapshot.exists && typeof leagueStateSnapshot.data()?.activeSeasonId === "string"
-    ? leagueStateSnapshot.data()!.activeSeasonId as string
+  const state = await db.collection(collections.leagueState).doc(leagueStateDocumentId).get();
+  const activeSeasonId = state.exists && typeof state.data()?.activeSeasonId === "string"
+    ? state.data()!.activeSeasonId as string
     : null;
 
-  if (!activeSeasonId) {
-    return {
-      schemaVersion: "WAR_ROOM_V1",
-      generatedAt: new Date().toISOString(),
-      visible: false,
-      status: "CLOSED",
-      activeSeason: null,
-      leaderboard: [],
+  const empty = {
+    schemaVersion: "WAR_ROOM_V1",
+    generatedAt: new Date().toISOString(),
+    visible: true,
+    status: "CLOSED",
+    activeSeason: null,
+    qualification: { status: "PENDING_SOURCE", canIssueChallenges: false, canRespond: false },
+    standingsStatus: "PENDING_REVIEW",
+    leaderboard: [],
+    rivalries: [],
+    viewer: {
+      playerId: actor.playerId,
+      canChallenge: false,
+      qualifiedRivals: [],
       rivalries: [],
-      viewer: { playerId: actor.playerId, canChallenge: false, qualifiedRivals: [] },
-      challenges: [],
-      viewerChallenges: [],
-    };
-  }
+      pendingIncomingChallenge: null,
+    },
+    challenges: [],
+    viewerChallenges: [],
+  };
+  if (!activeSeasonId) return { ...empty, visible: false };
 
+  // Challenge history is private to its two participants. Do not return the
+  // previous season-wide challenges collection to every active member.
   const seasonRef = db.collection(collections.seasons).doc(activeSeasonId);
-  const [seasonSnapshot, rivalriesSnapshot, challengesSnapshot, standingsSnapshot, playersSnapshot] = await Promise.all([
+  const [seasonSnapshot, sent, received, playersSnapshot] = await Promise.all([
     seasonRef.get(),
-    seasonRef.collection("rivalries").get(),
-    db.collection(collections.challenges).where("seasonId", "==", activeSeasonId).get(),
-    seasonRef.collection("warRoomStandings").get(),
+    db.collection(collections.challenges).where("challengerPlayerId", "==", actor.playerId).get(),
+    db.collection(collections.challenges).where("challengedPlayerId", "==", actor.playerId).get(),
     db.collection(collections.players).get(),
   ]);
-
   const season = seasonSnapshot.exists ? seasonSnapshot.data() as SeasonDocument : {};
   const players = playerMap(playersSnapshot);
-  const open = season.warRoom?.status === "OPEN";
+  const docs = new Map([...sent.docs, ...received.docs]
+    .filter(document => (document.data() as ChallengeDocument).seasonId === activeSeasonId)
+    .filter(document => {
+      const row = document.data() as ChallengeDocument;
+      return row.challengerPlayerId === actor.playerId || row.challengedPlayerId === actor.playerId;
+    })
+    .map(document => [document.id, document]));
 
-  const rivalries = rivalriesSnapshot.docs
-    .map((document) => ({ pairId: document.id, ...document.data() as RivalryDocument }))
-    .map((rivalry) => ({
-      pairId: rivalry.pairId,
-      playerOne: publicPlayer(rivalry.playerOneId ?? "UNKNOWN", players.get(rivalry.playerOneId ?? "")),
-      playerTwo: publicPlayer(rivalry.playerTwoId ?? "UNKNOWN", players.get(rivalry.playerTwoId ?? "")),
-      encounters: Number(rivalry.encounters ?? 0),
-      playerOneWins: Number(rivalry.playerOneWins ?? 0),
-      playerTwoWins: Number(rivalry.playerTwoWins ?? 0),
-      noPairWinnerEncounters: Number(rivalry.noPairWinnerEncounters ?? 0),
-      rivalryScore: Number(rivalry.rivalryScore ?? 0),
-      status: rivalry.status ?? "EMERGING",
-      contributingMatchIds: Array.isArray(rivalry.contributingMatchIds) ? rivalry.contributingMatchIds : [],
-      updatedAt: iso(rivalry.updatedAt),
-    }))
-    .sort((left, right) => right.rivalryScore - left.rivalryScore || left.pairId.localeCompare(right.pairId));
-
-  const viewerRivalries = rivalries.filter((rivalry) => (
-    rivalry.playerOne.playerId === actor.playerId || rivalry.playerTwo.playerId === actor.playerId
-  ));
-  const qualifiedRivals = viewerRivalries
-    .filter((rivalry) => rivalry.status === "QUALIFIED")
-    .map((rivalry) => rivalry.playerOne.playerId === actor.playerId ? rivalry.playerTwo : rivalry.playerOne);
-
-  const leaderboard = standingsSnapshot.docs
-    .map((document) => ({
-      player: publicPlayer(document.id, players.get(document.id)),
-      warRoomPoints: Number(document.data()?.warRoomPoints ?? 0),
-    }))
-    .sort((left, right) => right.warRoomPoints - left.warRoomPoints || left.player.steamName.localeCompare(right.player.steamName))
-    .map((standing, index) => ({ rank: index + 1, ...standing }));
-
-  const challenges = challengesSnapshot.docs
-    .map((document) => ({ challengeId: document.id, ...document.data() as ChallengeDocument }))
-    .map((challenge) => ({
-      challengeId: challenge.challengeId,
-      challengeRevision: Number(challenge.challengeRevision ?? 1),
+  const entries = (await Promise.all([...docs.values()].map(async document => {
+    const current = document.data() as ChallengeDocument;
+    const currentRevision = Number(current.challengeRevision ?? 1);
+    const history = await document.ref.collection("history").get();
+    // History is not a source of new eligibility. Read only canonical prior
+    // revisions of this authorized pair; foreign/duplicate aliases are ignored.
+    const archived = history.docs.filter(row => {
+      const value = row.data() as ChallengeDocument;
+      const revision = Number(value.challengeRevision ?? 1);
+      return Number.isSafeInteger(revision) && revision > 0 && revision < currentRevision &&
+        row.id === `R${revision}` && value.seasonId === activeSeasonId &&
+        (value.challengerPlayerId === actor.playerId || value.challengedPlayerId === actor.playerId) &&
+        ((value.challengerPlayerId === current.challengerPlayerId && value.challengedPlayerId === current.challengedPlayerId) ||
+          (value.challengerPlayerId === current.challengedPlayerId && value.challengedPlayerId === current.challengerPlayerId));
+    }).map(row => ({challenge: row.data() as ChallengeDocument, archived: true}));
+    return [{challenge: current, archived: false}, ...archived].map(entry => ({
+      ...entry, challengeId: document.id, currentRevision, currentStatus: current.status ?? "UNKNOWN",
+    }));
+  }))).flat();
+  const viewerChallenges = entries.map(entry => {
+    const challenge = entry.challenge;
+    const revision = Number(challenge.challengeRevision ?? 1);
+    return {
+      challengeId: entry.challengeId,
+      challengeEntryId: `${entry.challengeId}:R${revision}`,
+      challengeRevision: revision,
+      historyState: entry.archived ? "ARCHIVED" : "CURRENT",
+      currentChallengeRevision: entry.currentRevision,
+      currentChallengeStatus: entry.currentStatus,
+      archivedAt: entry.archived ? iso(challenge.archivedAt) : null,
       pairId: challenge.pairId ?? null,
       challenger: publicPlayer(challenge.challengerPlayerId ?? "UNKNOWN", players.get(challenge.challengerPlayerId ?? "")),
       challenged: publicPlayer(challenge.challengedPlayerId ?? "UNKNOWN", players.get(challenge.challengedPlayerId ?? "")),
       status: challenge.status ?? "UNKNOWN",
-      sourceRivalryId: challenge.sourceRivalryId ?? null,
       matchId: challenge.matchId ?? null,
-      winners: (challenge.winningPlayerIds ?? []).map((playerId) => publicPlayer(playerId, players.get(playerId))),
+      winners: (challenge.winningPlayerIds ?? []).map(playerId => publicPlayer(playerId, players.get(playerId))),
       createdAt: iso(challenge.createdAt),
       respondedAt: iso(challenge.respondedAt),
       completedAt: iso(challenge.completedAt),
-    }))
-    .sort((left, right) => String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")) || left.challengeId.localeCompare(right.challengeId));
+      eligibilityReview: "PENDING_SOURCE",
+      canRespond: false,
+    };
+  }).sort((left, right) =>
+    String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")) ||
+    left.challengeId.localeCompare(right.challengeId) || right.challengeRevision - left.challengeRevision);
 
-  const viewerChallenges = challenges.filter((challenge) => (
-    challenge.challenger.playerId === actor.playerId || challenge.challenged.playerId === actor.playerId
-  ));
-  const pendingIncomingChallenge = viewerChallenges.find((challenge) => (
-    challenge.status === "PENDING" && challenge.challenged.playerId === actor.playerId
-  )) ?? null;
-
+  // Historical legacy rivalry rows/QUALIFIED flags and proposed, private
+  // six-track simulations are NOT published current Relationship authority.
+  // Therefore no stage-3 challenger, eligible pair or challenge-dependent
+  // leaderboard may be represented as verified in this release slice.
   return {
-    schemaVersion: "WAR_ROOM_V1",
-    generatedAt: new Date().toISOString(),
-    visible: open,
-    status: open ? "OPEN" : "CLOSED",
+    ...empty,
+    status: season.warRoom?.status === "OPEN" ? "PENDING_SOURCE" : "CLOSED",
     activeSeason: {
       seasonId: activeSeasonId,
       name: season.name ?? activeSeasonId,
       openedAt: iso(season.warRoom?.openedAt),
-      openedByRivalryId: season.warRoom?.openedByRivalryId ?? null,
       engineVersion: season.warRoom?.engineVersion ?? null,
     },
-    leaderboard: open ? leaderboard : [],
-    rivalries: open ? rivalries : [],
-    viewer: {
-      playerId: actor.playerId,
-      canChallenge: open && qualifiedRivals.length > 0,
-      qualifiedRivals,
-      rivalries: open ? viewerRivalries : [],
-      pendingIncomingChallenge: open ? pendingIncomingChallenge : null,
-    },
-    challenges: open ? challenges : [],
-    viewerChallenges: open ? viewerChallenges : [],
+    challenges: viewerChallenges,
+    viewerChallenges,
   };
 });

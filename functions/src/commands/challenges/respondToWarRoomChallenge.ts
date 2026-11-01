@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase-admin/firestore";
+import { assertWarRoomMutationsApproved } from "./warRoomMutationGate.js";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireLeaguePlayer } from "../../auth/authorization.js";
 import { db } from "../../config/firebase.js";
@@ -50,6 +51,7 @@ function defaultWarRoomGameConfig() {
 
 export const respondToWarRoomChallenge = onCall<RespondToWarRoomChallengeInput>(callableOptions, async (request) => {
   const actor = await requireLeaguePlayer(request);
+  assertWarRoomMutationsApproved();
   const challengeId = request.data.challengeId?.trim();
   const response = request.data.response;
   if (!challengeId || (response !== "ACCEPT" && response !== "DECLINE")) {
