@@ -322,7 +322,13 @@ export class SeasonStatisticsExperience{
     for(const game of this.games.filter(game=>game.eligible))for(const metric of SEASON_METRICS.filter(metric=>metric.record&&metric.kind==='number'))for(const player of game.players){
       if(!seasonMetricEligible(metric,game,player))continue;
       const value=player.values[metric.id],model=player.models[metric.id];if(value==null||!model||model==='unknown')continue;
-      const startCohort=recordStartCohort(game),key=[metric.id,game.contextKey,model,startCohort??'UNVERIFIED_START'].join('|'),previous=result.get(key)??[];
+      // V1 owner policy: Fast Castle is one all-map/all-start Game record.
+      // Keep actual source start metadata for explanation, never eligibility.
+      const startCohort=recordStartCohort(game);
+      const key=metric.id==='castle'
+        ? [metric.id,'V1_ALL_MAPS_ALL_STARTS',model].join('|')
+        : [metric.id,game.contextKey,model,startCohort??'UNVERIFIED_START'].join('|');
+      const previous=result.get(key)??[];
       const record={metricId:metric.id,value,playerId:player.playerId,name:player.name,matchId:game.matchId,gameId:game.gameId,civilization:player.civilization,orderAtMs:game.orderAtMs,contextKey:game.contextKey,model,startCohort};
       if(!previous.length||(metric.record==='max'?value>previous[0].value:value<previous[0].value))result.set(key,[record]);
       else if(value===previous[0].value&&!previous.some(row=>row.playerId===player.playerId))result.set(key,[...previous,record]);
