@@ -57,6 +57,7 @@ test('newcomer sees closed and pending states, unavailable standings and no chal
   const data=fake(),ui=await mount(data);
   try{
     assert.match(document.body.textContent!,/The doors remain closed/);
+    assert.match(document.body.textContent!,/ELIGIBILITYClosed/);
     assert.match(document.body.textContent!,/No current challenge permission/);
     assert.match(document.body.textContent!,/Record of challenges/);
     assert.match(document.body.textContent!,/0 distinct Battle links retained/);
@@ -81,7 +82,7 @@ test('mock server-verified reciprocal stage enables send; server correction disa
     assert.equal(mayIssueWarChallenge(data),true);
     await ui.click('Issue challenge');
     assert.deepEqual(sent,['B']);
-    assert.match(document.body.textContent!,/Awaiting verification/);
+    assert.match(document.body.textContent!,/Source pending/);
     assert.equal(document.body.textContent!.includes('Issue challenge'),false);
   }finally{await ui.close();}
 });
