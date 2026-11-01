@@ -7,6 +7,10 @@ import {EXPERIENCE_VERSION,type StatisticsScope,type StatisticsDataset} from '..
 /** Explicitly illustrative and memory-only. Never mutates real league data. */
 export class PreviewLeagueRepository implements LeagueRepository {
   readonly mode='preview' as const;
+  async warRoom(){const s=await this.load();const {closedWarRoom}=await import('../domain/warRoom');
+    return closedWarRoom(s.viewer?.playerId??'',s.season?{seasonId:s.season.seasonId,name:s.season.name}:null);}
+  async createWarRoomChallenge(_challengedPlayerId:string):Promise<void>{throw new Error('Preview challenges are not active.');}
+  async respondWarRoomChallenge(_challengeId:string,_response:'ACCEPT'|'DECLINE'):Promise<void>{throw new Error('Preview challenges are not active.');}
   private designStates=new Map<string,EventDesignState>();
   setEventDesignState(eventId:string,state:EventDesignState){this.designStates.set(eventId,state);}
   private listeners=new Set<()=>void>();

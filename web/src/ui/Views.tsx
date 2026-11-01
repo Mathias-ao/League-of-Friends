@@ -14,8 +14,8 @@ import {AIWarmupReview,LateWarmupReview} from './EventLifecycle';
 import {useScheduleClock} from '../hooks/useScheduleClock';
 import {formatLeaguePoints} from "../domain/seasonPoints";
 import {useEffect,useRef,useState} from 'react';
-import {ArrowRight,BookOpen,Users,Crown,Check,Lock,Swords,Flag,Heart,Search,Shield,Upload,X} from 'lucide-react';
-import {isWarmupMatch,isMainEventMatch,LeagueEvent,LeagueService,RelationshipPolicy,currentLeagueEvent,formatName,isBattleOpen,isLombardia,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
+import {ArrowRight,BookOpen,Users,Crown,Check,Search,Shield,Upload,X} from 'lucide-react';
+import {isWarmupMatch,isMainEventMatch,LeagueEvent,LeagueService,currentLeagueEvent,formatName,isBattleOpen,isLombardia,type EventDetail,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {plannedEvents,lombardia} from '../data/content';
 import {civilizationById,civilizationName} from '../data/civilizations';
 import {Avatar,DateLabel,Empty,Sigil} from './Primitives';
@@ -70,11 +70,7 @@ export function PlayersView({snapshot,openPlayer}:ViewProps){
     {players.map((p,i)=><button className={'portrait-card banner-'+i%4} key={p.playerId} onClick={()=>openPlayer(p.playerId)}><div className="portrait-door"><Shield size={72} strokeWidth={.6}/><Avatar player={p} large/><span className="door-line"/></div><div className="portrait-caption"><span className="eyebrow">LEAGUE MEMBER</span><h2>{p.steamName}</h2><span className="profile-hint">Open profile<ArrowRight size={14}/></span></div></button>)}
   </div>{!players.length&&<Empty title="No players found">Try another name.</Empty>}<p className="footnote">Portraits begin as a newcomer identity. Earned military identities will follow validated match evidence.</p></section>;
 }
-export function WarRoomView(){
-  return <section className="section war-room"><div className="war-heading"><span className="eyebrow">SOME THINGS ARE PERSONAL</span><Lock size={34} strokeWidth={1}/><h1>The War Room</h1><p>The doors remain closed.</p><span className="quiet-badge">PROGRESSION AWAITING VALIDATED STATISTICS</span></div><div className="war-intro"><h2>Respect. Rivalry. Retribution.</h2><p>Reach the third stage of Rivalry or Enemy with another player to unlock your War Room. Friendships and rivalries can grow side by side.</p></div><div className="relationship-grid">
-    {RelationshipPolicy.tracks.map((t,i)=>{const Icon=i===0?Swords:i===1?Flag:Heart;return <article className={'relationship-track track-'+i} key={t.name}><Icon size={26} strokeWidth={1.2}/><span className="eyebrow">{t.axis}</span><h2>{t.name}</h2><p>{t.description}</p><ol>{t.stages.map((stage,j)=><li key={stage} className={j===2&&i<2?'unlock-stage':''}><span>{String(j+1).padStart(2,'0')}</span>{stage}{j===2&&i<2&&<Lock size={13}/>}</li>)}</ol></article>;})}
-  </div><div className="war-footer"><Shield size={20}/><p>Challenges have separate season and all-time standings. War Room Points never count as League Points.</p></div></section>;
-}
+export {WarRoomView} from './WarRoom';
 export function StatisticsView(){
   const [scope,setScope]=useState('season'),[category,setCategory]=useState('Economy');
   const groups:Record<string,{label:string;description:string}[]>={

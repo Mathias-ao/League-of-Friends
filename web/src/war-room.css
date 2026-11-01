@@ -1,0 +1,42 @@
+/* The War Room inherits Age of Friends' stone and dark-red historical palette. */
+.war-v1{--war-edge:rgba(194,157,105,.31);--war-muted:#c5b7a3;--war-ink:#f3e7d5;max-width:1200px;margin-inline:auto;padding-bottom:45px}
+.war-v1 .war-heading{max-width:850px;margin:0 auto 30px}
+.war-v1 .war-heading h1{font-family:var(--serif);letter-spacing:.025em}
+.war-v1 .war-heading p{max-width:700px;font-size:1rem;line-height:1.65}
+.war-v1-state{display:flex;justify-content:space-between;align-items:center;gap:25px;padding:23px 28px;border-color:var(--war-edge);background:linear-gradient(110deg,rgba(100,39,32,.27),rgba(29,23,19,.85))}
+.war-v1-state h2,.war-panel-header h2{margin:.35rem 0 .55rem;font-family:var(--serif);font-size:1.32rem;color:var(--war-ink)}
+.war-v1-state p{max-width:740px;margin:0;color:var(--war-muted);line-height:1.65}
+.war-v1-state .text-button{flex-shrink:0}
+.war-v1-content{display:grid;gap:24px;margin-top:24px}
+.war-v1-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.war-v1-summary>div{min-width:0;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:5px 12px;border:1px solid var(--war-edge);padding:19px;background:rgba(25,20,18,.75)}
+.war-v1-summary svg{grid-row:1/3;color:#cb9d67}
+.war-v1-summary strong{overflow-wrap:anywhere;color:#f1ddbd;font-family:var(--serif);font-weight:500;font-size:1.04rem}
+.war-v1-summary .eyebrow{font-size:.65rem}
+.war-v1-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch}
+.war-v1-panel{min-width:0;padding:25px 28px;border-color:var(--war-edge);background:linear-gradient(135deg,rgba(47,32,26,.68),rgba(25,26,26,.94))}
+.war-panel-header{padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--war-edge)}
+.war-panel-header .eyebrow{color:#c5a06e}
+.war-v1-panel h3{font-family:var(--serif);font-weight:500}
+.war-empty{text-align:center;max-width:470px;padding:26px 13px;margin:0 auto;color:var(--war-muted)}
+.war-empty svg{color:#b8986c}
+.war-empty h3{color:var(--war-ink);font-size:1.06rem;margin:12px 0}
+.war-empty p{line-height:1.65;font-size:.9rem}
+.war-entries{display:grid;gap:10px}
+.war-entry,.war-rival{display:flex;justify-content:space-between;align-items:center;gap:16px;min-width:0;padding:15px 0;border-bottom:1px solid var(--war-edge)}
+.war-entry:last-child,.war-rival:last-child{border-bottom:0}
+.war-entry-identity{min-width:0}
+.war-entry h3{margin:7px 0;font-size:1rem}
+.war-entry p{margin:5px 0;font-size:.9rem;color:var(--war-muted)}
+.war-entry-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
+.war-entry-actions .primary,.war-rival .primary{padding:9px 12px;white-space:nowrap;font-size:.8rem}
+.war-player-link{border:0;background:transparent;color:#ecd9b3;cursor:pointer;font-family:inherit;font-size:inherit;padding:0;text-align:left;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:4px}
+.war-player-link:hover,.war-player-link:focus-visible{color:#fff0d4;text-decoration-color:currentColor}
+.war-review,.war-action-pending{display:block;max-width:340px;color:#d4b4a6;font-size:.77rem;line-height:1.5}
+.war-table-wrap{overflow-x:auto}.war-v1 table{width:100%;border-collapse:collapse;text-align:left}.war-v1 td,.war-v1 th{padding:12px;border-bottom:1px solid var(--war-edge)}.war-v1 thead th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--war-muted)}.war-v1 tbody th{font-weight:500}
+.war-fineprint{color:var(--war-muted);font-size:.83rem;line-height:1.6;margin-top:19px}
+.war-loading,.war-error,.war-notice{margin:14px 0;padding:12px 16px;border:1px solid var(--war-edge)}
+.war-error{color:#e7a79c;border-color:#9c4940}.war-notice{color:#d5d0b4}
+@media (max-width:800px){.war-v1-grid{grid-template-columns:1fr}.war-v1-state{align-items:flex-start}.war-v1-summary{gap:8px}}
+@media (max-width:600px){.war-v1{padding-inline:12px}.war-v1-state{padding:20px;flex-direction:column;align-items:stretch}.war-v1-state .text-button{align-self:flex-start}.war-v1-panel{padding:19px}.war-v1-summary{grid-template-columns:1fr}.war-v1-summary>div{padding:13px;grid-template-columns:30px 1fr}.war-entry,.war-rival{align-items:flex-start;flex-direction:column}.war-entry-actions{justify-content:flex-start}.war-v1 .war-heading h1{font-size:2.3rem}}
+@media (prefers-reduced-motion:reduce){.war-v1 *{scroll-behavior:auto}}
