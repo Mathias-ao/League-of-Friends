@@ -101,7 +101,9 @@ assert.equal(initial.personality.calibration,'PROPOSED');assert.equal(initial.pe
 assert.equal(initial.personality.personalityProfile.policy.approvalRef,null);
 const sliders=initial.personality.personalityProfile.sliders;
 const supported=sliders.filter(s=>s.status==='READY');
-assert.ok(supported.some(s=>s.axis==='BOOMER_AGGRESSOR'),'Original full-cost measurements must support their own source-qualified axis.');
+assert.deepEqual(supported.map(s=>s.axis).sort(),
+  ['BOOMER_AGGRESSOR','CAUTIOUS_BOLD','COMPACT_EXPANSIVE'].sort(),
+  'These originals qualify all three observed command/placement axes, and cannot invent military posture or family opportunity.');
 for(const s of supported){assert.equal(s.independentBattles,2);assert.ok(Number.isFinite(s.value)&&s.value>=0&&s.value<=100);}
 const specialist=sliders.find(s=>s.axis==='SPECIALIST_IMPROVISER');
 assert.equal(specialist.value,null);assert.notEqual(specialist.status,'READY');
