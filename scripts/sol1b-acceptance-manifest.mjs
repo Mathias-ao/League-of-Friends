@@ -9,6 +9,7 @@ const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const head=git('rev-parse','HEAD');
 assert.match(head,/^[a-f0-9]{40}$/);
 assert.equal(head,process.env.AOF_ACCEPTANCE_EXPECTED_HEAD,'CI must check out the exact requested head');
+assert.match(process.env.AOF_ACCEPTANCE_BASE_HEAD??'',/^[a-f0-9]{40}$/);
 assert.match(process.env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION??'',/^[a-f0-9]{64}$/);
 assert.ok(process.env.AOF_NATIVE_CORPUS,'Pinned original recording corpus is required');
 const fixtureCommit='2d04ec6adbe871d156c108a4351448efeb08f4e6';
@@ -21,7 +22,7 @@ const recordings=Object.entries(formats).map(([name,format])=>{
   return {name,format,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
 });
 const report={version:'AOF_SOL1B_ACCEPTANCE_MANIFEST_1',testedHead:head,
-  testedTree:git('rev-parse','HEAD^{tree}'),releaseBase:'e8e69b6f549116af7eaec0929081ad9cdce49187',
+  testedTree:git('rev-parse','HEAD^{tree}'),releaseBase:process.env.AOF_ACCEPTANCE_BASE_HEAD,
   processorRevision:process.env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION,
   fixtureCommit,recordings,isolatedHonoursPolicyCommit:honoursCommit,
   runtimeHonoursSandboxImported:false,
