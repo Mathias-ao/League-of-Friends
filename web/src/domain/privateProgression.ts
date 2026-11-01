@@ -7,7 +7,7 @@ export interface PrivateProgression {
  cards:Array<{claimId:string;claimRevision:string;battleId:string;gameId:string;sourceAuthority:string;actorPlayerId:string;counterpartPlayerId:string;
   track:string;decision:'SOURCE_ADMITTED'|'PENDING';gradeBandId:string|null;originalEventCount:number;methodVersion:string;meaning:string|null;
   missingEvidence:string[];identity:{componentId:string}}>;
- pendingSources:Array<{battleId:string;gameId:string;reason:string}>;pendingMethods:string[];
+ pendingSources:Array<{battleId:string;gameId:string|null;reason:string}>;pendingMethods:string[];
  coverage:{currentSources:number;ownBattles:number};
  effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};
 }

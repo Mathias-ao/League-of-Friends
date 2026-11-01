@@ -123,3 +123,51 @@ test('stale action or refresh completion cannot erase a note in a reopened invit
   c.repository.actOnChronicleInvitation=action;
  }finally{await c.close();}}
 });
+
+const gameContext=()=>({version:'AOF_CHRONICLE_INVITATION_CONTEXT_V1' as const,
+ status:'CURRENT_GAME_ONLY' as const,battleId:'battle-1',gameId:'game-two',
+ opportunityRevision:'a'.repeat(64),gameNumber:2,incidentAccount:null,recordingAtMs:null,
+ missing:['SOURCE_QUALIFIED_INCIDENT_ACCOUNT','SOURCE_QUALIFIED_INCIDENT_TIME']});
+test('exact source-bound Game context is visible before the choice and again at private confirmation',async()=>{
+ const c=await setup();try{
+  const v=view();v.invitations[0].context=gameContext();c.set(v);
+  await c.render();await c.click('Review my invitations');
+  const context=document.querySelector('[aria-label="Recorded moment context"]')!;
+  assert.match(context.textContent!,/Game 2 of this Battle/);
+  assert.match(context.textContent!,/Details of this recorded moment and its time are Pending/);
+  assert.equal(context.getAttribute('data-aof-invitation-game'),'game-two');
+  assert.doesNotMatch(context.textContent!,/rescued|betrayed|completed|delivered/);
+  await c.click('It mattered to me');
+  assert.match(document.querySelector('[aria-label="Review your private perspective"]')!.textContent!,/Game 2 of this Battle/);
+  assert.match(document.querySelector('[aria-label="Review your private perspective"]')!.textContent!,/Details and timing remain Pending/);
+  assert.equal(c.calls.length,0);
+  await c.click('Save my private perspective');assert.equal(c.calls.length,1);
+  assert.equal('context' in c.calls[0],false,'the client cannot supply incident facts');
+ }finally{await c.close();}
+});
+test('foreign opportunity context is rejected; withdrawal and account switch cannot show an old current Game',async()=>{
+ const c=await setup();try{
+  const forged=view();forged.invitations[0].context={...gameContext(),opportunityRevision:'f'.repeat(64)};c.set(forged);
+  await c.render();await c.click('Review my invitations');
+  assert.equal(document.querySelector('[data-aof-chronicle-invitations-owner]'),null);
+  assert.match(document.body.textContent!,/authority changed/);
+  const v=view();v.invitations[0].context=gameContext();c.set(v);
+  await c.click('Review my invitations');await c.click('It mattered to me');
+  const stale=view();stale.invitations[0].sourceCurrent=false;
+  stale.invitations[0].context={...gameContext(),status:'PENDING',gameNumber:null};c.set(stale);
+  await c.click('Refresh my invitations');
+  assert.match(document.querySelector('[aria-label="Recorded moment context"]')!.textContent!,/no longer current/);
+  assert.doesNotMatch(document.body.textContent!,/Game 2 of this Battle/);
+  assert.equal(document.querySelector('[data-aof-invitation-game]'),null);
+  assert.equal(document.querySelector('[aria-label="Review your private perspective"]'),null);
+  assert.equal(c.calls.length,0);
+  await act(async()=>c.auth());assert.equal(document.querySelector('[aria-label="Recorded moment context"]'),null);
+ }finally{await c.close();}
+});
+test('older invitation without a context keeps the missing incident presentation explicitly Pending',async()=>{
+ const c=await setup();try{
+  await c.render();await c.click('Review my invitations');
+  assert.match(document.querySelector('[aria-label="Recorded moment context"]')!.textContent!,/Game context is Pending/);
+  assert.match(document.body.textContent!,/Details of this recorded moment and its time are Pending/);
+ }finally{await c.close();}
+});

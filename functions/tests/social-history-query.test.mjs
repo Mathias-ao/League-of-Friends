@@ -457,7 +457,7 @@ test('authenticated correction-heavy 145 Battles × 2 Games gives complete bound
  assert.equal(read.coverage.readableAcceptedGames,289);
  assert.equal(read.chronicle.pages[0].entries.length,145);
  assert.equal(metrics.matchPages,6,'three bounded cursor pages per complete scan');
- assert.equal(metrics.gamePages,145,'each Battle enumerated once');
+ assert.equal(metrics.gamePages,290,'each Battle enumerated and rechecked for Game-set correction');
  assert.equal(metrics.downloads,289,'no source reused as duplicate by source ID');
  assert.ok(metrics.checkpointDocs>=145+289*2,'complete authority revision check');
  assert.equal(new Set(read.chronicle.pages[0].entries.map(e=>e.sceneId)).size,145);
@@ -496,5 +496,39 @@ test('aggregate Battle-result and Match roster revisions during artifact read ab
   downloadHook=()=>mutation(m);
   await assert.rejects(getPlayerChronicle.run(request),e=>e.code==='aborted',
    'corrected Match result/roster cannot bypass the complete read revision fence');
+ }
+});
+
+function finalizedSeries(){
+ reset();const match=records.get('matches/m'),first=records.get('matches/m/games/g');
+ const players=[{playerId:'a',team:1},{playerId:'b',team:2}];
+ Object.assign(first,{players});
+ const second={...first,gameNumber:2,activeReplayStatisticsId:'r2',canonicalResult:{...first.canonicalResult}};
+ records.set('matches/m/games/g2',second);
+ records.set('matches/m/games/g2/replaySources/r2',{...records.get('matches/m/games/g/replaySources/r1')});
+ Object.assign(match,{participants:players,seriesRule:{maxGames:3,gamesRequiredToWin:2},
+  canonicalResult:{...first.canonicalResult,sourceGameId:'g2',seriesGameRevisions:{g:1,g2:1}}});
+ records.set('matches/m/games/terminal',{gameNumber:3,status:'NO_CONTEST',players,
+  resolutionReason:'Series decided by g2'});
+}
+test('Chronicle accepts a current finalized 2-0 Battle with lawful unused terminal; forged terminal remains incomplete',async()=>{
+ finalizedSeries();const r=await getPlayerChronicle.run(request);
+ assert.equal(r.status,'AVAILABLE');assert.equal(r.coverage.readableAcceptedGames,2);
+ assert.equal(r.coverage.excludedGames,0);assert.equal(r.coverage.opportunityCompleteness,true);
+ assert.equal(r.chronicle.pages[0].entries.length,1);
+ assert.equal(r.chronicle.pages[0].entries[0].resultStatus,'OFFICIAL');
+ records.get('matches/m/games/terminal').resolutionReason='forged cancellation';
+ const forged=await getPlayerChronicle.run(request);
+ assert.equal(forged.status,'PARTIAL');assert.equal(forged.coverage.opportunityCompleteness,false);
+ assert.equal(forged.chronicle.pages[0].entries[0].resultStatus,'UNRESOLVED');
+});
+test('Chronicle unused-terminal, series and required Game population corrections abort a mixed view',async()=>{
+ for(const change of [
+  ()=>{records.get('matches/m/games/terminal').resolutionReason='changed';},
+  ()=>{records.get('matches/m').canonicalResult={...records.get('matches/m').canonicalResult,seriesGameRevisions:{g:1,g2:2}};},
+  ()=>{records.set('matches/m/games/inserted',{gameNumber:4,status:'READY',players:[{playerId:'a'},{playerId:'b'}]});}
+ ]){
+  finalizedSeries();let once=false;downloadHook=()=>{if(!once){once=true;change();}};
+  await assert.rejects(getPlayerChronicle.run(request),e=>e.code==='aborted');
  }
 });

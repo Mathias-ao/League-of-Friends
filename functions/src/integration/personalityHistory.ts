@@ -9,6 +9,7 @@ import type {SocialScheduleOrder} from './socialScheduleOrder.js';
 type Bag=Record<string,any>;
 export interface PersonalityHistoryBattle {
   battleId:string;gameIds:string[];
+  unusedGameIds?:string[];gameManifestComplete?:boolean;
   sources:Array<{source:SourceSnapshot;statistics:Bag;match:Bag;game:Bag}>;
 }
 /** No episode-complete claim from a mere numeric count or empty array. The
@@ -67,7 +68,7 @@ export function projectPrivatePersonalityHistory(ownerPlayerId:string,battles:Pe
     const allScheduled=scheduled.length>0&&scheduled.every(Boolean);
     const allCompleted=completed.length>0&&completed.every(t=>Number.isSafeInteger(t)&&t>0);
     const historic=allScheduled||allCompleted;
-    const complete=battle.sources.length===battle.gameIds.length&&
+    const complete=battle.gameManifestComplete!==false&&battle.sources.length===battle.gameIds.length&&
       new Set(battle.sources.map(s=>s.source.gameId)).size===battle.gameIds.length&&
       battle.sources.every(s=>battle.gameIds.includes(s.source.gameId)&&
         ['OFFICIAL','UNRESOLVED'].includes(s.source.outcome.qualification)&&

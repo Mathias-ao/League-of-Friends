@@ -29,6 +29,7 @@ for(let i=0;i<names.length;i++){
 const common=fixtures[0].meta.players.find(p=>p.number===1).name;
 assert.ok(fixtures.slice(1,4).every(f=>f.meta.players.some(p=>p.name===common)),'Preserve original common recorder identity.');
 const bucket=getStorage().bucket(process.env.REPLAY_BUCKET),eventId='c2b-event',seasonId='c2b-season';
+// The source grouping is a controlled finite two-Game series, not a played BO3.
 const battleIds=['c2b-z-series','c2b-b-team','c2b-a-team','c2b-ffa'];
 for(const id of [owner,other,admin,outsider]){await db.doc('players/'+id).set({role:id===admin?'ADMIN':'PLAYER',membershipStatus:'ACTIVE',steamName:id,goldBalance:0});await db.doc('authLinks/'+id).set({playerId:id});}
 await db.doc('seasons/'+seasonId).set({status:'ACTIVE'});
@@ -42,7 +43,7 @@ for(const f of fixtures){
  Object.assign(f,{matchId,gameId,roster});
  for(const p of roster){if([owner,other].includes(p.playerId))continue;await db.doc('players/'+p.playerId).set({role:'PLAYER',membershipStatus:'ACTIVE',steamName:p.playerId,goldBalance:0});await db.doc('authLinks/'+p.playerId).set({playerId:p.playerId});}
  const mr=db.doc('matches/'+matchId);
- if(i!==1)await mr.create({status:'ACTIVE',format,opponentKind:'HUMAN',participants:roster,seriesRule:{maxGames:i===0?3:1,gamesRequiredToWin:i===0?2:1},seasonId,eventId,
+ if(i!==1)await mr.create({status:'ACTIVE',format,opponentKind:'HUMAN',participants:roster,seriesRule:{maxGames:i===0?2:1,gamesRequiredToWin:i===0?2:1},seasonId,eventId,
   sourceMatchPlanId:'approved',matchNumber:battleIndex+1,context:{affectsSeasonStats:false,affectsLifetimeStats:false,affectsLeaguePoints:false,affectsGold:false},gameConfigSnapshot:config});
  await mr.collection('games').doc(gameId).create({status:'READY',gameNumber:i===1?2:1,players:roster,replayStatisticsRevision:0,activeReplayStatisticsId:null,
   replayParticipantBindings:f.meta.players.map((p,j)=>({playerId:roster[j].playerId,sourceNameNormalized:p.name.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US')}))});
@@ -111,7 +112,9 @@ const unordered=await read();assert.ok(unordered.history.projections.every(p=>p.
 let once=false;const raced={file:(...args)=>({download:async()=>{const bytes=await bucket.file(...args).download();if(!once){once=true;await eventRef.update({startsAt:Timestamp.fromMillis(1700000001000)});}return bytes;}})};
 await assert.rejects(readMySocialProgression({db,bucket:raced,actor:{playerId:owner,authUid:owner},env:process.env,request:{}}),e=>e.code==='aborted');await eventRef.set(event);
 for(const forbidden of ['sourceName','replayBase64','native-replay-evidence','authUid'])assert.ok(!JSON.stringify(first).includes(forbidden));
-const report={version:first.version,currentMain:'b6a1024a478df119546daa0e691b6018ff20de39',genuineRecordings:5,formats:4,authenticatedUsers:fixtures[3].roster.length+3,
+const testedCommit=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'});
+assert.equal(testedCommit.status,0);assert.match(testedCommit.stdout.trim(),/^[a-f0-9]{40}$/);
+const report={version:first.version,testedCommit:testedCommit.stdout.trim(),genuineRecordings:5,formats:4,authenticatedUsers:fixtures[3].roster.length+3,
  twoGameBattle:true,reverseUploadOrder:true,genuineSourceAdmittedByTrack:allTrackCounts,ownerStages:first.history.projections.map(p=>({subject:p.subject,stage:p.currentStage,upBank:p.upBank,downBank:p.downBank})),
  retryIdempotent:true,withdrawal:true,resultCorrection:true,playerRemapping:true,scheduleCorrection:true,concurrentScheduleFence:true,privateOnly:true,officialReceipts:0,privateSourceToUI:true,authChangeClearsHistory:true,
  pending:['CRUELTY','HOSTILITY','INDEPENDENT_WEAKENING','STRICT_TREACHERY'],controlledLeagueFixtureNotActualHistoricalLeagueSeries:true};
