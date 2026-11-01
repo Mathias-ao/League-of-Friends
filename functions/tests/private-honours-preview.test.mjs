@@ -26,6 +26,11 @@ test('frozen ten concepts expose a sole official FFA candidate, never a grant or
   assert.deepEqual(ffa.evidence,[p.sources[0]]);assert.equal(ffa.evidence[0].resultRevision,2);
   assert.match(ffa.reason,/does not prove never allied or unaided/);
   assert.equal(p.honours.filter(h=>h.status==='PENDING').length,9);
+  const fc=p.honours.find(h=>h.key==='FAST_CASTLE');
+  assert.equal(fc.status,'PENDING');
+  assert.match(fc.reason,/all eligible maps and starts share the same Fast Castle timing pool for the record and trophy/);
+  assert.match(fc.reason,/trophy activation.*Pending/);
+  assert.equal(p.effects.entitlementGrants,false,'an all-map contender is not a trophy entitlement');
   assert.deepEqual(p.effects,{officialWrites:false,receiptPublication:false,entitlementGrants:false});
   assert.equal(p.honours.find(h=>h.key==='WONDER').status,'PENDING');
   assert.match(p.honours.find(h=>h.key==='WONDER').reason,/ordinary winner proves neither/);
