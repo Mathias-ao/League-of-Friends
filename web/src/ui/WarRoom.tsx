@@ -156,7 +156,7 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
     {loading&&<p className="war-loading" role="status">Verifying the War Room ledger…</p>}
     {data&&<div className="war-v1-content">
       <div className="war-v1-summary" aria-label="Your challenge summary">
-        <div><Shield size={20}/><span className="eyebrow">ELIGIBILITY</span><strong>{canIssue?'Qualified':'Awaiting verification'}</strong></div>
+        <div><Shield size={20}/><span className="eyebrow">ELIGIBILITY</span><strong>{data.status==='CLOSED'?'Closed':data.qualification.status!=='VERIFIED'?'Source pending':canIssue?'Qualified':'No eligible challenge'}</strong></div>
         <div><Flag size={20}/><span className="eyebrow">INVITATIONS RECEIVED</span><strong>{incoming.length}</strong></div>
         <div><Swords size={20}/><span className="eyebrow">CHALLENGE HISTORY</span><strong>{currentChallenges.length}</strong></div>
       </div>
@@ -178,7 +178,7 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
       <section className="panel war-v1-panel" aria-labelledby="war-history-title">
         <div className="war-panel-header"><span className="eyebrow">III · THE RECORD</span><h2 id="war-history-title">Challenge history</h2></div>
         {past.length?<div className="war-entries">{past.map(renderChallenge)}</div>:
-          <div className="war-empty"><h3>History begins with the first accepted contest</h3>
+          <div className="war-empty"><h3>No past challenge notices</h3>
             <p>Declined invitations, accepted Battles and corrected qualifications remain traceable here.</p></div>}
       </section>
       <section className="panel war-v1-panel" aria-labelledby="war-record-title">
