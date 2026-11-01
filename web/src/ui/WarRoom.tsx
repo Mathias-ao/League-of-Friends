@@ -76,6 +76,10 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
   const incoming=currentChallenges.filter(challenge=>challenge.challenged.playerId===viewerId&&openInvitation(challenge));
   const outgoing=currentChallenges.filter(challenge=>challenge.challenger.playerId===viewerId&&openInvitation(challenge));
   const past=currentChallenges.filter(challenge=>!openInvitation(challenge));
+  // Factual, viewer-authorized history only. Challenge revisions are not
+  // competitive awards, and one original Battle may survive multiple invites.
+  const linkedBattles=new Set(currentChallenges.map(row=>row.matchId).filter((id):id is string=>!!id)).size;
+  const archivedInvitations=currentChallenges.filter(row=>row.historyState==='ARCHIVED').length;
   const canIssue=!!data&&mayIssueWarChallenge(data)&&!!repository.createWarRoomChallenge;
   async function perform(action:()=>Promise<void>,success:string){
     if(working)return;
@@ -140,7 +144,7 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
         <p>{loading?'Checking your current Season and challenge history…':
           error||(!data?'The challenge ledger is not available.':
           !data.activeSeason?'A new Season has not yet been announced.':
-          state==='OPEN'?'Only independently verified, reciprocal Rivalry or Hostility can open a challenge.':
+          state==='OPEN'?'Reckonings require verified reciprocal pair history; honour challenges have separate access rules. Neither path is authorized by an unverified invitation.':
           state==='PENDING_SOURCE'?'Current Relationship proof is still under review. Previous challenges remain part of the historical ledger.':
           'War Room contests are not active in this Season. Existing accepted Battles remain historical facts.')}</p>
       </div>
@@ -163,7 +167,7 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
             {data.viewer.qualifiedRivals.map(opponent=><article key={opponent.playerId} className="war-rival"><button className="war-player-link" onClick={()=>openPlayer(opponent.playerId)}>{opponent.steamName}</button>
               <button className="primary" disabled={working} onClick={()=>send(opponent)}>Issue challenge<ArrowRight size={15}/></button></article>)}
           </div>:<div className="war-empty"><Lock size={22}/><h3>No current challenge permission</h3>
-            <p>Only verified, independently reciprocal Rivalry or Hostility at stage three or above can qualify. Unresolved source history never counts as an unlock.</p></div>}
+            <p>Reckonings require independently verified reciprocal Rivalry or Hostility at stage three or above. Honour challenges have separate eligibility still under review. Neither is unlocked by unresolved evidence.</p></div>}
         </section>
         <section className="panel war-v1-panel" aria-labelledby="war-invites-title">
           <div className="war-panel-header"><span className="eyebrow">II · CHALLENGE NOTICES</span><h2 id="war-invites-title">Invitations</h2></div>
@@ -177,14 +181,11 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
           <div className="war-empty"><h3>History begins with the first accepted contest</h3>
             <p>Declined invitations, accepted Battles and corrected qualifications remain traceable here.</p></div>}
       </section>
-      <section className="panel war-v1-panel" aria-labelledby="war-standing-title">
-        <div className="war-panel-header"><span className="eyebrow">IV · A SEPARATE CAMPAIGN</span><h2 id="war-standing-title">War Room standings</h2></div>
-        {data.standingsStatus==='VERIFIED'&&data.leaderboard.length?
-          <div className="war-table-wrap"><table><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">War Room Points</th></tr></thead><tbody>
-            {data.leaderboard.map(row=><tr key={row.player.playerId}><td>{row.rank}</td><th scope="row"><button className="war-player-link" onClick={()=>openPlayer(row.player.playerId)}>{row.player.steamName}</button></th><td>{row.warRoomPoints}</td></tr>)}
-          </tbody></table></div>:
-          <div className="war-empty"><Shield size={22}/><h3>Standings awaiting verification</h3><p>Season challenge points will appear only after qualified Battles and correction-safe War Room accounting are confirmed. No provisional score is presented as zero.</p></div>}
-        <p className="war-fineprint">War Room Points are independent of League Points and Gold. Lifetime standings will appear only when a verified lifetime ledger is available.</p>
+      <section className="panel war-v1-panel" aria-labelledby="war-record-title">
+        <div className="war-panel-header"><span className="eyebrow">IV · A SEPARATE CAMPAIGN</span><h2 id="war-record-title">Record of challenges</h2></div>
+        <p>{linkedBattles} distinct {linkedBattles===1?'Battle link':'Battle links'} retained · {archivedInvitations} archived {archivedInvitations===1?'invitation':'invitations'}.</p>
+        <p className="war-fineprint">This is a private factual ledger of invitations and their original Battles, not a competition score. Correcting challenge eligibility never erases an independently valid Battle.</p>
+        <p className="war-fineprint">Reckonings and honour challenges need separately approved eligibility, meaningful stakes and correction rules before competitive rewards can be shown. No challenge rewards are active here.</p>
       </section>
     </div>}
   </section>;
