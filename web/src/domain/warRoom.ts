@@ -9,6 +9,12 @@ export interface WarRoomPlayer {
 export interface WarRoomChallenge {
   challengeId: string;
   challengeRevision: number;
+  /** Optional for older read contracts; revisions are separate historical rows. */
+  challengeEntryId?: string;
+  historyState?: "CURRENT" | "ARCHIVED";
+  currentChallengeRevision?: number;
+  currentChallengeStatus?: string;
+  archivedAt?: string | null;
   pairId: string | null;
   challenger: WarRoomPlayer;
   challenged: WarRoomPlayer;
@@ -76,8 +82,15 @@ export function mayIssueWarChallenge(data: WarRoomData): boolean {
     data.viewer.qualifiedRivals.length > 0;
 }
 export function mayAnswerWarChallenge(data: WarRoomData, row: WarRoomChallenge): boolean {
+  const currentPending = (challenge: WarRoomChallenge) =>
+    Number.isSafeInteger(challenge.challengeRevision) && challenge.challengeRevision > 0 &&
+    challenge.historyState !== "ARCHIVED" &&
+    (challenge.currentChallengeRevision ?? challenge.challengeRevision) === challenge.challengeRevision &&
+    (challenge.currentChallengeStatus ?? challenge.status) === "PENDING" &&
+    challenge.status === "PENDING" && challenge.eligibilityReview === "VERIFIED" &&
+    challenge.canRespond && challenge.challenged.playerId === data.viewer.playerId;
   return data.status === "OPEN" && data.qualification.status === "VERIFIED" &&
-    data.qualification.canRespond && row.canRespond &&
-    row.status === "PENDING" && row.challenged.playerId === data.viewer.playerId &&
-    data.viewerChallenges.some(challenge => challenge.challengeId === row.challengeId);
+    data.qualification.canRespond && currentPending(row) &&
+    data.viewerChallenges.some(challenge => challenge.challengeId === row.challengeId &&
+      challenge.challengeRevision === row.challengeRevision && currentPending(challenge));
 }

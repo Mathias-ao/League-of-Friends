@@ -35,10 +35,11 @@ const owner='intb-owner',other='intb-opponent-alias',uid='intb-owner-uid',admin=
 for(const [id,authUid,role] of [[owner,uid,'PLAYER'],[other,'intb-other-uid','PLAYER'],[admin,admin,'ADMIN'],[outsider,outsider,'PLAYER']]){
  await db.doc('players/'+id).set({role,membershipStatus:'ACTIVE',steamName:id,goldBalance:0});await db.doc('authLinks/'+authUid).set({playerId:id});
 }
+// Controlled finite two-Game source wrapper, not an actual historical BO3.
 const matchId='intb-controlled-series',mr=db.doc('matches/'+matchId),roster=[{playerId:owner,team:1},{playerId:other,team:2}];
 await db.doc('seasons/intb-season').set({status:'ACTIVE'});
 await db.doc('events/intb-event').set({status:'ACTIVE',seasonId:'intb-season',officialMatchIds:[matchId],warmupMatchIds:[]});
-await mr.create({status:'ACTIVE',format:'ONE_V_ONE',opponentKind:'HUMAN',participants:roster,seriesRule:{maxGames:3,gamesRequiredToWin:2},
+await mr.create({status:'ACTIVE',format:'ONE_V_ONE',opponentKind:'HUMAN',participants:roster,seriesRule:{maxGames:2,gamesRequiredToWin:2},
  seasonId:'intb-season',eventId:'intb-event',context:{affectsSeasonStats:false,affectsLifetimeStats:false,affectsLeaguePoints:false,affectsGold:false},
  gameConfigSnapshot:{maps:{pool:['Arabia']},civilizations:{mode:'UNRESTRICTED'},victory:{conquest:true,wonder:false,relic:false},diplomacyEnabled:false,additionalSettings:{}}});
 Object.assign(process.env,{AOF_NATIVE_PLAYER_UPLOAD:'recorded-events-v1',AOF_NATIVE_REPLAY_PROJECT:project,

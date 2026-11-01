@@ -150,6 +150,8 @@ function categoryMode(values:string[]):{text:string|null;sharePercent:number|nul
   const max=Math.max(...counts.values()),modes=[...counts].filter(([,count])=>count===max).map(([value])=>value).sort();
   return {text:modes.join(' / '),sharePercent:100*max/values.length};
 }
+const measurementEligible=(game:GameStatistics)=>game.eligible||
+  game.sourceMeasurementsEligible===true&&game.exclusionReason==='Official Game result pending';
 
 /**
  * Season read-model: each distinct matchId (Battle) has one vote.
@@ -177,10 +179,11 @@ export class SeasonStatisticsExperience{
       const previous=byHash.get(game.sourceHash);
       // Duplicate POV uploads are one source. Prefer its valid current
       // projection; an ineligible duplicate must never mask accepted evidence.
-      if(!previous||(!previous.eligible&&game.eligible))byHash.set(game.sourceHash,game);
+      if(!previous||(!previous.eligible&&game.eligible)||
+        (!measurementEligible(previous)&&measurementEligible(game)))byHash.set(game.sourceHash,game);
     }
     this.knownGames=[...noHash,...byHash.values()].sort(order);
-    this.games=this.knownGames.filter(game=>selectedKeys.has(game.matchId+'/'+game.gameId)&&game.eligible&&game.affectsSeason);
+    this.games=this.knownGames.filter(game=>selectedKeys.has(game.matchId+'/'+game.gameId)&&measurementEligible(game)&&game.affectsSeason);
   }
   get battleCount():number{return new Set(this.games.map(game=>game.matchId)).size;}
   aggregate(mode:SeasonDisplayMode='perBattle',minimumBattles=5):SeasonAggregatePlayer[]{
@@ -211,7 +214,7 @@ export class SeasonStatisticsExperience{
           if(player&&!seasonMetricEligible(metric,game,player))continue;
           const ids=expected.get(game.matchId)??new Set<string>();
           ids.add(game.gameId);
-          for(const sibling of (game as GameStatistics&{knownGameIds?:string[]}).knownGameIds??[])
+          for(const sibling of game.knownGameIds??[])
             if(typeof sibling==='string'&&sibling.trim())ids.add(sibling);
           expected.set(game.matchId,ids);
         }
@@ -224,7 +227,8 @@ export class SeasonStatisticsExperience{
             const members=group.filter(pair=>(pair.player.models[metric.id]||'unknown')===chosen&&observation(pair)!==null&&observation(pair)!=='');
             if(!members.length)continue;
             const expectedIds=expected.get(battleId)??new Set(group.map(pair=>pair.game.gameId));
-            const complete=expectedIds.size>0&&[...expectedIds].every(gameId=>members.some(pair=>pair.game.gameId===gameId));
+            const complete=expectedIds.size>0&&group.every(pair=>pair.game.gameManifestComplete!==false)&&
+              [...expectedIds].every(gameId=>members.some(pair=>pair.game.gameId===gameId));
             const raw=members.map(observation),numbers=raw as number[];
             let battleValue:number|string|null=null;
             if(metric.kind==='category')battleValue=categoryMode(raw as string[]).text;
@@ -315,7 +319,7 @@ export class SeasonStatisticsExperience{
   }
   records():SeasonRecord[]{
     const result=new Map<string,SeasonRecord[]>();
-    for(const game of this.games)for(const metric of SEASON_METRICS.filter(metric=>metric.record&&metric.kind==='number'))for(const player of game.players){
+    for(const game of this.games.filter(game=>game.eligible))for(const metric of SEASON_METRICS.filter(metric=>metric.record&&metric.kind==='number'))for(const player of game.players){
       if(!seasonMetricEligible(metric,game,player))continue;
       const value=player.values[metric.id],model=player.models[metric.id];if(value==null||!model||model==='unknown')continue;
       const startCohort=recordStartCohort(game),key=[metric.id,game.contextKey,model,startCohort??'UNVERIFIED_START'].join('|'),previous=result.get(key)??[];

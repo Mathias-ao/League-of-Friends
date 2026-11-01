@@ -26,6 +26,7 @@ interface ChallengeDocument {
   createdAt?: Timestamp | null;
   respondedAt?: Timestamp | null;
   completedAt?: Timestamp | null;
+  archivedAt?: Timestamp | null;
   matchId?: string | null;
   winningPlayerIds?: string[];
 }
@@ -78,11 +79,36 @@ export const getWarRoom = onCall(callableOptions, async (request) => {
     })
     .map(document => [document.id, document]));
 
-  const viewerChallenges = [...docs.values()].map(document => {
-    const challenge = document.data() as ChallengeDocument;
+  const entries = (await Promise.all([...docs.values()].map(async document => {
+    const current = document.data() as ChallengeDocument;
+    const currentRevision = Number(current.challengeRevision ?? 1);
+    const history = await document.ref.collection("history").get();
+    // History is not a source of new eligibility. Read only canonical prior
+    // revisions of this authorized pair; foreign/duplicate aliases are ignored.
+    const archived = history.docs.filter(row => {
+      const value = row.data() as ChallengeDocument;
+      const revision = Number(value.challengeRevision ?? 1);
+      return Number.isSafeInteger(revision) && revision > 0 && revision < currentRevision &&
+        row.id === `R${revision}` && value.seasonId === activeSeasonId &&
+        (value.challengerPlayerId === actor.playerId || value.challengedPlayerId === actor.playerId) &&
+        ((value.challengerPlayerId === current.challengerPlayerId && value.challengedPlayerId === current.challengedPlayerId) ||
+          (value.challengerPlayerId === current.challengedPlayerId && value.challengedPlayerId === current.challengerPlayerId));
+    }).map(row => ({challenge: row.data() as ChallengeDocument, archived: true}));
+    return [{challenge: current, archived: false}, ...archived].map(entry => ({
+      ...entry, challengeId: document.id, currentRevision, currentStatus: current.status ?? "UNKNOWN",
+    }));
+  }))).flat();
+  const viewerChallenges = entries.map(entry => {
+    const challenge = entry.challenge;
+    const revision = Number(challenge.challengeRevision ?? 1);
     return {
-      challengeId: document.id,
-      challengeRevision: Number(challenge.challengeRevision ?? 1),
+      challengeId: entry.challengeId,
+      challengeEntryId: `${entry.challengeId}:R${revision}`,
+      challengeRevision: revision,
+      historyState: entry.archived ? "ARCHIVED" : "CURRENT",
+      currentChallengeRevision: entry.currentRevision,
+      currentChallengeStatus: entry.currentStatus,
+      archivedAt: entry.archived ? iso(challenge.archivedAt) : null,
       pairId: challenge.pairId ?? null,
       challenger: publicPlayer(challenge.challengerPlayerId ?? "UNKNOWN", players.get(challenge.challengerPlayerId ?? "")),
       challenged: publicPlayer(challenge.challengedPlayerId ?? "UNKNOWN", players.get(challenge.challengedPlayerId ?? "")),
@@ -97,7 +123,7 @@ export const getWarRoom = onCall(callableOptions, async (request) => {
     };
   }).sort((left, right) =>
     String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? "")) ||
-    left.challengeId.localeCompare(right.challengeId));
+    left.challengeId.localeCompare(right.challengeId) || right.challengeRevision - left.challengeRevision);
 
   // Historical legacy rivalry rows/QUALIFIED flags and proposed, private
   // six-track simulations are NOT published current Relationship authority.

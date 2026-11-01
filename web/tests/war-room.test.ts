@@ -153,3 +153,64 @@ test('a mismatched season response is never displayed and refresh errors remain 
     assert.match(document.body.textContent!,/season or league identity changed/i);
   }finally{await ui.close();}
 });
+
+test('top-level permission cannot override pending, invalidated, archived or stale invitation authority',async()=>{
+  const data=fake('B');data.status='OPEN';
+  data.qualification={status:'VERIFIED',canIssueChallenges:false,canRespond:true};
+  const valid=challenge('PENDING',{canRespond:true,eligibilityReview:'VERIFIED'});
+  data.viewerChallenges=[valid];
+  assert.equal(mayAnswerWarChallenge(data,valid),true,'current per-row permission remains compatible');
+  for(const override of [
+    {eligibilityReview:'PENDING_SOURCE'}, {eligibilityReview:'INVALIDATED'},
+    {historyState:'ARCHIVED'}, {currentChallengeRevision:2},
+    {currentChallengeStatus:'DECLINED'}, {challengeRevision:1.5},
+  ] as Partial<WarRoomChallenge>[]){
+    const row={...valid,...override};data.viewerChallenges=[row];
+    assert.equal(mayAnswerWarChallenge(data,row),false);
+    let responses=0;
+    const ui=await mount(data,{id:'B',repo:{warRoom:async()=>structuredClone(data),
+      onAuthChange:()=>()=>{},respondWarRoomChallenge:async()=>{responses++;}}});
+    try{
+      assert.equal([...document.querySelectorAll('button')].some(button=>
+        ['Accept','Decline'].includes(button.textContent??'')),false);
+      assert.equal(responses,0);
+    }finally{await ui.close();}
+  }
+  data.viewerChallenges=[{...valid,challengeRevision:2}];
+  assert.equal(mayAnswerWarChallenge(data,valid),false,'same challenge identity does not authorize an old revision');
+  data.viewerChallenges=[{...valid,eligibilityReview:'INVALIDATED'}];
+  assert.equal(mayAnswerWarChallenge(data,valid),false,'a stale local row cannot override the current read');
+});
+
+test('archived completed revision keeps its Battle beside a later declined invitation',async()=>{
+  const data=fake('B');data.status='PENDING_SOURCE';
+  data.viewerChallenges=[
+    challenge('DECLINED',{challengeRevision:2,challengeEntryId:'WAR_S1_A_B:R2',historyState:'CURRENT',
+      currentChallengeRevision:2,currentChallengeStatus:'DECLINED'}),
+    challenge('COMPLETED',{challengeEntryId:'WAR_S1_A_B:R1',historyState:'ARCHIVED',
+      currentChallengeRevision:2,currentChallengeStatus:'DECLINED',matchId:'M-original'}),
+  ];
+  const ui=await mount(data,{id:'B'});
+  try{
+    assert.equal(document.querySelectorAll('.war-entry').length,2);
+    assert.match(document.body.textContent!,/Archived invitation · revision 1/);
+    assert.match(document.body.textContent!,/Current invitation: revision 2 · Declined/);
+    assert.match(document.body.textContent!,/Original qualification pending review/);
+    assert.match(document.body.textContent!,/No open invitations/);
+    await ui.click('View Battle');
+    assert.deepEqual(ui.opened,['M-original']);
+  }finally{await ui.close();}
+});
+
+test('an archived pending revision belongs to history and cannot count as an incoming invitation',async()=>{
+  const data=fake('B');data.status='OPEN';
+  data.qualification={status:'VERIFIED',canIssueChallenges:false,canRespond:true};
+  data.viewerChallenges=[challenge('PENDING',{canRespond:true,eligibilityReview:'VERIFIED',
+    historyState:'ARCHIVED',currentChallengeRevision:2,currentChallengeStatus:'DECLINED'})];
+  const ui=await mount(data,{id:'B'});
+  try{
+    assert.match(document.body.textContent!,/No open invitations/);
+    assert.equal(document.querySelectorAll('.war-entry').length,1);
+    assert.equal([...document.querySelectorAll('button')].some(button=>button.textContent==='Accept'),false);
+  }finally{await ui.close();}
+});

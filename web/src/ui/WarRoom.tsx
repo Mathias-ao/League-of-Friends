@@ -70,9 +70,12 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
 
   const data=read?.key===key?read.value:null;
   const currentChallenges=data?.viewerChallenges??[];
-  const incoming=currentChallenges.filter(challenge=>challenge.challenged.playerId===viewerId&&challenge.status==='PENDING');
-  const outgoing=currentChallenges.filter(challenge=>challenge.challenger.playerId===viewerId&&challenge.status==='PENDING');
-  const past=currentChallenges.filter(challenge=>challenge.status!=='PENDING');
+  const openInvitation=(challenge:WarRoomChallenge)=>challenge.status==='PENDING'&&
+    challenge.historyState!=='ARCHIVED'&&
+    (challenge.currentChallengeRevision??challenge.challengeRevision)===challenge.challengeRevision;
+  const incoming=currentChallenges.filter(challenge=>challenge.challenged.playerId===viewerId&&openInvitation(challenge));
+  const outgoing=currentChallenges.filter(challenge=>challenge.challenger.playerId===viewerId&&openInvitation(challenge));
+  const past=currentChallenges.filter(challenge=>!openInvitation(challenge));
   const canIssue=!!data&&mayIssueWarChallenge(data)&&!!repository.createWarRoomChallenge;
   async function perform(action:()=>Promise<void>,success:string){
     if(working)return;
@@ -99,12 +102,17 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
   const renderChallenge=(challenge:WarRoomChallenge)=> {
     const opponent=otherPlayer(challenge,viewerId);
     const canRespond=!!data&&!!repository.respondWarRoomChallenge&&mayAnswerWarChallenge(data,challenge);
-    return <article className="war-entry" key={challenge.challengeId}>
+    return <article className="war-entry" key={challenge.challengeEntryId??`${challenge.challengeId}:R${challenge.challengeRevision}`}>
       <div className="war-entry-identity">
         <span className="eyebrow">{challenge.challenger.playerId===viewerId?'YOUR INVITATION':'INCOMING INVITATION'} · {humanDate(challenge.createdAt)}</span>
         <h3><button className="war-player-link" onClick={()=>openPlayer(opponent.playerId)}>{opponent.steamName}</button></h3>
         <p>{challengeLabel(challenge.status)}
           {challenge.matchId?' · 1v1 Battle':''}</p>
+        {challenge.historyState==='ARCHIVED'&&<p className="war-fineprint">
+          Archived invitation · revision {challenge.challengeRevision}.
+          {challenge.currentChallengeRevision!==undefined&&<> Current invitation: revision {challenge.currentChallengeRevision}
+            {challenge.currentChallengeStatus?` · ${challengeLabel(challenge.currentChallengeStatus)}`:''}.</>}
+        </p>}
         {challenge.eligibilityReview!=='VERIFIED'&&<span className="war-review">
           {challenge.eligibilityReview==='INVALIDATED'?'Challenge eligibility corrected — historical Battle retained':'Original qualification pending review'}
         </span>}
@@ -113,7 +121,7 @@ export function WarRoomView({snapshot,repository,openMatch,openPlayer}:WarRoomVi
         {challenge.matchId&&<button className="text-button" onClick={()=>openMatch(challenge.matchId!)}>View Battle<ArrowRight size={15}/></button>}
         {canRespond?<><button className="primary" disabled={working} onClick={()=>answer(challenge,'ACCEPT')}><Check size={15}/>Accept</button>
           <button className="text-button" disabled={working} onClick={()=>answer(challenge,'DECLINE')}><X size={15}/>Decline</button></>:
-          challenge.challenged.playerId===viewerId&&challenge.status==='PENDING'&&<small className="war-action-pending">Responses paused until current qualification is verified</small>}
+          challenge.challenged.playerId===viewerId&&openInvitation(challenge)&&<small className="war-action-pending">Responses paused until current qualification is verified</small>}
       </div>
     </article>;
   };

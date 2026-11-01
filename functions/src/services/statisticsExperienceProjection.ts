@@ -7,6 +7,8 @@ import {currentOfficialGameOutcome} from "../engines/recordingMatchFacts.js";
 import {activeNativeStatisticsSource,NATIVE_SHARED_DELIVERY} from '../engines/activeNativeStatisticsSource.js';
 import {EXPERIENCE_VERSION,StatisticsExperience,statisticsBindingKey,projectStatistics,type GameStatistics,type ProjectionMetadata,type StatisticsScope,type StatisticsDataset} from '../engines/statisticsExperience.js';
 import {SEASON_SHOWCASE_VERSION,augmentSeasonShowcase} from '../engines/seasonShowcaseProjection.js';
+import {battleGameManifest as statisticsGameManifest} from '../engines/battleGameManifest.js';
+export {battleGameManifest as statisticsGameManifest} from '../engines/battleGameManifest.js';
 
 const stable=(value:any):any=>Array.isArray(value)?value.map(stable):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value;
 export function statisticsMetadata(matchId:string,gameId:string,match:any,game:any,source:any):ProjectionMetadata {
@@ -59,7 +61,7 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
   const names=new Map<string,string>(identities.docs.map((p:any)=>[p.id,p.data().steamName??p.id]));
   const games:GameStatistics[]=[];let unavailableGames=0;
   const checkpoints:{ref:DocumentReference;token:string;kind:string}[]=[];
-  const token=(value:any,kind:string)=>JSON.stringify(stable(kind==='match'?{status:value?.status,opponentKind:value?.opponentKind,aiParticipation:value?.aiParticipation,context:value?.context,format:value?.format,seasonId:value?.seasonId,eventId:value?.eventId,completedAt:value?.completedAt,firstCompletedAt:value?.firstCompletedAt,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot}:kind==='game'?{status:value?.status,result:value?.canonicalResult,players:value?.players,source:value?.activeReplayStatisticsId,revision:value?.replayStatisticsRevision,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,completedAt:value?.completedAt}:{state:value?.state,hash:value?.sourceHash,statistics:value?.statistics,mapping:value?.playerMapping,opponents:value?.opponentMapping}));
+  const token=(value:any,kind:string)=>JSON.stringify(stable(kind==='match'?{status:value?.status,opponentKind:value?.opponentKind,aiParticipation:value?.aiParticipation,context:value?.context,format:value?.format,seasonId:value?.seasonId,eventId:value?.eventId,completedAt:value?.completedAt,firstCompletedAt:value?.firstCompletedAt,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,seriesRule:value?.seriesRule,result:value?.canonicalResult,participants:value?.participants}:kind==='game'?{status:value?.status,result:value?.canonicalResult,players:value?.players,source:value?.activeReplayStatisticsId,revision:value?.replayStatisticsRevision,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,completedAt:value?.completedAt,gameNumber:value?.gameNumber,resolutionReason:value?.resolutionReason,recordingResultBinding:value?.recordingResultBinding,statisticsState:value?.replayStatisticsState}:{state:value?.state,hash:value?.sourceHash,statistics:value?.statistics,mapping:value?.playerMapping,opponents:value?.opponentMapping,nativePublication:value?.nativePublicationVersion,ordinaryUpload:value?.ordinaryUploadVersion,sourceRevision:value?.replayStatisticsRevision,processorRevision:value?.processorRevision,validationId:value?.nativeValidationCandidateId,artifactRevision:value?.artifactRevision,originalRecording:value?.originalRecording,recordedEvents:value?.recordedEvents,extraction:value?.extraction}));
   const checkpoint=(ref:DocumentReference,value:any,kind:string)=>{if(!transaction)checkpoints.push({ref,token:token(value,kind),kind});};
   for(const matchSnapshot of snapshots){
     if(!matchSnapshot.exists)continue;
@@ -68,6 +70,7 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
     if(scope.seasonId&&match.seasonId!==scope.seasonId||scope.eventId&&match.eventId!==scope.eventId)continue;
     const gameQuery=matchSnapshot.ref.collection('games'),gameSnapshots=await read(gameQuery);
     if(!transaction)queries.push({ref:gameQuery,ids:queryIds(gameSnapshots.docs)});
+    const manifest=statisticsGameManifest(match,gameSnapshots.docs.map((snapshot:any)=>({...snapshot.data(),gameId:snapshot.id})));
     for(const gameSnapshot of gameSnapshots.docs){
       const game=gameSnapshot.data(),sourceId=game.activeReplayStatisticsId;checkpoint(gameSnapshot.ref,game,'game');
       if(!sourceId){if(game.status==='COMPLETED')unavailableGames++;continue;}
@@ -80,8 +83,9 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
       const nativeLooking=source.nativePublicationVersion!==undefined||
         source.recordedEvents?.datasetVersion==='AOF_RECORDED_EVENTS_V1'||
         source.statistics?.projectionDeliveryVersion===NATIVE_SHARED_DELIVERY;
-      if(nativeLooking&&!activeNativeStatisticsSource(matchSnapshot.id,gameSnapshot.id,
-          match,game,sourceId,source,process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1',true)){
+      const nativeQualified=nativeLooking?activeNativeStatisticsSource(matchSnapshot.id,gameSnapshot.id,
+          match,game,sourceId,source,process.env.AOF_ACTIVE_NATIVE_PLAYER_READS==='1',true):null;
+      if(nativeLooking&&!nativeQualified){
         unavailableGames++;continue;
       }
       const expectedBinding=statisticsBindingKey(statisticsMetadata(matchSnapshot.id,gameSnapshot.id,match,game,source));
@@ -91,7 +95,12 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
       const {mapping:_,roster,...base}=metadata;
       const experience=source.experience as GameStatistics;
       if(experience.players.length!==roster.length||experience.players.some(p=>!roster.some(r=>r.playerId===p.playerId))){unavailableGames++;continue;}
-      games.push({...experience,...base,players:experience.players.map(p=>({...p,name:names.get(p.playerId)??p.name,team:roster.find(r=>r.playerId===p.playerId)?.team??null,civilization:roster.find(r=>r.playerId===p.playerId)?.civilization??null}))});
+      // Keep outcome eligibility unchanged. Only the existing fully qualified
+      // ordinary native pending-source path can admit measurements separately.
+      // Always overwrite cached flags, including forged or stale true values.
+      const sourceMeasurementsEligible=!!nativeQualified&&!base.eligible&&base.exclusionReason==='Official Game result pending'&&
+        !game.canonicalResult&&['READY','AWAITING_CONFIRMATION'].includes(game.status);
+      games.push({...experience,...base,...manifest,sourceMeasurementsEligible,players:experience.players.map(p=>({...p,name:names.get(p.playerId)??p.name,team:roster.find(r=>r.playerId===p.playerId)?.team??null,civilization:roster.find(r=>r.playerId===p.playerId)?.civilization??null}))});
     }
   }
   for(const c of checkpoints){const fresh=await c.ref.get();if(!fresh.exists||token(fresh.data(),c.kind)!==c.token)throw new HttpsError('aborted','Statistics inputs changed during loading; retry for a coherent revision.');}

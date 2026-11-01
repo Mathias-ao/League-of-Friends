@@ -71,6 +71,15 @@ export interface GameStatistics {
   orderAtMs:number;revision:number;sourceHash:string;eligible:boolean;exclusionReason:string|null;
   affectsSeason:boolean;affectsLifetime:boolean;durationMs:number;players:PlayerMeasurement[];
   episodes:EvidenceEpisode[];evidenceTruncated:boolean;warnings:string[];
+  /** Current authoritative sibling identities, including unavailable sources. */
+  knownGameIds?:string[];
+  /** Only terminal Games proved unused by the current finalized series result. */
+  unusedGameIds?:string[];
+  /** False when required series slots have no authoritative Game identity yet. */
+  gameManifestComplete?:boolean;
+  /** Collector-qualified current source measurements while the official result is pending.
+   * Never authorizes records, victory claims, scoring or cached legacy totals. */
+  sourceMeasurementsEligible?:boolean;
 }
 export interface StatisticsScope {seasonId?:string;eventId?:string;matchId?:string;}
 export interface StatisticsDataset {version:string;games:GameStatistics[];unavailableGames:number;}

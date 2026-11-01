@@ -158,6 +158,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     return this.call<{success:true;revision:number;state:string;idempotent:boolean}>('actOnChronicleInvitation',input);
   }
   myPersonalityHistory(){return this.call<import('../domain/privateHistory').PrivatePersonalityHistory>('getMyPersonalityHistory');}
+  myHonoursPreview(){return this.call<import('../domain/privateHonoursPreview').PrivateHonoursPreview>('getMyHonoursPreview');}
   myGameplayPreview(){return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');}
   mySocialProgression(){return this.call<import('../domain/privateProgression').PrivateProgression>('getMySocialProgression');}
   myGameplayCandidates(){return this.call<import('../domain/gameplayPreview').PrivateGameplayCandidates>('getMyGameplayCandidates');}
