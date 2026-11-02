@@ -107,6 +107,12 @@ test('withdrawn known sibling prevents a false complete Battle; another partial 
   const reduced=new SeasonStatisticsExperience([...games,withdrawn]),a=reduced.aggregate()[0].values.buildOrderExecution;
   assert.equal(a.completeBattles,5);assert.equal(a.partialBattles,1);
   assert.equal(a.samples,5);assert.equal(a.value,90);
+  assert.deepEqual(a.contributingBattleIds,['battle1','battle2','battle3','battle4','battle5'],
+    'the partial sixth Battle is source-observed but does not contribute to Per Battle typical performance');
+  const allTime=reduced.aggregate('allTime')[0].values.unitRequests;
+  assert.equal(allTime.value,60,'an accepted Game from the partial series remains a legitimate additive Game contribution');
+  assert.deepEqual(allTime.contributingBattleIds,['battle1','battle2','battle3','battle4','battle5','battle6'],
+    'the cumulative Game total must disclose its differently scoped source contributions');
   assert.deepEqual(reduced.leaders('buildOrderExecution',5),['a']);
   const earlier=game('battle1','G2');earlier.eligible=false;earlier.players=[]; // source withdrawn before roster mapping
   const insufficient=new SeasonStatisticsExperience([...games,withdrawn,earlier]);
