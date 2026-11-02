@@ -63,7 +63,7 @@ test('controlled Season UI shows pending measurement, current source and honest 
     assert.equal(document.querySelectorAll('.sx-value-best').length,0,'pending measurement cannot become the private best presentation');
     await act(async()=>metric.click());
     const docket=document.querySelector('[aria-label="Statistic evidence"]');
-    assert.match(docket?.textContent??'',/Official result pending · Included in Battle summary/);
+    assert.match(docket?.textContent??'',/Official result pending · Included in displayed Per Battle result/);
     assert.match(docket?.textContent??'',/Battle date pending/);assert.doesNotMatch(docket?.textContent??'',/1970/);
   }finally{await act(async()=>root.unmount());dom.window.close();}
 });
