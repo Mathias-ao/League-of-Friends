@@ -69,7 +69,7 @@ test('complete veterans retain a visible scoped cohort lead despite newcomer and
     assert.doesNotMatch(c.textContent??'',/Cohort leader/);
     await click(a);
     assert.match(docket(),/Verified cohort leader.*2 qualified players/);
-    assert.match(docket(),/5\/6 complete for selected method/);
+    assert.match(docket(),/5\/6 complete Battles for selected method/);
     assert.match(docket(),/Absolute Season leader not declared/);
     await click(document.querySelector('[aria-label="Close evidence"]'));
     await click(c);
