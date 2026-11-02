@@ -8,24 +8,27 @@ import {projectPlayerChronicle} from '../lib/engines/playerChronicleCore.js';
  * correction/revision behavior; it does not pretend to be a decoded original
  * replay or a live source-to-browser acceptance run.
  */
-const names={a:'Aldric',b:'Beren'};
+const names={a:'Aldric',b:'Beren',c:'Cato',d:'Doran'};
 const leagueHistory={modelVersion:'AOF_SOCIAL_HISTORY_V1',
   pairs:[{playerIds:['a','b'],tracks:{},exposure:{gameIds:[],battleIds:[],contexts:[],lastOrder:null}}],
   contributions:[],profiles:[]};
 const roster=[{playerId:1,leaguePlayerId:'a',name:'Aldric'},
-  {playerId:2,leaguePlayerId:'b',name:'Beren'}];
+  {playerId:2,leaguePlayerId:'b',name:'Beren'},
+  {playerId:3,leaguePlayerId:'c',name:'Cato'},
+  {playerId:4,leaguePlayerId:'d',name:'Doran'}];
 const source=(battle,revision)=>'source-'+battle+'-R'+revision;
 const player=(id,castle)=>({
-  playerId:id,name:names[id],team:1,civilization:'Franks',opening:null,mainUnit:null,
+  playerId:id,name:names[id],team:id==='a'||id==='b'?1:2,civilization:'Franks',opening:null,mainUnit:null,
   values:{castle},models:{castle:'projected-castle-v1'},unavailable:{},composition:null,
   responseTimes:[],byAge:{},details:[],
 });
 function game(battle,revision,castle,{eligible=true}={}){
   return {version:EXPERIENCE_VERSION,matchId:'battle-'+battle,gameId:'G1',
-    seasonId:'s1',eventId:'e1',format:'ONE_V_ONE',contextKey:'approved-settings',
+    seasonId:'s1',eventId:'e1',format:'TWO_V_TWO',contextKey:'approved-settings',
     orderAtMs:battle*1000,revision,sourceHash:source(battle,revision),
     eligible,affectsSeason:true,affectsLifetime:true,exclusionReason:eligible?null:'SOURCE_WITHDRAWN',
-    durationMs:1800000,players:[player('a',castle),player('b',720000)],
+    durationMs:1800000,players:[player('a',castle),player('b',720000),
+      player('c',820000),player('d',840000)],
     episodes:[],evidenceTruncated:false,warnings:[],
   };
 }
@@ -38,7 +41,7 @@ function chapter(battle,revision,{accepted=true,hasBeat=true}={}){
   return {accepted,battleId:'battle-'+battle,gameIdentity:'battle-'+battle+'/G1',
     order:battle,chronologyQualified:true,sourceRevision:source(battle,revision),
     playedAtMs:1700000000000+battle*60000,eventId:'e1',seasonId:'s1',
-    battleOutcome:{qualification:'OFFICIAL',resultRevision:1,winningPlayerIds:['a']},
+    battleOutcome:{qualification:'OFFICIAL',resultRevision:1,winningPlayerIds:['a','b']},
     review:{status:'REVIEW_AVAILABLE',participants:roster,
       exposure:[{pairPlayerIds:[1,2],context:'LOCKED_TEAMMATES'}],
       chronicle:hasBeat?[beat(battle)]:[]},
