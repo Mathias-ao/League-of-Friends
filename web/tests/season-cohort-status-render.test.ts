@@ -103,8 +103,8 @@ test('all-qualified tie does not mint a leader and model isolation does not sile
 });
 
 test('another fully qualified method cohort is not misreported as having no peers',async()=>{
-  const old=Array.from({length:5},(_,index)=>game('old'+index,[player('a',90,'old'),player('b',70,'old')]));
-  const next=Array.from({length:5},(_,index)=>game('new'+index,[player('c',60,'new'),player('d',50,'new')]));
+  const old=Array.from({length:5},(_,index)=>game('old'+index,[player('a',90,'a-old'),player('b',70,'a-old')]));
+  const next=Array.from({length:5},(_,index)=>game('new'+index,[player('c',60,'z-new'),player('d',50,'z-new')]));
   await rendered([...old,...next],async()=>{
     const a=valueButton('A','Build Order Execution'),c=valueButton('C','Build Order Execution');
     assert.ok(a&&c);
