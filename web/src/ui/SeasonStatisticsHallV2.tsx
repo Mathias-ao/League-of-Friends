@@ -35,7 +35,9 @@ function qualificationStatus(metric:SeasonMetricDefinition,value:SeasonAggregate
     return {short:'Insufficient coverage',detail:'Insufficient coverage — 0 of 5 complete comparable Battles. The observed Game measurement remains provisional.'};
   if(complete<MIN_QUALIFIED_BATTLES)
     return {short:`Provisional · ${complete}/5 Battles`,detail:`Provisional — ${complete} of 5 complete comparable Battles. The source-backed value is visible but does not qualify for leadership.`};
-  if(comparison.qualifiedPlayers<2||comparison.model!==value.selectedModel)
+  if(comparison.qualifiedPlayers>=2&&comparison.model&&comparison.model!==value.selectedModel)
+    return {short:'Different model cohort',detail:`Different model cohort — displayed qualified peers use ${comparison.model}; your ${complete} complete Battles use ${value.selectedModel}, a different measurement model, and cannot be ranked against that cohort. Other compatible peers may exist.`};
+  if(comparison.qualifiedPlayers<2)
     return {short:'No comparable peers',detail:`Insufficient coverage — No compatible qualified peer group is established for ${value.selectedModel}. Your ${complete} complete Battles remain visible.`};
   if(!comparison.ids.length)
     return {short:'Qualified tie',detail:`Qualified tie — ${comparison.qualifiedPlayers} qualified players have the same value; no distinct cohort leader is marked. Absolute Season leader not declared.`};
@@ -53,7 +55,7 @@ function MetricCell({column,metric,comparison,select}:{column:SeasonColumn;metri
   const formatted=formatSeasonValue(value,metric),label=displayMetricLabel(metric),status=qualificationStatus(metric,value,comparison,column.playerId);
   return <td className={classes}><button className="sx-value-button" aria-label={`${column.name}, ${label}: ${formatted}. ${status?.detail??''} View evidence.`} onClick={()=>select(column.playerId,metric)}>
     <span className="sx-value-line"><span className="sx-value-main">{formatted}</span>
-      {leader&&<span className="sx-lead-seal" aria-label={`Highest or lowest value among ${comparison.qualifiedPlayers} qualified peers, according to this metric`}>◆</span>}
+      {leader&&<span className="sx-lead-seal" aria-label={`${metric.leader==='min'?'Lowest':'Highest'} value among ${comparison.qualifiedPlayers} qualified peers`}>◆</span>}
     </span>
     {(value.completeBattles??0)!==(value.eligibleBattles??0)&&<small>{value.completeBattles??0}/{value.eligibleBattles??0} complete Battles</small>}
     {(value.observedGames??0)<value.eligibleGames&&<small>{value.observedGames}/{value.eligibleGames} Games</small>}
