@@ -59,17 +59,17 @@ test('complete veterans retain a visible scoped cohort lead despite newcomer and
     const c=valueButton('C','Build Order Execution'),d=valueButton('D','Build Order Execution');
     assert.ok(a&&b&&c&&d,'all independently measured players remain in the table');
     assert.match(a.textContent??'',/90/);
-    assert.match(a.textContent??'',/5\/6 complete Battles/,'an incomplete sixth Battle is disclosed, not treated as a sixth complete Battle');
+    assert.match(a.textContent??'',/5\/6 complete for selected method/,'an incomplete sixth Battle is disclosed, not treated as a sixth complete Battle');
     assert.match(a.textContent??'',/Cohort leader/);
     assert.match(a.getAttribute('aria-label')??'',/Verified cohort leader.*2 qualified players/);
     assert.doesNotMatch(b.textContent??'',/Cohort leader/);
     assert.match(c.textContent??'',/Provisional.*1\/5 Battles/,'one-Battle newcomer is visible but cannot lead');
     assert.match(d.textContent??'',/Insufficient coverage/,'a pending incomplete Battle remains a visible observation, not a qualifying sample');
-    assert.match(d.textContent??'',/0\/1 complete Battles/);
+    assert.match(d.textContent??'',/0\/1 complete for selected method/);
     assert.doesNotMatch(c.textContent??'',/Cohort leader/);
     await click(a);
     assert.match(docket(),/Verified cohort leader.*2 qualified players/);
-    assert.match(docket(),/5\/6 complete Battles/);
+    assert.match(docket(),/5\/6 complete for selected method/);
     assert.match(docket(),/Absolute Season leader not declared/);
     await click(document.querySelector('[aria-label="Close evidence"]'));
     await click(c);
@@ -116,6 +116,21 @@ test('another fully qualified method cohort is not misreported as having no peer
   });
 });
 
+test('excluded complete model versions are not described as missing or withdrawn Battles',async()=>{
+  const games=Array.from({length:5},(_,index)=>game('normal'+index,[player('a',90,'old'),player('b',70,'old')]));
+  games.push(game('other-method',[player('a',10,'new')]));
+  await rendered(games,async()=>{
+    const a=valueButton('A','Build Order Execution');
+    assert.ok(a);
+    assert.match(a.textContent??'',/5\/6 complete for selected method/);
+    assert.match(a.textContent??'',/Compatible model only/);
+    await click(a);
+    assert.match(docket(),/5\/6 complete Battles for selected method/);
+    assert.match(docket(),/excluded: new/);
+    assert.match(docket(),/Verified cohort leader/);
+  });
+});
+
 test('All-time evidence calls Game sums Season-scoped, never Battle-summed or lifetime-wide',async()=>{
   const first=game('series',[player('a',90)]);
   const second=game('series',[player('a',90)]);
@@ -127,6 +142,6 @@ test('All-time evidence calls Game sums Season-scoped, never Battle-summed or li
     assert.ok(value);
     await click(value);
     assert.match(docket(),/Cumulative total of accepted compatible Game contributions in the selected Season/);
-    assert.match(docket(),/1\/1 eligible Battles · 2\/2 compatible Games · 1\/1 complete Battles/);
+    assert.match(docket(),/1\/1 eligible Battles · 2\/2 compatible Games · 1\/1 complete Battles for selected method/);
   });
 });
