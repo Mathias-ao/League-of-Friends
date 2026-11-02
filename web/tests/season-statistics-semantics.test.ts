@@ -30,7 +30,11 @@ test('Per Battle uses two independent observations for a 3-Game plus 1-Game seri
   assert.equal(row.values.apm.samples,2);assert.equal(row.values.apm.eligibleBattles,2);
   assert.equal(engine.aggregate('allTime').find(r=>r.playerId==='a')!.values.unitRequests.value,60);
   assert.equal(engine.aggregate('allTime').find(r=>r.playerId==='a')!.values.scouting.value,70);
-  assert.equal(new SeasonStatisticsExperience([game('battle3'),game('battle4')]).aggregate()[0].values.apm.samples,2);
+  const control=[game('battle3'),game('battle4')];
+  amount(control[0],'a','apm',10);amount(control[1],'a','apm',30);
+  const controlMetric=new SeasonStatisticsExperience(control).aggregate()[0].values.apm;
+  assert.equal(controlMetric.samples,2,'two single-Game Battles must also be two independent observations');
+  assert.equal(controlMetric.value,20,'the 1+1 control must match the Battle-weighted 3+1 timing example, not just its sample count');
 });
 test('Age timing takes a within-Battle median, then a median across Battles',()=>{
   const games=[game('battle1','G1'),game('battle1','G2'),game('battle1','G3'),game('battle2')];
