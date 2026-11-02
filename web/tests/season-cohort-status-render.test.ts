@@ -102,6 +102,20 @@ test('all-qualified tie does not mint a leader and model isolation does not sile
   });
 });
 
+test('another fully qualified method cohort is not misreported as having no peers',async()=>{
+  const old=Array.from({length:5},(_,index)=>game('old'+index,[player('a',90,'old'),player('b',70,'old')]));
+  const next=Array.from({length:5},(_,index)=>game('new'+index,[player('c',60,'new'),player('d',50,'new')]));
+  await rendered([...old,...next],async()=>{
+    const a=valueButton('A','Build Order Execution'),c=valueButton('C','Build Order Execution');
+    assert.ok(a&&c);
+    assert.match(a.textContent??'',/Cohort leader/);
+    assert.match(c.textContent??'',/Different model cohort/);
+    assert.doesNotMatch(c.textContent??'',/No comparable peers/);
+    await click(c);
+    assert.match(docket(),/different measurement model.*cannot be ranked against/);
+  });
+});
+
 test('All-time evidence calls Game sums Season-scoped, never Battle-summed or lifetime-wide',async()=>{
   const first=game('series',[player('a',90)]);
   const second=game('series',[player('a',90)]);
