@@ -1,16 +1,65 @@
 import {useEffect,useId,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
-import {ArrowRight,Check,Flag,Shield,Swords,X} from 'lucide-react';
+import {ArrowRight,BookOpen,Check,Flag,Medal,Shield,Swords,X} from 'lucide-react';
 import {frontPageNotices,type FrontPageNotice} from '../domain/frontPageNotices';
-import {canBrowseLeague,isWarmupMatch,type EventDetail,type LeagueSnapshot} from '../domain/league';
+import {honourActionNotices,chronicleActionNotices,recordingActionNotices} from '../domain/frontPageNoticeExtras';
+import {honoursSeenKey,HONOURS_VIEWED_EVENT,reconcileHonourNotices} from '../domain/achievementNotices';
+import {privateChronicleInteractionsEnabled} from '../domain/privateChronicleInteractions';
+import {canBrowseLeague,isWarmupMatch,type AchievementSummary,type EventDetail,type LeagueSnapshot,type MatchDetail,type PlayerProfile} from '../domain/league';
+import type {PrivateChronicleInvitations} from '../domain/privateChronicleInteractions';
 import {useScheduleClock} from '../hooks/useScheduleClock';
 import {EventWarmupNote} from './EventWarmupNote';
 import type {ViewProps} from './App';
 
-export function FrontPageNotifications(props:Pick<ViewProps,'snapshot'|'repository'|'busy'|'openEvent'|'openMatch'|'enter'|'act'>){
- const {snapshot,repository,busy,openEvent,openMatch,enter,act}=props;
+export function FrontPageNotifications(props:Pick<ViewProps,'snapshot'|'repository'|'busy'|'openEvent'|'openMatch'|'enter'|'act'>&{openHonours:()=>void}){
+ const {snapshot,repository,busy,openEvent,openMatch,openHonours,enter,act}=props;
  const now=useScheduleClock([...snapshot.events.flatMap(e=>[e.signupDeadlineAt,e.checkInOpensAt,e.checkInClosesAt,e.warmupOpensAt]),...snapshot.matches.flatMap(m=>[m.playOpensAt,m.playClosesAt])]);
- const notices=frontPageNotices(snapshot,now);
+ const [extraData,setExtraData]=useState<{snapshot:LeagueSnapshot;ownerId:string;profile:PlayerProfile|null;details:MatchDetail[];invitations:PrivateChronicleInvitations|null}|null>(null);
+ const [unseenHonours,setUnseenHonours]=useState<AchievementSummary[]>([]);
+ const [refreshToken,setRefreshToken]=useState(0);
+ useEffect(()=>{
+  const refresh=()=>setRefreshToken(token=>token+1);
+  window.addEventListener(HONOURS_VIEWED_EVENT,refresh);
+  window.addEventListener('aof:chronicle-invitation-updated',refresh);
+  window.addEventListener('focus',refresh);
+  return ()=>{window.removeEventListener(HONOURS_VIEWED_EVENT,refresh);window.removeEventListener('aof:chronicle-invitation-updated',refresh);window.removeEventListener('focus',refresh);};
+ },[]);
+ useEffect(()=>{
+  if(!canBrowseLeague(snapshot)||!snapshot.viewer)return;
+  let current=true;
+  const ownerId=snapshot.viewer.playerId;
+  const matches=snapshot.matches.filter(m=>['COMPLETED','AWAITING_CONFIRMATION'].includes(m.status)&&
+    m.participants.some(p=>p.playerId===ownerId)).slice(-8);
+  const profile=repository.player(ownerId).catch(()=>null);
+  const details=Promise.allSettled(matches.map(m=>repository.match(m.matchId))).then(results=>
+    results.flatMap(result=>result.status==='fulfilled'?[result.value]:[]));
+  const invitations=privateChronicleInteractionsEnabled(import.meta.env)&&repository.myChronicleInvitations
+    ?repository.myChronicleInvitations().catch(()=>null):Promise.resolve(null);
+  void Promise.all([profile,details,invitations]).then(([ownerProfile,matchDetails,privateInvitations])=>{
+    if(!current)return;
+    setExtraData({snapshot,ownerId,
+      profile:ownerProfile?.player.playerId===ownerId&&Array.isArray(ownerProfile.achievementCollection)?ownerProfile:null,
+      details:matchDetails,invitations:privateInvitations});
+  });
+  return ()=>{current=false;};
+ },[repository,snapshot,refreshToken]);
+ const currentData=extraData?.snapshot===snapshot&&extraData.ownerId===snapshot.viewer?.playerId?extraData:null;
+ useEffect(()=>{
+  const awards=currentData?.profile?.achievementCollection;
+  if(!awards||!snapshot.viewer){setUnseenHonours([]);return;}
+  try{
+    const key=honoursSeenKey(snapshot.viewer.playerId),raw=window.localStorage.getItem(key);
+    const evaluated=reconcileHonourNotices(awards,raw);
+    if(evaluated.initialSeen!==null)window.localStorage.setItem(key,evaluated.initialSeen);
+    setUnseenHonours(evaluated.unseen);
+  }catch{setUnseenHonours([]);}
+ },[currentData,snapshot.viewer,refreshToken]);
+ const extras=currentData?[
+   ...recordingActionNotices(snapshot,currentData.details),
+   ...chronicleActionNotices(snapshot,currentData.invitations),
+   ...honourActionNotices(unseenHonours)
+ ]:[];
+ const notices=frontPageNotices(snapshot,now,extras);
  const [selected,setSelected]=useState<string|null>(null);
  const [receipts,setReceipts]=useState<{snapshot:LeagueSnapshot;events:EventDetail[]}|null>(null);
  useEffect(()=>{
@@ -31,7 +80,8 @@ export function FrontPageNotifications(props:Pick<ViewProps,'snapshot'|'reposito
  const chosen=notices.find(note=>note.id===selected);
  const run=(note:FrontPageNotice)=>{
   setSelected(null);
-  if(note.kind==='season')enter();
+  if(note.kind==='recognition'||note.kind==='chronicle')openHonours();
+  else if(note.kind==='season')enter();
   else if(note.kind==='checkin')void act(()=>repository.checkIn(note.eventId!),'You are checked in. The muster will use your banner.');
   else if(note.matchId)openMatch(note.matchId);
   else if(note.eventId)openEvent(note.eventId);
@@ -46,8 +96,8 @@ export function FrontPageNotifications(props:Pick<ViewProps,'snapshot'|'reposito
  </div>;
 }
 function NoticeFlag({note,onClick}:{note:FrontPageNotice;onClick:()=>void}){
- const Icon=note.kind==='checkin'?Check:note.kind==='warmup'||note.kind==='battle'?Swords:note.kind==='season'?Shield:Flag;
- const cloth=note.kind==='checkin'||note.kind==='battle'?0:note.kind==='warmup'?4:3;
+ const Icon=note.kind==='recognition'?Medal:note.kind==='chronicle'?BookOpen:note.kind==='checkin'?Check:['warmup','battle','recording'].includes(note.kind)?Swords:note.kind==='season'?Shield:Flag;
+ const cloth=['warmup','battle','recording'].includes(note.kind)?0:note.kind==='chronicle'?5:note.kind==='recognition'?3:note.kind==='relationship'?2:1;
  return <button type="button" className={`chronicle-bookmark bookmark-cloth-${cloth} frontpage-notice-flag`} aria-label={`${note.label}: ${note.context}`} title={`${note.label} · ${note.context}`} aria-haspopup="dialog" onClick={onClick}><span className="bookmark-monogram" aria-hidden="true"><Icon size={17}/></span><span className="bookmark-player-name">{note.label}</span></button>;
 }
 function Deadline({note}:{note:FrontPageNotice}){
