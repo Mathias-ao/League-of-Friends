@@ -119,3 +119,28 @@ test('Chronicle epigraph never infers feelings, moral conduct or reciprocity fro
     assert.equal(relationshipEpigraph(relationship),neutral);
   }
 });
+
+test('earned award dispatch can open directly into the owner Chronicle with a visible NEW seal',async()=>{
+  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});
+  Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,
+    HTMLDialogElement:dom.window.HTMLDialogElement,localStorage:dom.window.localStorage,IS_REACT_ACT_ENVIRONMENT:true});
+  dom.window.HTMLElement.prototype.scrollIntoView=()=>{};
+  const {createRoot}=await import('react-dom/client'),root=createRoot(document.getElementById('app')!);
+  const repo=new PreviewLeagueRepository();
+  await repo.signIn();await repo.requestMembership('Reader','','K7M4Q9');await repo.enterSeason('S001');
+  const snapshot=await repo.load(),id=snapshot.viewer!.playerId,profile=await repo.player(id);
+  const earned={awardId:'new-v1-achievement',name:'First Fast Castle',description:'Source-qualified achievement',
+    firstAwardedAt:'2026-11-09T12:00:00.000Z'};
+  profile.achievementCollection=[earned];
+  dom.window.localStorage.setItem('aof:honours-seen:v1:'+encodeURIComponent(id),JSON.stringify([]));
+  const props={snapshot,preview:false,busy:false,repository:repo,openEvent:()=>{},openMatch:()=>{},
+    openPlayer:()=>{},act:async()=>true,enter:()=>{},navigate:()=>{},data:profile,openChronicleOnLoad:true};
+  try{
+    await act(async()=>{root.render(React.createElement(ProfileDialogWithIdentity,props));await flush();});
+    assert.ok(document.querySelector('.chronicle-self-page'),'honour opens the actual personal Chronicle leaf');
+    assert.match(document.querySelector('.chronicle-honours')?.textContent??'',/First Fast Castle/);
+    assert.equal(document.querySelector('.chronicle-new-honour')?.textContent,'NEW');
+    assert.match(dom.window.localStorage.getItem('aof:honours-seen:v1:'+encodeURIComponent(id))??'',/new-v1-achievement/,
+      'viewing the owner leaf updates only its local visual read receipt');
+  }finally{await act(async()=>root.unmount());dom.window.close();}
+});
