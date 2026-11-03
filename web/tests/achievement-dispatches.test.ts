@@ -39,6 +39,8 @@ test('only a finished Game with an official result and no active source has a re
   const s=snapshot(),d=detail();
   assert.deepEqual(recordingActionNotices(s,[d]).map(n=>n.id),['recording:m1:G1']);
   assert.equal(frontPageNotices(s,Date.now(),recordingActionNotices(s,[d]))[0].kind,'recording');
+  assert.deepEqual(recordingActionNotices({...s,matches:[{...s.matches[0],status:'AWAITING_CONFIRMATION'}]},[d]),[],
+    'result review owns the notice until the Battle is officially complete');
   assert.deepEqual(recordingActionNotices(s,[{...d,games:[{...d.games[0],status:'READY'}]}]),[],
     'an unplayed Game cannot be treated as a missing recording');
   assert.deepEqual(recordingActionNotices(s,[{...d,games:[{...d.games[0],result:null}]}]),[]);
