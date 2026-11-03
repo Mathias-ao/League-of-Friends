@@ -53,7 +53,7 @@ test('flags open parchment before check-in, restore focus, and close when attend
  const repository=new PreviewLeagueRepository();let checkins=0,fetches=0;
  repository.checkIn=async()=>{checkins++;};repository.event=async()=>{fetches++;throw new Error('Unnecessary request');};
  const snapshot=base();snapshot.events[0].checkInOpensAt='2020-01-01T00:00:00Z';snapshot.events[0].checkInClosesAt='2099-01-01T00:00:00Z';
- const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},enter:()=>{},act:async(action:()=>Promise<void>)=>{await action();return true;}};
+ const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},openHonours:()=>{},enter:()=>{},act:async(action:()=>Promise<void>)=>{await action();return true;}};
  try{
   await act(async()=>root.render(React.createElement(FrontPageNotifications,props)));
   const trigger=document.querySelector('[aria-label^="Answer muster"]') as HTMLButtonElement;trigger.focus();
@@ -84,7 +84,7 @@ test('only authenticated multiple-warm-up receipts become flags; stale requests 
  snapshot.matches=snapshot.matches.map(({warmupScoringPolicy,...match})=>match);
  let finish:(value:any)=>void=()=>{};
  repository.event=()=>new Promise(resolve=>{finish=resolve;});
- const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},enter:()=>{},act:async()=>true};
+ const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},openHonours:()=>{},enter:()=>{},act:async()=>true};
  const detail={event,matches:snapshot.matches,viewer:{playerId:'you'},roundoff:{viewerWarmupSelection:{playerId:'you',matchId:'extra',points:3,win:true,otherWarmupCount:1,resultRevision:1,sourceHash:'validated'}}};
  try{
   await act(async()=>root.render(React.createElement(FrontPageNotifications,props)));
