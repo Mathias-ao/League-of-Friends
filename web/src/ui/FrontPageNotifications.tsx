@@ -28,7 +28,7 @@ export function FrontPageNotifications(props:Pick<ViewProps,'snapshot'|'reposito
   if(!canBrowseLeague(snapshot)||!snapshot.viewer)return;
   let current=true;
   const ownerId=snapshot.viewer.playerId;
-  const matches=snapshot.matches.filter(m=>['COMPLETED','AWAITING_CONFIRMATION'].includes(m.status)&&
+  const matches=snapshot.matches.filter(m=>m.status==='COMPLETED'&&
     m.participants.some(p=>p.playerId===ownerId)).slice(-8);
   const profile=repository.player(ownerId).catch(()=>null);
   const details=Promise.allSettled(matches.map(m=>repository.match(m.matchId))).then(results=>
