@@ -41,7 +41,7 @@ export function chronicleActionNotices(snapshot:LeagueSnapshot,
     invitations.testOnly!==true||invitations.visibility!=='OWNER_ONLY'||
     invitations.ownerPlayerId!==ownerId||invitations.officialEffects.length!==0)return [];
   return invitations.invitations.filter(i=>i.respondentPlayerId===ownerId&&i.sourceCurrent&&
-      (i.state==='OFFERED'||i.state==='DEFERRED')&&i.speaker===null&&
+      i.state==='OFFERED'&&i.speaker===null&&
       i.opportunityRevision&&i.context?.status==='CURRENT_GAME_ONLY')
     .map(i=>({id:`chronicle:${i.slotId}:${i.opportunityRevision}`,kind:'chronicle' as const,
       label:'Chronicle',title:'Your perspective is invited',
