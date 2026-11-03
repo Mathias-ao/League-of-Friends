@@ -156,6 +156,9 @@
 .chronicle-honours strong,.chronicle-selected-records strong{color:var(--chronicle-ink);font:700 .98rem/1.25 var(--chronicle-book-hand)}
 .chronicle-honours p{margin:.18rem 0 0;color:#4b3624;font:400 .87rem/1.5 var(--chronicle-book-hand)}
 .chronicle-honours time{display:block;margin-top:.28rem;color:#826746;font:italic .66rem var(--chronicle-book-hand)}
+.chronicle-new-honour{display:inline-flex;align-items:center;margin-left:.48rem;padding:.11rem .38rem;border:1px solid #a77d35;border-radius:2px;color:#724a1a;background:rgba(212,168,72,.22);font:700 .55rem/1.4 Cinzel,serif;letter-spacing:.09em;vertical-align:middle;animation:honour-ink-reveal .45s ease-out both}
+@keyframes honour-ink-reveal{from{opacity:.25;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.chronicle-new-honour{animation:none}}
 .chronicle-selected-records li{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;padding:.72rem .15rem;border-bottom:1px solid rgba(80,50,25,.17)}
 .chronicle-selected-records li span{color:#6d4e31;font:italic .78rem var(--chronicle-book-hand);white-space:nowrap}
 .chronicle-reserved-copy{margin:1rem 0 0;color:#71583b;font:italic .88rem/1.55 var(--chronicle-book-hand)}
