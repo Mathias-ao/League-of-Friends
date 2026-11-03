@@ -100,3 +100,43 @@ test('only authenticated multiple-warm-up receipts become flags; stale requests 
   assert.equal(document.querySelector('.frontpage-counted-flag'),null);
  }finally{await act(async()=>root.unmount());dom.window.close();}
 });
+
+test('verified owner award shows one gold dispatch, routes to Chronicle and clears after reading',async()=>{
+ const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+ const {createRoot}=await import('react-dom/client');const root=createRoot(document.getElementById('app')!);
+ const repository=new PreviewLeagueRepository();
+ const award={awardId:'earn-one',name:'First Ascent',description:'Castle age',firstAwardedAt:'2026-11-09T10:00:00.000Z'};
+ let awards=[award],opened=0;
+ repository.player=async(id:string)=>({player:{playerId:id,steamName:id},lifetime:{competition:null},
+   activeSeason:null,achievements:[],achievementCollection:awards,opponents:[],teammates:[]});
+ const s={...base(),events:[],matches:[]};
+ const props={snapshot:s,repository,busy:false,openEvent:()=>{},openMatch:()=>{},openHonours:()=>{opened++;},enter:()=>{},act:async()=>true};
+ try{
+  await act(async()=>root.render(React.createElement(FrontPageNotifications,props)));
+  await act(async()=>{await Promise.resolve();});
+  assert.equal(document.querySelector('[aria-label^="New honour"]'),null,
+    'existing achievements do not blast a retroactive banner at first view');
+  awards=[award,{awardId:'earn-two',name:'Field Veteran',description:'Four distinct Battles',
+    firstAwardedAt:'2026-11-09T12:00:00.000Z'}];
+  await act(async()=>root.render(React.createElement(FrontPageNotifications,{...props,snapshot:{...s}})));
+  await act(async()=>{await Promise.resolve();});
+  const trigger=document.querySelector<HTMLButtonElement>('[aria-label^="New honour"]');
+  assert.ok(trigger,'new owner-authenticated award gets the gold dispatch');
+  await act(async()=>trigger.click());
+  assert.match(document.querySelector('dialog')!.textContent!,/Field Veteran/);
+  await act(async()=>document.querySelector<HTMLButtonElement>('.event-warmup-open-battle')!.click());
+  assert.equal(opened,1,'banner routes to owner Chronicle, not a new awards surface');
+  // The Chronicle acknowledgement writes the owner receipt; this signal
+  // refreshes the same-window banner, without any persisted award mutation.
+  dom.window.localStorage.setItem('aof:honours-seen:v1:you',JSON.stringify([
+    JSON.stringify(['earn-one',award.firstAwardedAt]),JSON.stringify(['earn-two','2026-11-09T12:00:00.000Z'])]));
+  await act(async()=>window.dispatchEvent(new Event('aof:honours-viewed')));
+  await act(async()=>{await Promise.resolve();});
+  assert.equal(document.querySelector('[aria-label^="New honour"]'),null);
+  const foreign={...s,viewer:{playerId:'other',steamName:'Other'},players:[]};
+  await act(async()=>root.render(React.createElement(FrontPageNotifications,{...props,snapshot:foreign})));
+  await act(async()=>{await Promise.resolve();});
+  assert.equal(document.querySelector('[aria-label^="New honour"]'),null,'no award crosses an account change');
+ }finally{await act(async()=>root.unmount());dom.window.close();}
+});
