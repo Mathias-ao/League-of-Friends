@@ -68,6 +68,7 @@ test('rare private perspective is an owner-only emulator dispatch, not a public 
   assert.equal(chronicleActionNotices(s,v).length,1);
   for(const altered of [{...v,ownerPlayerId:'other'},{...v,testOnly:false},
     {...v,invitations:[{...invitation,state:'DECLINED' as const}]},
+    {...v,invitations:[{...invitation,state:'DEFERRED' as const}]},
     {...v,invitations:[{...invitation,sourceCurrent:false}]},
     {...v,invitations:[{...invitation,respondentPlayerId:'other'}]}]){
     assert.deepEqual(chronicleActionNotices(s,altered as PrivateChronicleInvitations),[]);
