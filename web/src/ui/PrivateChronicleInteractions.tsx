@@ -66,7 +66,7 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
       await repository.actOnChronicleInvitation!(request);
       if(token!==attempt.current)return;
       await load(token);
-      if(token===attempt.current){setNotes({});window.dispatchEvent(new Event('aof:chronicle-invitation-updated'));}
+      if(token===attempt.current){setNotes({});window.dispatchEvent(new window.Event('aof:chronicle-invitation-updated'));}
     }catch(e){if(token===attempt.current){setRead(null);setNotes({});
       setError(e instanceof Error?e.message:'Invitation changed. Refresh your Chronicle.');}}
     finally{if(token===attempt.current)setBusy(false);}
