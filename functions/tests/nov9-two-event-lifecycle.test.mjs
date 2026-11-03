@@ -79,7 +79,7 @@ test('Nov 9 two-Event pilot: normal admin commands produce four separate 1v1 Bat
        matchId:id,gameId:'G1',bindings:[binding[0],{sourceName:'Fake third participant',playerId:'operator'}],
        reason:'Attempt to attach an unapproved source player.'})),/approved Game starters/);
      await assert.rejects(adminBindReplayParticipants.run(req({
-       matchId:id,gameId:'G1',bindings:[binding[0],{sourceName:'original red',playerId:'beren'}],
+       matchId:id,gameId:'G1',bindings:[binding[0],{sourceName:binding[0].sourceName.toLowerCase(),playerId:'beren'}],
        reason:'Attempt to bind duplicate normalized source names.'})),/Names and starters must be unique|approved Game starters/);
    }
  }
