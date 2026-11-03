@@ -10,6 +10,27 @@
 - [ ] Download four distinct original human-vs-human recordings, keep original bytes and SHA-256 hashes, note true Game GUID, patch/build, replay names, map, civilization, actual source winner and source-recording attribution. Prefer the same two historical players across recordings for coherent longitudinal behavior.
 - [ ] Admin-audited `adminBindReplayParticipants` resolves **observed names to the two test starter IDs BEFORE first accepted recording**, with a truthful test reason. It does not change raw replay slot/name/GUID or turn a downloaded player into a genuine league member. Reject a 2v2/4v4/FFA source, duplicate Game GUID, unmatched roster, or fabricated player identity.
 
+## Known four-original backup fixture set (checked into repo)
+
+These are genuine source bytes, not invented test Games. The exact SHA-256, independent GUID, original player name/slot, source resignation and postgame clock are asserted by `functions/tests/nov9-original-fixtures.test.mjs`.
+
+| Event/act | Original file in `replay-fixtures/` | Observed map / build | Bind actual original source name → **simulation only** | Source winner / test winner |
+|---|---|---|---|---|
+| E1 warmup | `1v1_1.aoe2record` | map ID 9 / 180059 | T90Official → A; Mr Greed → B | T90Official → A |
+| E1 main | `aof-test-game-1.aoe2record` | map ID 140 / 185872 | NOC \| Target331 → A; T90Official → B | T90Official → B |
+| E2 warmup | `aof-test-game-2.aoe2record` | map ID 140 / 185872 | NOC \| Target331 → A; T90Official → B | T90Official → B |
+| E2 main | `aof-test-game-3.aoe2record` | map ID 9 / 185872 | T90Official → A; Mununez → B | T90Official → A |
+
+**Do not use** `1v1_2.aoe2record` as a fifth distinct Game: it has the *same Game GUID* as `1v1_1.aoe2record`, just the other recorder's POV.
+
+**Honesty:** this 18–18 result tests the pipeline by **varying the historical real actor assigned to each test identity**. The true four winners remain T90Official in their original Game; no observed result is reversed. Therefore the created 'A versus B' repeated rivalry, Personality tendencies and any Achievement qualifying history are **synthetic testing identities, not real historical behavior of either person**. Label the entire league a test simulation; never export its standings/awards to Season I production. If the owner prioritizes a consistent real historical actor for Personality over a standings tie, bind T90Official to A in *all four* instead: A=26, B=10, and do not use the 18–18 oracle. Both are valid distinct test goals, not interchangeable evidence.
+
+**Configuration preflight:** the accepted Game must announce source-true map ID 9 or 140, version-compatible victory/settings and actual teams; warmup and main Game configurations may differ by approved schedule. Map ID 140's human display name must be verified from the authoritative map registry before naming it publicly. The current outcome resolver supports only carefully admitted versions/settings and may leave some sources in `PENDING_ADMIN_REVIEW`. Only authenticated source-bound Emperor review with the real outcome may settle them; never bypass with a fabricated result merely to display points. Recorded original play dates remain their historical dates; scheduling in this POC is an explicitly synthetic arrangement and should not claim actual November competition.
+
+### Security and release note
+
+These four files are a **backup** for the owner's preferred newly downloaded originals; they avoid a scramble if external downloads are unavailable. They are enough for an original-byte *preflight*, not proof that the native upload worker, correct Event map/victory configuration, auth, deployment, timestamps and browser READY display will work on November 9. Check the current deployed flags/allowlist and test host under a separately approved environment window. Retain independent genuine source hashes and preserve corrections.
+
 ## Exact score observations — approved Season Points V1
 
 | Processed Battle | Winner | A Season Points | B Season Points | What to verify |
