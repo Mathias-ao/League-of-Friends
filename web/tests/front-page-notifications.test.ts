@@ -131,7 +131,7 @@ test('verified owner award shows one gold dispatch, routes to Chronicle and clea
   // refreshes the same-window banner, without any persisted award mutation.
   dom.window.localStorage.setItem('aof:honours-seen:v1:you',JSON.stringify([
     JSON.stringify(['earn-one',award.firstAwardedAt]),JSON.stringify(['earn-two','2026-11-09T12:00:00.000Z'])]));
-  await act(async()=>window.dispatchEvent(new Event('aof:honours-viewed')));
+  await act(async()=>window.dispatchEvent(new dom.window.Event('aof:honours-viewed')));
   await act(async()=>{await Promise.resolve();});
   assert.equal(document.querySelector('[aria-label^="New honour"]'),null);
   const foreign={...s,viewer:{playerId:'other',steamName:'Other'},players:[]};
