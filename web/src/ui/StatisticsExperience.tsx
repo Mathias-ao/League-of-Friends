@@ -102,9 +102,9 @@ function compactDate(value:string|null|undefined){
   return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));
 }
 
-function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
+function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronicleOnLoad?:boolean}){
   const {data,snapshot,preview,openMatch}=props;
-  const [chronicleOpen,setChronicleOpen]=useState(false);
+  const [chronicleOpen,setChronicleOpen]=useState(!!props.openChronicleOnLoad);
   const battleRail=useRef<HTMLDivElement>(null);
   const identity=playerIdentity(data,preview);
   const seasonStats=data.activeSeason?.competition??null;
@@ -165,6 +165,6 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile}){
   </section>;
 }
 
-export function ProfileDialogWithIdentity(props:ViewProps&{data:PlayerProfile}){
+export function ProfileDialogWithIdentity(props:ViewProps&{data:PlayerProfile;openChronicleOnLoad?:boolean}){
   return <PlayerProfileExperience {...props}/>;
 }
