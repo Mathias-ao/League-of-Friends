@@ -1,12 +1,12 @@
 import {canBrowseLeague,isBattleOpen,isWarmupMatch,LeagueEvent,type LeagueSnapshot} from './league';
 
 export interface FrontPageNotice {
- id:string;kind:'season'|'signup'|'checkin'|'warmup'|'battle'|'muster';
+ id:string;kind:'season'|'signup'|'checkin'|'warmup'|'battle'|'recording'|'muster'|'chronicle'|'recognition'|'relationship';
  label:string;title:string;body:string;context:string;action:string;
  eventId?:string;matchId?:string;deadline?:string|null;priority:number;
 }
 /** Actionable personal notices derived from the same evidence as the Event screens. */
-export function frontPageNotices(snapshot:LeagueSnapshot,now=Date.now()):FrontPageNotice[]{
+export function frontPageNotices(snapshot:LeagueSnapshot,now=Date.now(),extra:FrontPageNotice[]=[]):FrontPageNotice[]{
  if(snapshot.membership!=='ACTIVE'||!snapshot.viewer)return [];
  if(!snapshot.enteredSeason&&snapshot.season?.status==='ACTIVE')return [{id:`season:${snapshot.season.seasonId}`,kind:'season',label:'Raise a banner',title:'Your place in the campaign',body:'Enter the current Season to sign up for Events and earn league points.',context:snapshot.season.name,action:'Enter the Season',priority:0}];
  if(!canBrowseLeague(snapshot))return [];
@@ -29,5 +29,5 @@ export function frontPageNotices(snapshot:LeagueSnapshot,now=Date.now()):FrontPa
   if(snapshot.enteredSeason&&event.viewer?.rsvp==='UNANSWERED'&&model.canRsvp(now))notices.push({...base,id:`signup:${event.eventId}`,kind:'signup',label:'Answer the call',title:'A call to arms',body:'An Event is open for signup. Read the campaign briefing and declare whether you will take the field.',action:'Open the Event',deadline:event.signupDeadlineAt,priority:4});
   if(event.viewer?.attendanceStatus==='CHECKED_IN'&&!mainReady&&!event.officialMatchIds?.length)notices.push({...base,id:`muster:${event.eventId}`,kind:'muster',label:'Muster forming',title:'Your attendance is confirmed',body:'The Emperor is resolving attendance and preparing the main-event pairings. Your Battle Orders will appear once the matches are approved.',action:'Open the muster',priority:6});
  }
- return notices.sort((a,b)=>a.priority-b.priority||(Date.parse(a.deadline??'')||Infinity)-(Date.parse(b.deadline??'')||Infinity)||a.id.localeCompare(b.id));
+ return [...notices,...extra].sort((a,b)=>a.priority-b.priority||(Date.parse(a.deadline??'')||Infinity)-(Date.parse(b.deadline??'')||Infinity)||a.id.localeCompare(b.id));
 }
