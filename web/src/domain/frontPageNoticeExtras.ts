@@ -10,7 +10,7 @@ export function recordingActionNotices(snapshot:LeagueSnapshot,details:MatchDeta
   const notices:FrontPageNotice[]=[];
   for(const detail of details){
     const match=known.get(detail.match.matchId);
-    if(!match||!match.eventId||!['COMPLETED','AWAITING_CONFIRMATION'].includes(match.status)||
+    if(!match||!match.eventId||match.status!=='COMPLETED'||
       !detail.viewer.isParticipant||detail.viewer.playerId!==ownerId||
       !detail.match.participants.some(player=>player.playerId===ownerId))continue;
     const event=snapshot.events.find(event=>event.eventId===match.eventId&&
