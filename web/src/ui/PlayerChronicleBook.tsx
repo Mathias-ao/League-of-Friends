@@ -283,7 +283,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
       const reconciliation=reconcileHonourNotices(awards,raw);
       setFreshAwardIds(new Set(reconciliation.unseen.map(award=>award.awardId)));
       window.localStorage.setItem(key,markHonoursViewed(awards,raw));
-      window.dispatchEvent(new Event(HONOURS_VIEWED_EVENT));
+      window.dispatchEvent(new window.Event(HONOURS_VIEWED_EVENT));
     }catch{setFreshAwardIds(new Set());}
   },[isSelf,ownerMismatch,profileLoading,ownerProfile,ownerId]);
 
