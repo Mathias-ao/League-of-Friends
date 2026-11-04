@@ -66,6 +66,7 @@ test('duplicate POV, reused source GUID/hash or repeated canonical Game cannot c
   for(const changed of [
     {...one,battleId:'C',matchId:'C',gameId:'g1'},
     {...fixture('C','g1',3),gameGuid:one.gameGuid},
+    {...fixture('C','g1',3),gameGuid:one.gameGuid.toUpperCase()},
     {...fixture('C','g1',3),sourceHash:one.sourceHash},
     {...one,authorityRevision:sha('replayed-source-revision')},
   ])assert.throws(()=>subset([one,two,changed]),/PERSONALITY_UNLOCK_DUPLICATE/);
