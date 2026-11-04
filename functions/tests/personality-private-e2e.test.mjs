@@ -413,7 +413,11 @@ test('Sol #203 axis isolation: source-proven observation without reviewed durati
 test('three distinct current Games inside BO3 unlock visibility but remain one Battle, five axes Developing',()=>{
   const games=[game('series-battle','g1',1),game('series-battle','g2',2),
     game('series-battle','g3',3)];
-  const milestone=qualifyPersonalityGameUnlock(actor,games.map(g=>g.source));
+  // The fixture's source adapter omits the real GUID field because old
+  // longitudinal engine tests didn't need it. Bind a distinct test-only GUID
+  // here; the authenticated reader uses the original source GUID.
+  const milestone=qualifyPersonalityGameUnlock(actor,games.map((g,i)=>({
+    ...g.source,gameGuid:'CONTROLLED_BO3_GUID_'+(i+1)})));
   assert.equal(milestone.eligibleGames,3);
   assert.equal(milestone.status,'UNLOCKED');
   const {view}=project(games);
