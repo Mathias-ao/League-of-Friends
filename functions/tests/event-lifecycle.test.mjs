@@ -175,3 +175,36 @@ test('FFA producer refuses commands/unregistered adapters; qualified ties share 
  const missing=structuredClone(facts);missing.result.eliminationOutcomeEvidence.eliminations.pop();assert.equal(produceFFAPlacements(missing,binding,['CONTROLLED_TEST_ONLY']).state,'PENDING');
  const wrong=structuredClone(facts);wrong.result.eliminationOutcomeEvidence.eliminations[0].replayPlayerId=1;assert.equal(produceFFAPlacements(wrong,binding,['CONTROLLED_TEST_ONLY']).state,'PENDING');
 });
+
+test('late-published Event waits for two confirmed RSVPs before sealing the warm-up draw',async()=>{
+ const {db,now}=fixture(2),initial=db.get('events/e');
+ db.set('events/e',{...initial,publishedAt:Timestamp.fromMillis(now-1000)});
+ const none={rsvp:'UNANSWERED',signupState:'NONE',attendanceStatus:'NOT_CHECKED'};
+ for(const id of ['p0','p1'])db.set('events/e/participants/'+id,none);
+ assert.deepEqual(await advanceEventWarmups('e',now),{changed:false});
+ assert.equal(db.get('events/e').warmupSchedule,undefined,'zero RSVPs must not permanently finalize an empty schedule');
+ assert.equal(db.get('events/e').warmupMatchIds,undefined);
+ db.set('events/e/participants/p0',{rsvp:'YES',signupState:'CONFIRMED',attendanceStatus:'NOT_CHECKED'});
+ assert.deepEqual(await advanceEventWarmups('e',now+5000),{changed:false});
+ assert.equal(db.get('events/e').warmupSchedule,undefined,'first late signup must not be stranded in guest review before second arrives');
+ db.set('events/e/participants/p1',{rsvp:'YES',signupState:'CONFIRMED',attendanceStatus:'NOT_CHECKED'});
+ const created=await advanceEventWarmups('e',now+10000);
+ assert.equal(created.changed,true);
+ const event=db.get('events/e'),matches=event.warmupMatchIds;
+ assert.equal(event.warmupSchedule.status,'PAIRED');
+ assert.equal(matches.length,1);
+ assert.deepEqual(db.get('matches/'+matches[0]).participants.map(p=>p.playerId).sort(),['p0','p1']);
+ assert.equal(db.get('events/e/scoringSlots/WARMUP_p0').matchId,matches[0]);
+ assert.equal(db.get('events/e/scoringSlots/WARMUP_p1').matchId,matches[0]);
+ assert.deepEqual(await advanceEventWarmups('e',now+15000),{changed:false});
+ assert.deepEqual(db.get('events/e').warmupMatchIds,matches,'repeated ticks cannot duplicate the pair');
+});
+
+test('on-time published Event keeps its existing one-player guest invitation path',async()=>{
+ const {db,now}=fixture(1),event=db.get('events/e');
+ db.set('events/e',{...event,publishedAt:Timestamp.fromMillis(now-9*day)});
+ const generated=await advanceEventWarmups('e',now);
+ assert.equal(generated.changed,true);
+ assert.equal(db.get('events/e').warmupSchedule.status,'GUEST_PENDING');
+ assert.equal(db.get('events/e').warmupSchedule.unpairedPlayerId,'p0');
+});
