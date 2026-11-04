@@ -10,6 +10,7 @@ import {resolve} from 'node:path';
 import {getStorage} from 'firebase-admin/storage';
 import {db} from '../lib/config/firebase.js';
 import {uploadReplay} from '../lib/commands/statistics/uploadReplay.js';
+import {adminBindReplayParticipants} from '../lib/commands/admin/bindReplayParticipants.js';
 import {adminReviewRecordingResult} from '../lib/commands/results/reviewRecordingResult.js';
 import {getPlayerChronicle} from '../lib/queries/getPlayerChronicle.js';
 import {getStatisticsExperience} from '../lib/queries/getStatisticsExperience.js';
@@ -70,8 +71,17 @@ async function runCase([name,format,expected]){
   const players=independent.meta.players,teams=[...new Set(players.map(p=>p.team_id))].sort();
   const roster=players.map(p=>({playerId:matchId+'-p'+p.number,team:format==='FFA'?p.number:teams.indexOf(p.team_id)+1}));
   const actor={playerId:roster[0].playerId,authUid:roster[0].playerId,role:'PLAYER'};
+  // Genuine recording bytes; deliberately controlled AoF test identities.
+  // This is not a claim that the original humans own these test accounts.
+  // Keep performance-witness and concurrent-user workloads unchanged.
+  const identityRecovery=name==='1v1_t90-deak'&&concurrency===1&&!witnessMode;
+  const identityHistoryBefore=[];
   for(let i=0;i<players.length;i++){
-    await db.doc('players/'+roster[i].playerId).set({role:'PLAYER',membershipStatus:'ACTIVE',steamName:players[i].name,goldBalance:0});
+    const player={role:'PLAYER',membershipStatus:'ACTIVE',steamName:players[i].name,goldBalance:0,
+      ...(identityRecovery?{steamIdentityVersion:'AOF_STEAM_IDENTITY_V1',
+        steamPersonaName:'Controlled recovery persona '+i,steamNameHistory:['Controlled prior persona '+i]}:{})};
+    await db.doc('players/'+roster[i].playerId).set(player);
+    identityHistoryBefore.push({steamPersonaName:player.steamPersonaName??null,steamNameHistory:player.steamNameHistory??[]});
     await db.doc('authLinks/'+roster[i].playerId).set({playerId:roster[i].playerId});
   }
   const eventId=matchId+'-event',seasonId=matchId+'-season';
@@ -83,13 +93,49 @@ async function runCase([name,format,expected]){
   await db.doc('events/'+eventId).set({status:'ACTIVE',seasonId,officialMatchIds:[matchId],warmupMatchIds:[]});
   for(const p of roster)await db.doc('events/'+eventId+'/scoringSlots/MAIN_'+p.playerId).set({matchId,playerId:p.playerId,seasonId,act:'MAIN'});
   await gr.create({status:'READY',gameNumber:1,players:roster,replayStatisticsRevision:0,activeReplayStatisticsId:null,
-    replayParticipantBindings:players.map((p,i)=>({sourceNameNormalized:p.name.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US'),playerId:roster[i].playerId}))});
+    ...(!identityRecovery?{replayParticipantBindings:players.map((p,i)=>({sourceNameNormalized:p.name.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US'),playerId:roster[i].playerId}))}:{})});
   if(concurrency===1)process.env.AOF_NATIVE_PLAYER_UPLOAD_GAME_ALLOWLIST=matchId+'/'+gameId;
   const seededMatch=(await mr.get()).data(),seededGame=(await gr.get()).data();
   const request={auth:{uid:actor.authUid},data:{matchId,gameId,fileName:name+'.aoe2record',replayBase64:original.toString('base64'),processingMode:'AUTO'}};
   const diagnosticOn=process.env.AOF_REPLAY_UPLOAD_PERF_TRACE==='1';
   if(diagnosticOn)request.data.diagnosticTraceId='00000000-0000-4000-8000-000000000000'; // Must never be trusted.
   await assert.rejects(uploadReplay.run({...request,auth:{uid:'operator-unknown'}}),error=>{assert.equal(error.details?.diagnosticTraceId,undefined);return true;});
+  let recordingNameRecovery=null;
+  if(identityRecovery){
+    const originalRequest=JSON.stringify(request.data);
+    await assert.rejects(uploadReplay.run(request),error=>error.code==='failed-precondition'&&
+      /Replay identity .*cannot be bound uniquely to this Game/.test(error.message));
+    const failedGame=(await gr.get()).data();
+    assert.equal(failedGame.activeReplayStatisticsId,null);
+    assert.equal(failedGame.replayStatisticsRevision,0);
+    assert.equal(failedGame.canonicalResult,undefined);
+    for(const collection of ['replaySources','nativeReplayValidations','nativeReplayPublications'])
+      assert.equal((await gr.collection(collection).get()).size,0,'Unbound identities cannot publish '+collection);
+    assert.ok((await gr.collection('nativeReplayValidationJobs').get()).docs.some(row=>row.data().state==='FAILED'));
+    const [retained]=await bucket.file(`native-replay-evidence/${matchId}/${gameId}/${sourceHash}/source.aoe2record`).download();
+    assert.equal(digest(retained),sourceHash,'The failed attempt retains the unchanged original safely');
+    const bindings=players.map((player,i)=>({sourceName:player.name,playerId:roster[i].playerId}));
+    const reason='Controlled pilot identity review: source recording names verified against approved test Game starters.';
+    await adminBindReplayParticipants.run({auth:{uid:'operator'},data:{matchId,gameId,bindings,reason}});
+    const bound=(await gr.get()).data();
+    assert.deepEqual(bound.replayParticipantBindings,bindings.map(row=>({
+      sourceNameNormalized:row.sourceName.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US'),playerId:row.playerId})));
+    const audits=await db.collection('adminAudit').where('targetId','==',matchId+'/'+gameId).get();
+    const identityAudits=audits.docs.map(row=>row.data()).filter(row=>row.action==='REPLAY_IDENTITIES_BOUND');
+    assert.equal(identityAudits.length,1);
+    assert.equal(identityAudits[0].actorUid,'operator');assert.equal(identityAudits[0].actorPlayerId,'operator');
+    assert.equal(identityAudits[0].reason,reason);assert.deepEqual(identityAudits[0].before,[]);
+    assert.deepEqual(identityAudits[0].after,bound.replayParticipantBindings);
+    for(let i=0;i<roster.length;i++){
+      const current=(await db.doc('players/'+roster[i].playerId).get()).data();
+      assert.deepEqual({steamPersonaName:current.steamPersonaName,steamNameHistory:current.steamNameHistory},identityHistoryBefore[i],
+        'Per-Game review must not learn a reusable Steam alias');
+    }
+    assert.equal(JSON.stringify(request.data),originalRequest,'The normal retry must submit identical recording bytes and filename');
+    recordingNameRecovery={source:'GENUINE_ORIGINAL_RECORDING',leagueIdentity:'CONTROLLED_TEST_MAPPING',
+      failedUniqueNameAdmission:true,retainedOriginalVerified:true,adminBindingAudited:true,
+      bindingScope:'THIS_CANONICAL_GAME_ONLY',steamNamesUnchanged:true,sameOriginalRetry:true};
+  }
   const began=Date.now();
   const nativeHandlerTimings=[];nativeHandlerTimings.records=[];
   const initialUpload=()=>performanceContext.run(nativeHandlerTimings,()=>uploadReplay.run(request));
@@ -112,6 +158,13 @@ async function runCase([name,format,expected]){
   }else assert.equal(response.diagnosticTraceId,undefined);
   const uploadMs=Date.now()-began;
   assert.equal(response.state,'READY');assert.equal(response.outcomeResolution.state,expected,name+': '+JSON.stringify(response.outcomeResolution));
+  if(identityRecovery){
+    assert.equal(response.sourceHash,sourceHash);
+    for(let i=0;i<roster.length;i++){
+      const current=(await db.doc('players/'+roster[i].playerId).get()).data();
+      assert.deepEqual({steamPersonaName:current.steamPersonaName,steamNameHistory:current.steamNameHistory},identityHistoryBefore[i]);
+    }
+  }
   const sr=gr.collection('replaySources').doc(sourceHash),source=(await sr.get()).data();
   let game=(await gr.get()).data(),match=(await mr.get()).data();
   assert.equal(source.originalRecording.permanent,true);assert.equal(source.originalRecording.sourceDeletionAuthorized,false);
@@ -214,6 +267,7 @@ async function runCase([name,format,expected]){
   reports.push({fixture:name,sourceSha256:sourceHash,inputBytes:original.length,processorRevision:source.processorRevision,
     expectedOutcome:expected,ready:true,retentionVerified:true,independentOutcomeVerified:true,boundedReader:true,
     pendingExclusion:true,retryIdempotent:true,serverReceivedToReadyAndResolutionMs:uploadMs,
+    recordingNameRecovery,
     authenticatedBoundedReadMs,authenticatedBattleStatisticsQueryMs,idempotentRetryMs,validationTimings:validationTimings??null,nativeHandlerTimings,
     diagnosticTraceOffResponseEquivalent,
     ordinaryRequestAttempts:attempts.map(r=>r.status==='fulfilled'?{state:r.value.state,alreadyProcessed:r.value.alreadyProcessed}:

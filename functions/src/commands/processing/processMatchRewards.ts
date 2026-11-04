@@ -345,7 +345,12 @@ export async function processMatchRewards(
 
       for (const [component, desired] of warRoomComponents) {
         const current = netForComponent(warRoomLedgerSnapshot.docs, reward.playerId, component);
-        const delta = desired - current;
+        // War Room invitation mutations are paused, but old accepted Battles
+        // may still reach result processing. Do not mint or transfer legacy
+        // generic challenge points without an approved challenge/stakes source.
+        // Preserve historic credit unless a correction lowers its entitlement;
+        // the old winner can be debited, never silently paid to a new winner.
+        const delta = Math.min(0, desired - current);
         if (delta === 0) continue;
 
         const entryRef = db.collection(collections.warRoomPointLedger)

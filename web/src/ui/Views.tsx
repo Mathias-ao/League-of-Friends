@@ -207,7 +207,10 @@ function ReplayConclusion({data,game,repository,onUpdated,onViewStatistics,compa
     try{
       await repository.uploadReplay(data.match.matchId,game.gameId,recording);
       onUpdated();
-    }catch(e){setError(e instanceof Error?e.message:'Replay processing failed.');}
+    }catch(e){
+      const message=e instanceof Error?e.message:'Replay processing failed.';
+      setError(/Replay identity .*cannot be bound uniquely to this Game/.test(message)?message+' Ask the Emperor to open this Battle’s Emperor · Battle controls → Resolve recording names and verify the starters. After the binding is saved, upload this same original recording again.':message);
+    }
     finally{uploading.current=false;setProcessing(false);}
   };
   useEffect(()=>{if(droppedFile)void analyze(droppedFile.file);},[droppedFile]);

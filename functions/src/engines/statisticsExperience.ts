@@ -331,7 +331,7 @@ export class StatisticsExperience {
     const result=new Map<string,StatisticRecord[]>();
     for(const g of this.games.filter(game=>game.format!=='AI_WARMUP'))for(const m of METRICS.filter(m=>m.record)){
       for(const p of g.players){if(!metricEligible(m,g,p))continue;const value=p.values[m.id];if(value==null||value===0||!p.models[m.id]||p.models[m.id]==='unknown')continue;
-        const key=[m.id,g.contextKey,p.models[m.id]].join('|'),previous=result.get(key)??[];
+        const key=[m.id,m.id==='castle'?'V1_ALL_MAPS_ALL_STARTS':g.contextKey,p.models[m.id]].join('|'),previous=result.get(key)??[];
         const record={metricId:m.id,value,playerId:p.playerId,name:p.name,matchId:g.matchId,gameId:g.gameId,civilization:p.civilization,orderAtMs:g.orderAtMs,contextKey:g.contextKey,model:p.models[m.id]};
         if(!previous.length||(m.record==='max'?value>previous[0].value:value<previous[0].value))result.set(key,[record]);
         else if(value===previous[0].value&&!previous.some(r=>r.playerId===p.playerId))result.set(key,[...previous,record]);
@@ -352,7 +352,7 @@ export class StatisticsExperience {
     const latest=this.games.at(-1);if(!latest)return [];
     const player=latest.players.find(p=>p.playerId===viewerId);if(!player)return [];
     return METRICS.filter(m=>m.record&&metricEligible(m,latest,player)).flatMap(m=>{
-      const previous=this.games.slice(0,-1).filter(g=>g.contextKey===latest.contextKey).flatMap(g=>g.players.filter(p=>p.playerId===viewerId&&metricEligible(m,g,p)&&p.models[m.id]===player.models[m.id]).map(p=>p.values[m.id])).filter((v):v is number=>v!=null);
+      const previous=this.games.slice(0,-1).filter(g=>m.id==='castle'||g.contextKey===latest.contextKey).flatMap(g=>g.players.filter(p=>p.playerId===viewerId&&metricEligible(m,g,p)&&p.models[m.id]===player.models[m.id]).map(p=>p.values[m.id])).filter((v):v is number=>v!=null);
       const value=player.values[m.id];if(previous.length<3||value==null||value===0||!player.models[m.id]||player.models[m.id]==='unknown')return [];
       if(m.record==='max'?value<=Math.max(...previous):value>=Math.min(...previous))return [];
       return [{metricId:m.id,value,playerId:viewerId,name:player.name,matchId:latest.matchId,gameId:latest.gameId,civilization:player.civilization,orderAtMs:latest.orderAtMs,contextKey:latest.contextKey,model:player.models[m.id]}];

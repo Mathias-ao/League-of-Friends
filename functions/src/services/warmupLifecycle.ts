@@ -55,6 +55,12 @@ export async function advanceEventWarmups(eventId:string,nowMs=Date.now()) {
       const reserved=new Set(slots.docs.filter(d=>d.data().act==='WARMUP').map(d=>d.data().playerId));
       const ids=signups.docs.filter(d=>d.data().rsvp==='YES'&&d.data().signupState==='CONFIRMED'&&
         members.docs.some(m=>m.id===d.id&&m.data().status==='ENTERED')&&players.docs.some(p=>p.id===d.id&&p.data().membershipStatus==='ACTIVE')&&!reserved.has(d.id)).map(d=>d.id);
+      // An Event first published after its T-7 warm-up window opened may
+      // receive RSVPs over several scheduler ticks. Do not permanently seal
+      // an empty or single-player draw before the two-person roster exists.
+      // Events published on time keep their established guest/odd-roster flow.
+      if(event.publishedAt instanceof Timestamp&&event.publishedAt.toMillis()>=window.opensAt.toMillis()&&ids.length<2)
+        return {changed:false};
       const seed=eventId+':'+window.opensAt.toMillis(),draw=drawWarmups(ids,seed);
       const matchIds=draw.pairs.map((pair,i)=>{const id=eventId+'-AUTO-W'+(i+1);writeWarmup(tx,ref,event,pair,id,now,false,league.data()?.currentEmperorPlayerId??null);return id;});
       tx.update(ref,{warmupSchedule:{modelVersion:WARMUP_LIFECYCLE_VERSION,seed,rosterIds:ids,...draw,pairs:draw.pairs.map(pair=>({playerIds:pair})),status:draw.unpairedPlayerId?'GUEST_PENDING':'PAIRED',generatedAt:now},

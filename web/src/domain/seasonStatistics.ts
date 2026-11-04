@@ -108,7 +108,7 @@ export const seasonMetric=(id:string)=>SEASON_METRICS.find(metric=>metric.id===i
 export const seasonMetricsFor=(category:Category)=>SEASON_METRICS.filter(metric=>metric.category===category);
 
 interface SeasonTextPlayer extends PlayerMeasurement {seasonText?:Record<string,string|null>}
-export interface SeasonAggregateValue {value:number|null;text:string|null;sharePercent:number|null;samples:number;eligibleGames:number;models:string[];/** Samples and completeBattles count independent source-complete Battles. */eligibleBattles?:number;observedGames?:number;completeBattles?:number;selectedModel?:string|null;excludedModels?:string[];partialBattles?:number;}
+export interface SeasonAggregateValue {value:number|null;text:string|null;sharePercent:number|null;samples:number;eligibleGames:number;models:string[];/** Samples and completeBattles count independent source-complete Battles. */eligibleBattles?:number;observedGames?:number;completeBattles?:number;selectedModel?:string|null;excludedModels?:string[];partialBattles?:number;/** Canonical Battles whose accepted observations actually contribute to the displayed value for this mode. */contributingBattleIds?:string[];}
 
 export interface SeasonAggregatePlayer {playerId:string;name:string;games:number;battles:number;values:Record<string,SeasonAggregateValue>;}
 /** Optional *source-qualified* starting opportunity; absent is never inferred from map/civ. */
@@ -263,12 +263,14 @@ export class SeasonStatisticsExperience{
               else value=numbers.reduce((sum,item)=>sum+item,0)/numbers.length;
             }
           }
-          return {value,text,sharePercent,samples:usable.length,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:selectedGames.length,completeBattles,partialBattles:byBattle.length-full.length,models:[chosen],selectedModel:chosen,excludedModels:models.filter(model=>model!==chosen).sort()};
+          const contributingBattleIds=mode==='allTime'&&metric.kind==='number'&&(metric.allTime==='sum'||metric.aggregation==='sum')
+            ?byBattle.map(item=>item.id):usable.map(item=>item.id);
+          return {value,text,sharePercent,samples:usable.length,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:selectedGames.length,completeBattles,partialBattles:byBattle.length-full.length,contributingBattleIds,models:[chosen],selectedModel:chosen,excludedModels:models.filter(model=>model!==chosen).sort()};
         }).sort((a,b)=>Number(a.selectedModel==='unknown')-Number(b.selectedModel==='unknown')||
           b.completeBattles-a.completeBattles||b.samples-a.samples||b.observedGames-a.observedGames||a.selectedModel.localeCompare(b.selectedModel));
         const metricModels=modelValues.get(metric.id)??new Map<string,SeasonAggregateValue[]>();
         metricModels.set(playerId,summaries);modelValues.set(metric.id,metricModels);
-        values[metric.id]=summaries[0]??{value:null,text:null,sharePercent:null,samples:0,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:0,completeBattles:0,partialBattles:0,models:[],selectedModel:null,excludedModels:[]};
+        values[metric.id]=summaries[0]??{value:null,text:null,sharePercent:null,samples:0,eligibleGames:eligible.length,eligibleBattles:expected.size,observedGames:0,completeBattles:0,partialBattles:0,models:[],selectedModel:null,excludedModels:[],contributingBattleIds:[]};
       }
       return {playerId,name:pairs.at(-1)?.player.name??playerId,games:pairs.length,battles:new Set(pairs.map(pair=>pair.game.matchId)).size,values};
     }).sort((a,b)=>a.name.localeCompare(b.name));
@@ -322,7 +324,13 @@ export class SeasonStatisticsExperience{
     for(const game of this.games.filter(game=>game.eligible))for(const metric of SEASON_METRICS.filter(metric=>metric.record&&metric.kind==='number'))for(const player of game.players){
       if(!seasonMetricEligible(metric,game,player))continue;
       const value=player.values[metric.id],model=player.models[metric.id];if(value==null||!model||model==='unknown')continue;
-      const startCohort=recordStartCohort(game),key=[metric.id,game.contextKey,model,startCohort??'UNVERIFIED_START'].join('|'),previous=result.get(key)??[];
+      // V1 owner policy: Fast Castle is one all-map/all-start Game record.
+      // Keep actual source start metadata for explanation, never eligibility.
+      const startCohort=recordStartCohort(game);
+      const key=metric.id==='castle'
+        ? [metric.id,'V1_ALL_MAPS_ALL_STARTS',model].join('|')
+        : [metric.id,game.contextKey,model,startCohort??'UNVERIFIED_START'].join('|');
+      const previous=result.get(key)??[];
       const record={metricId:metric.id,value,playerId:player.playerId,name:player.name,matchId:game.matchId,gameId:game.gameId,civilization:player.civilization,orderAtMs:game.orderAtMs,contextKey:game.contextKey,model,startCohort};
       if(!previous.length||(metric.record==='max'?value>previous[0].value:value<previous[0].value))result.set(key,[record]);
       else if(value===previous[0].value&&!previous.some(row=>row.playerId===player.playerId))result.set(key,[...previous,record]);

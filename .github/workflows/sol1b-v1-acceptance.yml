@@ -60,6 +60,10 @@ jobs:
           npm run build --prefix web
       - name: Controlled ten-honour policy and trophy succession simulations
         run: node --test .honours-sandbox/functions/tests/honours-v1-*.test.mjs
+      - name: November pilot fallback source manifest and dynamic outcome oracle
+        run: |
+          mkdir -p .replay-lab/social-e2e
+          AOF_PYTHON=python node scripts/nov9-pilot-report.mjs docs/testing/nov9-fallback-plan.json .replay-lab/social-e2e/nov9-fallback-report.json
       - name: Integrated backend and component regression suites
         env:
           # Existing Steam tests mock this origin. Keep the demo project and

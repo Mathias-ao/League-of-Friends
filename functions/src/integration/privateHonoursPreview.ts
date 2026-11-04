@@ -4,7 +4,7 @@ import type {collectMyCurrentBattleHistory} from '../queries/getMyPersonalityHis
 
 export const PRIVATE_HONOURS_PREVIEW='AOF_HONOURS_PRIVATE_SOURCE_PREVIEW_1' as const;
 export const HONOUR_TEST_BASELINE=[
-  ['FAST_CASTLE','TROPHY','Fast Castle','Comparable opening, strategy, Season maturity and quality qualification remain Pending.'],
+  ['FAST_CASTLE','TROPHY','Fast Castle','For V1, all eligible maps and starts share the same Fast Castle timing pool for the record and trophy. Source-qualified trophy activation and approved maturity/performance requirements remain Pending.'],
   ['WONDER','TROPHY','Wonder','Completed Wonder ownership and an independently verified Wonder-victory method are unavailable. A BUILD request or ordinary winner proves neither.'],
   ['UNBROKEN','EPITHET','the Unbroken','Season eligibility and the qualifying unbeaten sample remain unapproved.'],
   ['THREE_SCHOOLS','EPITHET','Master of the Three Schools','Independent source-qualified Elite branches and approved tier gates remain Pending.'],
