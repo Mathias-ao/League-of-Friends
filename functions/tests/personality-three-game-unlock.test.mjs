@@ -87,7 +87,7 @@ test('untrusted owner, missing GUID, wrong roster, invalid metadata or false res
     {...one,sourceHash:'bad'},
     {...one,gameGuid:null},
     {...one,outcome:{qualification:'UNRESOLVED',resultRevision:3,winningPlayerIds:[owner]}},
-    {...one,roster:one.roster.map(p=>({...p,playerId:'unrelated'})},
+    {...one,roster:one.roster.map(p=>({...p,playerId:'unrelated'}))},
     {...one,roster:[one.roster[0],one.roster[0]]},
     {...one,statisticsRevision:0},
     {...one,matchId:'mismatch'},
