@@ -154,11 +154,11 @@ function SelfPage({profile}:{profile:PlayerProfile}){
         <div className="chronicle-section-heading"><Medal size={18}/><div><span className="eyebrow">ACHIEVEMENTS</span><h3>Honours entered in the book</h3></div></div>
         {achievements.length?<ol>{achievements.map(achievement=><li key={achievement.awardId}>
           <Trophy size={15}/><div><strong>{achievement.name}</strong>{achievement.description&&<p>{achievement.description}</p>}{achievement.firstAwardedAt&&<time>{new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(achievement.firstAwardedAt))}</time>}</div>
-        </li>)}</ol>:<p className="chronicle-reserved-copy">No achievements have yet been entered on this leaf.</p>}
+        </li>)}</ol>:<p className="chronicle-reserved-copy">No achievements have yet been entered on this leaf. Ordinary Battles still contribute qualified statistics, selected-Game highlights and factual history where current evidence permits.</p>}
       </section>
       <section className="chronicle-selected-records">
         <div className="chronicle-section-heading"><ScrollText size={18}/><div><span className="eyebrow">SELECTED RECORDS</span><h3>Marks worth keeping close</h3></div></div>
-        {records.length?<ol>{records.map(record=><li key={record.code}><strong>{recordLabel(record.code)}</strong><span>{recordValue(record)}</span></li>)}</ol>:<p className="chronicle-reserved-copy">This space is reserved for records selected for the personal Chronicle.</p>}
+        {records.length?<ol>{records.map(record=><li key={record.code}><strong>{recordLabel(record.code)}</strong><span>{recordValue(record)}</span></li>)}</ol>:<p className="chronicle-reserved-copy">No personal records have been selected for this leaf. Supported Game observations remain in the Statistics Hall without automatically granting an honour.</p>}
       </section>
     </div>
   </section>;
@@ -188,7 +188,7 @@ function RelationshipPage({owner,counterpart,page,official,snapshot,partial,fres
           <footer className="chronicle-entry-signature"><span>{battleLabel(entry,snapshot)}</span><time>{compactDate(entry.playedAtMs)}</time></footer>
         </article>
       </li>)}</ol>
-    </div>:<div className="chronicle-empty-leaf"><BookOpen size={28}/><h3>This leaf remains unwritten.</h3><p>No qualified social event has yet earned an entry between {owner.steamName} and {counterpart.steamName}. The bookmark remains because every league relationship has a place in the book.</p></div>}
+    </div>:<div className="chronicle-empty-leaf"><BookOpen size={28}/><h3>This leaf remains unwritten.</h3><p>No source-current pair Battle history is available between {owner.steamName} and {counterpart.steamName} on this leaf. An ordinary Battle can receive a brief factual entry without a special social event. This bookmark remains for their history.</p></div>}
     {partial&&<footer className="chronicle-coverage-note">Some accepted Battles could not be read into the current evidence ledger. This Chronicle does not interpret those gaps as silence or non-interaction.</footer>}
   </section>;
 }
