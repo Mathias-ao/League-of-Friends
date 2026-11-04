@@ -20,7 +20,7 @@ export interface ViewProps {
   openEvent:(id:string)=>void;openMatch:(id:string)=>void;openPlayer:(id:string)=>void;
   act:(action:()=>Promise<void>,message:string)=>Promise<boolean>;enter:()=>void;navigate:(page:Page)=>void;
 }
-type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'favors';data:EmperorsFavorBatch}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile}|null;
+type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'favors';data:EmperorsFavorBatch}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile;openChronicle?:boolean}|null;
 function pageFromHash():Page|null{return pages.find(p=>!p.disabled&&'#'+p.id===location.hash)?.id??null;}
 function clearHash(){history.replaceState(null,'',location.pathname+location.search);}
 export function App({repository}:{repository:LeagueRepository}){
@@ -111,14 +111,14 @@ export function App({repository}:{repository:LeagueRepository}){
     }catch(e){setError(errorMessage(e));}
     finally{working.current=false;setBusy(false);}
   };
-  const detail=async(type:'event'|'match'|'player',id:string)=>{
+  const detail=async(type:'event'|'match'|'player',id:string,openChronicle=false)=>{
     if(!canBrowse){
       if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
       return;
     }
     const request=++detailRequest.current,epoch=authEpoch.current;setDetailBusy(true);
     try{
-      const result:DialogState=type==='event'?{type,data:await repository.event(id)}:type==='match'?{type,data:await repository.match(id)}:{type,data:await repository.player(id)};
+      const result:DialogState=type==='event'?{type,data:await repository.event(id)}:type==='match'?{type,data:await repository.match(id)}:{type,data:await repository.player(id),openChronicle};
       if(request===detailRequest.current&&epoch===authEpoch.current)setDialog(result);
     }catch(e){if(request===detailRequest.current&&epoch===authEpoch.current)setError(errorMessage(e));}
     finally{if(request===detailRequest.current)setDetailBusy(false);}
@@ -128,6 +128,7 @@ export function App({repository}:{repository:LeagueRepository}){
     if(snapshot.season)void act(()=>repository.enterSeason(snapshot.season!.seasonId),'You have entered the season.');
   };
   const openEvent=(id:string)=>{void detail('event',id);},openMatch=(id:string)=>{void detail('match',id);},openPlayer=(id:string)=>{void detail('player',id);};
+  const openHonours=()=>{if(snapshot.viewer)void detail('player',snapshot.viewer.playerId,true);};
   const next=currentLeagueEvent(snapshot);
   const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate};
   const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Field of Battle':dialog?.type==='player'?dialog.data.player.steamName:'';
@@ -138,7 +139,7 @@ export function App({repository}:{repository:LeagueRepository}){
       {preview&&<div className="preview-bar"><span>DESIGN PREVIEW</span> Sample standings, battles and statistics · Changes last only for this visit.</div>}
       <div className="landing-stage">
         <header className="site-header"><div className="header-inner">
-          <div className="header-action"><FrontPageNotifications key={`${snapshot.membership}:${snapshot.viewer?.playerId??'anonymous'}`} {...props}/></div>
+          <div className="header-action"><FrontPageNotifications key={`${snapshot.membership}:${snapshot.viewer?.playerId??'anonymous'}`} {...props} openHonours={openHonours}/></div>
           <a className="brand" href="/" onClick={e=>{e.preventDefault();returnHome();}}><span className="brand-top">{brand.name}</span><span className="brand-bottom">AN AGE OF EMPIRES II LEAGUE</span></a>
           <div className="header-account">{snapshot.viewer?<button className="profile-button" onClick={()=>setDialog({type:'account'})}><Avatar player={snapshot.viewer}/><span>{snapshot.viewer.steamName}</span></button>:<span className="sign-in"><Shield size={16}/>League gate</span>}</div>
         </div></header>
@@ -170,7 +171,7 @@ export function App({repository}:{repository:LeagueRepository}){
        dialog.type==='favors'?<FavorBatchSheet batch={dialog.data}/>:
        dialog.type==='event'?<EventDialogWithStatistics {...props} data={dialog.data} onUpdated={()=>openEvent(dialog.data.event.eventId)}/>:
        dialog.type==='match'?<MatchDialogWithStatistics {...props} data={dialog.data} onUpdated={()=>openMatch(dialog.data.match.matchId)}/>:
-       <ProfileDialogWithIdentity {...props} data={dialog.data}/>}
+       <ProfileDialogWithIdentity {...props} data={dialog.data} openChronicleOnLoad={dialog.openChronicle===true}/>}
     </Modal>}
   </>;
 }

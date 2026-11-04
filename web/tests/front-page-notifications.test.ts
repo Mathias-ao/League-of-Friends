@@ -53,7 +53,7 @@ test('flags open parchment before check-in, restore focus, and close when attend
  const repository=new PreviewLeagueRepository();let checkins=0,fetches=0;
  repository.checkIn=async()=>{checkins++;};repository.event=async()=>{fetches++;throw new Error('Unnecessary request');};
  const snapshot=base();snapshot.events[0].checkInOpensAt='2020-01-01T00:00:00Z';snapshot.events[0].checkInClosesAt='2099-01-01T00:00:00Z';
- const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},enter:()=>{},act:async(action:()=>Promise<void>)=>{await action();return true;}};
+ const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},openHonours:()=>{},enter:()=>{},act:async(action:()=>Promise<void>)=>{await action();return true;}};
  try{
   await act(async()=>root.render(React.createElement(FrontPageNotifications,props)));
   const trigger=document.querySelector('[aria-label^="Answer muster"]') as HTMLButtonElement;trigger.focus();
@@ -84,7 +84,7 @@ test('only authenticated multiple-warm-up receipts become flags; stale requests 
  snapshot.matches=snapshot.matches.map(({warmupScoringPolicy,...match})=>match);
  let finish:(value:any)=>void=()=>{};
  repository.event=()=>new Promise(resolve=>{finish=resolve;});
- const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},enter:()=>{},act:async()=>true};
+ const props={snapshot,repository,busy:false,openEvent:()=>{},openMatch:()=>{},openHonours:()=>{},enter:()=>{},act:async()=>true};
  const detail={event,matches:snapshot.matches,viewer:{playerId:'you'},roundoff:{viewerWarmupSelection:{playerId:'you',matchId:'extra',points:3,win:true,otherWarmupCount:1,resultRevision:1,sourceHash:'validated'}}};
  try{
   await act(async()=>root.render(React.createElement(FrontPageNotifications,props)));
@@ -98,5 +98,45 @@ test('only authenticated multiple-warm-up receipts become flags; stale requests 
   await act(async()=>root.render(React.createElement(FrontPageNotifications,{...props,snapshot:{...snapshot,viewer:{playerId:'stranger',steamName:'Another banner'}}})));
   await act(async()=>previousFinish(detail));
   assert.equal(document.querySelector('.frontpage-counted-flag'),null);
+ }finally{await act(async()=>root.unmount());dom.window.close();}
+});
+
+test('verified owner award shows one gold dispatch, routes to Chronicle and clears after reading',async()=>{
+ const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+ const {createRoot}=await import('react-dom/client');const root=createRoot(document.getElementById('app')!);
+ const repository=new PreviewLeagueRepository();
+ const award={awardId:'earn-one',name:'First Ascent',description:'Castle age',firstAwardedAt:'2026-11-09T10:00:00.000Z'};
+ let awards=[award],opened=0;
+ repository.player=async(id:string)=>({player:{playerId:id,steamName:id},lifetime:{competition:null},
+   activeSeason:null,achievements:[],achievementCollection:awards,opponents:[],teammates:[]});
+ const s={...base(),events:[],matches:[]};
+ const props={snapshot:s,repository,busy:false,openEvent:()=>{},openMatch:()=>{},openHonours:()=>{opened++;},enter:()=>{},act:async()=>true};
+ try{
+  await act(async()=>root.render(React.createElement(FrontPageNotifications,props)));
+  await act(async()=>{await Promise.resolve();});
+  assert.equal(document.querySelector('[aria-label^="New honour"]'),null,
+    'existing achievements do not blast a retroactive banner at first view');
+  awards=[award,{awardId:'earn-two',name:'Field Veteran',description:'Four distinct Battles',
+    firstAwardedAt:'2026-11-09T12:00:00.000Z'}];
+  await act(async()=>root.render(React.createElement(FrontPageNotifications,{...props,snapshot:{...s}})));
+  await act(async()=>{await Promise.resolve();});
+  const trigger=document.querySelector<HTMLButtonElement>('[aria-label^="New honour"]');
+  assert.ok(trigger,'new owner-authenticated award gets the gold dispatch');
+  await act(async()=>trigger.click());
+  assert.match(document.querySelector('dialog')!.textContent!,/Field Veteran/);
+  await act(async()=>document.querySelector<HTMLButtonElement>('.event-warmup-open-battle')!.click());
+  assert.equal(opened,1,'banner routes to owner Chronicle, not a new awards surface');
+  // The Chronicle acknowledgement writes the owner receipt; this signal
+  // refreshes the same-window banner, without any persisted award mutation.
+  dom.window.localStorage.setItem('aof:honours-seen:v1:you',JSON.stringify([
+    JSON.stringify(['earn-one',award.firstAwardedAt]),JSON.stringify(['earn-two','2026-11-09T12:00:00.000Z'])]));
+  await act(async()=>window.dispatchEvent(new dom.window.Event('aof:honours-viewed')));
+  await act(async()=>{await Promise.resolve();});
+  assert.equal(document.querySelector('[aria-label^="New honour"]'),null);
+  const foreign={...s,viewer:{playerId:'other',steamName:'Other'},players:[]};
+  await act(async()=>root.render(React.createElement(FrontPageNotifications,{...props,snapshot:foreign})));
+  await act(async()=>{await Promise.resolve();});
+  assert.equal(document.querySelector('[aria-label^="New honour"]'),null,'no award crosses an account change');
  }finally{await act(async()=>root.unmount());dom.window.close();}
 });

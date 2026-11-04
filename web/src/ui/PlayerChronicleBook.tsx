@@ -3,6 +3,7 @@ import {PrivateChronicleInteractions} from './PrivateChronicleInteractions';
 import {privateChronicleInteractionsEnabled} from '../domain/privateChronicleInteractions';
 import {privateProgressionEnabled} from '../domain/privateProgression';
 import {chronicleEntryKey,migrateChronicleSeen} from '../domain/chronicleReadHistory';
+import {honoursSeenKey,HONOURS_VIEWED_EVENT,markHonoursViewed,reconcileHonourNotices} from '../domain/achievementNotices';
 import {PrivatePersonalityHistory} from './PrivatePersonalityHistory';
 import {PrivateGameplayPreview} from './PrivateGameplayPreview';
 import {gameplayCandidatesEnabled,gameplayPreviewEnabled} from '../domain/gameplayPreview';
@@ -140,7 +141,7 @@ function recordValue(record:{value?:number|null;unit?:string}){
   return `${record.value}${record.unit?` ${record.unit}`:''}`;
 }
 
-function SelfPage({profile}:{profile:PlayerProfile}){
+function SelfPage({profile,freshAwards}:{profile:PlayerProfile;freshAwards:Set<string>}){
   const achievements=profile.achievementCollection??profile.achievements;
   const records=profile.chronicleShowcase?.selectedRecords??[];
   return <section className="chronicle-self-page" aria-label="Personal Chronicle page">
@@ -153,7 +154,7 @@ function SelfPage({profile}:{profile:PlayerProfile}){
       <section className="chronicle-honours">
         <div className="chronicle-section-heading"><Medal size={18}/><div><span className="eyebrow">ACHIEVEMENTS</span><h3>Honours entered in the book</h3></div></div>
         {achievements.length?<ol>{achievements.map(achievement=><li key={achievement.awardId}>
-          <Trophy size={15}/><div><strong>{achievement.name}</strong>{achievement.description&&<p>{achievement.description}</p>}{achievement.firstAwardedAt&&<time>{new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(achievement.firstAwardedAt))}</time>}</div>
+          <Trophy size={15}/><div><strong>{achievement.name}</strong>{freshAwards.has(achievement.awardId)&&<span className="chronicle-new-honour">NEW</span>}{achievement.description&&<p>{achievement.description}</p>}{achievement.firstAwardedAt&&<time>{new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(achievement.firstAwardedAt))}</time>}</div>
         </li>)}</ol>:<p className="chronicle-reserved-copy">No achievements have yet been entered on this leaf. Ordinary Battles still contribute qualified statistics, selected-Game highlights and factual history where current evidence permits.</p>}
       </section>
       <section className="chronicle-selected-records">
@@ -201,6 +202,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
   const chronicleRead=chronicleState?.chronicle.ownerPlayerId===ownerId?chronicleState:null;
   const [selectedPlayerId,setSelectedPlayerId]=useState(initialPagePlayerId||ownerId);
   const [freshEntryIds,setFreshEntryIds]=useState<Set<string>>(()=>new Set());
+  const [freshAwardIds,setFreshAwardIds]=useState<Set<string>>(()=>new Set());
   const [profileLoading,setProfileLoading]=useState(sourceProfile.player.playerId!==ownerId);
   const [chronicleLoading,setChronicleLoading]=useState(true);
   const [profileError,setProfileError]=useState('');
@@ -274,6 +276,18 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
   const pageError=isSelf?profileError:profileError||chronicleError;
 
   useEffect(()=>{
+    if(!isSelf||ownerMismatch||profileLoading||!ownerProfile?.achievementCollection||typeof window==='undefined')return;
+    const key=honoursSeenKey(ownerId),awards=ownerProfile.achievementCollection;
+    try{
+      const raw=window.localStorage.getItem(key);
+      const reconciliation=reconcileHonourNotices(awards,raw);
+      setFreshAwardIds(new Set(reconciliation.unseen.map(award=>award.awardId)));
+      window.localStorage.setItem(key,markHonoursViewed(awards,raw));
+      window.dispatchEvent(new window.Event(HONOURS_VIEWED_EVENT));
+    }catch{setFreshAwardIds(new Set());}
+  },[isSelf,ownerMismatch,profileLoading,ownerProfile,ownerId]);
+
+  useEffect(()=>{
     if(!page||typeof window==='undefined'){setFreshEntryIds(new Set());return;}
     const key=`aof:chronicle-seen:${ownerId}:${page.counterpartPlayerId}`;
     try{
@@ -301,7 +315,7 @@ export function PlayerChronicleBook({repository,snapshot,sourceProfile,initialPa
         {pageLoading?<div className="chronicle-loading" role="status"><BookOpen size={30}/><p>Opening the record…</p></div>
           :pageError?<div className="chronicle-loading" role="alert"><p>{pageError}</p></div>
           :ownerProfile&&selectedPlayer?(isSelf
-            ?<><SelfPage profile={ownerProfile}/>{privateProgressionEnabled(import.meta.env)&&<PrivateProgression repository={repository} ownerId={ownerId}/>}{privateHistoryEnabled(import.meta.env)&&<PrivatePersonalityHistory repository={repository} ownerId={ownerId}/>}{privateChronicleInteractionsEnabled(import.meta.env)&&<PrivateChronicleInteractions repository={repository} ownerId={ownerId} counterpartNames={Object.fromEntries(players.map(p=>[p.playerId,p.steamName]))}/>}{(gameplayCandidatesEnabled(import.meta.env)||gameplayPreviewEnabled(import.meta.env))&&<PrivateGameplayPreview repository={repository} sourceCandidates={gameplayCandidatesEnabled(import.meta.env)} ownerId={ownerId}/>}</>
+            ?<><SelfPage profile={ownerProfile} freshAwards={freshAwardIds}/>{privateProgressionEnabled(import.meta.env)&&<PrivateProgression repository={repository} ownerId={ownerId}/>}{privateHistoryEnabled(import.meta.env)&&<PrivatePersonalityHistory repository={repository} ownerId={ownerId}/>}{privateChronicleInteractionsEnabled(import.meta.env)&&<PrivateChronicleInteractions repository={repository} ownerId={ownerId} counterpartNames={Object.fromEntries(players.map(p=>[p.playerId,p.steamName]))}/>}{(gameplayCandidatesEnabled(import.meta.env)||gameplayPreviewEnabled(import.meta.env))&&<PrivateGameplayPreview repository={repository} sourceCandidates={gameplayCandidatesEnabled(import.meta.env)} ownerId={ownerId}/>}</>
             :<RelationshipPage owner={ownerProfile.player} counterpart={selectedPlayer} page={page} official={official} snapshot={snapshot} partial={chronicleRead?.status==='PARTIAL'} freshEntryIds={freshEntryIds}/>)
           :<div className="chronicle-loading"><p>The Chronicle has no page to show.</p></div>}
       </article>
