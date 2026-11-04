@@ -100,14 +100,19 @@ assert.equal(new Set(initial.sources.map(s=>s.gameGuid)).size,2);assert.deepEqua
 assert.equal(initial.personality.calibration,'PROPOSED');assert.equal(initial.personality.personalityProfile.policy.status,'PROPOSED');
 assert.equal(initial.personality.personalityProfile.policy.approvalRef,null);
 const sliders=initial.personality.personalityProfile.sliders;
-const supported=sliders.filter(s=>s.status==='READY');
-assert.deepEqual(supported.map(s=>s.axis).sort(),
+assert.equal(initial.personality.unlock.status,'LOCKED');
+assert.equal(initial.personality.unlock.eligibleGames,2);
+assert.equal(initial.personality.unlock.requiredGames,3);
+assert.ok(sliders.every(s=>s.status==='DEVELOPING'&&s.value===null));
+const measuredAxes=[...new Set(initial.personality.battleFeatures
+  .filter(f=>f.normalized!==null).map(f=>f.featureId))].sort();
+assert.deepEqual(measuredAxes,
   ['BOOMER_AGGRESSOR','CAUTIOUS_BOLD','COMPACT_EXPANSIVE'].sort(),
-  'These originals qualify all three observed command/placement axes, and cannot invent military posture or family opportunity.');
-for(const s of supported){assert.equal(s.independentBattles,2);assert.ok(Number.isFinite(s.value)&&s.value>=0&&s.value<=100);}
+  'These original bytes support three distinct axis measurements; two Games are still below the visible unlock.');
+assert.ok(initial.personality.battleFeatures.filter(f=>f.normalized!==null).every(f=>
+  Number.isFinite(f.normalized)&&f.normalized>=0&&f.normalized<=100));
 const specialist=sliders.find(s=>s.axis==='SPECIALIST_IMPROVISER');
 assert.equal(specialist.value,null);assert.notEqual(specialist.status,'READY');
-for(const s of sliders.filter(s=>s.status!=='READY'))assert.equal(s.value,null,'Unsupported opportunity must remain unmeasured.');
 const bucket=getStorage().bucket(process.env.REPLAY_BUCKET),actor={playerId:owner,authUid:uid};
 const facts=[];
 for(const f of fixtures){
@@ -145,13 +150,15 @@ assert.deepEqual(await read(),initial);
 const render=spawnSync(process.execPath,['--import','tsx','tests/render-personality-original-battles.mjs'],{
   cwd:resolve('web'),input:JSON.stringify(initial),encoding:'utf8',timeout:30_000,maxBuffer:64*1024});
 assert.equal(render.status,0,'Original-source Personality JSDOM witness failed; private input withheld');
-const dom=JSON.parse(render.stdout);assert.deepEqual(dom.renderedAxes,supported.map(s=>s.axis));
+const dom=JSON.parse(render.stdout);assert.deepEqual(dom.renderedAxes,[]);
+assert.equal(dom.lockedUntilThreeGames,true);
 const tested=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'});assert.equal(tested.status,0);
 const report={version:'AOF_PERSONALITY_AUTHENTIC_DISTINCT_BATTLES_1',testedCommit:tested.stdout.trim(),
   fixtureCommit:'2d04ec6adbe871d156c108a4351448efeb08f4e6',processorRevision:process.env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION,
   genuineRecorderProfileId:197930,controlledLeagueAuthority:true,independentBattles:2,
   existingPolicy:PRIVATE_PERSONALITY_E2E_VERSION,sourceFacts:facts,
   axes:sliders.map(s=>({axis:s.axis,status:s.status,value:s.value,independentBattles:s.independentBattles,coverage:s.coverage})),
+  sourceMeasuredAxesBeforeUnlock:measuredAxes,personalityGameUnlock:initial.personality.unlock,
   naturalUnresolvedResultContributes:true,noSyntheticStatisticsOrValues:true,withdrawalClearsNumbers:true,
   unauthorizedReaderDenied:true,oneBattleNegative:'SEPARATE_EXISTING_INT_B_TWO_ORIGINALS_ONE_BATTLE_STAGE',
   dom,realBrowser:false,productionPolicyApproved:false,personalityReadEffects:initial.effects};
