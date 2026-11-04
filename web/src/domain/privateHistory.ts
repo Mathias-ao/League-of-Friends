@@ -5,6 +5,8 @@ export interface PrivatePersonalityHistory {
   coverage:{completeEnumeration:true;scannedLeagueBattles:number;ownBattles:number;ownGames:number;currentSources:number;measuredIndependentBattles:number};
   sources:SourceSnapshot[];pending:Array<{battleId:string;gameId:string|null;reason:string}>;
   personality:{publication:'PRIVATE_PREVIEW_ONLY';battleFeatures:BattleFeature[];personalityProfile:PersonalityProfile;
+    unlock:{version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1';requiredGames:3;eligibleGames:number;
+      status:'LOCKED'|'UNLOCKED';reason:'THREE_SOURCE_QUALIFIED_GAMES_REQUIRED'|null};
     contextAdmission:'PENDING'|'SOURCE_QUALIFIED';calibration:'UNCONFIGURED'|'PROPOSED'};
   social:{status:'PENDING';reason:string};effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};
 }
