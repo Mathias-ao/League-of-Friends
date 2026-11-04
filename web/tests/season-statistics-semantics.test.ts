@@ -215,21 +215,44 @@ test('FFA diplomacy tribute requests remain visible without being declared deliv
   assert.match(seasonMetric('tributeReceived').hint,/receipt not independently verified/i);
   assert.equal(seasonMetric('tradeUnits').eligibility,'team','team-only trade remains separate');
 });
-test('Normal civilization/map variation does not erase observations; special-start best stays only provisional',()=>{
-  const standard=game('battle9','G1','ordinary map A');
-  const ordinary=game('battle10','G1','ordinary map B');
+test('V1 Fast Castle record treats all maps, civs and formats as one source-qualified timing competition',()=>{
+  const standard=game('battle9','G1','Arabia');
+  const ordinary=game('battle10','G1','Arena');
   const special=game('battle11','G1','Nomad');
   ordinary.players[0].civilization='Mongols';special.players[0].civilization='Malians';
+  special.format='FFA';
   amount(standard,'a','castle',850000);amount(ordinary,'a','castle',830000);amount(special,'a','castle',600000);
   const engine=new SeasonStatisticsExperience([standard,ordinary,special]);
-  const observations=engine.records().filter(record=>record.metricId==='castle'&&record.playerId==='a');
-  assert.equal(observations.length,3,'different contexts retain all evidence; no same-map/civ gate');
+  const holders=engine.records().filter(record=>record.metricId==='castle');
+  assert.equal(holders.length,1,'different map, civilization and match format must not create separate V1 FC champions');
+  assert.equal(holders[0].playerId,'a');
+  assert.equal(holders[0].value,600000);
+  assert.equal(holders[0].contextKey,'Nomad','source map remains available for truthful presentation');
+  assert.equal(holders[0].civilization,'Malians');
   assert.equal(engine.aggregate().find(row=>row.playerId==='a')!.values.castle.samples,3);
-  // No start-equivalence field exists in GameStatistics, so UI must call these provisional
-  // observations rather than publishing the nominal 600000 as a certified League FC record.
+  const water=game('battle12','G1','Water map');water.format='TWO_V_TWO';
+  amount(water,'b','castle',600000);
+  const ties=new SeasonStatisticsExperience([standard,ordinary,special,water]).records().filter(record=>record.metricId==='castle');
+  assert.deepEqual(new Set(ties.map(record=>record.playerId)),new Set(['a','b']),'exact time ties survive regardless of map');
 });
 
-test('verified same-start age records compare across ordinary map and civilization, never Nomad or unknown',()=>{
+test('V1 all-map FC record stays separate from methods, pending outcomes and source-negative observations',()=>{
+  const accepted=game('battle20','G1','Arena');
+  amount(accepted,'a','castle',800000);
+  const unresolved=game('battle21','G1','Nomad');
+  unresolved.eligible=false;unresolved.sourceMeasurementsEligible=true;unresolved.exclusionReason='Official Game result pending';
+  amount(unresolved,'a','castle',500000);
+  const noTiming=game('battle22','G1','Arabia');amount(noTiming,'a','castle',null);
+  const wrongModel=game('battle23','G1','Arabia');amount(wrongModel,'a','castle',400000,'v2');
+  const engine=new SeasonStatisticsExperience([accepted,unresolved,noTiming,wrongModel]);
+  const castleRecords=engine.records().filter(record=>record.metricId==='castle');
+  assert.deepEqual(new Set(castleRecords.map(record=>record.model)),new Set(['v1','v2']),'different measurement methods remain separated');
+  assert.equal(castleRecords.find(record=>record.model==='v1')?.value,800000,'unresolved official result must not claim an official record');
+  assert.equal(castleRecords.find(record=>record.model==='v2')?.value,400000);
+  assert.ok(!castleRecords.some(record=>record.matchId==='battle21'||record.matchId==='battle22'));
+});
+
+test('source-qualified age start metadata remains descriptive for FC and corrections rebuild the one V1 record',()=>{
   const a=game('record1','G1','Arabia'),b=game('record2','G1','Acropolis'),nomad=game('record3','G1','Nomad'),unknown=game('record4');
   const verified={status:'VERIFIED_SOURCE',startMode:'STANDARD',startingAge:'DARK',startingTownCenters:1,
     resourceMode:'STANDARD',gameSpeed:'NORMAL',environment:'LAND',patch:'P1',evidenceVersion:'record-start-V1'} as const;
@@ -240,14 +263,17 @@ test('verified same-start age records compare across ordinary map and civilizati
   assert.equal(recordStartCohort(a),recordStartCohort(b));
   assert.notEqual(recordStartCohort(a),recordStartCohort(nomad));
   assert.equal(recordStartCohort(unknown),null);
-  const records=new SeasonStatisticsExperience([a,b,nomad,unknown]).records().filter(r=>r.metricId==='castle'&&r.playerId==='a');
-  assert.equal(records.filter(r=>r.startCohort===recordStartCohort(a)).length,2);
-  assert.equal(records.filter(r=>r.startCohort===recordStartCohort(nomad)).length,1);
-  assert.equal(records.filter(r=>r.startCohort===null).length,1);
-  const amended=game('record2','G1','Acropolis',2);Object.assign(amended,{startOpportunity:{...verified}});
-  amount(amended,'a','castle',810000);
-  const corrected=new SeasonStatisticsExperience([a,b,nomad,unknown,amended]).records().filter(r=>r.metricId==='castle'&&r.playerId==='a');
-  assert.equal(corrected.find(r=>r.matchId==='record2')?.value,810000);
+  const records=new SeasonStatisticsExperience([a,b,nomad,unknown]).records().filter(r=>r.metricId==='castle');
+  assert.equal(records.length,1);
+  assert.equal(records[0].matchId,'record4','the fastest source timing wins despite unknown starting TC count');
+  assert.equal(records[0].value,550000);
+  assert.equal(records[0].startCohort,null,'do not forge a complete source-start observation');
+  const amended=game('record4','G1','unknown',2);
+  amount(amended,'a','castle',900000);
+  const corrected=new SeasonStatisticsExperience([a,b,nomad,unknown,amended]).records().filter(r=>r.metricId==='castle');
+  assert.equal(corrected[0].matchId,'record3','source revision changes the all-map winner');
+  assert.equal(corrected[0].value,590000);
   amended.eligible=false;
-  assert.ok(!new SeasonStatisticsExperience([a,b,nomad,unknown,amended]).records().some(r=>r.matchId==='record2'));
+  const withdrawn=new SeasonStatisticsExperience([a,b,nomad,unknown,amended]).records().filter(r=>r.metricId==='castle');
+  assert.equal(withdrawn[0].matchId,'record3','withdrawn old winner must not reappear');
 });
