@@ -30,7 +30,11 @@ test('Per Battle uses two independent observations for a 3-Game plus 1-Game seri
   assert.equal(row.values.apm.samples,2);assert.equal(row.values.apm.eligibleBattles,2);
   assert.equal(engine.aggregate('allTime').find(r=>r.playerId==='a')!.values.unitRequests.value,60);
   assert.equal(engine.aggregate('allTime').find(r=>r.playerId==='a')!.values.scouting.value,70);
-  assert.equal(new SeasonStatisticsExperience([game('battle3'),game('battle4')]).aggregate()[0].values.apm.samples,2);
+  const control=[game('battle3'),game('battle4')];
+  amount(control[0],'a','apm',10);amount(control[1],'a','apm',30);
+  const controlMetric=new SeasonStatisticsExperience(control).aggregate()[0].values.apm;
+  assert.equal(controlMetric.samples,2,'two single-Game Battles must also be two independent observations');
+  assert.equal(controlMetric.value,20,'the 1+1 control must match the Battle-weighted 3+1 timing example, not just its sample count');
 });
 test('Age timing takes a within-Battle median, then a median across Battles',()=>{
   const games=[game('battle1','G1'),game('battle1','G2'),game('battle1','G3'),game('battle2')];
@@ -103,6 +107,12 @@ test('withdrawn known sibling prevents a false complete Battle; another partial 
   const reduced=new SeasonStatisticsExperience([...games,withdrawn]),a=reduced.aggregate()[0].values.buildOrderExecution;
   assert.equal(a.completeBattles,5);assert.equal(a.partialBattles,1);
   assert.equal(a.samples,5);assert.equal(a.value,90);
+  assert.deepEqual(a.contributingBattleIds,['battle1','battle2','battle3','battle4','battle5'],
+    'the partial sixth Battle is source-observed but does not contribute to Per Battle typical performance');
+  const allTime=reduced.aggregate('allTime')[0].values.unitRequests;
+  assert.equal(allTime.value,60,'an accepted Game from the partial series remains a legitimate additive Game contribution');
+  assert.deepEqual(allTime.contributingBattleIds,['battle1','battle2','battle3','battle4','battle5','battle6'],
+    'the cumulative Game total must disclose its differently scoped source contributions');
   assert.deepEqual(reduced.leaders('buildOrderExecution',5),['a']);
   const earlier=game('battle1','G2');earlier.eligible=false;earlier.players=[]; // source withdrawn before roster mapping
   const insufficient=new SeasonStatisticsExperience([...games,withdrawn,earlier]);
