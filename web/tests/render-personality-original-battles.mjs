@@ -18,15 +18,15 @@ try{
   await act(async()=>document.querySelector('button').click());
   assert.equal(document.querySelector('[data-aof-history-owner]').dataset.aofHistoryRevision,history.inputDigest);
   const supported=history.personality.personalityProfile.sliders.filter(s=>s.status==='READY');
-  const meters=[...document.querySelectorAll('meter')];assert.equal(meters.length,supported.length);
-  assert.ok(supported.length>0&&supported.length<5);
-  for(const [i,s] of supported.entries()){
-    assert.equal(meters[i].value,s.value);assert.match(document.body.textContent,new RegExp(s.value.toFixed(1).replace('.','\\.')+' / 100'));
-  }
-  assert.match(document.body.textContent,/Developing/);assert.match(document.body.textContent,/private, provisional descriptive value/);
+  assert.equal(history.personality.unlock.status,'LOCKED');
+  assert.equal(history.personality.unlock.eligibleGames,2);
+  const meters=[...document.querySelectorAll('meter')];
+  assert.equal(supported.length,0);assert.equal(meters.length,0);
+  assert.match(document.body.textContent,/Personality is locked until 3 distinct source-accepted Games/);
+  assert.match(document.body.textContent,/2 of 3 eligible current Games/);
   assert.match(document.body.textContent,/2 current recordings across 2 Battles/);
   await act(async()=>authChange());assert.equal(document.querySelector('[data-aof-history-owner]'),null);
   assert.equal(document.querySelectorAll('meter').length,0);
   console.log(JSON.stringify({renderedAxes:supported.map(s=>s.axis),pendingAxes:history.personality.personalityProfile.sliders.filter(s=>s.status!=='READY').map(s=>s.axis),
-    actualApiNumbersRendered:true,authChangeClearsNumbers:true,jsdomOnly:true}));
+    lockedUntilThreeGames:true,actualApiNumbersRendered:false,authChangeClearsNumbers:true,jsdomOnly:true}));
 }finally{await act(async()=>root.unmount());dom.window.close();}
