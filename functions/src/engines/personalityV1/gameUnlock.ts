@@ -28,6 +28,7 @@ export function qualifyPersonalityGameUnlock(ownerPlayerId:string,
   const hashes=new Set<string>(),guids=new Set<string>(),gameKeys=new Set<string>();
   let eligibleGames=0;
   for(const source of currentSources){
+    const guid=typeof source.gameGuid==='string'?source.gameGuid.trim().toLowerCase():null;
     // Never let a stale, unknown, unbound or invented source count toward an
     // authenticated milestone, even if a caller supplies it to this pure seam.
     const roster=source.roster??[];
@@ -36,7 +37,7 @@ export function qualifyPersonalityGameUnlock(ownerPlayerId:string,
       HASH.test(source.sourceHash) && HASH.test(source.authorityRevision) &&
       HASH.test(source.mappingDigest) &&
       source.battleId===source.matchId && !!source.battleId && !!source.gameId &&
-      typeof source.gameGuid==='string' && source.gameGuid.length>0 &&
+      !!guid && guid.length<=200 &&
       Number.isSafeInteger(source.statisticsRevision) && source.statisticsRevision>0 &&
       ownerBindings.length===1 &&
       Number.isSafeInteger(ownerBindings[0].replaySlot) &&
@@ -50,10 +51,10 @@ export function qualifyPersonalityGameUnlock(ownerPlayerId:string,
          source.outcome.winningPlayerIds===null));
     if(!valid)throw Error('PERSONALITY_UNLOCK_UNTRUSTED_CURRENT_SOURCE');
     const key=JSON.stringify([source.battleId,source.gameId]);
-    if(hashes.has(source.sourceHash)||guids.has(source.gameGuid!)||gameKeys.has(key))
+    if(hashes.has(source.sourceHash)||guids.has(guid!)||gameKeys.has(key))
       throw Error('PERSONALITY_UNLOCK_DUPLICATE_GUID_SOURCE_OR_GAME');
     hashes.add(source.sourceHash);
-    guids.add(source.gameGuid!);
+    guids.add(guid!);
     gameKeys.add(key);
     eligibleGames++;
   }
