@@ -120,22 +120,43 @@ test('real authenticated bounded INT-B code path projects five private axes from
   assert.equal(result.coverage.measuredIndependentBattles,2);
   assert.equal(result.personality.calibration,'PROPOSED');
   assert.equal(result.personality.battleFeatures.length,10);
+  assert.equal(result.personality.unlock.eligibleGames,2);
+  assert.equal(result.personality.unlock.status,'LOCKED');
   assert.ok(result.personality.personalityProfile.sliders.every(x=>
-    x.status==='READY'&&typeof x.value==='number'&&x.independentBattles===2));
-  const score=Object.fromEntries(result.personality.personalityProfile.sliders.map(x=>[x.axis,x.value]));
-  assert.equal(score.BOOMER_AGGRESSOR,30);
-  assert.equal(score.CAUTIOUS_BOLD,50);
-  assert.equal(score.GUERRILLA_FRONTLINE,0);
-  assert.equal(score.SPECIALIST_IMPROVISER,0);
-  assert.equal(score.COMPACT_EXPANSIVE,33.33);
+    x.status==='DEVELOPING'&&x.value===null&&x.independentBattles===2));
+  // Evidence remains independently measured, but is not a visible player
+  // Personality score before the third *source-qualified original Game*.
+  assert.ok(result.personality.battleFeatures.some(x=>x.normalized!==null));
   assert.equal(result.effects.officialWrites,false);
   assert.deepEqual(result,(await readMyPersonalityHistory(options)));
-  // Withdrawal of one authentic-authority simulation -> one Battle insufficient.
-  f.rows.get('matches/m2/games/g2/replaySources/'+source2).state='WITHDRAWN';
-  const corrected=await readMyPersonalityHistory(options);
-  assert.equal(corrected.coverage.currentSources,1);
+  const source3=digest('third distinct controlled original');
+  const raw3=enrich(structuredClone(raw1),source3,'controlled-original-three-guid');
+  writeFixture(f,'m3','g3',source3,raw3,original,first,
+    {...match,firstCompletedAt:{toMillis:()=>3000}});
+  f.rows.get('events/e').officialMatchIds.push('m3');
+  const withThree={...options,personalityTaxonomy:taxonomy([source1,source2,source3])};
+  const unlocked=await readMyPersonalityHistory(withThree);
+  assert.equal(unlocked.personality.unlock.eligibleGames,3);
+  assert.equal(unlocked.personality.unlock.status,'UNLOCKED');
+  assert.equal(unlocked.coverage.measuredIndependentBattles,3);
+  const score=Object.fromEntries(unlocked.personality.personalityProfile.sliders.map(x=>[x.axis,x.value]));
+  assert.deepEqual(score,{
+    BOOMER_AGGRESSOR:30,CAUTIOUS_BOLD:50,GUERRILLA_FRONTLINE:0,
+    SPECIALIST_IMPROVISER:0,COMPACT_EXPANSIVE:33.33});
+  assert.ok(unlocked.personality.personalityProfile.sliders.every(x=>
+    x.status==='READY'&&x.independentBattles===3));
+  // Source correction to no current accepted third recording retracts unlock.
+  f.rows.get('matches/m3/games/g3/replaySources/'+source3).state='WITHDRAWN';
+  const corrected=await readMyPersonalityHistory(withThree);
+  assert.equal(corrected.coverage.currentSources,2);
+  assert.equal(corrected.personality.unlock.status,'LOCKED');
   assert.ok(corrected.personality.personalityProfile.sliders.every(x=>x.value===null));
-  assert.notEqual(result.inputDigest,corrected.inputDigest);
+  assert.notEqual(unlocked.inputDigest,corrected.inputDigest);
+  // Even two otherwise READY Battles cannot bypass the new display milestone.
+  f.rows.get('matches/m2/games/g2/replaySources/'+source2).state='WITHDRAWN';
+  const afterSecondWithdrawal=await readMyPersonalityHistory(withThree);
+  assert.equal(afterSecondWithdrawal.personality.unlock.eligibleGames,1);
+  assert.ok(afterSecondWithdrawal.personality.personalityProfile.sliders.every(x=>x.value===null));
   // No caller control over taxonomy/owner outside server-only input.
   await assert.rejects(readMyPersonalityHistory({...options,request:{personalityTaxonomy:taxonomy([])}}),
     e=>e.code==='invalid-argument');
@@ -178,11 +199,11 @@ test('Sol #203 authenticated reader: two current READY unresolved Games with no 
   assert.deepEqual(accepted.sources.map(s=>s.outcome.qualification),['UNRESOLVED','UNRESOLVED']);
   assert.ok(accepted.sources.every(s=>s.outcome.resultRevision===null&&s.outcome.winningPlayerIds===null));
   assert.equal(accepted.coverage.measuredIndependentBattles,2);
-  assert.deepEqual(Object.fromEntries(accepted.personality.personalityProfile.sliders
-    .map(x=>[x.axis,x.value])),{
-      BOOMER_AGGRESSOR:30,CAUTIOUS_BOLD:50,GUERRILLA_FRONTLINE:0,
-      SPECIALIST_IMPROVISER:0,COMPACT_EXPANSIVE:33.33});
-  assert.ok(accepted.personality.personalityProfile.sliders.every(x=>x.status==='READY'&&x.independentBattles===2));
+  assert.equal(accepted.personality.unlock.eligibleGames,2);
+  assert.equal(accepted.personality.unlock.status,'LOCKED');
+  assert.ok(accepted.personality.battleFeatures.some(x=>x.normalized!==null));
+  assert.ok(accepted.personality.personalityProfile.sliders.every(x=>
+    x.status==='DEVELOPING'&&x.value===null&&x.independentBattles===2));
   assert.equal(accepted.effects.officialWrites,false);
   // Source publication authority remains independent of the approved schedule.
   const second=f.rows.get('matches/m2/games/g2/replaySources/'+sha2);

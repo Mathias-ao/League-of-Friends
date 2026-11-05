@@ -7,6 +7,8 @@ import {admitPersonalityContext,PERSONALITY_CONTEXT_PROOF_VERSION}
   from '../lib/engines/personalityV1/contextAdmission.js';
 import {privatePersonalityE2EEnabled,privatePersonalityPolicy,PRIVATE_PERSONALITY_E2E_VERSION}
   from '../lib/engines/personalityV1/privateE2EPolicy.js';
+import {qualifyPersonalityGameUnlock}
+  from '../lib/engines/personalityV1/gameUnlock.js';
 import {validateSharedRecord} from '../lib/domain/socialV1Validation.js';
 import {ready} from './support/private-history-fixture.mjs';
 import {readMyPersonalityHistory} from '../lib/queries/getMyPersonalityHistory.js';
@@ -406,4 +408,21 @@ test('Sol #203 axis isolation: source-proven observation without reviewed durati
   // A forged roster is not a partial opportunity; it destroys source binding.
   b.source.roster[0].playerId='forged-subject';
   assert.equal(admitPersonalityContext(b,actor,tax.sourceProofs[b.source.sourceHash]).behaviorContext,null);
+});
+
+test('three distinct current Games inside BO3 unlock visibility but remain one Battle, five axes Developing',()=>{
+  const games=[game('series-battle','g1',1),game('series-battle','g2',2),
+    game('series-battle','g3',3)];
+  // The fixture's source adapter omits the real GUID field because old
+  // longitudinal engine tests didn't need it. Bind a distinct test-only GUID
+  // here; the authenticated reader uses the original source GUID.
+  const milestone=qualifyPersonalityGameUnlock(actor,games.map((g,i)=>({
+    ...g.source,gameGuid:'CONTROLLED_BO3_GUID_'+(i+1)})));
+  assert.equal(milestone.eligibleGames,3);
+  assert.equal(milestone.status,'UNLOCKED');
+  const {view}=project(games);
+  assert.equal(view.battleFeatures.length,5);
+  assert.ok(view.personalityProfile.sliders.every(s=>
+    s.status==='DEVELOPING'&&s.value===null&&s.independentBattles===1));
+  assert.equal(new Set(view.battleFeatures.map(f=>f.battleId)).size,1);
 });

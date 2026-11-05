@@ -11,6 +11,8 @@ import {PERSONALITY_AXES,measurePersonalityGame,projectPersonalityPreview,
   from '../lib/engines/personalityV1/personalityV1.js';
 import {createSocialE2EPilotCalibration}
   from '../lib/engines/socialV1History/e2ePilotCalibration.js';
+import {qualifyPersonalityGameUnlock}
+  from '../lib/engines/personalityV1/gameUnlock.js';
 import {evaluateHistory} from '../lib/engines/socialV1History/history.js';
 
 const sha=value=>createHash('sha256').update(String(value)).digest('hex');
@@ -76,6 +78,26 @@ test('genuine pinned T90 Games exercise five Personality axes and private Reputa
       playedAtMs:g.recordedAtMs,context,statistics:g.statistics
     };
   });
+  // Genuine original SHA/GUID/slots, but all league Player/Match source
+  // wrappers below remain explicit TEST ONLY and are NOT authenticated AoF.
+  const testSourceSnapshots=games.map((g,i)=>({
+    contract:'AOF_SOCIAL_V1_SHARED_1',authorityRevision:g.sourceAuthority,
+    battleId:g.battleId,matchId:g.matchId,gameId:g.gameId,
+    eventId:'TEST_EVENT',seasonId:'TEST_SEASON',
+    gameGuid:source.games[i].gameGuid,sourceHash:g.sourceHash,
+    statisticsRevision:1,mappingDigest:g.mappingDigest,
+    eventAdmissionDigest:sha('test event '+i),artifactRefs:[],
+    outcome:{qualification:'UNRESOLVED',resultRevision:null,winningPlayerIds:null},
+    roster:[{playerId:testPlayer,replaySlot:g.replaySlot,teamId:'test-a'},
+      {playerId:'TEST_OPPONENT_'+i,replaySlot:g.replaySlot===1?2:1,teamId:'test-b'}],
+  }));
+  assert.equal(qualifyPersonalityGameUnlock(testPlayer,testSourceSnapshots.slice(0,2)).status,'LOCKED');
+  const threeGameMilestone=qualifyPersonalityGameUnlock(testPlayer,testSourceSnapshots);
+  assert.equal(threeGameMilestone.status,'UNLOCKED');
+  assert.equal(threeGameMilestone.eligibleGames,3);
+  assert.equal(qualifyPersonalityGameUnlock(testPlayer,testSourceSnapshots.slice(1)).status,'LOCKED');
+  assert.throws(()=>qualifyPersonalityGameUnlock(testPlayer,
+    [...testSourceSnapshots,testSourceSnapshots[0]]),/DUPLICATE_GUID_SOURCE_OR_GAME/);
   const gameMeasurements=games.map((g,i)=>({
     original:source.games[i].label,sourceHash:g.sourceHash,gameGuid:source.games[i].gameGuid,
     slot:g.replaySlot,start:g.context.startFamily,civ:g.context.civilization,

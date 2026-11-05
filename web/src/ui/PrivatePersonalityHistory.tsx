@@ -7,6 +7,10 @@ export function PrivatePersonalityHistory({repository,ownerId}:{repository:Leagu
   const attempt=useRef(0),[read,setRead]=useState<{owner:string;value:History}|null>(null);
   const [error,setError]=useState<{owner:string;text:string}|null>(null),[pending,setPending]=useState<string|null>(null);
   const history=read?.owner===ownerId?read.value:null;
+  const milestone=history?.personality.unlock;
+  const unlocked=milestone?.version==='AOF_PERSONALITY_THREE_GAME_UNLOCK_V1'&&
+    milestone.requiredGames===3&&milestone.eligibleGames>=3&&milestone.status==='UNLOCKED'&&
+    milestone.reason===null;
   useEffect(()=>{attempt.current++;setRead(null);setError(null);setPending(null);
     const stop=repository.onAuthChange(()=>{attempt.current++;setRead(null);setError(null);setPending(null);});
     return()=>{attempt.current++;stop();};
@@ -32,9 +36,12 @@ export function PrivatePersonalityHistory({repository,ownerId}:{repository:Leagu
     {history&&<div data-aof-history-owner={ownerId} data-aof-history-revision={history.inputDigest}>
       <p>{history.coverage.currentSources} current recordings across {history.coverage.ownBattles} {history.coverage.ownBattles===1?'Battle':'Battles'}. Multiple Games share one Battle identity.</p>
       {history.pending.length>0&&<p>Some Game inputs are Pending. They do not count as qualifying Personality evidence.</p>}
+      {milestone?.version==='AOF_PERSONALITY_THREE_GAME_UNLOCK_V1'&&milestone.requiredGames===3&&
+        <p>{milestone.eligibleGames} of 3 eligible current Games toward Personality unlock. Multiple Games in one Battle count as Games here, but as one independent Battle for axis measurements.</p>}
+      {!unlocked?<p role="status">Personality is locked until 3 distinct source-accepted Games are verified for your account. Existing Game Statistics and other eligible history are not locked. Unsupported evidence remains Developing.</p>:
       <ul>{history.personality.personalityProfile.sliders.map(axis=>{
         // A backend-declared READY label alone must never invent a value.
-        const ready=history.personality.contextAdmission==='SOURCE_QUALIFIED'&&
+        const ready=unlocked&&history.personality.contextAdmission==='SOURCE_QUALIFIED'&&
           history.personality.calibration==='PROPOSED'&&
           history.personality.personalityProfile.policy.status==='PROPOSED'&&
           axis.status==='READY'&&typeof axis.value==='number'&&Number.isFinite(axis.value)&&
@@ -45,7 +52,7 @@ export function PrivatePersonalityHistory({repository,ownerId}:{repository:Leagu
             <meter min={0} max={100} value={axis.value!} aria-label={LABELS[axis.axis]+' provisional value'}/></>
             :<p>Comparable source history or opportunity is insufficient; no value assigned.</p>}
         </li>;
-      })}</ul>
+      })}</ul>}
       <p>Guerrilla ↔ Frontline describes military-command posture, not confirmed combat.</p>
       <p>Personality is descriptive, not a Reputation or Relationship award. This private view grants no honours.</p>
       <button onClick={()=>{attempt.current++;setRead(null);}}>Close Personality history</button>

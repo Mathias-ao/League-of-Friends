@@ -16,7 +16,13 @@ try{
  await act(async()=>root.render(React.createElement(PrivatePersonalityHistory,{repository,ownerId:owner})));
  await act(async()=>document.querySelector('button').click());
  assert.equal(document.querySelector('[data-aof-history-owner]').dataset.aofHistoryRevision,history.inputDigest);
- assert.equal(document.querySelectorAll('li').length,5);assert.match(document.body.textContent,/Developing/);
+ assert.equal(history.personality.unlock.version,'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1');
+ assert.equal(history.personality.unlock.status,'LOCKED');
+ assert.equal(history.personality.unlock.eligibleGames,2);
+ assert.equal(document.querySelectorAll('li').length,0);
+ assert.equal(document.querySelectorAll('meter').length,0);
+ assert.match(document.body.textContent,/2 of 3 eligible current Games/);
+ assert.match(document.body.textContent,/Personality is locked until 3 distinct source-accepted Games/);
  const key=`aof:chronicle-seen:${owner}:${counterpartId}`;dom.window.localStorage.setItem(key,JSON.stringify([oldEntryId]));
  const profile={player,lifetime:{competition:null},activeSeason:null,achievements:[],opponents:[],teammates:[],relationships:[]};
  const snapshot={viewer:player,players:[player,other],events:[],matches:[]};

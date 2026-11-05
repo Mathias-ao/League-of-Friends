@@ -10,7 +10,9 @@ import type {LeagueRepository} from '../src/domain/league';
 const base=JSON.parse(readFileSync(new URL('../../contracts/social-v1/fixtures/conformance.json',import.meta.url),'utf8')).bases.PersonalityProfile;
 function history():History{return {version:'AOF_INT_B_PRIVATE_HISTORY_1',contract:'AOF_SOCIAL_V1_SHARED_1',visibility:'OWNER_ONLY',ownerPlayerId:base.playerId,inputDigest:'a'.repeat(64),status:'CURRENT_INPUTS',
  coverage:{completeEnumeration:true,scannedLeagueBattles:1,ownBattles:1,ownGames:2,currentSources:2,measuredIndependentBattles:0},sources:[],pending:[],
- personality:{publication:'PRIVATE_PREVIEW_ONLY',battleFeatures:[],personalityProfile:{...structuredClone(base),sliders:base.sliders.map((s:any)=>({...s,status:'DEVELOPING',value:null}))},contextAdmission:'PENDING',calibration:'UNCONFIGURED'},
+ personality:{publication:'PRIVATE_PREVIEW_ONLY',battleFeatures:[],personalityProfile:{...structuredClone(base),sliders:base.sliders.map((s:any)=>({...s,status:'DEVELOPING',value:null}))},
+ unlock:{version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1',requiredGames:3,eligibleGames:2,status:'LOCKED',reason:'THREE_SOURCE_QUALIFIED_GAMES_REQUIRED'},
+ contextAdmission:'PENDING',calibration:'UNCONFIGURED'},
  social:{status:'PENDING',reason:'pending'},effects:{officialWrites:false,receiptPublication:false,entitlementGrants:false}};}
 async function setup(){
  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
@@ -24,8 +26,10 @@ async function setup(){
 test('private Personality is on-demand, five Developing values and one Battle across Games without fabricated slider',async()=>{
  const c=await setup();try{
   await c.render();assert.equal(c.calls(),0);await c.click('Inspect my Personality history');
-  assert.ok(document.querySelector('[data-aof-history-owner]'));assert.equal(document.querySelectorAll('li').length,5);
-  assert.match(document.body.textContent!,/2 current recordings across 1 Battle/);assert.match(document.body.textContent!,/Developing/);
+  assert.ok(document.querySelector('[data-aof-history-owner]'));assert.equal(document.querySelectorAll('li').length,0);
+  assert.match(document.body.textContent!,/2 current recordings across 1 Battle/);
+  assert.match(document.body.textContent!,/2 of 3 eligible current Games/);
+  assert.match(document.body.textContent!,/Personality is locked until 3 distinct/);
   assert.equal(document.querySelector('input[type="range"]'),null);assert.match(document.body.textContent!,/Personality is descriptive/);
   await c.click('Close Personality history');assert.equal(document.querySelector('[data-aof-history-owner]'),null);
  }finally{await c.close();}
@@ -50,6 +54,8 @@ test('UI rollout is default-off and rejects production even with an explicit fla
 test('source-qualified proposed calibration displays finite five-axis numbers including a genuine zero',async()=>{
  const c=await setup();try{
   c.value.coverage.measuredIndependentBattles=2;
+  c.value.personality.unlock={version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1',
+    requiredGames:3,eligibleGames:3,status:'UNLOCKED',reason:null};
   c.value.personality.contextAdmission='SOURCE_QUALIFIED';c.value.personality.calibration='PROPOSED';
   c.value.personality.personalityProfile.policy={...c.value.personality.personalityProfile.policy,status:'PROPOSED',approvalRef:null};
   c.value.personality.personalityProfile.sliders=c.value.personality.personalityProfile.sliders.map((s,i)=>
@@ -70,11 +76,43 @@ test('READY labels without verified source context, policy or independent sample
   assert.equal(document.querySelectorAll('meter').length,0);
   assert.match(document.body.textContent!,/Developing/);
   await c.click('Close Personality history');
+  c.value.personality.unlock={version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1',
+    requiredGames:3,eligibleGames:3,status:'UNLOCKED',reason:null};
   c.value.personality.contextAdmission='SOURCE_QUALIFIED';c.value.personality.calibration='PROPOSED';
   c.value.personality.personalityProfile.policy={...c.value.personality.personalityProfile.policy,status:'PROPOSED',approvalRef:null};
   c.value.personality.personalityProfile.sliders=c.value.personality.personalityProfile.sliders.map(s=>
     ({...s,status:'READY',value:60,independentBattles:2}));
   await c.click('Inspect my Personality history');assert.equal(document.querySelectorAll('meter').length,5);
   await act(async()=>c.auth());assert.equal(document.querySelectorAll('meter').length,0);
+ }finally{await c.close();}
+});
+
+test('1→2→3 eligible Games unlock private provisional sliders; withdrawal locks again and cannot reuse prior session',async()=>{
+ const c=await setup();try{
+  c.value.personality.contextAdmission='SOURCE_QUALIFIED';
+  c.value.personality.calibration='PROPOSED';
+  c.value.personality.personalityProfile.policy={...c.value.personality.personalityProfile.policy,status:'PROPOSED',approvalRef:null};
+  c.value.personality.personalityProfile.sliders=c.value.personality.personalityProfile.sliders.map((s,i)=>
+    ({...s,status:'READY',value:i*10,independentBattles:2}));
+  await c.render();
+  for(const n of [1,2,3]){
+    c.value.personality.unlock={version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1',
+      requiredGames:3,eligibleGames:n,status:n===3?'UNLOCKED':'LOCKED',
+      reason:n===3?null:'THREE_SOURCE_QUALIFIED_GAMES_REQUIRED'};
+    await c.click('Inspect my Personality history');
+    assert.match(document.body.textContent!,new RegExp(n+' of 3 eligible current Games'));
+    assert.equal(document.querySelectorAll('meter').length,n===3?5:0);
+    await c.click('Close Personality history');
+  }
+  // Correcting/withdrawing the third current source retracts visibility.
+  c.value.personality.unlock={version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1',
+    requiredGames:3,eligibleGames:2,status:'LOCKED',reason:'THREE_SOURCE_QUALIFIED_GAMES_REQUIRED'};
+  await c.click('Inspect my Personality history');assert.equal(document.querySelectorAll('meter').length,0);
+  // Do not trust a contradictory server label alone.
+  await c.click('Close Personality history');
+  c.value.personality.unlock={version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1',
+    requiredGames:3,eligibleGames:2,status:'UNLOCKED',reason:null};
+  await c.click('Inspect my Personality history');assert.equal(document.querySelectorAll('meter').length,0);
+  await c.render('other-owner');assert.equal(document.querySelector('[data-aof-history-owner]'),null);
  }finally{await c.close();}
 });

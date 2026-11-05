@@ -8,6 +8,8 @@ import {SOCIAL_V1_CONTRACT} from '../domain/socialV1.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
 import {battleGameManifest} from '../engines/battleGameManifest.js';
 import {projectPrivatePersonalityHistory,type PersonalityHistoryBattle} from '../integration/personalityHistory.js';
+import {qualifyPersonalityGameUnlock,gatePersonalityProfileByGames}
+  from '../engines/personalityV1/gameUnlock.js';
 import {privatePersonalityE2EEnabled,privatePersonalityPolicy,
   PRIVATE_SOURCE_TAXONOMY,type PrivateTaxonomy} from '../engines/personalityV1/privateE2EPolicy.js';
 import {loadMyCurrentSocialSource,assertIntV1PrivateReadEnabled} from './getMySocialExperience.js';
@@ -142,8 +144,15 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
   const pilot=privatePersonalityE2EEnabled(input.env)?
     privatePersonalityPolicy(input.actor.playerId,current.loaded,
       input.personalityTaxonomy??PRIVATE_SOURCE_TAXONOMY):null;
-  const personality=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,
+  const candidate=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,
     current.inputDigest,pilot?.context,pilot?.calibration??null,current.scheduleOrders);
+  // Count the complete set of *current accepted source Games* for the linked
+  // actor. Never count Games from a withdrawn source or a duplicate POV, and
+  // never make three Games equal three independent Battle samples.
+  const unlock=qualifyPersonalityGameUnlock(input.actor.playerId,
+    current.loaded.map(s=>s.source));
+  const personality={...candidate,unlock,
+    personalityProfile:gatePersonalityProfileByGames(candidate.personalityProfile,unlock)};
   const response={version:'AOF_INT_B_PRIVATE_HISTORY_1' as const,contract:SOCIAL_V1_CONTRACT,
     visibility:'OWNER_ONLY' as const,ownerPlayerId:input.actor.playerId,inputDigest:current.inputDigest,
     status:current.pending.length?'PENDING_INPUTS' as const:'CURRENT_INPUTS' as const,
