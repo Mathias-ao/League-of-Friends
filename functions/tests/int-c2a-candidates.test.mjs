@@ -27,6 +27,7 @@ test('Python candidate DTO binds separately without mutating producer or replaci
 test('forged source, scope, actor, metric, overlap key, grade, policy, and past-only context fail closed',()=>{
  const mutations=[
   f=>f.output.producer.gameScope.gameId='other',f=>f.output.producer.gameScope.gameGuid='other-guid',
+  f=>f.output.producer.gameScope.authorityRevision='other-source-authority',
   f=>f.output.producer.sourceRevision.replaySha256='f'.repeat(64),f=>f.output.producer.sourceRevision.parserVersion='unreviewed',f=>f.output.producer.gameScopeAuthenticated=true,
   f=>f.output.producer.gradePolicyStatus='APPROVED',f=>f.output.legacy.testPolicyDigest='f'.repeat(64),
   f=>f.output.legacy.processorRevision='f'.repeat(64),
