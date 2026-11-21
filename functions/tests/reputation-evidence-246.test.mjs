@@ -67,3 +67,18 @@ test('not yet approved method cannot turn arbitrary Cruelty positive into a grad
  assert.throws(()=>view([record('CRUELTY','b1','g1','s1')]),/CRUELTY_UNAPPROVED/);
  assert.throws(()=>projectReputationEvidence({version:'WRONG'}),/SHARED_SOURCE_REQUIRED/);
 });
+
+test('large Pending method candidate sets use compact references without losing source readiness',()=>{
+ const candidates=Array.from({length:200},(_,i)=>({
+  ...record('CRUELTY','b1','g1','s1',{admitted:false}),
+  contributionKey:'unqualified-'+i,claimId:'pending-'+i,claimRevision:'current-'+i,
+ }));
+ const x=view(candidates);
+ assert.equal(x.tracks.CRUELTY.withheldCandidateCount,200);
+ assert.equal(x.tracks.CRUELTY.withheldDeeds.length,1,
+   'one source/method/missing-evidence signature is enough for readiness display');
+ assert.equal(x.tracks.CRUELTY.career.sourceQualifiedBattles,0);
+ assert.equal(x.tracks.CRUELTY.careerPoints,null);
+ assert.ok(JSON.stringify(x).length<10000,
+   'the derived read model must not duplicate 200 full Pending source envelopes');
+});
