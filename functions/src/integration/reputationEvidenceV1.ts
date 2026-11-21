@@ -30,6 +30,15 @@ export const REPUTATION_V1_RULE_PROPOSAL=Object.freeze({
 } as const);
 export type ReputationEvidenceTrack='GALLANTRY'|'CRUELTY'|'CHIVALRY';
 export type ReputationEvidenceReadiness='SOURCE_QUALIFIED'|'PENDING_SOURCE_METHOD';
+/** Refer to the full authenticated source record in shared evidence; never
+ * copy its large proof envelope into each derived track and exceed the
+ * private callable's 4 MiB transport budget. */
+export type ReputationDeedRef=Pick<SourceQualifiedSocialDeed,
+  'claimId'|'claimRevision'|'battleId'|'gameId'|'methodVersion'|'contributionKey'>;
+const asRef=(d:SourceQualifiedSocialDeed):ReputationDeedRef=>({
+  claimId:d.claimId,claimRevision:d.claimRevision,battleId:d.battleId,
+  gameId:d.gameId,methodVersion:d.methodVersion,contributionKey:d.contributionKey,
+});
 export interface ReputationTrackEvidence {
   track:ReputationEvidenceTrack;
   readiness:ReputationEvidenceReadiness;
@@ -37,8 +46,9 @@ export interface ReputationTrackEvidence {
   career:{sourceQualifiedBattles:number;sourceQualifiedGames:number;distinctOriginalContributions:number};
   bySeason:Record<string,{sourceQualifiedBattles:number;sourceQualifiedGames:number;distinctOriginalContributions:number}>;
   pendingReasons:string[];
-  eligibleDeeds:SourceQualifiedSocialDeed[];
-  withheldDeeds:SourceQualifiedSocialDeed[];
+  eligibleDeeds:ReputationDeedRef[];
+  withheldDeeds:ReputationDeedRef[];
+  withheldCandidateCount:number;
   careerPoints:null;
   seasonPoints:null;
   stage:null;
@@ -88,8 +98,15 @@ export function projectReputationEvidence(evidence:SharedSocialSourceEvidence):R
     if(track==='CRUELTY')missing.add('OPPRESSIVE_TACTIC_SOURCE_METHOD_PENDING');
     tracks[track]={track,readiness:eligible.length?'SOURCE_QUALIFIED':'PENDING_SOURCE_METHOD',
       currentGrade:eligible.length?'ORDINARY':null,career:tally(eligible),bySeason,
-      pendingReasons:[...missing].sort(),eligibleDeeds:eligible,
-      withheldDeeds:withheld,careerPoints:null,seasonPoints:null,stage:null};
+      pendingReasons:[...missing].sort(),eligibleDeeds:eligible.map(asRef),
+      // The original pending cards remain in the authenticated shared
+      // evidence. A track's readiness only needs one proof pointer per
+      // Game/method/missing-evidence signature plus the full pending count.
+      withheldDeeds:[...new Map(withheld.map(d=>[
+        [d.battleId,d.gameId,d.methodVersion,...d.missingEvidence].join('\\u0000'),
+        asRef(d)])).values()],
+      withheldCandidateCount:withheld.length,
+      careerPoints:null,seasonPoints:null,stage:null};
   }
   return {version:REPUTATION_EVIDENCE_PROJECTION_VERSION,
     sourceVersion:SOCIAL_SOURCE_EVIDENCE_VERSION,
