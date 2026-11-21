@@ -7,6 +7,7 @@ import {AofSeal} from './AofSeal';
 import {FrontPageNotifications} from './FrontPageNotifications';
 import {SeasonView,EventsView,BattlesView,PlayersView,WarRoomView} from './Views';
 import {SeasonStatisticsView,EventDialogWithStatistics,MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperience';
+import {startSeasonStandingsRefresh} from './seasonStandingsRefresh';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
   {id:'events',label:'Events',icon:Flag},
@@ -19,6 +20,7 @@ export interface ViewProps {
   snapshot:LeagueSnapshot;preview:boolean;busy:boolean;repository:LeagueRepository;
   openEvent:(id:string)=>void;openMatch:(id:string)=>void;openPlayer:(id:string)=>void;
   act:(action:()=>Promise<void>,message:string)=>Promise<boolean>;enter:()=>void;navigate:(page:Page)=>void;
+  refreshStandings?:()=>void;
 }
 type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'favors';data:EmperorsFavorBatch}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile;openChronicle?:boolean}|null;
 function pageFromHash():Page|null{return pages.find(p=>!p.disabled&&'#'+p.id===location.hash)?.id??null;}
@@ -27,15 +29,23 @@ export function App({repository}:{repository:LeagueRepository}){
   const [snapshot,setSnapshot]=useState(emptySnapshot),[page,setPage]=useState<Page>('season'),[sectionOpen,setSectionOpen]=useState(false),[dialog,setDialog]=useState<DialogState>(null);
   const [actionBusy,setBusy]=useState(false),[detailBusy,setDetailBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
   const generation=useRef(0),authEpoch=useRef(0),detailRequest=useRef(0),working=useRef(false),navRef=useRef<HTMLElement>(null),gateRef=useRef<HTMLElement>(null);
+  const refreshTask=useRef<{epoch:number;task:Promise<boolean>}|null>(null);
   const accessResolved=useRef(false),previousCanBrowse=useRef(false);
   const preview=repository.mode==='preview',busy=actionBusy||detailBusy,canBrowse=canBrowseLeague(snapshot);
   const leagueEntryVisible=loading||snapshot.membership!=='ACTIVE';
   const showSeasonGate=!loading&&snapshot.membership==='ACTIVE'&&!canBrowse;
-  const refresh=useCallback(async()=>{
+  const refresh=useCallback((force=false)=>{
+    const epoch=authEpoch.current;
+    if(!force&&refreshTask.current?.epoch===epoch)return refreshTask.current.task;
     const id=++generation.current;
-    try{const data=await repository.load();if(id===generation.current){setSnapshot(data);setError('');}return true;}
-    catch(e){if(id===generation.current){setSnapshot(emptySnapshot());setDialog(null);setError(errorMessage(e));}return false;}
-    finally{if(id===generation.current)setLoading(false);}
+    const task=(async()=>{
+      try{const data=await repository.load();if(id===generation.current){setSnapshot(data);setError('');}return true;}
+      catch(e){if(id===generation.current){setSnapshot(emptySnapshot());setDialog(null);setError(errorMessage(e));}return false;}
+      finally{if(id===generation.current)setLoading(false);}
+    })();
+    refreshTask.current={epoch,task};
+    void task.finally(()=>{if(refreshTask.current?.task===task)refreshTask.current=null;});
+    return task;
   },[repository]);
   useEffect(()=>{
     void refresh();
@@ -45,6 +55,15 @@ export function App({repository}:{repository:LeagueRepository}){
     });
     return ()=>{generation.current++;authEpoch.current++;detailRequest.current++;unsubscribe();};
   },[repository,refresh]);
+  useEffect(()=>{
+    if(preview||!canBrowse||!sectionOpen||page!=='season'||!snapshot.season)return;
+    const updates=startSeasonStandingsRefresh({refresh,
+      visible:()=>document.visibilityState==='visible',available:()=>!working.current});
+    window.addEventListener('focus',updates.wake);
+    document.addEventListener('visibilitychange',updates.wake);
+    return()=>{updates.stop();window.removeEventListener('focus',updates.wake);
+      document.removeEventListener('visibilitychange',updates.wake);};
+  },[preview,canBrowse,sectionOpen,page,snapshot.viewer?.playerId,snapshot.season?.seasonId,refresh]);
   useEffect(()=>{
     const syncLocation=()=>{
       detailRequest.current++;setDetailBusy(false);setDialog(null);
@@ -97,7 +116,7 @@ export function App({repository}:{repository:LeagueRepository}){
   const navigate=(next:Page)=>openSection(next);
   const act=async(action:()=>Promise<void>,message:string)=>{
     if(working.current)return false;working.current=true;setBusy(true);setError('');
-    try{await action();const loaded=await refresh();if(loaded)setNotice(message+(preview?' (Preview only.)':''));return loaded;}
+    try{await action();const loaded=await refresh(true);if(loaded)setNotice(message+(preview?' (Preview only.)':''));return loaded;}
     catch(e){setError(errorMessage(e));return false;}
     finally{working.current=false;setBusy(false);}
   };
@@ -130,7 +149,8 @@ export function App({repository}:{repository:LeagueRepository}){
   const openEvent=(id:string)=>{void detail('event',id);},openMatch=(id:string)=>{void detail('match',id);},openPlayer=(id:string)=>{void detail('player',id);};
   const openHonours=()=>{if(snapshot.viewer)void detail('player',snapshot.viewer.playerId,true);};
   const next=currentLeagueEvent(snapshot);
-  const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate};
+  const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate,
+    refreshStandings:()=>{if(!working.current)void refresh();}};
   const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Field of Battle':dialog?.type==='player'?dialog.data.player.steamName:'';
   const showContent=sectionOpen||showSeasonGate||(!leagueEntryVisible&&!!error);
   return <>
@@ -216,7 +236,7 @@ function SeasonAccessGate({gateRef,snapshot,busy,enter}:{gateRef:Ref<HTMLElement
 }
 function Hero({onStory,onEvent}:{onStory:()=>void;onEvent:()=>void}){
   const [slide,setSlide]=useState(0),[paused,setPaused]=useState(false),[interacting,setInteracting]=useState(false),[failedArtwork,setFailedArtwork]=useState<string|null>(null);
-  const base=import.meta.env.BASE_URL;
+  const base=import.meta.env?.BASE_URL??'/';
   const artworks=[
     `${base}artwork/season-fiefdom.png`,
     `${base}artwork/event-lombardia.png`
