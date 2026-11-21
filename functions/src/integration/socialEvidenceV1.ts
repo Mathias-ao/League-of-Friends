@@ -55,6 +55,9 @@ export interface SourceQualifiedSocialDeed {
   readonly contributionKey:string;
   readonly componentId:string;
   readonly originalSourceEventIds:readonly string[];
+  readonly recordedContext:{readonly actorTeamId:string|null;readonly counterpartTeamId:string|null;
+    readonly rosterRelation:'SAME_RECORDED_TEAM'|'DIFFERENT_RECORDED_TEAMS'|'UNKNOWN';
+    readonly effectiveFfaDiplomacy:'UNAVAILABLE'};
   readonly originalPosition:{readonly recordingAtMs:number;readonly operationOrdinal:number|null;readonly order:'ORDERED'|'PARTIAL'};
   readonly historicalOrder:{readonly order:'ORDERED'|'UNKNOWN';readonly leagueOrderKey:string|null;readonly gameNumber:number};
   readonly corroboration:ReadonlyArray<{kind:string;sourceDetectorId:string;originalSourceEventIds:readonly string[]}>;
@@ -109,7 +112,9 @@ export function projectSharedSocialSourceEvidence(
       validHash(bound.sourceMethodRevision)&&
       Array.isArray(s.roster)&&s.roster.length>=2&&s.roster.length<=8&&
       new Set(s.roster.map((p:{playerId:string;replaySlot:number})=>p.playerId)).size===s.roster.length&&
-      s.roster.every((p:{playerId:string;replaySlot:number})=>validId(p.playerId)&&Number.isSafeInteger(p.replaySlot)),
+      s.roster.every((p:{playerId:string;replaySlot:number;teamId:string|null})=>
+        validId(p.playerId)&&Number.isSafeInteger(p.replaySlot)&&
+        (p.teamId===null||validId(p.teamId))),
       'SOURCE_SNAPSHOT_NOT_BOUND');
     requireFact(s.roster.some((p:{playerId:string})=>p.playerId===ownerPlayerId),
       'OWNER_NOT_CURRENT_SOURCE_PARTICIPANT');
@@ -192,6 +197,12 @@ export function projectSharedSocialSourceEvidence(
       // evidence must never be returned to this owner-private view.
       if(card.actorPlayerId!==ownerPlayerId&&card.counterpartPlayerId!==ownerPlayerId)
         continue;
+      const actorRoster=s.roster.find((p:{playerId:string})=>p.playerId===card.actorPlayerId)!;
+      const targetRoster=s.roster.find((p:{playerId:string})=>p.playerId===card.counterpartPlayerId)!;
+      const actorTeamId=actorRoster.teamId,counterpartTeamId=targetRoster.teamId;
+      const rosterRelation=actorTeamId===null||counterpartTeamId===null
+        ?'UNKNOWN' as const:actorTeamId===counterpartTeamId
+          ?'SAME_RECORDED_TEAM' as const:'DIFFERENT_RECORDED_TEAMS' as const;
       deeds.push({
         track,system:meta.system,decision:card.decision,
         reasonCodes:sorted(card.reasonCodes),missingEvidence:sorted(card.missingEvidence),
@@ -206,6 +217,8 @@ export function projectSharedSocialSourceEvidence(
         sourceContextRevision:card.sourceContextRevision,
         contributionKey:card.identity.contributionKey,componentId:card.identity.componentId,
         originalSourceEventIds:sorted(card.originalSourceEventIds),
+        recordedContext:{actorTeamId,counterpartTeamId,rosterRelation,
+          effectiveFfaDiplomacy:'UNAVAILABLE'},
         originalPosition:{recordingAtMs:card.originalPosition.recordingAtMs,
           operationOrdinal:card.originalPosition.operationOrdinal,
           order:card.originalPosition.order},
