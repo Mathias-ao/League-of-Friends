@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {memoryFirestore} from './support/memory-firestore.mjs';
 import {getLeagueBootstrap} from '../lib/queries/getLeagueBootstrap.js';
+import {readSeasonCompetitionRecords} from '../lib/queries/seasonCompetitionRecord.js';
 import {processMatchRewards} from '../lib/commands/processing/processMatchRewards.js';
 import {seasonScoringSnapshot} from '../lib/engines/seasonPoints.js';
 import {SYSTEM_RESULT_PROCESSING_ACTOR as system} from '../lib/services/resultProcessingActor.js';
@@ -33,9 +34,10 @@ function addBattle(db,id,act,winner,{event='e1',revision=1,recording=false,stats
     scoringSnapshot:seasonScoringSnapshot({act,diplomacyEnabled:false,placementPolicy:'NONE',emperorPlayerId:'emperor'}),
     goldRewardSnapshot:{matchCompletion:1,matchWin:2},activeResultDisputeId:null});
   db.set('matches/'+id+'/games/G1',{gameNumber:1,status:'COMPLETED',players:roster,canonicalResult:canonical,
-    ...(recording?{activeReplayStatisticsId:hash,recordingResultBinding:binding}:{}),activeResultDisputeId:null});
+    ...(recording?{activeReplayStatisticsId:hash,recordingResultBinding:binding,replayStatisticsState:'READY',replayStatisticsRevision:1}:{}),activeResultDisputeId:null});
   if(recording)db.set('matches/'+id+'/games/G1/replaySources/'+hash,
-    {state:'READY',matchId:id,gameId:'G1',sourceHash:hash,privateArtifactField:'DO_NOT_PUBLISH'});
+    {state:'READY',matchId:id,gameId:'G1',sourceHash:hash,replayStatisticsRevision:1,
+      playerMapping:roster.map((p,i)=>({playerId:p.playerId,replaySlot:i+1})),privateArtifactField:'DO_NOT_PUBLISH'});
   db.set('processingJobs/MATCH_RESULT_'+id+'_R'+revision,
     {status:'PENDING',resultRevision:revision,pendingSteps:['SCORING','GOLD'],completedSteps:[]});
   for(const p of roster)db.set('events/'+event+'/scoringSlots/'+act+'_'+p.playerId,
@@ -44,6 +46,33 @@ function addBattle(db,id,act,winner,{event='e1',revision=1,recording=false,stats
 const score=id=>processMatchRewards({matchId:id,requestId:'controlled-'+id},system);
 const read=(uid='a')=>getLeagueBootstrap.run({auth:{uid},data:{}});
 const rows=value=>value.leaderboard.map(p=>[p.playerId,p.leaguePoints,p.wins,p.losses,p.rank]);
+
+test('two Events with Event-owned best warmup ledgers retain the earned 26/10 points and four Battle records',async()=>{
+  const db=setup();
+  for(const event of ['e1','e2']){
+    addBattle(db,event+'m','MAIN','b',{event});await score(event+'m');
+    addBattle(db,event+'w','WARMUP','b',{event,recording:true});
+    db.set('events/'+event,{...db.get('events/'+event),warmupMatchIds:[event+'w'],warmupPolicy:{scoringPolicy:'AOF_BEST_WARMUP_V1'}});
+    db.set('matches/'+event+'w',{...db.get('matches/'+event+'w'),warmupScoringPolicy:'AOF_BEST_WARMUP_V1'});
+    await score(event+'w');
+  }
+  assert.deepEqual(rows(await read()),[['b',26,4,0,1],['a',10,0,4,2]]);
+  const ledger=()=>[...db.entries()].filter(([path])=>path.startsWith('leaguePointLedger/')).map(([,data])=>data);
+  assert.ok(ledger().some(row=>row.eventWarmup&&row.matchId===null&&row.sourceMatchId==='e1w'));
+  for(const id of ['a','b'])assert.equal(ledger().filter(row=>row.playerId===id).reduce((sum,row)=>sum+row.amountUnits,0),db.get('seasons/s/standings/'+id).leaguePointUnits);
+  const before=JSON.stringify(ledger());for(const id of ['e1m','e1w','e2m','e2w'])await score(id);
+  assert.equal(JSON.stringify(ledger()),before);
+});
+
+test('a correction between the standings Match read and the W–L transaction aborts instead of mixing revisions',async()=>{
+  const db=setup();addBattle(db,'main','MAIN','a');
+  const {db:firestore}=await import('../lib/config/firebase.js');
+  const snapshots=(await firestore.collection('matches').get()).docs.map(doc=>{
+    const data=structuredClone(doc.data());return {...doc,data:()=>data};
+  });
+  db.set('matches/main',{...db.get('matches/main'),activeResultDisputeId:'new-dispute'});
+  await assert.rejects(readSeasonCompetitionRecords(snapshots),e=>e.code==='aborted');
+});
 
 test('four eligible warmup/main Battles expose unchanged points, tie ranking and canonical Season W–L',async()=>{
   const db=setup();
@@ -85,6 +114,13 @@ test('disputed, void, pending and withdrawn recording-bound evidence cannot infl
   db.set(sourcePath,source);db.set('matches/recorded/games/G1',{...game,activeReplayStatisticsId:sha('wrong source')});
   assert.ok((await read()).leaderboard.every(p=>p.wins===0&&p.losses===0));
   db.set('matches/recorded/games/G1',game);
+  for(const change of [{replayStatisticsState:'UNAVAILABLE'},{replayStatisticsRevision:2}]){
+    db.set('matches/recorded/games/G1',{...game,...change});
+    assert.ok((await read()).leaderboard.every(p=>p.wins===0&&p.losses===0));
+  }
+  db.set('matches/recorded/games/G1',game);
+  db.set(sourcePath,{...source,playerMapping:[]});
+  assert.ok((await read()).leaderboard.every(p=>p.wins===0&&p.losses===0));db.set(sourcePath,source);
   assert.doesNotMatch(JSON.stringify(await read()),/DO_NOT_PUBLISH/);
 });
 

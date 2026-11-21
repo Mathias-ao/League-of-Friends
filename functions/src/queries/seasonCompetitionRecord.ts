@@ -1,6 +1,9 @@
 import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
 import {battleGameManifest} from '../engines/battleGameManifest.js';
 import {resolveSeriesResult} from '../engines/seriesResult.js';
+import {db} from '../config/firebase.js';
+import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
+import {HttpsError} from 'firebase-functions/v2/https';
 
 type Bag=Record<string,any>;
 export interface SeasonCompetitionRecord {wins:number;losses:number}
@@ -12,8 +15,14 @@ const same=(left:unknown,right:unknown)=>JSON.stringify(left)===JSON.stringify(r
  * result from the point ledger, recording claim or cached statistics totals.
  */
 export async function readSeasonCompetitionRecords(matches:MatchSnapshot[]):Promise<Map<string,SeasonCompetitionRecord>>{
+  return db.runTransaction(async tx=>{
   const records=new Map<string,SeasonCompetitionRecord>();
   for(const snapshot of matches){
+    // Tie W–L to the same Match revisions used by the point masking reader.
+    // Games and recording sources share this read transaction's snapshot.
+    const current=await tx.get(snapshot.ref);
+    if(bindingDigest(current.data()??null)!==bindingDigest(snapshot.data()))
+      throw new HttpsError('aborted','Season results changed during the read. Retry.');
     const match=snapshot.data();
     if(match.status!=='COMPLETED'||match.activeResultDisputeId||
       match.context?.affectsSeasonStats!==true||match.opponentKind==='AI'||match.aiOpponent)continue;
@@ -21,7 +30,7 @@ export async function readSeasonCompetitionRecords(matches:MatchSnapshot[]):Prom
       canonicalResult:match.canonicalResult},match);
     if(aggregate.qualification!=='OFFICIAL')continue;
 
-    const gamesSnapshot=await snapshot.ref.collection('games').get();
+    const gamesSnapshot=await tx.get(snapshot.ref.collection('games'));
     const games=gamesSnapshot.docs.map(doc=>({gameId:doc.id,...doc.data()} as Bag));
     let used:Bag[];
     if((match.seriesRule?.maxGames??1)>1){
@@ -53,8 +62,14 @@ export async function readSeasonCompetitionRecords(matches:MatchSnapshot[]):Prom
       if(game.recordingResultBinding||game.canonicalResult?.source==='RECORDING_VERIFIED'){
         const hash=game.recordingResultBinding?.sourceHash;
         if(typeof hash!=='string'||!hash||hash!==game.activeReplayStatisticsId){eligible=false;break;}
-        const source=(await snapshot.ref.collection('games').doc(game.gameId).collection('replaySources').doc(hash).get()).data();
-        if(source?.state!=='READY'||source.sourceHash!==hash||source.matchId!==snapshot.id||source.gameId!==game.gameId){eligible=false;break;}
+        const source=(await tx.get(snapshot.ref.collection('games').doc(game.gameId).collection('replaySources').doc(hash))).data();
+        const ids=Array.isArray(source?.playerMapping)?source.playerMapping.map((p:Bag)=>p.playerId):[];
+        if(source?.state!=='READY'||game.replayStatisticsState!=='READY'||
+          !Number.isSafeInteger(game.replayStatisticsRevision)||game.replayStatisticsRevision<1||
+          source.replayStatisticsRevision!==game.replayStatisticsRevision||
+          source.sourceHash!==hash||source.matchId!==snapshot.id||source.gameId!==game.gameId||
+          ids.length!==match.participants.length||new Set(ids).size!==ids.length||
+          ids.some((id:string)=>!match.participants.some((p:Bag)=>p.playerId===id))){eligible=false;break;}
       }
     }
     if(!eligible)continue;
@@ -66,4 +81,5 @@ export async function readSeasonCompetitionRecords(matches:MatchSnapshot[]):Prom
     }
   }
   return records;
+  });
 }
