@@ -14,6 +14,7 @@ import {adminBindReplayParticipants} from '../lib/commands/admin/bindReplayParti
 import {adminReviewRecordingResult} from '../lib/commands/results/reviewRecordingResult.js';
 import {getPlayerChronicle} from '../lib/queries/getPlayerChronicle.js';
 import {getStatisticsExperience} from '../lib/queries/getStatisticsExperience.js';
+import {readSeasonCompetitionRecords} from '../lib/queries/seasonCompetitionRecord.js';
 import {readActiveNativeBattleDetail} from '../lib/queries/getActiveNativeBattleDetail.js';
 import {collectStatistics,rebuildStatisticsReadModels} from '../lib/services/statisticsExperienceProjection.js';
 import {resolveRecordingResult} from '../lib/services/recordingResult.js';
@@ -208,6 +209,18 @@ async function runCase([name,format,expected]){
   }else{
     assert.equal(game.canonicalResult,undefined);assert.equal((await db.collection('processingJobs').where('matchId','==',matchId).get()).size,0);
   }
+  // Actual retained original/ordinary upload and current canonical authority;
+  // the AoF roster remains the existing controlled mapping. Do not seed a
+  // synthetic winner or standings row to make this W–L witness pass.
+  const competitionRecords=await readSeasonCompetitionRecords([await mr.get()]);
+  if(expected==='ACCEPTED'){
+    const originalWinners=players.filter(p=>p.winner===true).map(p=>matchId+'-p'+p.number);
+    for(const p of roster)assert.deepEqual(competitionRecords.get(p.playerId),
+      {wins:Number(originalWinners.includes(p.playerId)),losses:Number(!originalWinners.includes(p.playerId))});
+  }else assert.equal(competitionRecords.size,0,'READY source alone cannot establish a canonical win/loss');
+  const seasonCompetitionWitness={source:'GENUINE_ORIGINAL_RECORDING',leagueIdentity:'CONTROLLED_TEST_MAPPING',
+    currentSourceReader:true,eligibleCanonicalBattles:expected==='ACCEPTED'?1:0,
+    originalWinnerAgreement:expected==='ACCEPTED',pendingOfficialExcluded:expected!=='ACCEPTED'};
   const readBegan=performance.now();
   const detail=await readActiveNativeBattleDetail({db,bucket,actor,env:process.env,request:{matchId,gameId,mode:'list',replaySlot:players[0].number,group:'battles',pageSize:20}});
   const authenticatedBoundedReadMs=performance.now()-readBegan;
@@ -258,6 +271,10 @@ async function runCase([name,format,expected]){
     await assert.rejects(adminReviewRecordingResult.run({auth:{uid:actor.authUid},data:{matchId,gameId,sourceHash,outcome:{winnerTeam},reason:'Independent fixture outcome review',playedWithinWindow:true}}));
     await adminReviewRecordingResult.run({auth:{uid:'operator'},data:{matchId,gameId,sourceHash,outcome:{winnerTeam},reason:'Independent fixture outcome review',playedWithinWindow:true}});
     game=(await gr.get()).data();match=(await mr.get()).data();assert.equal(currentOfficialGameOutcome(game,match).qualification,'OFFICIAL');
+    const reviewedRecords=await readSeasonCompetitionRecords([await mr.get()]);
+    for(const p of roster)assert.deepEqual(reviewedRecords.get(p.playerId),
+      {wins:Number(game.canonicalResult.winningPlayerIds.includes(p.playerId)),
+        losses:Number(!game.canonicalResult.winningPlayerIds.includes(p.playerId))});
     assert.equal((await collectStatistics({matchId})).games[0].eligible,true);
     assert.equal((await uploadReplay.run(request)).replayStatisticsRevision,1);
   }
@@ -267,7 +284,7 @@ async function runCase([name,format,expected]){
   reports.push({fixture:name,sourceSha256:sourceHash,inputBytes:original.length,processorRevision:source.processorRevision,
     expectedOutcome:expected,ready:true,retentionVerified:true,independentOutcomeVerified:true,boundedReader:true,
     pendingExclusion:true,retryIdempotent:true,serverReceivedToReadyAndResolutionMs:uploadMs,
-    recordingNameRecovery,
+    recordingNameRecovery,seasonCompetitionWitness,
     authenticatedBoundedReadMs,authenticatedBattleStatisticsQueryMs,idempotentRetryMs,validationTimings:validationTimings??null,nativeHandlerTimings,
     diagnosticTraceOffResponseEquivalent,
     ordinaryRequestAttempts:attempts.map(r=>r.status==='fulfilled'?{state:r.value.state,alreadyProcessed:r.value.alreadyProcessed}:

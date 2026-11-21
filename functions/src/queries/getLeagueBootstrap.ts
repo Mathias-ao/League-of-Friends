@@ -7,6 +7,7 @@ import { callableOptions } from "../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../domain/collections.js";
 import {maskUnavailableSeasonAwards,rankSeasonStandings} from "../engines/seasonPoints.js";
 import { iso, playerMap, publicPlayer } from "./querySupport.js";
+import {readSeasonCompetitionRecords} from './seasonCompetitionRecord.js';
 
 interface LeagueStateDocument {
   activeSeasonId?: string | null;
@@ -245,6 +246,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
     };
   }
 
+  const competitionRecords=await readSeasonCompetitionRecords(scoringMatchesSnapshot.docs);
   const standingRows = standingsSnapshot.docs
     .map((document) => {
       const standing = document.data() as StandingDocument;
@@ -255,6 +257,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
         ...(standing.leaguePointUnits==null?{}:{leaguePointUnits:standing.leaguePointUnits}),
         mainEventWins:Number(standing.mainEventWins??0),warmupWins:Number(standing.warmupWins??0),
         mainEventsPlayed:Number(standing.mainEventsPlayed??0),warmupsPlayed:Number(standing.warmupsPlayed??0),
+        ...(competitionRecords.get(playerId)??{wins:0,losses:0}),
       };
     })
     ;
@@ -266,6 +269,7 @@ export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
       ?? (players.has(currentEmperorPlayerId) ? {
         ...publicPlayer(currentEmperorPlayerId, players.get(currentEmperorPlayerId)),
         leaguePoints: 0,
+        ...(competitionRecords.get(currentEmperorPlayerId)??{wins:0,losses:0}),
       } : null)
     : null;
   const leaderboard=rankSeasonStandings(orderedStandings

@@ -7,6 +7,7 @@ import {AofSeal} from './AofSeal';
 import {FrontPageNotifications} from './FrontPageNotifications';
 import {SeasonView,EventsView,BattlesView,PlayersView,WarRoomView} from './Views';
 import {SeasonStatisticsView,EventDialogWithStatistics,MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperience';
+import {startSeasonStandingsRefresh} from './seasonStandingsRefresh';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
   {id:'events',label:'Events',icon:Flag},
@@ -19,32 +20,81 @@ export interface ViewProps {
   snapshot:LeagueSnapshot;preview:boolean;busy:boolean;repository:LeagueRepository;
   openEvent:(id:string)=>void;openMatch:(id:string)=>void;openPlayer:(id:string)=>void;
   act:(action:()=>Promise<void>,message:string)=>Promise<boolean>;enter:()=>void;navigate:(page:Page)=>void;
+  refreshStandings?:()=>void;
 }
 type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'favors';data:EmperorsFavorBatch}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile;openChronicle?:boolean}|null;
 function pageFromHash():Page|null{return pages.find(p=>!p.disabled&&'#'+p.id===location.hash)?.id??null;}
 function clearHash(){history.replaceState(null,'',location.pathname+location.search);}
+export const BOOTSTRAP_ABORT_RETRY_DELAYS_MS=[1000,2000] as const;
 export function App({repository}:{repository:LeagueRepository}){
   const [snapshot,setSnapshot]=useState(emptySnapshot),[page,setPage]=useState<Page>('season'),[sectionOpen,setSectionOpen]=useState(false),[dialog,setDialog]=useState<DialogState>(null);
   const [actionBusy,setBusy]=useState(false),[detailBusy,setDetailBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
   const generation=useRef(0),authEpoch=useRef(0),detailRequest=useRef(0),working=useRef(false),navRef=useRef<HTMLElement>(null),gateRef=useRef<HTMLElement>(null);
+  const refreshTask=useRef<{epoch:number;task:Promise<boolean>;cancel:()=>void}|null>(null);
+  const [bootstrapAborted,setBootstrapAborted]=useState(false);
+  const [standingsRefreshRevision,setStandingsRefreshRevision]=useState(0);
   const accessResolved=useRef(false),previousCanBrowse=useRef(false);
   const preview=repository.mode==='preview',busy=actionBusy||detailBusy,canBrowse=canBrowseLeague(snapshot);
   const leagueEntryVisible=loading||snapshot.membership!=='ACTIVE';
   const showSeasonGate=!loading&&snapshot.membership==='ACTIVE'&&!canBrowse;
-  const refresh=useCallback(async()=>{
+  const refresh=useCallback((force=false)=>{
+    const epoch=authEpoch.current;
+    if(!force&&refreshTask.current?.epoch===epoch)return refreshTask.current.task;
     const id=++generation.current;
-    try{const data=await repository.load();if(id===generation.current){setSnapshot(data);setError('');}return true;}
-    catch(e){if(id===generation.current){setSnapshot(emptySnapshot());setDialog(null);setError(errorMessage(e));}return false;}
-    finally{if(id===generation.current)setLoading(false);}
+    refreshTask.current?.cancel();
+    const current=()=>id===generation.current&&epoch===authEpoch.current;
+    let cancelRetry=()=>{};
+    const waitForRetry=(ms:number)=>new Promise<void>(resolve=>{
+      const timer=setTimeout(()=>{cancelRetry=()=>{};resolve();},ms);
+      cancelRetry=()=>{clearTimeout(timer);resolve();};
+    });
+    const task=(async()=>{
+      try{
+        for(let attempt=0;current();attempt++){
+          try{
+            const data=await repository.load();if(!current())return false;
+            if(data.membership!=='ACTIVE'){detailRequest.current++;setDetailBusy(false);setDialog(null);}
+            setSnapshot(data);setBootstrapAborted(false);setError('');return true;
+          }catch(e){
+            if(!current())return false;
+            if((e as {code?:string}|null)?.code==='functions/aborted'){
+              // A revision race invalidates this read, not the authenticated member.
+              // Retry the whole load (including membership), never combine partial reads.
+              if(attempt<BOOTSTRAP_ABORT_RETRY_DELAYS_MS.length){
+                await waitForRetry(BOOTSTRAP_ABORT_RETRY_DELAYS_MS[attempt]);continue;
+              }
+              setBootstrapAborted(true);setError('The league changed while loading. Retry to load the latest standings.');
+            }else{
+              detailRequest.current++;setDetailBusy(false);setSnapshot(emptySnapshot());setDialog(null);
+              setBootstrapAborted(false);setError(errorMessage(e));
+            }
+            return false;
+          }
+        }
+        return false;
+      }finally{if(current())setLoading(false);}
+    })();
+    refreshTask.current={epoch,task,cancel:()=>cancelRetry()};
+    void task.finally(()=>{if(refreshTask.current?.task===task)refreshTask.current=null;});
+    return task;
   },[repository]);
   useEffect(()=>{
     void refresh();
     const unsubscribe=repository.onAuthChange(()=>{
       authEpoch.current++;detailRequest.current++;accessResolved.current=false;previousCanBrowse.current=false;
-      setDetailBusy(false);setSnapshot(emptySnapshot());setDialog(null);setLoading(true);void refresh();
+      setDetailBusy(false);setSnapshot(emptySnapshot());setDialog(null);setBootstrapAborted(false);setError('');setLoading(true);void refresh();
     });
-    return ()=>{generation.current++;authEpoch.current++;detailRequest.current++;unsubscribe();};
+    return ()=>{generation.current++;authEpoch.current++;detailRequest.current++;refreshTask.current?.cancel();unsubscribe();};
   },[repository,refresh]);
+  useEffect(()=>{
+    if(preview||!canBrowse||!sectionOpen||page!=='season'||!snapshot.season)return;
+    const updates=startSeasonStandingsRefresh({refresh,
+      visible:()=>document.visibilityState==='visible',available:()=>!working.current});
+    window.addEventListener('focus',updates.wake);
+    document.addEventListener('visibilitychange',updates.wake);
+    return()=>{updates.stop();window.removeEventListener('focus',updates.wake);
+      document.removeEventListener('visibilitychange',updates.wake);};
+  },[preview,canBrowse,sectionOpen,page,snapshot.viewer?.playerId,snapshot.season?.seasonId,standingsRefreshRevision,refresh]);
   useEffect(()=>{
     const syncLocation=()=>{
       detailRequest.current++;setDetailBusy(false);setDialog(null);
@@ -97,7 +147,10 @@ export function App({repository}:{repository:LeagueRepository}){
   const navigate=(next:Page)=>openSection(next);
   const act=async(action:()=>Promise<void>,message:string)=>{
     if(working.current)return false;working.current=true;setBusy(true);setError('');
-    try{await action();const loaded=await refresh();if(loaded)setNotice(message+(preview?' (Preview only.)':''));return loaded;}
+    const epoch=authEpoch.current;
+    try{await action();const loaded=await refresh(true);if(loaded&&epoch===authEpoch.current){
+      setNotice(message+(preview?' (Preview only.)':''));setStandingsRefreshRevision(revision=>revision+1);
+    }return loaded;}
     catch(e){setError(errorMessage(e));return false;}
     finally{working.current=false;setBusy(false);}
   };
@@ -130,7 +183,8 @@ export function App({repository}:{repository:LeagueRepository}){
   const openEvent=(id:string)=>{void detail('event',id);},openMatch=(id:string)=>{void detail('match',id);},openPlayer=(id:string)=>{void detail('player',id);};
   const openHonours=()=>{if(snapshot.viewer)void detail('player',snapshot.viewer.playerId,true);};
   const next=currentLeagueEvent(snapshot);
-  const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate};
+  const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate,
+    refreshStandings:()=>{if(!working.current)void refresh();}};
   const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Field of Battle':dialog?.type==='player'?dialog.data.player.steamName:'';
   const showContent=sectionOpen||showSeasonGate||(!leagueEntryVisible&&!!error);
   return <>
@@ -160,7 +214,7 @@ export function App({repository}:{repository:LeagueRepository}){
         <footer className="site-footer"><span>AGE OF FRIENDS · SEASON I</span><span>A private Age of Empires II: DE league</span></footer>
       </div></div>}
     </div>
-    {leagueEntryVisible&&<LeagueEntryGate snapshot={snapshot} loading={loading} preview={preview} busy={busy} repository={repository} act={act} error={error}/>} 
+    {leagueEntryVisible&&<LeagueEntryGate snapshot={snapshot} loading={loading} preview={preview} busy={busy} repository={repository} act={act} error={error} bootstrapAborted={bootstrapAborted} retry={()=>void refresh()}/>}
     {notice&&<div className="toast" role="status"><Check size={17}/>{notice}</div>}
     {busy&&<div className="working" role="status"><LoaderCircle size={16} className="spin"/>Working…</div>}
     {dialog&&<Modal key={dialog.type} className={dialog.type==='event'?'event-modal':dialog.type==='match'?'battle-modal':''} title={title} wide={['event','match','player','favor-admin','favors'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDetailBusy(false);setDialog(null);setError('');}}>
@@ -175,12 +229,13 @@ export function App({repository}:{repository:LeagueRepository}){
     </Modal>}
   </>;
 }
-function LeagueEntryGate({snapshot,loading,preview,busy,repository,act,error}:{snapshot:LeagueSnapshot;loading:boolean;preview:boolean;busy:boolean;repository:LeagueRepository;act:ViewProps['act'];error:string}){
+function LeagueEntryGate({snapshot,loading,preview,busy,repository,act,error,bootstrapAborted,retry}:{snapshot:LeagueSnapshot;loading:boolean;preview:boolean;busy:boolean;repository:LeagueRepository;act:ViewProps['act'];error:string;bootstrapAborted:boolean;retry:()=>void}){
   const [name,setName]=useState(''),[discord,setDiscord]=useState(''),[favor,setFavor]=useState('');
   const favorReady=/^[A-HJ-NP-Z2-9]{6}$/.test(favor);
   const steam=()=>{void act(()=>repository.signIn(),preview?'Preview Steam identity selected.':'Signed in with Steam.');};
   const signOut=()=>{void act(()=>repository.signOut(),'Signed out.');};
   if(loading)return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><span className="eyebrow">AGE OF FRIENDS · PRIVATE LEAGUE</span><h1 id="league-entry-title">The league gate</h1><p className="league-entry-lead">The banners are being read.</p><div className="league-entry-loading"><LoaderCircle className="spin" size={17}/>Opening the ledger…</div></section></div>;
+  if(bootstrapAborted)return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><h1 id="league-entry-title">The league is updating</h1><p className="league-entry-lead" role="alert">{error}</p><button className="league-entry-primary" disabled={busy} onClick={retry}>Retry</button></section></div>;
   if(snapshot.membership==='SIGNED_OUT')return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><span className="eyebrow">AGE OF FRIENDS · PRIVATE LEAGUE</span><h1 id="league-entry-title">Enter the league</h1><p className="league-entry-lead">Raise a banner of your own, or return under the one you already carry. Your Steam account carries your league identity between visits. New banners present an Emperor's Favor after Steam recognizes them.</p><div className="league-entry-rule"/><div className="league-entry-actions"><button className="league-entry-primary" disabled={busy} onClick={steam}>Sign in with Steam<ArrowRight size={18}/></button></div>{error&&<div className="league-entry-error" role="alert">{error}</div>}<p className="league-entry-note">Steam identifies the player. The Emperor's Favor admits the banner.</p></section></div>;
   if(snapshot.membership==='UNLINKED')return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><AofSeal variant="full" tone="ceremonial" size={104} className="league-entry-seal"/><span className="eyebrow">THE EMPEROR'S FAVOR</span><h1 id="league-entry-title">Present your Favor</h1><p className="league-entry-lead">Steam has identified your account. Admission to Age of Friends now requires a one-use Favor issued by the Emperor.</p><form className="league-entry-form" onSubmit={e=>{e.preventDefault();void act(()=>repository.requestMembership(name.trim(),discord.trim(),favor),'The Emperor has granted his Favor.');}}><label className="favor-field">Emperor's Favor<input className="favor-code-input" required maxLength={6} value={favor} onChange={e=>setFavor(e.target.value.toUpperCase().replace(/[\s-]+/g,'').slice(0,6))} autoComplete="one-time-code" autoCapitalize="characters" spellCheck={false} placeholder="K7M4Q9"/></label><p className="favor-help">Six characters · I, O, 0 and 1 are never used.{preview&&<> · Preview Favor: <strong>K7M4Q9</strong></>}</p><div className="league-entry-rule"/><span className="eyebrow">YOUR LEAGUE IDENTITY</span><label>League alias<input required maxLength={100} value={name} onChange={e=>setName(e.target.value)} autoComplete="nickname" placeholder="Your league alias"/></label><p>Your verified Steam name is appended to your league alias. Earlier Steam names are retained for recording identification.</p><label>Discord name · optional<input maxLength={100} value={discord} onChange={e=>setDiscord(e.target.value)} placeholder="Your Discord name"/></label><button className="league-entry-primary" disabled={busy||!name.trim()||!favorReady}>Invoke the Favor<ArrowRight size={18}/></button></form>{error&&<div className="league-entry-error" role="alert">{error}</div>}<button className="league-entry-secondary" disabled={busy} onClick={signOut}>Use another Steam account</button></section></div>;
   if(snapshot.membership==='PENDING')return <div className="league-entry-overlay"><section className="league-entry-slab" role="dialog" aria-modal="true" aria-labelledby="league-entry-title"><Shield className="league-entry-mark" strokeWidth={1}/><span className="eyebrow">LEAGUE MEMBERSHIP</span><h1 id="league-entry-title">Banner awaiting approval</h1><p className="league-entry-lead">This older membership request still requires administrator approval before the league can be entered.</p><div className="league-entry-status">Membership request pending</div>{error&&<div className="league-entry-error" role="alert">{error}</div>}<button className="league-entry-secondary" disabled={busy} onClick={signOut}>Sign out</button></section></div>;
@@ -216,7 +271,7 @@ function SeasonAccessGate({gateRef,snapshot,busy,enter}:{gateRef:Ref<HTMLElement
 }
 function Hero({onStory,onEvent}:{onStory:()=>void;onEvent:()=>void}){
   const [slide,setSlide]=useState(0),[paused,setPaused]=useState(false),[interacting,setInteracting]=useState(false),[failedArtwork,setFailedArtwork]=useState<string|null>(null);
-  const base=import.meta.env.BASE_URL;
+  const base=import.meta.env?.BASE_URL??'/';
   const artworks=[
     `${base}artwork/season-fiefdom.png`,
     `${base}artwork/event-lombardia.png`
