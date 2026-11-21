@@ -74,6 +74,10 @@ export function projectLivePersonalityEvidence(
     if(complete)qualified.add(battle.battleId);
   }
   const qualifiedBattles=qualified.size;
+  // An arbitrary feature flag is never calibration approval. Require an
+  // independently authorized, versioned SHARED_1 policy reference as well.
+  const calibrated=approvedHostedCalibration&&profile.policy.status==='APPROVED'&&
+    typeof profile.policy.approvalRef==='string'&&profile.policy.approvalRef.length>0;
   const canShow=unlock.status==='UNLOCKED'&&
     qualifiedBattles>=LIVE_PERSONALITY_MINIMUM_QUALIFIED_BATTLES;
   const axes=AXES.map(axis=>{
@@ -85,17 +89,17 @@ export function projectLivePersonalityEvidence(
     const sourceMissing=features.filter(f=>f.playerId===ownerPlayerId&&f.featureId===axis&&
       qualified.has(f.battleId)).flatMap(f=>f.coverage.missing);
     const candidate=profile.sliders.find(s=>s.axis===axis);
-    const ready=canShow&&approvedHostedCalibration&&measuredBattles>=2&&
+    const ready=canShow&&calibrated&&measuredBattles>=2&&
       candidate?.status==='READY'&&valid(candidate.value);
     const reasons=ready?[]:distinct([
       ...(!canShow?[unlock.status==='LOCKED'?
         'THREE_SOURCE_QUALIFIED_GAMES_REQUIRED':'THREE_QUALIFIED_BATTLES_REQUIRED']:[]),
       ...(measuredBattles<2?['AXIS_REQUIRES_TWO_INDEPENDENT_MEASURED_BATTLES']:[]),
       ...(measuredBattles<2?sourceMissing.filter(x=>x!=='CONTEXT_NORMALIZATION_ANCHOR_UNAVAILABLE'):[]),
-      ...(!approvedHostedCalibration?['APPROVED_HOSTED_CALIBRATION_REQUIRED']:[]),
+      ...(!calibrated?['APPROVED_HOSTED_CALIBRATION_REQUIRED']:[]),
     ]);
     return {axis,status:ready?'READY' as const:
-      measuredBattles>=2&&!approvedHostedCalibration?'CALIBRATION_PENDING' as const:'DEVELOPING' as const,
+      measuredBattles>=2&&!calibrated?'CALIBRATION_PENDING' as const:'DEVELOPING' as const,
       value:ready?candidate!.value:null,measuredBattles,reasons};
   });
   const status=canShow
@@ -107,5 +111,5 @@ export function projectLivePersonalityEvidence(
     requiredGames:3,eligibleGames:unlock.eligibleGames,gameUnlock:unlock.status,
     requiredQualifiedBattles:LIVE_PERSONALITY_MINIMUM_QUALIFIED_BATTLES,
     qualifiedBattles,status,
-    calibration:approvedHostedCalibration?'APPROVED':'NOT_APPROVED',axes};
+    calibration:calibrated?'APPROVED':'NOT_APPROVED',axes};
 }
