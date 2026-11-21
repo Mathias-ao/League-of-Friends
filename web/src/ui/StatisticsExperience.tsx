@@ -137,6 +137,8 @@ export function playerIdentity(data:PlayerProfile,preview:boolean,
     live.requiredGames===3&&live.requiredQualifiedBattles===3&&
     Number.isSafeInteger(live.eligibleGames)&&Number.isSafeInteger(live.qualifiedBattles)&&
     live.axes.length===PLAYER_PERSONALITY_SLIDERS.length&&
+    new Set(live.axes.map(axis=>axis.axis)).size===PLAYER_PERSONALITY_SLIDERS.length&&
+    live.qualifiedBattles>=0&&live.qualifiedBattles<=live.eligibleGames&&
     live.gameUnlock===(live.eligibleGames>=3?'UNLOCKED':'LOCKED');
   return {
     eligibleBattles:valid?live.qualifiedBattles:null,
@@ -146,7 +148,7 @@ export function playerIdentity(data:PlayerProfile,preview:boolean,
       const data=valid?live.axes.find(axis=>axis.axis===axisBySlider[slider.id]):null;
       const permitted=valid&&live.calibration==='APPROVED'&&
         live.qualifiedBattles>=3&&live.eligibleGames>=3&&
-        data?.status==='READY'&&typeof data.value==='number'&&
+        data?.status==='READY'&&data.measuredBattles>=2&&typeof data.value==='number'&&
         Number.isFinite(data.value)&&data.value>=0&&data.value<=100;
       return {id:slider.id,value:permitted?data!.value:null,
         eligibleBattles:valid?live.qualifiedBattles:0,
