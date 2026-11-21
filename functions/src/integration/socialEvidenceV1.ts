@@ -111,6 +111,8 @@ export function projectSharedSocialSourceEvidence(
       new Set(s.roster.map((p:{playerId:string;replaySlot:number})=>p.playerId)).size===s.roster.length&&
       s.roster.every((p:{playerId:string;replaySlot:number})=>validId(p.playerId)&&Number.isSafeInteger(p.replaySlot)),
       'SOURCE_SNAPSHOT_NOT_BOUND');
+    requireFact(s.roster.some((p:{playerId:string})=>p.playerId===ownerPlayerId),
+      'OWNER_NOT_CURRENT_SOURCE_PARTICIPANT');
     const gameKey=s.battleId+'\u0000'+s.gameId,identity=bindingDigest([s,bound.sourceMethodRevision,bound.cards]);
     if(games.has(gameKey)){
       requireFact(games.get(gameKey)===identity,'CONFLICTING_CURRENT_GAME_SOURCE');
@@ -186,6 +188,10 @@ export function projectSharedSocialSourceEvidence(
         card.originalSourceEventIds.forEach((id:string)=>seen.add(id));
         admittedOverlap.set(sameDirection,seen);
       }
+      // All worker cards are validated, but other players' unrelated pair
+      // evidence must never be returned to this owner-private view.
+      if(card.actorPlayerId!==ownerPlayerId&&card.counterpartPlayerId!==ownerPlayerId)
+        continue;
       deeds.push({
         track,system:meta.system,decision:card.decision,
         reasonCodes:sorted(card.reasonCodes),missingEvidence:sorted(card.missingEvidence),
