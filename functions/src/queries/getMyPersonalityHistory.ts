@@ -10,6 +10,8 @@ import {battleGameManifest} from '../engines/battleGameManifest.js';
 import {projectPrivatePersonalityHistory,type PersonalityHistoryBattle} from '../integration/personalityHistory.js';
 import {qualifyPersonalityGameUnlock,gatePersonalityProfileByGames}
   from '../engines/personalityV1/gameUnlock.js';
+import {admitPersonalityContext} from '../engines/personalityV1/contextAdmission.js';
+import {projectLivePersonalityEvidence} from '../engines/personalityV1/liveEvidence.js';
 import {privatePersonalityE2EEnabled,privatePersonalityPolicy,
   PRIVATE_SOURCE_TAXONOMY,type PrivateTaxonomy} from '../engines/personalityV1/privateE2EPolicy.js';
 import {loadMyCurrentSocialSource,assertIntV1PrivateReadEnabled} from './getMySocialExperience.js';
@@ -144,13 +146,24 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
   const pilot=privatePersonalityE2EEnabled(input.env)?
     privatePersonalityPolicy(input.actor.playerId,current.loaded,
       input.personalityTaxonomy??PRIVATE_SOURCE_TAXONOMY):null;
+  // The source-current V1 adapter can report real per-axis raw coverage
+  // without silently converting decoded map IDs, civs or starting ages into
+  // reviewed source opportunity classes. Hosted calibration remains absent.
+  const admittedContext=pilot?.context ??
+    ((item:typeof current.battles[number]['sources'][number])=>
+      admitPersonalityContext(item,input.actor.playerId,null).behaviorContext);
   const candidate=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,
-    current.inputDigest,pilot?.context,pilot?.calibration??null,current.scheduleOrders);
+    current.inputDigest,admittedContext,pilot?.calibration??null,current.scheduleOrders);
   // Count the complete set of *current accepted source Games* for the linked
   // actor. Never count Games from a withdrawn source or a duplicate POV, and
   // never make three Games equal three independent Battle samples.
   const unlock=qualifyPersonalityGameUnlock(input.actor.playerId,
     current.loaded.map(s=>s.source));
+  // Owner-facing LIVE evidence counts come from complete authenticated
+  // current Battles; the engine still counts distinct Games separately for
+  // the earlier 3-Game milestone. No hosted calibration is installed.
+  const livePersonality=projectLivePersonalityEvidence(input.actor.playerId,
+    current.battles,unlock,candidate.battleFeatures,candidate.personalityProfile);
   const personality={...candidate,unlock,
     personalityProfile:gatePersonalityProfileByGames(candidate.personalityProfile,unlock)};
   const response={version:'AOF_INT_B_PRIVATE_HISTORY_1' as const,contract:SOCIAL_V1_CONTRACT,
@@ -159,7 +172,7 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
     coverage:{...current.coverage,
       measuredIndependentBattles:new Set(personality.battleFeatures.filter(f=>f.numerator!==null)
         .map(f=>f.battleId)).size},
-    sources:current.loaded.map(s=>s.source),pending:current.pending,personality,
+    sources:current.loaded.map(s=>s.source),pending:current.pending,personality,livePersonality,
     social:{status:'PENDING' as const,reason:'SOURCE_QUALIFIER_AND_APPROVED_RULES_PENDING'},
     effects:{officialWrites:false as const,receiptPublication:false as const,entitlementGrants:false as const}};
   if(Buffer.byteLength(JSON.stringify(response))>INT_B_LIMITS.maxResponseBytes)
