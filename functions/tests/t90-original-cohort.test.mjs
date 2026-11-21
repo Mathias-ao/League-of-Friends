@@ -13,6 +13,8 @@ import {createSocialE2EPilotCalibration}
   from '../lib/engines/socialV1History/e2ePilotCalibration.js';
 import {qualifyPersonalityGameUnlock}
   from '../lib/engines/personalityV1/gameUnlock.js';
+import {projectLivePersonalityEvidence}
+  from '../lib/engines/personalityV1/liveEvidence.js';
 import {evaluateHistory} from '../lib/engines/socialV1History/history.js';
 
 const sha=value=>createHash('sha256').update(String(value)).digest('hex');
@@ -130,6 +132,38 @@ test('genuine pinned T90 Games exercise five Personality axes and private Reputa
     }
   });
   const career=projectPersonalityPreview(testPlayer,games,calibration);
+  // The original replay bytes prove actual Game feature numerators and
+  // denominators. Canonical league Battle/owner bindings remain synthetic
+  // test-only wrappers, not the historical T90 player's league membership.
+  const originalBattles=games.map((g,i)=>({
+    battleId:g.battleId,gameIds:[g.gameId],gameManifestComplete:true,
+    sources:[{source:testSourceSnapshots[i]}],
+  }));
+  const sourceFeatures=games.flatMap((g,i)=>axes.map(axis=>{
+    const observed=gameMeasurements[i].features[axis];
+    return {playerId:testPlayer,battleId:g.battleId,matchId:g.battleId,
+      featureId:axis,featureVersion:'AOF_PERSONALITY_FEATURES_V1',
+      sampleUnit:'INDEPENDENT_BATTLE',numerator:observed.numerator,
+      denominator:observed.denominator,
+      coverage:{missing:observed.reason?[observed.reason]:[]}};
+  }));
+  const ownerOnlyModel=projectLivePersonalityEvidence(
+    testPlayer,originalBattles,threeGameMilestone,sourceFeatures,{
+      playerId:testPlayer,policy:{status:'PROPOSED',approvalRef:null},
+      sliders:career.sliders,
+    },false);
+  assert.equal(ownerOnlyModel.qualifiedBattles,3);
+  assert.equal(ownerOnlyModel.eligibleGames,3);
+  assert.equal(ownerOnlyModel.calibration,'NOT_APPROVED');
+  assert.deepEqual(Object.fromEntries(ownerOnlyModel.axes.map(x=>[x.axis,x.measuredBattles])),{
+    BOOMER_AGGRESSOR:3,CAUTIOUS_BOLD:3,GUERRILLA_FRONTLINE:0,
+    SPECIALIST_IMPROVISER:0,COMPACT_EXPANSIVE:3
+  });
+  assert.ok(ownerOnlyModel.axes.every(x=>x.value===null));
+  assert.ok(ownerOnlyModel.axes.filter(x=>x.measuredBattles>0).every(x=>
+    x.status==='CALIBRATION_PENDING'));
+  assert.ok(ownerOnlyModel.axes.find(x=>x.axis==='SPECIALIST_IMPROVISER')
+    .reasons.includes('CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE'));
   // These expected numerics are conditional on isolated test Battle IDs,
   // source-unreviewed LAND test label and PROPOSED anchors — not live scores.
   const projected=Object.fromEntries(career.sliders.map(x=>[x.axis,x.value]));

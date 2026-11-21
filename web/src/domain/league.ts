@@ -243,6 +243,13 @@ export interface LeagueRepository {
   myChronicleInvitations?():Promise<import('./privateChronicleInteractions').PrivateChronicleInvitations>;
   actOnChronicleInvitation?(input:import('./privateChronicleInteractions').ChronicleInvitationAction):Promise<{success:true;revision:number;state:string;idempotent:boolean}>;
   myPersonalityHistory?():Promise<import('./privateHistory').PrivatePersonalityHistory>;
+  /** Owner-private live profile: the actual Firebase adapter authorizes this
+   * capability from staging configuration; never a caller-provided player ID. */
+  canReadMyPersonalityHistory?():boolean;
+  /** Current SDK user UID for distinguishing onAuthStateChanged's initial
+   * unchanged-user delivery from an actual logout/account replacement.
+   * Absence must fail closed; the playerId and UID are different identities. */
+  currentAuthUid?():string|null;
   myHonoursPreview?():Promise<import('./privateHonoursPreview').PrivateHonoursPreview>;
   myGameplayPreview?():Promise<import('./gameplayPreview').PrivateGameplayPreview>;
   mySocialProgression?():Promise<import('./privateProgression').PrivateProgression>;

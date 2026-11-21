@@ -59,7 +59,10 @@ export type PlayerPersonalitySliderId=typeof PLAYER_PERSONALITY_SLIDERS[number][
 export interface PlayerPersonalitySliderPresentation {
   id:PlayerPersonalitySliderId;
   value:number|null;
-  eligibleBattles:number;
+  eligibleBattles:number|null;
+  status?:'DEVELOPING'|'CALIBRATION_PENDING'|'READY';
+  measuredBattles?:number;
+  reasons?:string[];
   evidence?:string;
 }
 
@@ -80,7 +83,10 @@ export interface ReputationEssencePresentation {
 export type ReputationArchetype='Freeholder'|'Champion'|'Vigilante'|'Justiciar'|'Tyrant'|'Diplomat'|'Custodian'|'Monarch';
 
 export interface PlayerIdentityPresentation {
-  eligibleBattles:number;
+  /** null means source-current owner evidence has not been read, never zero. */
+  eligibleBattles:number|null;
+  eligibleGames?:number|null;
+  evidenceStatus?:'LOADING'|'UNAVAILABLE'|'NOT_OWNER'|'CURRENT'|'PREVIEW';
   sliders:PlayerPersonalitySliderPresentation[];
   reputation:{
     archetype:ReputationArchetype;
