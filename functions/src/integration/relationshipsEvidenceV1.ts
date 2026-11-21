@@ -29,6 +29,15 @@ export const RELATIONSHIP_V1_RULE_PROPOSAL=Object.freeze({
 } as const);
 export type RelationshipEvidenceTrack='RIVALRY'|'HOSTILITY'|'BOND';
 export type RelationshipDirection='OUTGOING'|'INCOMING';
+export type DirectionalDeedRef=Pick<SourceQualifiedSocialDeed,
+  'claimId'|'claimRevision'|'battleId'|'gameId'|'eventId'|'methodVersion'|
+  'actorPlayerId'|'counterpartPlayerId'|'contributionKey'>;
+const asRef=(d:SourceQualifiedSocialDeed):DirectionalDeedRef=>({
+  claimId:d.claimId,claimRevision:d.claimRevision,battleId:d.battleId,gameId:d.gameId,
+  eventId:d.eventId,methodVersion:d.methodVersion,
+  actorPlayerId:d.actorPlayerId,counterpartPlayerId:d.counterpartPlayerId,
+  contributionKey:d.contributionKey,
+});
 export interface DirectionalEvidenceRead {
   direction:RelationshipDirection;
   actorPlayerId:string;
@@ -36,8 +45,9 @@ export interface DirectionalEvidenceRead {
   sourceQualifiedBattles:number;
   sourceQualifiedEvents:number;
   sourceQualifiedGames:number;
-  admittedDeeds:SourceQualifiedSocialDeed[];
-  pendingDeeds:SourceQualifiedSocialDeed[];
+  admittedDeeds:DirectionalDeedRef[];
+  pendingDeeds:DirectionalDeedRef[];
+  pendingCandidateCount:number;
   missingEvidence:string[];
 }
 export interface RelationshipTrackRead {
@@ -125,7 +135,14 @@ export function projectRelationshipsEvidence(evidence:SharedSocialSourceEvidence
           sourceQualifiedBattles:tally(admitted,'BATTLE'),
           sourceQualifiedEvents:tally(admitted,'EVENT'),
           sourceQualifiedGames:tally(admitted,'GAME'),
-          admittedDeeds:admitted,pendingDeeds:pending,
+          // Full original witness cards remain available once in the shared
+          // source view. The directed track read only carries look-up refs.
+          admittedDeeds:admitted.map(asRef),
+          pendingDeeds:[...new Map(pending.map(d=>[
+            [d.battleId,d.gameId,d.methodVersion,
+              d.actorPlayerId,d.counterpartPlayerId,...d.missingEvidence].join('\\u0000'),
+            asRef(d)])).values()],
+          pendingCandidateCount:pending.length,
           missingEvidence:[...missing].sort()};
       };
       const outbound=direction('OUTGOING'),inbound=direction('INCOMING');
