@@ -1,8 +1,28 @@
 import assert from "node:assert/strict";
 import {db} from "../../lib/config/firebase.js";
+import {Timestamp} from "firebase-admin/firestore";
 export function memoryFirestore(initial=[]) {
   const records=new Map(initial);let nextId=0;
-  const snapshot=path=>({id:path.split("/").at(-1),exists:records.has(path),data:()=>records.get(path),ref:ref(path)});
+  // Real QueryDocumentSnapshots always carry commit-time updateTime and
+  // createTime. This test double previously omitted both, so an ordinary
+  // accepted replay falsely failed the revision-fenced relationship rebuild.
+  let tick=0;
+  const revisions=new Map(),created=new Map();
+  const stamp=()=>new Timestamp(1700000000,++tick);
+  for(const path of records.keys()){const time=stamp();created.set(path,time);revisions.set(path,time);}
+  records.set=(path,data)=>{
+    if(!created.has(path))created.set(path,stamp());
+    revisions.set(path,stamp());
+    Map.prototype.set.call(records,path,data);
+    return records;
+  };
+  records.delete=path=>{
+    revisions.delete(path);created.delete(path);return Map.prototype.delete.call(records,path);
+  };
+  records.clear=()=>{revisions.clear();created.clear();Map.prototype.clear.call(records);};
+  const snapshot=path=>({id:path.split("/").at(-1),exists:records.has(path),
+    data:()=>records.get(path),ref:ref(path),
+    createTime:created.get(path),updateTime:revisions.get(path)});
   const query=(path,filters=[],order=null,cap=null)=>{
     let docs=[...records.keys()].filter(key=>key.startsWith(path+"/")&&key.split("/").length===path.split("/").length+1).map(snapshot);
     for(const [field,operator,value] of filters){assert.equal(operator,"==");docs=docs.filter(doc=>doc.data()?.[field]===value);}
@@ -28,7 +48,13 @@ export function memoryFirestore(initial=[]) {
       create:(reference,data)=>{assert.equal(staged.has(reference.path),false,"create requires a new document");wrote=true;staged.set(reference.path,data);},
       set:(reference,data,options)=>{wrote=true;staged.set(reference.path,options?.merge?{...staged.get(reference.path),...data}:data);},
       update:(reference,data)=>{assert.equal(staged.has(reference.path),true,"update requires an existing document");wrote=true;staged.set(reference.path,{...staged.get(reference.path),...data});}};
-    const result=await callback(tx);records.clear();for(const entry of staged)records.set(...entry);return result;
+    const result=await callback(tx);
+    // Commit only actual changes. Replacing the entire Map would incorrectly
+    // rewrite unchanged Firestore snapshots and mask unaffected-pair stability.
+    for(const key of [...records.keys()])if(!staged.has(key))records.delete(key);
+    for(const [key,value] of staged)if(!records.has(key)||records.get(key)!==value)
+      records.set(key,value);
+    return result;
   }});
   Object.defineProperty(db,"bulkWriter",{configurable:true,value:()=>({
     delete:reference=>records.delete(reference.path),
