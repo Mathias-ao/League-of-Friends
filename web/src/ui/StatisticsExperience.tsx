@@ -42,7 +42,8 @@ function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
   const count=identity.eligibleBattles;
   const available=typeof count==='number'&&Number.isSafeInteger(count)&&count>=0;
   const unlocked=available&&count>=PERSONALITY_MINIMUM_ELIGIBLE_BATTLES&&
-    typeof identity.eligibleGames==='number'&&identity.eligibleGames>=3;
+    (identity.evidenceStatus==='PREVIEW'||
+      typeof identity.eligibleGames==='number'&&identity.eligibleGames>=3);
   const remaining=available?Math.max(0,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES-count):null;
   const waiting=!available;
   return <section className="identity-panel personality-panel">
@@ -59,7 +60,8 @@ function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
     </div>
     :<div className="personality-sliders">{PLAYER_PERSONALITY_SLIDERS.map(definition=>{
       const result=identity.sliders.find(slider=>slider.id===definition.id);
-      const numeric=result?.status==='READY'&&typeof result.value==='number'&&
+      const numeric=(identity.evidenceStatus==='PREVIEW'||result?.status==='READY')&&
+        typeof result?.value==='number'&&
         Number.isFinite(result.value)&&result.value>=0&&result.value<=100;
       const value=numeric?Math.round(result!.value!):null;
       const termHelp=sliderTermTooltips[definition.id];
