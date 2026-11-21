@@ -120,6 +120,27 @@ test('two allegedly separate same-direction credits cannot reuse an original eve
   a.cards.push(duplicate);
   assert.throws(()=>project(a),/CORRELATED_ORIGINAL_SOURCE_CREDIT/);
 });
+test('distinct #165 Pending candidates may share one incident without another grade',()=>{
+  const a=bound();
+  const pending=bound({qualified:false}).cards[0];
+  pending.identity.contributionKey=a.cards[0].identity.contributionKey;
+  pending.identity.componentId=a.cards[0].identity.componentId;
+  pending.claimId='pending-other-claim';
+  pending.claimRevision=sha('pending-other-claim');
+  a.cards.push(pending);
+  const out=project(a);
+  assert.equal(out.deeds.length,2);
+  assert.equal(out.deeds.filter(d=>d.decision==='SOURCE_ADMITTED').length,1);
+  assert.equal(out.deeds.filter(d=>d.decision==='PENDING').length,1);
+});
+test('second admitted row on the same #165 contribution is not another source method',()=>{
+  const a=bound();
+  const extra=structuredClone(a.cards[0]);
+  extra.claimId='another-candidate';
+  extra.claimRevision=sha('another-candidate');
+  a.cards.push(extra);
+  assert.throws(()=>project(a),/CORRELATED_COMPONENT_ALREADY_ADMITTED/);
+});
 test('reverse participant action is never inferred from receiving a Raid',()=>{
   const a=bound();
   const x=project(a);
