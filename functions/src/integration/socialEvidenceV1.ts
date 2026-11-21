@@ -107,8 +107,8 @@ export function projectSharedSocialSourceEvidence(
       Number.isSafeInteger(s.statisticsRevision)&&s.statisticsRevision>=0&&
       validHash(bound.sourceMethodRevision)&&
       Array.isArray(s.roster)&&s.roster.length>=2&&s.roster.length<=8&&
-      new Set(s.roster.map(p=>p.playerId)).size===s.roster.length&&
-      s.roster.every(p=>validId(p.playerId)&&Number.isSafeInteger(p.replaySlot)),
+      new Set(s.roster.map((p:{playerId:string;replaySlot:number})=>p.playerId)).size===s.roster.length&&
+      s.roster.every((p:{playerId:string;replaySlot:number})=>validId(p.playerId)&&Number.isSafeInteger(p.replaySlot)),
       'SOURCE_SNAPSHOT_NOT_BOUND');
     const gameKey=s.battleId+'\u0000'+s.gameId,identity=bindingDigest([s,bound.sourceMethodRevision,bound.cards]);
     if(games.has(gameKey)){
@@ -122,7 +122,7 @@ export function projectSharedSocialSourceEvidence(
     games.set(gameKey,identity);guids.set(s.gameGuid,gameKey);hashes.set(s.sourceHash,gameKey);
     requireFact(Array.isArray(bound.cards)&&bound.cards.length<=20000,'CARD_BUDGET');
     const seenCards=new Map<string,string>();
-    const roster=new Set(s.roster.map(p=>p.playerId));
+    const roster=new Set(s.roster.map((p:{playerId:string;replaySlot:number})=>p.playerId));
     for(const card of bound.cards){
       const track=card?.track as SocialTrack,meta=SOCIAL_EVIDENCE_TRACKS[track];
       requireFact(!!meta&&tracks.includes(track),'UNKNOWN_TRACK');
