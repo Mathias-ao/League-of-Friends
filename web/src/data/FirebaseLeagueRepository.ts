@@ -170,7 +170,13 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   replayStatistics(matchId:string,gameId:string){return this.call<ReplayStatisticsResult>('getReplayStatistics',{matchId,gameId});}
   activeNativeBattleDetail(query:ActiveNativeDetailRequest){return this.call<ActiveNativeDetailResult>('getActiveNativeBattleDetail',query);}
   activeNativeBattleRecord(query:ActiveNativeBattleRecordQuery){return this.call<ActiveNativeBattleRecordResult>('getActiveNativeBattleRecord',query);}
-  statisticsExperience(scope:import('../domain/statistics').StatisticsScope){return this.call<import('../domain/statistics').StatisticsDataset>('getStatisticsExperience',scope);}
+  statisticsExperience(scope:import('../domain/statistics').StatisticsScope){
+    const gateway=import.meta.env.VITE_AOF_STATISTICS_GATEWAY==='staging-v1'&&
+      import.meta.env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'&&
+      import.meta.env.VITE_USE_EMULATORS!=='true';
+    return this.call<import('../domain/statistics').StatisticsDataset>(gateway?'getLeagueBootstrap':'getStatisticsExperience',
+      gateway?{operation:'STATISTICS_READ_V1',scope}:scope);
+  }
   watchCivilizationDraft(matchId:string,gameId:string,callback:()=>void){
     let initial=true;
     return onSnapshot(

@@ -7,6 +7,7 @@ import { callableOptions } from "../config/runtime.js";
 import { collections, leagueStateDocumentId } from "../domain/collections.js";
 import {maskUnavailableSeasonAwards,rankSeasonStandings} from "../engines/seasonPoints.js";
 import { iso, playerMap, publicPlayer } from "./querySupport.js";
+import {readStatisticsGateway} from "../services/statisticsGateway.js";
 import {readSeasonCompetitionRecords} from './seasonCompetitionRecord.js';
 
 interface LeagueStateDocument {
@@ -118,6 +119,9 @@ function eventSummary(eventId: string, event: EventDocument) {
 }
 
 export const getLeagueBootstrap = onCall(callableOptions, async (request) => {
+  const enteredAt = performance.now();
+  if (request.data != null && (typeof request.data !== "object" || Array.isArray(request.data) || Object.keys(request.data).length > 0))
+    return readStatisticsGateway(request, enteredAt);
   const actor = await requireLeaguePlayer(request);
   const [leagueStateSnapshot, playersSnapshot, activitySnapshot] = await Promise.all([
     db.collection(collections.leagueState).doc(leagueStateDocumentId).get(),
