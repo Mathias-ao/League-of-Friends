@@ -141,6 +141,19 @@ test('second admitted row on the same #165 contribution is not another source me
   a.cards.push(extra);
   assert.throws(()=>project(a),/CORRELATED_COMPONENT_ALREADY_ADMITTED/);
 });
+test('owner-private read cannot expose unrelated teammate-to-enemy pair deeds',()=>{
+  const a=bound();
+  a.source.roster.push({playerId:'p3',replaySlot:3});
+  a.source.roster.push({playerId:'p4',replaySlot:4});
+  a.cards[0].actorPlayerId='p3';
+  a.cards[0].counterpartPlayerId='p4';
+  const own=project(a);
+  assert.equal(own.deeds.length,0);
+  a.cards[0].counterpartPlayerId='p1';
+  assert.equal(project(a).deeds.length,1,'incoming deed is allowed');
+  a.source.roster=a.source.roster.filter(p=>p.playerId!=='p1');
+  assert.throws(()=>project(a),/OWNER_NOT_CURRENT_SOURCE_PARTICIPANT/);
+});
 test('reverse participant action is never inferred from receiving a Raid',()=>{
   const a=bound();
   const x=project(a);
