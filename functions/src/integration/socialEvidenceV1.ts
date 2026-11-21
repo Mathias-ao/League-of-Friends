@@ -100,7 +100,7 @@ export function projectSharedSocialSourceEvidence(
     throw new Error('SOCIAL_EVIDENCE_INPUT_BUDGET_OR_OWNER');
   const games=new Map<string,string>(),guids=new Map<string,string>(),hashes=new Map<string,string>();
   const tracks=Object.keys(SOCIAL_EVIDENCE_TRACKS) as SocialTrack[];
-  const admittedOverlap=new Map<string,Set<string>>();
+  const admittedOverlap=new Map<string,Map<string,string>>();
   const admittedComponents=new Set<string>();
   const deeds:SourceQualifiedSocialDeed[]=[];
   for(const bound of inputs){
@@ -131,7 +131,15 @@ export function projectSharedSocialSourceEvidence(
     requireFact(Array.isArray(bound.cards)&&bound.cards.length<=20000,'CARD_BUDGET');
     const seenCards=new Map<string,string>();
     const roster=new Set(s.roster.map((p:{playerId:string;replaySlot:number})=>p.playerId));
-    for(const card of bound.cards){
+    // Source-connected #165 candidates can arrive in any producer order. Pick
+    // one representative per actor/direction/track/component deterministically;
+    // a valid second candidate is not a contradictory recording or new credit.
+    const orderedCards=[...bound.cards].sort((a,b)=>
+      (a?.originalPosition?.recordingAtMs??Infinity)-(b?.originalPosition?.recordingAtMs??Infinity)||
+      (a?.originalPosition?.operationOrdinal??Infinity)-(b?.originalPosition?.operationOrdinal??Infinity)||
+      String(a?.claimId??'').localeCompare(String(b?.claimId??''))||
+      bindingDigest(a).localeCompare(bindingDigest(b)));
+    for(const card of orderedCards){
       const track=card?.track as SocialTrack,meta=SOCIAL_EVIDENCE_TRACKS[track];
       requireFact(!!meta&&tracks.includes(track),'UNKNOWN_TRACK');
       requireFact(card.battleId===s.battleId&&card.gameId===s.gameId&&
@@ -170,9 +178,9 @@ export function projectSharedSocialSourceEvidence(
         card.missingEvidence.length===0:
         card.methodCoverage==='PENDING'&&card.gradeBandId===null,
         'UNAPPROVED_OR_UNSOURCED_TRACK_GRADE');
-      // Different #165 candidate rows can share one source-connected
-      // contribution. Keep their Pending explanations; dedup only identical
-      // candidate Claims, then reject a second *admitted* same-track credit.
+      // Different #165 candidate rows may share one accepted component.
+      // Retain distinct Pending explanations; admit at most one representative
+      // per independently connected component / actor / direction / track.
       const key=[gameKey,card.claimId,track].join('\u0000');
       const fingerprint=bindingDigest(card);
       if(seenCards.has(key)){
@@ -183,15 +191,18 @@ export function projectSharedSocialSourceEvidence(
       if(admitted){
         const admittedComponent=[gameKey,card.identity.contributionKey,
           card.actorPlayerId,card.counterpartPlayerId,track].join('\u0000');
-        requireFact(!admittedComponents.has(admittedComponent),
-          'CORRELATED_COMPONENT_ALREADY_ADMITTED');
-        admittedComponents.add(admittedComponent);
         const sameDirection=[gameKey,card.actorPlayerId,card.counterpartPlayerId,track].join('\u0000');
-        const seen=admittedOverlap.get(sameDirection)??new Set<string>();
-        requireFact(!card.originalSourceEventIds.some((id:string)=>seen.has(id)),
+        const seen=admittedOverlap.get(sameDirection)??new Map<string,string>();
+        // A ref can corroborate multiple candidates of the SAME connected
+        // component. Reuse by a DIFFERENT component claims inconsistent
+        // independence, and still fails closed rather than issuing two credits.
+        requireFact(!card.originalSourceEventIds.some((id:string)=>
+          seen.has(id)&&seen.get(id)!==admittedComponent),
           'CORRELATED_ORIGINAL_SOURCE_CREDIT');
-        card.originalSourceEventIds.forEach((id:string)=>seen.add(id));
+        card.originalSourceEventIds.forEach((id:string)=>seen.set(id,admittedComponent));
         admittedOverlap.set(sameDirection,seen);
+        if(admittedComponents.has(admittedComponent))continue;
+        admittedComponents.add(admittedComponent);
       }
       // All worker cards are validated, but other players' unrelated pair
       // evidence must never be returned to this owner-private view.
