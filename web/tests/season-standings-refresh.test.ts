@@ -45,7 +45,7 @@ const snapshot=(id='a',points=0):LeagueSnapshot=>({membership:'ACTIVE',enteredSe
   standings:[{playerId:'a',steamName:'Alice',leaguePoints:points,wins:points?1:0,losses:0,rank:1},
     {playerId:'b',steamName:'Bob',leaguePoints:points?4:0,wins:0,losses:points?1:0,rank:points?2:1}],
   players:[],events:[],matches:[]});
-async function mount(){
+async function mount(initial=snapshot()){
   const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost/#season',pretendToBeVisual:true});
   Object.assign(globalThis,{window:dom.window,document:dom.window.document,location:dom.window.location,history:dom.window.history,
     HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true,
@@ -60,8 +60,8 @@ async function mount(){
     return nativeTimer(callback,ms,...args);
   }) as typeof setTimeout;
   globalThis.clearTimeout=((id:unknown)=>{if(owned.has(id as number)){c.clearTimer(id);return;}nativeClear(id as any);}) as typeof clearTimeout;
-  let latest=snapshot(),calls=0,auth=()=>{},held:Promise<LeagueSnapshot>|null=null;
-  const repository={mode:'live',load:async()=>{calls++;return held?held:structuredClone(latest);},
+  let latest=initial,calls=0,auth=()=>{},held:Promise<LeagueSnapshot>|null=null;
+  const repository={mode:'live',load:async()=>{calls++;return held?held:structuredClone(latest);},player:async()=>null,enterSeason:async()=>{latest={...latest,enteredSeason:true};},
     onAuthChange:(fn:()=>void)=>{auth=fn;return()=>{};}} as unknown as LeagueRepository;
   const root=createRoot(document.getElementById('root')!);
   await act(async()=>{root.render(React.createElement(App,{repository}));await Promise.resolve();});
@@ -94,5 +94,18 @@ test('an old in-flight standings refresh cannot restore another account after Au
     assert.match(document.querySelector('tbody')!.textContent!,/BobYOU/);
     assert.doesNotMatch(document.querySelector('tbody')!.textContent!,/99/);
     assert.equal(ui.calls(),3);
+  }finally{await ui.close();}
+});
+
+test('a successful action restarts a bounded async reconciliation window after the initial one expires',async()=>{
+  const ui=await mount({...snapshot(),enteredSeason:false});try{
+    for(let i=0;i<SEASON_REFRESH_DELAYS_MS.length;i++)await act(async()=>{await ui.c.tick();});
+    assert.equal(ui.c.timers.size,0,'initial window is exhausted');
+    await ui.click('Enter Season I');
+    assert.ok(ui.c.timers.size>0,'successful action must allow its later asynchronous projection to reconcile');
+    ui.set(snapshot('a',26));await act(async()=>{await ui.c.tick();});
+    assert.match(document.querySelector('tbody')!.textContent!,/AliceYOU1–026/);
+    for(let i=1;i<SEASON_REFRESH_DELAYS_MS.length;i++)await act(async()=>{await ui.c.tick();});
+    assert.equal(ui.c.timers.size,0,'action restarts a bounded window, not perpetual polling');
   }finally{await ui.close();}
 });

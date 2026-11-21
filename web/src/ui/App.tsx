@@ -30,6 +30,7 @@ export function App({repository}:{repository:LeagueRepository}){
   const [actionBusy,setBusy]=useState(false),[detailBusy,setDetailBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
   const generation=useRef(0),authEpoch=useRef(0),detailRequest=useRef(0),working=useRef(false),navRef=useRef<HTMLElement>(null),gateRef=useRef<HTMLElement>(null);
   const refreshTask=useRef<{epoch:number;task:Promise<boolean>}|null>(null);
+  const [standingsRefreshRevision,setStandingsRefreshRevision]=useState(0);
   const accessResolved=useRef(false),previousCanBrowse=useRef(false);
   const preview=repository.mode==='preview',busy=actionBusy||detailBusy,canBrowse=canBrowseLeague(snapshot);
   const leagueEntryVisible=loading||snapshot.membership!=='ACTIVE';
@@ -63,7 +64,7 @@ export function App({repository}:{repository:LeagueRepository}){
     document.addEventListener('visibilitychange',updates.wake);
     return()=>{updates.stop();window.removeEventListener('focus',updates.wake);
       document.removeEventListener('visibilitychange',updates.wake);};
-  },[preview,canBrowse,sectionOpen,page,snapshot.viewer?.playerId,snapshot.season?.seasonId,refresh]);
+  },[preview,canBrowse,sectionOpen,page,snapshot.viewer?.playerId,snapshot.season?.seasonId,standingsRefreshRevision,refresh]);
   useEffect(()=>{
     const syncLocation=()=>{
       detailRequest.current++;setDetailBusy(false);setDialog(null);
@@ -116,7 +117,10 @@ export function App({repository}:{repository:LeagueRepository}){
   const navigate=(next:Page)=>openSection(next);
   const act=async(action:()=>Promise<void>,message:string)=>{
     if(working.current)return false;working.current=true;setBusy(true);setError('');
-    try{await action();const loaded=await refresh(true);if(loaded)setNotice(message+(preview?' (Preview only.)':''));return loaded;}
+    const epoch=authEpoch.current;
+    try{await action();const loaded=await refresh(true);if(loaded&&epoch===authEpoch.current){
+      setNotice(message+(preview?' (Preview only.)':''));setStandingsRefreshRevision(revision=>revision+1);
+    }return loaded;}
     catch(e){setError(errorMessage(e));return false;}
     finally{working.current=false;setBusy(false);}
   };
