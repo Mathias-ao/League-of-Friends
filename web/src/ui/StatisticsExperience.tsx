@@ -151,7 +151,7 @@ export function playerIdentity(data:PlayerProfile,preview:boolean,
         data?.status==='READY'&&data.measuredBattles>=2&&typeof data.value==='number'&&
         Number.isFinite(data.value)&&data.value>=0&&data.value<=100;
       return {id:slider.id,value:permitted?data!.value:null,
-        eligibleBattles:valid?live.qualifiedBattles:0,
+        eligibleBattles:valid?live.qualifiedBattles:null,
         status:permitted?'READY' as const:data?.status==='CALIBRATION_PENDING'?'CALIBRATION_PENDING' as const:'DEVELOPING' as const,
         measuredBattles:data?.measuredBattles??0,reasons:data?.reasons??[]};
     }),
