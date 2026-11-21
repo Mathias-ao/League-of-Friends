@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {playerIdentity} from '../src/ui/StatisticsExperience';
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {JSDOM} from 'jsdom';
+import {PlayerIdentityExperience,playerIdentity} from '../src/ui/StatisticsExperience';
 import type {PlayerProfile} from '../src/domain/league';
 import type {LivePersonalityEvidence} from '../src/domain/privateHistory';
 
@@ -69,4 +72,26 @@ test('malformed owner-private data cannot masquerade as qualified profile',()=>{
   const p=playerIdentity(data,false,x,'UNAVAILABLE');
   assert.equal(p.eligibleBattles,null);
   assert.ok(p.sliders.every(s=>s.value===null));
+});
+
+test('rendered live owner UI reveals 4 counted Battles with Developing reasons and no invented midpoint; preview remains intact',async()=>{
+  const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost/'});
+  Object.assign(globalThis,{window:dom.window,document:dom.window.document,
+    HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+  const root=createRoot(dom.window.document.getElementById('app')!);
+  try{
+    const liveIdentity=playerIdentity(data,false,live(4,4),'CURRENT');
+    await act(async()=>root.render(React.createElement(PlayerIdentityExperience,{
+      data,preview:false,identityOverride:liveIdentity})));
+    assert.match(dom.window.document.body.textContent!,/Calibration pending/);
+    assert.match(dom.window.document.body.textContent!,/4 independently measured Battles/);
+    assert.match(dom.window.document.body.textContent!,/reviewed hosted calibration is not yet approved/);
+    assert.equal(dom.window.document.querySelectorAll('.personality-track i').length,0);
+    const illustrated={...data,player:{...data.player,playerId:'sample-ragnar'}};
+    await act(async()=>root.render(React.createElement(PlayerIdentityExperience,{
+      data:illustrated,preview:true,
+      identityOverride:playerIdentity(illustrated,true)})));
+    assert.match(dom.window.document.body.textContent!,/78 \/ 100/);
+    assert.equal(dom.window.document.querySelectorAll('.personality-track i').length,5);
+  }finally{await act(async()=>root.unmount());dom.window.close();}
 });
