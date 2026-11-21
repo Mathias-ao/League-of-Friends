@@ -12,6 +12,7 @@ import {
   rebuildPairHistory,
   type PairHistoryMatchInput,
 } from "../../engines/relationshipEngine.js";
+import {relationshipQueryRevision,relationshipReplacementPlan,relationshipPairUnchanged} from "../../engines/relationshipAtomicPlan.js";
 import { writeAdminAudit } from "../../services/audit.js";
 import { reserveIdempotencyKey } from "../../services/idempotency.js";
 import {
@@ -84,11 +85,14 @@ export async function processRivalries(
   if (!requestId || !matchId) throw new HttpsError("invalid-argument", "requestId and matchId are required.");
 
   const triggerMatchRef = db.collection(collections.matches).doc(matchId);
+  const completedQuery=db.collection(collections.matches).where("status", "==", "COMPLETED");
+  const relationshipsQuery=db.collection(collections.relationships);
   const [triggerSnapshot, completedSnapshot, existingRelationships] = await Promise.all([
-    triggerMatchRef.get(),
-    db.collection(collections.matches).where("status", "==", "COMPLETED").get(),
-    db.collection(collections.relationships).get(),
+    triggerMatchRef.get(),completedQuery.get(),relationshipsQuery.get(),
   ]);
+  if(completedSnapshot.size>250||existingRelationships.size>450)
+    throw new HttpsError("failed-precondition",
+      "Atomic relationship rebuild is outside the current bounded league limit.");
 
   if (!triggerSnapshot.exists) throw new HttpsError("not-found", "Match not found.");
   const triggerMatch = triggerSnapshot.data() as MatchForRelationships;
@@ -143,40 +147,55 @@ export async function processRivalries(
   }
 
   const rebuiltAt = Timestamp.now();
-  const cleanupWriter = db.bulkWriter();
-  for (const document of existingRelationships.docs) cleanupWriter.delete(document.ref);
-  await cleanupWriter.close();
-
-  const writer = db.bulkWriter();
-  for (const history of histories) {
-    const relationship = evaluateRelationship(history, null);
-    writer.set(db.collection(collections.relationships).doc(history.pairId), {
+  const replacements=histories.map(history=>({
+    pairId:history.pairId,
+    doc:{
       schemaVersion: PAIR_HISTORY_VERSION,
       pairId: history.pairId,
       playerOneId: history.playerOneId,
       playerTwoId: history.playerTwoId,
       pairHistory: history,
-      relationship,
+      relationship: evaluateRelationship(history, null),
       chronicle: history.chronicle,
       relationshipEngineVersion: RELATIONSHIP_ENGINE_VERSION,
       relationshipRuleVersion: null,
       relationshipRulesConfigured: false,
       interactionCoverage: "UNAVAILABLE",
       updatedAt: rebuiltAt,
-    });
+    },
+  }));
+  // Keep a structurally identical pair untouched, including its write time;
+  // one corrected Battle must not churn unrelated player/Chronicle documents.
+  const priorPairs=new Map(existingRelationships.docs.map(doc=>[doc.id,doc.data()]));
+  const changedReplacements=replacements.filter(row=>
+    !relationshipPairUnchanged(priorPairs.get(row.pairId),row.doc));
+  let plan;
+  try{
+    plan=relationshipReplacementPlan(existingRelationships.docs.map(doc=>doc.id),
+      replacements.map(row=>row.pairId));
+  }catch(error){
+    throw new HttpsError("failed-precondition",
+      error instanceof Error?error.message:"Unsafe relationship replacement.");
   }
-  await writer.close();
-
+  const completedWitness=relationshipQueryRevision(completedSnapshot.docs);
+  const relationshipWitness=relationshipQueryRevision(existingRelationships.docs);
   const triggerRevision = canonicalRevision(triggerMatch.canonicalResult);
   const revisionedJobRef = db.collection(collections.processingJobs).doc(resultProcessingJobId(matchId, triggerRevision));
   const legacyJobRef = db.collection(collections.processingJobs).doc(`MATCH_RESULT_${matchId}`);
 
   const finalization = await db.runTransaction(async (transaction) => {
-    const [currentMatchSnapshot, revisionedJobSnapshot, legacyJobSnapshot] = await Promise.all([
+    const [currentMatchSnapshot, revisionedJobSnapshot, legacyJobSnapshot,
+      currentMatches, currentRelationships] = await Promise.all([
       transaction.get(triggerMatchRef),
       transaction.get(revisionedJobRef),
       transaction.get(legacyJobRef),
+      transaction.get(completedQuery),
+      transaction.get(relationshipsQuery),
     ]);
+    if(relationshipQueryRevision(currentMatches.docs)!==completedWitness||
+       relationshipQueryRevision(currentRelationships.docs)!==relationshipWitness)
+      throw new HttpsError("aborted",
+        "Matches or relationships changed while rebuilding. Retry with current sources.");
     if (!currentMatchSnapshot.exists) throw new HttpsError("not-found", "Match disappeared during Pair History rebuild.");
     const currentMatch = currentMatchSnapshot.data() as MatchForRelationships;
     if (currentMatch.status !== "COMPLETED" || currentMatch.activeResultDisputeId) {
@@ -198,9 +217,19 @@ export async function processRivalries(
       throw new HttpsError("failed-precondition", "The current processing job cannot process relationship history.");
     }
 
+    // The idempotency service MAY READ the transaction. Every read must
+    // finish before ANY paired-history set/delete or processing-job update.
     if (actor.source === "ADMIN") {
       await reserveIdempotencyKey(transaction, requestId, "adminProcessRivalries", actor.authUid);
     }
+    // Atomically replace only current pairs, remove genuinely obsolete pairs,
+    // and finish the processing job together. No external bulk-writer window.
+    if(replacements.length+plan.obsoletePairIds.length!==plan.totalPairWrites)
+      throw new HttpsError("aborted","Relationship replacement plan changed.");
+    for(const row of changedReplacements)
+      transaction.set(relationshipsQuery.doc(row.pairId),row.doc);
+    for(const obsoleteId of plan.obsoletePairIds)
+      transaction.delete(relationshipsQuery.doc(obsoleteId));
     const completedSteps = new Set(job.completedSteps ?? []);
     const alreadyProcessed = completedSteps.has("RIVALRIES");
     completedSteps.add("RIVALRIES");

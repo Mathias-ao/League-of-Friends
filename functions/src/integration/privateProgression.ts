@@ -5,6 +5,9 @@ import {Ajv2020} from 'ajv/dist/2020.js';
 import type {SourceSnapshot,Claim,Inference,Ref,Subject} from '../domain/socialV1.js';
 import {validateSharedRecord} from '../domain/socialV1Validation.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
+import {projectSharedSocialSourceEvidence} from './socialEvidenceV1.js';
+import {projectReputationEvidence} from './reputationEvidenceV1.js';
+import {projectRelationshipsEvidence} from './relationshipsEvidenceV1.js';
 import {validateC2AWorker} from './gameplayCandidates.js';
 import type {SocialScheduleOrder} from './socialScheduleOrder.js';
 import {evaluateHistory,type CalibratedSocialHistoryRules,type AdmittedEffect,type HistoricalChapter,type ActorConductWitness} from '../engines/socialV1History/history.js';
@@ -105,8 +108,13 @@ export function bindSourceGrades(raw:Bag,source:SourceSnapshot,statistics:Bag,pr
     actorPlayerId:b.binding.actorPlayerId,counterpartPlayerId:b.binding.counterpartPlayerId,track:g.track,
     decision:g.decision,gradeBandId:g.gradeBandId,sourceCoverage:g.sourceCoverage,methodCoverage:g.methodCoverage,
     methodVersion:g.methodVersion,meaning:g.materialMeaning,missingEvidence:g.missingEvidence,reasonCodes:g.reasonCodes,
-    originalPosition:g.originalPosition,originalEventCount:g.sourceEventIds.length,originalWitness:sourceRef,
-    corroboration:g.corroboration.map((p:Bag)=>({kind:p.kind,sourceDetectorId:p.sourceDetectorId,originalEventCount:p.sourceEventIds.length})),
+    originalPosition:g.originalPosition,originalEventCount:g.sourceEventIds.length,
+    originalSourceEventIds:[...g.sourceEventIds],sourceContextRevision:e.sourceContextRevision,
+    historicalOrder:{order:claim.historicalPosition.order==='ORDERED'?'ORDERED':'UNKNOWN',
+      leagueOrderKey:claim.historicalPosition.leagueOrderKey,gameNumber},
+    originalWitness:sourceRef,
+    corroboration:g.corroboration.map((p:Bag)=>({kind:p.kind,sourceDetectorId:p.sourceDetectorId,
+      originalEventCount:p.sourceEventIds.length,originalSourceEventIds:[...p.sourceEventIds]})),
     identity:{version:CREDIT_VERSION,contributionKey,componentId:b.compatibility.componentId,producerKey:b.compatibility.producerKey,
      legacyContributionKeys:b.compatibility.legacyContributionKeys,sourceDeedIds:b.compatibility.sourceDeedIds,sourceIncidentIds:b.compatibility.sourceIncidentIds,
      keySubstitutionAllowed:false},claimId,claimRevision:claim.claimRevision});
@@ -118,6 +126,11 @@ export function bindSourceGrades(raw:Bag,source:SourceSnapshot,statistics:Bag,pr
 }
 export function simulatePrivateProgression(owner:string,inputs:ReturnType<typeof bindSourceGrades>[],chapters:HistoricalChapter[],calibration:CalibratedSocialHistoryRules,pending:Bag[],inputDigest:string){
  if(calibration.policy.status!=='PROPOSED'||calibration.policy.approvalRef!==null)fail();
+ // Pure historical evaluator can receive sources for other actors during
+ // synthetic conformance checks. Owner-private read models must not expose
+ // those envelopes; runtime INT-B separately authenticates all own Games.
+ const ownerInputs=inputs.filter(i=>i.source.roster.some(p=>p.playerId===owner));
+ const evidence=projectSharedSocialSourceEvidence(owner,ownerInputs);
  const effects=inputs.flatMap(i=>i.effects),history=evaluateHistory({chapters,effects,actorWitnesses:inputs.flatMap(i=>i.actorWitnesses),calibration,trustedApprovals:[]});
  if(history.publicationAllowed||history.officialWrites||history.receipts.length)fail();
  const owned=(s:Subject)=>s.system==='REPUTATION'?s.playerId===owner:s.fromPlayerId===owner;
@@ -125,6 +138,8 @@ export function simulatePrivateProgression(owner:string,inputs:ReturnType<typeof
  const incidents=new Set(claims.map(c=>c.incidentId)),claimIds=new Set(claims.map(c=>c.claimId));
  return {version:PRIVATE_PROGRESSION_VERSION,visibility:'OWNER_ONLY' as const,ownerPlayerId:owner,inputDigest,
   simulation:{status:'PRIVATE_PROPOSED_SIMULATION_ONLY' as const,policy:calibration.policy,calibrationVersion:calibration.version},
+  evidence,reputationEvidence:projectReputationEvidence(evidence),
+  relationshipsEvidence:projectRelationshipsEvidence(evidence),
   cards:inputs.flatMap(i=>i.cards.filter(c=>c.actorPlayerId===owner)),claims,
   history:{...history,projections:history.projections.filter(p=>owned(p.subject)).map(p=>pending.length?{...p,status:'PENDING' as const,currentStage:null,pendingReasons:[...p.pendingReasons,'INCOMPLETE_CURRENT_SOURCE_HISTORY']}:p),
    consumption:history.consumption.filter(c=>incidents.has(c.incidentId)),audit:history.audit.filter(a=>a.claimId?claimIds.has(a.claimId):a.incidentId?incidents.has(a.incidentId):false)},
