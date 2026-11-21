@@ -80,9 +80,9 @@ export interface SharedSocialSourceEvidence {
   readonly unconfiguredWeakening:true;
 }
 
-const requireFact=(ok:unknown,code:string):asserts ok=>{
+function requireFact(ok:unknown,code:string):asserts ok {
   if(!ok)throw new Error('SOCIAL_EVIDENCE_'+code);
-};
+}
 const validId=(value:unknown):value is string=>typeof value==='string'&&value.length>0&&value.length<=512;
 const validHash=(value:unknown):value is string=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const unique=(refs:unknown):refs is string[]=>
@@ -130,7 +130,8 @@ export function projectSharedSocialSourceEvidence(
         card.sourceAuthority===s.authorityRevision&&
         roster.has(card.actorPlayerId)&&roster.has(card.counterpartPlayerId)&&
         card.actorPlayerId!==card.counterpartPlayerId&&
-        card.methodVersion===meta.method&&card.sourceCoverage==='LIMITED'&&
+        card.methodVersion===meta.method&&validHash(card.sourceContextRevision)&&
+        card.sourceCoverage==='LIMITED'&&
         unique(card.originalSourceEventIds)&&
         Number.isSafeInteger(card.originalEventCount)&&
         card.originalEventCount===card.originalSourceEventIds.length&&
@@ -187,7 +188,7 @@ export function projectSharedSocialSourceEvidence(
         eventId:s.eventId,seasonId:s.seasonId,sourceHash:s.sourceHash,
         authorityRevision:s.authorityRevision,statisticsRevision:s.statisticsRevision,
         sourceMethodRevision:bound.sourceMethodRevision,
-        sourceContextRevision:String(card.identity.sourceContextRevision??bound.sourceMethodRevision),
+        sourceContextRevision:card.sourceContextRevision,
         contributionKey:card.identity.contributionKey,componentId:card.identity.componentId,
         originalSourceEventIds:sorted(card.originalSourceEventIds),
         originalPosition:{recordingAtMs:card.originalPosition.recordingAtMs,
