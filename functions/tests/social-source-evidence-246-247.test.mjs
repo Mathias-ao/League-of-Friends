@@ -73,6 +73,20 @@ test('idempotent same source, two Games one Battle, cross-Battle means two sampl
   assert.equal(new Set(x.deeds.map(d=>d.battleId)).size,2);
   assert.deepEqual(x,project(c,b,a));
 });
+test('a current recording correction invalidates even an empty or Pending evidence view',()=>{
+  const first=bound();
+  first.cards=[];
+  const before=project(first);
+  const corrected=structuredClone(first);
+  corrected.source.sourceHash=sha('corrected-current-READY-source');
+  corrected.source.authorityRevision=sha('corrected-current-authority');
+  corrected.sourceMethodRevision=sha('corrected-method-projection');
+  const after=project(corrected);
+  assert.deepEqual(before.deeds,[]);
+  assert.deepEqual(after.deeds,[]);
+  assert.notEqual(before.evidenceRevision,after.evidenceRevision);
+  assert.notDeepEqual(before.sourceRevisions,after.sourceRevisions);
+});
 test('corrected same GUID or same Game from distinct current revisions fails closed',()=>{
   const a=bound();
   assert.throws(()=>project(a,bound({sourceSuffix:'corrected'})),/CONFLICTING_CURRENT_GAME_SOURCE/);
