@@ -68,6 +68,11 @@ export interface SourceQualifiedSocialDeed {
 }
 export interface SharedSocialSourceEvidence {
   readonly version:typeof SOCIAL_SOURCE_EVIDENCE_VERSION;
+  /** Current authenticated shared-Games only: a factual co-participant is
+   * neither a method admission nor an opponent/ally/social signal. */
+  readonly factualPairs:ReadonlyArray<{readonly otherPlayerId:string;
+    readonly battleIds:readonly string[];readonly gameKeys:readonly string[];
+    readonly eventIds:readonly string[]}>;
   readonly visibility:'OWNER_ONLY';
   readonly sourcePolicy:'PROPOSED_EMULATOR_ONLY';
   readonly ownerPlayerId:string;
@@ -102,6 +107,7 @@ export function projectSharedSocialSourceEvidence(
   const tracks=Object.keys(SOCIAL_EVIDENCE_TRACKS) as SocialTrack[];
   const admittedOverlap=new Map<string,Map<string,string>>();
   const admittedComponents=new Set<string>();
+  const factualPairs=new Map<string,{battles:Set<string>;games:Set<string>;events:Set<string>}>();
   const deeds:SourceQualifiedSocialDeed[]=[];
   for(const bound of inputs){
     const s=bound.source;
@@ -128,6 +134,15 @@ export function projectSharedSocialSourceEvidence(
     requireFact(!hashes.has(s.sourceHash)||hashes.get(s.sourceHash)===gameKey,
       'DUPLICATE_RECORDING_SOURCE_ACROSS_GAMES');
     games.set(gameKey,identity);guids.set(s.gameGuid,gameKey);hashes.set(s.sourceHash,gameKey);
+    // Even an incident-free READY Battle supplies an authenticated, factual
+    // pair. Never synthesize a deed or a directed relationship from the roster.
+    for(const participant of s.roster){
+      if(participant.playerId===ownerPlayerId)continue;
+      const row=factualPairs.get(participant.playerId)??{
+        battles:new Set<string>(),games:new Set<string>(),events:new Set<string>()};
+      row.battles.add(s.battleId);row.games.add(gameKey);row.events.add(s.eventId);
+      factualPairs.set(participant.playerId,row);
+    }
     requireFact(Array.isArray(bound.cards)&&bound.cards.length<=20000,'CARD_BUDGET');
     const seenCards=new Map<string,string>();
     const roster=new Set(s.roster.map((p:{playerId:string;replaySlot:number})=>p.playerId));
@@ -251,7 +266,12 @@ export function projectSharedSocialSourceEvidence(
     a.counterpartPlayerId.localeCompare(b.counterpartPlayerId)||
     a.track.localeCompare(b.track)||a.contributionKey.localeCompare(b.contributionKey));
   const sourceRevisions=sorted([...games.keys()].map(k=>games.get(k)!));
-  return {version:SOCIAL_SOURCE_EVIDENCE_VERSION,visibility:'OWNER_ONLY',
+  const currentFactualPairs=[...factualPairs.entries()]
+    .sort(([a],[b])=>a.localeCompare(b)).map(([otherPlayerId,row])=>({
+      otherPlayerId,battleIds:sorted([...row.battles]),
+      gameKeys:sorted([...row.games]),eventIds:sorted([...row.events])}));
+  return {version:SOCIAL_SOURCE_EVIDENCE_VERSION,factualPairs:currentFactualPairs,
+    visibility:'OWNER_ONLY',
     sourcePolicy:'PROPOSED_EMULATOR_ONLY',ownerPlayerId,
     methodVersion:'AOF_SOC_V1E_BOUNDED_GRADE_METHODS_1',
     sourceBinding:'INT_B_CURRENT_READY_AND_C2A_VALIDATED',
@@ -259,7 +279,7 @@ export function projectSharedSocialSourceEvidence(
     // Even if no method qualifies, replacing a READY source invalidates
     // that Battle's previous Pending/negative coverage interpretation.
     deeds:ordered,evidenceRevision:bindingDigest([
-      SOCIAL_SOURCE_EVIDENCE_VERSION,ownerPlayerId,sourceRevisions,ordered]),
+      SOCIAL_SOURCE_EVIDENCE_VERSION,ownerPlayerId,sourceRevisions,currentFactualPairs,ordered]),
     originalCoverage:'LIMITED',officialWrites:false,publicationAllowed:false,
     gradeWeightsApproved:false,unconfiguredWeakening:true};
 }
