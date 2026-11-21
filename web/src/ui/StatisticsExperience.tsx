@@ -7,7 +7,7 @@ import {
   type PlayerIdentityPresentation,type ReputationEssenceId
 } from '../domain/statisticsExperience';
 import {previewPlayerIdentity} from '../data/statisticsPreview';
-import {privateHistoryEnabled,type LivePersonalityEvidence} from '../domain/privateHistory';
+import type {LivePersonalityEvidence} from '../domain/privateHistory';
 import {Avatar,Sigil} from './Primitives';
 import type {ViewProps} from './App';
 
@@ -195,14 +195,38 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronic
     let active=true;
     setOwnerRead(null);
     const mine=viewerId===ownerId;
+    // The concrete Firebase repository checks the existing staging-only
+    // feature gate. Tests can mount the real profile with an enabled mock,
+    // without substituting the build-time import.meta.env bundle.
+    const authUid=props.repository.currentAuthUid?.()??null;
     const enabled=!preview&&mine&&props.repository.mode==='live'&&
-      privateHistoryEnabled(import.meta.env)&&!!props.repository.myPersonalityHistory;
+      props.repository.canReadMyPersonalityHistory?.()===true&&
+      !!props.repository.myPersonalityHistory&&!!authUid;
     setReadStatus(mine?'UNAVAILABLE':'NOT_OWNER');
     if(!enabled)return ()=>{active=false;};
     setReadStatus('LOADING');
-    const stop=props.repository.onAuthChange(()=>{active=false;setOwnerRead(null);setReadStatus('UNAVAILABLE');});
+    const invalidate=()=>{
+      if(!active)return;
+      active=false;
+      setOwnerRead(null);
+      setReadStatus('UNAVAILABLE');
+    };
+    // Firebase onAuthStateChanged *always* delivers the initial currentUser
+    // asynchronously. Do not cancel the live read unless the UID actually
+    // changed. Compare the initial callback too: it might already be a logout
+    // or a different account, and must never be skipped blindly.
+    const stop=props.repository.onAuthChange(()=>{
+      if(props.repository.currentAuthUid?.()!==authUid)invalidate();
+    });
+    if(props.repository.currentAuthUid?.()!==authUid){
+      invalidate();
+      return ()=>{active=false;stop();};
+    }
     props.repository.myPersonalityHistory!().then(response=>{
       if(!active)return;
+      // Also check at resolution, in case an account switch preceded observer
+      // delivery. The linked playerId is not interchangeable with Firebase UID.
+      if(props.repository.currentAuthUid?.()!==authUid){invalidate();return;}
       if(response.ownerPlayerId!==ownerId||response.visibility!=='OWNER_ONLY'||
         response.personality.personalityProfile.playerId!==ownerId||
         response.livePersonality?.version!=='AOF_PERSONALITY_LIVE_EVIDENCE_V1')
