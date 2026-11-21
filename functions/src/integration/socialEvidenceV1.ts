@@ -98,6 +98,7 @@ export function projectSharedSocialSourceEvidence(
   const games=new Map<string,string>(),guids=new Map<string,string>(),hashes=new Map<string,string>();
   const tracks=Object.keys(SOCIAL_EVIDENCE_TRACKS) as SocialTrack[];
   const admittedOverlap=new Map<string,Set<string>>();
+  const admittedComponents=new Set<string>();
   const deeds:SourceQualifiedSocialDeed[]=[];
   for(const bound of inputs){
     const s=bound.source;
@@ -162,7 +163,10 @@ export function projectSharedSocialSourceEvidence(
         card.missingEvidence.length===0:
         card.methodCoverage==='PENDING'&&card.gradeBandId===null,
         'UNAPPROVED_OR_UNSOURCED_TRACK_GRADE');
-      const key=[gameKey,card.identity.contributionKey,track].join('\u0000');
+      // Different #165 candidate rows can share one source-connected
+      // contribution. Keep their Pending explanations; dedup only identical
+      // candidate Claims, then reject a second *admitted* same-track credit.
+      const key=[gameKey,card.claimId,track].join('\u0000');
       const fingerprint=bindingDigest(card);
       if(seenCards.has(key)){
         requireFact(seenCards.get(key)===fingerprint,'CONFLICTING_DUPLICATE_CARD');
@@ -170,6 +174,11 @@ export function projectSharedSocialSourceEvidence(
       }
       seenCards.set(key,fingerprint);
       if(admitted){
+        const admittedComponent=[gameKey,card.identity.contributionKey,
+          card.actorPlayerId,card.counterpartPlayerId,track].join('\u0000');
+        requireFact(!admittedComponents.has(admittedComponent),
+          'CORRELATED_COMPONENT_ALREADY_ADMITTED');
+        admittedComponents.add(admittedComponent);
         const sameDirection=[gameKey,card.actorPlayerId,card.counterpartPlayerId,track].join('\u0000');
         const seen=admittedOverlap.get(sameDirection)??new Set<string>();
         requireFact(!card.originalSourceEventIds.some((id:string)=>seen.has(id)),
