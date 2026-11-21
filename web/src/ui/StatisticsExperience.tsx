@@ -129,7 +129,7 @@ const axisBySlider={
   'specialist-improviser':'SPECIALIST_IMPROVISER',
   'compact-expansive':'COMPACT_EXPANSIVE',
 } as const;
-function playerIdentity(data:PlayerProfile,preview:boolean,
+export function playerIdentity(data:PlayerProfile,preview:boolean,
   live:LivePersonalityEvidence|null=null,
   readStatus:'LOADING'|'UNAVAILABLE'|'NOT_OWNER'|'CURRENT'='UNAVAILABLE'):PlayerIdentityPresentation{
   if(preview)return {...previewPlayerIdentity(data.player.playerId),evidenceStatus:'PREVIEW'};
