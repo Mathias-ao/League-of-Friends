@@ -217,3 +217,17 @@ test('reverse participant action is never inferred from receiving a Raid',()=>{
   assert.equal(x.deeds.filter(d=>d.actorPlayerId==='p2').length,0);
   assert.equal(x.deeds.filter(d=>d.track==='BOND').length,0);
 });
+
+test('deed-free current authenticated Games preserve factual pairs without social credit',()=>{
+ const empty=bound();empty.cards=[];
+ const x=project(empty);
+ assert.equal(x.deeds.length,0);
+ assert.deepEqual(x.factualPairs,[{otherPlayerId:'p2',battleIds:['b1'],
+   gameKeys:['b1\u0000g1'],eventIds:['eb1']}]);
+ assert.equal(x.officialWrites,false);
+ const revised=structuredClone(empty);revised.source.sourceHash=sha('corrected-quiet');
+ revised.source.authorityRevision=sha('corrected-quiet-authority');
+ assert.equal(project(revised).factualPairs.length,1);
+ assert.notEqual(project(revised).evidenceRevision,x.evidenceRevision);
+ assert.deepEqual(project().factualPairs,[],'withdrawal of last current source removes active factual pair');
+});
