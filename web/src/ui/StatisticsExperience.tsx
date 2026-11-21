@@ -1,12 +1,13 @@
 import {PlayerChronicleBook} from './PlayerChronicleBook';
-import {useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {ArrowRight,BookOpen,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
-import {formatName,type PlayerProfile} from '../domain/league';
+import {formatName,type LeagueRepository,type PlayerProfile} from '../domain/league';
 import {
   FREEHOLDER_TOOLTIP,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES,PLAYER_PERSONALITY_SLIDERS,REPUTATION_ESSENCES,
   type PlayerIdentityPresentation,type ReputationEssenceId
 } from '../domain/statisticsExperience';
 import {previewPlayerIdentity} from '../data/statisticsPreview';
+import {privateHistoryEnabled,type LivePersonalityEvidence} from '../domain/privateHistory';
 import {Avatar,Sigil} from './Primitives';
 import type {ViewProps} from './App';
 
@@ -20,15 +21,63 @@ const sliderTermTooltips:Record<string,[string,string]>={
 
 export {BattleStatisticsExperience,MatchDialogWithStatistics,EventDialogWithStatistics,SeasonStatisticsView} from './StatisticsDashboard';
 
+const personalityReasonText:Record<string,string>={
+  THREE_SOURCE_QUALIFIED_GAMES_REQUIRED:'Three distinct accepted Games are needed before Personality becomes visible.',
+  THREE_QUALIFIED_BATTLES_REQUIRED:'At least three complete, source-accepted Battles are needed for the player profile.',
+  AXIS_REQUIRES_TWO_INDEPENDENT_MEASURED_BATTLES:'This axis needs measurements in at least two independent Battles.',
+  APPROVED_HOSTED_CALIBRATION_REQUIRED:'A reviewed hosted calibration is not yet approved.',
+  FULL_GAME_COST_COVERAGE_UNAVAILABLE:'Complete original resource-commitment coverage is unavailable.',
+  STRATEGIC_PLACEMENT_TAXONOMY_OR_ANCHOR_UNAVAILABLE:'Reviewed strategic-building opportunities or placement anchors are unavailable.',
+  INSUFFICIENT_ATTRIBUTABLE_COMMAND_EPISODES:'There are not enough independently attributable military-command episodes.',
+  CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE:'The source build and civilization military-family opportunity taxonomy is incomplete.',
+  EXPANSION_ZONES_OR_HOME_ANCHOR_UNAVAILABLE:'Source-qualified expansion zones or the starting home anchor are incomplete.',
+  CONTEXT_ADMISSION_PENDING:'Exact source context is not yet admitted.',
+  APPROVED_SCHEDULE_OR_SOURCE_COMPLETION_ORDER_UNAVAILABLE:'Approved chronological source or Event ordering is unavailable.',
+  INCOMPLETE_OR_UNORDERED_BATTLE_INPUT:'A required Game in this Battle is absent or unqualified.',
+};
+function readablePersonalityReason(reason:string):string{
+  return personalityReasonText[reason]??reason.replaceAll('_',' ').toLowerCase();
+}
 function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
-  const revealed=identity.eligibleBattles>=PERSONALITY_MINIMUM_ELIGIBLE_BATTLES&&identity.sliders.some(slider=>slider.value!=null);
-  const remaining=Math.max(0,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES-identity.eligibleBattles);
-  return <section className="identity-panel personality-panel"><div className="identity-heading"><div><span className="eyebrow">PLAYER PERSONALITY</span><h3>Patterns of play</h3></div>{!revealed&&<span className="quiet-badge tooltip-target tooltip-below" tabIndex={0} data-tooltip={`${identity.eligibleBattles} of ${PERSONALITY_MINIMUM_ELIGIBLE_BATTLES} qualified Battles recorded.`}>{remaining} TO GO</span>}</div>{revealed?<div className="personality-sliders">{PLAYER_PERSONALITY_SLIDERS.map(definition=>{
-    const result=identity.sliders.find(slider=>slider.id===definition.id);
-    const value=result?.value==null?50:Math.round(result.value);
-    const termHelp=sliderTermTooltips[definition.id];
-    return <div className="personality-slider" key={definition.id} aria-label={`${definition.left} to ${definition.right}: ${result?.value==null?'unrated':value+' out of 100'}`}><div className="personality-labels"><strong className="slider-term tooltip-target tooltip-below" tabIndex={0} data-tooltip={termHelp[0]}>{definition.left}</strong><span>{result?.value==null?'Unrated':value+' / 100'}</span><strong className="slider-term tooltip-target tooltip-below" tabIndex={0} data-tooltip={termHelp[1]}>{definition.right}</strong></div><div className="personality-track" aria-hidden="true"><span className="personality-mid"/><i style={{left:`${value}%`}}/></div></div>;
-  })}</div>:<div className="personality-locked"><strong>Patterns locked</strong><span>{identity.eligibleBattles} / {PERSONALITY_MINIMUM_ELIGIBLE_BATTLES} eligible Battles</span><small>The profile reveals its tendencies once enough Battles exist to support them.</small></div>}</section>;
+  const count=identity.eligibleBattles;
+  const available=typeof count==='number'&&Number.isSafeInteger(count)&&count>=0;
+  const unlocked=available&&count>=PERSONALITY_MINIMUM_ELIGIBLE_BATTLES&&
+    typeof identity.eligibleGames==='number'&&identity.eligibleGames>=3;
+  const remaining=available?Math.max(0,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES-count):null;
+  const waiting=!available;
+  return <section className="identity-panel personality-panel">
+    <div className="identity-heading"><div><span className="eyebrow">PLAYER PERSONALITY</span><h3>Patterns of play</h3></div>
+      {!waiting&&!unlocked&&<span className="quiet-badge tooltip-target tooltip-below" tabIndex={0}
+        data-tooltip={`${count} of ${PERSONALITY_MINIMUM_ELIGIBLE_BATTLES} source-qualified Battles recorded.`}>{remaining} TO GO</span>}
+    </div>
+    {waiting?<div className="personality-locked"><strong>{identity.evidenceStatus==='LOADING'?'Reading current recordings…':'Source-qualified Personality pending'}</strong><small>{identity.evidenceStatus==='NOT_OWNER'
+      ?'The private Personality of another player is not available here.'
+      :'Your current accepted Battle and Game evidence must be read securely before eligible counts can be shown.'}</small></div>
+    :!unlocked?<div className="personality-locked"><strong>Patterns developing</strong>
+      <span>{count} / {PERSONALITY_MINIMUM_ELIGIBLE_BATTLES} qualified Battles</span>
+      <small>{identity.eligibleGames??0} / 3 current accepted Games. Games within one Battle count individually toward the Game unlock, but only one Battle toward the historical profile.</small>
+    </div>
+    :<div className="personality-sliders">{PLAYER_PERSONALITY_SLIDERS.map(definition=>{
+      const result=identity.sliders.find(slider=>slider.id===definition.id);
+      const numeric=result?.status==='READY'&&typeof result.value==='number'&&
+        Number.isFinite(result.value)&&result.value>=0&&result.value<=100;
+      const value=numeric?Math.round(result!.value!):null;
+      const termHelp=sliderTermTooltips[definition.id];
+      const label=numeric?value+' / 100':result?.status==='CALIBRATION_PENDING'?'Calibration pending':'Developing';
+      const reason=result?.reasons?.map(readablePersonalityReason).join(' ')||
+        'Source context or opportunity remains unqualified.';
+      return <div className="personality-slider" key={definition.id}
+        aria-label={`${definition.left} to ${definition.right}: ${numeric?value+' out of 100':label}`}>
+        <div className="personality-labels">
+          <strong className="slider-term tooltip-target tooltip-below" tabIndex={0} data-tooltip={termHelp[0]}>{definition.left}</strong>
+          <span>{label}</span>
+          <strong className="slider-term tooltip-target tooltip-below" tabIndex={0} data-tooltip={termHelp[1]}>{definition.right}</strong>
+        </div>
+        {numeric?<div className="personality-track" aria-hidden="true"><span className="personality-mid"/><i style={{left:`${value}%`}}/></div>
+          :<small>{result?.measuredBattles??0} independently measured Battles. {reason}</small>}
+      </div>;
+    })}</div>}
+  </section>;
 }
 
 function reputationRankStage(intensity:number|null,preview:boolean){
@@ -73,16 +122,44 @@ function ReputationPanel({identity,preview,sharedHistory}:{identity:PlayerIdenti
   })}</div><SharedHistory summary={sharedHistory}/></section>;
 }
 
-function playerIdentity(data:PlayerProfile,preview:boolean):PlayerIdentityPresentation{
-  return preview?previewPlayerIdentity(data.player.playerId):{
-    eligibleBattles:0,
-    sliders:PLAYER_PERSONALITY_SLIDERS.map(slider=>({id:slider.id,value:null,eligibleBattles:0})),
-    reputation:{archetype:'Freeholder' as const,tooltip:FREEHOLDER_TOOLTIP,essences:REPUTATION_ESSENCES.map(essence=>({id:essence.id,intensity:null,careerPoints:null,seasonPoints:null}))}
+const axisBySlider={
+  'boomer-aggressor':'BOOMER_AGGRESSOR',
+  'cautious-bold':'CAUTIOUS_BOLD',
+  'guerrilla-frontline':'GUERRILLA_FRONTLINE',
+  'specialist-improviser':'SPECIALIST_IMPROVISER',
+  'compact-expansive':'COMPACT_EXPANSIVE',
+} as const;
+function playerIdentity(data:PlayerProfile,preview:boolean,
+  live:LivePersonalityEvidence|null=null,
+  readStatus:'LOADING'|'UNAVAILABLE'|'NOT_OWNER'|'CURRENT'='UNAVAILABLE'):PlayerIdentityPresentation{
+  if(preview)return {...previewPlayerIdentity(data.player.playerId),evidenceStatus:'PREVIEW'};
+  const valid=live?.version==='AOF_PERSONALITY_LIVE_EVIDENCE_V1'&&
+    live.requiredGames===3&&live.requiredQualifiedBattles===3&&
+    Number.isSafeInteger(live.eligibleGames)&&Number.isSafeInteger(live.qualifiedBattles)&&
+    live.axes.length===PLAYER_PERSONALITY_SLIDERS.length&&
+    live.gameUnlock===(live.eligibleGames>=3?'UNLOCKED':'LOCKED');
+  return {
+    eligibleBattles:valid?live.qualifiedBattles:null,
+    eligibleGames:valid?live.eligibleGames:null,
+    evidenceStatus:valid?'CURRENT':readStatus,
+    sliders:PLAYER_PERSONALITY_SLIDERS.map(slider=>{
+      const data=valid?live.axes.find(axis=>axis.axis===axisBySlider[slider.id]):null;
+      const permitted=valid&&live.calibration==='APPROVED'&&
+        live.qualifiedBattles>=3&&live.eligibleGames>=3&&
+        data?.status==='READY'&&typeof data.value==='number'&&
+        Number.isFinite(data.value)&&data.value>=0&&data.value<=100;
+      return {id:slider.id,value:permitted?data!.value:null,
+        eligibleBattles:valid?live.qualifiedBattles:0,
+        status:permitted?'READY' as const:data?.status==='CALIBRATION_PENDING'?'CALIBRATION_PENDING' as const:'DEVELOPING' as const,
+        measuredBattles:data?.measuredBattles??0,reasons:data?.reasons??[]};
+    }),
+    reputation:{archetype:'Freeholder' as const,tooltip:FREEHOLDER_TOOLTIP,
+      essences:REPUTATION_ESSENCES.map(essence=>({id:essence.id,intensity:null,careerPoints:null,seasonPoints:null}))}
   };
 }
 
-export function PlayerIdentityExperience({data,preview,sharedHistory}:{data:PlayerProfile;preview:boolean;sharedHistory?:SharedHistorySummary}){
-  const identity=playerIdentity(data,preview);
+export function PlayerIdentityExperience({data,preview,sharedHistory,identityOverride}:{data:PlayerProfile;preview:boolean;sharedHistory?:SharedHistorySummary;identityOverride?:PlayerIdentityPresentation}){
+  const identity=identityOverride??playerIdentity(data,preview);
   const history=sharedHistory??{playerName:data.player.steamName,allied:null,opposed:null};
   return <section className="player-identity-experience"><div className="identity-layout"><PersonalityPanel identity={identity}/><ReputationPanel identity={identity} preview={preview} sharedHistory={history}/></div></section>;
 }
@@ -106,10 +183,35 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronic
   const {data,snapshot,preview,openMatch}=props;
   const [chronicleOpen,setChronicleOpen]=useState(!!props.openChronicleOnLoad);
   const battleRail=useRef<HTMLDivElement>(null);
-  const identity=playerIdentity(data,preview);
+  const [ownerRead,setOwnerRead]=useState<{owner:string;data:LivePersonalityEvidence}|null>(null);
+  const [readStatus,setReadStatus]=useState<'LOADING'|'UNAVAILABLE'|'NOT_OWNER'|'CURRENT'>('UNAVAILABLE');
+  const viewerId=snapshot.viewer?.playerId;
+  const ownerId=data.player.playerId;
+  useEffect(()=>{
+    let active=true;
+    setOwnerRead(null);
+    const mine=viewerId===ownerId;
+    const enabled=!preview&&mine&&props.repository.mode==='live'&&
+      privateHistoryEnabled(import.meta.env)&&!!props.repository.myPersonalityHistory;
+    setReadStatus(mine?'UNAVAILABLE':'NOT_OWNER');
+    if(!enabled)return ()=>{active=false;};
+    setReadStatus('LOADING');
+    const stop=props.repository.onAuthChange(()=>{active=false;setOwnerRead(null);setReadStatus('UNAVAILABLE');});
+    props.repository.myPersonalityHistory!().then(response=>{
+      if(!active)return;
+      if(response.ownerPlayerId!==ownerId||response.visibility!=='OWNER_ONLY'||
+        response.personality.personalityProfile.playerId!==ownerId||
+        response.livePersonality?.version!=='AOF_PERSONALITY_LIVE_EVIDENCE_V1')
+        throw Error('Personality owner or source revision changed.');
+      setOwnerRead({owner:ownerId,data:response.livePersonality});
+      setReadStatus('CURRENT');
+    }).catch(()=>{if(active){setOwnerRead(null);setReadStatus('UNAVAILABLE');}});
+    return ()=>{active=false;stop();};
+  },[props.repository,preview,viewerId,ownerId]);
+  const identity=playerIdentity(data,preview,
+    ownerRead?.owner===ownerId&&viewerId===ownerId?ownerRead.data:null,readStatus);
   const seasonStats=data.activeSeason?.competition??null;
   const winRate=seasonStats&&seasonStats.matchesPlayed>0?Math.round(seasonStats.matchesWon/seasonStats.matchesPlayed*100)+'%':'—';
-  const viewerId=snapshot.viewer?.playerId;
   const sharedWithViewer=!!viewerId&&viewerId!==data.player.playerId;
   const alliedCount=sharedWithViewer?(data.teammates.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
   const opposedCount=sharedWithViewer?(data.opponents.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
@@ -131,7 +233,7 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronic
 
     <ProfileDeedsBar data={data} preview={preview}/>
 
-      <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory}/>
+      <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory} identityOverride={identity}/>
 
       <section className="profile-battle-record">
         <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span></div></div>
