@@ -19,7 +19,7 @@ function bound({battle='b1',game='g1',guid='guid1',season='s1',
   const source={contract:'AOF_SOCIAL_V1_SHARED_1',battleId:battle,matchId:battle,
     gameId:game,gameGuid:guid,seasonId:season,eventId:'e'+battle,sourceHash:sha('source'+guid+sourceSuffix),
     authorityRevision:authority,statisticsRevision:1,
-    roster:[{playerId:'p1',replaySlot:1},{playerId:'p2',replaySlot:2}]};
+    roster:[{playerId:'p1',replaySlot:1,teamId:null},{playerId:'p2',replaySlot:2,teamId:null}]};
   const component='component-'+battle+game+actor+other;
   const originalIds=qualified?['op1-'+guid+'-'+actor,'op2-'+guid+'-'+actor]:[];
   const cards=[{
@@ -62,6 +62,8 @@ test('one validated source envelope is versioned and read-only; source remains L
   assert.equal(d.actorPlayerId,'p1');
   assert.equal(d.counterpartPlayerId,'p2');
   assert.equal(d.opportunity.approvedDenominator,null);
+  assert.equal(d.recordedContext.rosterRelation,'UNKNOWN');
+  assert.equal(d.recordedContext.effectiveFfaDiplomacy,'UNAVAILABLE');
   assert.equal(d.evidenceMeaning,'SOURCE_BOUND_INFERRED_COMMAND_COMMITMENT_NOT_OUTCOME');
 });
 test('idempotent same source, two Games one Battle, cross-Battle means two samples',()=>{
@@ -141,10 +143,21 @@ test('second admitted row on the same #165 contribution is not another source me
   a.cards.push(extra);
   assert.throws(()=>project(a),/CORRELATED_COMPONENT_ALREADY_ADMITTED/);
 });
+test('recorded team membership is context, not proof of helpful conduct or FFA alignment',()=>{
+ const teammate=bound();
+ teammate.source.roster[0].teamId='alliance-1';
+ teammate.source.roster[1].teamId='alliance-1';
+ assert.equal(project(teammate).deeds[0].recordedContext.rosterRelation,'SAME_RECORDED_TEAM');
+ teammate.source.roster[1].teamId='alliance-2';
+ assert.equal(project(teammate).deeds[0].recordedContext.rosterRelation,'DIFFERENT_RECORDED_TEAMS');
+ assert.equal(project(teammate).deeds[0].recordedContext.effectiveFfaDiplomacy,'UNAVAILABLE');
+ teammate.source.roster[1].teamId=undefined;
+ assert.throws(()=>project(teammate),/SOURCE_SNAPSHOT_NOT_BOUND/);
+});
 test('owner-private read cannot expose unrelated teammate-to-enemy pair deeds',()=>{
   const a=bound();
-  a.source.roster.push({playerId:'p3',replaySlot:3});
-  a.source.roster.push({playerId:'p4',replaySlot:4});
+  a.source.roster.push({playerId:'p3',replaySlot:3,teamId:'a'});
+  a.source.roster.push({playerId:'p4',replaySlot:4,teamId:'b'});
   a.cards[0].actorPlayerId='p3';
   a.cards[0].counterpartPlayerId='p4';
   const own=project(a);
