@@ -7,6 +7,7 @@ import {validateSharedRecord} from '../domain/socialV1Validation.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
 import {projectSharedSocialSourceEvidence} from './socialEvidenceV1.js';
 import {projectReputationEvidence} from './reputationEvidenceV1.js';
+import {projectRelationshipsEvidence} from './relationshipsEvidenceV1.js';
 import {validateC2AWorker} from './gameplayCandidates.js';
 import type {SocialScheduleOrder} from './socialScheduleOrder.js';
 import {evaluateHistory,type CalibratedSocialHistoryRules,type AdmittedEffect,type HistoricalChapter,type ActorConductWitness} from '../engines/socialV1History/history.js';
@@ -138,6 +139,7 @@ export function simulatePrivateProgression(owner:string,inputs:ReturnType<typeof
  return {version:PRIVATE_PROGRESSION_VERSION,visibility:'OWNER_ONLY' as const,ownerPlayerId:owner,inputDigest,
   simulation:{status:'PRIVATE_PROPOSED_SIMULATION_ONLY' as const,policy:calibration.policy,calibrationVersion:calibration.version},
   evidence,reputationEvidence:projectReputationEvidence(evidence),
+  relationshipsEvidence:projectRelationshipsEvidence(evidence),
   cards:inputs.flatMap(i=>i.cards.filter(c=>c.actorPlayerId===owner)),claims,
   history:{...history,projections:history.projections.filter(p=>owned(p.subject)).map(p=>pending.length?{...p,status:'PENDING' as const,currentStage:null,pendingReasons:[...p.pendingReasons,'INCOMPLETE_CURRENT_SOURCE_HISTORY']}:p),
    consumption:history.consumption.filter(c=>incidents.has(c.incidentId)),audit:history.audit.filter(a=>a.claimId?claimIds.has(a.claimId):a.incidentId?incidents.has(a.incidentId):false)},
