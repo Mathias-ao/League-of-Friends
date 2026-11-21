@@ -116,3 +116,18 @@ test('factual source enumeration is scoped to its authenticated owner',()=>{
  assert.throws(()=>project([], [{...other,otherPlayerId:'p1'}]),/FACTUAL_PAIRS_INVALID/);
  assert.throws(()=>project([], [other,other]),/DUPLICATE_FACTUAL_PAIR/);
 });
+
+test('large directional Pending candidates retain counts without repeating full source envelopes',()=>{
+ const candidates=Array.from({length:200},(_,i)=>({
+  ...deed('HOSTILITY','p1','p2','b1','e1',{admitted:false}),
+  claimId:'candidate-'+i,claimRevision:'revision-'+i,contributionKey:'candidate-'+i,
+ }));
+ const x=project(candidates);
+ const track=x.pairs[0].tracks.HOSTILITY.outbound;
+ assert.equal(track.pendingCandidateCount,200);
+ assert.equal(track.pendingDeeds.length,1,
+  'readiness is one private method/missing-proof signature, not 200 copied source envelopes');
+ assert.equal(track.sourceQualifiedEvents,0);
+ assert.equal(x.pairs[0].tracks.HOSTILITY.numericPoints,null);
+ assert.ok(JSON.stringify(x).length<12000);
+});
