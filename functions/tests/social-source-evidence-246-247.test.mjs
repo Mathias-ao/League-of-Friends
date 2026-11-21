@@ -149,13 +149,43 @@ test('distinct #165 Pending candidates may share one incident without another gr
   assert.equal(out.deeds.filter(d=>d.decision==='SOURCE_ADMITTED').length,1);
   assert.equal(out.deeds.filter(d=>d.decision==='PENDING').length,1);
 });
-test('second admitted row on the same #165 contribution is not another source method',()=>{
+test('multiple real same-component admitted candidates collapse to one source credit',()=>{
   const a=bound();
   const extra=structuredClone(a.cards[0]);
   extra.claimId='another-candidate';
   extra.claimRevision=sha('another-candidate');
+  // A second source-connected #165 episode can have separate original orders.
+  // Its contribution identity is still ONE connected component.
+  extra.originalSourceEventIds=['op3-guid1-p1','op4-guid1-p1'];
+  extra.originalEventCount=2;
+  extra.originalPosition={recordingAtMs:20000,operationOrdinal:30,order:'ORDERED'};
+  extra.corroboration=[{kind:'RAID_V3',sourceDetectorId:'raid-2',
+    originalSourceEventIds:[extra.originalSourceEventIds[0]]}];
   a.cards.push(extra);
-  assert.throws(()=>project(a),/CORRELATED_COMPONENT_ALREADY_ADMITTED/);
+  const first=project(a);
+  assert.equal(first.deeds.filter(d=>d.decision==='SOURCE_ADMITTED').length,1);
+  const reversed=structuredClone(a);reversed.cards.reverse();
+  assert.deepEqual(project(reversed).deeds,first.deeds,
+    'producer card order must not choose a different representative');
+});
+test('different connected components independently qualify, but reused source refs cannot double-credit',()=>{
+  const a=bound();
+  const extra=structuredClone(a.cards[0]);
+  extra.claimId='separate-claim';
+  extra.claimRevision=sha('separate-claim');
+  extra.identity.contributionKey='independent-connected-component';
+  extra.identity.componentId='independent-connected-component';
+  extra.originalSourceEventIds=['op9-guid1-p1','op10-guid1-p1'];
+  extra.originalEventCount=2;
+  extra.corroboration=[{kind:'SKIRMISH',sourceDetectorId:'skirmish-other',
+    originalSourceEventIds:[extra.originalSourceEventIds[0]]}];
+  a.cards.push(extra);
+  assert.equal(project(a).deeds.filter(d=>d.decision==='SOURCE_ADMITTED').length,2,
+    'independently sourced components must survive deduplication');
+  a.cards[1].originalSourceEventIds[0]=a.cards[0].originalSourceEventIds[0];
+  a.cards[1].corroboration[0].originalSourceEventIds[0]=a.cards[0].originalSourceEventIds[0];
+  assert.throws(()=>project(a),/CORRELATED_ORIGINAL_SOURCE_CREDIT/,
+    'a second independent component cannot reuse a claimed original event');
 });
 test('recorded team membership is context, not proof of helpful conduct or FFA alignment',()=>{
  const teammate=bound();
