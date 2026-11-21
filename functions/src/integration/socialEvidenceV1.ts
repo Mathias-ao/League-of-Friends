@@ -239,12 +239,16 @@ export function projectSharedSocialSourceEvidence(
     a.actorPlayerId.localeCompare(b.actorPlayerId)||
     a.counterpartPlayerId.localeCompare(b.counterpartPlayerId)||
     a.track.localeCompare(b.track)||a.contributionKey.localeCompare(b.contributionKey));
+  const sourceRevisions=sorted([...games.keys()].map(k=>games.get(k)!));
   return {version:SOCIAL_SOURCE_EVIDENCE_VERSION,visibility:'OWNER_ONLY',
     sourcePolicy:'PROPOSED_EMULATOR_ONLY',ownerPlayerId,
     methodVersion:'AOF_SOC_V1E_BOUNDED_GRADE_METHODS_1',
     sourceBinding:'INT_B_CURRENT_READY_AND_C2A_VALIDATED',
-    sourceRevisions:sorted([...games.keys()].map(k=>games.get(k)!)),
-    deeds:ordered,evidenceRevision:bindingDigest([SOCIAL_SOURCE_EVIDENCE_VERSION,ordered]),
+    sourceRevisions,
+    // Even if no method qualifies, replacing a READY source invalidates
+    // that Battle's previous Pending/negative coverage interpretation.
+    deeds:ordered,evidenceRevision:bindingDigest([
+      SOCIAL_SOURCE_EVIDENCE_VERSION,ownerPlayerId,sourceRevisions,ordered]),
     originalCoverage:'LIMITED',officialWrites:false,publicationAllowed:false,
     gradeWeightsApproved:false,unconfiguredWeakening:true};
 }
