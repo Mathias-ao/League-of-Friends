@@ -124,7 +124,11 @@ export function bindSourceGrades(raw:Bag,source:SourceSnapshot,statistics:Bag,pr
 }
 export function simulatePrivateProgression(owner:string,inputs:ReturnType<typeof bindSourceGrades>[],chapters:HistoricalChapter[],calibration:CalibratedSocialHistoryRules,pending:Bag[],inputDigest:string){
  if(calibration.policy.status!=='PROPOSED'||calibration.policy.approvalRef!==null)fail();
- const evidence=projectSharedSocialSourceEvidence(owner,inputs);
+ // Pure historical evaluator can receive sources for other actors during
+ // synthetic conformance checks. Owner-private read models must not expose
+ // those envelopes; runtime INT-B separately authenticates all own Games.
+ const ownerInputs=inputs.filter(i=>i.source.roster.some(p=>p.playerId===owner));
+ const evidence=projectSharedSocialSourceEvidence(owner,ownerInputs);
  const effects=inputs.flatMap(i=>i.effects),history=evaluateHistory({chapters,effects,actorWitnesses:inputs.flatMap(i=>i.actorWitnesses),calibration,trustedApprovals:[]});
  if(history.publicationAllowed||history.officialWrites||history.receipts.length)fail();
  const owned=(s:Subject)=>s.system==='REPUTATION'?s.playerId===owner:s.fromPlayerId===owner;
