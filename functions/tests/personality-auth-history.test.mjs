@@ -246,3 +246,53 @@ test('Sol #203 authenticated reader: two current READY unresolved Games with no 
   assert.ok(rebinding.personality.personalityProfile.sliders.every(x=>x.value===null));
   assert.ok(rebinding.pending.some(x=>x.reason==='NOT_A_GAME_PARTICIPANT'));
 });
+
+test('hosted-style read: four accepted current original-shaped Battles populate true live counts without demo scores',async()=>{
+  const f=await ready();
+  const original=f.rows.get(f.sourcePath),first=f.rows.get('matches/m/games/g');
+  const match=f.rows.get('matches/m');
+  const hashes=[f.sourceHash,digest('source-honest-other-2'),
+    digest('source-honest-other-3'),digest('source-honest-other-4')];
+  const ids=['m','m2','m3','m4'];
+  for(let i=0;i<4;i++){
+    const raw=enrich(originalStats(f),hashes[i],'source-original-test-guid-'+(i+1));
+    writeFixture(f,ids[i],i===0?'g':'g'+(i+1),hashes[i],raw,original,first,
+      {...match,firstCompletedAt:{toMillis:()=>1000+i*1000}});
+  }
+  f.rows.get('events/e').officialMatchIds=ids;
+  // No emulator numerical pilot/calibration. All source receipts still go
+  // through the real authenticated, current replay-statistics read.
+  const options={...f.input,env:{...f.input.env,AOF_PERSONALITY_PRIVATE_E2E:undefined}};
+  const result=await readMyPersonalityHistory(options);
+  assert.equal(result.ownerPlayerId,'p1');
+  assert.equal(result.coverage.currentSources,4);
+  assert.equal(result.livePersonality.eligibleGames,4);
+  assert.equal(result.livePersonality.qualifiedBattles,4);
+  assert.equal(result.livePersonality.gameUnlock,'UNLOCKED');
+  assert.equal(result.livePersonality.calibration,'NOT_APPROVED');
+  assert.ok(result.livePersonality.axes.every(axis=>axis.value===null));
+  assert.ok(result.personality.personalityProfile.sliders.every(axis=>axis.value===null));
+  const amounts=Object.fromEntries(result.livePersonality.axes.map(x=>[x.axis,x.measuredBattles]));
+  assert.equal(amounts.BOOMER_AGGRESSOR,4,
+    'Source-verified resource commitment must not need reviewed map/civ classification');
+  assert.equal(amounts.SPECIALIST_IMPROVISER,0,
+    'Unreviewed exact civ families may not contaminate other axes');
+  assert.equal(result.effects.officialWrites,false);
+  assert.deepEqual(await readMyPersonalityHistory(options),result);
+  // A withdrawn current original loses one Game and one canonical Battle.
+  f.rows.get('matches/m4/games/g4/replaySources/'+hashes[3]).state='WITHDRAWN';
+  const corrected=await readMyPersonalityHistory(options);
+  assert.equal(corrected.livePersonality.eligibleGames,3);
+  assert.equal(corrected.livePersonality.qualifiedBattles,3);
+  assert.notEqual(corrected.inputDigest,result.inputDigest);
+  // A Battle with a missing sibling cannot count, even if its first Game
+  // remains source-qualified; BO3 original Game count is not Battle count.
+  f.rows.get('matches/m3').seriesRule={maxGames:3,gamesRequiredToWin:2};
+  const incomplete=await readMyPersonalityHistory(options);
+  assert.ok(incomplete.livePersonality.qualifiedBattles<=2);
+  // No arbitrary cross-account or unsigned/private owner override.
+  await assert.rejects(readMyPersonalityHistory({...options,request:{playerId:'p2'}}),
+    e=>e.code==='invalid-argument');
+  await assert.rejects(readMyPersonalityHistory({...options,actor:{playerId:'p2',authUid:'owner'}}),
+    e=>e.code==='permission-denied');
+});
