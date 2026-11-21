@@ -4,6 +4,7 @@ import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/func
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
 import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse,type NativeValidationCandidateResult,type NativeE2eReview,type NativeE2ePublishRequest,type NativeE2ePublicationResult,type NativeE2eEnvironmentStatus} from '../domain/league';
 import {assertRecordingUploadFile} from '../domain/recordingUploadPolicy';
+import {privateHistoryEnabled} from '../domain/privateHistory';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -158,6 +159,8 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     return this.call<{success:true;revision:number;state:string;idempotent:boolean}>('actOnChronicleInvitation',input);
   }
   myPersonalityHistory(){return this.call<import('../domain/privateHistory').PrivatePersonalityHistory>('getMyPersonalityHistory');}
+  canReadMyPersonalityHistory(){return privateHistoryEnabled(import.meta.env);}
+  currentAuthUid(){return this.auth.currentUser?.uid??null;}
   myHonoursPreview(){return this.call<import('../domain/privateHonoursPreview').PrivateHonoursPreview>('getMyHonoursPreview');}
   myGameplayPreview(){return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');}
   mySocialProgression(){return this.call<import('../domain/privateProgression').PrivateProgression>('getMySocialProgression');}
