@@ -39,10 +39,14 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   const numerics=[...Object.values(dto.reputation).map(t=>t.career),
    ...dto.relationships.flatMap(p=>Object.values(p.tracks).flatMap(t=>[t.outgoing,t.incoming]))]
    .filter(t=>t.progression==='PRIVATE_PREVIEW');
-  assert.ok(numerics.length,'Genuine source must produce at least one private numerical projection');
+  const incomplete=process.argv.includes('--incomplete');
+  if(incomplete){assert.equal(dto.coverage.complete,false);assert.equal(dto.relationships.length,0);
+   assert.match(app.body(),/Shared history is incomplete/);assert.doesNotMatch(app.body(),/No current shared recorded Battles/);
+  }else assert.ok(numerics.length,'Genuine source must produce at least one private numerical projection');
   for(const t of numerics)assert.ok(app.body().includes('Preview stage '+t.stage+' · Bank '+t.upBank));
   assert.match(app.body(),/Not yet measured/);
   await app.auth(null);assert.doesNotMatch(app.body(),/Preview stage/);
-  console.log(JSON.stringify({version:dto.version,sourceDerivedProjectionRendered:true,logoutClears:true,numericTracks:numerics.length}));
+  console.log(JSON.stringify({version:dto.version,sourceDerivedProjectionRendered:true,logoutClears:true,
+   incompleteSharedHistory:incomplete,numericTracks:numerics.length}));
  }finally{await app.close();}
 }

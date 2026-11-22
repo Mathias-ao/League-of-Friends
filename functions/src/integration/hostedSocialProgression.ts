@@ -21,6 +21,11 @@ export interface HostedTrack {
   reasonCodes:string[];sourceQualifiedBattles:number;sourceQualifiedGames:number;sourceQualifiedEvents:number;
   stage:number|null;upBank:number|null;
 }
+/** Unknown scope stays conservative; known source failures affect only windows
+ * and subjects to which that source could actually contribute. */
+export interface HostedPendingSource {
+  seasonId:string|null;rosterPlayerIds:string[]|null;
+}
 function publicEffectsBlocked(history:ReturnType<typeof evaluateHistory>){
   if(history.publicationAllowed||history.officialWrites||history.receipts.length)
     throw new Error('HOSTED_SOCIAL_PUBLIC_EFFECTS_FORBIDDEN');
@@ -57,7 +62,7 @@ export function fixedHostedOpportunity(bound:Bound,statistics:Bag,subject:Subjec
         Number.isSafeInteger(original(w.actorReplaySlot))&&original(w.actorReplaySlot)!==b;}));
 }
 export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[];chapters:HistoricalChapter[];
-  calibration:CalibratedSocialHistoryRules;pending:boolean;coverage:Bag;inputRevision:string;policyRevision:string;
+  calibration:CalibratedSocialHistoryRules;pendingSources:HostedPendingSource[];coverage:Bag;inputRevision:string;policyRevision:string;
   opportunity:(bound:Bound,subject:Subject,claimId:string)=>boolean}){
   const {owner,inputs,chapters,calibration}=input;
   if(calibration.policy.status!=='PROPOSED'||calibration.policy.approvalRef!==null||
@@ -65,7 +70,7 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
   const evidence=projectSharedSocialSourceEvidence(owner,inputs);
   const reputation=projectReputationEvidence(evidence),relationships=projectRelationshipsEvidence(evidence);
   const admitted=new Set(evidence.deeds.filter(d=>d.decision==='SOURCE_ADMITTED').map(d=>d.claimId));
-  const withheldSubjects=new Set<string>();
+  const withheldSubjects=new Map<string,Set<string>>();
   const effects=inputs.flatMap(bound=>bound.effects.filter(effect=>{
     const c=effect.claim;if(c.decision!=='QUALIFIED')return false;
     const rule=calibration.rules[c.ruleId],method=HOSTED_POLICY_SPEC.admittedMethodByRule[c.ruleId];
@@ -74,7 +79,10 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
       c.effect!=='STRENGTHEN'||c.significanceBandId!=='ORDINARY'||rule.bands.ORDINARY!==1||
       bindingDigest(c.policy)!==bindingDigest(calibration.policy))throw new Error('HOSTED_SOCIAL_WITHHELD_RULE_OR_METHOD');
     if(!relevant(c.subject,owner)||!admitted.has(c.claimId))return false;
-    if(!input.opportunity(bound,c.subject,c.claimId)){withheldSubjects.add(subjectKey(c.subject));return false;}
+    if(!input.opportunity(bound,c.subject,c.claimId)){
+      const key=subjectKey(c.subject),seasons=withheldSubjects.get(key)??new Set<string>();
+      seasons.add(bound.source.seasonId);withheldSubjects.set(key,seasons);return false;
+    }
     return true;
   }));
   const effectIds=new Set(effects.map(e=>e.claim.claimId));
@@ -88,9 +96,14 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
   const career=evaluate(chapters),seasonHistories=new Map([...new Set(chapters.map(c=>c.seasonId))].sort()
     .map(season=>[season,evaluate(chapters.filter(c=>c.seasonId===season))]));
   const find=(history:typeof career,subject:Subject)=>history.projections.find(p=>subjectKey(p.subject)===subjectKey(subject));
-  const summary=(subject:Subject,deeds:typeof evidence.deeds,history:typeof career):HostedTrack=>{
+  const summary=(subject:Subject,deeds:typeof evidence.deeds,history:typeof career,seasonId?:string):HostedTrack=>{
     const accepted=deeds.filter(d=>d.decision==='SOURCE_ADMITTED'),unsupported=['CRUELTY','HOSTILITY'].includes(subject.track);
-    const p=find(history,subject),incomplete=input.pending||withheldSubjects.has(subjectKey(subject));
+    const affectedSeasons=withheldSubjects.get(subjectKey(subject));
+    const incomplete=(!seasonId?!!affectedSeasons:affectedSeasons?.has(seasonId))||input.pendingSources.some(s=>
+      (!seasonId||s.seasonId===null||s.seasonId===seasonId)&&(!s.rosterPlayerIds||
+        (subject.system==='REPUTATION'?s.rosterPlayerIds.includes(subject.playerId):
+          s.rosterPlayerIds.includes(subject.fromPlayerId)&&s.rosterPlayerIds.includes(subject.toPlayerId))));
+    const p=find(history,subject);
     const row:HostedTrack={readiness:accepted.length?'SOURCE_QUALIFIED':'PENDING_SOURCE_METHOD',progression:'PENDING',reasonCodes:[],
       sourceQualifiedBattles:new Set(accepted.map(d=>d.battleId)).size,
       sourceQualifiedGames:new Set(accepted.map(d=>d.battleId+'\u0000'+d.gameId)).size,
@@ -116,7 +129,7 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
     if(reputation.tracks[track].career.sourceQualifiedBattles!==new Set(deeds.filter(d=>d.decision==='SOURCE_ADMITTED').map(d=>d.battleId)).size)
       throw new Error('HOSTED_SOCIAL_REPUTATION_COUNT_MISMATCH');
     return [track,{career:summary(subject,deeds,career),bySeason:Object.fromEntries([...seasonHistories].map(([season,h])=>
-      [season,summary(subject,deeds.filter(d=>d.seasonId===season),h)]))}];
+      [season,summary(subject,deeds.filter(d=>d.seasonId===season),h,season)]))}];
   }));
   const pairDto=relationships.pairs.map(pair=>({otherPlayerId:pair.otherPlayerId,
     factualCurrentSourceBattles:pair.factualCurrentSourceBattles,factualCurrentSourceGames:pair.factualCurrentSourceGames,
@@ -127,9 +140,9 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
         d.actorPlayerId===from&&d.counterpartPlayerId===to),career)];
     }))]))}));
   const response={version:'AOF_SOC_V1A_HOSTED_OWNER_READ_1' as const,ownerPlayerId:owner,
-    revision:bindingDigest([input.inputRevision,input.policyRevision,evidence.evidenceRevision,career.projectionRevision,input.pending]),
+    revision:bindingDigest([input.inputRevision,input.policyRevision,evidence.evidenceRevision,career.projectionRevision,input.pendingSources]),
     policyVersion:HOSTED_POLICY_VERSION,approvalScope:'PRIVATE_NUMERICAL_PREVIEW' as const,
-    coverage:{complete:!input.pending,ownBattles:input.coverage.ownBattles,ownGames:input.coverage.ownGames,
+    coverage:{complete:input.pendingSources.length===0,ownBattles:input.coverage.ownBattles,ownGames:input.coverage.ownGames,
       currentSources:input.coverage.currentSources,pendingSources:input.coverage.pendingSources},
     reputation:repDto,relationships:pairDto};
   if(Buffer.byteLength(JSON.stringify(response))>512*1024)throw new Error('HOSTED_SOCIAL_RESPONSE_BUDGET');

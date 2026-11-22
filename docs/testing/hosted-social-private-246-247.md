@@ -62,7 +62,9 @@ can supply ORDINARY +1 strengthening:
 The pilot also requires decoded locked fixed-team alignment matching the
 original roster partitions. Helpers require a source-bound opposing third-party
 threat. Uncertain opportunities withhold affected numerical subjects. Missing
-source coverage withholds numerical history. Quiet verified pairs remain with
+source coverage withholds affected numerical history. Known roster and Season
+scope preserve independent complete pairs and Season windows; unknown scope
+stays conservative. Quiet verified pairs remain with
 independent Pending tracks; withdrawal removes facts supported only by that
 source. Cruelty, Hostility, SUBSTANTIAL, weakening, Treachery and public awards
 remain withheld. No absent measurement becomes a fabricated zero.
@@ -74,7 +76,9 @@ activity is restricted to the owner's shared pair. Logout, account replacement,
 membership changes, unmount and stale requests clear or discard private values.
 Refresh clears old values, automatically retries revision aborts twice, and
 then offers an explicit recovery action. Identical bootstrap snapshots do not
-restart an in-flight read.
+restart an in-flight read. The hosted callable alone has an explicit 125-second
+Firebase SDK timeout, covering its 100-second application budget and 120-second
+function limit. Other repository calls retain their current deadlines.
 
 ## External runtime record — deliberately absent
 
@@ -109,11 +113,17 @@ identity isolation and this PR makes no such claim.
 
 ## Verification and evidence labels
 
-Local full builds passed, with 797 backend tests passed / two skipped and 222
+Local full builds passed, with 800 backend tests passed / two skipped and 224
 frontend tests passed. Focused suites cover the immutable specification, strict
 registry, caps and direction, separate Career/Season windows, fixed-team and
 third-party opportunity, quiet pairs, correction/revocation/source races,
-transport identity/deadline and mounted authentication/privacy/recovery.
+transport identity/deadline and mounted authentication/privacy/recovery. Review
+regressions preserve a complete Season when another Season's opportunity fails,
+and an owner-A pair when owner-B derivation is unavailable. The actual installed
+Firebase SDK accepts a controlled 75-second response and bounds a hung request
+at 125 seconds. Incomplete empty shared history has qualified wording and a
+refresh action; the emulator feeds the withdrawn-source collector DTO through
+the real parser and mounted profile.
 
 An isolated Firestore/Storage emulator run passed with five pinned genuine
 recordings in four formats, eleven controlled identities, a two-Game Battle,

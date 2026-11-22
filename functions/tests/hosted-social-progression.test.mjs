@@ -46,7 +46,7 @@ const ownerOf=r=>{const s=r.effects.find(e=>e.claim.decision==='QUALIFIED').clai
 function project(rows,extra={}){
   return projectHostedSocialProgression({owner:rows[0].r.effects.some(e=>e.claim.decision==='QUALIFIED')?
     ownerOf(rows[0].r):rows[0].r.source.roster[0].playerId,inputs:rows.map(x=>x.r),chapters:rows.map(x=>x.chapter),
-    calibration:cal(),pending:false,coverage:{ownBattles:new Set(rows.map(x=>x.r.source.battleId)).size,ownGames:rows.length,
+    calibration:cal(),pendingSources:[],coverage:{ownBattles:new Set(rows.map(x=>x.r.source.battleId)).size,ownGames:rows.length,
       currentSources:rows.length,pendingSources:0},inputRevision:'current',policyRevision:'test-only',opportunity:()=>true,...extra});
 }
 
@@ -105,7 +105,7 @@ test('canonical Battle/Event caps survive multi-Game input and independent recip
 
 test('unknown historical order, partial sources and withheld opportunity do not show stale numbers',()=>{
   const row=bound(),old=project([row]);assert.equal(old.relationships[0].tracks.RIVALRY.outgoing.upBank,1);
-  const missing=project([row],{pending:true});assert.equal(missing.relationships[0].tracks.RIVALRY.outgoing.upBank,null);
+  const missing=project([row],{pendingSources:[{seasonId:null,rosterPlayerIds:null}]});assert.equal(missing.relationships[0].tracks.RIVALRY.outgoing.upBank,null);
   const opportunity=project([row],{opportunity:()=>false});assert.equal(opportunity.relationships[0].tracks.RIVALRY.outgoing.stage,null);
   row.chapter.order=null;row.r.effects.forEach(e=>{e.claim.historicalPosition.order='UNKNOWN';e.claim.historicalPosition.leagueOrderKey=null;});
   const unordered=project([row]);assert.equal(unordered.relationships[0].tracks.RIVALRY.outgoing.stage,null);
@@ -133,6 +133,40 @@ test('corrected zero-deed sources keep factual quiet pairs and independent Pendi
   const x=project([row]);assert.equal(x.relationships.length,1);assert.equal(x.relationships[0].factualCurrentSourceBattles,1);
   for(const t of ['RIVALRY','HOSTILITY','BOND'])for(const d of ['outgoing','incoming']){
     assert.equal(x.relationships[0].tracks[t][d].stage,null);assert.equal(x.relationships[0].tracks[t][d].upBank,null);
+  }
+});
+
+test('a withheld opportunity in one Season preserves an independent complete Season',()=>{
+  const rows=[bound(1,{season:'s1'}),bound(2,{season:'s2'})];
+  // Post-binding projection probe, not a genuine source-method positive.
+  for(const {r} of rows){const owner=ownerOf(r);
+    r.cards=r.cards.filter(c=>c.track==='RIVALRY').map(c=>({...c,track:'GALLANTRY',
+      methodVersion:HOSTED_POLICY_SPEC.admittedMethodByRule.E2E_DARING_OFFENSE}));
+    r.effects=r.effects.filter(e=>e.claim.subject.track==='RIVALRY').map(e=>({...e,claim:{...e.claim,
+      subject:{system:'REPUTATION',track:'GALLANTRY',playerId:owner},ruleId:'E2E_DARING_OFFENSE'}}));
+    r.actorWitnesses=[];
+  }
+  const p=project(rows,{opportunity:b=>b.source.seasonId==='s1'}).reputation.GALLANTRY;
+  assert.equal(p.career.stage,null);assert.equal(p.bySeason.s2.stage,null);
+  assert.equal(p.bySeason.s1.stage,0);assert.equal(p.bySeason.s1.upBank,1);
+  const pending=project(rows,{pendingSources:[{seasonId:'s2',rosterPlayerIds:rows[0].r.source.roster.map(p=>p.playerId)}]}).reputation.GALLANTRY;
+  assert.equal(pending.career.stage,null);assert.equal(pending.bySeason.s2.stage,null);
+  assert.equal(pending.bySeason.s1.upBank,1);
+});
+
+test('unavailable owner-B derivation preserves owner-A, while affected or unknown pairs stay Pending',()=>{
+  const a=bound(1),b=bound(2),owner=ownerOf(a.r),other=a.r.source.roster.find(p=>p.playerId!==owner).playerId;
+  b.r.source.roster=b.r.source.roster.map(p=>({...p,playerId:p.playerId===owner?owner:'unrelated-B'}));
+  b.r.cards=[];b.r.effects=[];b.r.actorWitnesses=[];
+  const extra={pendingSources:[{seasonId:b.r.source.seasonId,rosterPlayerIds:b.r.source.roster.map(p=>p.playerId)}],
+    coverage:{ownBattles:2,ownGames:2,currentSources:2,pendingSources:1}};
+  const x=project([a,b],extra);assert.equal(x.coverage.complete,false);
+  const pairA=x.relationships.find(p=>p.otherPlayerId===other),pairB=x.relationships.find(p=>p.otherPlayerId==='unrelated-B');
+  assert.equal(pairA.tracks.RIVALRY.outgoing.upBank,1);assert.equal(pairA.tracks.RIVALRY.incoming.stage,null);
+  assert.equal(pairB.factualCurrentSourceGames,1);assert.equal(pairB.tracks.RIVALRY.outgoing.stage,null);
+  for(const rosterPlayerIds of [null,[owner,other]]){
+    const affected=project([a,b],{...extra,pendingSources:[{seasonId:'s1',rosterPlayerIds}]});
+    assert.equal(affected.relationships.find(p=>p.otherPlayerId===other).tracks.RIVALRY.outgoing.stage,null);
   }
 });
 
@@ -190,6 +224,13 @@ test('real source collector preserves quiet pairs on worker unavailability, reje
   f.rows.get('players/p1').membershipStatus='SUSPENDED';
   await assert.rejects(readMyHostedSocialProgression(input),e=>e.code==='permission-denied');
   await assert.rejects(getMyHostedSocialProgression.run({data:{}}),e=>e.code==='unauthenticated');
+});
+
+test('withdrawn collector source reports incomplete shared history without invoking the worker',async()=>{
+  const f=await hostedReady();f.rows.set(HOSTED_POLICY_PATH,approval());f.rows.get(f.sourcePath).state='WITHDRAWN';
+  const x=await readMyHostedSocialProgression({...f.input,env:{...f.input.env,...env},derive:async()=>{throw Error('must not run');}});
+  assert.equal(x.coverage.complete,false);assert.equal(x.coverage.currentSources,0);assert.deepEqual(x.relationships,[]);
+  assert.equal(x.coverage.pendingSources,1);
 });
 
 test('source or external approval changed during derivation aborts instead of returning cached private values',async()=>{

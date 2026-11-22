@@ -7,7 +7,7 @@ import {digest} from '../engines/nativeRecordingIntegration.js';
 import type {HistoricalChapter} from '../engines/socialV1History/history.js';
 import {bindSourceGrades} from '../integration/privateProgression.js';
 import {loadHostedSocialPolicy,hostedBinderCalibration} from '../integration/hostedSocialPolicy.js';
-import {projectHostedSocialProgression,fixedHostedOpportunity} from '../integration/hostedSocialProgression.js';
+import {projectHostedSocialProgression,fixedHostedOpportunity,type HostedPendingSource} from '../integration/hostedSocialProgression.js';
 import {collectMyCurrentBattleHistory} from './getMyPersonalityHistory.js';
 import {callVerifiedWorker} from '../services/nativeRecordingValidation.js';
 
@@ -27,7 +27,19 @@ export async function readMyHostedSocialProgression(input:Input){
     const policy=await loadHostedSocialPolicy(input.db,input.env);check();
     const current=await collectMyCurrentBattleHistory({...input,maxOwnGames:8,includeScheduleOrder:true});check();
     const binder=hostedBinderCalibration(policy.calibration),bound:ReturnType<typeof bindSourceGrades>[]=[],chapters:HistoricalChapter[]=[];
-    let pendingSources=current.pending.length;
+    const pendingSources:HostedPendingSource[]=[];
+    const validId=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(v);
+    for(const pending of current.pending){
+      // These documents already belong to the collector's fenced dependency
+      // set. A concurrent edit of this scope also invalidates its final fence.
+      const match=(await input.db.doc('matches/'+pending.battleId).get()).data();check();
+      const game=pending.gameId?(await input.db.doc('matches/'+pending.battleId+'/games/'+pending.gameId).get()).data():null;check();
+      const roster=game?.players;
+      pendingSources.push({seasonId:validId(match?.seasonId)?match.seasonId:null,
+        rosterPlayerIds:Array.isArray(roster)&&roster.length>=2&&roster.length<=8&&
+          roster.every(p=>validId(p?.playerId))&&new Set(roster.map(p=>p.playerId)).size===roster.length?
+          roster.map(p=>p.playerId):null});
+    }
     const context=new Map<string,{loaded:typeof current.loaded[number];witnesses:Record<string,any>[]} >();
     const artifact=async(meta:any)=>{
       check();
@@ -54,7 +66,7 @@ export async function readMyHostedSocialProgression(input:Input){
         raw=await (input.derive??((p,signal)=>callVerifiedWorker(input.env.REPLAY_WORKER_URL!,
           '/social-hosted-grade-v1',p,{signal})))(payload,controller.signal);
       }catch{
-        check();pendingSources++;
+        check();pendingSources.push({seasonId:source.seasonId,rosterPlayerIds:source.roster.map(p=>p.playerId)});
         // A verified READY source remains a factual pair even if derivation is
         // temporarily unavailable. Empty cards are never numerical evidence.
         bound.push({source,sourceMethodRevision:digest(Buffer.from('UNAVAILABLE:'+source.authorityRevision)),
@@ -66,8 +78,8 @@ export async function readMyHostedSocialProgression(input:Input){
       catch{throw new HttpsError('data-loss','Private social source method or actor binding did not match.');}
     }
     const response=projectHostedSocialProgression({owner:input.actor.playerId,inputs:bound,chapters,
-      calibration:policy.calibration,pending:pendingSources>0,
-      coverage:{...current.coverage,pendingSources},inputRevision:current.inputDigest,policyRevision:policy.revision,
+      calibration:policy.calibration,pendingSources,
+      coverage:{...current.coverage,pendingSources:pendingSources.length},inputRevision:current.inputDigest,policyRevision:policy.revision,
       opportunity:(b,s,claim)=>{const {loaded,witnesses}=context.get(b.source.authorityRevision)!;
         return fixedHostedOpportunity(b,loaded.statistics,s,loaded.match.format,claim,witnesses);}});
     check();

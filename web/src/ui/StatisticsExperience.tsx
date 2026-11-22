@@ -261,7 +261,8 @@ function HostedSocialProfile(props:ViewProps&{data:PlayerProfile}){
         </div>}
       </article>)}
       <h4>Relationships · Shared recorded history</h4>
-      {!value.relationships.length&&<p>No current shared recorded Battles.</p>}
+      {!value.coverage.complete&&<p>Shared history is incomplete — some recorded sources are unavailable. Refresh to try again.</p>}
+      {!value.relationships.length&&value.coverage.complete&&<p>No current shared recorded Battles.</p>}
       {value.relationships.map(pair=><article key={pair.otherPlayerId}>
         <button type="button" onClick={()=>props.openPlayer(pair.otherPlayerId)}>
           {snapshot.players.find(p=>p.playerId===pair.otherPlayerId)?.steamName??'League player'}</button>

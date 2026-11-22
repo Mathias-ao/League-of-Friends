@@ -70,10 +70,9 @@ export function parseHostedSocialProgression(raw:unknown,owner:string):HostedSoc
       if(!closed(r,['outgoing','incoming'])||!track(r.outgoing,name==='HOSTILITY')||!track(r.incoming,name==='HOSTILITY'))fail();
     }
   }
-  if(!x.coverage.complete&&[
-    ...REPUTATION_TRACKS.flatMap(t=>[x.reputation[t].career,...Object.values(x.reputation[t].bySeason)]),
-    ...x.relationships.flatMap(p=>RELATIONSHIP_TRACKS.flatMap(t=>[p.tracks[t].outgoing,p.tracks[t].incoming]))
-  ].some(t=>t.progression==='PRIVATE_PREVIEW'))fail();
+  // Incomplete overall coverage can coexist with a complete independent pair
+  // or Season. The server withholds only source-dependent track projections.
+  if(x.coverage.complete!==(x.coverage.pendingSources===0))fail();
   return x;
 }
 export function hostedSocialEnabled(env:Record<string,string|boolean|undefined>):boolean {

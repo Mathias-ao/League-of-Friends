@@ -165,7 +165,8 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   myHonoursPreview(){return this.call<import('../domain/privateHonoursPreview').PrivateHonoursPreview>('getMyHonoursPreview');}
   myGameplayPreview(){return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');}
   mySocialProgression(){return this.call<import('../domain/privateProgression').PrivateProgression>('getMySocialProgression');}
-  myHostedSocialProgression(){return this.call<import('../domain/hostedSocialProgression').HostedSocialProgression>('getMyHostedSocialProgression',{});}
+  async myHostedSocialProgression(){return (await httpsCallable<unknown,import('../domain/hostedSocialProgression').HostedSocialProgression>(
+    this.functions,'getMyHostedSocialProgression',{timeout:125_000})({})).data;}
   canReadMyHostedSocialProgression(){return hostedSocialEnabled(import.meta.env);}
   myGameplayCandidates(){return this.call<import('../domain/gameplayPreview').PrivateGameplayCandidates>('getMyGameplayCandidates');}
   playerChronicle(){return this.call<PlayerChronicleResponse>('getPlayerChronicle');}

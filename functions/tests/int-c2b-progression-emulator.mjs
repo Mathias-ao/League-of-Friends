@@ -102,6 +102,20 @@ const hostedRender=spawnSync(process.execPath,['--import','./tests/register-asse
  {cwd:resolve('web'),input:JSON.stringify(firstHosted),encoding:'utf8',timeout:30_000,maxBuffer:64*1024});
 assert.equal(hostedRender.status,0,'Genuine hosted DTO to mounted owner UI failed; private output withheld');
 assert.equal(JSON.parse(hostedRender.stdout).logoutClears,true);
+// Current collector -> real DTO parser -> mounted UI, with all own originals
+// temporarily withdrawn inside this isolated demo emulator only.
+const unavailableRefs=first.sources.map(s=>db.doc('matches/'+s.battleId+'/games/'+s.gameId+'/replaySources/'+s.sourceHash));
+const unavailableOriginals=await Promise.all(unavailableRefs.map(ref=>ref.get()));
+try{
+ await Promise.all(unavailableRefs.map(ref=>ref.update({state:'WITHDRAWN'})));
+ await read();const unavailable=hostedByOwner.get(owner);
+ assert.equal(unavailable.coverage.complete,false);assert.equal(unavailable.coverage.currentSources,0);
+ assert.deepEqual(unavailable.relationships,[]);
+ const rendered=spawnSync(process.execPath,['--import','./tests/register-assets.mjs','--import','tsx',
+  'tests/render-hosted-social.mjs','--incomplete'],{cwd:resolve('web'),input:JSON.stringify(unavailable),
+   encoding:'utf8',timeout:30_000,maxBuffer:64*1024});
+ assert.equal(rendered.status,0,rendered.stderr);assert.equal(JSON.parse(rendered.stdout).incompleteSharedHistory,true);
+}finally{await Promise.all(unavailableRefs.map((ref,i)=>ref.set(unavailableOriginals[i].data())));}
 // Exercise the NEW fixed HTTP route with genuine retained artifacts too. The
 // second local worker has staging metadata, but all data/credentials stay in
 // this explicit demo emulator. It proves no Cloud IAM or hosted browser fact.
@@ -154,7 +168,11 @@ if(quiet.coverage.currentSources){assert.ok(quiet.relationships.length,'A quiet 
 const f=fixtures[0],gr=db.doc('matches/'+f.matchId+'/games/'+f.gameId),game=(await gr.get()).data(),sr=gr.collection('replaySources').doc(game.activeReplayStatisticsId),source=(await sr.get()).data();
 await sr.update({state:'WITHDRAWN'});const withdrawn=await read();assert.equal(withdrawn.coverage.currentSources,3);assert.ok(withdrawn.history.projections.every(p=>p.currentStage===null));
 assert.equal(hostedByOwner.get(owner).coverage.complete,false);
-assert.ok(hostedByOwner.get(owner).relationships.every(p=>Object.values(p.tracks).every(t=>t.outgoing.stage===null&&t.incoming.stage===null)));
+for(const pair of hostedByOwner.get(owner).relationships){
+ if(pair.otherPlayerId===other)assert.ok(Object.values(pair.tracks).every(t=>t.outgoing.stage===null&&t.incoming.stage===null));
+ else assert.deepEqual(pair,firstHosted.relationships.find(p=>p.otherPlayerId===pair.otherPlayerId),
+  'A withdrawn 1v1 cannot suppress independent team pairs');
+}
 assert.ok(withdrawn.cards.every(c=>c.gameId!=='g1'||c.battleId!==f.matchId));await sr.set(source);
 await disputeCanonicalGameResult.run({auth:{uid:owner},data:{requestId:'c2b-dispute',matchId:f.matchId,gameId:f.gameId,category:'WRONG_RESULT',reason:'Isolated emulator correction test.'}});
 const disputed=await read();assert.ok(disputed.history.projections.every(p=>p.currentStage===null));

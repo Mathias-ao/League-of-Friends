@@ -18,7 +18,7 @@ function dto(owner='owner'):HostedSocialProgression{return {version:HOSTED_SOCIA
  factualCurrentSourceGames:1,tracks:{RIVALRY:{outgoing:measured(),incoming:pending()},
  HOSTILITY:{outgoing:pending(true),incoming:pending(true)},BOND:{outgoing:pending(),incoming:pending()}}}]};}
 
-test('strict private DTO rejects wrong owner, public/proof fields, unsupported or partial numbers',()=>{
+test('strict private DTO rejects wrong owner, public/proof fields, unsupported numbers or inconsistent coverage',()=>{
  assert.deepEqual(parseHostedSocialProgression(dto(),'owner'),dto());
  for(const change of [x=>x.ownerPlayerId='other',x=>(x as any).receipts=[],
   x=>(x.reputation.CHIVALRY.career as any).originalWitness='private',
@@ -28,10 +28,23 @@ test('strict private DTO rejects wrong owner, public/proof fields, unsupported o
   x=>(x.reputation as any).UNKNOWN={career:measured(),bySeason:{}}]){
   const x=dto();change(x);assert.throws(()=>parseHostedSocialProgression(x,'owner'));
  }
+ const partial=dto();partial.coverage.complete=false;partial.coverage.pendingSources=1;
+ assert.equal(parseHostedSocialProgression(partial,'owner').relationships[0].tracks.RIVALRY.outgoing.upBank,1,
+  'independent complete pairs may remain available when another source is missing');
  const enabled={VITE_AOF_HOSTED_SOCIAL_PRIVATE:'v1a',VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging'};
  assert.equal(hostedSocialEnabled(enabled),true);
  for(const change of [{VITE_AOF_HOSTED_SOCIAL_PRIVATE:undefined},{VITE_FIREBASE_PROJECT_ID:'production'},
   {VITE_USE_EMULATORS:'true'}])assert.equal(hostedSocialEnabled({...enabled,...change}),false);
+});
+
+test('incomplete empty shared history is qualified and remains refreshable',async()=>{
+ const app=await mountHostedSocial();try{
+  const x=dto();x.coverage.complete=false;x.coverage.pendingSources=1;x.relationships=[];
+  await app.complete(0,x);assert.match(app.body(),/Shared history is incomplete/);
+  assert.doesNotMatch(app.body(),/No current shared recorded Battles/);
+  await app.click();assert.equal(app.calls.length,2);await app.complete(1,{...dto(),relationships:[]});
+  assert.match(app.body(),/No current shared recorded Battles/);assert.doesNotMatch(app.body(),/Shared history is incomplete/);
+ }finally{await app.close();}
 });
 
 test('mounted owner consumes independent directed progression while unsupported tracks stay Pending/null',async()=>{
