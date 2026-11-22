@@ -4,6 +4,7 @@ import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/func
 import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/firestore';
 import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse,type NativeValidationCandidateResult,type NativeE2eReview,type NativeE2ePublishRequest,type NativeE2ePublicationResult,type NativeE2eEnvironmentStatus} from '../domain/league';
 import {assertRecordingUploadFile} from '../domain/recordingUploadPolicy';
+import {hostedSocialEnabled} from '../domain/hostedSocialProgression';
 import {privateHistoryEnabled} from '../domain/privateHistory';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
@@ -164,6 +165,8 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   myHonoursPreview(){return this.call<import('../domain/privateHonoursPreview').PrivateHonoursPreview>('getMyHonoursPreview');}
   myGameplayPreview(){return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');}
   mySocialProgression(){return this.call<import('../domain/privateProgression').PrivateProgression>('getMySocialProgression');}
+  myHostedSocialProgression(){return this.call<import('../domain/hostedSocialProgression').HostedSocialProgression>('getMyHostedSocialProgression',{});}
+  canReadMyHostedSocialProgression(){return hostedSocialEnabled(import.meta.env);}
   myGameplayCandidates(){return this.call<import('../domain/gameplayPreview').PrivateGameplayCandidates>('getMyGameplayCandidates');}
   playerChronicle(){return this.call<PlayerChronicleResponse>('getPlayerChronicle');}
   socialHistory(){return this.call<SocialHistoryResponse>('getSocialHistory');}

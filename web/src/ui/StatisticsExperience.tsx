@@ -8,6 +8,8 @@ import {
 } from '../domain/statisticsExperience';
 import {previewPlayerIdentity} from '../data/statisticsPreview';
 import type {LivePersonalityEvidence} from '../domain/privateHistory';
+import {parseHostedSocialProgression,REPUTATION_TRACKS,RELATIONSHIP_TRACKS,
+  type HostedSocialProgression,type PrivateSocialTrack} from '../domain/hostedSocialProgression';
 import {Avatar,Sigil} from './Primitives';
 import type {ViewProps} from './App';
 
@@ -183,6 +185,96 @@ function compactDate(value:string|null|undefined){
   return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));
 }
 
+function PrivateSocialValue({value}:{value:PrivateSocialTrack}){
+  if(value.progression==='PRIVATE_PREVIEW')return <>
+    <span>Preview stage {value.stage} · Bank {value.upBank}</span>
+    {value.reasonCodes.includes('INDEPENDENT_ACTIVITY_REQUIRED')&&<small>Awaiting independent activity from both players</small>}
+    <small>{value.sourceQualifiedBattles} source-qualified Battles · {value.sourceQualifiedGames} Games</small>
+  </>;
+  return <span>{value.reasonCodes.includes('NOT_YET_MEASURED')?'Not yet measured':
+    value.reasonCodes.includes('NO_QUALIFYING_RECORDED_ACTIVITY')?'Developing — no qualifying recorded activity':
+    'Pending — source evidence incomplete'}</span>;
+}
+
+/** Separate owner-private preview: never fills public career points or titles. */
+function HostedSocialProfile(props:ViewProps&{data:PlayerProfile}){
+  const {repository,snapshot,preview,data}=props,owner=data.player.playerId,viewer=snapshot.viewer?.playerId;
+  const [read,setRead]=useState<{uid:string;owner:string;data:HostedSocialProgression}|null>(null);
+  const [status,setStatus]=useState<'LOADING'|'CURRENT'|'UNAVAILABLE'>('LOADING');
+  const reload=useRef<()=>void>(()=>{});
+  const enabled=!preview&&repository.mode==='live'&&snapshot.membership==='ACTIVE'&&owner===viewer&&
+    repository.canReadMyHostedSocialProgression?.()===true&&!!repository.myHostedSocialProgression;
+  // Bootstrap returns new arrays even when nothing changed. Do not continually
+  // cancel an owner read during the existing bounded standings refresh window.
+  const sourceSignal=JSON.stringify(snapshot.matches.filter(m=>m.participants.some(p=>p.playerId===owner)));
+  useEffect(()=>{
+    setRead(null);setStatus('UNAVAILABLE');
+    const uid=repository.currentAuthUid?.();
+    if(!enabled||!uid)return;
+    let alive=true,inFlight=false,generation=0,cancelWait=()=>{};
+    const current=(id:number)=>alive&&id===generation&&repository.currentAuthUid?.()===uid;
+    const invalidate=()=>{alive=false;generation++;cancelWait();setRead(null);setStatus('UNAVAILABLE');};
+    const load=async()=>{
+      if(!alive||inFlight)return;
+      if(repository.currentAuthUid?.()!==uid){invalidate();return;}
+      inFlight=true;const id=++generation;setRead(null);setStatus('LOADING');
+      try{
+        for(let attempt=0;current(id);attempt++){
+          try{
+            const result=await repository.myHostedSocialProgression!();
+            if(!current(id))return;
+            const valid=parseHostedSocialProgression(result,owner);
+            setRead({uid,owner,data:valid});setStatus('CURRENT');return;
+          }catch(error){
+            if(!current(id))return;
+            if((error as {code?:string}|null)?.code==='functions/aborted'&&attempt<2){
+              await new Promise<void>(resolve=>{const timer=setTimeout(resolve,1000*(attempt+1));
+                cancelWait=()=>{clearTimeout(timer);resolve();};});
+              continue;
+            }
+            setRead(null);setStatus('UNAVAILABLE');return;
+          }
+        }
+      }finally{inFlight=false;}
+    };
+    reload.current=()=>void load();
+    const stop=repository.onAuthChange(()=>{if(repository.currentAuthUid?.()!==uid)invalidate();});
+    const wake=()=>{if(document.visibilityState==='visible')void load();};
+    window.addEventListener('focus',wake);document.addEventListener('visibilitychange',wake);
+    void load();
+    return()=>{alive=false;generation++;cancelWait();stop();reload.current=()=>{};
+      window.removeEventListener('focus',wake);document.removeEventListener('visibilitychange',wake);};
+  },[repository,enabled,owner,viewer,sourceSignal]);
+  if(!enabled)return null;
+  const value=read?.owner===owner&&read.uid===repository.currentAuthUid?.()?read.data:null;
+  const meanings={GALLANTRY:'Response to pressure',CHIVALRY:'Protective participation',CRUELTY:'Cruelty',
+    RIVALRY:'Competitive engagement',HOSTILITY:'Hostility',BOND:'Directed help'};
+  return <section className="identity-panel private-social-progression" aria-label="Private social progression">
+    <h3>Private Reputation and Relationships</h3><p>Private pilot · source-supported conduct</p>
+    <button type="button" disabled={status==='LOADING'} onClick={()=>reload.current()}>Refresh private progression</button>
+    {!value?<p role="status">{status==='LOADING'?'Reading current social sources…':'Unavailable — refresh'}</p>:<>
+      <h4>Reputation · Career</h4>
+      {REPUTATION_TRACKS.map(track=><article key={track}><strong>{meanings[track]}</strong>
+        <PrivateSocialValue value={value.reputation[track].career}/>
+        {snapshot.season&&value.reputation[track].bySeason[snapshot.season.seasonId]&&<div>
+          <span>{snapshot.season.name}</span><PrivateSocialValue value={value.reputation[track].bySeason[snapshot.season.seasonId]}/>
+        </div>}
+      </article>)}
+      <h4>Relationships · Shared recorded history</h4>
+      {!value.relationships.length&&<p>No current shared recorded Battles.</p>}
+      {value.relationships.map(pair=><article key={pair.otherPlayerId}>
+        <button type="button" onClick={()=>props.openPlayer(pair.otherPlayerId)}>
+          {snapshot.players.find(p=>p.playerId===pair.otherPlayerId)?.steamName??'League player'}</button>
+        <p>{pair.factualCurrentSourceBattles} factual Battles · {pair.factualCurrentSourceGames} Games</p>
+        {RELATIONSHIP_TRACKS.map(track=><div key={track}><strong>{meanings[track]}</strong>
+          <div><span>Your activity → this player</span><PrivateSocialValue value={pair.tracks[track].outgoing}/></div>
+          <div><span>This player’s activity → you</span><PrivateSocialValue value={pair.tracks[track].incoming}/></div>
+        </div>)}
+      </article>)}
+    </>}
+  </section>;
+}
+
 function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronicleOnLoad?:boolean}){
   const {data,snapshot,preview,openMatch}=props;
   const [chronicleOpen,setChronicleOpen]=useState(!!props.openChronicleOnLoad);
@@ -262,6 +354,7 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronic
     <ProfileDeedsBar data={data} preview={preview}/>
 
       <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory} identityOverride={identity}/>
+      <HostedSocialProfile {...props}/>
 
       <section className="profile-battle-record">
         <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span></div></div>
