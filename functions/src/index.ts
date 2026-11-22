@@ -103,6 +103,8 @@ export {getMyHonoursPreview} from './queries/getMyHonoursPreview.js';
 export {getMyPrivateChronicle} from './queries/getMyPrivateChronicle.js';
 export {getMyGameplayPreview,getMyGameplayCandidates} from './queries/getMyGameplayPreview.js';
 export {getMySocialProgression} from './queries/getMySocialProgression.js';
+// Default-off owner-private pilot; requires separately authorized runtime policy.
+export {getMyHostedSocialProgression} from './queries/getMyHostedSocialProgression.js';
 
 // #169: emulator-only authenticated optional Chronicle interactions; production disabled.
 export {offerChronicleInvitation,actOnChronicleInvitation,getMyChronicleInvitations,

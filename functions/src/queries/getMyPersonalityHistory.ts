@@ -121,11 +121,12 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
     [...checkpoints].map(([path,p])=>[path,p.token]),loaded.map(s=>s.source)]);
   // One read-only transaction fences the entire enumerated current set, including
   // insertions/deletions, all pending-source authorities, access and loaded sources.
-  const revalidate=async()=>{await db.runTransaction(async(tx:any)=>{
+  const revalidate=async(additionalCheck?:(tx:any)=>Promise<void>)=>{await db.runTransaction(async(tx:any)=>{
     if(await access(tx)!==accessToken||matchToken(await matches(tx))!==initialToken)throw changed();
     for(const q of gameSets)if(gamesToken((await read(q.ref,tx)).docs)!==q.token)throw changed();
     for(const p of checkpoints.values())if(p.tokenOf((await read(p.ref,tx)).data()??null)!==p.token)throw changed();
     for(const s of loaded)await s.revalidate(tx);
+    await additionalCheck?.(tx);
     budget();
   });};
   await revalidate();

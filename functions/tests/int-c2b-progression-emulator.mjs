@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {spawnSync} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import {getStorage} from 'firebase-admin/storage';
 import {Timestamp} from 'firebase-admin/firestore';
 import {db} from '../lib/config/firebase.js';
@@ -12,7 +12,12 @@ import {uploadReplay} from '../lib/commands/statistics/uploadReplay.js';
 import {getMySocialProgression,readMySocialProgression} from '../lib/queries/getMySocialProgression.js';
 import {disputeCanonicalGameResult} from '../lib/commands/results/disputeCanonicalGameResult.js';
 import {adminResolveCanonicalResultDispute} from '../lib/commands/results/adminResolveCanonicalResultDispute.js';
-import {digest} from '../lib/engines/nativeRecordingIntegration.js';
+import {digest,bindingDigest} from '../lib/engines/nativeRecordingIntegration.js';
+import {requireLeaguePlayer} from '../lib/auth/authorization.js';
+import {callVerifiedWorker} from '../lib/services/nativeRecordingValidation.js';
+import {readMyHostedSocialProgression,getMyHostedSocialProgression} from '../lib/queries/getMyHostedSocialProgression.js';
+import {HOSTED_POLICY_PATH,HOSTED_POLICY_VERSION,HOSTED_POLICY_SHA256} from '../lib/integration/hostedSocialPolicy.js';
+import {controlledHostedApproval} from './support/hosted-social-approval-fixture.mjs';
 import {statisticsBindingKey} from '../lib/engines/statisticsExperience.js';
 import {validateSharedRecord} from '../lib/domain/socialV1Validation.js';
 const project='demo-aof-native-player';
@@ -66,8 +71,68 @@ for(const f of [...fixtures].reverse()){
   recordedEvents:{...source.recordedEvents,path:'events.jsonl.gz'},statistics:{...source.statistics,path:'statistics.direct.json.gz'},retention:{sourceDeletionAuthorized:false,canonicalReplayProduced:false}}));
  console.log(JSON.stringify({phase:'genuine-upload-ready',fixture:f.name}));
 }
-const read=(id=owner)=>getMySocialProgression.run({auth:{uid:id},data:{}});
+// Isolated emulator approval only; no real runtime policy is approved/written.
+const methodCases=spawnSync('python',['replay-tools/tests/hosted_social_source_cases.py',
+ ...['1v1_t90-deak','2v2_arabia','4v4_arabia'].map(name=>resolve('.replay-lab/native-player',name))],
+ {encoding:'utf8',timeout:240_000,maxBuffer:64*1024});
+assert.equal(methodCases.status,0,'Retained original method positive/controlled-ablation checks failed; private output withheld');
+const genuineMethodCases=JSON.parse(methodCases.stdout);assert.equal(genuineMethodCases.genuineRetainedCases,3);
+await db.doc(HOSTED_POLICY_PATH).set(controlledHostedApproval());
+const hostedEnv=()=>({...process.env,GCLOUD_PROJECT:'age-of-friends-staging',GOOGLE_CLOUD_PROJECT:'age-of-friends-staging',AOF_HOSTED_SOCIAL_PRIVATE:'v1a'});
+const hostedByOwner=new Map();
+const read=async(id=owner)=>{
+ const actor=await requireLeaguePlayer({auth:{uid:id}}),derived=new Map();
+ const result=await readMySocialProgression({db,bucket,actor,request:{},env:process.env,derive:async payload=>{
+  const raw=await callVerifiedWorker(process.env.REPLAY_WORKER_URL,'/social-e2e-progression-v1',payload);
+  derived.set(bindingDigest(payload),raw);return raw;
+ }});
+ // Reuse the exact genuine worker response at the isolated network boundary,
+ // while rerunning actual complete-source collection, binding and policy fences.
+ const hosted=await readMyHostedSocialProgression({db,bucket,actor,request:{},env:hostedEnv(),derive:async payload=>{
+  const raw=derived.get(bindingDigest(payload));assert.ok(raw,'Exact current genuine derivation required');return raw;
+ }});
+ hostedByOwner.set(id,hosted);return result;
+};
 const first=await read();console.log(JSON.stringify({phase:'private-owner-history',cards:first.cards.length,projections:first.history.projections.length}));assert.equal(first.coverage.currentSources,4);assert.equal(first.coverage.ownBattles,3);
+const firstHosted=hostedByOwner.get(owner);
+assert.ok(firstHosted.relationships.some(p=>p.tracks.RIVALRY.outgoing.upBank!==null));
+assert.ok(firstHosted.relationships.every(p=>p.tracks.HOSTILITY.outgoing.stage===null&&p.tracks.HOSTILITY.incoming.stage===null));
+assert.equal(firstHosted.reputation.CRUELTY.career.stage,null);
+const hostedRender=spawnSync(process.execPath,['--import','./tests/register-assets.mjs','--import','tsx','tests/render-hosted-social.mjs'],
+ {cwd:resolve('web'),input:JSON.stringify(firstHosted),encoding:'utf8',timeout:30_000,maxBuffer:64*1024});
+assert.equal(hostedRender.status,0,'Genuine hosted DTO to mounted owner UI failed; private output withheld');
+assert.equal(JSON.parse(hostedRender.stdout).logoutClears,true);
+// Current collector -> real DTO parser -> mounted UI, with all own originals
+// temporarily withdrawn inside this isolated demo emulator only.
+const unavailableRefs=first.sources.map(s=>db.doc('matches/'+s.battleId+'/games/'+s.gameId+'/replaySources/'+s.sourceHash));
+const unavailableOriginals=await Promise.all(unavailableRefs.map(ref=>ref.get()));
+try{
+ await Promise.all(unavailableRefs.map(ref=>ref.update({state:'WITHDRAWN'})));
+ await read();const unavailable=hostedByOwner.get(owner);
+ assert.equal(unavailable.coverage.complete,false);assert.equal(unavailable.coverage.currentSources,0);
+ assert.deepEqual(unavailable.relationships,[]);
+ const rendered=spawnSync(process.execPath,['--import','./tests/register-assets.mjs','--import','tsx',
+  'tests/render-hosted-social.mjs','--incomplete'],{cwd:resolve('web'),input:JSON.stringify(unavailable),
+   encoding:'utf8',timeout:30_000,maxBuffer:64*1024});
+ assert.equal(rendered.status,0,rendered.stderr);assert.equal(JSON.parse(rendered.stdout).incompleteSharedHistory,true);
+}finally{await Promise.all(unavailableRefs.map((ref,i)=>ref.set(unavailableOriginals[i].data())));}
+// Exercise the NEW fixed HTTP route with genuine retained artifacts too. The
+// second local worker has staging metadata, but all data/credentials stay in
+// this explicit demo emulator. It proves no Cloud IAM or hosted browser fact.
+const port=18766,hostedUrl='http://127.0.0.1:'+port;
+const hostedWorker=spawn('python',['replay-tools/upload_worker.py'],{env:{...process.env,
+ GCLOUD_PROJECT:'age-of-friends-staging',GOOGLE_CLOUD_PROJECT:'age-of-friends-staging',
+ AOF_REPLAY_WORKER_PORT:String(port),AOF_SOCIAL_HOSTED_GRADE_V1_ENDPOINT:'1'},stdio:'ignore'});
+const restoreEnv={...process.env};
+try{
+ let healthy=false;for(let i=0;i<100;i++){try{healthy=(await fetch(hostedUrl+'/health')).ok;}catch{}if(healthy)break;await new Promise(r=>setTimeout(r,100));}
+ assert.ok(healthy,'Isolated hosted-route test worker must start');
+ Object.assign(process.env,hostedEnv(),{REPLAY_WORKER_URL:hostedUrl});
+ const throughCallable=await getMyHostedSocialProgression.run({auth:{uid:owner},data:{}});
+ assert.deepEqual(throughCallable,firstHosted,'Fixed HTTP route and real callable must match original worker derivation');
+ await assert.rejects(getMyHostedSocialProgression.run({data:{}}),e=>e.code==='unauthenticated');
+ await assert.rejects(getMyHostedSocialProgression.run({auth:{uid:owner},data:{playerId:other}}),e=>e.code==='invalid-argument');
+}finally{for(const k of Object.keys(process.env))if(!(k in restoreEnv))delete process.env[k];Object.assign(process.env,restoreEnv);hostedWorker.kill();}
 assert.ok(first.scheduleOrders.every(o=>o.status==='ORDERED'));assert.equal(first.scheduleOrders.find(o=>o.battleId===battleIds[0]).order.battle,1);
 assert.equal(new Set(first.sources.map(s=>s.gameGuid)).size,4);
 assert.ok(first.cards.some(c=>c.decision==='SOURCE_ADMITTED'),'Real original source admission required');
@@ -90,17 +155,32 @@ for(const id of fixtures[3].roster.map(p=>p.playerId)){
  const r=id===owner?first:await read(id);console.log(JSON.stringify({phase:'independent-private-actor',actorIndex:fixtures[3].roster.findIndex(p=>p.playerId===id)}));for(const c of r.cards.filter(c=>c.decision==='SOURCE_ADMITTED'))allTrackCounts[c.track]=(allTrackCounts[c.track]??0)+1;
  assert.ok(r.claims.every(c=>c.subject.system==='REPUTATION'?c.subject.playerId===id:c.subject.fromPlayerId===id));assert.deepEqual(r.history.receipts,[]);
 }
+for(const track of ['GALLANTRY','CHIVALRY'])assert.ok([...hostedByOwner.values()].some(h=>h.reputation[track].career.progression==='PRIVATE_PREVIEW'),
+ 'Genuine fixed-team '+track+' must pass hosted policy and sole evaluator');
+assert.ok([...hostedByOwner.values()].some(h=>h.relationships.some(p=>p.tracks.BOND.outgoing.progression==='PRIVATE_PREVIEW')),
+ 'Genuine recipient-specific Bond must pass hosted policy');
 for(const track of ['RIVALRY','BOND','CHIVALRY','GALLANTRY'])assert.ok(allTrackCounts[track]>0,'Authentic source-backed '+track+' required');
 assert.equal(allTrackCounts.CRUELTY,undefined);assert.equal(allTrackCounts.HOSTILITY,undefined);
 const ffa=await read(fixtures[4].roster[0].playerId);assert.ok(ffa.cards.every(c=>c.decision==='PENDING'));assert.equal(ffa.history.projections.length,0);assert.ok(ffa.cards.length>0||ffa.pendingSources.length===1,'Unqualified FFA method must remain explicitly Pending');
+const quiet=hostedByOwner.get(fixtures[4].roster[0].playerId);
+if(quiet.coverage.currentSources){assert.ok(quiet.relationships.length,'A quiet current source retains factual pairs');
+ assert.ok(quiet.relationships.every(p=>Object.values(p.tracks).every(t=>t.outgoing.stage===null&&t.incoming.stage===null)));}
 const f=fixtures[0],gr=db.doc('matches/'+f.matchId+'/games/'+f.gameId),game=(await gr.get()).data(),sr=gr.collection('replaySources').doc(game.activeReplayStatisticsId),source=(await sr.get()).data();
 await sr.update({state:'WITHDRAWN'});const withdrawn=await read();assert.equal(withdrawn.coverage.currentSources,3);assert.ok(withdrawn.history.projections.every(p=>p.currentStage===null));
+assert.equal(hostedByOwner.get(owner).coverage.complete,false);
+for(const pair of hostedByOwner.get(owner).relationships){
+ if(pair.otherPlayerId===other)assert.ok(Object.values(pair.tracks).every(t=>t.outgoing.stage===null&&t.incoming.stage===null));
+ else assert.deepEqual(pair,firstHosted.relationships.find(p=>p.otherPlayerId===pair.otherPlayerId),
+  'A withdrawn 1v1 cannot suppress independent team pairs');
+}
 assert.ok(withdrawn.cards.every(c=>c.gameId!=='g1'||c.battleId!==f.matchId));await sr.set(source);
 await disputeCanonicalGameResult.run({auth:{uid:owner},data:{requestId:'c2b-dispute',matchId:f.matchId,gameId:f.gameId,category:'WRONG_RESULT',reason:'Isolated emulator correction test.'}});
 const disputed=await read();assert.ok(disputed.history.projections.every(p=>p.currentStage===null));
 const winner=game.canonicalResult.winningPlayerIds.includes(owner)?other:owner;
 await adminResolveCanonicalResultDispute.run({auth:{uid:admin},data:{requestId:'c2b-resolve',matchId:f.matchId,gameId:f.gameId,disputeId:'c2b-dispute',resolution:'CORRECT',reason:'Isolated authoritative result correction.',expectedSourceHash:game.activeReplayStatisticsId,winnerTeam:f.roster.find(p=>p.playerId===winner).team}});
 const corrected=await read();assert.notEqual(corrected.inputDigest,first.inputDigest);assert.equal(corrected.cards.length,first.cards.length);
+assert.notEqual(hostedByOwner.get(owner).revision,firstHosted.revision);
+assert.deepEqual(hostedByOwner.get(owner).relationships,firstHosted.relationships,'Result correction must rebind, not add conduct credit');
 assert.deepEqual(corrected.history.projections,first.history.projections,'Result-only correction preserves conduct, recomputes source bindings');
 assert.ok(corrected.cards.every(c=>corrected.sources.some(s=>s.authorityRevision===c.sourceAuthority)));
 const correctedSource=(await sr.get()).data(),mapping=correctedSource.playerMapping.map((p,i,a)=>({...p,playerId:a[(i+1)%a.length].playerId})),current=(await gr.get()).data();
@@ -115,6 +195,8 @@ for(const forbidden of ['sourceName','replayBase64','native-replay-evidence','au
 const testedCommit=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'});
 assert.equal(testedCommit.status,0);assert.match(testedCommit.stdout.trim(),/^[a-f0-9]{40}$/);
 const report={version:first.version,testedCommit:testedCommit.stdout.trim(),genuineRecordings:5,formats:4,authenticatedUsers:fixtures[3].roster.length+3,
+ hostedOwnerRead:true,newFixedWorkerRoute:true,hostedDtoMountedProfile:true,compiledPrivatePolicySha256:HOSTED_POLICY_SHA256,
+ genuineMethodCases,
  twoGameBattle:true,reverseUploadOrder:true,genuineSourceAdmittedByTrack:allTrackCounts,ownerStages:first.history.projections.map(p=>({subject:p.subject,stage:p.currentStage,upBank:p.upBank,downBank:p.downBank})),
  retryIdempotent:true,withdrawal:true,resultCorrection:true,playerRemapping:true,scheduleCorrection:true,concurrentScheduleFence:true,privateOnly:true,officialReceipts:0,privateSourceToUI:true,authChangeClearsHistory:true,
  pending:['CRUELTY','HOSTILITY','INDEPENDENT_WEAKENING','STRICT_TREACHERY'],controlledLeagueFixtureNotActualHistoricalLeagueSeries:true};

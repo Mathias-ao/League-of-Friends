@@ -253,6 +253,8 @@ export interface LeagueRepository {
   myHonoursPreview?():Promise<import('./privateHonoursPreview').PrivateHonoursPreview>;
   myGameplayPreview?():Promise<import('./gameplayPreview').PrivateGameplayPreview>;
   mySocialProgression?():Promise<import('./privateProgression').PrivateProgression>;
+  myHostedSocialProgression?():Promise<import('./hostedSocialProgression').HostedSocialProgression>;
+  canReadMyHostedSocialProgression?():boolean;
   myGameplayCandidates?():Promise<import('./gameplayPreview').PrivateGameplayCandidates>;
   warRoom?():Promise<import('./warRoom').WarRoomData>;
   createWarRoomChallenge?(challengedPlayerId:string):Promise<void>;

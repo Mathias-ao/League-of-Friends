@@ -50,6 +50,8 @@ interface NativeWorkerTransport {
   fetcher?:typeof fetch;
   getIdToken?:(audience:string)=>Promise<string>;
   diagnosticTraceId?:string;
+  /** Internal caller's remaining read budget, never supplied by callable input. */
+  signal?:AbortSignal;
 }
 
 /** Native HTTP contract is explicit and bounded; legacy /process is never retried here.
@@ -63,7 +65,12 @@ export async function callNativeWorker(
 }
 
 /** Shared authenticated transport; route is server-selected, never a client URL. */
-export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'/social-evidence-v1a'|'/social-grade-preview-v1'|'/social-grade-candidates-preview-v1'|'/social-e2e-progression-v1',payload:Bag,transport:NativeWorkerTransport={}):Promise<Bag>{
+export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'/social-evidence-v1a'|'/social-grade-preview-v1'|'/social-grade-candidates-preview-v1'|'/social-e2e-progression-v1'|'/social-hosted-grade-v1',payload:Bag,transport:NativeWorkerTransport={}):Promise<Bag>{
+  if(route==='/social-hosted-grade-v1'&&!transport.signal)throw fail('Hosted social read budget is required.');
+  if(route==='/social-hosted-grade-v1'&&(process.env.AOF_HOSTED_SOCIAL_PRIVATE!=='v1a'||
+    [process.env.GCLOUD_PROJECT,process.env.GOOGLE_CLOUD_PROJECT].filter(Boolean).some(p=>p!=='age-of-friends-staging')||
+    ![process.env.GCLOUD_PROJECT,process.env.GOOGLE_CLOUD_PROJECT].some(Boolean)))
+    throw fail('Hosted social worker route is disabled.');
   const target=url.replace(/\/+$/,'');
   const parsed=new URL(target),loopback=['127.0.0.1','localhost'].includes(parsed.hostname);
   if(parsed.username||parsed.password||(!loopback&&parsed.protocol!=='https:')||
@@ -84,14 +91,16 @@ export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'
     if(!identity)throw fail('Native Cloud Run identity token was not available.');
     headers['X-Serverless-Authorization']='Bearer '+identity;
   }
+  transport.signal?.throwIfAborted();
   const response=await (transport.fetcher??fetch)(target+route,{method:'POST',redirect:'error',
-    headers,body:JSON.stringify(payload),signal:AbortSignal.timeout(240_000)});
+    headers,body:JSON.stringify(payload),signal:route==='/social-hosted-grade-v1'?transport.signal:transport.signal?
+      AbortSignal.any([transport.signal,AbortSignal.timeout(240_000)]):AbortSignal.timeout(240_000)});
   if(!response.ok){await response.body?.cancel();throw fail('Native worker rejected the recording; legacy was not invoked.');}
   if(!response.body)throw fail('Missing native worker response.');
   const reader=response.body.getReader(),chunks:Buffer[]=[];let total=0;
   try{while(true){const next=await reader.read();if(next.done)break;total+=next.value.length;
     if(total>(route==='/social-evidence-v1a'?1:70)*1024*1024)throw fail('Worker response exceeds transport limit.');chunks.push(Buffer.from(next.value));}}
-  finally{await reader.cancel();}
+  finally{if(route==='/social-hosted-grade-v1')void reader.cancel().catch(()=>{});else await reader.cancel();}
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
