@@ -1,3 +1,5 @@
+import {loadPracticalPersonalityRuntime,createPracticalPersonalityPolicy} from '../engines/personalityV1/practicalPolicy.js';
+import {PRACTICAL_POLICY,PRACTICAL_POLICY_SHA256} from '../engines/personalityV1/practicalPolicyResource.js';
 import {deriveSocialScheduleOrders,scheduleTimestampMillis,type ScheduleBattle} from '../integration/socialScheduleOrder.js';
 import {getStorage} from 'firebase-admin/storage';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
@@ -144,17 +146,19 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
   const current=await collectMyCurrentBattleHistory({...input,includeScheduleOrder:true});
   // Only the authenticated complete current-source reader may supply history
   // and the actor. Entire-set revision fencing remains INT-B's responsibility.
+  const runtime=await loadPracticalPersonalityRuntime(input.db,input.env);
+  const approved=runtime?createPracticalPersonalityPolicy(input.actor.playerId,current.loaded,runtime.sourceReviews):null;
   const pilot=privatePersonalityE2EEnabled(input.env)?
     privatePersonalityPolicy(input.actor.playerId,current.loaded,
       input.personalityTaxonomy??PRIVATE_SOURCE_TAXONOMY):null;
   // The source-current V1 adapter can report real per-axis raw coverage
   // without silently converting decoded map IDs, civs or starting ages into
   // reviewed source opportunity classes. Hosted calibration remains absent.
-  const admittedContext=pilot?.context ??
+  const admittedContext=approved?.context??pilot?.context ??
     ((item:typeof current.battles[number]['sources'][number])=>
       admitPersonalityContext(item,input.actor.playerId,null).behaviorContext);
   const candidate=projectPrivatePersonalityHistory(input.actor.playerId,current.battles,
-    current.inputDigest,admittedContext,pilot?.calibration??null,current.scheduleOrders);
+    current.inputDigest,admittedContext,approved?.calibration??pilot?.calibration??null,current.scheduleOrders);
   // Count the complete set of *current accepted source Games* for the linked
   // actor. Never count Games from a withdrawn source or a duplicate POV, and
   // never make three Games equal three independent Battle samples.
@@ -164,9 +168,17 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
   // current Battles; the engine still counts distinct Games separately for
   // the earlier 3-Game milestone. No hosted calibration is installed.
   const livePersonality=projectLivePersonalityEvidence(input.actor.playerId,
-    current.battles,unlock,candidate.battleFeatures,candidate.personalityProfile);
-  const personality={...candidate,unlock,
-    personalityProfile:gatePersonalityProfileByGames(candidate.personalityProfile,unlock)};
+    current.battles,unlock,candidate.battleFeatures,candidate.personalityProfile,!!approved);
+  const gameGated=gatePersonalityProfileByGames(candidate.personalityProfile,unlock);
+  // The legacy private candidate remains provisional. Under the approved path,
+  // BOTH presentation gates apply to every returned numerical profile field.
+  const sliders=approved?gameGated.sliders.map(slider=>{
+    const axis=livePersonality.axes.find(axis=>axis.axis===slider.axis)!;
+    return {...slider,value:axis.value,status:axis.status==='READY'?'READY' as const:'DEVELOPING' as const,
+      coverage:{...slider.coverage,missing:axis.reasons}};
+  }):gameGated.sliders;
+  const personality={...candidate,unlock,personalityProfile:approved?
+    {...gameGated,sliders,projectionRevision:bindingDigest([gameGated.projectionRevision,livePersonality,runtime!.revision])}:gameGated};
   const response={version:'AOF_INT_B_PRIVATE_HISTORY_1' as const,contract:SOCIAL_V1_CONTRACT,
     visibility:'OWNER_ONLY' as const,ownerPlayerId:input.actor.playerId,inputDigest:current.inputDigest,
     status:current.pending.length?'PENDING_INPUTS' as const:'CURRENT_INPUTS' as const,
@@ -174,11 +186,14 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
       measuredIndependentBattles:new Set(personality.battleFeatures.filter(f=>f.numerator!==null)
         .map(f=>f.battleId)).size},
     sources:current.loaded.map(s=>s.source),pending:current.pending,personality,livePersonality,
+    numericalPolicy:{policyVersion:PRACTICAL_POLICY.policyVersion,configurationVersion:PRACTICAL_POLICY.configurationVersion,
+      sha256:PRACTICAL_POLICY_SHA256,approvalRef:PRACTICAL_POLICY.approvalRef,
+      runtime:runtime?'AUTHORIZED' as const:'DISABLED' as const,runtimeRevision:runtime?.revision??null},
     social:{status:'PENDING' as const,reason:'SOURCE_QUALIFIER_AND_APPROVED_RULES_PENDING'},
     effects:{officialWrites:false as const,receiptPublication:false as const,entitlementGrants:false as const}};
   if(Buffer.byteLength(JSON.stringify(response))>INT_B_LIMITS.maxResponseBytes)
     throw new HttpsError('resource-exhausted','Private history exceeds its complete-response budget.');
-  await current.revalidate();
+  await current.revalidate(runtime?.revalidate);
   return response;
 }
 export const getMyPersonalityHistory=onCall({...callableOptions,timeoutSeconds:120,memory:'1GiB'},async request=>{

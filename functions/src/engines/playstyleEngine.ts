@@ -121,7 +121,9 @@ export function validatePlaystyleRuleSet(ruleSet: PlaystyleRuleSet): PlaystyleRu
 function evaluateSlider(
   slider: PlaystyleSliderRule,
   metrics: Map<string, NormalizedPlaystyleMetric>,
+  preservePrecision=false,
 ): PlaystyleSliderResult {
+  const precision=preservePrecision?(value:number)=>value:rounded;
   const components: PlaystyleComponentResult[] = [];
   const missingMetricIds: string[] = [];
 
@@ -136,11 +138,11 @@ function evaluateSlider(
     const directedValue = rule.direction === "RIGHT" ? metric.value : 100 - metric.value;
     components.push({
       metricId: metric.metricId,
-      normalizedValue: rounded(metric.value),
-      directedValue: rounded(directedValue),
+      normalizedValue: precision(metric.value),
+      directedValue: precision(directedValue),
       samples: metric.samples,
       weight: rule.weight,
-      contribution: rounded(directedValue * rule.weight),
+      contribution: precision(directedValue * rule.weight),
       sourceVersion: metric.sourceVersion,
     });
   }
@@ -156,7 +158,7 @@ function evaluateSlider(
     leftLabel: slider.leftLabel,
     rightLabel: slider.rightLabel,
     status: ready ? "READY" : "INSUFFICIENT_DATA",
-    value: ready && totalWeight > 0 ? rounded(weighted / totalWeight) : null,
+    value: ready && totalWeight > 0 ? precision(weighted / totalWeight) : null,
     availableComponents: components.length,
     requiredComponents: slider.requireAllComponents ? slider.components.length : slider.minimumAvailableComponents,
     components,
@@ -169,6 +171,7 @@ export function evaluatePlaystyleProfile(
   scope: "CAREER" | "RECENT",
   metricsInput: NormalizedPlaystyleMetric[],
   ruleSetInput: PlaystyleRuleSet | null,
+  options?:{preservePrecision?:boolean},
 ): PlaystyleProfile {
   if (!ruleSetInput) {
     return {
@@ -190,7 +193,7 @@ export function evaluatePlaystyleProfile(
   }
 
   const sliders = ruleSet.sliders
-    .map((slider) => evaluateSlider(slider, metrics))
+    .map((slider) => evaluateSlider(slider, metrics,options?.preservePrecision===true))
     .sort((left, right) => left.sliderId.localeCompare(right.sliderId));
   const readyCount = sliders.filter((slider) => slider.status === "READY").length;
 

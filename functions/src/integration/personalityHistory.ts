@@ -1,3 +1,4 @@
+import {practicalPolicyApproval} from '../engines/personalityV1/practicalPolicy.js';
 import type {BattleFeature,SourceSnapshot} from '../domain/socialV1.js';
 import {validateSharedRecord} from '../domain/socialV1Validation.js';
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
@@ -119,5 +120,5 @@ export function projectPrivatePersonalityHistory(ownerPlayerId:string,battles:Pe
     projectionRevision:bindingDigest([candidate.personalityProfile.projectionRevision,inputDigest,battleFeatures])});
   return {publication:candidate.publication,battleFeatures,personalityProfile,
     contextAdmission:contextAdmission?'SOURCE_QUALIFIED' as const:'PENDING' as const,
-    calibration:calibration?'PROPOSED' as const:'UNCONFIGURED' as const};
+    calibration:practicalPolicyApproval(calibration)?'APPROVED' as const:calibration?'PROPOSED' as const:'UNCONFIGURED' as const};
 }

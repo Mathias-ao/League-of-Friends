@@ -1,3 +1,4 @@
+import {practicalPolicyApproval} from './practicalPolicy.js';
 import {createHash} from 'node:crypto';
 import {
   SOCIAL_V1_CONTRACT, battleIdForMatch, assertRecordInvariants,
@@ -73,7 +74,8 @@ export function toPrivateShared1Personality(
     throw new Error('PERSONALITY_SHARED1_FIVE_AXES_REQUIRED');
   }
   // Never trust an external APPROVED label. Only Sol's registry can authorize.
-  const policy:PolicyRef={
+  const approved=practicalPolicyApproval(calibration);
+  const policy:PolicyRef=approved??{
     policyVersion, configurationVersion:calibration?.configurationVersion??'PERSONALITY_UNCONFIGURED_V1',
     status:'PROPOSED', approvalRef:null,
   };
@@ -104,7 +106,7 @@ export function toPrivateShared1Personality(
       if(normalized!==null && !Number.isFinite(normalized))throw new Error('PERSONALITY_SHARED1_ANCHOR_INVALID');
       const reasons=feature.reason?[feature.reason]:[];
       if(!anchor)reasons.push('CONTEXT_NORMALIZATION_ANCHOR_UNAVAILABLE');
-      const limited:string[]=['PRIVATE_CALIBRATION_NOT_AUTHORIZED'];
+      const limited:string[]=approved?[]:['PRIVATE_CALIBRATION_NOT_AUTHORIZED'];
       if(axis==='GUERRILLA_FRONTLINE')limited.push('INFERRED_MILITARY_COMMAND_POSTURE_NOT_CONFIRMED_COMBAT');
       if(battle.gameIds.length>1)limited.push('MULTI_GAME_BATTLE_AGGREGATED_ONCE');
       const bf:BattleFeature={
@@ -131,7 +133,7 @@ export function toPrivateShared1Personality(
     // Required nonempty context ID, sentinel is explicitly NOT a comparable group.
     const contextKey=v.contextKey??'PERSONALITY_CONTEXT_NOT_COMPARABLE';
     const gaps=unique([...v.reasons,...(v.contextKey?[]:['NO_COMPARABLE_CONTEXT'])]);
-    const limits:string[]=['PRIVATE_PREVIEW_UNAPPROVED_RULES'];
+    const limits:string[]=approved?[]:['PRIVATE_PREVIEW_UNAPPROVED_RULES'];
     if(axis==='GUERRILLA_FRONTLINE')limits.push('MILITARY_COMMAND_POSTURE_INFERENCE_ONLY');
     if(v.status==='CONTEXT_LIMITED')limits.push('INCOMPATIBLE_CONTEXT_GROUPS');
     return {

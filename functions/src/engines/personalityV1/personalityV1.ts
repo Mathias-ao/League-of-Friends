@@ -122,6 +122,12 @@ export interface PersonalityCalibration {
   anchors: Record<string, Partial<Record<PersonalityAxis, CalibrationAnchor>>>;
   /** Command episode support requirement, never silently set to one. */
   minimumIndependentCommandEpisodes: number;
+  /** Only the approved server policy adapter supplies exact-source reviews.
+   * Legacy/demo configurations retain their existing behavior. */
+  practical?:{policySha256:string;minimumStrategicPlacements:4;minimumExpansionUnits:6;
+    sources:Record<string,{sourceHash:string;mappingDigest:string;sourceBound:boolean;replaySlots:number[];sourceReason:string|null;
+      costCatalogVerified:boolean;spatialQualified:boolean;strategicBuildingIds:number[];
+      militaryFamilies:string[];commandAttributionVerified:boolean;expansionSitesVerified:boolean}>};
 }
 export interface AxisPreview {
   axis: PersonalityAxis; left: string; right: string;
@@ -216,32 +222,46 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const total = num(obj(commitment.resourcesCommitted).total);
   const mil = num(spend.resources);
   const coverage = obj(commitment.coverage);
+  const review=config?.practical?.sources[game.sourceAuthority];
+  const reviewed=!!review&&review.sourceHash===game.sourceHash&&review.mappingDigest===game.mappingDigest&&review.sourceBound;
+  const approved=!!config?.practical;
+  if(approved&&!reviewed){
+    for(const axis of AXES)result[axis]=missing(axis,semanticOf(axis),review?.sourceReason??'CURRENT_SOURCE_REVIEW_UNAVAILABLE');
+    return {battleId:game.battleId,gameId:game.gameId,gameNumber:game.gameNumber,playerId:game.playerId,
+      sourceHash:game.sourceHash,authorityRevision:game.authorityRevision,sourceAuthority:game.sourceAuthority,
+      contextKey:keyOf(c),eligible:true,features:result};
+  }
   // A: same full-game positive-cost BUILD/queue/research request accounting, not actual spending
   // or a fabricated 20-minute economy denominator.
-  result.BOOMER_AGGRESSOR = total !== null && mil !== null &&
+  result.BOOMER_AGGRESSOR = (!approved||(reviewed&&review!.costCatalogVerified))&&total !== null && mil !== null &&
     coverage.unpricedRequestCommands === 0 && spend.unpricedMilitaryCommandAmount === 0 &&
     sourceVersion(commitment.modelVersion,MODELS.economy) &&
     sourceVersion(military.modelVersion,MODELS.military)
     ? feature('BOOMER_AGGRESSOR','RECORDED_COMMITMENT',mil,total,[],
         [String(commitment.modelVersion ?? ''),String(military.modelVersion ?? '')])
-    : missing('BOOMER_AGGRESSOR','RECORDED_COMMITMENT','FULL_GAME_COST_COVERAGE_UNAVAILABLE');
+    : missing('BOOMER_AGGRESSOR','RECORDED_COMMITMENT',approved&&(!reviewed||!review!.costCatalogVerified)?'EXACT_SOURCE_COST_CATALOG_UNVERIFIED':'FULL_GAME_COST_COVERAGE_UNAVAILABLE');
 
   // B: explicit owner-reviewed strategic building taxonomy required. Source event ids are
   // deduplicated; home/forward sectors only, ambiguous mid-map is excluded.
-  const sectors = obj(mp.buildingSectors), strategic = config?.strategicBuildingIds ?? [];
+  const sectors = obj(mp.buildingSectors), strategic = approved?(reviewed?review!.strategicBuildingIds:[]):config?.strategicBuildingIds ?? [];
   const placed = list(sectors.evidence), classified = placed.filter(x =>
     strategic.includes(x.buildingId) && ['home','forward'].includes(x.sector) && id(x.sourceEventId));
   const unique = [...new Map(classified.map(x => [x.sourceEventId,x])).values()];
   const unknown = placed.length !== sectors.classifiedPlacementCount ||
+    (approved&&classified.some(x=>!Number.isSafeInteger(x.atMs)||x.atMs<0||x.atMs>c.observedUntilMs||
+      num(obj(x.position).x)===null||num(obj(x.position).y)===null))||
     placed.some(x => strategic.includes(x.buildingId) &&
     (!['home','forward','midMap'].includes(x.sector) || !id(x.sourceEventId)));
-  result.CAUTIOUS_BOLD = config && strategic.length && !unknown &&
+  const conflictingPlacements=approved&&classified.some(x=>classified.some(y=>x.sourceEventId===y.sourceEventId&&
+    (x.buildingId!==y.buildingId||x.sector!==y.sector)));
+  result.CAUTIOUS_BOLD = config && strategic.length && !unknown && !conflictingPlacements &&
+    (!approved||(reviewed&&review!.spatialQualified&&unique.length>=config.practical!.minimumStrategicPlacements))&&
     obj(mp.homeAnchor).method === 'initial_town_center' &&
     num(sectors.classifiedPlacementCount) !== null && sourceVersion(mp.modelVersion,MODELS.map)
     ? feature('CAUTIOUS_BOLD','PLACEMENT_POSTURE',
         unique.filter(x => x.sector === 'forward').length,unique.length,ids(unique),
         [String(mp.modelVersion ?? '')])
-    : missing('CAUTIOUS_BOLD','PLACEMENT_POSTURE','STRATEGIC_PLACEMENT_TAXONOMY_OR_ANCHOR_UNAVAILABLE');
+    : missing('CAUTIOUS_BOLD','PLACEMENT_POSTURE',approved&&strategic.length&&reviewed&&review!.spatialQualified&&unique.length<4?'INSUFFICIENT_STRATEGIC_PLACEMENT_OBSERVATIONS':'STRATEGIC_PLACEMENT_TAXONOMY_OR_ANCHOR_UNAVAILABLE');
 
   // C: *command* episodes, never confirmed raids/attacks. Both detectors are
   // command-derived; overlap groups sharing source events count once.
@@ -249,12 +269,17 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   const raidRows = list(obj(engagements.raidEvidence).initiatedEpisodes);
   const battleRows = list(obj(engagements.engagementEvidence).battles);
   const slot = String(p.playerId);
+  const validEpisode=(row:Json,sources:string[])=>!approved||
+    (Number.isSafeInteger(row.startedAtMs)&&Number.isSafeInteger(row.endedAtMs)&&
+     row.startedAtMs>=0&&row.endedAtMs>=row.startedAtMs&&row.endedAtMs<=c.observedUntilMs&&
+     sources.length>0&&new Set(sources).size===sources.length);
   const candidates: {kind:'ECONOMY'|'CONTESTED'; sources:string[]}[] = [];
   if ((c.format !== 'FFA' || c.dynamicDiplomacyQualified) && sourceVersion(engagements.engagementModelVersion,MODELS.engagement)) {
     for (const row of raidRows) {
       const sourceIds = Array.isArray(row.sourceEventIds) ? row.sourceEventIds.filter((v:unknown):v is string=>!!id(v)) : [];
       if (sourceVersion(row.modelVersion,MODELS.raid) && row.attackerPlayerId === p.playerId &&
           num(row.victimPlayerId) !== null &&
+          (!approved||(row.victimPlayerId!==p.playerId&&Number.isSafeInteger(row.victimPlayerId)&&review!.replaySlots.includes(row.victimPlayerId)&&id(row.raidId)))&&validEpisode(row,sourceIds)&&
           sourceIds.length && num(row.startedAtMs) !== null && row.startedAtMs <= c.observedUntilMs &&
           (num(row.endedAtMs) === null || row.endedAtMs <= c.observedUntilMs)) candidates.push({kind:'ECONOMY',sources:sourceIds});
     }
@@ -262,7 +287,9 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
       const ownIds = obj(row.contributionSourceEventIdsByPlayer)[slot];
       const sourceIds = Array.isArray(ownIds) ? ownIds.filter((v:unknown):v is string=>!!id(v)) : [];
       const classRow = obj(obj(row.unitClassEvidenceByPlayer)[slot]);
-      if (row.baseOwnerPlayerId === null && sourceIds.length &&
+      if (row.baseOwnerPlayerId === null && sourceIds.length &&validEpisode(row,sourceIds)&&
+          (!approved||(id(row.battleId)&&Array.isArray(row.participantPlayerIds)&&row.participantPlayerIds.includes(p.playerId)&&row.participantPlayerIds.every((v:unknown)=>review!.replaySlots.includes(v as number))&&
+            row.participantPlayerIds.some((v:unknown)=>Number.isSafeInteger(v)&&v!==p.playerId)))&&
           num(row.startedAtMs) !== null && row.startedAtMs <= c.observedUntilMs &&
           num(row.endedAtMs) !== null && row.endedAtMs <= c.observedUntilMs &&
           num(classRow.militaryClassInstances) !== null && classRow.militaryClassInstances > 0) {
@@ -277,7 +304,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     for (const x of row.sources) seen.add(x);
     episodes.push(row);
   }
-  result.GUERRILLA_FRONTLINE = config && game.episodeChronologyComplete === true &&
+  result.GUERRILLA_FRONTLINE = config && (!approved||(reviewed&&review!.commandAttributionVerified))&&game.episodeChronologyComplete === true &&
     !overlapAmbiguous && sourceVersion(engagements.engagementModelVersion,MODELS.engagement) &&
     (c.format !== 'FFA' || c.dynamicDiplomacyQualified) &&
     episodes.length >= config.minimumIndependentCommandEpisodes
@@ -289,7 +316,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   // D: family breadth of positive military *queue requests*, with civilization/map
   // opportunity counted from separately reviewed taxonomy (not observed selection).
   const composition = obj(military.composition), requests = obj(military.militaryUnitsTrained);
-  const allowed = c?.civilizationOpportunityKey ?
+  const allowed = approved?(reviewed?review!.militaryFamilies:[]):c?.civilizationOpportunityKey ?
     (config?.availableMilitaryFamilies[c.civilizationOpportunityKey] ?? []) : [];
   const amounts = allowed.map(k => num(composition[k]));
   const included = amounts.every(x => x !== null) ? amounts.reduce<number>((s,x) => s+(x as number),0) : 0;
@@ -299,7 +326,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
   },0)/Math.log(allowed.length) : null;
   const entropyFraction = entropy === null ? null : Math.max(0, Math.min(1, entropy));
   // No unknown/unclassified positive queues or artificial zero-sample specialization.
-  result.SPECIALIST_IMPROVISER = allowed.length > 1 && entropyFraction !== null &&
+  result.SPECIALIST_IMPROVISER = allowed.length > 1 && new Set(allowed).size===allowed.length && entropyFraction !== null &&
     totalRequests === included && num(requests.unknownAmountCommands) === 0 && sourceVersion(military.modelVersion,MODELS.military)
     ? feature('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION',entropyFraction,1,[],
         [String(military.modelVersion ?? '')])
@@ -313,10 +340,16 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     remote !== null && home !== null && sites !== null && sites <= remote &&
     list(zones.zones).length === sites &&
     list(zones.zones).reduce((sum,z) => sum+list(z.buildings).length,0) === remote;
-  result.COMPACT_EXPANSIVE = supported ?
+  const zoneRows=list(zones.zones),zoneIds=zoneRows.map(z=>id(z.zoneId));
+  const remoteIds=zoneRows.flatMap(z=>ids(list(z.buildings)));
+  const uniqueSites=!approved||(zoneIds.every(Boolean)&&new Set(zoneIds).size===zoneIds.length&&
+    remoteIds.length===remote&&new Set(remoteIds).size===remoteIds.length&&zoneRows.every(z=>list(z.buildings).length>0));
+  const expansionReviewed=!approved||(reviewed&&review!.spatialQualified&&review!.expansionSitesVerified);
+  result.COMPACT_EXPANSIVE = supported && uniqueSites && expansionReviewed &&
+    (!approved||sites!+home!>=config!.practical!.minimumExpansionUnits) ?
     feature('COMPACT_EXPANSIVE','EXPANSION_PLACEMENT',sites!,sites!+home!,
       list(zones.zones).flatMap(z => ids(list(z.buildings))),[String(mp.modelVersion ?? '')])
-    : missing('COMPACT_EXPANSIVE','EXPANSION_PLACEMENT','EXPANSION_ZONES_OR_HOME_ANCHOR_UNAVAILABLE');
+    : missing('COMPACT_EXPANSIVE','EXPANSION_PLACEMENT',approved&&supported&&uniqueSites&&expansionReviewed&&sites!+home!<6?'INSUFFICIENT_EXPANSION_PLACEMENT_UNITS':'EXPANSION_ZONES_OR_HOME_ANCHOR_UNAVAILABLE');
   return {battleId:game.battleId,gameId:game.gameId,gameNumber:game.gameNumber,playerId:game.playerId,
     sourceHash:game.sourceHash,authorityRevision:game.authorityRevision,sourceAuthority:game.sourceAuthority,
     contextKey:keyOf(c),eligible:true,features:result};
@@ -475,7 +508,7 @@ export function projectPersonalityPreview(playerId: string,games: AuthorizedGame
       }]};
       value=evaluatePlaystyleProfile(playerId,'CAREER',
         [{metricId:axis,value:blended,samples:admitted.length,sourceVersion:PERSONALITY_FEATURE_VERSION}],
-        ruleSet).sliders[0].value;
+        ruleSet,{preservePrecision:!!config?.practical}).sliders[0].value;
     }else if(mixed)reasonSet.add('INCOMPATIBLE_CONTEXT_COMPARISON_GROUPS');
     else if(!config)reasonSet.add('CALIBRATION_NOT_CONFIGURED');
     else reasonSet.add('INSUFFICIENT_DISTINCT_BATTLES');

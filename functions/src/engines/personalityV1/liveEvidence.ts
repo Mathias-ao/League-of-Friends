@@ -10,7 +10,7 @@ export const LIVE_PERSONALITY_EVIDENCE_VERSION='AOF_PERSONALITY_LIVE_EVIDENCE_V1
 export const LIVE_PERSONALITY_MINIMUM_QUALIFIED_BATTLES=3 as const;
 export type LivePersonalityAxis={
   axis:PersonalityAxis;status:'DEVELOPING'|'CALIBRATION_PENDING'|'READY';
-  value:number|null;measuredBattles:number;reasons:string[];
+  value:number|null;measuredBattles:number;comparableBattles:number;reasons:string[];
 };
 export type LivePersonalityEvidence={
   version:typeof LIVE_PERSONALITY_EVIDENCE_VERSION;
@@ -89,18 +89,22 @@ export function projectLivePersonalityEvidence(
     const sourceMissing=features.filter(f=>f.playerId===ownerPlayerId&&f.featureId===axis&&
       qualified.has(f.battleId)).flatMap(f=>f.coverage.missing);
     const candidate=profile.sliders.find(s=>s.axis===axis);
-    const ready=canShow&&calibrated&&measuredBattles>=2&&
+    const comparableBattles=candidate&&candidate.contextKey!=='PERSONALITY_CONTEXT_NOT_COMPARABLE'&&
+      Number.isSafeInteger(candidate.independentBattles)?candidate.independentBattles:0;
+    const ready=canShow&&calibrated&&measuredBattles>=2&&comparableBattles>=2&&comparableBattles<=measuredBattles&&
       candidate?.status==='READY'&&valid(candidate.value);
     const reasons=ready?[]:distinct([
       ...(!canShow?[unlock.status==='LOCKED'?
         'THREE_SOURCE_QUALIFIED_GAMES_REQUIRED':'THREE_QUALIFIED_BATTLES_REQUIRED']:[]),
       ...(measuredBattles<2?['AXIS_REQUIRES_TWO_INDEPENDENT_MEASURED_BATTLES']:[]),
+      ...(comparableBattles<2?['AXIS_REQUIRES_TWO_COMPARABLE_BATTLES']:[]),
+      ...(candidate?.coverage?.missing??[]),
       ...(measuredBattles<2?sourceMissing.filter(x=>x!=='CONTEXT_NORMALIZATION_ANCHOR_UNAVAILABLE'):[]),
       ...(!calibrated?['APPROVED_HOSTED_CALIBRATION_REQUIRED']:[]),
     ]);
     return {axis,status:ready?'READY' as const:
       measuredBattles>=2&&!calibrated?'CALIBRATION_PENDING' as const:'DEVELOPING' as const,
-      value:ready?candidate!.value:null,measuredBattles,reasons};
+      value:ready?candidate!.value:null,measuredBattles,comparableBattles,reasons};
   });
   const status=canShow
     ?axes.some(a=>a.status==='READY')?'READY' as const
