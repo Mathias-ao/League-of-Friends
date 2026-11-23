@@ -6,7 +6,7 @@ import {EXPERIENCE_VERSION} from '../lib/engines/statisticsExperience.js';
 import {getLeagueBootstrap} from '../lib/queries/getLeagueBootstrap.js';
 
 // Public aliases and controlled fixtures only. No real endpoint/token/IAM probe.
-const env={GCLOUD_PROJECT:'age-of-friends-staging',AOF_STATISTICS_GATEWAY:'staging-v1',
+const env={GCLOUD_PROJECT:'age-of-friends-staging-eu',AOF_STATISTICS_GATEWAY:'staging-v1',
   AOF_STATISTICS_GATEWAY_TARGET_URI:'https://statistics-fixture.example.run.app'};
 const dataset=(extra={})=>({version:EXPERIENCE_VERSION,games:[],unavailableGames:0,...extra});
 const data={operation:'STATISTICS_READ_V1',scope:{seasonId:'season-fixture'}};
@@ -88,6 +88,9 @@ test('server gate is default-off, staging-only and never enabled by cloud emulat
   setup();
   for(const changed of [
     {AOF_STATISTICS_GATEWAY:undefined},{AOF_STATISTICS_GATEWAY:'1'},
+    {GCLOUD_PROJECT:'age-of-friends-staging'},
+    {GCLOUD_PROJECT:'age-of-friends-staging-eu-extra'},
+    {GOOGLE_CLOUD_PROJECT:'age-of-friends-staging'},
     {GCLOUD_PROJECT:'production-fixture'},{GCLOUD_PROJECT:'demo-fixture',FUNCTIONS_EMULATOR:'true'},
     {FUNCTIONS_EMULATOR:'true'},{GOOGLE_CLOUD_PROJECT:'production-fixture'},{GCLOUD_PROJECT:undefined},
   ]){const h=harness({env:{...env,...changed}});await assert.rejects(h.run(),code('failed-precondition'));assert.deepEqual(h.counts(),[0,0]);}
@@ -206,4 +209,15 @@ test('success and failure clear both timers instead of later aborting another re
   assert.ok(scheduled.mock.calls.every(call=>clearedHandles.includes(call.result)));
   t.mock.timers.tick(100_000);await flush();
   assert.deepEqual(await harness().run(),dataset());
+});
+
+
+test('EU staging exact project aliases agree; a single GOOGLE_CLOUD_PROJECT is also supported',async()=>{
+ setup();
+ for(const projectEnv of [
+  {GCLOUD_PROJECT:'age-of-friends-staging-eu',GOOGLE_CLOUD_PROJECT:'age-of-friends-staging-eu'},
+  {GCLOUD_PROJECT:undefined,GOOGLE_CLOUD_PROJECT:'age-of-friends-staging-eu'},
+ ]){
+  const h=harness({env:{...env,...projectEnv}});assert.deepEqual(await h.run(),dataset());assert.deepEqual(h.counts(),[1,1]);
+ }
 });

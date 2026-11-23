@@ -8,7 +8,8 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const staging='age-of-friends-staging';
+const staging='age-of-friends-staging-eu';
+const webAppId=/^1:[0-9]+:web:[a-f0-9]+$/;
 export function parseViteConfig(contents){
   const values={};
   for(const [i,raw] of contents.split(/\r?\n/).entries()){
@@ -24,7 +25,7 @@ export function parseViteConfig(contents){
   }
   return values;
 }
-export function checkStagingWebConfig(env,{forManualE2e=false}={}){
+export function checkStagingWebConfig(env,{forManualE2e=false,approvedAppId}={}){
   const errors=[];
   const requireExact=(key,value)=>{
     if(env[key]!==value)errors.push(key+' must be exactly '+value);
@@ -35,8 +36,12 @@ export function checkStagingWebConfig(env,{forManualE2e=false}={}){
   requireExact('VITE_USE_EMULATORS','false');
   if(!env.VITE_FIREBASE_API_KEY||/^(?:replace|todo|changeme|test|placeholder)/i.test(env.VITE_FIREBASE_API_KEY))
     errors.push('VITE_FIREBASE_API_KEY must be the approved staging web public API key');
-  if(!env.VITE_FIREBASE_APP_ID||/^(?:replace|todo|changeme|test|placeholder)/i.test(env.VITE_FIREBASE_APP_ID))
-    errors.push('VITE_FIREBASE_APP_ID must be the approved staging web app ID');
+  // App IDs do not encode their project ID. Match an independently approved
+  // private pin; syntax alone cannot prove which Firebase project owns an app.
+  if(!webAppId.test(approvedAppId??''))
+    errors.push('AOF_STAGING_APPROVED_WEB_APP_ID must pin the owner-approved EU staging web app');
+  if(!webAppId.test(env.VITE_FIREBASE_APP_ID??'')||env.VITE_FIREBASE_APP_ID!==approvedAppId)
+    errors.push('VITE_FIREBASE_APP_ID must match the owner-approved EU staging web app ID');
   if(!/^[a-f0-9]{40}$/.test(env.VITE_AOF_COMMIT_SHA??''))
     errors.push('VITE_AOF_COMMIT_SHA must pin the reviewed 40-hex Git commit');
   if(!['true','false'].includes(env.VITE_AOF_STAGING_E2E))
@@ -63,17 +68,19 @@ function selfTest(){
     VITE_USE_EMULATORS:'false',VITE_AOF_STAGING_E2E:'false',
     VITE_AOF_COMMIT_SHA:'a'.repeat(40)
   };
-  assert.equal(checkStagingWebConfig(config).ok,true);
-  assert.equal(checkStagingWebConfig(config,{forManualE2e:true}).ok,false);
-  assert.equal(checkStagingWebConfig({...config,VITE_AOF_STAGING_E2E:'true'},{forManualE2e:true}).ok,true);
-  assert.equal(checkStagingWebConfig({...config,VITE_AOF_STAGING_E2E:'true'}).ok,false);
+  assert.equal(checkStagingWebConfig(config,{approvedAppId:config.VITE_FIREBASE_APP_ID}).ok,true);
+  assert.equal(checkStagingWebConfig(config,{approvedAppId:config.VITE_FIREBASE_APP_ID,forManualE2e:true}).ok,false);
+  assert.equal(checkStagingWebConfig({...config,VITE_AOF_STAGING_E2E:'true'},{approvedAppId:config.VITE_FIREBASE_APP_ID,forManualE2e:true}).ok,true);
+  assert.equal(checkStagingWebConfig({...config,VITE_AOF_STAGING_E2E:'true'},{approvedAppId:config.VITE_FIREBASE_APP_ID}).ok,false);
   for(const bad of [
+    {VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging'},
+    {VITE_FIREBASE_APP_ID:'1:9999:web:deadbeef'},
     {VITE_FIREBASE_PROJECT_ID:'league-of-friends-cc274'},
     {VITE_FIREBASE_PROJECT_ID:'league-of-freinds'},
     {VITE_USE_EMULATORS:'true'}, {VITE_AOF_COMMIT_SHA:'bad'},
     {VITE_FIREBASE_AUTH_DOMAIN:'league-of-friends-cc274.firebaseapp.com'},
     {VITE_FIREBASE_REGION:'us-central1'}
-  ])assert.equal(checkStagingWebConfig({...config,...bad}).ok,false);
+  ])assert.equal(checkStagingWebConfig({...config,...bad},{approvedAppId:config.VITE_FIREBASE_APP_ID}).ok,false);
   assert.deepEqual(parseViteConfig('VITE_AOF_STAGING_E2E=false\n# comment'),{VITE_AOF_STAGING_E2E:'false'});
   assert.throws(()=>parseViteConfig('VITE_AOF_STAGING_E2E=false\nVITE_AOF_STAGING_E2E=true'));
   console.log('PASS: offline staging Firebase web build audit refuses production and activation confusion');
@@ -86,7 +93,8 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   }else{
     try {
       const config=parseViteConfig(readFileSync(resolve(process.argv[2]),'utf8'));
-      const result=checkStagingWebConfig(config,{forManualE2e:process.argv.includes('--for-manual-e2e')});
+      const result=checkStagingWebConfig(config,{forManualE2e:process.argv.includes('--for-manual-e2e'),
+        approvedAppId:process.env.AOF_STAGING_APPROVED_WEB_APP_ID});
       console.log(JSON.stringify(result,null,2));
       if(!result.ok)process.exitCode=1;
     }catch(e){console.error('NO-GO: staging web env is absent or invalid; contents are not printed.');process.exitCode=1;}

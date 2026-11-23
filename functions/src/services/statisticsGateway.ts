@@ -37,7 +37,7 @@ function targetFrom(env:NodeJS.ProcessEnv):string {
   const projects=[env.GCLOUD_PROJECT,env.GOOGLE_CLOUD_PROJECT].filter(Boolean);
   // FUNCTIONS_EMULATOR cannot turn a cloud workload into a test environment.
   if(env.AOF_STATISTICS_GATEWAY!=='staging-v1'||!projects.length||
-    projects.some(project=>project!=='age-of-friends-staging')||env.FUNCTIONS_EMULATOR==='true')
+    projects.some(project=>project!=='age-of-friends-staging-eu')||env.FUNCTIONS_EMULATOR==='true')
     throw new HttpsError('failed-precondition','Statistics gateway is disabled.');
   const target=env.AOF_STATISTICS_GATEWAY_TARGET_URI;
   try {

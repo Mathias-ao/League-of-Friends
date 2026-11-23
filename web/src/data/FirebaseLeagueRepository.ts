@@ -176,7 +176,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   activeNativeBattleRecord(query:ActiveNativeBattleRecordQuery){return this.call<ActiveNativeBattleRecordResult>('getActiveNativeBattleRecord',query);}
   statisticsExperience(scope:import('../domain/statistics').StatisticsScope){
     const gateway=import.meta.env.VITE_AOF_STATISTICS_GATEWAY==='staging-v1'&&
-      import.meta.env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'&&
+      import.meta.env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging-eu'&&
       import.meta.env.VITE_USE_EMULATORS!=='true';
     return this.call<import('../domain/statistics').StatisticsDataset>(gateway?'getLeagueBootstrap':'getStatisticsExperience',
       gateway?{operation:'STATISTICS_READ_V1',scope}:scope);

@@ -16,7 +16,7 @@ const create=(env:Record<string,string|undefined>)=>{
   repository.call=(name:string,data:unknown)=>{calls.push({name,data});return Promise.resolve({games:[]});};
   return {repository,calls};
 };
-const enabled={VITE_AOF_STATISTICS_GATEWAY:'staging-v1',VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging'};
+const enabled={VITE_AOF_STATISTICS_GATEWAY:'staging-v1',VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging-eu'};
 
 test('explicit staging gateway flag routes each unchanged scope through the closed bootstrap operation',async()=>{
   for(const scope of [{seasonId:'s'},{eventId:'e'},{matchId:'m'}]){
@@ -28,6 +28,8 @@ test('explicit staging gateway flag routes each unchanged scope through the clos
 test('default, production, preview and emulator keep the direct Statistics callable',async()=>{
   for(const env of [{},{...enabled,VITE_AOF_STATISTICS_GATEWAY:undefined},
     {...enabled,VITE_AOF_STATISTICS_GATEWAY:'true'},
+    {...enabled,VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging'},
+    {...enabled,VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging-eu-extra'},
     {...enabled,VITE_FIREBASE_PROJECT_ID:'production-fixture'},
     {...enabled,VITE_FIREBASE_PROJECT_ID:'preview-fixture'},
     {...enabled,VITE_USE_EMULATORS:'true'},
