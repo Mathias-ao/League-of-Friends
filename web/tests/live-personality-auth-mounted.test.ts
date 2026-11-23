@@ -23,7 +23,7 @@ function response(playerId:string,battles=4):PrivatePersonalityHistory{
     calibration:'NOT_APPROVED',
     axes:AXES.map((axis,i)=>({
       axis,status:i===0?'CALIBRATION_PENDING':'DEVELOPING',
-      value:null,measuredBattles:i===0?battles:0,
+      value:null,measuredBattles:i===0?battles:0,comparableBattles:i===0?battles:0,
       reasons:i===0?['APPROVED_HOSTED_CALIBRATION_REQUIRED']:
         ['CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE']
     }))
@@ -85,9 +85,11 @@ function mounted(options:{enabled?:boolean;initialUid?:string|null;
   const emit=async(newUid:string|null)=>{
     await act(async()=>{uid=newUid;for(const callback of [...listeners])callback();});
   };
-  const complete=async(index:number,playerId='owner',battles=4)=>{
+  const complete=async(index:number,playerId='owner',battles=4,numeric=false)=>{
     assert.ok(calls[index],`Missing authenticated owner request ${index}`);
-    await act(async()=>calls[index].resolve(response(playerId,battles)));
+    const result=response(playerId,battles);if(numeric){result.livePersonality!.calibration='APPROVED';
+      Object.assign(result.livePersonality!.axes[0],{status:'READY',value:37.48290863890615,reasons:[]});}
+    await act(async()=>calls[index].resolve(result));
   };
   const fail=async(index:number)=>{
     assert.ok(calls[index]);await act(async()=>calls[index].reject(new Error('Source corrected')));
@@ -108,7 +110,7 @@ test('Sol P1 reproduction: initial unchanged Firebase user notification does NOT
     assert.match(app.body(),/Reading current recordings/);
     await app.complete(0);
     assert.match(app.body(),/4 independently measured Battles/);
-    assert.match(app.body(),/Calibration pending/);
+    assert.match(app.body(),/Developing/);
     assert.doesNotMatch(app.body(),/Source-qualified Personality pending/);
     // Subsequent unchanged-user delivery is also not a logout or refetch.
     await app.emit('firebase-owner');
@@ -217,4 +219,18 @@ test('unmount invalidates pending owner promise and unsubscribes the observer',a
   assert.equal(app.activeListeners(),0);
   assert.ok(app.unsubscribed()>=1);
   await app.complete(0);
+});
+
+
+test('approved numeric owner tendency renders then retracts on logout; stale account delivery cannot restore it',async()=>{
+ const app=mounted();try{
+  await app.render();await app.complete(0,'owner',4,true);
+  assert.match(app.body(),/37 \/ 100/);assert.match(app.body(),/Early tendency \/ based on 4 comparable Battles/);
+  assert.match(app.body(),/Share of recorded positive-cost resource requests/);
+  await app.emit(null);assert.doesNotMatch(app.body(),/37 \/ 100|Early tendency/);
+ }finally{await app.close();}
+ const switched=mounted({initialNotificationUid:'other-uid'});try{
+  await switched.render();await switched.complete(0,'owner',4,true);
+  assert.doesNotMatch(switched.body(),/37 \/ 100|Early tendency/);
+ }finally{await switched.close();}
 });

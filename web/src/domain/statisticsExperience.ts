@@ -47,11 +47,11 @@ export interface EventStatisticsPresentation {
 }
 
 export const PLAYER_PERSONALITY_SLIDERS=[
-  {id:'boomer-aggressor',left:'Boomer',right:'Aggressor',question:'Do they invest early in economic development or military pressure?'},
-  {id:'cautious-bold',left:'Cautious',right:'Bold',question:'Do they secure home territory or establish themselves toward the enemy with little defence?'},
-  {id:'guerrilla-frontline',left:'Guerrilla',right:'Frontline Fighter',question:'Do they prefer raids and disruption or direct sustained engagements?'},
-  {id:'specialist-improviser',left:'Specialist',right:'Improviser',question:'Do they concentrate on a narrow plan or composition, or use a broader range of tools?'},
-  {id:'compact-expansive',left:'Compact',right:'Expansive',question:'Do they keep infrastructure concentrated or spread economically across the map?'}
+  {id:'boomer-aggressor',left:'Boomer',right:'Aggressor',question:'Share of recorded positive-cost resource requests committed to military choices.'},
+  {id:'cautious-bold',left:'Cautious',right:'Bold',question:'Share of qualified strategic building placements made forward rather than at home.'},
+  {id:'guerrilla-frontline',left:'Guerrilla',right:'Frontline Fighter',question:'Share of attributable military orders in contested episodes rather than economy-directed raid episodes.'},
+  {id:'specialist-improviser',left:'Specialist',right:'Improviser',question:'Breadth of recorded military queue choices relative to verified available families.'},
+  {id:'compact-expansive',left:'Compact',right:'Expansive',question:'Distinct remote economic placement clusters relative to those clusters and home placements.'}
 ] as const;
 
 export type PlayerPersonalitySliderId=typeof PLAYER_PERSONALITY_SLIDERS[number]['id'];
@@ -62,6 +62,7 @@ export interface PlayerPersonalitySliderPresentation {
   eligibleBattles:number|null;
   status?:'DEVELOPING'|'CALIBRATION_PENDING'|'READY';
   measuredBattles?:number;
+  comparableBattles?:number;
   reasons?:string[];
   evidence?:string;
 }

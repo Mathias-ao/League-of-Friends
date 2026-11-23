@@ -261,7 +261,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     ? feature('CAUTIOUS_BOLD','PLACEMENT_POSTURE',
         unique.filter(x => x.sector === 'forward').length,unique.length,ids(unique),
         [String(mp.modelVersion ?? '')])
-    : missing('CAUTIOUS_BOLD','PLACEMENT_POSTURE',approved&&strategic.length&&reviewed&&review!.spatialQualified&&unique.length<4?'INSUFFICIENT_STRATEGIC_PLACEMENT_OBSERVATIONS':'STRATEGIC_PLACEMENT_TAXONOMY_OR_ANCHOR_UNAVAILABLE');
+    : missing('CAUTIOUS_BOLD','PLACEMENT_POSTURE',approved&&strategic.length&&reviewed&&review!.spatialQualified?(unknown||conflictingPlacements?'STRATEGIC_PLACEMENT_EVIDENCE_INCOMPLETE':unique.length<4?'INSUFFICIENT_STRATEGIC_PLACEMENT_OBSERVATIONS':'STRATEGIC_PLACEMENT_TAXONOMY_OR_ANCHOR_UNAVAILABLE'):'STRATEGIC_PLACEMENT_TAXONOMY_OR_ANCHOR_UNAVAILABLE');
 
   // C: *command* episodes, never confirmed raids/attacks. Both detectors are
   // command-derived; overlap groups sharing source events count once.
@@ -273,7 +273,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     (Number.isSafeInteger(row.startedAtMs)&&Number.isSafeInteger(row.endedAtMs)&&
      row.startedAtMs>=0&&row.endedAtMs>=row.startedAtMs&&row.endedAtMs<=c.observedUntilMs&&
      sources.length>0&&new Set(sources).size===sources.length);
-  const candidates: {kind:'ECONOMY'|'CONTESTED'; sources:string[]}[] = [];
+  const candidates: {kind:'ECONOMY'|'CONTESTED'; sources:string[];group:string|null}[] = [];
   if ((c.format !== 'FFA' || c.dynamicDiplomacyQualified) && sourceVersion(engagements.engagementModelVersion,MODELS.engagement)) {
     for (const row of raidRows) {
       const sourceIds = Array.isArray(row.sourceEventIds) ? row.sourceEventIds.filter((v:unknown):v is string=>!!id(v)) : [];
@@ -281,7 +281,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
           num(row.victimPlayerId) !== null &&
           (!approved||(row.victimPlayerId!==p.playerId&&Number.isSafeInteger(row.victimPlayerId)&&review!.replaySlots.includes(row.victimPlayerId)&&id(row.raidId)))&&validEpisode(row,sourceIds)&&
           sourceIds.length && num(row.startedAtMs) !== null && row.startedAtMs <= c.observedUntilMs &&
-          (num(row.endedAtMs) === null || row.endedAtMs <= c.observedUntilMs)) candidates.push({kind:'ECONOMY',sources:sourceIds});
+          (num(row.endedAtMs) === null || row.endedAtMs <= c.observedUntilMs)) candidates.push({kind:'ECONOMY',sources:sourceIds,group:id(row.raidId)});
     }
     for (const row of battleRows) {
       const ownIds = obj(row.contributionSourceEventIdsByPlayer)[slot];
@@ -293,13 +293,18 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
           num(row.startedAtMs) !== null && row.startedAtMs <= c.observedUntilMs &&
           num(row.endedAtMs) !== null && row.endedAtMs <= c.observedUntilMs &&
           num(classRow.militaryClassInstances) !== null && classRow.militaryClassInstances > 0) {
-        candidates.push({kind:'CONTESTED',sources:sourceIds});
+        candidates.push({kind:'CONTESTED',sources:sourceIds,group:id(row.battleId)});
       }
     }
   }
-  const seen = new Set<string>(), episodes: typeof candidates = [];
+  const seen = new Set<string>(), groups=new Set<string>(), episodes: typeof candidates = [];
   let overlapAmbiguous = false;
   for (const row of [...candidates].sort((a,b) => a.kind.localeCompare(b.kind))) {
+    // This array is scoped to one actor/source/Game. A producer group is one
+    // episode even when repeated telemetry carries disjoint event subsets.
+    const group=JSON.stringify([row.kind,row.group]);
+    if(approved&&(!row.group||groups.has(group))){overlapAmbiguous=true;continue;}
+    groups.add(group);
     if (row.sources.some(x => seen.has(x))) {overlapAmbiguous = true; continue;}
     for (const x of row.sources) seen.add(x);
     episodes.push(row);
@@ -311,7 +316,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     ? feature('GUERRILLA_FRONTLINE','COMMAND_POSTURE',
         episodes.filter(x => x.kind === 'CONTESTED').length, episodes.length,
         episodes.flatMap(x => x.sources),[String(engagements.engagementModelVersion ?? '')])
-    : missing('GUERRILLA_FRONTLINE','COMMAND_POSTURE','INSUFFICIENT_ATTRIBUTABLE_COMMAND_EPISODES');
+    : missing('GUERRILLA_FRONTLINE','COMMAND_POSTURE',approved&&overlapAmbiguous?'COMMAND_EPISODE_GROUP_AMBIGUOUS':'INSUFFICIENT_ATTRIBUTABLE_COMMAND_EPISODES');
 
   // D: family breadth of positive military *queue requests*, with civilization/map
   // opportunity counted from separately reviewed taxonomy (not observed selection).
@@ -330,7 +335,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     totalRequests === included && num(requests.unknownAmountCommands) === 0 && sourceVersion(military.modelVersion,MODELS.military)
     ? feature('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION',entropyFraction,1,[],
         [String(military.modelVersion ?? '')])
-    : missing('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION','CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE');
+    : missing('SPECIALIST_IMPROVISER','QUEUE_COMPOSITION',approved&&allowed.length>1?'MILITARY_QUEUE_QUANTITIES_UNRECONCILED':'CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE');
 
   // E: site-normalized distinct remote expansion *placement* clusters, not raw clicks.
   const zones = obj(mp.expansionZones), remote = num(zones.eligibleRemoteBuildingCount),
@@ -349,7 +354,7 @@ export function measurePersonalityGame(game: AuthorizedGame, config: Personality
     (!approved||sites!+home!>=config!.practical!.minimumExpansionUnits) ?
     feature('COMPACT_EXPANSIVE','EXPANSION_PLACEMENT',sites!,sites!+home!,
       list(zones.zones).flatMap(z => ids(list(z.buildings))),[String(mp.modelVersion ?? '')])
-    : missing('COMPACT_EXPANSIVE','EXPANSION_PLACEMENT',approved&&supported&&uniqueSites&&expansionReviewed&&sites!+home!<6?'INSUFFICIENT_EXPANSION_PLACEMENT_UNITS':'EXPANSION_ZONES_OR_HOME_ANCHOR_UNAVAILABLE');
+    : missing('COMPACT_EXPANSIVE','EXPANSION_PLACEMENT',approved&&supported?(!uniqueSites?'DISTINCT_REMOTE_SITE_EVIDENCE_UNVERIFIED':!expansionReviewed?'EXPANSION_SITE_OPPORTUNITY_UNREVIEWED':sites!+home!<6?'INSUFFICIENT_EXPANSION_PLACEMENT_UNITS':'EXPANSION_ZONES_OR_HOME_ANCHOR_UNAVAILABLE'):'EXPANSION_ZONES_OR_HOME_ANCHOR_UNAVAILABLE');
   return {battleId:game.battleId,gameId:game.gameId,gameNumber:game.gameNumber,playerId:game.playerId,
     sourceHash:game.sourceHash,authorityRevision:game.authorityRevision,sourceAuthority:game.sourceAuthority,
     contextKey:keyOf(c),eligible:true,features:result};

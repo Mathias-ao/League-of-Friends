@@ -49,9 +49,9 @@ export function createPracticalPersonalityPolicy(owner:string,sources:readonly C
     const spatial=sourceBound&&c.mapFamily==='LAND'&&c.startFamily==='STANDARD'&&!!review.spatial&&
       admission.fields.mapFamily.status==='REVIEWED_CLASSIFICATION'&&admission.fields.startFamily.status==='REVIEWED_CLASSIFICATION';
     const catalog=sourceBound&&review.costCatalog?.product==='AOE2_DE'&&review.costCatalog.gameBuild===build&&
-      review.costCatalog.version===input.statistics.entityCatalogVersion&&SHA.test(review.costCatalog.sha256)&&text(review.costCatalog.referenceId);
+      text(review.costCatalog.version)&&review.costCatalog.version===input.statistics.entityCatalogVersion&&SHA.test(review.costCatalog.sha256)&&text(review.costCatalog.referenceId);
     const strategic=spatial&&review.strategicBuildings?.product==='AOE2_DE'&&SHA.test(review.strategicBuildings.catalogSha256)&&
-      review.strategicBuildings.catalogVersion===input.statistics.entityCatalogVersion&&review.strategicBuildings.gameBuild===build&&text(review.strategicBuildings.referenceId)&&
+      text(review.strategicBuildings.catalogVersion)&&review.strategicBuildings.catalogVersion===input.statistics.entityCatalogVersion&&review.strategicBuildings.gameBuild===build&&text(review.strategicBuildings.referenceId)&&
       Array.isArray(review.strategicBuildings.ids)&&review.strategicBuildings.ids.length>0&&
       review.strategicBuildings.ids.every(id=>Number.isSafeInteger(id)&&id>0)&&
       new Set(review.strategicBuildings.ids).size===review.strategicBuildings.ids.length;
@@ -61,7 +61,7 @@ export function createPracticalPersonalityPolicy(owner:string,sources:readonly C
       new Set(review.militaryFamilies.families).size===review.militaryFamilies.families.length;
     const command=spatial&&review.commandAttribution?.version==='AOF_RAID_V3_ENGAGEMENT_V4_ATTRIBUTION_1'&&text(review.commandAttribution.referenceId);
     const expansion=spatial&&review.expansionSites?.product==='AOE2_DE'&&SHA.test(review.expansionSites.catalogSha256)&&
-      review.expansionSites.catalogVersion===input.statistics.entityCatalogVersion&&review.expansionSites.version==='AOF_MAP_PRESENCE_V8_DISTINCT_SITES_1'&&text(review.expansionSites.referenceId);
+      text(review.expansionSites.catalogVersion)&&review.expansionSites.catalogVersion===input.statistics.entityCatalogVersion&&review.expansionSites.version==='AOF_MAP_PRESENCE_V8_DISTINCT_SITES_1'&&text(review.expansionSites.referenceId);
     quality[input.source.authorityRevision]={sourceHash:input.source.sourceHash,mappingDigest:input.source.mappingDigest,
       sourceBound,replaySlots:input.source.roster.map(p=>p.replaySlot),sourceReason:!matched?'CURRENT_SOURCE_REVIEW_UNAVAILABLE':build!==review.gameBuild?'EXACT_SOURCE_BUILD_UNVERIFIED':
         c.format!=='ONE_V_ONE'?'UNSUPPORTED_PERSONALITY_CONTEXT':!review.completeInterval?'COMPLETE_SOURCE_INTERVAL_UNVERIFIED':null,costCatalogVerified:!!catalog,spatialQualified:!!spatial,

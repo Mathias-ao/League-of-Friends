@@ -136,3 +136,44 @@ test('actual private history preserves disabled truthful counts and fences runti
  const nonmember=await ready();nonmember.rows.get('authLinks/owner').playerId='p2';await assert.rejects(nonmember.read(),/Active linked membership/);
  await assert.rejects(readMyPersonalityHistory({...f.input,request:{playerId:'p2'}}),/accepts no player/);
 });
+
+
+test('Sol P1: repeated canonical raid/contested group cannot manufacture independent C episodes',()=>{
+ for(const kind of ['raid','contested']){
+  const item=sourceItem(),p=policy([item]),eng=item.statistics.participants[0].military.engagements;
+  if(kind==='raid')eng.raidEvidence.initiatedEpisodes[1].raidId='raid1';
+  else {eng.raidEvidence.initiatedEpisodes=[];eng.engagementEvidence.battles=[1,2].map(n=>({
+   battleId:'same-producer-group',baseOwnerPlayerId:null,participantPlayerIds:[1,2],startedAtMs:100,endedAtMs:200,
+   contributionSourceEventIdsByPlayer:{1:['order'+n]},unitClassEvidenceByPlayer:{1:{militaryClassInstances:2}}
+  }));}
+  let features=measurePersonalityGame(game(item,p),p.calibration).features;
+  assert.equal(features.GUERRILLA_FRONTLINE.fraction,null,kind+' same group with disjoint source subsets');
+  assert.equal(features.BOOMER_AGGRESSOR.fraction,4/13);assert.equal(features.CAUTIOUS_BOLD.fraction,.25);
+  assert.equal(features.COMPACT_EXPANSIVE.fraction,1/3);
+  if(kind==='raid')eng.raidEvidence.initiatedEpisodes[1].raidId='raid2';
+  else eng.engagementEvidence.battles[1].battleId='independent-producer-group';
+  features=measurePersonalityGame(game(item,p),p.calibration).features;
+  assert.equal(features.GUERRILLA_FRONTLINE.fraction,kind==='raid'?0:1,'two distinct qualified controlled groups');
+ }
+});
+
+test('approved canonical chronology changes recent3 while source-qualified incompatible spatial context stays axis-local',()=>{
+ const items=[1,2,3,4,5].map(sourceItem);items.forEach((x,i)=>{x.statistics.participants[0].military.militarySpend.resources=[1,2,4,8,12][i];});
+ const p=policy(items),before=project(items,p);items[4].match.firstCompletedAt={toMillis:()=>500};
+ const after=project(items,p);assert.notEqual(axis(before,'BOOMER_AGGRESSOR').value,axis(after,'BOOMER_AGGRESSOR').value);
+ assert.equal(axis(after,'BOOMER_AGGRESSOR').value,100*(4/13));assert.notEqual(before.personalityProfile.projectionRevision,after.personalityProfile.projectionRevision);
+ const mixed=items.slice(0,3),reviews=Object.fromEntries(mixed.map(i=>[i.source.sourceHash,review(i)]));
+ reviews[mixed[2].source.sourceHash].spatial.mapFamily='WATER';
+ const qualified=createPracticalPersonalityPolicy(owner,mixed,reviews),result=project(mixed,qualified);
+ assert.equal(axis(result,'CAUTIOUS_BOLD').independentBattles,2);assert.equal(axis(result,'CAUTIOUS_BOLD').value,25);
+ assert.equal(axis(result,'BOOMER_AGGRESSOR').independentBattles,3);
+});
+
+
+test('qualified zeros remain real endpoints on every axis rather than absence or midpoint',()=>{
+ const items=[1,2,3].map(sourceItem);
+ for(const item of items){const p=item.statistics.participants[0];p.military.militarySpend.resources=0;
+  p.mapPresence.buildingSectors.evidence.forEach(e=>e.sector='home');
+  Object.assign(p.mapPresence.expansionZones,{count:0,eligibleRemoteBuildingCount:0,eligibleBuildingPlacementsInsideHomeRadius:6,zones:[]});}
+ const out=project(items);assert.ok(out.personalityProfile.sliders.every(x=>x.status==='READY'&&x.value===0));
+});
