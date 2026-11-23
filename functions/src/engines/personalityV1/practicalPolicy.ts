@@ -5,6 +5,7 @@ import {admitPersonalityContext,type ContextSourceInput,type ReviewedContextProo
 import {personalityComparisonGroup,type PersonalityCalibration,type GameContext,type PersonalityAxis} from './personalityV1.js';
 import type {PolicyRef} from '../../domain/socialV1.js';
 import {PRACTICAL_POLICY as SPEC,PRACTICAL_POLICY_SHA256} from './practicalPolicyResource.js';
+import {loadEuTestAuthority,euTestSourceReview,euTestCostReviewQualified} from '../../integration/euTestAuthority.js';
 
 const SHA=/^[a-f0-9]{64}$/;
 const text=(v:unknown):v is string=>typeof v==='string'&&v.trim().length>0&&v.length<=500;
@@ -33,6 +34,10 @@ export const practicalSourceFingerprint=(input:ContextSourceInput)=>bindingDiges
 /** Existing evaluator configuration, not a second scorer. References are
  * separately reviewed exact-source evidence under the later D release. */
 export function createPracticalPersonalityPolicy(owner:string,sources:readonly ContextSourceInput[],reviews:PracticalSourceReviews){
+  return buildPracticalPersonalityPolicy(owner,sources,reviews,{policyVersion:SPEC.policyVersion,
+    configurationVersion:SPEC.configurationVersion,status:'APPROVED',approvalRef:SPEC.approvalRef});
+}
+function buildPracticalPersonalityPolicy(owner:string,sources:readonly ContextSourceInput[],reviews:PracticalSourceReviews,policy:PolicyRef){
   const contexts=new Map<string,GameContext>();
   const quality:NonNullable<PersonalityCalibration['practical']>['sources']={};
   const anchors:PersonalityCalibration['anchors']={};
@@ -78,8 +83,6 @@ export function createPracticalPersonalityPolicy(owner:string,sources:readonly C
     minimumIndependentBattles:2,recentBattleCount:3,careerWeight:.75,aggregationMethod:'MEDIAN',
     strategicBuildingIds:[],availableMilitaryFamilies:{},anchors,minimumIndependentCommandEpisodes:2,
     practical:{policySha256:PRACTICAL_POLICY_SHA256,sources:quality,minimumStrategicPlacements:4,minimumExpansionUnits:6}};
-  const policy:PolicyRef={policyVersion:SPEC.policyVersion,configurationVersion:SPEC.configurationVersion,
-    status:'APPROVED',approvalRef:SPEC.approvalRef};
   const freeze=(v:any):void=>{if(v&&typeof v==='object'){Object.values(v).forEach(freeze);Object.freeze(v);}};
   freeze(calibration);approvals.set(calibration,Object.freeze(policy));
   return {calibration,context:(input:ContextSourceInput)=>contexts.get(input.source.authorityRevision)??null};
@@ -93,10 +96,29 @@ export async function loadPracticalPersonalityRuntime(db:any,env:NodeJS.ProcessE
   const project=projects[0];
   const unavailable=()=>new HttpsError('failed-precondition','Private Personality runtime authorization is unavailable.');
   if(!isolatedStagingProject(env)||!project||projects.some(p=>p!==project))throw unavailable();
-  // The immutable D2 payload/approval names the historical project. An EU
-  // runtime record with that old hash cannot reapprove it. Keep real history
-  // Developing, even with the flag, until a separately reviewed EU policy exists.
-  if(project===EU_STAGING_PROJECT)return null;
+  if(project===EU_STAGING_PROJECT){
+    if(env.AOF_EU_TEST_PROGRESSION!=='v1')return null;
+    const authority=await loadEuTestAuthority(db,env,'D2');
+    const policy:PolicyRef={policyVersion:authority.resource.spec.id,configurationVersion:SPEC.configurationVersion,
+      status:'APPROVED',approvalRef:authority.approvalRef};
+    return {...authority,policy,createPolicy:(owner:string,sources:readonly ContextSourceInput[])=>{
+      const reviews:Record<string,PracticalSourceReview>={};
+      for(const input of sources){
+        const evidence=input as ContextSourceInput&{producerRevision?:string;sourceAttestationRevision?:string};
+        const review=euTestSourceReview(authority,input.source,evidence.producerRevision,evidence.sourceAttestationRevision);
+        if(!review)continue;
+        // Trusted exact-source producer selection/override and observed-positive
+        // coverage are separate prerequisites; zero unpriced counts is not proof.
+        const accepted=structuredClone(review);
+        if(!euTestCostReviewQualified(review,input.statistics))delete accepted.costCatalog;
+        // The reviewed producer identity is shared. Bind the unchanged local
+        // evaluator copy to this owner's separately fenced current snapshot.
+        accepted.sourceFingerprint=practicalSourceFingerprint(input);
+        reviews[input.source.sourceHash]=accepted;
+      }
+      return buildPracticalPersonalityPolicy(owner,sources,reviews,policy);
+    }};
+  }
   const ref=db.doc(PRACTICAL_RUNTIME_PATH),snapshot=await ref.get(),record=snapshot.data();
   const expected={version:'AOF_PERSONALITY_PRIVATE_RUNTIME_1',status:'APPROVED',project,
     policyVersion:SPEC.policyVersion,configurationVersion:SPEC.configurationVersion,
@@ -111,6 +133,9 @@ export async function loadPracticalPersonalityRuntime(db:any,env:NodeJS.ProcessE
     Object.keys(record.sourceReviews).length>64||Object.keys(record.sourceReviews).some(k=>!SHA.test(k)))throw unavailable();
   const token=(s:any)=>bindingDigest([s.data()??null,s.updateTime??null]),revision=token(snapshot);
   return {sourceReviews:record.sourceReviews as PracticalSourceReviews,revision,
+    policy:{policyVersion:SPEC.policyVersion,configurationVersion:SPEC.configurationVersion,approvalRef:SPEC.approvalRef},
+    resource:{sha256:PRACTICAL_POLICY_SHA256},
+    createPolicy:(owner:string,sources:readonly ContextSourceInput[])=>createPracticalPersonalityPolicy(owner,sources,record.sourceReviews),
     revalidate:async(tx:any)=>{if(token(await tx.get(ref))!==revision)
       throw new HttpsError('aborted','Private Personality runtime approval changed. Refresh.');}};
 }

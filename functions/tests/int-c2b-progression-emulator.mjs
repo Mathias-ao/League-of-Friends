@@ -18,6 +18,7 @@ import {callVerifiedWorker} from '../lib/services/nativeRecordingValidation.js';
 import {readMyHostedSocialProgression,getMyHostedSocialProgression} from '../lib/queries/getMyHostedSocialProgression.js';
 import {HOSTED_POLICY_SHA256} from '../lib/integration/hostedSocialPolicy.js';
 import {projectControlledHostedHistory} from './support/hosted-social-projection-fixture.mjs';
+import {readControlledEuHostedHistory} from './support/eu-test-hosted-consumer-fixture.mjs';
 import {statisticsBindingKey} from '../lib/engines/statisticsExperience.js';
 import {validateSharedRecord} from '../lib/domain/socialV1Validation.js';
 const project='demo-aof-native-player';
@@ -90,7 +91,25 @@ const read=async(id=owner)=>{
  // evaluator over the actual demo collector and exact genuine worker response.
  await assert.rejects(readMyHostedSocialProgression({db,bucket,actor,request:{},env:hostedEnv(),
    derive:async()=>assert.fail('Unapproved EU must not invoke a producer')}),e=>e.code==='failed-precondition');
- const projected=await projectControlledHostedHistory({db,bucket,actor,request:{},env:process.env},derived);
+ const collectedInput={db,bucket,actor,request:{},env:process.env};
+ const projected=await projectControlledHostedHistory(collectedInput,derived);
+ // Actual EU query + genuine source binder/evaluator, with disclosed in-memory
+ // approval/transport simulation. Never writes an EU or emulator policy record.
+ const {response:euControlled,attestationsCurrent}=await readControlledEuHostedHistory(collectedInput,derived);
+ // Missing derivation is now explicitly Unavailable, rather than an evidence
+ // Pending label. All numbers, source counts and unsupported-track states agree.
+ const comparable=value=>JSON.parse(JSON.stringify(value,(key,v)=>['reasonCodes','progression'].includes(key)?undefined:v));
+ if(attestationsCurrent){
+  assert.deepEqual(comparable(euControlled.reputation),comparable(projected.reputation));
+  assert.deepEqual(comparable(euControlled.relationships),comparable(projected.relationships));
+  assert.deepEqual(euControlled.coverage,projected.coverage);
+ }else{
+  // Source corrections do not silently regenerate approvals, even in this
+  // controlled facade. The actual EU consumer must withhold affected values.
+  const tracks=[...Object.values(euControlled.reputation).map(r=>r.career),
+   ...euControlled.relationships.flatMap(p=>Object.values(p.tracks).flatMap(t=>[t.outgoing,t.incoming]))];
+  assert.ok(tracks.some(t=>t.progression==='UNAVAILABLE'&&t.stage===null&&t.upBank===null));
+ }
  projectedByOwner.set(id,projected);return result;
 };
 const first=await read();console.log(JSON.stringify({phase:'private-owner-history',cards:first.cards.length,projections:first.history.projections.length}));assert.equal(first.coverage.currentSources,4);assert.equal(first.coverage.ownBattles,3);
@@ -185,6 +204,7 @@ assert.equal(testedCommit.status,0);assert.match(testedCommit.stdout.trim(),/^[a
 const report={version:first.version,testedCommit:testedCommit.stdout.trim(),genuineRecordings:5,formats:4,authenticatedUsers:fixtures[3].roster.length+3,
  hostedOwnerRead:false,newFixedWorkerRoute:false,hostedDtoMountedProfile:false,
  euHostedPolicy:'BLOCKED_PENDING_PROJECT_SCOPED_APPROVAL',emulatorProposedProjectionMountedProfile:true,compiledPrivatePolicySha256:HOSTED_POLICY_SHA256,
+ controlledEuAuthorityActualConsumerGenuineSources:true,actualEuHostedAuthority:false,
  genuineMethodCases,
  twoGameBattle:true,reverseUploadOrder:true,genuineSourceAdmittedByTrack:allTrackCounts,ownerStages:first.history.projections.map(p=>({subject:p.subject,stage:p.currentStage,upBank:p.upBank,downBank:p.downBank})),
  retryIdempotent:true,withdrawal:true,resultCorrection:true,playerRemapping:true,scheduleCorrection:true,concurrentScheduleFence:true,privateOnly:true,officialReceipts:0,privateSourceToUI:true,authChangeClearsHistory:true,

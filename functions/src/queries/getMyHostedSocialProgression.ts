@@ -7,7 +7,8 @@ import {callableOptions} from '../config/runtime.js';
 import {digest} from '../engines/nativeRecordingIntegration.js';
 import type {HistoricalChapter} from '../engines/socialV1History/history.js';
 import {bindSourceGrades} from '../integration/privateProgression.js';
-import {loadHostedSocialPolicy,hostedBinderCalibration} from '../integration/hostedSocialPolicy.js';
+import {hostedBinderCalibration} from '../integration/hostedSocialPolicy.js';
+import {loadEuTestSocialPolicy} from '../integration/euTestSocialPolicy.js';
 import {projectHostedSocialProgression,fixedHostedOpportunity,type HostedPendingSource} from '../integration/hostedSocialProgression.js';
 import {collectMyCurrentBattleHistory} from './getMyPersonalityHistory.js';
 import {callVerifiedWorker} from '../services/nativeRecordingValidation.js';
@@ -21,15 +22,13 @@ export async function readMyHostedSocialProgression(input:Input){
     throw new HttpsError('invalid-argument','Private social reads accept no owner, policy, source or cursor arguments.');
   if(!isolatedStagingProject(input.env,false))
     throw new HttpsError('failed-precondition','Hosted private social requires the exact EU project and region.');
-  // loadHostedSocialPolicy deliberately retains the immutable old-project R
-  // boundary. EU is not numerically authorized by a flag or copied approval.
   // Complete read + worker + final source/policy fence share one 100s budget.
   const controller=new AbortController(),expired=()=>new HttpsError('deadline-exceeded','Private social read timed out. Retry.');
   let timer:ReturnType<typeof setTimeout>|undefined;
   const budget=new Promise<never>((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(expired());},100_000);});
   const check=()=>{if(controller.signal.aborted)throw expired();};
   const work=async()=>{
-    const policy=await loadHostedSocialPolicy(input.db,input.env);check();
+    const policy=await loadEuTestSocialPolicy(input.db,input.env);check();
     const current=await collectMyCurrentBattleHistory({...input,maxOwnGames:8,includeScheduleOrder:true});check();
     const binder=hostedBinderCalibration(policy.calibration),bound:ReturnType<typeof bindSourceGrades>[]=[],chapters:HistoricalChapter[]=[];
     const pendingSources:HostedPendingSource[]=[];
@@ -67,11 +66,14 @@ export async function readMyHostedSocialProgression(input:Input){
       if(Buffer.byteLength(JSON.stringify(payload))>40*1024*1024)
         throw new HttpsError('resource-exhausted','Private social transport budget exceeded.');
       let raw;
+      const sourceQualified=policy.sourceQualified(source,loaded.producerRevision,loaded.sourceAttestationRevision);
       try{
+        if(!sourceQualified)throw new Error('EU_SOURCE_PRODUCER_ATTESTATION_PENDING');
         raw=await (input.derive??((p,signal)=>callVerifiedWorker(input.env.REPLAY_WORKER_URL!,
           '/social-hosted-grade-v1',p,{signal})))(payload,controller.signal);
       }catch{
-        check();pendingSources.push({seasonId:source.seasonId,rosterPlayerIds:source.roster.map(p=>p.playerId)});
+        check();pendingSources.push({seasonId:source.seasonId,rosterPlayerIds:source.roster.map(p=>p.playerId),
+          reason:sourceQualified?'WORKER_TRANSPORT_UNAVAILABLE':'SOURCE_PRODUCER_ATTESTATION_UNAVAILABLE'});
         // A verified READY source remains a factual pair even if derivation is
         // temporarily unavailable. Empty cards are never numerical evidence.
         bound.push({source,sourceMethodRevision:digest(Buffer.from('UNAVAILABLE:'+source.authorityRevision)),
@@ -91,7 +93,7 @@ export async function readMyHostedSocialProgression(input:Input){
     // One read-only transaction is the linearization point for approval and
     // the entire source, membership and schedule dependency witness.
     await current.revalidate(tx=>policy.revalidate(tx));
-    check();return response;
+    check();return {...response,policyVersion:policy.resource.spec.id};
   };
   try{return await Promise.race([work(),budget]);}
   finally{clearTimeout(timer);controller.abort();}

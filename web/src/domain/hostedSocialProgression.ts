@@ -4,7 +4,8 @@ export const HOSTED_SOCIAL_VERSION='AOF_SOC_V1A_HOSTED_OWNER_READ_1' as const;
 export const REPUTATION_TRACKS=['GALLANTRY','CRUELTY','CHIVALRY'] as const;
 export const RELATIONSHIP_TRACKS=['RIVALRY','HOSTILITY','BOND'] as const;
 export const SOCIAL_REASONS=['NOT_YET_MEASURED','NO_QUALIFYING_RECORDED_ACTIVITY',
-  'SOURCE_EVIDENCE_INCOMPLETE','HISTORICAL_ORDER_PENDING','INDEPENDENT_ACTIVITY_REQUIRED'] as const;
+  'SOURCE_EVIDENCE_INCOMPLETE','HISTORICAL_ORDER_PENDING','INDEPENDENT_ACTIVITY_REQUIRED',
+  'SOURCE_PRODUCER_ATTESTATION_UNAVAILABLE','WORKER_TRANSPORT_UNAVAILABLE'] as const;
 export interface PrivateSocialTrack {
   readiness:'SOURCE_QUALIFIED'|'PENDING_SOURCE_METHOD';
   progression:'PRIVATE_PREVIEW'|'PENDING'|'UNAVAILABLE';
@@ -47,7 +48,7 @@ export function parseHostedSocialProgression(raw:unknown,owner:string):HostedSoc
   const fail=()=>{throw Error('Private social response is unavailable.');};
   if(!closed(x,['version','ownerPlayerId','revision','policyVersion','approvalScope','coverage','reputation','relationships'])||
     x.version!==HOSTED_SOCIAL_VERSION||!id(owner)||x.ownerPlayerId!==owner||!hash(x.revision)||
-    x.policyVersion!=='AOF_SOC_V1A_SOURCE_BOUND_ORDINARY_GRADES_PROPOSED_1'||x.approvalScope!=='PRIVATE_NUMERICAL_PREVIEW'||
+    !['AOF_SOC_V1A_SOURCE_BOUND_ORDINARY_GRADES_PROPOSED_1','AOF_EU_TEST_R_1'].includes(x.policyVersion)||x.approvalScope!=='PRIVATE_NUMERICAL_PREVIEW'||
     new TextEncoder().encode(JSON.stringify(x)).length>512*1024||
     !closed(x.coverage,['complete','ownBattles','ownGames','currentSources','pendingSources'])||
     typeof x.coverage.complete!=='boolean'||![x.coverage.ownBattles,x.coverage.ownGames,x.coverage.currentSources,x.coverage.pendingSources].every(count)||

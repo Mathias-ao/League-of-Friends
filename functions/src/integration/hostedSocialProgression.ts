@@ -25,6 +25,7 @@ export interface HostedTrack {
  * and subjects to which that source could actually contribute. */
 export interface HostedPendingSource {
   seasonId:string|null;rosterPlayerIds:string[]|null;
+  reason?:'SOURCE_PRODUCER_ATTESTATION_UNAVAILABLE'|'WORKER_TRANSPORT_UNAVAILABLE';
 }
 function publicEffectsBlocked(history:ReturnType<typeof evaluateHistory>){
   if(history.publicationAllowed||history.officialWrites||history.receipts.length)
@@ -99,17 +100,22 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
   const summary=(subject:Subject,deeds:typeof evidence.deeds,history:typeof career,seasonId?:string):HostedTrack=>{
     const accepted=deeds.filter(d=>d.decision==='SOURCE_ADMITTED'),unsupported=['CRUELTY','HOSTILITY'].includes(subject.track);
     const affectedSeasons=withheldSubjects.get(subjectKey(subject));
-    const incomplete=(!seasonId?!!affectedSeasons:affectedSeasons?.has(seasonId))||input.pendingSources.some(s=>
+    const affectedSources=input.pendingSources.filter(s=>
       (!seasonId||s.seasonId===null||s.seasonId===seasonId)&&(!s.rosterPlayerIds||
         (subject.system==='REPUTATION'?s.rosterPlayerIds.includes(subject.playerId):
           s.rosterPlayerIds.includes(subject.fromPlayerId)&&s.rosterPlayerIds.includes(subject.toPlayerId))));
+    const incomplete=(!seasonId?!!affectedSeasons:affectedSeasons?.has(seasonId))||affectedSources.length>0;
     const p=find(history,subject);
     const row:HostedTrack={readiness:accepted.length?'SOURCE_QUALIFIED':'PENDING_SOURCE_METHOD',progression:'PENDING',reasonCodes:[],
       sourceQualifiedBattles:new Set(accepted.map(d=>d.battleId)).size,
       sourceQualifiedGames:new Set(accepted.map(d=>d.battleId+'\u0000'+d.gameId)).size,
       sourceQualifiedEvents:new Set(accepted.map(d=>d.eventId)).size,stage:null,upBank:null};
     if(unsupported){row.reasonCodes=['NOT_YET_MEASURED'];return row;}
-    if(incomplete){row.reasonCodes=['SOURCE_EVIDENCE_INCOMPLETE'];return row;}
+    if(incomplete){
+      const unavailable=affectedSources.flatMap(s=>s.reason?[s.reason]:[]);
+      row.reasonCodes=unavailable.length?[...new Set(unavailable)]:['SOURCE_EVIDENCE_INCOMPLETE'];
+      if(unavailable.length)row.progression='UNAVAILABLE';return row;
+    }
     if(p?.status==='PENDING'){row.reasonCodes=['HISTORICAL_ORDER_PENDING'];return row;}
     if(!accepted.length||!p||p.currentStage===null){
       row.reasonCodes=[deeds.length?'SOURCE_EVIDENCE_INCOMPLETE':'NO_QUALIFYING_RECORDED_ACTIVITY'];return row;

@@ -5,7 +5,7 @@ const saved={...process.env};
 async function configured(run){
  try{
   delete process.env.FUNCTIONS_EMULATOR;delete process.env.GOOGLE_CLOUD_PROJECT;
-  Object.assign(process.env,{GCLOUD_PROJECT:'age-of-friends-staging-eu',FUNCTION_REGION:'europe-west1',AOF_HOSTED_SOCIAL_PRIVATE:'v1a',REPLAY_WORKER_AUTH_TOKEN:'controlled-transport-token'});
+  Object.assign(process.env,{GCLOUD_PROJECT:'age-of-friends-staging-eu',FUNCTION_REGION:'europe-west1',AOF_EU_TEST_PROGRESSION:'v1',AOF_HOSTED_SOCIAL_PRIVATE:'v1a',REPLAY_WORKER_AUTH_TOKEN:'controlled-transport-token'});
   return await run();
  }finally{for(const key of Object.keys(process.env))if(!(key in saved))delete process.env[key];Object.assign(process.env,saved);}
 }
@@ -22,7 +22,7 @@ test('hosted derivation is a fixed POST with separate app bearer and exact workl
   assert.equal(seen.options.body,JSON.stringify({snapshot:'controlled'}));
   await assert.rejects(callVerifiedWorker(url,'/social-hosted-grade-v1',{},
     {...transport,signal:undefined}),/budget is required/);
-  for(const change of [{AOF_HOSTED_SOCIAL_PRIVATE:''},{GCLOUD_PROJECT:'production'},
+  for(const change of [{AOF_HOSTED_SOCIAL_PRIVATE:''},{AOF_EU_TEST_PROGRESSION:''},{GCLOUD_PROJECT:'age-of-friends-staging'},{GCLOUD_PROJECT:'production'},
    {GOOGLE_CLOUD_PROJECT:'other'},{REPLAY_WORKER_AUTH_TOKEN:''}]){
    const before={...process.env};Object.assign(process.env,change);const n=tokens;
    await assert.rejects(callVerifiedWorker(url,'/social-hosted-grade-v1',{},transport));assert.equal(tokens,n);

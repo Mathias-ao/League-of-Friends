@@ -1,4 +1,4 @@
-import {loadPracticalPersonalityRuntime,createPracticalPersonalityPolicy} from '../engines/personalityV1/practicalPolicy.js';
+import {loadPracticalPersonalityRuntime} from '../engines/personalityV1/practicalPolicy.js';
 import {PRACTICAL_POLICY,PRACTICAL_POLICY_SHA256} from '../engines/personalityV1/practicalPolicyResource.js';
 import {deriveSocialScheduleOrders,scheduleTimestampMillis,type ScheduleBattle} from '../integration/socialScheduleOrder.js';
 import {getStorage} from 'firebase-admin/storage';
@@ -147,7 +147,7 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
   // Only the authenticated complete current-source reader may supply history
   // and the actor. Entire-set revision fencing remains INT-B's responsibility.
   const runtime=await loadPracticalPersonalityRuntime(input.db,input.env);
-  const approved=runtime?createPracticalPersonalityPolicy(input.actor.playerId,current.loaded,runtime.sourceReviews):null;
+  const approved=runtime?.createPolicy(input.actor.playerId,current.loaded)??null;
   const pilot=privatePersonalityE2EEnabled(input.env)?
     privatePersonalityPolicy(input.actor.playerId,current.loaded,
       input.personalityTaxonomy??PRIVATE_SOURCE_TAXONOMY):null;
@@ -186,8 +186,9 @@ export async function readMyPersonalityHistory(input:Parameters<typeof collectMy
       measuredIndependentBattles:new Set(personality.battleFeatures.filter(f=>f.numerator!==null)
         .map(f=>f.battleId)).size},
     sources:current.loaded.map(s=>s.source),pending:current.pending,personality,livePersonality,
-    numericalPolicy:{policyVersion:PRACTICAL_POLICY.policyVersion,configurationVersion:PRACTICAL_POLICY.configurationVersion,
-      sha256:PRACTICAL_POLICY_SHA256,approvalRef:PRACTICAL_POLICY.approvalRef,
+    numericalPolicy:{policyVersion:runtime?.policy.policyVersion??PRACTICAL_POLICY.policyVersion,
+      configurationVersion:PRACTICAL_POLICY.configurationVersion,
+      sha256:runtime?.resource.sha256??PRACTICAL_POLICY_SHA256,approvalRef:runtime?.policy.approvalRef??PRACTICAL_POLICY.approvalRef,
       runtime:runtime?'AUTHORIZED' as const:'DISABLED' as const,runtimeRevision:runtime?.revision??null},
     social:{status:'PENDING' as const,reason:'SOURCE_QUALIFIER_AND_APPROVED_RULES_PENDING'},
     effects:{officialWrites:false as const,receiptPublication:false as const,entitlementGrants:false as const}};
