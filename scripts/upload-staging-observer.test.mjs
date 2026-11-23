@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {validateObserverConfig,createUploadCapture,observerSnippet,installUploadObserver} from './upload-staging-observer.mjs';
 
-const config={origin:'https://age-of-friends-staging.web.app',project:'age-of-friends-staging',mode:'compact',sourceSha256:'a'.repeat(64),revision:2,matchId:'private-match',gameId:'private-game'};
+const config={origin:'https://age-of-friends-staging-eu.web.app',project:'age-of-friends-staging-eu',mode:'compact',sourceSha256:'a'.repeat(64),revision:2,matchId:'private-match',gameId:'private-game'};
 const upload=()=>({result:{state:'READY',sourceHash:config.sourceSha256,replayStatisticsRevision:2,matchId:config.matchId,gameId:config.gameId,playerMapping:[{sourceName:'PRIVATE NAME'}]}});
 const statistics=()=>({result:{version:'AOF_STATISTICS_EXPERIENCE_V3',games:[{matchId:config.matchId,gameId:config.gameId,sourceHash:config.sourceSha256,revision:2,eligible:false,players:[{playerId:'private-one',name:'PRIVATE NAME',values:{apm:0}},{playerId:'private-two',values:{apm:10}}]}]}});
 function fixture(){let clock=0;const capture=createUploadCapture(config,()=>clock);return{capture,tick:n=>clock=n};}
@@ -13,8 +13,8 @@ test('refuses production origins, mismatched projects and unpinned sources/revis
   assert.deepEqual(validateObserverConfig(config),config);
   for(const patch of [{origin:'https://age-of-friends.web.app'},{project:'production-project'},{sourceSha256:'bad'},{revision:0},
     {origin:'http://localhost:5173',project:'demo-aof-native-player'},
-    {origin:'https://age-of-friends-staging.web.app',project:'demo-aof-native-player'},{mode:'drop'}])assert.throws(()=>validateObserverConfig({...config,...patch}));
-  assert.doesNotThrow(()=>validateObserverConfig({...config,origin:'https://age-of-friends-staging.web.app',project:'age-of-friends-staging'}));
+    {origin:'https://age-of-friends-staging-eu.web.app',project:'demo-aof-native-player'},{mode:'drop'}])assert.throws(()=>validateObserverConfig({...config,...patch}));
+  assert.doesNotThrow(()=>validateObserverConfig({...config,origin:'https://age-of-friends-staging-eu.web.app',project:'age-of-friends-staging-eu'}));
 });
 test('measures commit before transport and permits genuine pending-outcome statistics',()=>{
   const f=fixture();qualify(f);f.tick(200);const r=f.capture.confirmDisplayed();

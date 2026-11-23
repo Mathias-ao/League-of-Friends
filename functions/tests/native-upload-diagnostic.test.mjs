@@ -11,7 +11,7 @@ test('diagnostic UUIDs are per-attempt, scoped and off by default',async()=>{
     {...enabled,GCLOUD_PROJECT:'production-project'},{...enabled,GCLOUD_PROJECT:'age-of-friends-staging',AOF_REPLAY_UPLOAD_PERF_TRACE:'0'}]){
     assert.equal(nativeUploadDiagnosticEnabled(env),false);assert.equal(nativeUploadDiagnosticTraceId(env),undefined);
   }
-  assert.ok(UUID.test(nativeUploadDiagnosticTraceId({AOF_REPLAY_UPLOAD_PERF_TRACE:'1',GCLOUD_PROJECT:'age-of-friends-staging'})));
+  assert.ok(UUID.test(nativeUploadDiagnosticTraceId({AOF_REPLAY_UPLOAD_PERF_TRACE:'1',GCLOUD_PROJECT:'age-of-friends-staging-eu',FUNCTION_REGION:'europe-west1'})));
 });
 test('numeric log allowlist excludes identities, payloads and malformed numeric values',()=>{
   const result=nativeUploadDiagnosticTimings({sourceHash:'secret',playerId:'private',replayBase64:'private',nativeHandlerTotalMs:42,

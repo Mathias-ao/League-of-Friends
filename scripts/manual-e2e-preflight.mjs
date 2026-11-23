@@ -43,12 +43,13 @@ export const STAGING_GATES=[
 const SHA=/^[0-9a-f]{40}$/;
 const isObject=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
 export function gateNames(m){
-  return [...COMMON_GATES,...(m.mode==='native-assisted'?NATIVE_GATES:[]),
+  return [...COMMON_GATES.map(gate=>m.environment==='staging'&&gate==='preTestBackupVerified'?
+    'disposableStagingDataLossAccepted':gate),...(m.mode==='native-assisted'?NATIVE_GATES:[]),
     ...(m.environment==='staging'?STAGING_GATES:[])];
 }
 export function exampleManifest(environment='emulator',mode='legacy-browser'){
   const obj={schemaVersion:VERSION,environment,
-    projectId:environment==='emulator'?'demo-aof-e2e':'age-of-friends-staging',
+    projectId:environment==='emulator'?'demo-aof-e2e':'age-of-friends-staging-eu',
     mode,commitSha:'FILL_CURRENT_REVIEWED_40_CHAR_COMMIT',
     gates:{}};
   for(const gate of gateNames(obj))obj.gates[gate]=false;
@@ -62,8 +63,8 @@ export function evaluateManifest(m){
   if(!['legacy-browser','native-assisted'].includes(m.mode))errors.push('Unknown test mode');
   if(m.environment==='emulator'&&(!/^demo-[a-z0-9-]+$/.test(m.projectId??'')||m.projectId!=='demo-aof-e2e'))
     errors.push('Local browser acceptance must use the dedicated demo-aof-e2e project');
-  if(m.environment==='staging'&&m.projectId!=='age-of-friends-staging')
-    errors.push('Only age-of-friends-staging is an allowed cloud acceptance project');
+  if(m.environment==='staging'&&m.projectId!=='age-of-friends-staging-eu')
+    errors.push('Only age-of-friends-staging-eu is an allowed cloud acceptance project');
   if(m.projectId==='league-of-friends-cc274'||m.projectId==='league-of-freinds')
     errors.push('Production/default project IDs are never allowed');
   if(!SHA.test(m.commitSha??''))errors.push('Use a reviewed exact 40-character Git commit');

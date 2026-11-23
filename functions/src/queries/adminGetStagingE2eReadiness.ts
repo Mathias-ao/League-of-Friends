@@ -1,4 +1,5 @@
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
+import {EU_STAGING_PROJECT,isolatedStagingProject} from '../config/stagingProject.js';
 import {defineSecret} from 'firebase-functions/params';
 import {requireAdmin} from '../auth/authorization.js';
 import {callableOptions} from '../config/runtime.js';
@@ -6,7 +7,7 @@ import {callableOptions} from '../config/runtime.js';
 const ID=/^[A-Za-z0-9_-]{1,200}$/;
 const REV=/^[a-f0-9]{64}$/;
 const SHA=/^[a-f0-9]{40}$/;
-const projectStaging='age-of-friends-staging';
+const projectStaging=EU_STAGING_PROJECT;
 const replayWorkerAuthToken=defineSecret('REPLAY_WORKER_AUTH_TOKEN');
 
 /** Read-only staging/demo preflight. This never tests external connectivity,
@@ -14,10 +15,8 @@ const replayWorkerAuthToken=defineSecret('REPLAY_WORKER_AUTH_TOKEN');
 export function stagedNativeEnvironmentStatus(env:NodeJS.ProcessEnv,matchId:string,gameId:string,expectedCommit:string){
   if(!ID.test(matchId??'')||!ID.test(gameId??'')||!SHA.test(expectedCommit??''))
     throw new HttpsError('invalid-argument','Provide the reviewed exact Match/Game and 40-character expected commit.');
-  const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT||'';
-  const isolated=project===projectStaging||
-    (env.FUNCTIONS_EMULATOR==='true'&&project.startsWith('demo-'));
-  if(!isolated)throw new HttpsError('failed-precondition','This is not an approved staging or emulator project.');
+  const project=isolatedStagingProject(env);
+  if(!project)throw new HttpsError('failed-precondition','This is not an approved staging or emulator project.');
   const allow=(key:string)=>(env[key]??'').split(',').map(v=>v.trim()).includes(matchId+'/'+gameId);
   const flags:Record<string,boolean>={
     nativeValidation:env.AOF_NATIVE_REPLAY_INTEGRATION==='validate-v1',

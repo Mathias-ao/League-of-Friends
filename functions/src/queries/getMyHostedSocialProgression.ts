@@ -1,4 +1,5 @@
 import {getStorage} from 'firebase-admin/storage';
+import {isolatedStagingProject} from '../config/stagingProject.js';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {requireLeaguePlayer} from '../auth/authorization.js';
 import {db} from '../config/firebase.js';
@@ -18,6 +19,10 @@ type Input=Parameters<typeof collectMyCurrentBattleHistory>[0]&{
 export async function readMyHostedSocialProgression(input:Input){
   if(!input.request||typeof input.request!=='object'||Array.isArray(input.request)||Object.keys(input.request).length)
     throw new HttpsError('invalid-argument','Private social reads accept no owner, policy, source or cursor arguments.');
+  if(!isolatedStagingProject(input.env,false))
+    throw new HttpsError('failed-precondition','Hosted private social requires the exact EU project and region.');
+  // loadHostedSocialPolicy deliberately retains the immutable old-project R
+  // boundary. EU is not numerically authorized by a flag or copied approval.
   // Complete read + worker + final source/policy fence share one 100s budget.
   const controller=new AbortController(),expired=()=>new HttpsError('deadline-exceeded','Private social read timed out. Retry.');
   let timer:ReturnType<typeof setTimeout>|undefined;

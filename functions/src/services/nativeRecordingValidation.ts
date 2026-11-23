@@ -1,4 +1,5 @@
 import {assertNativePlayerUploadAllowed,NATIVE_PLAYER_UPLOAD} from '../engines/nativePlayerUpload.js';
+import {isolatedStagingProject} from '../config/stagingProject.js';
 import {readNativePlayerAuthority} from './nativePlayerRecording.js';
 import {randomUUID} from 'node:crypto';
 import {GoogleAuth} from 'google-auth-library';
@@ -17,9 +18,7 @@ const DIAGNOSTIC_UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[
 
 /** Diagnostic identity is server-owned, ephemeral and never an authority key. */
 export function nativeUploadDiagnosticEnabled(env:NodeJS.ProcessEnv):boolean{
-  const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
-  return env.AOF_REPLAY_UPLOAD_PERF_TRACE==='1'&&!!project&&
-    (project==='age-of-friends-staging'||env.FUNCTIONS_EMULATOR==='true'&&project.startsWith('demo-'));
+  return env.AOF_REPLAY_UPLOAD_PERF_TRACE==='1'&&!!isolatedStagingProject(env);
 }
 export function nativeUploadDiagnosticTraceId(env:NodeJS.ProcessEnv):string|undefined{
   return nativeUploadDiagnosticEnabled(env)?randomUUID():undefined;
@@ -68,13 +67,15 @@ export async function callNativeWorker(
 export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'/social-evidence-v1a'|'/social-grade-preview-v1'|'/social-grade-candidates-preview-v1'|'/social-e2e-progression-v1'|'/social-hosted-grade-v1',payload:Bag,transport:NativeWorkerTransport={}):Promise<Bag>{
   if(route==='/social-hosted-grade-v1'&&!transport.signal)throw fail('Hosted social read budget is required.');
   if(route==='/social-hosted-grade-v1'&&(process.env.AOF_HOSTED_SOCIAL_PRIVATE!=='v1a'||
-    [process.env.GCLOUD_PROJECT,process.env.GOOGLE_CLOUD_PROJECT].filter(Boolean).some(p=>p!=='age-of-friends-staging')||
-    ![process.env.GCLOUD_PROJECT,process.env.GOOGLE_CLOUD_PROJECT].some(Boolean)))
+    !isolatedStagingProject(process.env,false)))
     throw fail('Hosted social worker route is disabled.');
   const target=url.replace(/\/+$/,'');
   const parsed=new URL(target),loopback=['127.0.0.1','localhost'].includes(parsed.hostname);
+  const emulator=process.env.FUNCTIONS_EMULATOR==='true';
+  if(emulator&&(!loopback||!isolatedStagingProject(process.env)?.startsWith('demo-')))
+    throw fail('Native worker emulator transport requires an isolated demo project.');
   if(parsed.username||parsed.password||(!loopback&&parsed.protocol!=='https:')||
-    (loopback&&!process.env.FUNCTIONS_EMULATOR)||!process.env.REPLAY_WORKER_AUTH_TOKEN)
+    (loopback&&!emulator)||!process.env.REPLAY_WORKER_AUTH_TOKEN)
     throw fail('Native worker requires authenticated HTTPS or an emulator loopback endpoint.');
   const headers:Record<string,string>={
     'content-type':'application/json',authorization:'Bearer '+process.env.REPLAY_WORKER_AUTH_TOKEN,
@@ -84,7 +85,7 @@ export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'
       throw fail('Native upload diagnostic trace is not enabled or valid.');
     headers['X-AoF-Upload-Trace-Id']=transport.diagnosticTraceId;
   }
-  if(!process.env.FUNCTIONS_EMULATOR){
+  if(!emulator){
     const identity=transport.getIdToken
       ?await transport.getIdToken(target)
       :await (await new GoogleAuth().getIdTokenClient(target)).idTokenProvider.fetchIdToken(target);

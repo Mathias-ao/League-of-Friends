@@ -215,30 +215,35 @@ async function hostedReady(){
   meta.uncompressedBytes=meta.bytes;meta.uncompressedSha256=meta.sha256;
   return f;
 }
-test('real source collector preserves quiet pairs on worker unavailability, rejects owner overrides and revoked access',async()=>{
+test('hosted query rejects archived/EU policy reuse, owner overrides and unauthenticated access before derivation',async()=>{
   const f=await hostedReady();f.rows.set(HOSTED_POLICY_PATH,approval());
   const input={...f.input,env:{...f.input.env,...env},derive:async()=>{throw Error('worker unavailable');}};
-  const x=await readMyHostedSocialProgression(input);assert.equal(x.coverage.complete,false);
-  assert.equal(x.relationships[0].otherPlayerId,'p2');assert.equal(x.relationships[0].tracks.RIVALRY.outgoing.stage,null);
+  await assert.rejects(readMyHostedSocialProgression(input),e=>e.code==='failed-precondition');
+  await assert.rejects(readMyHostedSocialProgression({...input,env:{...input.env,FUNCTIONS_EMULATOR:undefined,
+    FUNCTION_REGION:'europe-west1',GCLOUD_PROJECT:'age-of-friends-staging-eu'}}),e=>e.code==='failed-precondition');
   await assert.rejects(readMyHostedSocialProgression({...input,request:{playerId:'p2'}}),e=>e.code==='invalid-argument');
   f.rows.get('players/p1').membershipStatus='SUSPENDED';
-  await assert.rejects(readMyHostedSocialProgression(input),e=>e.code==='permission-denied');
+  await assert.rejects(collectMyCurrentBattleHistory(f.input),e=>e.code==='permission-denied');
   await assert.rejects(getMyHostedSocialProgression.run({data:{}}),e=>e.code==='unauthenticated');
 });
 
-test('withdrawn collector source reports incomplete shared history without invoking the worker',async()=>{
+test('withdrawn collector source stays incomplete while the hosted policy path remains blocked',async()=>{
   const f=await hostedReady();f.rows.set(HOSTED_POLICY_PATH,approval());f.rows.get(f.sourcePath).state='WITHDRAWN';
-  const x=await readMyHostedSocialProgression({...f.input,env:{...f.input.env,...env},derive:async()=>{throw Error('must not run');}});
-  assert.equal(x.coverage.complete,false);assert.equal(x.coverage.currentSources,0);assert.deepEqual(x.relationships,[]);
-  assert.equal(x.coverage.pendingSources,1);
+  const x=await collectMyCurrentBattleHistory(f.input);
+  assert.equal(x.coverage.currentSources,0);assert.equal(x.pending.length,1);
+  await assert.rejects(readMyHostedSocialProgression({...f.input,env:{...f.input.env,...env},
+    derive:async()=>assert.fail('must not run')}),e=>e.code==='failed-precondition');
 });
 
-test('source or external approval changed during derivation aborts instead of returning cached private values',async()=>{
+test('source or archived approval changed after collection aborts instead of returning cached private values',async()=>{
   for(const change of [f=>f.rows.set(HOSTED_POLICY_PATH,{...approval(),status:'REVOKED'}),
     f=>f.rows.get(f.sourcePath).state='WITHDRAWN',f=>f.rows.get('authLinks/owner').playerId='p2']){
     const f=await hostedReady();f.rows.set(HOSTED_POLICY_PATH,approval());
-    await assert.rejects(readMyHostedSocialProgression({...f.input,env:{...f.input.env,...env},
-      derive:async()=>{change(f);throw Error('worker unavailable');}}),e=>['aborted','permission-denied'].includes(e.code));
+    const current=await collectMyCurrentBattleHistory(f.input);
+    // Historical approval validation remains a pure controlled fixture. It is
+    // not EU runtime authority; the actual hosted query above refuses reuse.
+    const policy=await loadHostedSocialPolicy(f.db,env);change(f);
+    await assert.rejects(current.revalidate(tx=>policy.revalidate(tx)),e=>['aborted','permission-denied'].includes(e.code));
   }
 });
 

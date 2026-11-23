@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {isolatedStagingProject} from '../config/stagingProject.js';
 import {Readable} from 'node:stream';
 import {createGunzip,gunzipSync} from 'node:zlib';
 import {nativeStatisticsExperienceInput} from './nativeStatisticsReadAdapter.js';
@@ -20,11 +21,11 @@ const requireValue=(condition:unknown,message:string):void=>{if(!condition)throw
 /** Explicit request opt-in, operator flag, project boundary and Game allowlist.
  * Never select this route merely because the worker supports it. */
 export function assertNativeValidationAllowed(env:NodeJS.ProcessEnv,role:string,matchId:string,gameId:string):string {
-  const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
+  const project=isolatedStagingProject(env);
   requireValue(env.AOF_NATIVE_REPLAY_INTEGRATION==='validate-v1','Native validation is disabled.');
   requireValue(role==='ADMIN','Native validation requires an administrator.');
   requireValue(project===env.AOF_NATIVE_REPLAY_PROJECT&&
-    (project==='age-of-friends-staging'||!!env.FUNCTIONS_EMULATOR&&project?.startsWith('demo-')),
+    !!project,
   'Native validation is restricted to explicitly configured staging or demo emulators.');
   requireValue((env.AOF_NATIVE_REPLAY_GAME_ALLOWLIST??'').split(',').map(s=>s.trim()).includes(matchId+'/'+gameId),
     'Game is not allowlisted for native validation.');

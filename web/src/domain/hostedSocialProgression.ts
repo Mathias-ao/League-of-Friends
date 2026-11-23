@@ -1,4 +1,5 @@
 /** Closed owner-private wire contract. No source proof or publication envelope. */
+import {isolatedStagingProject} from './stagingProject';
 export const HOSTED_SOCIAL_VERSION='AOF_SOC_V1A_HOSTED_OWNER_READ_1' as const;
 export const REPUTATION_TRACKS=['GALLANTRY','CRUELTY','CHIVALRY'] as const;
 export const RELATIONSHIP_TRACKS=['RIVALRY','HOSTILITY','BOND'] as const;
@@ -76,6 +77,5 @@ export function parseHostedSocialProgression(raw:unknown,owner:string):HostedSoc
   return x;
 }
 export function hostedSocialEnabled(env:Record<string,string|boolean|undefined>):boolean {
-  return env.VITE_AOF_HOSTED_SOCIAL_PRIVATE==='v1a'&&env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'&&
-    env.VITE_USE_EMULATORS!=='true';
+  return env.VITE_AOF_HOSTED_SOCIAL_PRIVATE==='v1a'&&isolatedStagingProject(env,false);
 }

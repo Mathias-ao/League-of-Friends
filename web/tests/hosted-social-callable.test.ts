@@ -12,6 +12,9 @@ test('actual hosted repository callable accepts a 75s SDK response and bounds ex
  // with no auth/persistence/browser bootstrap or real network access.
  const repository=Object.create(FirebaseLeagueRepository.prototype) as FirebaseLeagueRepository;
  (repository as any).functions=functions;
+ // Rollout refusal is covered by eu-staging-guards; isolate the real SDK
+ // deadline here, with every request still intercepted below.
+ repository.canReadMyHostedSocialProgression=()=>true;
  const originalFetch=globalThis.fetch;let requests=0;
  globalThis.fetch=(async (url,options)=>{
   requests++;assert.match(String(url),/\/getMyHostedSocialProgression$/);

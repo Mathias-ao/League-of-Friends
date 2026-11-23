@@ -5,7 +5,7 @@ const saved={...process.env};
 async function configured(run){
  try{
   delete process.env.FUNCTIONS_EMULATOR;delete process.env.GOOGLE_CLOUD_PROJECT;
-  Object.assign(process.env,{GCLOUD_PROJECT:'age-of-friends-staging',AOF_HOSTED_SOCIAL_PRIVATE:'v1a',REPLAY_WORKER_AUTH_TOKEN:'controlled-transport-token'});
+  Object.assign(process.env,{GCLOUD_PROJECT:'age-of-friends-staging-eu',FUNCTION_REGION:'europe-west1',AOF_HOSTED_SOCIAL_PRIVATE:'v1a',REPLAY_WORKER_AUTH_TOKEN:'controlled-transport-token'});
   return await run();
  }finally{for(const key of Object.keys(process.env))if(!(key in saved))delete process.env[key];Object.assign(process.env,saved);}
 }

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {stagedNativeEnvironmentStatus} from '../lib/queries/adminGetStagingE2eReadiness.js';
 
-const staging='age-of-friends-staging',sha='a'.repeat(40);
+const staging='age-of-friends-staging-eu',sha='a'.repeat(40);
 const env={
-  GCLOUD_PROJECT:staging,AOF_NATIVE_REPLAY_PROJECT:staging,
+  FUNCTION_REGION:'europe-west1',GCLOUD_PROJECT:staging,AOF_NATIVE_REPLAY_PROJECT:staging,
   AOF_DEPLOY_GIT_SHA:sha,
   AOF_NATIVE_REPLAY_INTEGRATION:'validate-v1',
   AOF_NATIVE_READY_PUBLICATION:'reviewed-v1',
@@ -34,7 +34,7 @@ test('staging read-only status ties every configured gate and deployed SHA to ex
   assert.ok(wrongSha.blockers.includes('deployedCommitMatches'));
   assert.equal(stagedNativeEnvironmentStatus(env,'other','g',sha).configReady,false);
   assert.equal(stagedNativeEnvironmentStatus({...env,REPLAY_WORKER_URL:'http://localhost:8090'},'m','g',sha).configReady,false);
-  assert.equal(stagedNativeEnvironmentStatus({...env,GCLOUD_PROJECT:staging,
+  assert.equal(stagedNativeEnvironmentStatus({...env,FUNCTION_REGION:'europe-west1',GCLOUD_PROJECT:staging,
     REPLAY_BUCKET:'league-of-friends-cc274.appspot.com'},'m','g',sha).configReady,false);
 });
 test('read-only staging status does not misrepresent rollback availability',()=>{

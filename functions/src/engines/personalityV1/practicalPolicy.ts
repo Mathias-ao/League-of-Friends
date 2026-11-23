@@ -1,4 +1,5 @@
 import {HttpsError} from 'firebase-functions/v2/https';
+import {EU_STAGING_PROJECT,isolatedStagingProject} from '../../config/stagingProject.js';
 import {bindingDigest} from '../nativeRecordingIntegration.js';
 import {admitPersonalityContext,type ContextSourceInput,type ReviewedContextProof} from './contextAdmission.js';
 import {personalityComparisonGroup,type PersonalityCalibration,type GameContext,type PersonalityAxis} from './personalityV1.js';
@@ -89,9 +90,13 @@ export function createPracticalPersonalityPolicy(owner:string,sources:readonly C
 export async function loadPracticalPersonalityRuntime(db:any,env:NodeJS.ProcessEnv){
   if(env.AOF_PERSONALITY_PRIVATE_POLICY!=='practical-v1')return null;
   const projects=[env.GCLOUD_PROJECT,env.GOOGLE_CLOUD_PROJECT].filter(Boolean);
-  const project=projects[0],emulator=env.FUNCTIONS_EMULATOR==='true'&&/^demo-[a-z0-9-]+$/.test(project??'');
+  const project=projects[0];
   const unavailable=()=>new HttpsError('failed-precondition','Private Personality runtime authorization is unavailable.');
-  if(!project||projects.some(p=>p!==project)||(!emulator&&project!=='age-of-friends-staging'))throw unavailable();
+  if(!isolatedStagingProject(env)||!project||projects.some(p=>p!==project))throw unavailable();
+  // The immutable D2 payload/approval names the historical project. An EU
+  // runtime record with that old hash cannot reapprove it. Keep real history
+  // Developing, even with the flag, until a separately reviewed EU policy exists.
+  if(project===EU_STAGING_PROJECT)return null;
   const ref=db.doc(PRACTICAL_RUNTIME_PATH),snapshot=await ref.get(),record=snapshot.data();
   const expected={version:'AOF_PERSONALITY_PRIVATE_RUNTIME_1',status:'APPROVED',project,
     policyVersion:SPEC.policyVersion,configurationVersion:SPEC.configurationVersion,

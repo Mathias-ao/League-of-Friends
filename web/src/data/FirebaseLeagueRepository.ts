@@ -5,6 +5,8 @@ import {connectFirestoreEmulator,doc,getFirestore,onSnapshot} from 'firebase/fir
 import {emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Membership,type PlayerRecord,type EventRecord,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch,type ReplayUploadResult,type ReplayStatisticsResult,type ActiveNativeDetailRequest,type ActiveNativeDetailResult,type ActiveNativeBattleRecordQuery,type ActiveNativeBattleRecordResult,type SocialHistoryResponse,type PlayerChronicleResponse,type NativeValidationCandidateResult,type NativeE2eReview,type NativeE2ePublishRequest,type NativeE2ePublicationResult,type NativeE2eEnvironmentStatus} from '../domain/league';
 import {assertRecordingUploadFile} from '../domain/recordingUploadPolicy';
 import {hostedSocialEnabled} from '../domain/hostedSocialProgression';
+import {isolatedStagingProject} from '../domain/stagingProject';
+import {gameplayPreviewEnabled,gameplayCandidatesEnabled} from '../domain/gameplayPreview';
 import {privateHistoryEnabled} from '../domain/privateHistory';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
@@ -109,7 +111,7 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   private stagingE2eAllowed(){
     const project=import.meta.env.VITE_FIREBASE_PROJECT_ID;
     const demo=import.meta.env.VITE_USE_EMULATORS==='true'&&project==='demo-aof-e2e';
-    const cloud=import.meta.env.VITE_USE_EMULATORS!=='true'&&project==='age-of-friends-staging';
+    const cloud=isolatedStagingProject(import.meta.env,false);
     if(import.meta.env.VITE_AOF_STAGING_E2E!=='true'||!(demo||cloud))
       throw new Error('Staging E2E controls are disabled for this Firebase project.');
   }
@@ -153,22 +155,38 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     // Server-owned rollout selects native ingestion; explicit LEGACY remains compatible.
     return this.sendReplay<ReplayUploadResult>(matchId,gameId,file,'AUTO');
   }
-  mySocialExperience(request:{matchId:string;gameId:string}){return this.call<import('../domain/intV1Experience').IntV1PrivateExperience>('getMySocialExperience',request);}
+  mySocialExperience(request:{matchId:string;gameId:string}){
+    if(import.meta.env.VITE_AOF_INT_V1_PRIVATE_READS!=='source-v1'||!isolatedStagingProject(import.meta.env))
+      throw new Error('Private source reads are disabled for this Firebase project.');
+    return this.call<import('../domain/intV1Experience').IntV1PrivateExperience>('getMySocialExperience',request);
+  }
   myPrivateChronicle(){return this.call<PlayerChronicleResponse>('getMyPrivateChronicle');}
   myChronicleInvitations(){return this.call<import('../domain/privateChronicleInteractions').PrivateChronicleInvitations>('getMyChronicleInvitations',{});}
   actOnChronicleInvitation(input:import('../domain/privateChronicleInteractions').ChronicleInvitationAction){
     return this.call<{success:true;revision:number;state:string;idempotent:boolean}>('actOnChronicleInvitation',input);
   }
-  myPersonalityHistory(){return this.call<import('../domain/privateHistory').PrivatePersonalityHistory>('getMyPersonalityHistory');}
+  myPersonalityHistory(){
+    if(!this.canReadMyPersonalityHistory())throw new Error('Private Personality history is disabled for this Firebase project.');
+    return this.call<import('../domain/privateHistory').PrivatePersonalityHistory>('getMyPersonalityHistory');
+  }
   canReadMyPersonalityHistory(){return privateHistoryEnabled(import.meta.env);}
   currentAuthUid(){return this.auth.currentUser?.uid??null;}
   myHonoursPreview(){return this.call<import('../domain/privateHonoursPreview').PrivateHonoursPreview>('getMyHonoursPreview');}
-  myGameplayPreview(){return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');}
+  myGameplayPreview(){
+    if(!gameplayPreviewEnabled(import.meta.env))throw new Error('Private gameplay preview is disabled for this Firebase project.');
+    return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');
+  }
   mySocialProgression(){return this.call<import('../domain/privateProgression').PrivateProgression>('getMySocialProgression');}
-  async myHostedSocialProgression(){return (await httpsCallable<unknown,import('../domain/hostedSocialProgression').HostedSocialProgression>(
-    this.functions,'getMyHostedSocialProgression',{timeout:125_000})({})).data;}
+  async myHostedSocialProgression(){
+    if(!this.canReadMyHostedSocialProgression())throw new Error('Private social reads are disabled for this Firebase project.');
+    return (await httpsCallable<unknown,import('../domain/hostedSocialProgression').HostedSocialProgression>(
+      this.functions,'getMyHostedSocialProgression',{timeout:125_000})({})).data;
+  }
   canReadMyHostedSocialProgression(){return hostedSocialEnabled(import.meta.env);}
-  myGameplayCandidates(){return this.call<import('../domain/gameplayPreview').PrivateGameplayCandidates>('getMyGameplayCandidates');}
+  myGameplayCandidates(){
+    if(!gameplayCandidatesEnabled(import.meta.env))throw new Error('Private gameplay candidates are disabled for this Firebase project.');
+    return this.call<import('../domain/gameplayPreview').PrivateGameplayCandidates>('getMyGameplayCandidates');
+  }
   playerChronicle(){return this.call<PlayerChronicleResponse>('getPlayerChronicle');}
   socialHistory(){return this.call<SocialHistoryResponse>('getSocialHistory');}
   replayStatistics(matchId:string,gameId:string){return this.call<ReplayStatisticsResult>('getReplayStatistics',{matchId,gameId});}

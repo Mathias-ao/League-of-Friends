@@ -1,4 +1,5 @@
 import type {SourceSnapshot,BattleFeature,PersonalityProfile} from '../../../functions/src/domain/socialV1';
+import {isolatedStagingProject} from './stagingProject';
 export interface LivePersonalityEvidence {
   version:'AOF_PERSONALITY_LIVE_EVIDENCE_V1';
   requiredGames:3;eligibleGames:number;gameUnlock:'LOCKED'|'UNLOCKED';
@@ -26,6 +27,5 @@ export interface PrivatePersonalityHistory {
 }
 export function privateHistoryEnabled(env:Record<string,string|boolean|undefined>={}):boolean{
   return env.VITE_AOF_INT_V1_PRIVATE_HISTORY==='battle-v1'&&
-    (env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'||env.VITE_USE_EMULATORS==='true'&&
-      typeof env.VITE_FIREBASE_PROJECT_ID==='string'&&env.VITE_FIREBASE_PROJECT_ID.startsWith('demo-'));
+    isolatedStagingProject(env);
 }

@@ -31,7 +31,7 @@ test('strict private DTO rejects wrong owner, public/proof fields, unsupported n
  const partial=dto();partial.coverage.complete=false;partial.coverage.pendingSources=1;
  assert.equal(parseHostedSocialProgression(partial,'owner').relationships[0].tracks.RIVALRY.outgoing.upBank,1,
   'independent complete pairs may remain available when another source is missing');
- const enabled={VITE_AOF_HOSTED_SOCIAL_PRIVATE:'v1a',VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging'};
+ const enabled={VITE_FIREBASE_REGION:'europe-west1',VITE_AOF_HOSTED_SOCIAL_PRIVATE:'v1a',VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging-eu'};
  assert.equal(hostedSocialEnabled(enabled),true);
  for(const change of [{VITE_AOF_HOSTED_SOCIAL_PRIVATE:undefined},{VITE_FIREBASE_PROJECT_ID:'production'},
   {VITE_USE_EMULATORS:'true'}])assert.equal(hostedSocialEnabled({...enabled,...change}),false);
