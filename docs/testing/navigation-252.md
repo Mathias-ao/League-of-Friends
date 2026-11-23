@@ -38,6 +38,7 @@ All selected-player Battles remain reachable using Show more; unrelated players'
 Battles are excluded. This is rendering work only, not a second history projection.
 
 Exact additional Event seams were released by [Sol7095060943](https://github.com/Mathias-ao/League-of-Friends/issues/252#issuecomment-7095060943).
+Entity-scoped Game/tab choice props were released by [Sol7096111479](https://github.com/Mathias-ao/League-of-Friends/issues/252#issuecomment-7096111479).
 The remaining scope uses [the exclusive shared-file handoff](https://github.com/Mathias-ao/League-of-Friends/issues/252#issuecomment-7086185100).
 No scoring, policy/evaluator, source-admission/parser, IAM/config or deployment changes.
 
@@ -64,18 +65,18 @@ before shell; a real staged numeric budget still needs operator/Sol observation.
 
 | Detail | Battles | Condition | Shell before → after | Essential before → after | Secondary before → after |
 | --- | ---: | --- | --- | --- | --- |
-| event | 5 | cold-mount | 109.86/134.23 → 7.09/17.42 | 109.86/134.23 → 96.16/117.05 | 116.78/143.04 → 189.88/219.19 |
-| event | 5 | warm-reopen | 103.28/112.71 → 6.05/6.75 | 103.29/112.71 → 101.91/108.04 | 110.49/119.50 → 196.39/213.32 |
-| match | 5 | cold-mount | 96.86/108.26 → 5.95/7.07 | 96.86/108.26 → 93.88/96.02 | 186.91/197.97 → 191.43/194.16 |
-| match | 5 | warm-reopen | 100.94/103.51 → 5.13/6.02 | 100.94/103.51 → 98.37/100.70 | 191.39/194.13 → 195.65/198.59 |
-| player | 5 | cold-mount | 105.22/114.51 → 21.67/27.52 | 105.22/114.51 → 93.23/98.06 | 105.22/114.51 → 93.23/98.06 |
-| player | 5 | warm-reopen | 108.76/114.24 → 20.45/28.94 | 108.76/114.24 → 96.52/97.58 | 108.76/114.24 → 96.52/97.58 |
-| event | 200 | cold-mount | 110.60/121.00 → 7.30/8.06 | 110.61/121.00 → 97.21/106.78 | 117.32/128.46 → 191.93/202.01 |
-| event | 200 | warm-reopen | 102.14/115.95 → 6.89/9.54 | 102.14/115.95 → 100.93/102.56 | 109.62/123.17 → 196.33/198.19 |
-| match | 200 | cold-mount | 163.97/379.16 → 10.03/14.70 | 163.97/379.16 → 91.88/99.95 | 259.26/467.70 → 183.73/197.43 |
-| match | 200 | warm-reopen | 145.96/379.46 → 7.35/7.50 | 145.97/379.46 → 97.50/99.40 | 234.89/465.91 → 193.03/197.25 |
-| player | 200 | cold-mount | 193.01/318.46 → 34.97/48.95 | 193.01/318.46 → 102.85/109.45 | 193.01/318.46 → 102.85/109.45 |
-| player | 200 | warm-reopen | 197.56/303.04 → 35.35/40.71 | 197.56/303.04 → 96.28/99.70 | 197.56/303.04 → 96.28/99.70 |
+| event | 5 | cold-mount | 109.86/134.23 → 7.09/17.49 | 109.86/134.23 → 96.69/132.47 | 116.78/143.04 → 191.40/236.19 |
+| event | 5 | warm-reopen | 103.28/112.71 → 6.04/6.27 | 103.29/112.71 → 102.37/108.05 | 110.49/119.50 → 196.91/213.85 |
+| match | 5 | cold-mount | 96.86/108.26 → 5.95/7.06 | 96.86/108.26 → 92.96/95.84 | 186.91/197.97 → 188.19/192.55 |
+| match | 5 | warm-reopen | 100.94/103.51 → 5.19/5.55 | 100.94/103.51 → 98.26/100.70 | 191.39/194.13 → 193.03/197.34 |
+| player | 5 | cold-mount | 105.22/114.51 → 23.40/42.41 | 105.22/114.51 → 91.92/96.43 | 105.22/114.51 → 91.92/96.43 |
+| player | 5 | warm-reopen | 108.76/114.24 → 21.18/24.86 | 108.76/114.24 → 96.32/97.10 | 108.76/114.24 → 96.32/97.10 |
+| event | 200 | cold-mount | 110.60/121.00 → 7.80/8.64 | 110.61/121.00 → 96.09/106.19 | 117.32/128.46 → 193.07/210.08 |
+| event | 200 | warm-reopen | 102.14/115.95 → 7.08/8.71 | 102.14/115.95 → 102.50/105.52 | 109.62/123.17 → 197.14/213.97 |
+| match | 200 | cold-mount | 163.97/379.16 → 10.48/18.40 | 163.97/379.16 → 91.32/98.97 | 259.26/467.70 → 187.90/195.19 |
+| match | 200 | warm-reopen | 145.96/379.46 → 7.94/14.70 | 145.97/379.46 → 97.02/98.97 | 234.89/465.91 → 194.37/196.56 |
+| player | 200 | cold-mount | 193.01/318.46 → 35.22/41.55 | 193.01/318.46 → 93.92/108.36 | 193.01/318.46 → 93.92/108.36 |
+| player | 200 | warm-reopen | 197.56/303.04 → 35.27/36.89 | 197.56/303.04 → 95.95/108.09 | 197.56/303.04 → 95.95/108.09 |
 
 Repository calls per navigation: Event1 essential call (legacy1 full call), plus1
 on-demand Roundoff call if requested; Battle1 detail+1 Statistics; Player1 public
@@ -97,6 +98,12 @@ The script removes only the temporary baseline modules it creates. Raw local
 reports are review evidence, not deterministic golden performance tests.
 
 ## Regression and release boundaries
+
+Same-entity refresh/Retry retains only the selected Game ID or Event tab, while
+unmounting old authority. A missing Game falls back to a fresh valid Game, tested
+through the actual draft command target. A retained Roundoff tab issues a new
+section read; old sections cannot satisfy it. Different entity/account/close resets
+choices. Default uncontrolled preview/detail callers retain their behavior.
 
 Focused tests also cover actual-App RSVP and Battle command failures inside the
 active modal, successful recovery, late-failure rejection across selection/account

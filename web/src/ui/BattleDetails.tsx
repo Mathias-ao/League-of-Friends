@@ -12,17 +12,20 @@ import {BattleOverlay} from './BattleOverlay';
 import {BattleAccomplishments} from './BattleAccomplishments';
 import type {ViewProps} from './App';
 
-export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>void}){
+export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>void;selectedGameId?:string;onSelectGame?:(id:string|undefined)=>void}){
   const {data,repository,preview,snapshot,openPlayer}=props;
   const [gameId,setGameId]=useState(data.games[0]?.gameId??''),[statisticsOpen,setStatisticsOpen]=useState(false);
-  const selected=data.games.find(game=>game.gameId===gameId)??data.games[0];
+  const selected=data.games.find(game=>game.gameId===(props.selectedGameId??gameId))??data.games[0];
+  useEffect(()=>{
+    if(props.selectedGameId!==undefined&&props.selectedGameId!==selected?.gameId)props.onSelectGame?.(selected?.gameId);
+  },[props.selectedGameId,selected?.gameId,props.onSelectGame]);
   const revision=JSON.stringify(data.games.map(game=>[game.gameId,game.status,game.result?.revision,game.resultDisputeOpen,game.replay?.statisticsRevision]));
   const state=useStatistics(repository,{matchId:data.match.matchId},revision);
   const recorded=state.dataset?.games.find(game=>game.gameId===selected?.gameId);
   useEffect(()=>{setGameId(data.games[0]?.gameId??'');setStatisticsOpen(false);},[data.match.matchId]);
   return <div className="battle-details">
     <header className="battle-detail-header"><div><span className="eyebrow">{data.match.scoringAct==='WARMUP'?'ACT I · WARM-UP':data.match.scoringAct==='MAIN'?'ACT II · MAIN EVENT':'THE FIELD OF BATTLE'}</span><h3>{formatName(data.match.format)}{data.games.length>1&&<small> · {data.games.length} Games</small>}</h3></div><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></header>
-    {data.games.length>1&&<label className="battle-game-picker">Game<select value={selected?.gameId??''} onChange={event=>{setGameId(event.target.value);setStatisticsOpen(false);}}>{data.games.map(game=><option key={game.gameId} value={game.gameId}>Game {game.gameNumber} · {game.status.replaceAll('_',' ')}</option>)}</select></label>}
+    {data.games.length>1&&<label className="battle-game-picker">Game<select value={selected?.gameId??''} onChange={event=>{setGameId(event.target.value);props.onSelectGame?.(event.target.value);setStatisticsOpen(false);}}>{data.games.map(game=><option key={game.gameId} value={game.gameId}>Game {game.gameNumber} · {game.status.replaceAll('_',' ')}</option>)}</select></label>}
     <MatchDialog key={data.match.matchId+'/'+selected?.gameId} {...props} compact gameId={selected?.gameId} recordedGame={recorded}/>
     {!preview&&selected&&<StagingE2eControls data={data} game={selected}
       repository={repository} role={snapshot.viewer?.role} onUpdated={props.onUpdated}/>}

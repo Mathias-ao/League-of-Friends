@@ -22,9 +22,10 @@ export function hasAvailableRoundoff(data:EventDetail){
   return typeof revision==='number'&&Number.isInteger(revision)&&revision>0&&(expected==null||expected===revision);
 }
 const battleStatus=(match:MatchRecord)=>match.status==='COMPLETED'?'Played':match.status==='READY'?'Ready':match.status==='ACTIVE'?'Underway':match.status==='DISPUTED'?'Under review':match.status==='AWAITING_CONFIRMATION'?'Awaiting result':match.status==='CANCELLED'?'Cancelled':'Scheduled';
-export function EventDetails(props:ViewProps&{data:EventDetail;onUpdated:()=>void;roundoffState?:DetailSectionState}){
+export function EventDetails(props:ViewProps&{data:EventDetail;onUpdated:()=>void;roundoffState?:DetailSectionState;selectedTab?:Tab;onSelectTab?:(tab:Tab)=>void}){
   const {snapshot,repository,busy,act,enter,onUpdated,openMatch,preview}=props;
-  const [tab,setTab]=useState<Tab>('briefing'),[designState,setDesignState]=useState<EventDesignState>('current');
+  const [localTab,setTab]=useState<Tab>('briefing'),[designState,setDesignState]=useState<EventDesignState>('current');
+  const tab=props.selectedTab??localTab;
   const tabId=useId();
   const [storyOpen,setStoryOpen]=useState(false);
   useEffect(()=>{setTab('briefing');setDesignState('current');setStoryOpen(false);},[props.data.event.eventId]);
@@ -56,7 +57,7 @@ export function EventDetails(props:ViewProps&{data:EventDetail;onUpdated:()=>voi
   const warmupOpensAt=data.event.warmupOpensAt||(data.event.startsAt&&Number.isFinite(Date.parse(data.event.startsAt))?new Date(Date.parse(data.event.startsAt)-7*86400000).toISOString():null);
   const checkInClosed=!!data.event.checkInClosesAt&&Date.parse(data.event.checkInClosesAt)<=now;
   const checkInMessage=data.viewer.attendanceStatus==='CHECKED_IN'?(myWarmup||myMain?'Your approved Battles are ready to open below.':'The muster is forming. Your Battles will appear once the plan is approved.'):data.viewer.signupState==='WAITING_LIST'?'A place opens when a confirmed player withdraws.':data.viewer.rsvp==='YES'?(event.canCheckIn(now)?'Check-in is open for the main Event. Confirm your attendance before the deadline.':checkInClosed?'Main-event check-in has closed. Contact the organizer if you need assistance.':'Arrange your warm-up with your opponent during the play window. Main-event attendance is confirmed separately at check-in.'):'Confirm whether you will take the field.';
-  const chooseTab=(next:Tab)=>{setTab(next);if(next==='roundoff')props.roundoffState?.request?.();};
+  const chooseTab=(next:Tab)=>{setTab(next);props.onSelectTab?.(next);if(next==='roundoff')props.roundoffState?.request?.();};
   const tabKey=(e:React.KeyboardEvent<HTMLButtonElement>,index:number)=>{
     let next=index;
     if(e.key==='ArrowRight')next=(index+1)%tabs.length;
@@ -65,7 +66,7 @@ export function EventDetails(props:ViewProps&{data:EventDetail;onUpdated:()=>voi
     e.preventDefault();chooseTab(tabs[next].id);document.getElementById(`${tabId}-${tabs[next].id}`)?.focus();
   };
   return <div className="event-details">
-    {preview&&<div className="event-design-controls"><span>Illustrative Event states</span><label>Preview state<select value={designState} onChange={e=>{const state=e.target.value as EventDesignState;setDesignState(state);(repository as typeof repository&{setEventDesignState?:(id:string,state:EventDesignState)=>void}).setEventDesignState?.(data.event.eventId,state);setTab('briefing');}}><option value="current">Current preview data</option><option value="pairings">Warm-up pairings</option><option value="main">Main Battle ready</option><option value="preparing">Record being prepared</option><option value="released">Available roundoff</option><option value="counted">Counted extra warm-up</option></select></label></div>}
+    {preview&&<div className="event-design-controls"><span>Illustrative Event states</span><label>Preview state<select value={designState} onChange={e=>{const state=e.target.value as EventDesignState;setDesignState(state);(repository as typeof repository&{setEventDesignState?:(id:string,state:EventDesignState)=>void}).setEventDesignState?.(data.event.eventId,state);chooseTab('briefing');}}><option value="current">Current preview data</option><option value="pairings">Warm-up pairings</option><option value="main">Main Battle ready</option><option value="preparing">Record being prepared</option><option value="released">Available roundoff</option><option value="counted">Counted extra warm-up</option></select></label></div>}
     <header className={'event-briefing-hero '+(artwork?'with-artwork ':'')+(countedWarmup?'has-warmup-note':'')} style={artwork?{backgroundImage:`linear-gradient(90deg,rgba(22,14,10,.96),rgba(22,14,10,.57) 68%,rgba(22,14,10,.3)),url(${JSON.stringify(artwork)})`}:undefined}>
       <div><span className="event-phase"><Flag size={13}/>{phaseLabel}</span><h3>{isLombardia(data.event)?'The road to Milan':data.event.title}</h3><p>{data.event.description||(isLombardia(data.event)?lombardia.story.oneLine:'A new field of contest in the Season campaign.')}</p><button className="event-campaign-trigger" onClick={()=>setStoryOpen(true)} aria-haspopup="dialog"><BookOpen size={16}/>Read the campaign briefing<ArrowRight size={15}/></button></div>
       <div className="event-hero-facts"><span><Clock3 size={15}/><DateLabel value={data.event.startsAt}/></span><span><Swords size={15}/>{mains[0]?formatName(mains[0].format):isLombardia(data.event)?'4v4 · Lombardia':formatName(data.event.competitionStyle)}</span><span><Users size={15}/>{data.signup.confirmedCount} / {data.event.maxParticipants??'—'} banners raised</span></div>

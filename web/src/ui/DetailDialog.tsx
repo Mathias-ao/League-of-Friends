@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useCallback,useEffect,useState} from 'react';
 import {canBrowseLeague,formatName,isWarmupMatch,type EventDetail,type EventRoundoff,type MatchDetail,type PlayerProfile} from '../domain/league';
 import {Avatar,DateLabel,Modal} from './Primitives';
 import {MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperience';
@@ -14,6 +14,14 @@ type Loaded={type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{typ
 export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string|null|undefined;selection:DetailSelection;requests:DetailRequests;onClose:()=>void}){
   const {selection,repository,snapshot,requests}=props;
   const uid=props.authUid;
+  const choiceIdentity=JSON.stringify([uid,snapshot.viewer?.playerId,selection.type,selection.id]);
+  const [choiceState,setChoice]=useState<{identity:string;gameId?:string;tab?:'briefing'|'battles'|'roundoff'}>({identity:choiceIdentity});
+  const choice=choiceState.identity===choiceIdentity?choiceState:null;
+  useEffect(()=>{setChoice(previous=>previous.identity===choiceIdentity?previous:{identity:choiceIdentity});},[choiceIdentity]);
+  const selectGame=useCallback((gameId:string|undefined)=>setChoice(previous=>({
+    ...(previous.identity===choiceIdentity?previous:{identity:choiceIdentity}),gameId})),[choiceIdentity]);
+  const selectTab=useCallback((tab:'briefing'|'battles'|'roundoff')=>setChoice(previous=>({
+    ...(previous.identity===choiceIdentity?previous:{identity:choiceIdentity}),tab})),[choiceIdentity]);
   const [retry,setRetry]=useState(0);
   const [roundoffRetry,setRoundoffRetry]=useState(0);
   const [requestedRoundoff,setRequestedRoundoff]=useState('');
@@ -23,7 +31,7 @@ export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string
   const [roundoff,setRoundoff]=useState<{key:string;data?:EventRoundoff;error?:string;denied?:boolean}>({key:roundoffKey});
   const split=selection.type==='event'&&!!repository.eventEssential&&!!repository.eventRoundoff;
   const loaded=state.key===key?state.loaded:undefined;
-  const wantsRoundoff=requestedRoundoff===key||(loaded?.type==='event'&&
+  const wantsRoundoff=choice?.tab==='roundoff'||requestedRoundoff===key||(loaded?.type==='event'&&
     loaded.data.matches.filter(match=>isWarmupMatch(match)&&match.participants.some(p=>p.playerId===snapshot.viewer?.playerId)).length>1);
   const allowed=canBrowseLeague(snapshot)&&accessCurrent(repository,uid)&&(!repository.currentAuthUid||!!uid||repository.mode==='preview');
   useEffect(()=>{
@@ -78,9 +86,11 @@ export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string
         recordsState={{status:loaded?'ready':current?.error?'error':'loading',error:current?.error,retry:retryRead}}
         openChronicleOnLoad={selection.openChronicle}/>:
       loaded?.type==='event'?<EventDetails {...props} data={split?{...loaded.data,roundoff:section?.data}:loaded.data} onUpdated={updated}
+        selectedTab={choice?.tab??'briefing'} onSelectTab={selectTab}
         roundoffState={split?{status:section?.data?'ready':section?.error?'error':'loading',error:section?.error,
           request:()=>setRequestedRoundoff(key),retry:()=>setRoundoffRetry(n=>n+1)}:undefined}/>:
-      loaded?.type==='match'?<MatchDialogWithStatistics key={selection.id} {...props} data={loaded.data} onUpdated={updated}/>:
+      loaded?.type==='match'?<MatchDialogWithStatistics key={selection.id} {...props} data={loaded.data} onUpdated={updated}
+        selectedGameId={choice?.gameId} onSelectGame={selectGame}/>:
       <div className="detail-selection-summary" data-detail-shell={selection.type}>
         {selection.type==='event'&&event&&<header><h3>{event.title}</h3><p><DateLabel value={event.startsAt}/></p><span>{event.status.replaceAll('_',' ')}</span></header>}
         {selection.type==='event'&&snapshot.matches.filter(match=>match.eventId===selection.id).slice(0,8).map(match=>

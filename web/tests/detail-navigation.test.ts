@@ -218,3 +218,65 @@ test('successful action with exhausted revision-refresh retry recovers inside th
   assert.ok(!document.querySelector('dialog [role="alert"]'));assert.equal(commands,1);
  }finally{await ui.close();t.mock.timers.reset();}
 });
+
+test('same Battle preserves selected Game through correction and failed-read Retry; removed Game uses fresh valid target',async()=>{
+ const ui=await navigationFixture({app:false,kind:'match'});try{
+  const games=[1,2,3].map(n=>({...ui.match.games[0],gameId:'g'+n,gameNumber:n,status:'READY',draftRequired:true,draft:null,result:null})),
+   battle={...ui.match,match:{...ui.match.match,status:'READY',result:null},viewer:{...ui.match.viewer,isParticipant:true},games};
+  await ui.complete('match',battle);
+  const choose=async(id:string)=>act(async()=>{const picker=document.querySelector<HTMLSelectElement>('.battle-game-picker select')!;
+   picker.value=id;picker.dispatchEvent(new window.Event('change',{bubbles:true}));});
+  await choose('g3');
+  await ui.change(s=>({...s,matches:s.matches.map(m=>({...m,result:{revision:2,winningPlayerIds:[]}}))}));
+  assert.ok(!document.querySelector('.battle-details'),'old authority stays unmounted');
+  await ui.complete('match',battle,1);assert.equal(document.querySelector<HTMLSelectElement>('.battle-game-picker select')!.value,'g3');
+  await ui.change(s=>({...s,matches:s.matches.map(m=>({...m,result:{revision:3,winningPlayerIds:[]}}))}));
+  await ui.fail('match',Error('Controlled correction read failure'),2);
+  const retry=[...document.querySelectorAll('button')].find(b=>b.textContent==='Retry battle controls')!;
+  await act(async()=>retry.click());await ui.complete('match',battle,3);
+  assert.equal(document.querySelector<HTMLSelectElement>('.battle-game-picker select')!.value,'g3');
+  await ui.change(s=>({...s,matches:s.matches.map(m=>({...m,result:{revision:4,winningPlayerIds:[]}}))}));
+  await ui.complete('match',{...battle,games:games.slice(0,2)},4);
+  assert.equal(document.querySelector<HTMLSelectElement>('.battle-game-picker select')!.value,'g1');
+  const targets:string[]=[];ui.repository.ensureCivilizationDraft=async(matchId:string,gameId:string)=>{targets.push(matchId+'/'+gameId);};
+  await actionButton('Open civilization draft');assert.deepEqual(targets,[ui.matchId+'/g1'],'command targets only the current valid Game');
+ }finally{await ui.close();}
+});
+
+test('same Event retains Roundoff through correction and Retry, with a fresh section; new Event resets choice',async()=>{
+ const ui=await navigationFixture({app:false});try{
+  await ui.complete('essential',ui.event);await ui.click('[role="tab"]:nth-child(3)');
+  await ui.change(s=>({...s,matches:s.matches.map(m=>({...m,result:{revision:2,winningPlayerIds:[]}}))}));
+  assert.ok(!document.querySelector('.event-details'));
+  await ui.complete('essential',ui.event,1);
+  assert.equal(document.querySelector('[role="tab"][aria-selected="true"]')!.textContent,'Roundoff');
+  await ui.complete('roundoff',{eventId:ui.eventId,roundoff:{revision:111,points:[]}});
+  assert.match(ui.body(),/Loading event roundoff/,'old section cannot complete this generation');
+  await ui.complete('roundoff',{eventId:ui.eventId,roundoff:{revision:222,points:[]}},1);
+  await ui.change(s=>({...s,matches:s.matches.map(m=>({...m,result:{revision:3,winningPlayerIds:[]}}))}));
+  await ui.fail('essential',Error('Controlled retry'),2);
+  const retry=[...document.querySelectorAll('button')].find(b=>b.textContent==='Retry event participation and battles')!;
+  await act(async()=>retry.click());await ui.complete('essential',ui.event,3);
+  assert.equal(document.querySelector('[role="tab"][aria-selected="true"]')!.textContent,'Roundoff');
+  assert.equal(ui.calls.filter(c=>c.kind==='roundoff').length,4,'each current refresh/Retry has a distinct section request');
+  await ui.select('event','new-event');
+  await ui.complete('essential',{...ui.event,event:{...ui.event.event,eventId:'new-event'}},4);
+  assert.equal(document.querySelector('[role="tab"][aria-selected="true"]')!.textContent,'Briefing');
+ }finally{await ui.close();}
+});
+
+
+test('closing the window and account replacement reset retained tab choices',async()=>{
+ const ui=await navigationFixture();try{
+  await ui.open();await ui.complete('essential',ui.event);await ui.click('[role="tab"]:nth-child(3)');
+  await ui.click('button[aria-label="Close dialog"]');await ui.open();await ui.complete('essential',ui.event,1);
+  assert.equal(document.querySelector('[role="tab"][aria-selected="true"]')!.textContent,'Briefing');
+ }finally{await ui.close();}
+ const account=await navigationFixture({app:false});try{
+  await account.complete('essential',account.event);await account.click('[role="tab"]:nth-child(3)');
+  await account.auth('replacement-uid');await account.authorizeSnapshot('replacement-uid');await account.complete('essential',account.event,1);
+  assert.equal(document.querySelector('[role="tab"][aria-selected="true"]')!.textContent,'Briefing');
+  await account.auth('firebase-owner');await account.authorizeSnapshot('firebase-owner');await account.complete('essential',account.event,2);
+  assert.equal(document.querySelector('[role="tab"][aria-selected="true"]')!.textContent,'Briefing','returning account starts with a new choice scope');
+ }finally{await account.close();}
+});

@@ -10,7 +10,7 @@ import {detailRequests} from '../src/ui/detailNavigation.ts';
 /** Controlled latency/identity fixture, never a hosted/source-method witness. */
 export async function navigationFixture({app=true,kind='event',split=true,scale=5,Component=App,privateReads=false,summaryStatus}={}){
  const backend=new PreviewLeagueRepository();await backend.signIn();await backend.requestMembership('Navigator','','K7M4Q9');await backend.enterSeason();
- let snapshot=await backend.load(),uid='firebase-owner';
+ let snapshot=await backend.load(),uid='firebase-owner',authorizedUid=uid;
  const eventId=snapshot.events[0].eventId,matchId=snapshot.matches[0].matchId,owner=snapshot.viewer.playerId;
  const event=await backend.event(eventId),match=await backend.match(matchId),profile=await backend.player(owner);
  snapshot={...snapshot,matches:Array.from({length:scale},(_,i)=>i===0?snapshot.matches[0]:{
@@ -42,7 +42,7 @@ export async function navigationFixture({app=true,kind='event',split=true,scale=
  const requests=detailRequests(),root=createRoot(document.getElementById('root'));
  const render=async()=>act(async()=>root.render(app?React.createElement(Component,{repository}):
   React.createElement(DetailDialog,{key:selection.type+':'+selection.id,repository,snapshot,preview:false,busy:false,
-   selection,requests,authUid:'firebase-owner',onClose:()=>root.render(null),act:async()=>true,enter:()=>{},navigate:()=>{},
+   selection,requests,authUid:authorizedUid,onClose:()=>root.render(null),act:async work=>{await work();return true;},enter:()=>{},navigate:()=>{},
    openEvent:id=>{selection={type:'event',id,request:selection.request+1};void render();},
    openMatch:id=>{selection={type:'match',id,request:selection.request+1};void render();},
    openPlayer:id=>{selection={type:'player',id,request:selection.request+1};void render();}})));
@@ -56,5 +56,6 @@ export async function navigationFixture({app=true,kind='event',split=true,scale=
   async fail(kind,error=new Error('Controlled offline failure'),index=0){const call=calls.filter(c=>c.kind===kind)[index];assert.ok(call,kind+' request');await act(async()=>call.reject(error));},
   async change(update){snapshot=update(structuredClone(snapshot));await render();},
   async auth(nextUid,notify=true){await act(async()=>{uid=nextUid;if(notify)for(const fn of [...listeners])fn();});},
+  async authorizeSnapshot(nextUid){authorizedUid=nextUid;await render();},
   async close(){await act(async()=>root.unmount());requests.clear();dom.window.close();}};
 }
