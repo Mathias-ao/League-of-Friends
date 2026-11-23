@@ -1,12 +1,14 @@
-import {useCallback,useEffect,useRef,useState,type Ref} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState,type Ref} from 'react';
 import {ArrowRight,ChevronLeft,ChevronRight,Pause,Play,Shield,Swords,Users,ChartNoAxesCombined,Lock,Flag,LogOut,Check,LoaderCircle} from 'lucide-react';
-import {canBrowseLeague,currentLeagueEvent,emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Page,type EventDetail,type MatchDetail,type PlayerProfile,type EmperorsFavorBatch} from '../domain/league';
+import {canBrowseLeague,currentLeagueEvent,emptySnapshot,type LeagueRepository,type LeagueSnapshot,type Page,type EmperorsFavorBatch} from '../domain/league';
 import {lombardia,brand} from '../data/content';
 import {Avatar,Modal,Sigil} from './Primitives';
 import {AofSeal} from './AofSeal';
 import {FrontPageNotifications} from './FrontPageNotifications';
 import {SeasonView,EventsView,BattlesView,PlayersView,WarRoomView} from './Views';
-import {SeasonStatisticsView,EventDialogWithStatistics,MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperience';
+import {SeasonStatisticsView} from './StatisticsExperience';
+import {DetailDialog} from './DetailDialog';
+import {detailRequests,type DetailSelection} from './detailNavigation';
 import {startSeasonStandingsRefresh} from './seasonStandingsRefresh';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
@@ -22,27 +24,30 @@ export interface ViewProps {
   act:(action:()=>Promise<void>,message:string)=>Promise<boolean>;enter:()=>void;navigate:(page:Page)=>void;
   refreshStandings?:()=>void;
 }
-type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'favors';data:EmperorsFavorBatch}|{type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile;openChronicle?:boolean}|null;
+type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'favors';data:EmperorsFavorBatch}|DetailSelection|null;
 function pageFromHash():Page|null{return pages.find(p=>!p.disabled&&'#'+p.id===location.hash)?.id??null;}
 function clearHash(){history.replaceState(null,'',location.pathname+location.search);}
 export const BOOTSTRAP_ABORT_RETRY_DELAYS_MS=[1000,2000] as const;
 export function App({repository}:{repository:LeagueRepository}){
   const [snapshot,setSnapshot]=useState(emptySnapshot),[page,setPage]=useState<Page>('season'),[sectionOpen,setSectionOpen]=useState(false),[dialog,setDialog]=useState<DialogState>(null);
-  const [actionBusy,setBusy]=useState(false),[detailBusy,setDetailBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
+  const [actionBusy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
   const generation=useRef(0),authEpoch=useRef(0),detailRequest=useRef(0),working=useRef(false),navRef=useRef<HTMLElement>(null),gateRef=useRef<HTMLElement>(null);
+  const snapshotUid=useRef(repository.currentAuthUid?.());
+  const detailReads=useRef(detailRequests());
   const refreshTask=useRef<{epoch:number;task:Promise<boolean>;cancel:()=>void}|null>(null);
   const [bootstrapAborted,setBootstrapAborted]=useState(false);
   const [standingsRefreshRevision,setStandingsRefreshRevision]=useState(0);
   const accessResolved=useRef(false),previousCanBrowse=useRef(false);
-  const preview=repository.mode==='preview',busy=actionBusy||detailBusy,canBrowse=canBrowseLeague(snapshot);
+  const preview=repository.mode==='preview',busy=actionBusy,canBrowse=canBrowseLeague(snapshot);
   const leagueEntryVisible=loading||snapshot.membership!=='ACTIVE';
   const showSeasonGate=!loading&&snapshot.membership==='ACTIVE'&&!canBrowse;
   const refresh=useCallback((force=false)=>{
     const epoch=authEpoch.current;
+    const uid=repository.currentAuthUid?.();
     if(!force&&refreshTask.current?.epoch===epoch)return refreshTask.current.task;
     const id=++generation.current;
     refreshTask.current?.cancel();
-    const current=()=>id===generation.current&&epoch===authEpoch.current;
+    const current=()=>id===generation.current&&epoch===authEpoch.current&&repository.currentAuthUid?.()===uid;
     let cancelRetry=()=>{};
     const waitForRetry=(ms:number)=>new Promise<void>(resolve=>{
       const timer=setTimeout(()=>{cancelRetry=()=>{};resolve();},ms);
@@ -53,7 +58,8 @@ export function App({repository}:{repository:LeagueRepository}){
         for(let attempt=0;current();attempt++){
           try{
             const data=await repository.load();if(!current())return false;
-            if(data.membership!=='ACTIVE'){detailRequest.current++;setDetailBusy(false);setDialog(null);}
+            if(!canBrowseLeague(data)){detailRequest.current++;detailReads.current.clear();setDialog(null);}
+            snapshotUid.current=uid;
             setSnapshot(data);setBootstrapAborted(false);setError('');return true;
           }catch(e){
             if(!current())return false;
@@ -65,7 +71,7 @@ export function App({repository}:{repository:LeagueRepository}){
               }
               setBootstrapAborted(true);setError('The league changed while loading. Retry to load the latest standings.');
             }else{
-              detailRequest.current++;setDetailBusy(false);setSnapshot(emptySnapshot());setDialog(null);
+              detailRequest.current++;setSnapshot(emptySnapshot());setDialog(null);
               setBootstrapAborted(false);setError(errorMessage(e));
             }
             return false;
@@ -81,8 +87,8 @@ export function App({repository}:{repository:LeagueRepository}){
   useEffect(()=>{
     void refresh();
     const unsubscribe=repository.onAuthChange(()=>{
-      authEpoch.current++;detailRequest.current++;accessResolved.current=false;previousCanBrowse.current=false;
-      setDetailBusy(false);setSnapshot(emptySnapshot());setDialog(null);setBootstrapAborted(false);setError('');setLoading(true);void refresh();
+      authEpoch.current++;detailReads.current.clear();detailRequest.current++;accessResolved.current=false;previousCanBrowse.current=false;
+      setSnapshot(emptySnapshot());setDialog(null);setBootstrapAborted(false);setError('');setLoading(true);void refresh();
     });
     return ()=>{generation.current++;authEpoch.current++;detailRequest.current++;refreshTask.current?.cancel();unsubscribe();};
   },[repository,refresh]);
@@ -97,7 +103,7 @@ export function App({repository}:{repository:LeagueRepository}){
   },[preview,canBrowse,sectionOpen,page,snapshot.viewer?.playerId,snapshot.season?.seasonId,standingsRefreshRevision,refresh]);
   useEffect(()=>{
     const syncLocation=()=>{
-      detailRequest.current++;setDetailBusy(false);setDialog(null);
+      detailRequest.current++;setDialog(null);
       const next=pageFromHash();
       if(loading)return;
       if(!canBrowse){
@@ -132,16 +138,16 @@ export function App({repository}:{repository:LeagueRepository}){
     const target=pages.find(p=>p.id===next);
     if(!target||target.disabled)return;
     if(!canBrowse){
-      detailRequest.current++;setDetailBusy(false);setPage('season');setSectionOpen(false);setDialog(null);clearHash();
+      detailRequest.current++;setPage('season');setSectionOpen(false);setDialog(null);clearHash();
       if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
       return;
     }
-    detailRequest.current++;setDetailBusy(false);setPage(next);setSectionOpen(true);setDialog(null);
+    detailRequest.current++;setPage(next);setSectionOpen(true);setDialog(null);
     if(location.hash!=='#'+next)location.hash=next;
     requestAnimationFrame(()=>navRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
   };
   const returnHome=()=>{
-    detailRequest.current++;setDetailBusy(false);setSectionOpen(false);setPage('season');setDialog(null);clearHash();
+    detailRequest.current++;setSectionOpen(false);setPage('season');setDialog(null);clearHash();
     scrollTo({top:0,behavior:'smooth'});
   };
   const navigate=(next:Page)=>openSection(next);
@@ -165,16 +171,11 @@ export function App({repository}:{repository:LeagueRepository}){
     finally{working.current=false;setBusy(false);}
   };
   const detail=async(type:'event'|'match'|'player',id:string,openChronicle=false)=>{
-    if(!canBrowse){
+    if(!canBrowse||repository.currentAuthUid?.()!==snapshotUid.current){
       if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
       return;
     }
-    const request=++detailRequest.current,epoch=authEpoch.current;setDetailBusy(true);
-    try{
-      const result:DialogState=type==='event'?{type,data:await repository.event(id)}:type==='match'?{type,data:await repository.match(id)}:{type,data:await repository.player(id),openChronicle};
-      if(request===detailRequest.current&&epoch===authEpoch.current)setDialog(result);
-    }catch(e){if(request===detailRequest.current&&epoch===authEpoch.current)setError(errorMessage(e));}
-    finally{if(request===detailRequest.current)setDetailBusy(false);}
+    setError('');setDialog({type,id,request:++detailRequest.current,openChronicle});
   };
   const enter=()=>{
     if(snapshot.membership!=='ACTIVE')return;
@@ -185,7 +186,10 @@ export function App({repository}:{repository:LeagueRepository}){
   const next=currentLeagueEvent(snapshot);
   const props:ViewProps={snapshot,preview,busy,repository,openEvent,openMatch,openPlayer,act,enter,navigate,
     refreshStandings:()=>{if(!working.current)void refresh();}};
-  const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:dialog?.type==='event'?dialog.data.event.title:dialog?.type==='match'?'Field of Battle':dialog?.type==='player'?dialog.data.player.steamName:'';
+  // Dialog state must not rebuild a hundreds-row archive beneath the modal.
+  // Captured handlers depend on these same public/auth inputs and mutable refs.
+  const pageContent=useMemo(()=>page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<SeasonStatisticsView snapshot={snapshot} preview={preview} repository={repository} openPlayer={openPlayer} openMatch={openMatch}/>:page==='war-room'?<WarRoomView {...props}/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>,[snapshot,page,preview,busy,repository]);
+  const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:'';
   const showContent=sectionOpen||showSeasonGate||(!leagueEntryVisible&&!!error);
   return <>
     <div className={leagueEntryVisible?'league-entry-underlay':''} inert={leagueEntryVisible}>
@@ -209,7 +213,7 @@ export function App({repository}:{repository:LeagueRepository}){
           {error&&!leagueEntryVisible&&<div className="alert" role="alert"><span>{error}</span><button onClick={()=>void refresh()}>Retry</button><button aria-label="Dismiss error" onClick={()=>setError('')}>×</button></div>}
           {loading?<div className="loading" role="status"><LoaderCircle className="spin"/>Gathering the banners…</div>:showSeasonGate?
             <SeasonAccessGate gateRef={gateRef} snapshot={snapshot} busy={busy} enter={enter}/>:
-            page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<SeasonStatisticsView snapshot={snapshot} preview={preview} repository={repository} openPlayer={openPlayer} openMatch={openMatch}/>:page==='war-room'?<WarRoomView {...props}/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>}
+            pageContent}
         </main>
         <footer className="site-footer"><span>AGE OF FRIENDS · SEASON I</span><span>A private Age of Empires II: DE league</span></footer>
       </div></div>}
@@ -217,15 +221,13 @@ export function App({repository}:{repository:LeagueRepository}){
     {leagueEntryVisible&&<LeagueEntryGate snapshot={snapshot} loading={loading} preview={preview} busy={busy} repository={repository} act={act} error={error} bootstrapAborted={bootstrapAborted} retry={()=>void refresh()}/>}
     {notice&&<div className="toast" role="status"><Check size={17}/>{notice}</div>}
     {busy&&<div className="working" role="status"><LoaderCircle size={16} className="spin"/>Working…</div>}
-    {dialog&&<Modal key={dialog.type} className={dialog.type==='event'?'event-modal':dialog.type==='match'?'battle-modal':''} title={title} wide={['event','match','player','favor-admin','favors'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDetailBusy(false);setDialog(null);setError('');}}>
+    {dialog&&'id' in dialog?<DetailDialog key={dialog.type+':'+dialog.id} {...props} authUid={snapshotUid.current} selection={dialog} requests={detailReads.current} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}/>:dialog&&<Modal key={dialog.type} title={title} wide={['favor-admin','favors'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}>
       {error&&<div className="alert" role="alert">{error}</div>}
       {dialog.type==='rules'?<Rules/>:dialog.type==='story'?<article className="story"><span className="eyebrow">EVENT I · LOMBARDIA</span>{lombardia.story.brief.map(p=><p key={p}>{p}</p>)}<div className="story-facts"><span>4v4</span><span>Lombardia</span><span>Standard Victory</span></div></article>:
        dialog.type==='account'?<><div className="account-heading">{snapshot.viewer&&<Avatar player={snapshot.viewer} large/>}<div><h3>{snapshot.viewer?.steamName}</h3><p>{snapshot.membership==='ACTIVE'?'League member':snapshot.membership.toLowerCase()}</p></div></div><p>Your league identity persists between seasons.</p><div className="stack">{snapshot.membership==='ACTIVE'&&<button className="primary" onClick={()=>snapshot.viewer&&openPlayer(snapshot.viewer.playerId)}>View profile</button>}{snapshot.viewer?.role==='ADMIN'&&<button className="primary" onClick={()=>setDialog({type:'favor-admin'})}>Issue Emperor's Favors</button>}<button className="text-button" onClick={()=>void act(()=>repository.signOut(),'Signed out.')}><LogOut size={16}/>Sign out</button></div></>:
        dialog.type==='favor-admin'?<FavorGeneratorForm busy={busy} onGenerate={generateFavors}/>:
        dialog.type==='favors'?<FavorBatchSheet batch={dialog.data}/>:
-       dialog.type==='event'?<EventDialogWithStatistics {...props} data={dialog.data} onUpdated={()=>openEvent(dialog.data.event.eventId)}/>:
-       dialog.type==='match'?<MatchDialogWithStatistics {...props} data={dialog.data} onUpdated={()=>openMatch(dialog.data.match.matchId)}/>:
-       <ProfileDialogWithIdentity {...props} data={dialog.data} openChronicleOnLoad={dialog.openChronicle===true}/>}
+       null}
     </Modal>}
   </>;
 }

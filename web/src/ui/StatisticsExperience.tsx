@@ -1,7 +1,7 @@
 import {PlayerChronicleBook} from './PlayerChronicleBook';
 import {useEffect,useRef,useState} from 'react';
 import {ArrowRight,BookOpen,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
-import {formatName,type LeagueRepository,type PlayerProfile} from '../domain/league';
+import {formatName,type LeagueRepository,type PlayerProfile,type PlayerRecord} from '../domain/league';
 import {
   FREEHOLDER_TOOLTIP,PERSONALITY_MINIMUM_ELIGIBLE_BATTLES,PLAYER_PERSONALITY_SLIDERS,REPUTATION_ESSENCES,
   type PlayerIdentityPresentation,type ReputationEssenceId
@@ -11,6 +11,7 @@ import type {LivePersonalityEvidence} from '../domain/privateHistory';
 import {parseHostedSocialProgression,REPUTATION_TRACKS,RELATIONSHIP_TRACKS,
   type HostedSocialProgression,type PrivateSocialTrack} from '../domain/hostedSocialProgression';
 import {Avatar,Sigil} from './Primitives';
+import {DetailLoadState,type DetailSectionState} from './DetailSection';
 import type {ViewProps} from './App';
 
 const sliderTermTooltips:Record<string,[string,string]>={
@@ -133,7 +134,7 @@ const axisBySlider={
   'specialist-improviser':'SPECIALIST_IMPROVISER',
   'compact-expansive':'COMPACT_EXPANSIVE',
 } as const;
-export function playerIdentity(data:PlayerProfile,preview:boolean,
+export function playerIdentity(data:Pick<PlayerProfile,'player'>,preview:boolean,
   live:LivePersonalityEvidence|null=null,
   readStatus:'LOADING'|'UNAVAILABLE'|'NOT_OWNER'|'CURRENT'='UNAVAILABLE'):PlayerIdentityPresentation{
   if(preview)return {...previewPlayerIdentity(data.player.playerId),evidenceStatus:'PREVIEW'};
@@ -164,7 +165,7 @@ export function playerIdentity(data:PlayerProfile,preview:boolean,
   };
 }
 
-export function PlayerIdentityExperience({data,preview,sharedHistory,identityOverride}:{data:PlayerProfile;preview:boolean;sharedHistory?:SharedHistorySummary;identityOverride?:PlayerIdentityPresentation}){
+export function PlayerIdentityExperience({data,preview,sharedHistory,identityOverride}:{data:Pick<PlayerProfile,'player'>;preview:boolean;sharedHistory?:SharedHistorySummary;identityOverride?:PlayerIdentityPresentation}){
   const identity=identityOverride??playerIdentity(data,preview);
   const history=sharedHistory??{playerName:data.player.steamName,allied:null,opposed:null};
   return <section className="player-identity-experience"><div className="identity-layout"><PersonalityPanel identity={identity}/><ReputationPanel identity={identity} preview={preview} sharedHistory={history}/></div></section>;
@@ -197,7 +198,7 @@ function PrivateSocialValue({value}:{value:PrivateSocialTrack}){
 }
 
 /** Separate owner-private preview: never fills public career points or titles. */
-function HostedSocialProfile(props:ViewProps&{data:PlayerProfile}){
+function HostedSocialProfile(props:ViewProps&{data:Pick<PlayerProfile,'player'>}){
   const {repository,snapshot,preview,data}=props,owner=data.player.playerId,viewer=snapshot.viewer?.playerId;
   const [read,setRead]=useState<{uid:string;owner:string;data:HostedSocialProgression}|null>(null);
   const [status,setStatus]=useState<'LOADING'|'CURRENT'|'UNAVAILABLE'>('LOADING');
@@ -276,14 +277,19 @@ function HostedSocialProfile(props:ViewProps&{data:PlayerProfile}){
   </section>;
 }
 
-function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronicleOnLoad?:boolean}){
+type ProfileLoadingProps={data?:PlayerProfile;summaryPlayer?:PlayerRecord;recordsState?:DetailSectionState;openChronicleOnLoad?:boolean};
+function PlayerProfileExperience(props:ViewProps&ProfileLoadingProps&{summaryPlayer:PlayerRecord}){
   const {data,snapshot,preview,openMatch}=props;
+  const profilePlayer=data?.player??props.summaryPlayer;
   const [chronicleOpen,setChronicleOpen]=useState(!!props.openChronicleOnLoad);
+  useEffect(()=>{if(props.openChronicleOnLoad)setChronicleOpen(true);},[props.openChronicleOnLoad]);
   const battleRail=useRef<HTMLDivElement>(null);
+  const [visibleBattles,setVisibleBattles]=useState(12);
   const [ownerRead,setOwnerRead]=useState<{owner:string;data:LivePersonalityEvidence}|null>(null);
   const [readStatus,setReadStatus]=useState<'LOADING'|'UNAVAILABLE'|'NOT_OWNER'|'CURRENT'>('UNAVAILABLE');
+  const [personalityRetry,setPersonalityRetry]=useState(0);
   const viewerId=snapshot.viewer?.playerId;
-  const ownerId=data.player.playerId;
+  const ownerId=profilePlayer.playerId;
   useEffect(()=>{
     let active=true;
     setOwnerRead(null);
@@ -328,50 +334,53 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronic
       setReadStatus('CURRENT');
     }).catch(()=>{if(active){setOwnerRead(null);setReadStatus('UNAVAILABLE');}});
     return ()=>{active=false;stop();};
-  },[props.repository,preview,viewerId,ownerId]);
-  const identity=playerIdentity(data,preview,
+  },[props.repository,preview,viewerId,ownerId,personalityRetry]);
+  const identity=playerIdentity({player:profilePlayer},preview,
     ownerRead?.owner===ownerId&&viewerId===ownerId?ownerRead.data:null,readStatus);
-  const seasonStats=data.activeSeason?.competition??null;
+  const seasonStats=data?.activeSeason?.competition??null;
   const winRate=seasonStats&&seasonStats.matchesPlayed>0?Math.round(seasonStats.matchesWon/seasonStats.matchesPlayed*100)+'%':'—';
-  const sharedWithViewer=!!viewerId&&viewerId!==data.player.playerId;
-  const alliedCount=sharedWithViewer?(data.teammates.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
-  const opposedCount=sharedWithViewer?(data.opponents.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
-  const sharedHistory:SharedHistorySummary={playerName:data.player.steamName,allied:alliedCount,opposed:opposedCount};
+  const sharedWithViewer=!!viewerId&&viewerId!==profilePlayer.playerId;
+  const alliedCount=data&&sharedWithViewer?(data.teammates.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
+  const opposedCount=data&&sharedWithViewer?(data.opponents.find(item=>item.player.playerId===viewerId)?.matchesTogether??0):null;
+  const sharedHistory:SharedHistorySummary={playerName:profilePlayer.steamName,allied:alliedCount,opposed:opposedCount};
   const titleLabel=identity.reputation.archetype==='Freeholder'?'Novitiate':identity.reputation.archetype;
-  const battles=snapshot.matches.filter(match=>match.participants.some(player=>player.playerId===data.player.playerId)).sort((left,right)=>{
+  const battles=snapshot.matches.filter(match=>match.participants.some(participant=>participant.playerId===profilePlayer.playerId)).sort((left,right)=>{
     const leftEvent=snapshot.events.find(event=>event.eventId===left.eventId),rightEvent=snapshot.events.find(event=>event.eventId===right.eventId);
     return (right.completedAt??rightEvent?.startsAt??'').localeCompare(left.completedAt??leftEvent?.startsAt??'');
   });
   const scrollBattles=(direction:-1|1)=>battleRail.current?.scrollBy({left:direction*440,behavior:'smooth'});
   return <section className="player-profile-experience">
     <section className="profile-hero">
-      <div className="profile-portrait-card"><div className="profile-portrait-frame"><Avatar player={data.player} large/></div><strong className="profile-player-name">{data.player.steamName}</strong></div>
+      <div className="profile-portrait-card"><div className="profile-portrait-frame"><Avatar player={profilePlayer} large/></div><strong className="profile-player-name">{profilePlayer.steamName}</strong></div>
       <div className="profile-identity-copy"><span className="eyebrow">CURRENT TITLE</span><div className="profile-title-slot tooltip-target tooltip-below" tabIndex={0} data-tooltip="This slot becomes the player's reputation title as their league identity develops."><strong>{titleLabel}</strong>{titleLabel==='Novitiate'&&<small>Identity still being forged</small>}</div></div>
       <div className="profile-hero-record" aria-label="Current season record"><div className="profile-record-primary"><div><strong>{seasonStats?.matchesWon??'—'}</strong><span>Won</span></div><div><strong>{seasonStats?.matchesLost??'—'}</strong><span>Lost</span></div><div><strong>{winRate}</strong><span>Win rate</span></div></div></div>
     </section>
 
     <div className="profile-chronicle-action"><button type="button" className="profile-chronicle-trigger" onClick={()=>setChronicleOpen(true)}><BookOpen size={16}/>Chronicle</button></div>
 
-    <ProfileDeedsBar data={data} preview={preview}/>
+    <section aria-label="Player records">{data?<ProfileDeedsBar data={data} preview={preview}/>:<DetailLoadState label="Player records" error={props.recordsState?.error} retry={props.recordsState?.retry??(()=>{})}/>}</section>
 
-      <PlayerIdentityExperience data={data} preview={preview} sharedHistory={sharedHistory} identityOverride={identity}/>
-      <HostedSocialProfile {...props}/>
+      <PlayerIdentityExperience data={{player:profilePlayer}} preview={preview} sharedHistory={sharedHistory} identityOverride={identity}/>
+      {readStatus==='UNAVAILABLE'&&!preview&&viewerId===ownerId&&snapshot.membership==='ACTIVE'&&
+        props.repository.canReadMyPersonalityHistory?.()===true&&props.repository.currentAuthUid?.()&&
+        <button type="button" onClick={()=>setPersonalityRetry(n=>n+1)}>Retry private Personality</button>}
+      <HostedSocialProfile {...props} data={{player:profilePlayer}}/>
 
       <section className="profile-battle-record">
         <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span></div></div>
         <div className="battle-carousel-shell">
           <button type="button" className="battle-carousel-arrow previous" aria-label="Scroll earlier Battles" onClick={()=>scrollBattles(-1)}><ChevronLeft size={22}/></button>
           <div className="battle-carousel" ref={battleRail}>
-            {battles.length?battles.map(match=>{
+            {battles.length?battles.slice(0,visibleBattles).map(match=>{
               const event=snapshot.events.find(candidate=>candidate.eventId===match.eventId);
-              const subject=match.participants.find(player=>player.playerId===data.player.playerId);
-              const others=match.participants.filter(player=>player.playerId!==data.player.playerId);
+              const subject=match.participants.find(participant=>participant.playerId===profilePlayer.playerId);
+              const others=match.participants.filter(participant=>participant.playerId!==profilePlayer.playerId);
               const opponents=subject?.team!=null?others.filter(player=>player.team==null||player.team!==subject.team):others;
               const resultKnown=match.status==='COMPLETED'&&Array.isArray(match.result?.winningPlayerIds)&&match.result!.winningPlayerIds!.length>0;
-              const won=resultKnown&&match.result!.winningPlayerIds!.includes(data.player.playerId);
+              const won=resultKnown&&match.result!.winningPlayerIds!.includes(profilePlayer.playerId);
               const lost=resultKnown&&!won;
               const result=won?'WON':lost?'LOST':match.status.replaceAll('_',' ');
-              const opponentsLabel=opponents.length?'vs '+opponents.slice(0,2).map(player=>player.steamName).join(' · ')+(opponents.length>2?` +${opponents.length-2}`:''):formatName(match.format);
+              const opponentsLabel=opponents.length?'vs '+opponents.slice(0,2).map(participant=>participant.steamName).join(' · ')+(opponents.length>2?` +${opponents.length-2}`:''):formatName(match.format);
               return <button type="button" className={'profile-battle-card '+(won?'won':lost?'lost':'pending')} key={match.matchId} onClick={()=>openMatch(match.matchId)}>
                 <div className="profile-battle-card-mark"><Sigil kind={match.format==='ONE_V_ONE'?'duel':match.format==='FFA'?'ffa':'team'} size={22}/><span>{event?.title??'League Battle'}</span></div>
                 <span className="profile-battle-result">{result}</span>
@@ -379,16 +388,19 @@ function PlayerProfileExperience(props:ViewProps&{data:PlayerProfile;openChronic
                 <small>{formatName(match.format)}</small>
                 <span className="profile-battle-date">{compactDate(match.completedAt??event?.startsAt)}</span>
               </button>;
-            }):<div className="profile-battle-empty"><strong>No Battles yet.</strong></div>}
+            }):<div className="profile-battle-empty"><strong>{data?'No Battles yet.':'Battle record is loading.'}</strong></div>}
             {battles.length>3&&<span className="battle-carousel-peek" aria-hidden="true"/>}
           </div>
           <button type="button" className="battle-carousel-arrow next" aria-label="Scroll later Battles" onClick={()=>scrollBattles(1)}><ChevronRight size={22}/></button>
         </div>
+        {battles.length>visibleBattles&&<button type="button" onClick={()=>setVisibleBattles(n=>n+12)}>Show more Battles ({visibleBattles} of {battles.length} shown)</button>}
       </section>
-    {chronicleOpen&&<PlayerChronicleBook repository={props.repository} snapshot={snapshot} sourceProfile={data} initialPagePlayerId={data.player.playerId} onClose={()=>setChronicleOpen(false)}/>}
+    {chronicleOpen&&!data&&<section aria-label="Chronicle profile"><DetailLoadState label="Chronicle profile details" error={props.recordsState?.error} retry={props.recordsState?.retry??(()=>{})}/><button onClick={()=>setChronicleOpen(false)}>Close Chronicle</button></section>}
+    {chronicleOpen&&data&&<PlayerChronicleBook repository={props.repository} snapshot={snapshot} sourceProfile={data} initialPagePlayerId={profilePlayer.playerId} onClose={()=>setChronicleOpen(false)}/>}
   </section>;
 }
 
-export function ProfileDialogWithIdentity(props:ViewProps&{data:PlayerProfile;openChronicleOnLoad?:boolean}){
-  return <PlayerProfileExperience {...props}/>;
+export function ProfileDialogWithIdentity(props:ViewProps&ProfileLoadingProps){
+  const player=props.data?.player??props.summaryPlayer;
+  return player?<PlayerProfileExperience {...props} summaryPlayer={player}/>:null;
 }
