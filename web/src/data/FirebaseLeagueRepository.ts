@@ -193,6 +193,8 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     );
   }
   event(eventId:string){return this.call<EventDetail>('getEventDetail',{eventId});}
+  eventEssential(eventId:string){return this.call<EventDetail>('getEventDetail',{eventId,section:'essential'});}
+  eventRoundoff(eventId:string){return this.call<{eventId:string;roundoff:import('../domain/league').EventRoundoff}>('getEventDetail',{eventId,section:'roundoff'});}
   match(matchId:string){return this.call<MatchDetail>('getMatchDetail',{matchId});}
   player(playerId:string){return this.call<PlayerProfile>('getPlayerProfile',{playerId});}
   async dispute(matchId:string,gameId:string,category:string,reason:string){await this.call('disputeCanonicalGameResult',{requestId:crypto.randomUUID(),matchId,gameId,category,reason});}

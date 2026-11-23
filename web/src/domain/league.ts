@@ -262,6 +262,10 @@ export interface LeagueRepository {
   playerChronicle?():Promise<PlayerChronicleResponse>;
   socialHistory?():Promise<SocialHistoryResponse>;
   event(id:string):Promise<EventDetail>;match(id:string):Promise<MatchDetail>;player(id:string):Promise<PlayerProfile>;
+  /** Optional split on the existing Event callable; paired capability keeps
+   * preview and older repositories on their unchanged full-data path. */
+  eventEssential?(id:string):Promise<EventDetail>;
+  eventRoundoff?(id:string):Promise<{eventId:string;roundoff:EventRoundoff}>;
   dispute(matchId:string,gameId:string,category:string,reason:string):Promise<void>;
   onAuthChange(callback:()=>void):()=>void;
 }

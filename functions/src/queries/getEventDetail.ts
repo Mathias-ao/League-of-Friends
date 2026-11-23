@@ -12,6 +12,7 @@ import { iso, playerMap, publicPlayer } from "./querySupport.js";
 
 interface EventDetailInput {
   eventId: string;
+  section?:'essential'|'roundoff';
 }
 
 interface EventDocument {
@@ -68,8 +69,29 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
   const actor = await requireLeaguePlayer(request);
   const eventId = request.data.eventId?.trim();
   if (!eventId) throw new HttpsError("invalid-argument", "eventId is required.");
+  const section=request.data.section;
+  if(section!==undefined&&section!=='essential'&&section!=='roundoff')
+    throw new HttpsError('invalid-argument','Unknown Event detail section.');
 
   const eventRef = db.collection(collections.events).doc(eventId);
+  const revalidateSection=async(before:Awaited<ReturnType<typeof eventRef.get>>)=>{
+    const [fresh,after]=await Promise.all([requireLeaguePlayer(request),eventRef.get()]);
+    if(!after.exists)throw new HttpsError('not-found','Event not found.');
+    if(after.data()?.status==='DRAFT'&&fresh.role!=='ADMIN')
+      throw new HttpsError('permission-denied','This Event has not been announced.');
+    if(fresh.playerId!==actor.playerId||fresh.role!==actor.role||
+      !before.updateTime?.isEqual(after.updateTime!))
+      throw new HttpsError('aborted','Event or access changed during the read. Retry.');
+  };
+  if(section==='roundoff'){
+    const snapshot=await eventRef.get();
+    if(!snapshot.exists)throw new HttpsError('not-found','Event not found.');
+    if(snapshot.data()?.status==='DRAFT'&&actor.role!=='ADMIN')
+      throw new HttpsError('permission-denied','This Event has not been announced.');
+    const roundoff=await readEventRoundoff(eventId,actor.playerId);
+    await revalidateSection(snapshot);
+    return {eventId,roundoff};
+  }
   const [eventSnapshot, participantsSnapshot, matchesSnapshot, playersSnapshot] = await Promise.all([
     eventRef.get(),
     eventRef.collection("participants").get(),
@@ -146,6 +168,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
     respondedAt: iso(participant.data.respondedAt),
   }));
 
+  if(section==='essential')await revalidateSection(eventSnapshot);
   return {
     schemaVersion: "EVENT_DETAIL_V1",
     generatedAt: new Date().toISOString(),
@@ -174,7 +197,7 @@ export const getEventDetail = onCall<EventDetailInput>(callableOptions, async (r
     warmup:{configured:!!event.warmupPolicy,schedule:event.warmupSchedule?{status:event.warmupSchedule.status,unpairedPlayerId:event.warmupSchedule.unpairedPlayerId??null}:null,aiDifficulty:event.warmupPolicy?.aiDifficulty??null,map:event.warmupPolicy?.gameConfig?.maps?.pool?.[0]??null,guestAcceptanceDeadlineAt:iso(event.warmupPolicy?.guestAcceptanceDeadlineAt),challenges:invites,eligibleGuests:eligibleGuestIds.map(id=>publicPlayer(id,players.get(id))),replacementGuests:actor.role==='ADMIN'?playersSnapshot.docs.filter(d=>d.data().membershipStatus==='ACTIVE').map(d=>publicPlayer(d.id,players.get(d.id))):[],isGuest:guests.docs.some(d=>d.id===actor.playerId)},
     pairingPlan:plan?{planId:event.currentMatchPlanId,status:plan.status,pairingMode:plan.planningConfig?.pairingMode??"ELO_BALANCED",sittingOutPlayerIds:plan.sittingOutPlayerIds??[],matches:(plan.matches??[]).map((m:any)=>({...m,participants:m.participants.map((p:any)=>({...p,...publicPlayer(p.playerId,players.get(p.playerId))}))}))}:null,
     finalisation,
-    roundoff:await readEventRoundoff(eventId,actor.playerId),
+    ...(section==='essential'?{}:{roundoff:await readEventRoundoff(eventId,actor.playerId)}),
     viewer: {
       playerId: actor.playerId,
       role: actor.role,
