@@ -1,4 +1,5 @@
 import type {PendingGrade} from '../../../functions/src/domain/gameplayPreview';
+import {isolatedStagingProject} from './stagingProject';
 import type {SourceSnapshot} from '../../../functions/src/domain/socialV1';
 import type {BoundGameplayCandidate} from '../../../functions/src/domain/gameplayCandidates';
 export interface PrivateGameplayPreview {
@@ -15,11 +16,9 @@ export interface PrivateGameplayCandidates extends Omit<PrivateGameplayPreview,'
 }
 export function gameplayCandidatesEnabled(env:Record<string,string|boolean|undefined>={}):boolean{
   return env.VITE_AOF_INT_C2A_PREVIEW==='source-compatible-v1'&&
-    (env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'||env.VITE_USE_EMULATORS==='true'&&
-      typeof env.VITE_FIREBASE_PROJECT_ID==='string'&&env.VITE_FIREBASE_PROJECT_ID.startsWith('demo-'));
+    isolatedStagingProject(env);
 }
 export function gameplayPreviewEnabled(env:Record<string,string|boolean|undefined>={}):boolean{
   return env.VITE_AOF_INT_C1_PREVIEW==='wiring-test-v1'&&
-    (env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'||env.VITE_USE_EMULATORS==='true'&&
-      typeof env.VITE_FIREBASE_PROJECT_ID==='string'&&env.VITE_FIREBASE_PROJECT_ID.startsWith('demo-'));
+    isolatedStagingProject(env);
 }

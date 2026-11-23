@@ -1,4 +1,5 @@
 import {Timestamp} from 'firebase-admin/firestore';
+import {isolatedStagingProject} from '../config/stagingProject.js';
 import {HttpsError} from 'firebase-functions/v2/https';
 import {NATIVE_READY_CORRECTION_VERSION,readCorrectionAuthority,prepareNativeCorrection,commitNativeCorrection} from './nativeReadyCorrection.js';
 import type {GameOutcome} from '../domain/types.js';
@@ -64,9 +65,8 @@ export function assertNativePublicationAllowed(env:NodeJS.ProcessEnv,actor:Nativ
   // readers have been disabled following an incident. It still requires
   // staging/demo, admin, pinned processor and a distinct rollback approval.
   if(request.operation==='ROLLBACK'){
-    const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
+    const project=isolatedStagingProject(env);
     if(actor.role!=='ADMIN'||!project||project!==env.AOF_NATIVE_REPLAY_PROJECT||
-       !(project==='age-of-friends-staging'||!!env.FUNCTIONS_EMULATOR&&project.startsWith('demo-'))||
        !SHA.test(env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION??'')||
        env.AOF_NATIVE_READY_ROLLBACK!=='reviewed-v1'||
        !(env.AOF_NATIVE_READY_GAME_ALLOWLIST??'').split(',').map(x=>x.trim()).includes(request.matchId+'/'+request.gameId))

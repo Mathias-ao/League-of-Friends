@@ -36,7 +36,7 @@ test('default-off gate rejects production even with explicit opt-in and emulator
   {...env,GCLOUD_PROJECT:'demo-test',FUNCTIONS_EMULATOR:'false'},
   {...env,GCLOUD_PROJECT:'not-staging',FUNCTIONS_EMULATOR:'true'}])assert.throws(()=>assertIntV1PrivateReadEnabled(e));
  assert.doesNotThrow(()=>assertIntV1PrivateReadEnabled(env));
- assert.doesNotThrow(()=>assertIntV1PrivateReadEnabled({...env,GCLOUD_PROJECT:'age-of-friends-staging',FUNCTIONS_EMULATOR:undefined}));
+ assert.doesNotThrow(()=>assertIntV1PrivateReadEnabled({...env,GCLOUD_PROJECT:'age-of-friends-staging-eu',FUNCTION_REGION:'europe-west1',FUNCTIONS_EMULATOR:undefined}));
 });
 
 test('authenticated participant source boundary is deterministic and read-only, without fake progression',async()=>{

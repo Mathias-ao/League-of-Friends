@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import {isolatedStagingProject} from '../domain/stagingProject';
 import {BarChart3,RefreshCw} from 'lucide-react';
 import {formatName,type MatchDetail} from '../domain/league';
 import {MatchDialog} from './Views';
@@ -35,8 +36,7 @@ export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>vo
       {state.error?<div role="alert"><p>{state.error}</p><button onClick={state.retry}>Retry reading statistics</button></div>:!state.dataset?<p role="status">Reading the battle ledger…</p>:recorded?<>
         <BattleStatistics key={recorded.gameId+'/'+recorded.revision+'/'+recorded.sourceHash} game={recorded} preview={preview} provisional={!recorded.eligible||!!selected?.resultDisputeOpen||!selected?.result} viewerId={snapshot.viewer?.playerId} openPlayer={openPlayer}/>
         {import.meta.env?.VITE_AOF_INT_V1_PRIVATE_READS==='source-v1'&&
-          (import.meta.env.VITE_FIREBASE_PROJECT_ID==='age-of-friends-staging'||
-            import.meta.env.VITE_USE_EMULATORS==='true'&&import.meta.env.VITE_FIREBASE_PROJECT_ID?.startsWith('demo-'))&&!preview&&data.viewer.isParticipant&&snapshot.viewer&&
+          isolatedStagingProject(import.meta.env)&&!preview&&data.viewer.isParticipant&&snapshot.viewer&&
           selected?.replay?.statisticsDelivery==='NATIVE_BOUNDED_V1'&&!selected.resultDisputeOpen&&
           selected.players.some(player=>player.playerId===snapshot.viewer!.playerId)&&<PrivateSocialExperience
             repository={repository} matchId={data.match.matchId} gameId={selected.gameId}

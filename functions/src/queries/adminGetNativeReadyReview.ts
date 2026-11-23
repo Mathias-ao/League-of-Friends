@@ -1,4 +1,5 @@
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
+import {isolatedStagingProject} from '../config/stagingProject.js';
 import {requireAdmin} from '../auth/authorization.js';
 import {db} from '../config/firebase.js';
 import {callableOptions} from '../config/runtime.js';
@@ -12,9 +13,8 @@ const fail=(message:string)=>new HttpsError('failed-precondition',message);
 export function assertNativeE2eReviewAllowed(env:NodeJS.ProcessEnv,role:string,matchId:string,gameId:string,candidateId:string){
   if(!ID.test(matchId??'')||!ID.test(gameId??'')||!SHA.test(candidateId??''))
     throw new HttpsError('invalid-argument','Pin a valid Game and native validation candidate ID.');
-  const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
-  if(role!=='ADMIN'||!project||env.AOF_NATIVE_REPLAY_PROJECT!==project||
-     !(project==='age-of-friends-staging'||(env.FUNCTIONS_EMULATOR==='true'&&project.startsWith('demo-'))))
+  const project=isolatedStagingProject(env);
+  if(role!=='ADMIN'||!project||env.AOF_NATIVE_REPLAY_PROJECT!==project)
     throw fail('Native review is for an authenticated staging or local-demo administrator only.');
   if(!(env.AOF_NATIVE_READY_GAME_ALLOWLIST??'').split(',').map(v=>v.trim()).includes(matchId+'/'+gameId)||
      (env.AOF_NATIVE_READY_PUBLICATION!=='reviewed-v1'&&

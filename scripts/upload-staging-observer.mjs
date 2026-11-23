@@ -7,9 +7,9 @@ import {pathToFileURL} from 'node:url';
 export function validateObserverConfig(input){
   const c={...input};
   const origin=new URL(c.origin);
-  const staging=['https://age-of-friends-staging.web.app','https://age-of-friends-staging.firebaseapp.com'].includes(origin.origin);
+  const staging=['https://age-of-friends-staging-eu.web.app','https://age-of-friends-staging-eu.firebaseapp.com'].includes(origin.origin);
   if(origin.origin!==c.origin||origin.username||origin.password||!staging)throw Error('Explicit pinned staging origin required; production and localhost are denied.');
-  if(c.project!=='age-of-friends-staging')throw Error('The fixed staging project is required.');
+  if(c.project!=='age-of-friends-staging-eu')throw Error('The fixed EU staging project is required.');
   if(!['compact','submit'].includes(c.mode))throw Error('Choose compact selection commit or selected-file submit.');
   if(!/^[a-f0-9]{64}$/.test(c.sourceSha256??''))throw Error('An independently pinned original SHA-256 is required.');
   if(!Number.isSafeInteger(c.revision)||c.revision<1)throw Error('Pin the expected statistics revision.');
@@ -150,7 +150,7 @@ export function observerSnippet(config){
 }
 
 const HELP=`Offline helper only; no deployment, browser connection or upload is initiated.
-Usage: node scripts/upload-staging-observer.mjs --emit-snippet --origin ORIGIN --project age-of-friends-staging --mode compact|submit --source-sha SHA256 --revision N --match-id PRIVATE_ID --game-id PRIVATE_ID
+Usage: node scripts/upload-staging-observer.mjs --emit-snippet --origin ORIGIN --project age-of-friends-staging-eu --mode compact|submit --source-sha SHA256 --revision N --match-id PRIVATE_ID --game-id PRIVATE_ID
 
 Keep the generated snippet/config private. Install it manually in DevTools only
 inside a separately authorized test window, after login and before selecting a

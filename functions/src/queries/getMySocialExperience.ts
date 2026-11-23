@@ -1,4 +1,5 @@
 import {getStorage} from 'firebase-admin/storage';
+import {isolatedStagingProject} from '../config/stagingProject.js';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {requireLeaguePlayer} from '../auth/authorization.js';
 import {db} from '../config/firebase.js';
@@ -18,9 +19,8 @@ const stale=()=>new HttpsError('aborted','Recording or access changed. Reopen th
 /** Default-off even in production, regardless of callers' roles. No credentials,
  * worker calls, scans, source writes, flags or persistence are performed here. */
 export function assertIntV1PrivateReadEnabled(env:NodeJS.ProcessEnv){
-  const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
   if(env.AOF_INT_V1_PRIVATE_READS!=='source-v1'||
-    !(project==='age-of-friends-staging'||env.FUNCTIONS_EMULATOR==='true'&&project?.startsWith('demo-')))
+    !isolatedStagingProject(env))
     throw new HttpsError('failed-precondition','Private integration read is disabled.');
 }
 

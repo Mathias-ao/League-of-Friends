@@ -4,10 +4,10 @@ import {assertNativeE2eReviewAllowed,nativeE2eReviewDto} from '../lib/queries/ad
 
 const matchId='m',gameId='g',candidateId='c'.repeat(64),sourceHash='d'.repeat(64),
   statisticsSha256='e'.repeat(64);
-const env={GCLOUD_PROJECT:'age-of-friends-staging',AOF_NATIVE_REPLAY_PROJECT:'age-of-friends-staging',
+const env={FUNCTION_REGION:'europe-west1',GCLOUD_PROJECT:'age-of-friends-staging-eu',AOF_NATIVE_REPLAY_PROJECT:'age-of-friends-staging-eu',
   AOF_NATIVE_READY_PUBLICATION:'reviewed-v1',AOF_NATIVE_READY_GAME_ALLOWLIST:'m/g'};
 test('read-only review requires exact staging/demo project, role and Game allowlist',()=>{
-  assert.equal(assertNativeE2eReviewAllowed(env,'ADMIN',matchId,gameId,candidateId),'age-of-friends-staging');
+  assert.equal(assertNativeE2eReviewAllowed(env,'ADMIN',matchId,gameId,candidateId),'age-of-friends-staging-eu');
   for(const patch of [{GCLOUD_PROJECT:'league-of-friends-cc274'},
     {AOF_NATIVE_REPLAY_PROJECT:'another'}, {AOF_NATIVE_READY_PUBLICATION:'0'},
     {AOF_NATIVE_READY_GAME_ALLOWLIST:'other/g'}]){
@@ -15,7 +15,7 @@ test('read-only review requires exact staging/demo project, role and Game allowl
   }
   assert.equal(assertNativeE2eReviewAllowed({...env,AOF_NATIVE_READY_PUBLICATION:'0',
     AOF_NATIVE_READY_ROLLBACK:'reviewed-v1'},'ADMIN',matchId,gameId,candidateId),
-    'age-of-friends-staging','Recovery review stays available after publication is disabled');
+    'age-of-friends-staging-eu','Recovery review stays available after publication is disabled');
   assert.throws(()=>assertNativeE2eReviewAllowed({...env,
     AOF_NATIVE_READY_PUBLICATION:'0',AOF_NATIVE_READY_ROLLBACK:'0'},
     'ADMIN',matchId,gameId,candidateId));

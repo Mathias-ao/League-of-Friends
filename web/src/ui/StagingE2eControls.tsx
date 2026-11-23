@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import {isolatedStagingProject} from '../domain/stagingProject';
 import type {LeagueRepository,MatchDetail,NativeE2eReview,NativeE2ePublishRequest,NativeE2eEnvironmentStatus} from '../domain/league';
 
 /** The frontend flag controls display, not authorization. Server-side gates
@@ -6,7 +7,7 @@ import type {LeagueRepository,MatchDetail,NativeE2eReview,NativeE2ePublishReques
 export function stagingE2eUiEnabled(env:Record<string,string|boolean|undefined>=import.meta.env??{}){
   const project=env.VITE_FIREBASE_PROJECT_ID;
   return env.VITE_AOF_STAGING_E2E==='true'&&(
-    (project==='age-of-friends-staging'&&env.VITE_USE_EMULATORS!=='true')||
+    isolatedStagingProject(env,false)||
     (project==='demo-aof-e2e'&&env.VITE_USE_EMULATORS==='true'));
 }
 function errorText(error:unknown){
