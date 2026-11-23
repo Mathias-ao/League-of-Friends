@@ -69,6 +69,9 @@ test('native emulator remains loopback-only with app bearer and never requests I
     });
     assert.equal(called,true);
     assert.equal(result.state,'VERIFIED_UNPUBLISHED');
+    await assert.rejects(callNativeWorker('https://external-worker.invalid','game.aoe2record','YQ==',{
+      fetcher:async()=>assert.fail('A demo emulator must never send its bearer to a hosted worker'),
+    }));
   }finally{
     if(beforeProject===undefined)delete process.env.GCLOUD_PROJECT;else process.env.GCLOUD_PROJECT=beforeProject;
     if(beforeAlias===undefined)delete process.env.GOOGLE_CLOUD_PROJECT;else process.env.GOOGLE_CLOUD_PROJECT=beforeAlias;

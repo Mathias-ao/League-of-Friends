@@ -3,6 +3,7 @@
  * genuine method/correction/UI regression coverage while EU R is unapproved.
  */
 import assert from 'node:assert/strict';
+import {digest} from '../../lib/engines/nativeRecordingIntegration.js';
 import {collectMyCurrentBattleHistory} from '../../lib/queries/getMyPersonalityHistory.js';
 import {bindSourceGrades} from '../../lib/integration/privateProgression.js';
 import {HOSTED_POLICY_SPEC,hostedBinderCalibration} from '../../lib/integration/hostedSocialPolicy.js';
@@ -25,7 +26,13 @@ export async function projectControlledHostedHistory(input,derived){
       eventId:source.eventId,seasonId:source.seasonId,sourceAuthority:source.authorityRevision,
       revision:source.statisticsRevision,state:'READY',order:schedule?.order??null});
     const raw=derived.get(source.authorityRevision);
-    assert.ok(raw,'Only the exact current genuine derivation may enter this pure fixture');
+    if(!raw){
+      // Unsupported genuine formats/worker failures retain factual quiet pairs,
+      // without substituting another actor's response or inventing an opportunity.
+      pendingSources.push({seasonId:source.seasonId,rosterPlayerIds:source.roster.map(p=>p.playerId)});
+      bound.push({source,sourceMethodRevision:digest(Buffer.from('UNAVAILABLE:'+source.authorityRevision)),
+        cards:[],effects:[],inferences:[],actorWitnesses:[]});continue;
+    }
     bound.push(bindSourceGrades(raw,source,loaded.statistics,input.env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION??'',schedule,loaded.game.gameNumber,binder));
     context.set(source.authorityRevision,{loaded,witnesses:raw.gradeWitnesses});
   }

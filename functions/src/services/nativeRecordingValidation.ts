@@ -72,7 +72,7 @@ export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'
   const target=url.replace(/\/+$/,'');
   const parsed=new URL(target),loopback=['127.0.0.1','localhost'].includes(parsed.hostname);
   const emulator=process.env.FUNCTIONS_EMULATOR==='true';
-  if(emulator&&!isolatedStagingProject(process.env)?.startsWith('demo-'))
+  if(emulator&&(!loopback||!isolatedStagingProject(process.env)?.startsWith('demo-')))
     throw fail('Native worker emulator transport requires an isolated demo project.');
   if(parsed.username||parsed.password||(!loopback&&parsed.protocol!=='https:')||
     (loopback&&!emulator)||!process.env.REPLAY_WORKER_AUTH_TOKEN)

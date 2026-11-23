@@ -16,6 +16,7 @@ import {HOSTED_POLICY_SHA256,HOSTED_POLICY_PATH} from '../lib/integration/hosted
 import {fixture,env as nativeEnv,actor} from './support/native-ready-fixture.mjs';
 import {ready} from './support/private-history-fixture.mjs';
 import {controlledHostedApproval} from './support/hosted-social-approval-fixture.mjs';
+import {projectControlledHostedHistory} from './support/hosted-social-projection-fixture.mjs';
 
 const eu=extra=>({...nativeEnv,FUNCTIONS_EMULATOR:undefined,FUNCTION_REGION:'europe-west1',
   GCLOUD_PROJECT:EU_STAGING_PROJECT,GOOGLE_CLOUD_PROJECT:EU_STAGING_PROJECT,
@@ -102,4 +103,16 @@ test('EU private source reads reject foreign Game/actor, revoked membership and 
   assert.equal((await readMyPersonalityHistory(input)).coverage.currentSources,0);
   for(const callable of [getMyPersonalityHistory,getMyHostedSocialProgression,uploadReplay])
     await assert.rejects(callable.run({data:{}}),e=>e.code==='unauthenticated');
+});
+
+test('demo-only proposed projection preserves unmeasured factual pairs and withdraws them without hosted approval',async()=>{
+  const f=await ready();
+  const projected=await projectControlledHostedHistory(f.input,new Map());
+  assert.equal(projected.coverage.complete,false);
+  assert.equal(projected.relationships[0].factualCurrentSourceGames,1);
+  assert.ok(Object.values(projected.relationships[0].tracks).every(t=>t.outgoing.stage===null&&t.incoming.stage===null));
+  f.rows.get(f.sourcePath).state='WITHDRAWN';
+  const withdrawn=await projectControlledHostedHistory(f.input,new Map());
+  assert.equal(withdrawn.coverage.currentSources,0);assert.deepEqual(withdrawn.relationships,[]);
+  await assert.rejects(projectControlledHostedHistory({...f.input,env:eu()},new Map()));
 });
