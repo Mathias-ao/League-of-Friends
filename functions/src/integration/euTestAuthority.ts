@@ -48,9 +48,16 @@ export async function loadEuTestAuthority(db:any,env:NodeJS.ProcessEnv,kind:'D2'
 }
 /** Binds the private attestation to all current source artifacts, roster,
  * correction, schedule and producer. Missing proof never fabricates evidence. */
-export function euTestSourceReview(authority:Awaited<ReturnType<typeof loadEuTestAuthority>>,source:any,producerRevision:unknown){
+export function euTestSourceFingerprint(source:any,sourceAttestationRevision:unknown):string|null{
+  if(!sha(sourceAttestationRevision))return null;
+  const {authorityRevision:_ownerReadRevision,...evidence}=source;
+  return bindingDigest([evidence,sourceAttestationRevision]);
+}
+export function euTestSourceReview(authority:Awaited<ReturnType<typeof loadEuTestAuthority>>,source:any,
+  producerRevision:unknown,sourceAttestationRevision:unknown){
   const review=authority.sourceReviews[source.sourceHash];
-  return producerRevision===authority.processorRevision&&review&&review.sourceFingerprint===bindingDigest(source)&&
+  const fingerprint=euTestSourceFingerprint(source,sourceAttestationRevision);
+  return !!fingerprint&&producerRevision===authority.processorRevision&&review&&review.sourceFingerprint===fingerprint&&
     review.producer?.processorRevision===authority.processorRevision&&sha(review.producer?.imageSha256)&&
     ref(review.producer?.referenceId)?review:null;
 }

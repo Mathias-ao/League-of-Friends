@@ -66,7 +66,7 @@ export async function readMyHostedSocialProgression(input:Input){
       if(Buffer.byteLength(JSON.stringify(payload))>40*1024*1024)
         throw new HttpsError('resource-exhausted','Private social transport budget exceeded.');
       let raw;
-      const sourceQualified=policy.sourceQualified(source,loaded.producerRevision);
+      const sourceQualified=policy.sourceQualified(source,loaded.producerRevision,loaded.sourceAttestationRevision);
       try{
         if(!sourceQualified)throw new Error('EU_SOURCE_PRODUCER_ATTESTATION_PENDING');
         raw=await (input.derive??((p,signal)=>callVerifiedWorker(input.env.REPLAY_WORKER_URL!,

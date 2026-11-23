@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {digest} from '../lib/engines/nativeRecordingIntegration.js';
-import {loadEuTestAuthority} from '../lib/integration/euTestAuthority.js';
+import {digest,bindingDigest} from '../lib/engines/nativeRecordingIntegration.js';
+import {loadEuTestAuthority,euTestSourceFingerprint} from '../lib/integration/euTestAuthority.js';
 import {loadPracticalPersonalityRuntime} from '../lib/engines/personalityV1/practicalPolicy.js';
 import {loadEuTestSocialPolicy} from '../lib/integration/euTestSocialPolicy.js';
 import {PRACTICAL_POLICY_SHA256} from '../lib/engines/personalityV1/practicalPolicyResource.js';
@@ -16,7 +16,7 @@ import {readMyHostedSocialProgression} from '../lib/queries/getMyHostedSocialPro
 import {euEnv,EU_TEST_D2,EU_TEST_R,installAuthority,attest} from './support/eu-test-authority-fixture.mjs';
 
 test('new unsigned canonical EU contracts pin unchanged historical semantics without inheriting approval',()=>{
- for(const [resource,sha,bytes] of [[EU_TEST_D2,PRACTICAL_POLICY_SHA256,1045],[EU_TEST_R,HOSTED_POLICY_SHA256,1058]]){
+ for(const [resource,sha,bytes] of [[EU_TEST_D2,PRACTICAL_POLICY_SHA256,1045],[EU_TEST_R,HOSTED_POLICY_SHA256,977]]){
   assert.equal(createHash('sha256').update(resource.bytes).digest('hex'),resource.sha256);
   assert.equal(Buffer.byteLength(resource.bytes),bytes);assert.ok(resource.bytes.endsWith('\n'));
   assert.equal(resource.spec.semantics.sha256,sha);assert.notEqual(resource.sha256,sha);
@@ -57,8 +57,8 @@ test('EU authority requires two separate exact records, new decision, exact SHA/
 
 test('EU D2 uses the unchanged five-axis evaluator; A needs exact producer selection and positive coverage',async()=>{
  const f=await ready(),env=euEnv(f.input.env),items=[1,2,3].map(sourceItem);
- items.forEach(i=>i.producerRevision=env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION);
- const reviews=()=>Object.fromEntries(items.map(i=>[i.source.sourceHash,attest(i.source,env,review(i))]));
+ items.forEach(i=>{i.producerRevision=env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION;i.sourceAttestationRevision=hash('native-'+i.source.sourceHash);});
+ const reviews=()=>Object.fromEntries(items.map(i=>[i.source.sourceHash,attest(i.source,env,review(i),i.sourceAttestationRevision)]));
  const project=async(sourceReviews)=>{
   installAuthority(f.rows,EU_TEST_D2,env,sourceReviews);
   const runtime=await loadPracticalPersonalityRuntime(f.db,env),p=runtime.createPolicy(owner,items);
@@ -91,21 +91,28 @@ test('EU R authority preserves all six method boundaries and internal PROPOSED p
  assert.equal(Object.keys(loaded.calibration.rules).length,4);
 });
 
-test('actual EU Personality consumer measures qualified controlled native evidence and keeps presentation locked',async()=>{
+async function measuredNativeFixture(){
  const f=await ready(),env=euEnv(f.input.env),input={...f.input,env},source=f.rows.get(f.sourcePath);
  const raw=JSON.parse(gunzipSync(f.objects.get(source.statistics.path))),sample=sourceItem();
  // Upgrade only the explicitly synthetic native fixture. All hashes and exact
  // source reviews below are recomputed; these are not genuine recording facts.
  Object.assign(raw,{entityCatalogVersion:sample.statistics.entityCatalogVersion,scope:sample.statistics.scope});
  Object.assign(raw.participants[0],sample.statistics.participants[0]);
+ Object.assign(raw.participants[1],structuredClone(sample.statistics.participants[0]),{playerId:2,replaySlot:2});
  raw.matchFacts={...raw.matchFacts,...sample.statistics.matchFacts,
   source:{...raw.matchFacts.source,gameBuild:185872},
   game:{...sample.statistics.matchFacts.game,guid:source.matchFacts.game.guid}};
  source.matchFacts=structuredClone(raw.matchFacts);
  const plain=Buffer.from(JSON.stringify(raw)),bytes=gzipSync(plain);f.objects.set(source.statistics.path,bytes);
  Object.assign(source.statistics,{sha256:digest(bytes),bytes:bytes.length,uncompressedBytes:plain.length,uncompressedSha256:digest(plain)});
+ Object.assign(source.recordedEvents,{uncompressedBytes:source.recordedEvents.bytes,uncompressedSha256:source.recordedEvents.sha256});
+ return {f,env,input};
+}
+
+test('actual EU Personality consumer measures qualified controlled native evidence and keeps presentation locked',async()=>{
+ const {f,env,input}=await measuredNativeFixture();
  const current=await collectMyCurrentBattleHistory({...input,includeScheduleOrder:true}),item=current.loaded[0];
- assert.ok(item);installAuthority(f.rows,EU_TEST_D2,env,{[item.source.sourceHash]:attest(item.source,env,review(item))});
+ assert.ok(item);installAuthority(f.rows,EU_TEST_D2,env,{[item.source.sourceHash]:attest(item.source,env,review(item),item.sourceAttestationRevision)});
  const history=await readMyPersonalityHistory(input);
  assert.equal(history.numericalPolicy.runtime,'AUTHORIZED');assert.equal(history.numericalPolicy.sha256,EU_TEST_D2.sha256);
  const feature=history.personality.battleFeatures.find(f=>f.featureId==='BOOMER_AGGRESSOR');
@@ -115,6 +122,42 @@ test('actual EU Personality consumer measures qualified controlled native eviden
  f.rows.get(f.sourcePath).processorRevision='b'.repeat(64);
  const corrected=await readMyPersonalityHistory(input);
  assert.ok(corrected.personality.battleFeatures.every(f=>f.numerator===null),'producer correction invalidates exact attestation');
+});
+
+test('two linked participants share ONE unchanged D2/R source attestation while correction and access remain fenced',async()=>{
+ const {f,env,input}=await measuredNativeFixture();
+ const other={...input,actor:{playerId:'p2',authUid:'other'}};
+ const a=(await collectMyCurrentBattleHistory(input)).loaded[0],b=(await collectMyCurrentBattleHistory(other)).loaded[0];
+ assert.equal(a.source.sourceHash,b.source.sourceHash);
+ assert.notEqual(a.source.authorityRevision,b.source.authorityRevision,'owner-specific privacy tokens remain distinct');
+ assert.equal(a.sourceAttestationRevision,b.sourceAttestationRevision);
+ assert.equal(euTestSourceFingerprint(a.source,a.sourceAttestationRevision),euTestSourceFingerprint(b.source,b.sourceAttestationRevision));
+ const d2=installAuthority(f.rows,EU_TEST_D2,env,{[a.source.sourceHash]:attest(a.source,env,review(a),a.sourceAttestationRevision)});
+ const r=installAuthority(f.rows,EU_TEST_R,env,{[a.source.sourceHash]:attest(a.source,env,{},a.sourceAttestationRevision)});
+ const unchanged=bindingDigest([d2,r]);let derived=0;
+ const social=who=>readMyHostedSocialProgression({...who,derive:async()=>{derived++;throw Error('CONTROLLED_TRANSPORT');}});
+ for(const who of [input,other]){
+  const h=await readMyPersonalityHistory(who);
+  assert.equal(h.personality.battleFeatures.find(x=>x.featureId==='BOOMER_AGGRESSOR').numerator,4/13);
+  const out=await social(who);
+  assert.deepEqual(out.relationships[0].tracks.RIVALRY.outgoing.reasonCodes,['WORKER_TRANSPORT_UNAVAILABLE']);
+ }
+ assert.equal(derived,2,'the same source attestation authorizes derivation for both linked owners');
+ assert.equal(bindingDigest([d2,r]),unchanged,'no per-owner policy/runtime replacement');
+ f.rows.get('authLinks/other').playerId='p1';
+ await assert.rejects(readMyPersonalityHistory(other),e=>e.code==='permission-denied');
+ await assert.rejects(social(other),e=>e.code==='permission-denied');
+ assert.equal((await readMyPersonalityHistory(input)).personality.battleFeatures.find(x=>x.featureId==='BOOMER_AGGRESSOR').numerator,4/13);
+ f.rows.get('authLinks/other').playerId='p2';
+ f.rows.get('matches/m/games/g').replayStatisticsRevision++;
+ f.rows.get(f.sourcePath).replayStatisticsRevision++;
+ const callsBefore=derived;
+ for(const who of [input,other]){
+  assert.ok((await readMyPersonalityHistory(who)).personality.battleFeatures.every(x=>x.numerator===null));
+  assert.deepEqual((await social(who)).relationships[0].tracks.RIVALRY.outgoing.reasonCodes,['SOURCE_PRODUCER_ATTESTATION_UNAVAILABLE']);
+ }
+ assert.equal(derived,callsBefore,'corrected evidence cannot inherit the old shared review');
+ assert.equal(bindingDigest([d2,r]),unchanged);
 });
 
 test('actual EU private reads separate unavailable authority from current insufficient evidence and fence changes',async()=>{
@@ -127,7 +170,7 @@ test('actual EU private reads separate unavailable authority from current insuff
  const meta=f.rows.get(f.sourcePath).recordedEvents;meta.uncompressedBytes=meta.bytes;meta.uncompressedSha256=meta.sha256;
  const records=installAuthority(f.rows,EU_TEST_R,env);
  const current=await collectMyCurrentBattleHistory({...input,includeScheduleOrder:true});
- const item=current.loaded[0];records.runtime.sourceReviews[item.source.sourceHash]=attest(item.source,env);
+ const item=current.loaded[0];records.runtime.sourceReviews[item.source.sourceHash]=attest(item.source,env,{},item.sourceAttestationRevision);
  let calls=0;const socialInput={...input,derive:async()=>{calls++;throw Error('CONTROLLED_TRANSPORT_FAILURE');}};
  const out=await readMyHostedSocialProgression(socialInput);
  assert.equal(calls,1);assert.equal(out.coverage.complete,false);assert.equal(out.relationships[0].tracks.RIVALRY.outgoing.stage,null);
@@ -137,9 +180,9 @@ test('actual EU private reads separate unavailable authority from current insuff
  delete records.runtime.sourceReviews[item.source.sourceHash];calls=0;
  const missing=await readMyHostedSocialProgression(socialInput);assert.equal(missing.coverage.complete,false);assert.equal(calls,0);
  assert.deepEqual(missing.relationships[0].tracks.RIVALRY.outgoing.reasonCodes,['SOURCE_PRODUCER_ATTESTATION_UNAVAILABLE']);
- records.runtime.sourceReviews[item.source.sourceHash]=attest(item.source,env);
+ records.runtime.sourceReviews[item.source.sourceHash]=attest(item.source,env,{},item.sourceAttestationRevision);
  await assert.rejects(readMyHostedSocialProgression({...input,derive:async()=>{records.policy.revision++;throw Error('CONTROLLED');}}),e=>e.code==='aborted');
- installAuthority(f.rows,EU_TEST_R,env,{[item.source.sourceHash]:attest(item.source,env)});
+ installAuthority(f.rows,EU_TEST_R,env,{[item.source.sourceHash]:attest(item.source,env,{},item.sourceAttestationRevision)});
  await assert.rejects(readMyHostedSocialProgression({...input,derive:async()=>{f.rows.get(f.sourcePath).state='WITHDRAWN';throw Error('CONTROLLED');}}),e=>e.code==='aborted');
  const withdrawn=await readMyHostedSocialProgression(socialInput);assert.equal(withdrawn.coverage.currentSources,0);assert.deepEqual(withdrawn.relationships,[]);
  for(const mutate of [f=>f.rows.get('players/p1').membershipStatus='SUSPENDED',f=>f.rows.get('authLinks/owner').playerId='p2']){

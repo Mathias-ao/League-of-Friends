@@ -8,5 +8,6 @@ export async function loadEuTestSocialPolicy(db:any,env:NodeJS.ProcessEnv){
     throw new HttpsError('failed-precondition','Private social policy is not enabled or approved.');
   const authority=await loadEuTestAuthority(db,env,'R');
   return {...authority,calibration:structuredClone(HOSTED_POLICY_SPEC.calibration) as CalibratedSocialHistoryRules,
-    sourceQualified:(source:any,producerRevision:unknown)=>!!euTestSourceReview(authority,source,producerRevision)};
+    sourceQualified:(source:any,producerRevision:unknown,sourceAttestationRevision:unknown)=>
+      !!euTestSourceReview(authority,source,producerRevision,sourceAttestationRevision)};
 }

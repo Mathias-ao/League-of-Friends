@@ -68,7 +68,11 @@ export async function loadMyCurrentSocialSource(input:{db:any;bucket:any;actor:{
     const claim=await tx.get(db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')));
     if(claim.data()?.matchId!==r.matchId||claim.data()?.gameId!==r.gameId||
       claim.data()?.sourceHash!==g.activeReplayStatisticsId)throw fail();
-    return {m,g,event,season,source,guid,token:bindingDigest([...docs,...more,claim].map(s=>({path:s.ref.path,data:s.data()??null})))};
+    // Producer review identity excludes the requesting player/auth-link. The
+    // existing owner-specific token remains the read/correction/privacy fence.
+    const sourceAttestationRevision=bindingDigest([m,g,event,season,source,claim.data()]);
+    return {m,g,event,season,source,guid,sourceAttestationRevision,
+      token:bindingDigest([...docs,...more,claim].map(s=>({path:s.ref.path,data:s.data()??null})))};
   };
   const before=await db.runTransaction(snapshot);
   const loaded=await loadActiveNativeEvidence({db,bucket,actor,matchId:r.matchId,gameId:r.gameId,env,allowPending:true});
@@ -102,6 +106,7 @@ export async function loadMyCurrentSocialSource(input:{db:any;bucket:any;actor:{
   };
   await revalidate();
   return {source:response.source,producerRevision:before.source.processorRevision,
+    sourceAttestationRevision:before.sourceAttestationRevision,
     statistics:loaded.statistics,match:before.m,game:before.g,recordedEvents:before.source.recordedEvents,statisticsArtifact:before.source.statistics,revalidate};
 }
 

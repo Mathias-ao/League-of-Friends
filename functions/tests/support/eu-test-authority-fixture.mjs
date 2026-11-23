@@ -1,7 +1,7 @@
 /** CONTROLLED in-memory authority/producer assertions. No actual owner
  * approval, immutable producer attestation, cloud records or hosted E2E proof. */
 import {EU_TEST_D2,EU_TEST_R} from '../../lib/integration/euTestPolicyResource.js';
-import {bindingDigest} from '../../lib/engines/nativeRecordingIntegration.js';
+import {euTestSourceFingerprint} from '../../lib/integration/euTestAuthority.js';
 export {EU_TEST_D2,EU_TEST_R};
 export const euEnv=base=>({...base,GCLOUD_PROJECT:'age-of-friends-staging-eu',GOOGLE_CLOUD_PROJECT:'age-of-friends-staging-eu',
   AOF_NATIVE_REPLAY_PROJECT:'age-of-friends-staging-eu',FUNCTION_REGION:'europe-west1',FUNCTIONS_EMULATOR:'false',
@@ -22,8 +22,8 @@ export function installAuthority(rows,resource,env,sourceReviews={}){
  const records=authorityRecords(resource,env,sourceReviews);
  rows.set(resource.policyPath,records.policy);rows.set(resource.runtimePath,records.runtime);return records;
 }
-export function attest(source,env,review={}){
- const sourceFingerprint=bindingDigest(source);
+export function attest(source,env,review={},sourceAttestationRevision){
+ const sourceFingerprint=euTestSourceFingerprint(source,sourceAttestationRevision);
  return {...review,sourceFingerprint,producer:{processorRevision:env.AOF_NATIVE_REPLAY_PROCESSOR_REVISION,
    imageSha256:'a'.repeat(64),referenceId:'CONTROLLED_PRODUCER_ATTESTATION',gameBuild:review.gameBuild,
    selectedCatalogSha256:review.costCatalog?.sha256,selectedCatalogVersion:review.costCatalog?.version,

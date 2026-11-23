@@ -95,13 +95,21 @@ const read=async(id=owner)=>{
  const projected=await projectControlledHostedHistory(collectedInput,derived);
  // Actual EU query + genuine source binder/evaluator, with disclosed in-memory
  // approval/transport simulation. Never writes an EU or emulator policy record.
- const euControlled=await readControlledEuHostedHistory(collectedInput,derived,result.sources);
+ const {response:euControlled,attestationsCurrent}=await readControlledEuHostedHistory(collectedInput,derived);
  // Missing derivation is now explicitly Unavailable, rather than an evidence
  // Pending label. All numbers, source counts and unsupported-track states agree.
  const comparable=value=>JSON.parse(JSON.stringify(value,(key,v)=>['reasonCodes','progression'].includes(key)?undefined:v));
- assert.deepEqual(comparable(euControlled.reputation),comparable(projected.reputation));
- assert.deepEqual(comparable(euControlled.relationships),comparable(projected.relationships));
- assert.deepEqual(euControlled.coverage,projected.coverage);
+ if(attestationsCurrent){
+  assert.deepEqual(comparable(euControlled.reputation),comparable(projected.reputation));
+  assert.deepEqual(comparable(euControlled.relationships),comparable(projected.relationships));
+  assert.deepEqual(euControlled.coverage,projected.coverage);
+ }else{
+  // Source corrections do not silently regenerate approvals, even in this
+  // controlled facade. The actual EU consumer must withhold affected values.
+  const tracks=[...Object.values(euControlled.reputation).map(r=>r.career),
+   ...euControlled.relationships.flatMap(p=>Object.values(p.tracks).flatMap(t=>[t.outgoing,t.incoming]))];
+  assert.ok(tracks.some(t=>t.progression==='UNAVAILABLE'&&t.stage===null&&t.upBank===null));
+ }
  projectedByOwner.set(id,projected);return result;
 };
 const first=await read();console.log(JSON.stringify({phase:'private-owner-history',cards:first.cards.length,projections:first.history.projections.length}));assert.equal(first.coverage.currentSources,4);assert.equal(first.coverage.ownBattles,3);

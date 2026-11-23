@@ -104,12 +104,16 @@ export async function loadPracticalPersonalityRuntime(db:any,env:NodeJS.ProcessE
     return {...authority,policy,createPolicy:(owner:string,sources:readonly ContextSourceInput[])=>{
       const reviews:Record<string,PracticalSourceReview>={};
       for(const input of sources){
-        const review=euTestSourceReview(authority,input.source,(input as ContextSourceInput&{producerRevision?:string}).producerRevision);
+        const evidence=input as ContextSourceInput&{producerRevision?:string;sourceAttestationRevision?:string};
+        const review=euTestSourceReview(authority,input.source,evidence.producerRevision,evidence.sourceAttestationRevision);
         if(!review)continue;
         // Trusted exact-source producer selection/override and observed-positive
         // coverage are separate prerequisites; zero unpriced counts is not proof.
         const accepted=structuredClone(review);
         if(!euTestCostReviewQualified(review,input.statistics))delete accepted.costCatalog;
+        // The reviewed producer identity is shared. Bind the unchanged local
+        // evaluator copy to this owner's separately fenced current snapshot.
+        accepted.sourceFingerprint=practicalSourceFingerprint(input);
         reviews[input.source.sourceHash]=accepted;
       }
       return buildPracticalPersonalityPolicy(owner,sources,reviews,policy);
