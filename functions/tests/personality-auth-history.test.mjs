@@ -1,3 +1,6 @@
+import {review as practicalReview,runtimeRecord} from './support/practical-personality-fixture.mjs';
+import {PRACTICAL_RUNTIME_PATH} from '../lib/engines/personalityV1/practicalPolicy.js';
+import {collectMyCurrentBattleHistory} from '../lib/queries/getMyPersonalityHistory.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {gzipSync,gunzipSync} from 'node:zlib';
@@ -295,4 +298,34 @@ test('hosted-style read: four accepted current original-shaped Battles populate 
     e=>e.code==='invalid-argument');
   await assert.rejects(readMyPersonalityHistory({...options,actor:{playerId:'p2',authUid:'owner'}}),
     e=>e.code==='permission-denied');
+});
+
+
+test('approved practical policy serves only qualified owner axes after both gates and retracts on source withdrawal',async()=>{
+ const f=await ready(),source=f.rows.get(f.sourcePath),game=f.rows.get('matches/m/games/g'),match=f.rows.get('matches/m');
+ for(const i of [1,2,3]){
+  const hash=i===1?f.sourceHash:digest('PRACTICAL_CONTROLLED_ORIGINAL_'+i);
+  const raw=enrich(originalStats(f),hash,i===1?'synthetic-native-game-guid':'practical-controlled-guid-'+i);
+  raw.entityCatalogVersion='CONTROLLED_SOURCE_CATALOG';
+  writeFixture(f,i===1?'m':'m'+i,i===1?'g':'g'+i,hash,raw,source,game,{...match,firstCompletedAt:{toMillis:()=>i*1000}});
+  if(i>1)f.rows.get('events/e').officialMatchIds.push('m'+i);
+ }
+ const current=await collectMyCurrentBattleHistory({...f.input,includeScheduleOrder:true});
+ const sourceReviews=Object.fromEntries(current.loaded.map(item=>{
+  const r=practicalReview(item);delete r.commandAttribution;delete r.militaryFamilies;return [item.source.sourceHash,r];
+ }));
+ const input={...f.input,env:{...f.input.env,AOF_PERSONALITY_PRIVATE_POLICY:'practical-v1'}};
+ f.rows.set(PRACTICAL_RUNTIME_PATH,runtimeRecord(input.env.GCLOUD_PROJECT,sourceReviews));
+ const result=await readMyPersonalityHistory(input),a=result.livePersonality.axes.find(x=>x.axis==='BOOMER_AGGRESSOR');
+ assert.equal(result.livePersonality.qualifiedBattles,3);assert.equal(result.livePersonality.eligibleGames,3);
+ assert.equal(a.value,30);assert.equal(a.comparableBattles,3);assert.equal(a.status,'READY');
+ assert.ok(result.livePersonality.axes.filter(x=>x.axis!=='BOOMER_AGGRESSOR').every(x=>x.value===null));
+ assert.equal(result.personality.personalityProfile.sliders.find(x=>x.axis==='BOOMER_AGGRESSOR').value,30);
+ assert.deepEqual(result,await readMyPersonalityHistory(input),'duplicate processing has no persisted vote');
+ const saved=f.rows.get(f.sourcePath);f.rows.set(f.sourcePath,{...saved,state:'WITHDRAWN'});
+ const withdrawn=await readMyPersonalityHistory(input);assert.equal(withdrawn.livePersonality.qualifiedBattles,2);
+ assert.ok(withdrawn.livePersonality.axes.every(x=>x.value===null));
+ assert.ok(withdrawn.personality.personalityProfile.sliders.every(x=>x.value===null));
+ f.rows.set(f.sourcePath,saved);assert.deepEqual(await readMyPersonalityHistory(input),result);
+ f.rows.get('players/p1').membershipStatus='SUSPENDED';await assert.rejects(readMyPersonalityHistory(input),/Active linked membership/);
 });

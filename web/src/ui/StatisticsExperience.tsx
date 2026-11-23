@@ -15,11 +15,11 @@ import {DetailLoadState,type DetailSectionState} from './DetailSection';
 import type {ViewProps} from './App';
 
 const sliderTermTooltips:Record<string,[string,string]>={
-  'boomer-aggressor':['Builds economy before committing to pressure.','Commits early resources to military pressure.'],
-  'cautious-bold':['Keeps expansion and infrastructure protected.','Establishes forward positions with limited cover.'],
-  'guerrilla-frontline':['Favors raids, mobility and disruption.','Favors direct, sustained engagements.'],
-  'specialist-improviser':['Commits to a narrow plan or composition.','Uses a broad mix of tools and responses.'],
-  'compact-expansive':['Keeps economy and infrastructure concentrated.','Spreads economy and infrastructure across the map.']
+  'boomer-aggressor':['Lower recorded military request share.','Higher recorded military request share; not a measure of early aggression.'],
+  'cautious-bold':['More qualified strategic placements at home.','More qualified forward strategic placements; not a measure of courage.'],
+  'guerrilla-frontline':['More attributable economy-directed raid orders.','More attributable contested military orders; not confirmed combat outcomes.'],
+  'specialist-improviser':['Narrower recorded military queue choices.','Broader choices among verified available families; not adaptation skill.'],
+  'compact-expansive':['More home-radius economic placements.','More distinct remote economic placement clusters; not confirmed territorial control.']
 };
 
 export {BattleStatisticsExperience,MatchDialogWithStatistics,EventDialogWithStatistics,SeasonStatisticsView} from './StatisticsDashboard';
@@ -28,7 +28,21 @@ const personalityReasonText:Record<string,string>={
   THREE_SOURCE_QUALIFIED_GAMES_REQUIRED:'Three distinct accepted Games are needed before Personality becomes visible.',
   THREE_QUALIFIED_BATTLES_REQUIRED:'At least three complete, source-accepted Battles are needed for the player profile.',
   AXIS_REQUIRES_TWO_INDEPENDENT_MEASURED_BATTLES:'This axis needs measurements in at least two independent Battles.',
-  APPROVED_HOSTED_CALIBRATION_REQUIRED:'A reviewed hosted calibration is not yet approved.',
+  APPROVED_HOSTED_CALIBRATION_REQUIRED:'Private numerical serving is not yet authorized.',
+  AXIS_REQUIRES_TWO_COMPARABLE_BATTLES:'At least two independently qualified comparable Battles are needed for this axis.',
+  EXACT_SOURCE_COST_CATALOG_UNVERIFIED:'The cost catalogue is not verified for this recording and build.',
+  CURRENT_SOURCE_REVIEW_UNAVAILABLE:'The current recording revision has no applicable source-quality review.',
+  EXACT_SOURCE_BUILD_UNVERIFIED:'The source build does not match its reviewed opportunity.',
+  COMPLETE_SOURCE_INTERVAL_UNVERIFIED:'Complete coverage of the observed recording interval is unverified.',
+  UNSUPPORTED_PERSONALITY_CONTEXT:'This source context is outside the qualified private 1v1 scope.',
+  STRATEGIC_PLACEMENT_EVIDENCE_INCOMPLETE:'Strategic placement identities, coordinates or observation times are incomplete or conflicting.',
+  COMMAND_EPISODE_GROUP_AMBIGUOUS:'Repeated or overlapping command groups cannot count as independent episodes.',
+  MILITARY_QUEUE_QUANTITIES_UNRECONCILED:'Positive military queue quantities do not reconcile with verified available families.',
+  DISTINCT_REMOTE_SITE_EVIDENCE_UNVERIFIED:'Distinct remote site and placement identities are not verified.',
+  EXPANSION_SITE_OPPORTUNITY_UNREVIEWED:'The economic placement opportunity is not reviewed for this exact source.',
+  INSUFFICIENT_STRATEGIC_PLACEMENT_OBSERVATIONS:'Fewer than four qualified strategic placements were observed in a required Game.',
+  INSUFFICIENT_EXPANSION_PLACEMENT_UNITS:'Fewer than six qualified cluster and home-placement units were observed in a required Game.',
+  INCOMPATIBLE_CONTEXT_COMPARISON_GROUPS:'The measurements do not yet form a sufficient comparable source-context group.',
   FULL_GAME_COST_COVERAGE_UNAVAILABLE:'Complete original resource-commitment coverage is unavailable.',
   STRATEGIC_PLACEMENT_TAXONOMY_OR_ANCHOR_UNAVAILABLE:'Reviewed strategic-building opportunities or placement anchors are unavailable.',
   INSUFFICIENT_ATTRIBUTABLE_COMMAND_EPISODES:'There are not enough independently attributable military-command episodes.',
@@ -68,7 +82,7 @@ function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
         Number.isFinite(result.value)&&result.value>=0&&result.value<=100;
       const value=numeric?Math.round(result!.value!):null;
       const termHelp=sliderTermTooltips[definition.id];
-      const label=numeric?value+' / 100':result?.status==='CALIBRATION_PENDING'?'Calibration pending':'Developing';
+      const label=numeric?value+' / 100':'Developing';
       const reason=result?.reasons?.map(readablePersonalityReason).join(' ')||
         'Source context or opportunity remains unqualified.';
       return <div className="personality-slider" key={definition.id}
@@ -78,7 +92,8 @@ function PersonalityPanel({identity}:{identity:PlayerIdentityPresentation}){
           <span>{label}</span>
           <strong className="slider-term tooltip-target tooltip-below" tabIndex={0} data-tooltip={termHelp[1]}>{definition.right}</strong>
         </div>
-        {numeric?<div className="personality-track" aria-hidden="true"><span className="personality-mid"/><i style={{left:`${value}%`}}/></div>
+        {numeric?<><div className="personality-track" aria-hidden="true"><span className="personality-mid"/><i style={{left:`${value}%`}}/></div>
+          <small>{definition.question} {identity.evidenceStatus==='PREVIEW'?'Illustrative preview.':`Early tendency / based on ${result?.comparableBattles??0} comparable Battles.`}</small></>
           :<small>{result?.measuredBattles??0} independently measured Battles. {reason}</small>}
       </div>;
     })}</div>}
@@ -153,12 +168,13 @@ export function playerIdentity(data:Pick<PlayerProfile,'player'>,preview:boolean
       const data=valid?live.axes.find(axis=>axis.axis===axisBySlider[slider.id]):null;
       const permitted=valid&&live.calibration==='APPROVED'&&
         live.qualifiedBattles>=3&&live.eligibleGames>=3&&
-        data?.status==='READY'&&data.measuredBattles>=2&&typeof data.value==='number'&&
+        data?.status==='READY'&&Number.isSafeInteger(data.measuredBattles)&&data.measuredBattles<=live.qualifiedBattles&&Number.isSafeInteger(data.comparableBattles)&&data.comparableBattles!>=2&&
+        data.comparableBattles!<=data.measuredBattles&&data.measuredBattles>=2&&typeof data.value==='number'&&
         Number.isFinite(data.value)&&data.value>=0&&data.value<=100;
       return {id:slider.id,value:permitted?data!.value:null,
         eligibleBattles:valid?live.qualifiedBattles:null,
         status:permitted?'READY' as const:data?.status==='CALIBRATION_PENDING'?'CALIBRATION_PENDING' as const:'DEVELOPING' as const,
-        measuredBattles:data?.measuredBattles??0,reasons:data?.reasons??[]};
+        measuredBattles:data?.measuredBattles??0,comparableBattles:data?.comparableBattles??0,reasons:data?.reasons??[]};
     }),
     reputation:{archetype:'Freeholder' as const,tooltip:FREEHOLDER_TOOLTIP,
       essences:REPUTATION_ESSENCES.map(essence=>({id:essence.id,intensity:null,careerPoints:null,seasonPoints:null}))}

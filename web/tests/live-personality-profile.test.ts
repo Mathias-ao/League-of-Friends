@@ -18,7 +18,7 @@ function live(battles:number,games:number):LivePersonalityEvidence{
     calibration:'NOT_APPROVED',
     axes:axes.map((axis,i)=>({axis,
       status:i===0?'CALIBRATION_PENDING':'DEVELOPING',
-      value:null,measuredBattles:i===0?battles:0,
+      value:null,measuredBattles:i===0?battles:0,comparableBattles:i===0?battles:0,
       reasons:i===0?['APPROVED_HOSTED_CALIBRATION_REQUIRED']:
         ['CLASSIFIED_FAMILY_OPPORTUNITY_UNAVAILABLE']}))};
 }
@@ -83,9 +83,9 @@ test('rendered live owner UI reveals 4 counted Battles with Developing reasons a
     const liveIdentity=playerIdentity(data,false,live(4,4),'CURRENT');
     await act(async()=>root.render(React.createElement(PlayerIdentityExperience,{
       data,preview:false,identityOverride:liveIdentity})));
-    assert.match(dom.window.document.body.textContent!,/Calibration pending/);
+    assert.match(dom.window.document.body.textContent!,/Developing/);
     assert.match(dom.window.document.body.textContent!,/4 independently measured Battles/);
-    assert.match(dom.window.document.body.textContent!,/reviewed hosted calibration is not yet approved/);
+    assert.match(dom.window.document.body.textContent!,/Private numerical serving is not yet authorized/);
     assert.equal(dom.window.document.querySelectorAll('.personality-track i').length,0);
     const illustrated={...data,player:{...data.player,playerId:'sample-ragnar'}};
     await act(async()=>root.render(React.createElement(PlayerIdentityExperience,{
@@ -94,4 +94,14 @@ test('rendered live owner UI reveals 4 counted Battles with Developing reasons a
     assert.match(dom.window.document.body.textContent!,/78 \/ 100/);
     assert.equal(dom.window.document.querySelectorAll('.personality-track i').length,5);
   }finally{await act(async()=>root.unmount());dom.window.close();}
+});
+
+
+test('raw measured count cannot substitute for comparable Battles, and UI keeps exact input precision',()=>{
+ const x=live(4,4);x.calibration='APPROVED';Object.assign(x.axes[0],{status:'READY',value:37.48290863890615,comparableBattles:1});
+ assert.equal(playerIdentity(data,false,x,'CURRENT').sliders[0].value,null);
+ x.axes[0].comparableBattles=2;assert.equal(playerIdentity(data,false,x,'CURRENT').sliders[0].value,37.48290863890615);
+ assert.equal(x.axes[0].value,37.48290863890615);
+ x.axes[0].measuredBattles=100;x.axes[0].comparableBattles=100;assert.equal(playerIdentity(data,false,x,'CURRENT').sliders[0].value,null);
+ delete x.axes[0].comparableBattles;assert.equal(playerIdentity(data,false,x,'CURRENT').sliders[0].value,null);
 });

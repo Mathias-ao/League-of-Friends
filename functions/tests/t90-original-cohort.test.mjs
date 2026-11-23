@@ -16,12 +16,77 @@ import {qualifyPersonalityGameUnlock}
 import {projectLivePersonalityEvidence}
   from '../lib/engines/personalityV1/liveEvidence.js';
 import {evaluateHistory} from '../lib/engines/socialV1History/history.js';
+import {createPracticalPersonalityPolicy} from '../lib/engines/personalityV1/practicalPolicy.js';
+import {projectPrivatePersonalityHistory} from '../lib/integration/personalityHistory.js';
+import {sourceItem,review as controlledReview,owner as controlledOwner} from './support/practical-personality-fixture.mjs';
 
 const sha=value=>createHash('sha256').update(String(value)).digest('hex');
 const report=process.env.AOF_T90_SOURCE_REPORT;
 const axes=Object.keys(PERSONALITY_AXES);
 const exact=c=>[c.format,c.mapFamily,c.startFamily,c.mapId,c.durationFamily,
   c.civilizationOpportunityKey].join('|');
+
+test('approved policy uses genuine original-byte A measurements; absent spatial/episode/family reviews stay Developing',{
+  skip:!report?'AOF_T90_SOURCE_REPORT from the genuine parser required':false,
+},()=>{
+  const original=JSON.parse(readFileSync(report,'utf8'));
+  const records=JSON.parse(readFileSync(new URL('./fixtures/recording-outcomes.json',import.meta.url),'utf8'));
+  const catalogBytes=readFileSync(new URL('../../replay-tools/entity-catalog/aoe2de-185872-v2.json',import.meta.url));
+  const catalog=JSON.parse(catalogBytes.toString('utf8'));
+  assert.equal(catalog.referenceGameBuild,185872);
+  // The existing generator rehashes/parses all original bytes and selects the
+  // build185872 catalogue without an override. These reviewed BASE request
+  // costs do not claim actual civ-adjusted spending. League identities and
+  // source envelopes here remain isolated TEST wrappers, not staged owners.
+  const items=original.games.map((g,i)=>{
+    const recorded=records.find(r=>r.sourceHash===g.sourceHash),header=recorded.matchFacts.headerFieldCandidates;
+    assert.equal(header['de.build'],185872);assert.equal(header['de.mod'],'');assert.equal(header['de.rms_mod_id'],null);
+    assert.equal(recorded.matchFacts.game.bodyParseComplete,true);
+    const item=sourceItem(i+1);
+    item.source.sourceHash=g.sourceHash;item.source.gameGuid=g.gameGuid;
+    item.source.roster=recorded.players.map(p=>({playerId:p.replaySlot===g.t90ReplaySlot?controlledOwner:'TEST_OPPONENT_'+i,
+      replaySlot:p.replaySlot,teamId:String(p.teamId)}));
+    item.game.players=item.source.roster.map(p=>({playerId:p.playerId,team:Number(p.teamId)}));
+    item.match.firstCompletedAt={toMillis:()=>g.recordedAtMs};
+    item.statistics={entityCatalogVersion:catalog.schemaVersion,scope:{observedUntilMs:g.observedUntilMs},
+      participants:[g.statistics],matchFacts:{
+        // Controlled canonical metadata envelope, not an asserted current native
+        // artifact. Source measurements/IDs/build/clock above come from originals;
+        // native header retention/admission is tested separately by the genuine
+        // authenticated two-original emulator (no fabricated retained digest).
+        modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',identityNamespace:'CANONICAL_REPLAY_PLAYER_ID',
+        source:{...recorded.matchFacts.source,gameBuild:header['de.build']},
+        game:{observedDurationMs:g.observedDurationMs,durationMeaning:'observed_recording_interval_not_proven_full_game'},
+        map:{id:g.mapId},rules:{mapId:{status:'DECODED',value:g.mapId},
+          startingAgeId:{status:'DECODED',value:header['de.starting_age_id']},
+          startingResourcesId:{status:'DECODED',value:header['de.starting_resources_id']}},
+        players:recorded.players.map(p=>({playerId:p.replaySlot,replaySlot:p.replaySlot,civilization:{rawId:p.civilizationId}}))}};
+    return item;
+  });
+  const reviews=Object.fromEntries(items.map(item=>{
+    const r=controlledReview(item);
+    r.referenceId='TEST_AUTHORITY_ORIGINAL_BYTE_CATALOG_APPLICABILITY';
+    r.costCatalog={product:'AOE2_DE',gameBuild:185872,version:catalog.schemaVersion,
+      sha256:createHash('sha256').update(catalogBytes).digest('hex'),referenceId:'PINNED_185872_CATALOG_NO_MOD_BASE_REQUEST_COSTS'};
+    // These exact originals have NO independently reviewed spatial or family
+    // opportunity in the hosted registry. Never borrow demo LAND/standard IDs.
+    delete r.spatial;delete r.strategicBuildings;delete r.commandAttribution;delete r.militaryFamilies;delete r.expansionSites;
+    return [item.source.sourceHash,r];
+  }));
+  const policy=createPracticalPersonalityPolicy(controlledOwner,items,reviews);
+  const battles=items.map(item=>({battleId:item.source.battleId,gameIds:['g1'],gameManifestComplete:true,sources:[item]}));
+  const result=projectPrivatePersonalityHistory(controlledOwner,battles,sha('TEST_CURRENT_INPUT'),policy.context,policy.calibration);
+  const a=result.personalityProfile.sliders.find(s=>s.axis==='BOOMER_AGGRESSOR');
+  const fractions=original.games.map(g=>g.statistics.military.militarySpend.resources/g.statistics.economy.resourceCommitment.resourcesCommitted.total).sort((a,b)=>a-b);
+  assert.equal(a.independentBattles,3,JSON.stringify({axis:a,features:result.battleFeatures.map(f=>({axis:f.featureId,missing:f.coverage.missing}))}));assert.equal(a.value,100*fractions[1]);assert.equal(a.status,'READY');
+  assert.equal(a.value,100*(19100/40225));
+  assert.ok(result.personalityProfile.sliders.filter(s=>s.axis!=='BOOMER_AGGRESSOR').every(s=>s.value===null));
+  for(const missing of ['CAUTIOUS_BOLD','COMPACT_EXPANSIVE','GUERRILLA_FRONTLINE','SPECIALIST_IMPROVISER'])
+    assert.notEqual(result.personalityProfile.sliders.find(s=>s.axis===missing).status,'READY');
+  const unreviewed=createPracticalPersonalityPolicy(controlledOwner,items,{});
+  const negative=projectPrivatePersonalityHistory(controlledOwner,battles,sha('TEST_CURRENT_INPUT'),unreviewed.context,unreviewed.calibration);
+  assert.ok(negative.personalityProfile.sliders.every(s=>s.value===null),'same genuine bytes without applicable review cannot mint scores');
+});
 
 test('genuine pinned T90 Games exercise five Personality axes and private Reputation history',{
   skip:!report?'AOF_T90_SOURCE_REPORT from the genuine parser required':false

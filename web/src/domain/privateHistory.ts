@@ -7,7 +7,7 @@ export interface LivePersonalityEvidence {
   calibration:'NOT_APPROVED'|'APPROVED';
   axes:Array<{axis:'BOOMER_AGGRESSOR'|'CAUTIOUS_BOLD'|'GUERRILLA_FRONTLINE'|
     'SPECIALIST_IMPROVISER'|'COMPACT_EXPANSIVE';status:'DEVELOPING'|'CALIBRATION_PENDING'|'READY';
-    value:number|null;measuredBattles:number;reasons:string[]}>;
+    value:number|null;measuredBattles:number;comparableBattles?:number;reasons:string[]}>;
 }
 export interface PrivatePersonalityHistory {
   version:'AOF_INT_B_PRIVATE_HISTORY_1';contract:'AOF_SOCIAL_V1_SHARED_1';visibility:'OWNER_ONLY';ownerPlayerId:string;
@@ -19,7 +19,9 @@ export interface PrivatePersonalityHistory {
   personality:{publication:'PRIVATE_PREVIEW_ONLY';battleFeatures:BattleFeature[];personalityProfile:PersonalityProfile;
     unlock:{version:'AOF_PERSONALITY_THREE_GAME_UNLOCK_V1';requiredGames:3;eligibleGames:number;
       status:'LOCKED'|'UNLOCKED';reason:'THREE_SOURCE_QUALIFIED_GAMES_REQUIRED'|null};
-    contextAdmission:'PENDING'|'SOURCE_QUALIFIED';calibration:'UNCONFIGURED'|'PROPOSED'};
+    contextAdmission:'PENDING'|'SOURCE_QUALIFIED';calibration:'UNCONFIGURED'|'PROPOSED'|'APPROVED'};
+  numericalPolicy?:{policyVersion:string;configurationVersion:string;sha256:string;approvalRef:string;
+    runtime:'AUTHORIZED'|'DISABLED';runtimeRevision:string|null};
   social:{status:'PENDING';reason:string};effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};
 }
 export function privateHistoryEnabled(env:Record<string,string|boolean|undefined>={}):boolean{

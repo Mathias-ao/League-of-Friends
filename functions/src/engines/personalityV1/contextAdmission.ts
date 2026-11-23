@@ -66,6 +66,8 @@ export type PersonalityContextAdmission={
    * create private READY values. */
   behaviorContext:GameContext|null;
   provenanceDigest:string;
+  /** Exact decoded build after source/header conflict checks; no catalogue inference. */
+  verifiedGameBuild:number|null;
   fields:{
     format:AdmissionField<Format>;
     mapId:AdmissionField<string>;
@@ -259,7 +261,7 @@ export function admitPersonalityContext(input:ContextSourceInput, subjectPlayerI
   const context=missing.length===0?behaviorContext:null;
   return {
     version:PERSONALITY_CONTEXT_ADAPTER_VERSION,
-    status:context?'ADMITTED':'PENDING',context,behaviorContext,
+    status:context?'ADMITTED':'PENDING',context,behaviorContext,verifiedGameBuild:trust?replayBuild:null,
     provenanceDigest:hash([PERSONALITY_CONTEXT_ADAPTER_VERSION,source.authorityRevision,
       source.mappingDigest,source.sourceHash,source.statisticsRevision,source.matchId,
       source.gameId,match.format,game.players,subjectPlayerId,subjectSlot,
