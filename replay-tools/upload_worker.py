@@ -195,7 +195,12 @@ class Handler(BaseHTTPRequestHandler):
         if hosted_grade_route:
             projects = [os.environ.get(k) for k in ("GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT") if os.environ.get(k)]
             if (os.environ.get("AOF_SOCIAL_HOSTED_GRADE_V1_ENDPOINT") != "1" or not expected_token or
-                not projects or any(p != "age-of-friends-staging" for p in projects)):
+                os.environ.get("AOF_EU_TEST_PROGRESSION") != "v1" or
+                not projects or any(p != "age-of-friends-staging-eu" for p in projects) or
+                os.environ.get("FUNCTION_REGION") != "europe-west1" or
+                os.environ.get("FUNCTIONS_EMULATOR", "false") != "false" or
+                any(os.environ.get(k) for k in ("FIRESTORE_EMULATOR_HOST", "FIREBASE_AUTH_EMULATOR_HOST",
+                    "FIREBASE_STORAGE_EMULATOR_HOST", "STORAGE_EMULATOR_HOST"))):
                 self._json(404, {"error": "not_found"})
                 return
         grade_route = self.path == "/social-grade-preview-v1"

@@ -66,7 +66,7 @@ export async function callNativeWorker(
 /** Shared authenticated transport; route is server-selected, never a client URL. */
 export async function callVerifiedWorker(url:string,route:'/process-native-v1'|'/social-evidence-v1a'|'/social-grade-preview-v1'|'/social-grade-candidates-preview-v1'|'/social-e2e-progression-v1'|'/social-hosted-grade-v1',payload:Bag,transport:NativeWorkerTransport={}):Promise<Bag>{
   if(route==='/social-hosted-grade-v1'&&!transport.signal)throw fail('Hosted social read budget is required.');
-  if(route==='/social-hosted-grade-v1'&&(process.env.AOF_HOSTED_SOCIAL_PRIVATE!=='v1a'||
+  if(route==='/social-hosted-grade-v1'&&(process.env.AOF_HOSTED_SOCIAL_PRIVATE!=='v1a'||process.env.AOF_EU_TEST_PROGRESSION!=='v1'||
     !isolatedStagingProject(process.env,false)))
     throw fail('Hosted social worker route is disabled.');
   const target=url.replace(/\/+$/,'');

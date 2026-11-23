@@ -57,6 +57,20 @@ test('mounted owner consumes independent directed progression while unsupported 
  }finally{await app.close();}
 });
 
+test('EU private profile distinguishes unavailable runtime from insufficient genuine opportunity and qualified values',async()=>{
+ const app=await mountHostedSocial();try{
+  const x=dto();x.policyVersion='AOF_EU_TEST_R_1';x.coverage.complete=false;x.coverage.pendingSources=1;
+  x.relationships[0].tracks.RIVALRY.outgoing={...pending(),progression:'UNAVAILABLE',reasonCodes:['WORKER_TRANSPORT_UNAVAILABLE']};
+  x.relationships[0].tracks.BOND.outgoing={...pending(),progression:'UNAVAILABLE',reasonCodes:['SOURCE_PRODUCER_ATTESTATION_UNAVAILABLE']};
+  assert.equal(parseHostedSocialProgression(x,'owner').policyVersion,'AOF_EU_TEST_R_1');
+  await app.complete(0,x);
+  assert.match(app.body(),/Unavailable — recording analysis could not be read. Retry./);
+  assert.match(app.body(),/Unavailable — recording source review is required/);
+  assert.match(app.body(),/Developing — no qualifying recorded activity/);
+  assert.match(app.body(),/Preview stage 0 · Bank 1/);assert.match(app.body(),/Not yet measured/);
+ }finally{await app.close();}
+});
+
 test('identical bootstrap snapshots cannot starve an in-flight private read during standings reconciliation',async()=>{
  const app=await mountHostedSocial();try{
   await app.render();await app.render();assert.equal(app.calls.length,1);

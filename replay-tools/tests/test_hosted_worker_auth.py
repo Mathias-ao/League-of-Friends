@@ -70,7 +70,8 @@ class HostedWorkerAuthTests(TestCase):
 
     def test_hosted_social_route_is_separately_gated_staging_only_and_authenticated(self):
         with patch.dict(os.environ, {'AOF_REPLAY_WORKER_AUTH_TOKEN': 'hosted-test',
-                        'GCLOUD_PROJECT': 'age-of-friends-staging'}, clear=True):
+                        'GCLOUD_PROJECT': 'age-of-friends-staging-eu', 'FUNCTION_REGION': 'europe-west1',
+                        'AOF_EU_TEST_PROGRESSION': 'v1'}, clear=True):
             route = '/social-hosted-grade-v1'
             self.assertEqual(self.call(route, 'hosted-test')[0], 404)
             os.environ['AOF_SOCIAL_HOSTED_GRADE_V1_ENDPOINT'] = '1'
@@ -78,13 +79,25 @@ class HostedWorkerAuthTests(TestCase):
             self.assertEqual(self.call(route, 'wrong')[0], 401)
             self.assertEqual(self.call(route, 'hosted-test')[0], 400)  # same strict pure request validator
             self.assertEqual(self.call('/social-e2e-progression-v1', 'hosted-test')[0], 404)
-            for project in ['production', 'demo-test']:
+            for project in ['production', 'demo-test', 'age-of-friends-staging', 'age-of-friends-staging-eu-extra']:
                 os.environ['GCLOUD_PROJECT'] = project
                 os.environ['FUNCTIONS_EMULATOR'] = 'true'
                 self.assertEqual(self.call(route, 'hosted-test')[0], 404)
-            os.environ['GCLOUD_PROJECT'] = 'age-of-friends-staging'
+            os.environ['GCLOUD_PROJECT'] = 'age-of-friends-staging-eu'
             os.environ['GOOGLE_CLOUD_PROJECT'] = 'production'
             self.assertEqual(self.call(route, 'hosted-test')[0], 404)
+
+    def test_eu_social_worker_needs_exact_region_flag_and_no_emulator_settings(self):
+        env = {'AOF_REPLAY_WORKER_AUTH_TOKEN': 'hosted-test', 'GCLOUD_PROJECT': 'age-of-friends-staging-eu',
+               'FUNCTION_REGION': 'europe-west1', 'AOF_SOCIAL_HOSTED_GRADE_V1_ENDPOINT': '1',
+               'AOF_EU_TEST_PROGRESSION': 'v1', 'FUNCTIONS_EMULATOR': 'false'}
+        with patch.dict(os.environ, env, clear=True):
+            self.assertEqual(self.call('/social-hosted-grade-v1', 'hosted-test')[0], 400)
+            for change in ({'AOF_EU_TEST_PROGRESSION': ''}, {'FUNCTION_REGION': ''},
+                           {'FUNCTION_REGION': 'us-central1'}, {'FUNCTIONS_EMULATOR': 'true'},
+                           {'FIRESTORE_EMULATOR_HOST': 'localhost:8080'}):
+                with patch.dict(os.environ, change):
+                    self.assertEqual(self.call('/social-hosted-grade-v1', 'hosted-test')[0], 404)
 
     def test_c1_route_is_default_off_authenticated_and_nonproduction_only(self):
         with patch.dict(os.environ, {"AOF_REPLAY_WORKER_AUTH_TOKEN":"test-c1",

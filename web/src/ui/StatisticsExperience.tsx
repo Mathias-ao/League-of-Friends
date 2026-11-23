@@ -209,6 +209,8 @@ function PrivateSocialValue({value}:{value:PrivateSocialTrack}){
     <small>{value.sourceQualifiedBattles} source-qualified Battles · {value.sourceQualifiedGames} Games</small>
   </>;
   return <span>{value.reasonCodes.includes('NOT_YET_MEASURED')?'Not yet measured':
+    value.reasonCodes.includes('WORKER_TRANSPORT_UNAVAILABLE')?'Unavailable — recording analysis could not be read. Retry.':
+    value.reasonCodes.includes('SOURCE_PRODUCER_ATTESTATION_UNAVAILABLE')?'Unavailable — recording source review is required':
     value.reasonCodes.includes('NO_QUALIFYING_RECORDED_ACTIVITY')?'Developing — no qualifying recorded activity':
     'Pending — source evidence incomplete'}</span>;
 }
