@@ -156,3 +156,65 @@ test('same-UID linked-player mismatch cannot grant action authority from another
   assert.ok(!document.querySelector('.event-briefing-layout'));assert.match(ui.body(),/league identity changed/);
  }finally{await ui.close();}
 });
+
+function readyEvent(ui:any){return {...ui.event,event:{...ui.event.event,status:'PUBLISHED',signupDeadlineAt:new Date(Date.now()+86400000).toISOString()},
+ viewer:{...ui.event.viewer,rsvp:'NO',signupState:'NONE'}};}
+async function actionButton(text:string){const button=[...document.querySelectorAll<HTMLButtonElement>('dialog button')].find(b=>b.textContent===text);
+ assert.ok(button,'Action '+text);await act(async()=>button.click());}
+
+test('actual App Event action failure is visible inside its modal and clears on successful recovery',async()=>{
+ const ui=await navigationFixture();try{
+  ui.repository.rsvp=async()=>{throw Error('EVENT_ACTION_FAILURE');};
+  await ui.open();await ui.complete('essential',readyEvent(ui));await actionButton('Raise your banner');
+  assert.match(document.querySelector('dialog [role="alert"]')!.textContent!,/EVENT_ACTION_FAILURE/);
+  ui.repository.rsvp=async()=>{};await actionButton('Raise your banner');
+  assert.doesNotMatch(document.querySelector('dialog')!.textContent!,/EVENT_ACTION_FAILURE/);
+  assert.equal(ui.calls.filter(c=>c.kind==='essential').length,2,'successful command revalidates loaded authority');
+  await ui.complete('essential',readyEvent(ui),1);assert.ok(document.querySelector('.event-briefing-layout'));
+ }finally{await ui.close();}
+});
+
+test('actual App shared Battle action path retains visible error and retry recovery',async()=>{
+ // Pre-play summaries avoid the existing completed-Battle notification reads;
+ // resolve the actual selected Battle RPC, rather than a background notice RPC.
+ const ui=await navigationFixture({kind:'match',summaryStatus:'READY'});try{
+  const battle={...ui.match,match:{...ui.match.match,status:'READY',result:null},viewer:{...ui.match.viewer,isParticipant:true},
+   games:[{...ui.match.games[0],status:'READY',draftRequired:true,draft:null,result:null}]};
+  ui.repository.ensureCivilizationDraft=async()=>{throw Error('BATTLE_ACTION_FAILURE');};
+  await ui.open();await ui.complete('match',battle);await actionButton('Open civilization draft');
+  assert.match(document.querySelector('dialog [role="alert"]')!.textContent!,/BATTLE_ACTION_FAILURE/);
+  ui.repository.ensureCivilizationDraft=async()=>{};await actionButton('Open civilization draft');
+  assert.doesNotMatch(document.querySelector('dialog')!.textContent!,/BATTLE_ACTION_FAILURE/);
+  assert.equal(ui.calls.filter(c=>c.kind==='match').length,2);
+ }finally{await ui.close();}
+});
+
+test('late action failure cannot appear in a replacement selection or another account',async()=>{
+ for(const change of ['selection','account']){
+  const ui=await navigationFixture();try{
+   let reject!:(error:Error)=>void;ui.repository.rsvp=()=>new Promise((_resolve,no)=>{reject=no;});
+   await ui.open();await ui.complete('essential',readyEvent(ui));await actionButton('Raise your banner');
+   await ui.click('button[aria-label="Close dialog"]');
+   if(change==='selection'){await ui.open();await ui.complete('essential',readyEvent(ui),1);}
+   else await ui.auth('replacement-uid');
+   await act(async()=>reject(Error('OLD_ACTION_MUST_STAY_HIDDEN')));
+   assert.doesNotMatch(ui.body(),/OLD_ACTION_MUST_STAY_HIDDEN/);
+  }finally{await ui.close();}
+ }
+});
+
+test('successful action with exhausted revision-refresh retry recovers inside the modal without resubmission',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const ui=await navigationFixture();try{
+  let commands=0;ui.repository.rsvp=async()=>{commands++;};
+  const load=ui.repository.load.bind(ui.repository);
+  await ui.open();await ui.complete('essential',readyEvent(ui));
+  ui.repository.load=async()=>{throw Object.assign(Error('Controlled revision race'),{code:'functions/aborted'});};
+  await actionButton('Raise your banner');
+  await act(async()=>{t.mock.timers.tick(1000);});await act(async()=>{t.mock.timers.tick(2000);});
+  assert.match(document.querySelector('dialog [role="alert"]')!.textContent!,/league changed while loading/);
+  assert.doesNotMatch(ui.body(),/Sign in with Steam/);assert.equal(commands,1);
+  ui.repository.load=load;await actionButton('Refresh league state');
+  assert.ok(!document.querySelector('dialog [role="alert"]'));assert.equal(commands,1);
+ }finally{await ui.close();t.mock.timers.reset();}
+});

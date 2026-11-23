@@ -11,7 +11,7 @@ const authorityError=(error:unknown)=>['functions/permission-denied','functions/
   .includes((error as {code?:string})?.code??'')||(error as {accessChanged?:boolean})?.accessChanged===true||
   ((error as {code?:string})?.code==='functions/failed-precondition'&&/membership|linked/i.test((error as Error)?.message??''));
 type Loaded={type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile};
-export function DetailDialog(props:ViewProps&{authUid:string|null|undefined;selection:DetailSelection;requests:DetailRequests;onClose:()=>void}){
+export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string|null|undefined;selection:DetailSelection;requests:DetailRequests;onClose:()=>void}){
   const {selection,repository,snapshot,requests}=props;
   const uid=props.authUid;
   const [retry,setRetry]=useState(0);
@@ -69,6 +69,9 @@ export function DetailDialog(props:ViewProps&{authUid:string|null|undefined;sele
   const retryRead=()=>setRetry(n=>n+1);
   const updated=()=>setRetry(n=>n+1);
   return <Modal title={title} wide className={selection.type==='event'?'event-modal':selection.type==='match'?'battle-modal':''} onClose={props.onClose}>
+    {!hidden&&props.actionError&&<div className="alert" role="alert">{props.actionError}
+      {props.refreshStandings&&<button type="button" disabled={props.busy} onClick={props.refreshStandings}>Refresh league state</button>}
+    </div>}
     {hidden?<DetailLoadState label="League details" error={current?.error??'Access changed. Reopen the current selection.'} retry={retryRead}/>:
       selection.type==='player'&&(player||loaded?.type==='player')?<ProfileDialogWithIdentity key={revision} {...props}
         data={loaded?.type==='player'?loaded.data:undefined} summaryPlayer={player??undefined}

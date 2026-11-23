@@ -64,18 +64,18 @@ before shell; a real staged numeric budget still needs operator/Sol observation.
 
 | Detail | Battles | Condition | Shell before → after | Essential before → after | Secondary before → after |
 | --- | ---: | --- | --- | --- | --- |
-| event | 5 | cold-mount | 109.86/134.23 → 6.88/17.68 | 109.86/134.23 → 97.36/125.07 | 116.78/143.04 → 190.93/228.30 |
-| event | 5 | warm-reopen | 103.28/112.71 → 6.09/7.00 | 103.29/112.71 → 102.86/106.77 | 110.49/119.50 → 196.87/213.59 |
-| match | 5 | cold-mount | 96.86/108.26 → 5.75/7.32 | 96.86/108.26 → 93.39/97.96 | 186.91/197.97 → 189.49/195.08 |
-| match | 5 | warm-reopen | 100.94/103.51 → 5.14/5.82 | 100.94/103.51 → 96.85/98.86 | 191.39/194.13 → 182.84/196.80 |
-| player | 5 | cold-mount | 105.22/114.51 → 20.95/26.93 | 105.22/114.51 → 92.62/100.45 | 105.22/114.51 → 92.62/100.45 |
-| player | 5 | warm-reopen | 108.76/114.24 → 20.23/20.87 | 108.76/114.24 → 95.57/104.45 | 108.76/114.24 → 95.57/104.45 |
-| event | 200 | cold-mount | 110.60/121.00 → 7.43/8.12 | 110.61/121.00 → 96.87/102.51 | 117.32/128.46 → 191.30/210.88 |
-| event | 200 | warm-reopen | 102.14/115.95 → 6.90/9.20 | 102.14/115.95 → 102.27/103.69 | 109.62/123.17 → 196.73/212.99 |
-| match | 200 | cold-mount | 163.97/379.16 → 10.37/17.42 | 163.97/379.16 → 87.94/98.18 | 259.26/467.70 → 185.33/195.82 |
-| match | 200 | warm-reopen | 145.96/379.46 → 7.51/7.79 | 145.97/379.46 → 97.34/98.97 | 234.89/465.91 → 195.18/195.90 |
-| player | 200 | cold-mount | 193.01/318.46 → 35.82/49.06 | 193.01/318.46 → 95.93/107.73 | 193.01/318.46 → 95.93/107.73 |
-| player | 200 | warm-reopen | 197.56/303.04 → 35.44/43.18 | 197.56/303.04 → 96.09/97.60 | 197.56/303.04 → 96.09/97.60 |
+| event | 5 | cold-mount | 109.86/134.23 → 7.09/17.42 | 109.86/134.23 → 96.16/117.05 | 116.78/143.04 → 189.88/219.19 |
+| event | 5 | warm-reopen | 103.28/112.71 → 6.05/6.75 | 103.29/112.71 → 101.91/108.04 | 110.49/119.50 → 196.39/213.32 |
+| match | 5 | cold-mount | 96.86/108.26 → 5.95/7.07 | 96.86/108.26 → 93.88/96.02 | 186.91/197.97 → 191.43/194.16 |
+| match | 5 | warm-reopen | 100.94/103.51 → 5.13/6.02 | 100.94/103.51 → 98.37/100.70 | 191.39/194.13 → 195.65/198.59 |
+| player | 5 | cold-mount | 105.22/114.51 → 21.67/27.52 | 105.22/114.51 → 93.23/98.06 | 105.22/114.51 → 93.23/98.06 |
+| player | 5 | warm-reopen | 108.76/114.24 → 20.45/28.94 | 108.76/114.24 → 96.52/97.58 | 108.76/114.24 → 96.52/97.58 |
+| event | 200 | cold-mount | 110.60/121.00 → 7.30/8.06 | 110.61/121.00 → 97.21/106.78 | 117.32/128.46 → 191.93/202.01 |
+| event | 200 | warm-reopen | 102.14/115.95 → 6.89/9.54 | 102.14/115.95 → 100.93/102.56 | 109.62/123.17 → 196.33/198.19 |
+| match | 200 | cold-mount | 163.97/379.16 → 10.03/14.70 | 163.97/379.16 → 91.88/99.95 | 259.26/467.70 → 183.73/197.43 |
+| match | 200 | warm-reopen | 145.96/379.46 → 7.35/7.50 | 145.97/379.46 → 97.50/99.40 | 234.89/465.91 → 193.03/197.25 |
+| player | 200 | cold-mount | 193.01/318.46 → 34.97/48.95 | 193.01/318.46 → 102.85/109.45 | 193.01/318.46 → 102.85/109.45 |
+| player | 200 | warm-reopen | 197.56/303.04 → 35.35/40.71 | 197.56/303.04 → 96.28/99.70 | 197.56/303.04 → 96.28/99.70 |
 
 Repository calls per navigation: Event1 essential call (legacy1 full call), plus1
 on-demand Roundoff call if requested; Battle1 detail+1 Statistics; Player1 public
@@ -97,6 +97,11 @@ The script removes only the temporary baseline modules it creates. Raw local
 reports are review evidence, not deterministic golden performance tests.
 
 ## Regression and release boundaries
+
+Focused tests also cover actual-App RSVP and Battle command failures inside the
+active modal, successful recovery, late-failure rejection across selection/account
+changes, and an exhausted post-command bootstrap abort followed by a league refresh
+without command resubmission. Action errors remain distinct from section-read errors.
 
 Focused tests cover unresolved/failed independent sections, local Retry, preview/
 older-repository fallback, wrong entity/viewer, same-ID coalescing, source/result/

@@ -8,13 +8,14 @@ import {DetailDialog} from '../src/ui/DetailDialog.tsx';
 import {detailRequests} from '../src/ui/detailNavigation.ts';
 
 /** Controlled latency/identity fixture, never a hosted/source-method witness. */
-export async function navigationFixture({app=true,kind='event',split=true,scale=5,Component=App,privateReads=false}={}){
+export async function navigationFixture({app=true,kind='event',split=true,scale=5,Component=App,privateReads=false,summaryStatus}={}){
  const backend=new PreviewLeagueRepository();await backend.signIn();await backend.requestMembership('Navigator','','K7M4Q9');await backend.enterSeason();
  let snapshot=await backend.load(),uid='firebase-owner';
  const eventId=snapshot.events[0].eventId,matchId=snapshot.matches[0].matchId,owner=snapshot.viewer.playerId;
  const event=await backend.event(eventId),match=await backend.match(matchId),profile=await backend.player(owner);
  snapshot={...snapshot,matches:Array.from({length:scale},(_,i)=>i===0?snapshot.matches[0]:{
   ...snapshot.matches[0],matchId:'scaled-battle-'+i,eventId:i%2?eventId:'older-event',seasonId:i%2?'S001':'S000'})};
+ if(summaryStatus)snapshot={...snapshot,matches:snapshot.matches.map(match=>({...match,status:summaryStatus,result:null,completedAt:null}))};
  const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost/#'+({event:'events',match:'battles',player:'players'}[kind]),pretendToBeVisual:true});
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,location:dom.window.location,history:dom.window.history,
   HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true,requestAnimationFrame:fn=>{fn(0);return 1;},
