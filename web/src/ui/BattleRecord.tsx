@@ -16,7 +16,7 @@ export function BattleRecordContent({statistics,mapping=[],players=[],officialOu
   const context=example?object(audit.recordingMatchFacts):facts;
   const rules=example?object(context.ruleValues):Object.fromEntries(Object.entries(object(facts.rules)).map(([k,v])=>[k,object(v).value]));
   const source=example?object(audit.source):object(raw.source);
-  const name=(id:any)=>{const p=list(facts.players).find(p=>p.playerId===id);const slot=p?.replaySlot??id;const m=mapping.find(m=>m.replaySlot===slot);return m?players.find(p=>p.playerId===m.playerId)?.steamName??m.sourceName:`Recording player ${id}`;};
+  const name=(id:any)=>{const p=list(facts.players).find(p=>p.playerId===id);const slot=p?.replaySlot??id;const m=mapping.find(m=>m.replaySlot===slot);return m?players.find(p=>p.playerId===m.playerId)?.steamName??m.playerId:`Recording player ${id}`;};
   const rebuild=object(audit?.teamLockRebuildComparison);
   const alignment=object(diplomacyReview??audit?.diplomacyReview);
   const declared=object(alignment.declaredHistory);

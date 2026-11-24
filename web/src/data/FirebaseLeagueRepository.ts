@@ -1,3 +1,4 @@
+import {privateHonoursPreviewEnabled} from '../domain/privateHonoursPreview';
 import {initializeApp} from 'firebase/app';
 import {getAuth,browserLocalPersistence,setPersistence,signInWithCustomToken,signInWithEmailAndPassword,signOut,onAuthStateChanged,connectAuthEmulator} from 'firebase/auth';
 import {getFunctions,httpsCallable,connectFunctionsEmulator} from 'firebase/functions';
@@ -171,7 +172,11 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   }
   canReadMyPersonalityHistory(){return privateHistoryEnabled(import.meta.env);}
   currentAuthUid(){return this.auth.currentUser?.uid??null;}
-  myHonoursPreview(){return this.call<import('../domain/privateHonoursPreview').PrivateHonoursPreview>('getMyHonoursPreview');}
+  canReadMyHonoursPreview(){return privateHonoursPreviewEnabled(import.meta.env);}
+  myHonoursPreview(){
+    if(!this.canReadMyHonoursPreview())throw new Error('Private honours preview is disabled for this Firebase project.');
+    return this.call<import('../domain/privateHonoursPreview').PrivateHonoursPreview>('getMyHonoursPreview');
+  }
   myGameplayPreview(){
     if(!gameplayPreviewEnabled(import.meta.env))throw new Error('Private gameplay preview is disabled for this Firebase project.');
     return this.call<import('../domain/gameplayPreview').PrivateGameplayPreview>('getMyGameplayPreview');

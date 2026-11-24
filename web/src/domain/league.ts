@@ -4,7 +4,7 @@ export interface PlayerRecord { leagueAlias?:string|null;steamPersonaName?:strin
 export class Player {
   constructor(readonly record:PlayerRecord) {}
   get id(){return this.record.playerId;}
-  get name(){return this.record.steamName;}
+  get name(){return this.record.leagueAlias||this.record.steamName;}
   get initials(){return this.name.replace(/[^\p{L}\p{N} ]/gu,'').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();}
 }
 /** Optional legacy publication metadata; not an Event-finalisation gate. */
@@ -250,6 +250,7 @@ export interface LeagueRepository {
    * unchanged-user delivery from an actual logout/account replacement.
    * Absence must fail closed; the playerId and UID are different identities. */
   currentAuthUid?():string|null;
+  canReadMyHonoursPreview?():boolean;
   myHonoursPreview?():Promise<import('./privateHonoursPreview').PrivateHonoursPreview>;
   myGameplayPreview?():Promise<import('./gameplayPreview').PrivateGameplayPreview>;
   mySocialProgression?():Promise<import('./privateProgression').PrivateProgression>;

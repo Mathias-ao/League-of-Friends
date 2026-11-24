@@ -1,3 +1,4 @@
+import {PrivateHonoursPreview} from './PrivateHonoursPreview';
 import {PlayerChronicleBook} from './PlayerChronicleBook';
 import {useEffect,useRef,useState} from 'react';
 import {ArrowRight,BookOpen,ChevronLeft,ChevronRight,Info,Sparkles} from 'lucide-react';
@@ -383,6 +384,9 @@ function PlayerProfileExperience(props:ViewProps&ProfileLoadingProps&{summaryPla
         props.repository.canReadMyPersonalityHistory?.()===true&&props.repository.currentAuthUid?.()&&
         <button type="button" onClick={()=>setPersonalityRetry(n=>n+1)}>Retry private Personality</button>}
       <HostedSocialProfile {...props} data={{player:profilePlayer}}/>
+      {!preview&&viewerId===ownerId&&snapshot.membership==='ACTIVE'&&props.repository.mode==='live'&&
+        props.repository.currentAuthUid?.()&&props.repository.canReadMyHonoursPreview?.()===true&&
+        <PrivateHonoursPreview repository={props.repository} ownerId={ownerId}/>}
 
       <section className="profile-battle-record">
         <div className="profile-section-heading battle-record-heading"><div><span className="eyebrow">BATTLE RECORD</span></div></div>

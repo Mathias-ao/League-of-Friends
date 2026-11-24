@@ -127,3 +127,11 @@ test('unsupported diplomacy mode is a coverage gap rather than a chosen Unknown 
  assert.ok(html.includes('Unrecognized diplomacy mode; declaration becomes unavailable'));
  assert.ok(!html.includes('Changed declaration from ALLY to UNKNOWN'));
 });
+
+test('raw recording aliases cannot become fallback player labels when the league directory is absent',()=>{
+  const facts={modelVersion:'AOF_RECORDING_MATCH_FACTS_V1',players:[{playerId:2,replaySlot:5}],lobbyGroups:[{memberPlayerIds:[2]}]};
+  const mapping=[{replaySlot:5,playerId:'canonical-player',sourceName:'Private replay alias'}];
+  const html=render({statistics:{matchFacts:facts},mapping});
+  assert.match(html,/canonical-player/);assert.doesNotMatch(html,/Private replay alias/);
+  assert.equal(mapping[0].sourceName,'Private replay alias','audit provenance retained');
+});

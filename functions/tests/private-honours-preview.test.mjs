@@ -74,7 +74,7 @@ test('authenticated native intake is read-only and source-bound; known unsupport
   const withdrawn=await readMyHonoursPreview(input);assert.equal(withdrawn.sources.length,0);assert.equal(withdrawn.pendingSources.length,1);
   assert.ok(withdrawn.honours.every(h=>h.status==='PENDING'&&h.evidence.length===0));
 });
-test('default-off demo-emulator guard, authentication and no-target request prevent private evidence injection',async()=>{
+test('default-off project guard, authentication and no-target request prevent private evidence injection',async()=>{
   const f=await ready();
   assert.throws(()=>assertPrivateHonoursPreviewEnabled(f.input.env),e=>e.code==='failed-precondition');
   for(const env of [{...enabled(f.input).env,FUNCTIONS_EMULATOR:'false'},
@@ -97,4 +97,50 @@ test('native whole-set source, result and auth corrections during reads reject s
   const f=await ready(),current=await collectMyCurrentBattleHistory(f.input);
   f.rows.get('matches/m/games/g').replayStatisticsRevision++;
   await assert.rejects(current.revalidate());
+});
+
+const eu=env=>({...env,GCLOUD_PROJECT:'age-of-friends-staging-eu',GOOGLE_CLOUD_PROJECT:'age-of-friends-staging-eu',
+  AOF_NATIVE_REPLAY_PROJECT:'age-of-friends-staging-eu',FUNCTION_REGION:'europe-west1',FUNCTIONS_EMULATOR:undefined});
+test('explicit EU honours opt-in accepts only exact coherent hosted identity; every nearest neighbour is denied',()=>{
+  const env=eu({AOF_HONOURS_PRIVATE_PREVIEW:'source-v1'});
+  assert.doesNotThrow(()=>assertPrivateHonoursPreviewEnabled(env));
+  assert.doesNotThrow(()=>assertPrivateHonoursPreviewEnabled({...env,GCLOUD_PROJECT:undefined}));
+  assert.doesNotThrow(()=>assertPrivateHonoursPreviewEnabled({...env,FUNCTIONS_EMULATOR:'false'}));
+  for(const patch of [
+    {AOF_HONOURS_PRIVATE_PREVIEW:undefined},{AOF_HONOURS_PRIVATE_PREVIEW:'true'},{AOF_HONOURS_PRIVATE_PREVIEW:'source-v2'},
+    ...['age-of-friends-staging','league-of-friends-cc274','age-of-friends-staging-eu-extra',''].map(project=>({GCLOUD_PROJECT:project,GOOGLE_CLOUD_PROJECT:project})),
+    {GOOGLE_CLOUD_PROJECT:'demo-honours'},{GCLOUD_PROJECT:'demo-honours'},
+    {FUNCTION_REGION:undefined},{FUNCTION_REGION:'us-central1'},{FUNCTIONS_EMULATOR:'true'},{FUNCTIONS_EMULATOR:'yes'},
+    ...['FIRESTORE_EMULATOR_HOST','FIREBASE_AUTH_EMULATOR_HOST','FIREBASE_STORAGE_EMULATOR_HOST','STORAGE_EMULATOR_HOST'].map(key=>({[key]:'localhost:9000'})),
+  ])assert.throws(()=>assertPrivateHonoursPreviewEnabled({...env,...patch}),e=>e.code==='failed-precondition');
+  assert.throws(()=>assertPrivateHonoursPreviewEnabled({AOF_HONOURS_PRIVATE_PREVIEW:'source-v1',GCLOUD_PROJECT:'demo-',FUNCTIONS_EMULATOR:'true'}));
+});
+test('controlled EU LIVE-reader fixture: current source, final correction and access fences stay read-only',async()=>{
+  // Real authenticated native reader with controlled in-memory SDK/artifacts;
+  // this is CODE VERIFIED, not a genuine hosted EU recording or LIVE PASS.
+  const f=await ready(),input={...enabled(f.input),env:eu(enabled(f.input).env)};
+  const before=JSON.stringify([...f.rows]),p=await readMyHonoursPreview(input);
+  assert.equal(p.ownerPlayerId,'p1');assert.equal(p.sources.length,1);assert.equal(p.honours.length,10);
+  assert.deepEqual(p.effects,{officialWrites:false,receiptPublication:false,entitlementGrants:false});
+  assert.equal(JSON.stringify([...f.rows]),before);
+  f.rows.get(f.sourcePath).state='WITHDRAWN';
+  const withdrawn=await readMyHonoursPreview(input);
+  assert.equal(withdrawn.sources.length,0);assert.notEqual(withdrawn.inputDigest,p.inputDigest);
+  assert.ok(withdrawn.honours.every(h=>h.status==='PENDING'&&h.evidence.length===0));
+  assert.deepEqual(withdrawn.effects,p.effects);
+  for(const change of [
+    f=>f.rows.get('players/p1').membershipStatus='INACTIVE',
+    f=>f.rows.delete('authLinks/owner'),
+    f=>f.rows.get('authLinks/owner').playerId='p2',
+    f=>f.rows.get(f.sourcePath).state='WITHDRAWN',
+    f=>f.rows.get('matches/m/games/g').canonicalResult.revision++,
+    f=>f.rows.get('matches/m/games/g').players.reverse(),
+  ]){const fixture=await ready(),options={...enabled(fixture.input),env:eu(enabled(fixture.input).env)};
+    fixture.onFinal(()=>change(fixture));await assert.rejects(readMyHonoursPreview(options));}
+  for(const change of [f=>f.rows.get('players/p1').membershipStatus='SUSPENDED',f=>f.rows.delete('authLinks/owner')]){
+    const f=await ready();change(f);await assert.rejects(readMyHonoursPreview({...enabled(f.input),env:eu(enabled(f.input).env)}),e=>e.code==='permission-denied');
+  }
+  for(const key of ['ownerPlayerId','playerId','source','policy','cursor'])
+    await assert.rejects(readMyHonoursPreview({...input,request:{[key]:'forged'}}),e=>e.code==='invalid-argument');
+  await assert.rejects(readMyHonoursPreview({...input,actor:{playerId:'p2',authUid:'owner'}}),e=>e.code==='permission-denied');
 });
