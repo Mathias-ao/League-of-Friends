@@ -1,3 +1,4 @@
+import {publicPlayer} from '../queries/querySupport.js';
 import {decodeReplayStatistics} from './replayStatisticsStorage.js';
 import {getStorage} from 'firebase-admin/storage';
 import {Timestamp,type Transaction,type DocumentReference,type Query} from 'firebase-admin/firestore';
@@ -58,7 +59,7 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
   const queryIds=(docs:any[])=>JSON.stringify(docs.map(doc=>doc.id).sort());
   if(!transaction&&!scope.matchId)queries.push({ref:query,ids:queryIds(snapshots)});
   const identities=await read(db.collection('players'));
-  const names=new Map<string,string>(identities.docs.map((p:any)=>[p.id,p.data().steamName??p.id]));
+  const names=new Map<string,string>(identities.docs.map((p:any)=>[p.id,publicPlayer(p.id,p.data()).steamName]));
   const games:GameStatistics[]=[];let unavailableGames=0;
   const checkpoints:{ref:DocumentReference;token:string;kind:string}[]=[];
   const token=(value:any,kind:string)=>JSON.stringify(stable(kind==='match'?{status:value?.status,opponentKind:value?.opponentKind,aiParticipation:value?.aiParticipation,context:value?.context,format:value?.format,seasonId:value?.seasonId,eventId:value?.eventId,completedAt:value?.completedAt,firstCompletedAt:value?.firstCompletedAt,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,seriesRule:value?.seriesRule,result:value?.canonicalResult,participants:value?.participants}:kind==='game'?{status:value?.status,result:value?.canonicalResult,players:value?.players,source:value?.activeReplayStatisticsId,revision:value?.replayStatisticsRevision,dispute:value?.activeResultDisputeId,config:value?.gameConfigSnapshot,completedAt:value?.completedAt,gameNumber:value?.gameNumber,resolutionReason:value?.resolutionReason,recordingResultBinding:value?.recordingResultBinding,statisticsState:value?.replayStatisticsState}:{state:value?.state,hash:value?.sourceHash,statistics:value?.statistics,mapping:value?.playerMapping,opponents:value?.opponentMapping,nativePublication:value?.nativePublicationVersion,ordinaryUpload:value?.ordinaryUploadVersion,sourceRevision:value?.replayStatisticsRevision,processorRevision:value?.processorRevision,validationId:value?.nativeValidationCandidateId,artifactRevision:value?.artifactRevision,originalRecording:value?.originalRecording,recordedEvents:value?.recordedEvents,extraction:value?.extraction}));
@@ -100,7 +101,7 @@ export async function collectStatistics(scope:StatisticsScope={},transaction?:Tr
       // Always overwrite cached flags, including forged or stale true values.
       const sourceMeasurementsEligible=!!nativeQualified&&!base.eligible&&base.exclusionReason==='Official Game result pending'&&
         !game.canonicalResult&&['READY','AWAITING_CONFIRMATION'].includes(game.status);
-      games.push({...experience,...base,...manifest,sourceMeasurementsEligible,players:experience.players.map(p=>({...p,name:names.get(p.playerId)??p.name,team:roster.find(r=>r.playerId===p.playerId)?.team??null,civilization:roster.find(r=>r.playerId===p.playerId)?.civilization??null}))});
+      games.push({...experience,...base,...manifest,sourceMeasurementsEligible,players:experience.players.map(p=>({...p,name:names.get(p.playerId)??p.playerId,team:roster.find(r=>r.playerId===p.playerId)?.team??null,civilization:roster.find(r=>r.playerId===p.playerId)?.civilization??null}))});
     }
   }
   for(const c of checkpoints){const fresh=await c.ref.get();if(!fresh.exists||token(fresh.data(),c.kind)!==c.token)throw new HttpsError('aborted','Statistics inputs changed during loading; retry for a coherent revision.');}

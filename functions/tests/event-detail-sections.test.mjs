@@ -71,3 +71,13 @@ test('scaled essential read-operation count excludes roundoff Match/Game/source 
  assert.equal(new Set(counts.map(x=>x.operations)).size,1,'query operations are independent of unrelated Game/source histories');
  console.log(JSON.stringify({controlledEssentialReadOperations:counts,notBillableDocumentCounts:true}));
 });
+
+test('warmup invitations use canonical league names rather than legacy or Steam aliases',async()=>{
+ const rows=fixture();
+ rows.set('players/p',{steamName:'Old player label',leagueAlias:'Permanent player',steamPersonaName:'Private persona',membershipStatus:'ACTIVE',role:'PLAYER'});
+ rows.set('players/guest',{steamName:'Old guest label',leagueAlias:'Permanent guest',membershipStatus:'ACTIVE'});
+ rows.set('events/e/warmupChallenges/challenge',{challengerPlayerId:'p',guestPlayerId:'guest',status:'PENDING'});
+ const result=await getEventDetail.run(request('essential'));
+ const text=JSON.stringify(result);assert.match(text,/Permanent player/);assert.match(text,/Permanent guest/);
+ assert.doesNotMatch(text,/Old player label|Old guest label|Private persona/);
+});

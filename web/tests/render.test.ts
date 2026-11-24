@@ -56,3 +56,11 @@ test('completed draft recovery is visible only to administrators',async()=>{
   assert.ok(adminMarkup.includes('Reset / reroll draft'));
   assert.ok(!playerMarkup.includes('Reset / reroll draft'));
 });
+
+test('profile public rendering omits historical Steam aliases even from a legacy payload',async()=>{
+  const repository=new PreviewLeagueRepository();await repository.signIn();
+  const snapshot=await repository.load(),data=await repository.player('sample-you');
+  data.player.nicknames=['Private historical Steam persona'];
+  const html=renderToStaticMarkup(React.createElement(ProfileDialog,{repository,snapshot,data,preview:true} as any));
+  assert.ok(html.includes(data.player.steamName));assert.doesNotMatch(html,/Private historical Steam persona|Earlier Steam names/);
+});

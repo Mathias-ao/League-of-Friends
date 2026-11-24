@@ -1,3 +1,4 @@
+import {isolatedStagingProject} from './stagingProject';
 export interface HonourSourceRef {
   battleId:string;gameId:string;seasonId:string;sourceHash:string;statisticsRevision:number;authorityRevision:string;resultRevision:number|null;
 }
@@ -10,6 +11,5 @@ export interface PrivateHonoursPreview {
   effects:{officialWrites:false;receiptPublication:false;entitlementGrants:false};
 }
 export function privateHonoursPreviewEnabled(env:Record<string,string|boolean|undefined>={}):boolean{
-  return env.VITE_AOF_HONOURS_PRIVATE_PREVIEW==='source-v1'&&env.VITE_USE_EMULATORS==='true'&&
-    typeof env.VITE_FIREBASE_PROJECT_ID==='string'&&env.VITE_FIREBASE_PROJECT_ID.startsWith('demo-');
+  return env.VITE_AOF_HONOURS_PRIVATE_PREVIEW==='source-v1'&&isolatedStagingProject(env);
 }

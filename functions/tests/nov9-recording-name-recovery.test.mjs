@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {getStorage} from 'firebase-admin/storage';
 import {memoryFirestore} from './support/memory-firestore.mjs';
 import {uploadReplay} from '../lib/commands/statistics/uploadReplay.js';
+import {publicPlayer} from '../lib/queries/querySupport.js';
 import {adminBindReplayParticipants} from '../lib/commands/admin/bindReplayParticipants.js';
 
 // Controlled worker/storage/league fixtures exercise the actual callables.
@@ -13,8 +14,8 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const bytes=Buffer.from('controlled identity-recovery worker fixture');
 const sourceHash=hash(bytes),bundle=Buffer.from('controlled canonical evidence bundle');
 const req=(data,uid='alice')=>({auth:{uid},data});
-const upload=(gameId='G1',uid='alice')=>uploadReplay.run(req({matchId:'battle',gameId,
-  fileName:'unchanged.aoe2record',replayBase64:bytes.toString('base64'),processingMode:'LEGACY'},uid));
+const upload=(gameId='G1',uid='alice',recording=bytes)=>uploadReplay.run(req({matchId:'battle',gameId,
+  fileName:'unchanged.aoe2record',replayBase64:recording.toString('base64'),processingMode:'LEGACY'},uid));
 const bindings=[{sourceName:'Original Red',playerId:'alice'},{sourceName:'Original Blue',playerId:'beren'}];
 const bind=(gameId='G1',uid='operator',rows=bindings)=>adminBindReplayParticipants.run(req({
   matchId:'battle',gameId,bindings:rows,reason:'Verified recording names against the two approved original Game starters.'},uid));
@@ -22,7 +23,7 @@ function fixture(){
   return memoryFirestore([
     ...['alice','beren','operator','outsider'].flatMap(id=>[
       ['authLinks/'+id,{playerId:id}],['players/'+id,{membershipStatus:'ACTIVE',role:id==='operator'?'ADMIN':'PLAYER',
-        steamIdentityVersion:'AOF_STEAM_IDENTITY_V1',steamName:'League alias '+id,
+        steamIdentityVersion:'AOF_STEAM_IDENTITY_V1',steamName:'League alias '+id,leagueAlias:'Permanent '+id,
         steamPersonaName:'Current '+id,steamNameHistory:[]}],
     ]),
     ['matches/battle',{status:'READY',opponentKind:'HUMAN',format:'ONE_V_ONE'}],
@@ -30,7 +31,8 @@ function fixture(){
       {playerId:'alice',team:1},{playerId:'beren',team:2}],replayStatisticsRevision:0}]),
   ]);
 }
-function worker(names=['Original Red','Original Blue'],slots=[1,2]){
+function worker(names=['Original Red','Original Blue'],slots=[1,2],recording=bytes){
+  const sourceHash=hash(recording);
   const source={replaySha256:sourceHash,canonicalManifestSha256:'c'.repeat(64),extractionRunId:'controlled-extraction'};
   return {sourceHash,sourceFileName:'unchanged.aoe2record',parserName:'CONTROLLED_TEST_WORKER',parserVersion:'test',
     adapterSchemaVersion:'test',canonicalSchemaVersion:'test',extractionRunId:source.extractionRunId,
@@ -116,4 +118,35 @@ test('participants and outsiders cannot bind names; outsider upload and closed o
   db.set('matches/battle',{...db.get('matches/battle'),status:'COMPLETED'});
   await assert.rejects(bind(),/before its first recording/);
   assert.equal([...db.values()].filter(row=>row.action==='REPLAY_IDENTITIES_BOUND').length,0);
+});
+
+test('two separately reviewed recorded aliases attach distinct Game sources to the same permanent AoF players',async t=>{
+  const db=fixture(),before=[db.get('players/alice'),db.get('players/beren')];
+  let response=worker();transport(t,()=>response);
+  await bind();const first=await upload();
+  const secondBytes=Buffer.from('second controlled recording with independently observed aliases');
+  const secondNames=['Later Red','Later Blue'];response=worker(secondNames,[1,2],secondBytes);
+  await assert.rejects(upload('G2','alice',secondBytes),/cannot be bound uniquely/);
+  await bind('G2','operator',secondNames.map((sourceName,i)=>({sourceName,playerId:['alice','beren'][i]})));
+  const second=await upload('G2','alice',secondBytes);
+  assert.notEqual(first.sourceHash,second.sourceHash);
+  assert.deepEqual(first.playerMapping.map(p=>p.playerId),second.playerMapping.map(p=>p.playerId));
+  for(const [index,gameId] of ['G1','G2'].entries()){
+    const accepted=[first,second][index],source=db.get('matches/battle/games/'+gameId+'/replaySources/'+accepted.sourceHash);
+    assert.equal(db.get('matches/battle/games/'+gameId).activeReplayStatisticsId,accepted.sourceHash);
+    assert.deepEqual(source.playerMapping,accepted.playerMapping,'canonical ids and original observed name/slot retained as provenance');
+    assert.deepEqual(accepted.playerMapping.map(p=>publicPlayer(p.playerId,db.get('players/'+p.playerId)).steamName),['Permanent alice','Permanent beren']);
+    await assert.rejects(bind(gameId),/before its first recording/);
+  }
+  assert.equal([...db.keys()].filter(path=>path.startsWith('players/')).length,4,'no alias-created player');
+  assert.deepEqual([db.get('players/alice'),db.get('players/beren')],before,'no profile/name/score mutation');
+});
+test('public player labels prefer the fixed league name; legacy fallback never publishes Steam persona/history',()=>{
+  for(const [player,expected] of [
+    [{leagueAlias:'Permanent',steamName:'Legacy',steamPersonaName:'Raw persona',steamNameHistory:['Raw previous']},'Permanent'],
+    [{steamName:'Legacy league name',steamPersonaName:'Raw persona',steamNameHistory:['Raw previous']},'Legacy league name'],
+    [{steamPersonaName:'Raw persona'},'p'],[undefined,'p'],
+  ]){const result=publicPlayer('p',player);assert.equal(result.steamName,expected);
+    assert.equal(Object.hasOwn(result,'steamPersonaName'),false);assert.equal(Object.hasOwn(result,'nicknames'),false);
+    assert.doesNotMatch(JSON.stringify(result),/Raw persona|Raw previous/);}
 });

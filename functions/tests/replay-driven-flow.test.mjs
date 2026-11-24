@@ -141,7 +141,7 @@ test('two warmups pay only the best result; retry, dispute, fallback and source 
 test('Steam refresh preserves league alias and verified name history; user names are not used as persona evidence',async t=>{
   const records=memoryFirestore([['authLinks/steam:76561198000000000',{playerId:'p'}],['players/p',{steamId64:'76561198000000000',steamName:'Banner',leagueAlias:'Banner',steamPersonaName:'Old name',steamNameHistory:['Older name']}]]);
   t.mock.method(globalThis,'fetch',async()=>({ok:true,text:async()=>'<profile><steamID64>76561198000000000</steamID64><steamID><![CDATA[New & name]]></steamID></profile>'}));
-  await refreshSteamProfile('76561198000000000');const p=records.get('players/p');assert.equal(p.leagueAlias,'Banner');assert.equal(p.steamPersonaName,'New & name');assert.deepEqual(p.steamNameHistory,['Older name','Old name']);assert.equal(publicPlayer('p',p).steamName,'Banner (New & name)');
+  await refreshSteamProfile('76561198000000000');const p=records.get('players/p');assert.equal(p.leagueAlias,'Banner');assert.equal(p.steamPersonaName,'New & name');assert.deepEqual(p.steamNameHistory,['Older name','Old name']);assert.equal(publicPlayer('p',p).steamName,'Banner');
   assert.deepEqual(steamNameHistory(p,'Old name'),['Older name','New & name']);
   t.mock.method(globalThis,'fetch',async()=>({ok:true,text:async()=>'<profile><steamID64>76561198000000001</steamID64><steamID>Impersonator</steamID></profile>'}));assert.equal(await fetchSteamProfile('76561198000000000'),null);
 });
@@ -214,10 +214,15 @@ test('Event statistics retain both warmups while Roundoff points and closure use
   await processMatchRewards({matchId:'w1',requestId:'r1'},system);await processMatchRewards({matchId:'w2',requestId:'r2'},system);
   for(const id of ['w1','w2']) {
     const m=records.get('matches/'+id),g=records.get('matches/'+id+'/games/G1'),source=records.get('matches/'+id+'/games/G1/replaySources/'+g.activeReplayStatisticsId);
-    const raw={scope:{observedUntilMs:100},participants:source.playerMapping.map(p=>({replaySlot:p.replaySlot,playerId:p.replaySlot,economy:{resourceCommitment:{modelVersion:'cost-v1',resourcesCommitted:{total:id==='w1'?100:300}}}}))},metadata=statisticsMetadata(id,'G1',m,g,source);source.experience=augmentSeasonShowcase(raw,projectStatistics(raw,metadata),metadata);
+    source.playerMapping=source.playerMapping.map(p=>({...p,sourceName:id+' private alias '+p.playerId}));
+    const raw={scope:{observedUntilMs:100},participants:source.playerMapping.map(p=>({replaySlot:p.replaySlot,playerId:p.replaySlot,displayName:id+' private alias '+p.playerId,economy:{resourceCommitment:{modelVersion:'cost-v1',resourcesCommitted:{total:id==='w1'?100:300}}}}))},metadata=statisticsMetadata(id,'G1',m,g,source);source.experience=augmentSeasonShowcase(raw,projectStatistics(raw,metadata),metadata);
     records.set('processingJobs/MATCH_RESULT_'+id+'_R1',{matchId:id,resultRevision:1,status:'COMPLETED',pendingSteps:[]});
   }
+  records.set('players/p1',{...records.get('players/p1'),leagueAlias:'Permanent banner',steamName:'Old label',steamPersonaName:'Changed persona'});
   const scoped=await collectStatistics({eventId:'e'}),row=new StatisticsExperience(scoped.games).aggregate().find(p=>p.playerId==='p1');assert.equal(row.games,2);assert.equal(row.values.total.value,400);
+  assert.equal(row.name,'Permanent banner');
+  assert.ok(scoped.games.every(g=>g.players.find(p=>p.playerId==='p1').name==='Permanent banner'));
+  assert.doesNotMatch(JSON.stringify(scoped.games.map(g=>g.players)),/private alias|Old label|Changed persona/);
   assert.equal(scoped.games.some(game=>'countedEventPlayerIds' in game),false,'statistics carry no scoring selection mask');
   assert.equal(new StatisticsExperience((await collectStatistics({seasonId:'s'})).games).aggregate().find(p=>p.playerId==='p1').games,2);
   const roundoff=await readEventRoundoff('e','p1');assert.equal(roundoff.points.find(p=>p.playerId==='p1').warmup,3);assert.ok(roundoff.revision>0);

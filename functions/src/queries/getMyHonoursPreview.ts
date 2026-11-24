@@ -1,3 +1,4 @@
+import {isolatedStagingProject} from '../config/stagingProject.js';
 import {getStorage} from 'firebase-admin/storage';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {requireLeaguePlayer} from '../auth/authorization.js';
@@ -7,8 +8,7 @@ import {projectPrivateHonoursPreview} from '../integration/privateHonoursPreview
 import {collectMyCurrentBattleHistory,INT_B_LIMITS} from './getMyPersonalityHistory.js';
 
 export function assertPrivateHonoursPreviewEnabled(env:NodeJS.ProcessEnv){
-  const project=env.GCLOUD_PROJECT||env.GOOGLE_CLOUD_PROJECT;
-  if(env.AOF_HONOURS_PRIVATE_PREVIEW!=='source-v1'||env.FUNCTIONS_EMULATOR!=='true'||!project?.startsWith('demo-'))
+  if(env.AOF_HONOURS_PRIVATE_PREVIEW!=='source-v1'||!isolatedStagingProject(env))
     throw new HttpsError('failed-precondition','Private honours testing is disabled.');
 }
 export async function readMyHonoursPreview(input:Parameters<typeof collectMyCurrentBattleHistory>[0]){
