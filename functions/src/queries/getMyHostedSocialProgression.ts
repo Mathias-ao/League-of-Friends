@@ -85,6 +85,7 @@ export async function readMyHostedSocialProgression(input:Input){
       catch{throw new HttpsError('data-loss','Private social source method or actor binding did not match.');}
     }
     const response=projectHostedSocialProgression({owner:input.actor.playerId,inputs:bound,chapters,
+      occurrenceBattles:current.occurrenceBattles,
       calibration:policy.calibration,pendingSources,
       coverage:{...current.coverage,pendingSources:pendingSources.length},inputRevision:current.inputDigest,policyRevision:policy.revision,
       opportunity:(b,s,claim)=>{const {loaded,witnesses}=context.get(b.source.authorityRevision)!;
