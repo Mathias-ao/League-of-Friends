@@ -114,6 +114,11 @@ test('source current three distinct official losses by canonical opponent qualif
  let q=qualifyThreeBattleLosses([d,c,a,b],'B');
  assert.equal(q.length,1);assert.equal(q[0].anchorBattleId,'third');
  assert.deepEqual(q[0].witnessBattleIds,['first','second','third']);
+ const rev=q[0].revision;
+ c.occurrence.revision++;
+ q=qualifyThreeBattleLosses([d,c,a,b],'B');
+ assert.equal(q.length,1);
+ assert.notEqual(q[0].revision,rev,'re-reviewing the third historical placement changes proof revision');
  assert.equal(qualifyThreeBattleLosses([a,b],'B').length,0);
  b.games[0].game.canonicalResult.winningPlayerIds=['B'];
  b.games[0].game.canonicalResult.losingPlayerIds=['A'];
