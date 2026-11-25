@@ -164,7 +164,7 @@ export async function reviewBattleOccurrence(input:{actor:Actor;request:Request&
     target.occurrence=(await tx.get(db.doc('matches/'+edge.battleId+'/occurrence/current'))).data();
     const proof=verifiedOccurrence(target);
     if(!proof||proof.binding!==edge.sourceBinding||proof.revision!==edge.revision||
-      bounds.at(-1)!.notAfterMs<proof.startMs===false&&proof.endMs<bounds[0].notBeforeMs)
+      proof.endMs<bounds[0].notBeforeMs)
       throw wrong();
   }
   const now=Timestamp.now();
