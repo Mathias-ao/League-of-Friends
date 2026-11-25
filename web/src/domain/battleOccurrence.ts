@@ -7,6 +7,7 @@ export type BattleOccurrenceRead={
   battleId:string;expectedSourceBinding:string;gameIds:string[];
   games:{gameId:string;receiptUpperBoundAtMs:number|null}[];
   status:'PENDING'|'APPROVED';revision:number|null;
+  opponentProposalBounds:BattleOccurrenceBound[]|null;proposalMismatch:boolean;
 };
 export type BattleOccurrenceBound={gameId:string;notBeforeMs:number;notAfterMs:number};
 export function battleOccurrenceEnabled(env:Record<string,string|boolean|undefined>):boolean{
