@@ -297,7 +297,7 @@ test('hosted evaluator orders warmup + MAIN from one subject scope, not unrelate
  // not a reason to suppress the first two qualified directions.
  rows[2].r.cards=[];rows[2].r.effects=[];rows[2].r.actorWitnesses=[];
  occurrences[2].occurrence=null;
- const x=project(rows,{occurrenceBattles:occurrences});
+ const x=project(rows,{occurrenceBattles:occurrences,actualOccurrenceEnabled:true});
  assert.equal(x.relationships[0].tracks.RIVALRY.outgoing.stage,1);
  assert.equal(x.relationships[0].tracks.RIVALRY.outgoing.sourceQualifiedBattles,2);
  assert.equal(x.relationships[0].tracks.RIVALRY.incoming.stage,null);
@@ -309,7 +309,7 @@ test('hosted evaluator orders warmup + MAIN from one subject scope, not unrelate
    'default-OFF must ignore retained actual-order sidecars');
  occurrences[1].occurrence.bounds[0]={...occurrences[1].occurrence.bounds[0],
    notBeforeMs:3500,notAfterMs:4800}; // overlapping first interval
- const blocked=project(rows,{occurrenceBattles:occurrences});
+ const blocked=project(rows,{occurrenceBattles:occurrences,actualOccurrenceEnabled:true});
  assert.equal(blocked.relationships[0].tracks.RIVALRY.outgoing.stage,null);
  assert.ok(blocked.relationships[0].tracks.RIVALRY.outgoing.reasonCodes.includes('HISTORICAL_ORDER_PENDING'));
 });
