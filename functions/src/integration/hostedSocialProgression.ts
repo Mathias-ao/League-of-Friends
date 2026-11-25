@@ -67,7 +67,7 @@ export function fixedHostedOpportunity(bound:Bound,statistics:Bag,subject:Subjec
 export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[];chapters:HistoricalChapter[];
   calibration:CalibratedSocialHistoryRules;pendingSources:HostedPendingSource[];coverage:Bag;inputRevision:string;policyRevision:string;
   opportunity:(bound:Bound,subject:Subject,claimId:string)=>boolean;
-  occurrenceBattles?:OccurrenceBattle[]}){
+  occurrenceBattles?:OccurrenceBattle[];actualOccurrenceEnabled?:boolean}){
   const {owner,inputs,chapters,calibration}=input;
   if(calibration.policy.status!=='PROPOSED'||calibration.policy.approvalRef!==null||
     bindingDigest(calibration)!==bindingDigest(HOSTED_POLICY_SPEC.calibration))throw new Error('HOSTED_SOCIAL_PRIVATE_CALIBRATION_REQUIRED');
@@ -107,7 +107,7 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
       c.seasonId===seasonId&&c.battleId===e.battleId&&c.gameId===e.gameId));
     const ids=[...new Set(eligible.map(e=>e.battleId))];
     const relevantChapters=chapters.filter(c=>ids.includes(c.battleId)&&(!seasonId||c.seasonId===seasonId));
-    const resolved=input.occurrenceBattles?
+    const resolved=input.actualOccurrenceEnabled===true&&input.occurrenceBattles?
       deriveScopedOccurrenceOrders(input.occurrenceBattles,ids):[];
     const order=new Map(resolved.map(r=>[r.battleId+'\\u0000'+r.gameId,r]));
     const actualChapters=relevantChapters.map(c=>{
