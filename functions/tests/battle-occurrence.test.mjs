@@ -259,3 +259,41 @@ test('collector fences both existing and absent occurrence records after current
  g.onFinal(()=>g.rows.set('matches/m/occurrence/current',{status:'PENDING',revision:1}));
  await assert.rejects(newHistory.revalidate(),e=>e.code==='aborted');
 });
+
+
+test('Sol 6060246964: an A→B path through a material X↔Y↔Z cycle is not historical proof',()=>{
+ const X=make('X',{warmup:true,seed:61,interval:[100,200]});
+ const Z=make('Z',{warmup:true,seed:62,interval:[150,350]});
+ const Y=make('Y',{warmup:true,seed:63,interval:[300,400]});
+ const A=make('A',{warmup:true,seed:64,interval:[100,900]});
+ const B=make('B',{warmup:true,seed:65,interval:[100,900]});
+ // Same revised source and approval witnesses as Sol's exact graph.
+ const edge=(from,to)=>({battleId:to.battleId,
+   sourceBinding:verifiedOccurrence(to).binding,revision:verifiedOccurrence(to).revision});
+ Z.occurrence.precedes=[edge(Z,X)];
+ Y.occurrence.precedes=[edge(Y,Z)];
+ X.occurrence.precedes=[edge(X,B)];
+ A.occurrence.precedes=[edge(A,Y)];
+ const cohort=[X,Z,Y,A,B];
+ assert.equal(compareOccurrence('X','Y',cohort),'CONFLICT');
+ assert.equal(compareOccurrence('A','B',[X,Y,A,B]),'UNKNOWN');
+ assert.notEqual(compareOccurrence('A','B',cohort),'BEFORE',
+  'a cycle-contaminated dependency path must not establish A before B');
+ assert.ok(deriveScopedOccurrenceOrders(cohort,['A','B']).every(row=>row.status==='PENDING'),
+  'dependent social progression withholds ambiguous chronology');
+ const F=make('first-loss',{warmup:true,seed:66,interval:[10,90]});
+ // X/Z/Y are chronology peers, but not respondent B losses: this checks
+ // the first-third anchored chain F < A ? B without adding extraneous losses.
+ for(const peer of [X,Z,Y]){
+  peer.match.participants=[{playerId:'C',team:1},{playerId:'D',team:2}];
+  peer.games[0].game.players=[{playerId:'C',team:1},{playerId:'D',team:2}];
+  peer.games[0].game.canonicalResult.winningPlayerIds=['C'];
+  peer.games[0].game.canonicalResult.losingPlayerIds=['D'];
+  approve(peer,peer.occurrence.bounds[0].notBeforeMs,peer.occurrence.bounds[0].notAfterMs);
+ }
+ // Regenerate the edges with the updated canonical peer source revisions.
+ Z.occurrence.precedes=[edge(Z,X)];Y.occurrence.precedes=[edge(Y,Z)];
+ X.occurrence.precedes=[edge(X,B)];A.occurrence.precedes=[edge(A,Y)];
+ assert.equal(qualifyThreeBattleLosses([F,A,B,X,Y,Z],'B').length,0,
+  'a first-third loss may not use a corrupted intermediary order');
+});
