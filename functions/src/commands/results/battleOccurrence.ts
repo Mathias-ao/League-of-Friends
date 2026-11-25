@@ -171,6 +171,7 @@ export async function attestBattleOccurrence(input:{actor:Actor;request:Request}
   const approved=Boolean(partner);
   const unchangedApproval=current?.status==='APPROVED'&&current.sourceBinding===binding&&
     same(current.bounds,bounds)&&current.proof?.kind==='MUTUAL_PARTICIPANTS'&&
+    Array.isArray(current.proof.participants)&&Array.isArray(current.proof.witnessUids)&&
     partner&&same(current.proof.participants,[actor.playerId,partner.playerId].sort())&&
     same(current.proof.witnessUids,[actor.authUid,partner.authUid].sort());
   if(sameOwn&&unchangedApproval)
