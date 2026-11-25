@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {db} from '../lib/config/firebase.js';
 import {memoryFirestore} from './support/memory-firestore.mjs';
 import {bindingDigest} from '../lib/engines/nativeRecordingIntegration.js';
-import {attestBattleOccurrence,reviewBattleOccurrence}
+import {attestBattleOccurrence,reviewBattleOccurrence,readMyBattleOccurrence}
   from '../lib/commands/results/battleOccurrence.js';
 import {BATTLE_OCCURRENCE_VERSION,occurrenceSourceBinding,verifiedOccurrence}
   from '../lib/integration/battleOccurrence.js';
@@ -60,6 +60,19 @@ const currentBinding=records=>{
     publicationAtMs:100000}}]};
  return occurrenceSourceBinding(b);
 };
+test('owner-private Battle status supplies opaque current revision but no native source refs',async()=>{
+ const records=setup();
+ const status=await readMyBattleOccurrence({actor:A,request:{battleId:id}});
+ assert.equal(status.status,'PENDING');
+ assert.equal(status.expectedSourceBinding,currentBinding(records));
+ assert.deepEqual(status.gameIds,['G1']);
+ for(const forbidden of ['sourceHash','processorRevision','artifactRefs','sourcePath','privateNote'])
+  assert.equal(JSON.stringify(status).includes(forbidden),false);
+ await assert.rejects(readMyBattleOccurrence({actor:actor('outsider','nobody'),
+  request:{battleId:id}}),e=>e.code==='permission-denied');
+ await assert.rejects(readMyBattleOccurrence({actor:A,request:{battleId:id,ownerPlayerId:'B'}}),
+  e=>e.code==='invalid-argument');
+});
 test('opposing ACTIVE confirmations approve once; stale source correction retracts without affecting result',async()=>{
  const records=setup();
  const expectedSourceBinding=currentBinding(records);
