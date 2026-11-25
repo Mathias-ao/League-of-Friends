@@ -130,18 +130,42 @@ export async function attestBattleOccurrence(input:{actor:Actor;request:Request}
   const byId=new Map(attestations.docs.map((d:any)=>[d.id,d.data()]));
   byId.set(actor.playerId,{version:BATTLE_OCCURRENCE_VERSION,sourceBinding:binding,bounds,
     actorUid:actor.authUid,actorPlayerId:actor.playerId});
-  const teams=new Map(b.match.participants.map((p:Bag)=>[p.playerId,
-    b.games[0].game.players.find((x:Bag)=>x.playerId===p.playerId)?.team]));
-  const partner=[...byId].find(([playerId,other])=>playerId!==actor.playerId&&
-    b.match.participants.some((p:Bag)=>p.playerId===playerId)&&
-    teams.get(playerId)!==teams.get(actor.playerId)&&teams.get(playerId)!=null&&teams.get(actor.playerId)!=null&&
-    other.sourceBinding===binding&&same(other.bounds,bounds));
+  // Use only canonically required, current official Games: a precreated
+  // unused/NO_CONTEST BO3 terminal Game cannot establish opposition.
+  const opponentsInEveryRequiredGame=(left:string,right:string)=>{
+    const required=canonicalOccurrenceGames(b);
+    return !!required?.length&&required.every(g=>{
+      const roster=g.game.players;
+      const a=roster.find((p:Bag)=>p.playerId===left);
+      const other=roster.find((p:Bag)=>p.playerId===right);
+      return a&&other&&a.team!==null&&a.team!==undefined&&
+        other.team!==null&&other.team!==undefined&&a.team!==other.team;
+    });
+  };
+  let partner:{playerId:string;authUid:string}|null=null;
+  for(const [playerId,other] of byId){
+    if(playerId===actor.playerId||!id(playerId)||!id(other?.actorUid)||
+       other.actorPlayerId!==playerId||other.actorUid===actor.authUid||
+       !b.match.participants.some((p:Bag)=>p.playerId===playerId)||
+       !opponentsInEveryRequiredGame(actor.playerId,playerId)||
+       other.sourceBinding!==binding||!same(other.bounds,bounds))continue;
+    // A previously saved row does not prove its UID still belongs to an
+    // ACTIVE league opponent. Recheck both authorities in THIS approval tx.
+    const [member,link]=await Promise.all([
+      tx.get(db.doc('players/'+playerId)),
+      tx.get(db.doc('authLinks/'+other.actorUid))
+    ]);
+    if(member.data()?.membershipStatus!=='ACTIVE'||link.data()?.playerId!==playerId)
+      continue;
+    partner={playerId,authUid:other.actorUid};
+    break;
+  }
   const approved=Boolean(partner);
   const now=Timestamp.now();
   const next={version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,sourceBinding:binding,
     status:approved?'APPROVED':'PENDING',bounds,precedes:[],
-    proof:approved?{kind:'MUTUAL_PARTICIPANTS',participants:[actor.playerId,partner![0]].sort(),
-      sourceRevision:binding}:null,updatedAt:now};
+    proof:approved?{kind:'MUTUAL_PARTICIPANTS',participants:[actor.playerId,partner!.playerId].sort(),
+      witnessUids:[actor.authUid,partner!.authUid].sort(),sourceRevision:binding}:null,updatedAt:now};
   tx.set(attestationsRef.doc(actor.playerId),{version:BATTLE_OCCURRENCE_VERSION,
     sourceBinding:binding,bounds,actorUid:actor.authUid,actorPlayerId:actor.playerId,updatedAt:now});
   // Any changed assertion invalidates a previous approval in the same transaction.
