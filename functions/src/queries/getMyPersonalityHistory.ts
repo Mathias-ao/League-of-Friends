@@ -130,6 +130,8 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
         const source=battle.sources.find(s=>s.source.gameId===row.gameId)?.source;
         if(source)row.source={sourceHash:source.sourceHash,gameGuid:source.gameGuid!,
           mappingDigest:source.mappingDigest,
+          provenanceDigest:bindingDigest([source.sourceHash,source.statisticsRevision,
+            source.artifactRefs,battle.sources.find(s=>s.source.gameId===row.gameId)!.producerRevision]),
           publicationAtMs:sourcePublications.get(row.gameId)??null};
       }
     }
