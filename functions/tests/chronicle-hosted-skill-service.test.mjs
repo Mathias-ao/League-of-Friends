@@ -308,6 +308,13 @@ test('SERVICE: unchanged policy and Season allow explicit owner submission, priv
     opportunityRevision:offer.invitation.opportunityRevision,
     action:'CORRECT',choiceId:'DO_NOT_ACKNOWLEDGE',confirmed:true}));
   assert.equal(rebound.state,'SUBMITTED');assert.equal(rebound.revision,5);
-  assert.equal((await f.offer()).offered,false,'used first-third slot never becomes available again');
+  const subsequent=await f.offer();
+  assert.equal(subsequent.offered,true,'a distinct b7 rarity may offer after three eligible Battles');
+  assert.equal(subsequent.invitation.battleId,'b7');
+  const sameAgain=await f.offer();
+  assert.equal(sameAgain.offered,false,'consumed b3 and b7 slots never reopen');
+  const originalSlot=[...f.rows.entries()].find(([key])=>
+    key.startsWith('matches/b3/socialV1InvitationSlots/')&&key.split('/').length===4);
+  assert.equal(originalSlot?.[1].state,'SUBMITTED');
  }finally{f.restore();}
 });
