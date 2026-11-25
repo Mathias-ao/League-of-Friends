@@ -129,7 +129,7 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
   };
   const find=(history:ReturnType<typeof evaluateHistory>,subject:Subject)=>
     history.projections.find(p=>subjectKey(p.subject)===subjectKey(subject));
-  const summary=(subject:Subject,deeds:typeof evidence.deeds,history:typeof career,seasonId?:string):HostedTrack=>{
+  const summary=(subject:Subject,deeds:typeof evidence.deeds,history:ReturnType<typeof evaluateHistory>,seasonId?:string):HostedTrack=>{
     const accepted=deeds.filter(d=>d.decision==='SOURCE_ADMITTED'),unsupported=['CRUELTY','HOSTILITY'].includes(subject.track);
     const affectedSeasons=withheldSubjects.get(subjectKey(subject));
     const affectedSources=input.pendingSources.filter(s=>
