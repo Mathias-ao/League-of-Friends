@@ -18,7 +18,6 @@ const hash=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const wrong=()=>new HttpsError('failed-precondition','Battle, source, result or chronology authority changed.');
 type Actor={playerId:string;authUid:string;role:string};
 type Request={battleId:string;expectedSourceBinding:string;bounds:GameBounds[];reason?:string;precedes?:ReviewedPrecedence[]};
-const millis=(value:any)=>{try{const n=value?.toMillis?.();return Number.isSafeInteger(n)&&n>0?n:null;}catch{return null;}};
 const same=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
 
 /** Transaction-only source check. Reading the current GUID claim prevents an
@@ -69,7 +68,7 @@ async function currentBattle(tx:any,battleId:string):Promise<OccurrenceBattle>{
  if(!canonicalOccurrenceGames(out)||!occurrenceSourceBinding(out))throw wrong();
  return out;
 }
-function validatedBounds(b:OccurrenceBattle,raw:unknown):GameBounds[]{
+function validatedBounds(b:OccurrenceBattle,raw:unknown,requireReceipt=true):GameBounds[]{
  const games=canonicalOccurrenceGames(b)!;
  if(!Array.isArray(raw)||raw.length!==games.length)throw new HttpsError('invalid-argument','Supply one bounded window for each required Game.');
  const found=raw.map((x:any)=>({gameId:x?.gameId,notBeforeMs:x?.notBeforeMs,notAfterMs:x?.notAfterMs}));
@@ -79,8 +78,8 @@ function validatedBounds(b:OccurrenceBattle,raw:unknown):GameBounds[]{
     !Number.isSafeInteger(x.notAfterMs)||x.notBeforeMs<1||x.notAfterMs<=x.notBeforeMs||
     x.notAfterMs-x.notBeforeMs>14*86400000||
     x.notAfterMs>Date.now()||
-    (source.publicationAtMs===null||x.notAfterMs>source.publicationAtMs)&&
-      b.occurrence?.proof?.kind!=='ADMIN_REVIEWED'||
+    (requireReceipt&&source.publicationAtMs===null)||
+    (source.publicationAtMs!==null&&x.notAfterMs>source.publicationAtMs)||
     i>0&&found[i-1].notAfterMs>=x.notBeforeMs)
       throw new HttpsError('invalid-argument','Proposed Game windows are not source-bound, ordered and bounded.');
  }
@@ -172,7 +171,7 @@ export async function reviewBattleOccurrence(input:{actor:Actor;request:Request&
   const current=(await tx.get(mr.collection('occurrence').doc('current'))).data();
   checkedRevision(current);
   if((current?.revision??null)!==r.expectedRevision)throw wrong();
-  const bounds=r.action==='APPROVE'?validatedBounds(b,r.bounds):[];
+  const bounds=r.action==='APPROVE'?validatedBounds(b,r.bounds,false):[];
   const edges=r.action==='APPROVE'?(r.precedes??[]):[];
   if(!Array.isArray(edges)||edges.length>12||
      edges.some(v=>!v||!id(v.battleId)||v.battleId===r.battleId||
