@@ -12,7 +12,8 @@ const allowed={VITE_AOF_BATTLE_OCCURRENCE_V1:'source-v1',
  VITE_USE_EMULATORS:'false'};
 const read:BattleOccurrenceRead={version:'AOF_CANONICAL_BATTLE_OCCURRENCE_1',battleId:'b1',
  expectedSourceBinding:'a'.repeat(64),gameIds:['G1'],
- games:[{gameId:'G1',receiptUpperBoundAtMs:Date.now()-1000}],status:'PENDING',revision:null};
+ games:[{gameId:'G1',receiptUpperBoundAtMs:Date.now()-1000}],status:'PENDING',revision:null,
+ opponentProposalBounds:null,proposalMismatch:false};
 test('Battle confirmation UI only mounts in separate exact EU default-OFF scope',()=>{
  assert.equal(battleOccurrenceEnabled(allowed),true);
  for(const env of [
@@ -50,5 +51,31 @@ test('a trusted receipt is shown as an upper bound, never an inferred play time'
  assert.match(document.body.textContent??'',/upper bound only/);
  assert.match(document.body.textContent??'',/both opposing players/);
  assert.equal(document.body.textContent?.includes(read.expectedSourceBinding),false);
+ await act(async()=>{root.unmount();});
+});
+
+test('opposing player can adopt the opposing source-current exact window and actually submit',async()=>{
+ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost/'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,
+  HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+ const root=createRoot(document.getElementById('root')!);
+ const proposed=[{gameId:'G1',notBeforeMs:Date.now()-300000,notAfterMs:Date.now()-120000}];
+ const candidate={...read,opponentProposalBounds:proposed,proposalMismatch:true};
+ let saved:null|{battleId:string;binding:string;bounds:unknown}=null;
+ let uid='opponent';
+ const repository={mode:'live',currentAuthUid:()=>uid,onAuthChange:()=>()=>{},
+  canConfirmBattleOccurrence:()=>true,getMyBattleOccurrence:async()=>candidate,
+  confirmBattleOccurrence:async(battleId:string,binding:string,bounds:unknown)=>{
+   saved={battleId,binding,bounds};
+  }} as unknown as LeagueRepository;
+ await act(async()=>{root.render(React.createElement(BattleOccurrenceConfirm,{repository,battleId:'b1'}));});
+ assert.match(document.body.textContent??'',/differs from the current opposing confirmation/);
+ const adopt=[...document.querySelectorAll('button')].find(v=>v.textContent?.includes("Use opponent's exact proposed window"));
+ assert.ok(adopt,'independent opponent must be able to adopt an exact recorded proposal');
+ await act(async()=>{adopt.click();});
+ const submit=[...document.querySelectorAll('button')].find(v=>v.textContent?.includes('Confirm this play window'));
+ assert.ok(submit);
+ await act(async()=>{submit.click();});
+ assert.deepEqual(saved,{battleId:'b1',binding:read.expectedSourceBinding,bounds:proposed});
  await act(async()=>{root.unmount();});
 });
