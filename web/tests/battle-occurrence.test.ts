@@ -79,3 +79,28 @@ test('opposing player can adopt the opposing source-current exact window and act
  assert.deepEqual(saved,{battleId:'b1',binding:read.expectedSourceBinding,bounds:proposed});
  await act(async()=>{root.unmount();});
 });
+
+
+test('an in-flight private occurrence submission cannot leave the next AuthUID busy or restore prior draft',async()=>{
+ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost/'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,
+  HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+ const root=createRoot(document.getElementById('root')!);
+ const bounds=[{gameId:'G1',notBeforeMs:Date.now()-300000,notAfterMs:Date.now()-120000}];
+ let uid:string|null='first',onAuth=()=>{},resolve:()=>void=()=>{};
+ const repo={mode:'live',currentAuthUid:()=>uid,onAuthChange:(cb:()=>void)=>{onAuth=cb;return()=>{};},
+  canConfirmBattleOccurrence:()=>true,
+  getMyBattleOccurrence:async()=>({...read,opponentProposalBounds:bounds}),
+  confirmBattleOccurrence:async()=>new Promise<void>(done=>{resolve=done;})} as unknown as LeagueRepository;
+ await act(async()=>{root.render(React.createElement(BattleOccurrenceConfirm,{repository:repo,battleId:'b1'}));});
+ const find=(s:string)=>[...document.querySelectorAll('button')].find(v=>v.textContent?.includes(s));
+ await act(async()=>{find("Use opponent's exact proposed window")?.click();});
+ await act(async()=>{find('Confirm this play window')?.click();});
+ assert.match(document.body.textContent??'',/Saving private confirmation/);
+ await act(async()=>{uid='second';onAuth();});
+ assert.equal(find('Confirm this play window')?.disabled,false,
+  'the second signed-in member must not inherit the first account busy state');
+ await act(async()=>{resolve();});
+ assert.equal(find('Confirm this play window')?.disabled,false);
+ await act(async()=>{root.unmount();});
+});
