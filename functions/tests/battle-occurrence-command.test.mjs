@@ -29,7 +29,7 @@ function setup(){
  const items=[
   ['matches/'+id,structuredClone(match)],['matches/'+id+'/games/'+gameId,structuredClone(game)],
   ['events/event',structuredClone(event)],
-  ['matches/'+id+'/games/'+gameId+'/replaySources/'+sourceHash,structuredClone(source)],
+  ['matches/'+id+'/games/'+gameId+'/replaySources/'+sourceHash,source],
   ['recordingGameClaims/'+Buffer.from(guid).toString('hex'),{matchId:id,gameId,sourceHash}],
   ['players/A',{role:'PLAYER',membershipStatus:'ACTIVE'}],
   ['players/B',{role:'PLAYER',membershipStatus:'ACTIVE'}],
