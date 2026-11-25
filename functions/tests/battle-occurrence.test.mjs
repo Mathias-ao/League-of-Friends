@@ -72,6 +72,20 @@ test('missing, uncertain, conflicting or equal actual order remains Pending; unr
  assert.equal(compareOccurrence('A','B',[a,b,c]),'BEFORE',
   'a reviewed edge never survives the target approval revision');
 });
+test('warmup is eligible before a MAIN plan exists; absent other-class list is not a missing play witness',()=>{
+ const early=make('warmup-before-plan',{warmup:true,seed:9});
+ delete early.event.officialMatchIds;
+ delete early.event.approvedMatchPlanId;
+ delete early.event.matchPlanStatus;
+ approve(early,1000,2000);
+ assert.ok(verifiedOccurrence(early));
+ const main=make('main-without-warmups',{seed:10});
+ delete main.event.warmupMatchIds;
+ approve(main,5000,6000);
+ assert.ok(verifiedOccurrence(main));
+ const rows=deriveScopedOccurrenceOrders([main,early],['warmup-before-plan','main-without-warmups']);
+ assert.ok(rows.every(r=>r.status==='ORDERED'));
+});
 test('source revision, corrected result, replacement and raw headers never authorize a stale order',()=>{
  const a=make('warmup',{warmup:true,seed:4,interval:[1000,2000]});
  assert.ok(verifiedOccurrence(a));
