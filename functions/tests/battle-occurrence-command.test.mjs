@@ -11,6 +11,7 @@ import {BATTLE_OCCURRENCE_VERSION,occurrenceSourceBinding,verifiedOccurrence}
 const sourceHash='b'.repeat(64),guid='genuine-guid-controlled-test',id='warmup-battle',gameId='G1';
 const roster=[{playerId:'A',team:1},{playerId:'B',team:2}];
 const game={status:'COMPLETED',gameNumber:1,players:roster,activeReplayStatisticsId:sourceHash,
+ replayStatisticsRevision:1,
  canonicalResult:{source:'PLAYER_CONFIRMED',type:'PLAYER_WIN',revision:1,
   winningPlayerIds:['A'],losingPlayerIds:['B']}};
 const match={eventId:'event',seasonId:'season',status:'COMPLETED',opponentKind:'HUMAN',format:'ONE_V_ONE',
@@ -18,8 +19,9 @@ const match={eventId:'event',seasonId:'season',status:'COMPLETED',opponentKind:'
  seriesRule:{maxGames:1,gamesRequiredToWin:1},matchNumber:0};
 const event={seasonId:'season',officialMatchIds:[],warmupMatchIds:[id]};
 const published=()=>({toMillis:()=>100000});
-const source={state:'READY',matchId:id,gameId,sourceHash,originalRecording:{sha256:sourceHash},
- recordedEvents:{sha256:'c'.repeat(64)},statistics:{sha256:'d'.repeat(64)},
+const source={state:'READY',matchId:id,gameId,sourceHash,originalRecording:{sha256:sourceHash,generation:'7'},
+ recordedEvents:{sha256:'c'.repeat(64),generation:'7'},
+ statistics:{sha256:'d'.repeat(64),generation:'7'},processorRevision:'e'.repeat(64),
  playerMapping:[{playerId:'A',replaySlot:1},{playerId:'B',replaySlot:2}],
  matchFacts:{game:{guid}},publication:{publishedAt:published()}};
 const actor=(playerId,authUid,role='PLAYER')=>({playerId,authUid,role});
@@ -65,6 +67,10 @@ test('opposing ACTIVE confirmations approve once; stale source correction retrac
  const before={battleId:id,match:records.get('matches/'+id),event:records.get('events/event'),
   planId:null,plan:null,games:[{gameId,game:records.get('matches/'+id+'/games/'+gameId),
    source:{sourceHash,gameGuid:guid,mappingDigest:bindingDigest(source.playerMapping),
+    provenanceDigest:bindingDigest([sourceHash,1,
+      [{kind:'STATISTICS',digest:source.statistics.sha256,generation:'7'},
+       {kind:'RECORDED_EVENTS',digest:source.recordedEvents.sha256,generation:'7'},
+       {kind:'ORIGINAL',digest:sourceHash,generation:'7'}],source.processorRevision]),
     publicationAtMs:100000}}],occurrence:current};
  assert.equal(verifiedOccurrence(before),null);
  assert.equal(records.get('matches/'+id+'/games/'+gameId).canonicalResult.winningPlayerIds[0],'A');
