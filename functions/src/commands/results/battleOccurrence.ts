@@ -10,7 +10,7 @@ import {callableOptions} from '../../config/runtime.js';
 import {requireLeaguePlayer,requireAdmin} from '../../auth/authorization.js';
 import {bindingDigest} from '../../engines/nativeRecordingIntegration.js';
 import {BATTLE_OCCURRENCE_VERSION,canonicalOccurrenceGames,occurrenceSourceBinding,
- verifiedOccurrence,type OccurrenceBattle,type GameBounds,type ReviewedPrecedence} from '../../integration/battleOccurrence.js';
+ verifiedOccurrence,sourceBoundReadyReceiptMillis,type OccurrenceBattle,type GameBounds,type ReviewedPrecedence} from '../../integration/battleOccurrence.js';
 
 type Bag=Record<string,any>;
 const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(v);
@@ -61,7 +61,7 @@ async function currentBattle(tx:any,battleId:string):Promise<OccurrenceBattle>{
         {kind:'RECORDED_EVENTS',digest:doc.recordedEvents.sha256,generation:String(doc.recordedEvents.generation)},
         {kind:'ORIGINAL',digest:doc.originalRecording.sha256,generation:String(doc.originalRecording.generation)}],
        doc.processorRevision]),
-     publicationAtMs:millis(doc.publication?.publishedAt)};
+     publicationAtMs:sourceBoundReadyReceiptMillis(doc,battleId,row.id,game.activeReplayStatisticsId)};
   }
   games.push({gameId:row.id,game,source});
  }
@@ -79,7 +79,8 @@ function validatedBounds(b:OccurrenceBattle,raw:unknown):GameBounds[]{
     !Number.isSafeInteger(x.notAfterMs)||x.notBeforeMs<1||x.notAfterMs<=x.notBeforeMs||
     x.notAfterMs-x.notBeforeMs>14*86400000||
     x.notAfterMs>Date.now()||
-    source.publicationAtMs!==null&&x.notAfterMs>source.publicationAtMs||
+    (source.publicationAtMs===null||x.notAfterMs>source.publicationAtMs)&&
+      b.occurrence?.proof?.kind!=='ADMIN_REVIEWED'||
     i>0&&found[i-1].notAfterMs>=x.notBeforeMs)
       throw new HttpsError('invalid-argument','Proposed Game windows are not source-bound, ordered and bounded.');
  }
@@ -214,7 +215,9 @@ export async function readMyBattleOccurrence(input:{actor:Actor;request:{battleI
   const current=(await tx.get(db.doc('matches/'+r.battleId+'/occurrence/current'))).data();
   const binding=occurrenceSourceBinding(b)!;
   return {version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,
-   expectedSourceBinding:binding,gameIds:canonicalOccurrenceGames(b)!.map(g=>g.gameId),
+   expectedSourceBinding:binding,
+   games:canonicalOccurrenceGames(b)!.map(g=>({gameId:g.gameId,receiptUpperBoundAtMs:g.source!.publicationAtMs})),
+   gameIds:canonicalOccurrenceGames(b)!.map(g=>g.gameId),
    status:current?.sourceBinding===binding&&
      current.status==='APPROVED'&&verifiedOccurrence({...b,occurrence:current})?
        'APPROVED' as const:'PENDING' as const,
