@@ -162,13 +162,20 @@ export function compareOccurrence(a:string,b:string,all:OccurrenceBattle[]):Occu
 export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPlayerId:string){
  type Loss={battleId:string;opponentPlayerId:string;sourceBinding:string;gameKeys:string[];occurrenceDigest:string};
  const losses:Loss[]=[],possible=new Map<string,Set<string>>();
- // Caller should supply a complete authenticated enumeration. Duplicate
- // Battle/GUID sources can never be counted as independent losses.
+ // Caller must supply a complete authenticated current cohort. A repeated
+ // Battle or GUID in respondent-relevant 1v1 evidence cannot become another
+ // independent loss. Duplicates wholly outside the respondent's cohort cannot
+ // veto unrelated proven history.
  if(new Set(battles.map(b=>b.battleId)).size!==battles.length)return [];
- const seenGameGuids=new Set<string>();
- for(const b of battles)for(const g of b.games)if(g.source){
-  if(seenGameGuids.has(g.source.gameGuid))return [];
-  seenGameGuids.add(g.source.gameGuid);
+ const owners=new Map<string,string>(),duplicateBattles=new Set<string>();
+ for(const b of battles){
+  if(!b.match?.participants?.some((p:Bag)=>p.playerId===respondentPlayerId)||
+    b.match?.format!=='ONE_V_ONE')continue;
+  for(const g of b.games)if(g.source?.gameGuid){
+   const old=owners.get(g.source.gameGuid);
+   if(old&&old!==b.battleId){duplicateBattles.add(old);duplicateBattles.add(b.battleId);}
+   else owners.set(g.source.gameGuid,b.battleId);
+  }
  }
  for(const b of battles){
   if(!b.match?.participants?.some((p:Bag)=>p.playerId===respondentPlayerId))continue;
@@ -176,7 +183,12 @@ export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPl
   if(b.match.format!=='ONE_V_ONE'||!Array.isArray(players)||players.length!==2)continue;
   const opponent=players.find((p:Bag)=>p.playerId!==respondentPlayerId)?.playerId;
   if(!id(opponent))continue;
+  // Officially void, cancelled, AI or replaced matches cannot be a Battle
+  // loss. They are not an "unknown earlier defeat" veto.
+  if(['VOID','CANCELLED','REPLACED'].includes(b.match.status)||
+     b.match.replacementMatchId||b.match.opponentKind==='AI')continue;
   const uncertain=()=>{const set=possible.get(opponent)??new Set<string>();set.add(b.battleId);possible.set(opponent,set);};
+  if(duplicateBattles.has(b.battleId)){uncertain();continue;}
   const needed=canonicalOccurrenceGames(b),binding=occurrenceSourceBinding(b);
   if(!needed||!binding){uncertain();continue;}
   const winners=b.match.seriesRule.maxGames===1?
@@ -197,21 +209,33 @@ export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPl
  for(const opponent of new Set(losses.map(l=>l.opponentPlayerId))){
   const candidates=losses.filter(l=>l.opponentPlayerId===opponent);
   if(candidates.length<3)continue;
-  // Only accept a unique first-three chain and prove every other possible earlier
-  // same-opponent Battle cannot change the third anchor.
-  const sortedLosses=[...candidates].sort((a,b)=>{
-    const relation=compareOccurrence(a.battleId,b.battleId,battles);
-    return relation==='BEFORE'?-1:relation==='AFTER'?1:0;
-  });
-  if(sortedLosses.some((l,i)=>i>0&&compareOccurrence(sortedLosses[i-1].battleId,l.battleId,battles)!=='BEFORE'))continue;
-  const anchor=sortedLosses[2];
-  if((possible.get(opponent)??new Set()).size)continue; // No guessed earlier non-loss.
-  if(sortedLosses.slice(3).some(l=>compareOccurrence(anchor.battleId,l.battleId,battles)!=='BEFORE'))continue;
-  const trio=sortedLosses.slice(0,3);
-  results.push({respondentPlayerId,opponentPlayerId:opponent,anchorBattleId:anchor.battleId,
+  // A third-loss anchor needs exactly two demonstrably earlier losses.
+  // Later losses need only be AFTER that anchor, not ordered relative to
+  // one another. This does not invent a total history when two later
+  // Battles overlap. Unknown possible earlier losses stay fail-closed.
+  for(const anchor of candidates){
+   const before:Loss[]=[],after:Loss[]=[];
+   let unresolved=false;
+   for(const other of candidates){
+    if(other.battleId===anchor.battleId)continue;
+    const relation=compareOccurrence(other.battleId,anchor.battleId,battles);
+    if(relation==='BEFORE')before.push(other);
+    else if(relation==='AFTER')after.push(other);
+    else unresolved=true;
+   }
+   if(unresolved||before.length!==2||(possible.get(opponent)?.size??0)>0)continue;
+   const first=compareOccurrence(before[0].battleId,before[1].battleId,battles);
+   if(first!=='BEFORE'&&first!=='AFTER')continue;
+   const trio=first==='BEFORE'?[before[0],before[1],anchor]:
+     [before[1],before[0],anchor];
+   // Bind the first-three proof and the source-current *later* witnesses
+   // which certify that this is the FIRST eligible third loss.
+   results.push({respondentPlayerId,opponentPlayerId:opponent,anchorBattleId:anchor.battleId,
     witnessBattleIds:trio.map(l=>l.battleId),qualification:'THIRD_LOSS_SOURCE_QUALIFIED',
     revision:bindingDigest([BATTLE_OCCURRENCE_VERSION,respondentPlayerId,opponent,
-      trio.map(l=>[l.battleId,l.sourceBinding,l.gameKeys,l.occurrenceDigest])])});
+      trio.map(l=>[l.battleId,l.sourceBinding,l.gameKeys,l.occurrenceDigest]),
+      after.map(l=>[l.battleId,l.sourceBinding,l.occurrenceDigest]).sort((a,b)=>a[0].localeCompare(b[0]))])});
+  }
  }
  return results.sort((a,b)=>a.anchorBattleId.localeCompare(b.anchorBattleId));
 }
