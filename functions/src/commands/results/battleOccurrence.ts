@@ -151,7 +151,7 @@ export async function reviewBattleOccurrence(input:{actor:Actor;request:Request&
   const next={version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,sourceBinding:binding,
     status:r.action==='APPROVE'?'APPROVED':'REVOKED',bounds,precedes:edges,
     proof:{kind:'ADMIN_REVIEWED',actorUid:actor.authUid,actorPlayerId:actor.playerId,
-      reviewedEvidenceRefs:[...new Set(r.evidenceRefs)],reason:r.reason.trim()},
+      reviewedEvidenceRefs:[...new Set(r.evidenceRefs!)],reason:r.reason!.trim()},
     updatedAt:now};
   const saved=approval(tx,mr,current,next);
   return {status:saved.status,revision:saved.revision};
