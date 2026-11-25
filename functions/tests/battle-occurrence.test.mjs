@@ -27,7 +27,7 @@ const make=(battleId,opts={})=>{
    winningPlayerIds:[win],losingPlayerIds:[win==='A'?'B':'A']}};
  const b={battleId,match,event,plan:warmup?null:mainPlan,planId:warmup?null:'plan',
   games:[{gameId:g,game,source:{sourceHash,gameGuid:'guid-'+battleId,
-   mappingDigest:'mapping-'+battleId,publicationAtMs:100000000}}],occurrence:null};
+   mappingDigest:'mapping-'+battleId,provenanceDigest:bindingDigest(['source',battleId]),publicationAtMs:100000000}}],occurrence:null};
  if(opts.interval)approve(b,opts.interval[0],opts.interval[1]);
  return b;
 };
@@ -133,7 +133,7 @@ test('three completed Games in one verified BO3 still count as only one Battle',
  const g1=a.games[0];
  const g2=structuredClone(g1);
  g2.gameId='G2';g2.game.gameNumber=2;g2.source={...g1.source,
-  sourceHash:sha(7),gameGuid:'guid-game-two',mappingDigest:'mapping-game-two'};
+  sourceHash:sha(7),gameGuid:'guid-game-two',mappingDigest:'mapping-game-two',provenanceDigest:bindingDigest(['source','game-two'])};
  g2.game.activeReplayStatisticsId=g2.source.sourceHash;
  const g3={gameId:'G3',game:{status:'NO_CONTEST',gameNumber:3,players:g1.game.players,
   resolutionReason:'Series decided by G2',activeReplayStatisticsId:null,canonicalResult:null},source:null};
