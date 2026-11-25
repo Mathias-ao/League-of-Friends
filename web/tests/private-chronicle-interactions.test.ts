@@ -4,7 +4,8 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import {JSDOM} from 'jsdom';
 import {PrivateChronicleInteractions} from '../src/ui/PrivateChronicleInteractions';
-import {privateChronicleInteractionsEnabled,type PrivateChronicleInvitations} from '../src/domain/privateChronicleInteractions';
+import {privateChronicleInteractionsEnabled,hostedPrivateChronicleEnabled,
+ type PrivateChronicleInvitations} from '../src/domain/privateChronicleInteractions';
 import type {LeagueRepository} from '../src/domain/league';
 const invite={slotId:'slot-a',battleId:'battle-1',respondentPlayerId:'owner',revision:1,state:'OFFERED',
  opportunityRevision:'a'.repeat(64),family:'ASSISTANCE',counterpartPlayerId:'other',
@@ -24,7 +25,7 @@ async function setup(){
    return {success:true,revision:2,state:input.action,idempotent:false};},
   onAuthChange:(cb:()=>void)=>{auth=cb;return()=>{};}} as unknown as LeagueRepository;
  const root=createRoot(document.getElementById('root')!);
- const render=async(id='owner')=>act(async()=>root.render(React.createElement(PrivateChronicleInteractions,{repository,ownerId:id,counterpartNames:{other:'Beren'}})));
+ const render=async(id='owner',hosted=false)=>act(async()=>root.render(React.createElement(PrivateChronicleInteractions,{repository,ownerId:id,hosted,counterpartNames:{other:'Beren'}})));
  const click=async(part:string)=>act(async()=>{const btn=[...document.querySelectorAll('button')].find(x=>x.textContent?.includes(part));assert.ok(btn,part);btn.click();});
  return {repository,render,click,set:(v:PrivateChronicleInvitations)=>{data=v;},fail:()=>{fail=true;},calls,auth:()=>auth(),close:async()=>{await act(async()=>root.unmount());dom.window.close();}};
 }
@@ -169,5 +170,60 @@ test('older invitation without a context keeps the missing incident presentation
   await c.render();await c.click('Review my invitations');
   assert.match(document.querySelector('[aria-label="Recorded moment context"]')!.textContent!,/Game context is Pending/);
   assert.match(document.body.textContent!,/Details of this recorded moment and its time are Pending/);
+ }finally{await c.close();}
+});
+
+test('hosted private Chronicle is a separate exact-EU default-OFF browser gate',()=>{
+ assert.equal(hostedPrivateChronicleEnabled({}),false);
+ const eu={VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging-eu',VITE_FIREBASE_REGION:'europe-west1',
+   VITE_AOF_CHRONICLE_PRIVATE_INTERACTIONS:'source-v1'};
+ assert.equal(hostedPrivateChronicleEnabled(eu),true);
+ assert.equal(privateChronicleInteractionsEnabled(eu),true);
+ for(const changed of [
+  {VITE_AOF_CHRONICLE_PRIVATE_INTERACTIONS:'off'},
+  {VITE_FIREBASE_PROJECT_ID:'age-of-friends-staging'},
+  {VITE_FIREBASE_PROJECT_ID:'demo-aof'},
+  {VITE_FIREBASE_REGION:'us-central1'},
+  {VITE_USE_EMULATORS:'true'}
+ ])assert.equal(hostedPrivateChronicleEnabled({...eu,...changed}),false,JSON.stringify(changed));
+ assert.equal(privateChronicleInteractionsEnabled({VITE_USE_EMULATORS:'true',
+  VITE_AOF_CHRONICLE_INTERACTIONS_V1E:'emulator-only',VITE_FIREBASE_PROJECT_ID:'demo-aof'}),true,
+  'emulator protection is unchanged');
+});
+test('hosted owner explicitly checks for rare moments without selecting a Battle and confirms privately',async()=>{
+ const c=await setup();try{
+  const v=view();v.testOnly=false;
+  v.invitations[0].family='SKILL_ACKNOWLEDGMENT';
+  v.invitations[0].choices=['ACKNOWLEDGED_SKILL','DO_NOT_ACKNOWLEDGE','UNDECIDED'];
+  c.set({...v,invitations:[]} as PrivateChronicleInvitations);
+  const checks:unknown[][]=[];
+  c.repository.checkMyChronicleMoments=async(...args:any[])=>{
+   checks.push(args);c.set(v);return {offered:true};
+  };
+  await c.render('owner',true);
+  await c.click('Review my invitations');assert.match(document.body.textContent!,/No rare moments/);
+  await c.click('Check for a rare moment');
+  assert.deepEqual(checks,[[]],'the user cannot choose a later Battle or override policy');
+  assert.match(document.body.textContent!,/Your encounter with Beren/);
+  await c.click('Stronger in these meetings');assert.equal(c.calls.length,0);
+  await c.click('Save my private perspective');
+  assert.equal(c.calls[0].action,'SUBMIT');assert.equal(c.calls[0].choiceId,'ACKNOWLEDGED_SKILL');
+  assert.equal(c.calls[0].confirmed,true);assert.equal('playerId' in c.calls[0],false);
+ }finally{await c.close();}
+});
+test('hosted list rejects test-only or non-skill families and never renders foreign testimony',async()=>{
+ const c=await setup();try{
+  await c.render('owner',true);
+  await c.click('Review my invitations');
+  assert.match(document.body.textContent!,/authority changed/,'emulator response is not host authority');
+  const v=view();v.testOnly=false;c.set(v);
+  await c.click('Review my invitations');
+  assert.match(document.body.textContent!,/authority changed/,'assistance is not hosted');
+  v.invitations[0].family='SKILL_ACKNOWLEDGMENT';
+  v.invitations[0].choices=['ACKNOWLEDGED_SKILL','DO_NOT_ACKNOWLEDGE','UNDECIDED'];
+  v.invitations[0].speaker={authorPlayerId:'other',choiceId:'ACKNOWLEDGED_SKILL',
+   qualification:'PENDING',presentation:'ATTRIBUTED_SPEAKER_NOT_OBJECTIVE_NARRATOR'};
+  c.set(v);await c.click('Review my invitations');
+  assert.match(document.body.textContent!,/authority changed/);
  }finally{await c.close();}
 });

@@ -245,6 +245,7 @@ export interface LeagueRepository {
     bounds:import('./battleOccurrence').BattleOccurrenceBound[]):Promise<{status:'PENDING'|'APPROVED';revision:number;idempotent?:boolean}>;
   myPrivateChronicle?():Promise<PlayerChronicleResponse>;
   myChronicleInvitations?():Promise<import('./privateChronicleInteractions').PrivateChronicleInvitations>;
+  checkMyChronicleMoments?():Promise<{offered:boolean;reason?:string}>;
   actOnChronicleInvitation?(input:import('./privateChronicleInteractions').ChronicleInvitationAction):Promise<{success:true;revision:number;state:string;idempotent:boolean}>;
   myPersonalityHistory?():Promise<import('./privateHistory').PrivatePersonalityHistory>;
   /** Owner-private live profile: the actual Firebase adapter authorizes this
