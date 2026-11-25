@@ -16,8 +16,9 @@ export interface OccurrenceBattle {
  games:OccurrenceGame[];occurrence?:Bag|null;
 }
 export type GameBounds={gameId:string;notBeforeMs:number;notAfterMs:number};
+export type ReviewedPrecedence={battleId:string;sourceBinding:string;revision:number};
 export type VerifiedOccurrence={battleId:string;binding:string;revision:number;
- startMs:number;endMs:number;bounds:GameBounds[];precedes:string[]};
+ startMs:number;endMs:number;bounds:GameBounds[];precedes:ReviewedPrecedence[]};
 const id=(v:any):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(v);
 const ms=(v:any)=>Number.isSafeInteger(v)&&v>0;
 const sorted=(a:string[])=>[...a].sort();
@@ -46,6 +47,9 @@ export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|nu
   typeof g.source.gameGuid!=='string'||!g.source.gameGuid||
   typeof g.source.mappingDigest!=='string'||!g.source.mappingDigest||
   !Array.isArray(g.game.players)||!equal(sorted(g.game.players.map((p:Bag)=>p.playerId)),sorted(m.participants.map((p:Bag)=>p.playerId)))))return null;
+ if(m.seriesRule?.maxGames===1&&m.canonicalResult?.winningPlayerIds&&
+  !equal(sorted(m.canonicalResult.winningPlayerIds),
+    sorted(currentOfficialGameOutcome(needed[0].game,m).winnerPlayerIds)))return null;
  if(m.seriesRule?.maxGames>1){
   try{const winner=resolveSeriesResult(b.games.map(g=>({...g.game,gameId:g.gameId} as any)),m.seriesRule,m.participants);
     if(!m.canonicalResult||!equal(winner.seriesGameRevisions,m.canonicalResult.seriesGameRevisions)||
@@ -83,10 +87,13 @@ export function verifiedOccurrence(b:OccurrenceBattle):VerifiedOccurrence|null{
   if(i&&bounds[i-1].notAfterMs>=p.notBeforeMs)return null;
   bounds.push({gameId:g.gameId,notBeforeMs:p.notBeforeMs,notAfterMs:p.notAfterMs});
  }
- if(!Array.isArray(o.precedes)||o.precedes.some((v:any)=>!id(v)||v===b.battleId)||
-  new Set(o.precedes).size!==o.precedes.length)return null;
+ if(!Array.isArray(o.precedes)||o.precedes.some((v:any)=>!v||!id(v.battleId)||
+  v.battleId===b.battleId||!/^[a-f0-9]{64}$/.test(v.sourceBinding??'')||
+  !Number.isSafeInteger(v.revision)||v.revision<1)||
+  new Set(o.precedes.map((v:any)=>v.battleId)).size!==o.precedes.length)return null;
  return {battleId:b.battleId,binding,revision:o.revision,startMs:bounds[0].notBeforeMs,
-  endMs:bounds.at(-1)!.notAfterMs,bounds,precedes:[...o.precedes]};
+  endMs:bounds.at(-1)!.notAfterMs,bounds,precedes:o.precedes.map((v:any)=>({
+    battleId:v.battleId,sourceBinding:v.sourceBinding,revision:v.revision}))};
 }
 export type OccurrenceComparison='BEFORE'|'AFTER'|'UNKNOWN'|'CONFLICT';
 /** Transitive strict proof, including attested before edges. No total ranking is stored.
@@ -102,9 +109,11 @@ export function compareOccurrence(a:string,b:string,all:OccurrenceBattle[]):Occu
   const l=proven.get(x)!,r=proven.get(y)!;
   if(l.endMs<r.startMs)edges.get(x)!.add(y);
  }
- for(const x of ids)for(const y of proven.get(x)!.precedes)if(edges.has(y)){
-  // An approved relation must not contradict nonoverlapping independent bounds.
-  if(proven.get(y)!.endMs<proven.get(x)!.startMs)return 'CONFLICT';
+ for(const x of ids)for(const edge of proven.get(x)!.precedes){
+  const y=edge.battleId,target=proven.get(y);
+  // A predecessor proof is never carried across a corrected/reapproved target.
+  if(!target||target.binding!==edge.sourceBinding||target.revision!==edge.revision)continue;
+  if(target.endMs<proven.get(x)!.startMs)return 'CONFLICT';
   edges.get(x)!.add(y);
  }
  const reach=(from:string,to:string)=>{
@@ -121,6 +130,14 @@ export function compareOccurrence(a:string,b:string,all:OccurrenceBattle[]):Occu
 export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPlayerId:string){
  type Loss={battleId:string;opponentPlayerId:string;sourceBinding:string;gameKeys:string[]};
  const losses:Loss[]=[],possible=new Map<string,Set<string>>();
+ // Caller should supply a complete authenticated enumeration. Duplicate
+ // Battle/GUID sources can never be counted as independent losses.
+ if(new Set(battles.map(b=>b.battleId)).size!==battles.length)return [];
+ const seenGameGuids=new Set<string>();
+ for(const b of battles)for(const g of b.games)if(g.source){
+  if(seenGameGuids.has(g.source.gameGuid))return [];
+  seenGameGuids.add(g.source.gameGuid);
+ }
  for(const b of battles){
   if(!b.match?.participants?.some((p:Bag)=>p.playerId===respondentPlayerId))continue;
   const players=b.match.participants;
@@ -128,12 +145,17 @@ export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPl
   const opponent=players.find((p:Bag)=>p.playerId!==respondentPlayerId)?.playerId;
   if(!id(opponent))continue;
   const uncertain=()=>{const set=possible.get(opponent)??new Set<string>();set.add(b.battleId);possible.set(opponent,set);};
-  const needed=canonicalOccurrenceGames(b),binding=occurrenceSourceBinding(b),occ=verifiedOccurrence(b);
-  if(!needed||!binding||!occ){uncertain();continue;}
-  let winners:string[];
-  if(b.match.seriesRule.maxGames===1)winners=currentOfficialGameOutcome(needed[0].game,b.match).winnerPlayerIds;
-  else winners=b.match.canonicalResult?.winningPlayerIds;
+  const needed=canonicalOccurrenceGames(b),binding=occurrenceSourceBinding(b);
+  if(!needed||!binding){uncertain();continue;}
+  const winners=b.match.seriesRule.maxGames===1?
+    currentOfficialGameOutcome(needed[0].game,b.match).winnerPlayerIds:
+    b.match.canonicalResult?.winningPlayerIds;
   if(!Array.isArray(winners)||winners.length!==1){uncertain();continue;}
+  // Verified non-loss does not require a historical position; it cannot be a
+  // predecessor loss regardless of when this Battle occurred.
+  if(winners[0]===respondentPlayerId)continue;
+  const occ=verifiedOccurrence(b);
+  if(!occ){uncertain();continue;}
   if(winners[0]===opponent)losses.push({battleId:b.battleId,opponentPlayerId:opponent,
     sourceBinding:binding,gameKeys:needed.map(g=>g.gameId+':'+g.source!.sourceHash+':'+g.source!.gameGuid)});
  }
