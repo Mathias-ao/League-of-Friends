@@ -132,7 +132,10 @@ export async function attestBattleOccurrence(input:{actor:Actor;request:Request}
   if(current?.status==='REVOKED'||current?.status==='APPROVED'&&current.proof?.kind==='ADMIN_REVIEWED')
     throw new HttpsError('failed-precondition','Reviewed or revoked occurrence needs independent correction review.');
   const my=attestations.docs.find((d:any)=>d.id===actor.playerId)?.data();
-  if(my?.sourceBinding===binding&&same(my.bounds,bounds))return {status:current?.status??'PENDING',idempotent:true};
+  // Pending resubmission must retry current opposing authentication: an AuthLink
+  // may have been restored without the source bounds changing.
+  const sameOwn=my?.sourceBinding===binding&&same(my.bounds,bounds)&&
+    my.actorUid===actor.authUid&&my.actorPlayerId===actor.playerId;
   const byId=new Map(attestations.docs.map((d:any)=>[d.id,d.data()]));
   byId.set(actor.playerId,{version:BATTLE_OCCURRENCE_VERSION,sourceBinding:binding,bounds,
     actorUid:actor.authUid,actorPlayerId:actor.playerId});
@@ -167,6 +170,15 @@ export async function attestBattleOccurrence(input:{actor:Actor;request:Request}
     break;
   }
   const approved=Boolean(partner);
+  const unchangedApproval=current?.status==='APPROVED'&&current.sourceBinding===binding&&
+    same(current.bounds,bounds)&&current.proof?.kind==='MUTUAL_PARTICIPANTS'&&
+    partner&&same(current.proof.participants,[actor.playerId,partner.playerId].sort())&&
+    same(current.proof.witnessUids,[actor.authUid,partner.authUid].sort());
+  if(sameOwn&&unchangedApproval)
+    return {status:'APPROVED' as const,idempotent:true,revision:current.revision};
+  if(sameOwn&&!partner&&current?.status==='PENDING'&&current.sourceBinding===binding&&
+    same(current.bounds,bounds))
+    return {status:'PENDING' as const,idempotent:true,revision:current.revision};
   const now=Timestamp.now();
   const next={version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,sourceBinding:binding,
     status:approved?'APPROVED':'PENDING',bounds,precedes:[],
