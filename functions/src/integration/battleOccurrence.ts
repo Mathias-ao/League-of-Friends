@@ -36,7 +36,7 @@ export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|nu
   e.matchPlanStatus!=='APPROVED'||b.plan?.status!=='APPROVED'||
   !Array.isArray(b.plan?.officialMatchIds)||b.plan.officialMatchIds[m.matchNumber-1]!==b.battleId))return null;
  if(!Array.isArray(b.games)||!b.games.length||new Set(b.games.map(g=>g.gameId)).size!==b.games.length)return null;
- const manifest=battleGameManifest(m,b.games.map(g=>({...g.game,gameId:g.gameId})));
+ const manifest=battleGameManifest(m,b.games.map(g=>({...g.game,gameId:g.gameId} as any)));
  if(!manifest.gameManifestComplete)return null;
  const needed=b.games.filter(g=>manifest.knownGameIds.includes(g.gameId)).sort((a,b)=>a.game.gameNumber-b.game.gameNumber);
  if(needed.length!==manifest.knownGameIds.length||needed.some((g,i)=>g.game.gameNumber!==i+1||
@@ -47,7 +47,7 @@ export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|nu
   typeof g.source.mappingDigest!=='string'||!g.source.mappingDigest||
   !Array.isArray(g.game.players)||!equal(sorted(g.game.players.map((p:Bag)=>p.playerId)),sorted(m.participants.map((p:Bag)=>p.playerId)))))return null;
  if(m.seriesRule?.maxGames>1){
-  try{const winner=resolveSeriesResult(b.games.map(g=>({...g.game,gameId:g.gameId})),m.seriesRule,m.participants);
+  try{const winner=resolveSeriesResult(b.games.map(g=>({...g.game,gameId:g.gameId} as any)),m.seriesRule,m.participants);
     if(!m.canonicalResult||!equal(winner.seriesGameRevisions,m.canonicalResult.seriesGameRevisions)||
       winner.sourceGameId!==m.canonicalResult.sourceGameId||
       !equal(sorted(winner.result.winningPlayerIds),sorted(m.canonicalResult.winningPlayerIds)))return null;
