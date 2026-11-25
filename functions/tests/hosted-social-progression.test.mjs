@@ -283,7 +283,8 @@ test('hosted evaluator orders warmup + MAIN from one subject scope, not unrelate
     canonicalResult:{revision:1,source:'PLAYER_CONFIRMED',type:'PLAYER_WIN',
       winningPlayerIds:[players[0].playerId],losingPlayerIds:[players[1].playerId]}},
      source:{sourceHash:r.source.sourceHash,gameGuid:r.source.gameGuid,
-      mappingDigest:r.source.mappingDigest,publicationAtMs:1000000}}],occurrence:null};
+      mappingDigest:r.source.mappingDigest,
+      provenanceDigest:bindingDigest(['source',chapter.battleId]),publicationAtMs:1000000}}],occurrence:null};
   const binding=occurrenceSourceBinding(b);assert.ok(binding);
   if(approved)b.occurrence={version:BATTLE_OCCURRENCE_VERSION,battleId:chapter.battleId,
     sourceBinding:binding,status:'APPROVED',revision:1,
