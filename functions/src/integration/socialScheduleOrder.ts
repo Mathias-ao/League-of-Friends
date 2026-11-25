@@ -1,16 +1,18 @@
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
 import type {HistoricalChapter} from '../engines/socialV1History/history.js';
+import {compareOccurrence,verifiedOccurrence,type OccurrenceBattle} from './battleOccurrence.js';
 
 type Bag=Record<string,any>;
 export const SOCIAL_SCHEDULE_ORDER_VERSION='AOF_SOCIAL_SCHEDULE_ORDER_1';
+export const SOCIAL_OCCURRENCE_ORDER_VERSION='AOF_SOCIAL_OCCURRENCE_ORDER_1';
 export interface ScheduleBattle {
  battleId:string;match:Bag;event:Bag|null;plan:Bag|null;planId:string|null;
  games:Array<{gameId:string;game:Bag}>;
 }
 export interface SocialScheduleOrder {
- version:typeof SOCIAL_SCHEDULE_ORDER_VERSION;battleId:string;gameId:string;eventId:string;seasonId:string;
+ version:typeof SOCIAL_SCHEDULE_ORDER_VERSION|typeof SOCIAL_OCCURRENCE_ORDER_VERSION;battleId:string;gameId:string;eventId:string;seasonId:string;
  status:'ORDERED'|'PENDING';order:HistoricalChapter['order'];revision:string;reasons:string[];
- basis:'APPROVED_EVENT_SCHEDULE_AND_PLAN_GAME_NUMBER';
+ basis:'APPROVED_EVENT_SCHEDULE_AND_PLAN_GAME_NUMBER'|'SOURCE_VERIFIED_ACTUAL_BATTLE_PARTIAL_ORDER';
 }
 export function scheduleTimestampMillis(value:any):number|null{
  try{const n=value?.toMillis?.();return Number.isSafeInteger(n)&&n>0?n:null;}catch{return null;}
@@ -51,4 +53,55 @@ export function deriveSocialScheduleOrders(battles:ScheduleBattle[]):SocialSched
     order:reasons.length?null:{event:start!,battle:m.matchNumber,game:g.game.gameNumber,key:'chapter-'+revision}};
   });
  });
+}
+
+/** #139's positional adapter over a proven partial order. Scope is explicit:
+ * only independently admitted, subject-relevant Battles are compared. A
+ * qualified unrelated but unordered Battle does not silently veto a different
+ * player/track/directed-pair. The caller still owns missing-source uncertainty.
+ *
+ * Never mix the legacy normative MAIN schedule with actual occurrence ranks.
+ * A wholly MAIN-only, non-occurrence cohort retains unchanged v1 semantics.
+ * Every actual-occurrence dependency must have current approved Game evidence.
+ */
+export function deriveScopedOccurrenceOrders(
+ all:OccurrenceBattle[],scopeBattleIds:readonly string[],
+):SocialScheduleOrder[]{
+ const required=[...new Set(scopeBattleIds)];
+ const byId=new Map(all.map(b=>[b.battleId,b]));
+ if(byId.size!==all.length)throw new Error('DUPLICATE_BATTLE_OCCURRENCE_SCOPE');
+ if(required.some(id=>!byId.has(id)))throw new Error('OCCURRENCE_DEPENDENCY_OUTSIDE_COMPLETE_COHORT');
+ const selected=required.map(id=>byId.get(id)!);
+ if(!selected.length)return [];
+ const legacy=selected.every(b=>b.match.scoringSnapshot?.rules?.act!=='WARMUP'&&!b.occurrence);
+ if(legacy)return deriveSocialScheduleOrders(selected);
+ const proof=new Map(selected.map(b=>[b.battleId,verifiedOccurrence(b)]));
+ const pending=new Set<string>(selected.filter(b=>!proof.get(b.battleId)).map(b=>b.battleId));
+ let conflict=false;
+ for(let i=0;i<selected.length;i++)for(let j=0;j<i;j++){
+  const a=selected[i],b=selected[j],result=compareOccurrence(a.battleId,b.battleId,all);
+  if(result==='UNKNOWN'){pending.add(a.battleId);pending.add(b.battleId);}
+  if(result==='CONFLICT'){conflict=true;pending.add(a.battleId);pending.add(b.battleId);}
+ }
+ // A partial but consequentially ambiguous chain may never be converted into
+ // an arbitrary total order. Keep all dependent subjects Pending.
+ const complete=!pending.size;
+ const ordered=complete?[...selected].sort((a,b)=>
+  compareOccurrence(a.battleId,b.battleId,all)==='BEFORE'?-1:1):[];
+ const ranks=new Map(ordered.map((b,i)=>[b.battleId,i+1]));
+ const witness=complete?bindingDigest(ordered.map(b=>[b.battleId,proof.get(b.battleId)])):null;
+ return selected.flatMap(b=>b.games
+  .filter(g=>g.game.status!=='NO_CONTEST'&&g.game.status!=='REMAKE')
+  .map(g=>{
+   const v=proof.get(b.battleId),reason=complete?[]:
+     [conflict?'OCCURRENCE_PRECEDENCE_CONFLICT':
+       !v?'OCCURRENCE_SOURCE_OR_APPROVAL_PENDING':'OCCURRENCE_PEER_ORDER_PENDING'];
+   const revision=bindingDigest([SOCIAL_OCCURRENCE_ORDER_VERSION,b.battleId,g.gameId,
+     v??null,witness,reason,selected.map(s=>s.battleId).sort()]);
+   return {version:SOCIAL_OCCURRENCE_ORDER_VERSION,battleId:b.battleId,gameId:g.gameId,
+    eventId:b.match.eventId,seasonId:b.match.seasonId,status:complete?'ORDERED' as const:'PENDING' as const,
+    reasons:reason,revision,basis:'SOURCE_VERIFIED_ACTUAL_BATTLE_PARTIAL_ORDER' as const,
+    order:complete?{event:ranks.get(b.battleId)!,battle:1,game:g.game.gameNumber,
+      key:'actual-'+bindingDigest([b.battleId,v!.binding,v!.revision,witness])}:null};
+  }));
 }
