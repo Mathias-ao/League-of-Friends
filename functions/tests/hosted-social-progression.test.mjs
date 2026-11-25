@@ -10,6 +10,8 @@ import {readMyHostedSocialProgression,getMyHostedSocialProgression} from '../lib
 import {ready} from './support/private-history-fixture.mjs';
 import {collectMyCurrentBattleHistory} from '../lib/queries/getMyPersonalityHistory.js';
 import {controlledHostedApproval} from './support/hosted-social-approval-fixture.mjs';
+import {BATTLE_OCCURRENCE_VERSION,occurrenceSourceBinding}
+  from '../lib/integration/battleOccurrence.js';
 
 // Approved-looking records below are isolated test authority, NEVER runtime approval.
 const approval=controlledHostedApproval;
@@ -258,4 +260,56 @@ test('optional approval hook joins the existing source transaction, propagates f
     assert.equal((await tx.get(f.db.doc(HOSTED_POLICY_PATH))).data().approvalRevision,1);calls++;});
   assert.equal(calls,1);await current.revalidate();assert.equal(calls,1,'existing callers do not acquire a policy dependency');
   await assert.rejects(current.revalidate(async()=>{throw Object.assign(new Error('Changed'),{code:'aborted'});}),e=>e.code==='aborted');
+});
+
+/** CONTROLLED authority only: no source-method qualification is fabricated.
+ * The existing original-derived bound() fixture still supplies the four-rule
+ * source card and #139's direction; this supplies separate occurrence proofs. */
+test('hosted evaluator orders warmup + MAIN from one subject scope, not unrelated Pending peers',()=>{
+ const rows=[bound(1),bound(2),bound(3)];
+ const makeOcc=(row,index,approved=true)=>{
+  const {r,chapter}=row,players=r.source.roster.map((p,i)=>({playerId:p.playerId,team:i+1}));
+  const b={battleId:chapter.battleId,match:{eventId:chapter.eventId,seasonId:chapter.seasonId,
+    format:'ONE_V_ONE',status:'COMPLETED',opponentKind:'HUMAN',participants:players,
+    matchNumber:index===1?0:1,sourceMatchPlanId:index===1?null:'plan',
+    scoringSnapshot:{rules:{act:index===1?'WARMUP':'MAIN'}},
+    seriesRule:{maxGames:1,gamesRequiredToWin:1},canonicalResult:null},
+   event:{seasonId:chapter.seasonId,officialMatchIds:index===1?[]:[chapter.battleId],
+    warmupMatchIds:index===1?[chapter.battleId]:[],approvedMatchPlanId:'plan',
+    matchPlanStatus:'APPROVED'},planId:index===1?null:'plan',
+   plan:index===1?null:{status:'APPROVED',officialMatchIds:[chapter.battleId],matches:[{}]},
+   games:[{gameId:chapter.gameId,game:{gameNumber:1,status:'COMPLETED',
+    players,activeReplayStatisticsId:r.source.sourceHash,
+    canonicalResult:{revision:1,source:'PLAYER_CONFIRMED',type:'PLAYER_WIN',
+      winningPlayerIds:[players[0].playerId],losingPlayerIds:[players[1].playerId]}},
+     source:{sourceHash:r.source.sourceHash,gameGuid:r.source.gameGuid,
+      mappingDigest:r.source.mappingDigest,
+      provenanceDigest:bindingDigest(['source',chapter.battleId]),publicationAtMs:1000000}}],occurrence:null};
+  const binding=occurrenceSourceBinding(b);assert.ok(binding);
+  if(approved)b.occurrence={version:BATTLE_OCCURRENCE_VERSION,battleId:chapter.battleId,
+    sourceBinding:binding,status:'APPROVED',revision:1,
+    bounds:[{gameId:chapter.gameId,notBeforeMs:index*3000,notAfterMs:index*3000+1000}],
+    precedes:[],proof:{kind:'MUTUAL_PARTICIPANTS'}};
+  return b;
+ };
+ const occurrences=rows.map((row,i)=>makeOcc(row,i+1));
+ // A third current Battle with no admitted deed is a factual quiet Battle,
+ // not a reason to suppress the first two qualified directions.
+ rows[2].r.cards=[];rows[2].r.effects=[];rows[2].r.actorWitnesses=[];
+ occurrences[2].occurrence=null;
+ const x=project(rows,{occurrenceBattles:occurrences,actualOccurrenceEnabled:true});
+ assert.equal(x.relationships[0].tracks.RIVALRY.outgoing.stage,1);
+ assert.equal(x.relationships[0].tracks.RIVALRY.outgoing.sourceQualifiedBattles,2);
+ assert.equal(x.relationships[0].tracks.RIVALRY.incoming.stage,null);
+ // Sol 6060246964 red repro: approved sidecars must not be consumed after
+ // occurrence capture/consumption is OFF; the legacy warmup stays Pending.
+ rows[0].chapter.order=null;
+ const off=project(rows,{occurrenceBattles:occurrences,actualOccurrenceEnabled:false});
+ assert.equal(off.relationships[0].tracks.RIVALRY.outgoing.stage,null,
+   'default-OFF must ignore retained actual-order sidecars');
+ occurrences[1].occurrence.bounds[0]={...occurrences[1].occurrence.bounds[0],
+   notBeforeMs:3500,notAfterMs:4800}; // overlapping first interval
+ const blocked=project(rows,{occurrenceBattles:occurrences,actualOccurrenceEnabled:true});
+ assert.equal(blocked.relationships[0].tracks.RIVALRY.outgoing.stage,null);
+ assert.ok(blocked.relationships[0].tracks.RIVALRY.outgoing.reasonCodes.includes('HISTORICAL_ORDER_PENDING'));
 });

@@ -11,6 +11,7 @@ import {hostedBinderCalibration} from '../integration/hostedSocialPolicy.js';
 import {loadEuTestSocialPolicy} from '../integration/euTestSocialPolicy.js';
 import {projectHostedSocialProgression,fixedHostedOpportunity,type HostedPendingSource} from '../integration/hostedSocialProgression.js';
 import {collectMyCurrentBattleHistory} from './getMyPersonalityHistory.js';
+import {battleOccurrenceEvidenceEnabled} from '../integration/battleOccurrence.js';
 import {callVerifiedWorker} from '../services/nativeRecordingValidation.js';
 
 type Input=Parameters<typeof collectMyCurrentBattleHistory>[0]&{
@@ -85,6 +86,8 @@ export async function readMyHostedSocialProgression(input:Input){
       catch{throw new HttpsError('data-loss','Private social source method or actor binding did not match.');}
     }
     const response=projectHostedSocialProgression({owner:input.actor.playerId,inputs:bound,chapters,
+      occurrenceBattles:battleOccurrenceEvidenceEnabled(input.env)?current.occurrenceBattles:undefined,
+      actualOccurrenceEnabled:battleOccurrenceEvidenceEnabled(input.env),
       calibration:policy.calibration,pendingSources,
       coverage:{...current.coverage,pendingSources:pendingSources.length},inputRevision:current.inputDigest,policyRevision:policy.revision,
       opportunity:(b,s,claim)=>{const {loaded,witnesses}=context.get(b.source.authorityRevision)!;

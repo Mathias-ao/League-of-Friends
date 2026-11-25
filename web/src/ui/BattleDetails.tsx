@@ -11,6 +11,7 @@ import {NativeBattleRecordViewer} from './NativeBattleRecordViewer';
 import {StagingE2eControls} from './StagingE2eControls';
 import {BattleOverlay} from './BattleOverlay';
 import {BattleAccomplishments} from './BattleAccomplishments';
+import {BattleOccurrenceConfirm} from './BattleOccurrenceConfirm';
 import type {ViewProps} from './App';
 
 export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>void;selectedGameId?:string;onSelectGame?:(id:string|undefined)=>void}){
@@ -28,6 +29,10 @@ export function BattleDetails(props:ViewProps&{data:MatchDetail;onUpdated:()=>vo
     <header className="battle-detail-header"><div><span className="eyebrow">{data.match.scoringAct==='WARMUP'?'ACT I · WARM-UP':data.match.scoringAct==='MAIN'?'ACT II · MAIN EVENT':'THE FIELD OF BATTLE'}</span><h3>{formatName(data.match.format)}{data.games.length>1&&<small> · {data.games.length} Games</small>}</h3></div><span className="quiet-badge">{data.match.status.replaceAll('_',' ')}</span></header>
     {data.games.length>1&&<label className="battle-game-picker">Game<select value={selected?.gameId??''} onChange={event=>{setGameId(event.target.value);props.onSelectGame?.(event.target.value);setStatisticsOpen(false);}}>{data.games.map(game=><option key={game.gameId} value={game.gameId}>Game {game.gameNumber} · {game.status.replaceAll('_',' ')}</option>)}</select></label>}
     <MatchDialog key={data.match.matchId+'/'+selected?.gameId} {...props} compact gameId={selected?.gameId} recordedGame={recorded}/>
+    {!preview&&data.viewer.isParticipant&&data.match.status==='COMPLETED'&&
+      repository.canConfirmBattleOccurrence?.()&&<BattleOccurrenceConfirm
+        key={data.match.matchId} repository={repository} battleId={data.match.matchId}/>}
+
     {!preview&&selected&&<StagingE2eControls data={data} game={selected}
       repository={repository} role={snapshot.viewer?.role} onUpdated={props.onUpdated}/>}
     {recorded&&<BattleAccomplishments key={recorded.gameId+'/'+recorded.revision+'/'+recorded.sourceHash} game={recorded} data={data} preview={preview}/>}

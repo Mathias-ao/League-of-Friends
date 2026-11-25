@@ -1,6 +1,7 @@
 import {loadPracticalPersonalityRuntime} from '../engines/personalityV1/practicalPolicy.js';
 import {PRACTICAL_POLICY,PRACTICAL_POLICY_SHA256} from '../engines/personalityV1/practicalPolicyResource.js';
 import {deriveSocialScheduleOrders,scheduleTimestampMillis,type ScheduleBattle} from '../integration/socialScheduleOrder.js';
+import {sourceBoundReadyReceiptMillis,type OccurrenceBattle} from '../integration/battleOccurrence.js';
 import {getStorage} from 'firebase-admin/storage';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {requireLeaguePlayer} from '../auth/authorization.js';
@@ -69,6 +70,7 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
   const checkpoint=async(ref:any,tokenOf:(data:any)=>string=bindingDigest)=>{const snap=await read(ref);checkpoints.set(ref.path,{ref,tokenOf,token:tokenOf(snap.data()??null)});return snap;};
   const gameSets:Array<{ref:any;token:string}>=[],loaded:Array<Awaited<ReturnType<typeof loadMyCurrentSocialSource>>>=[];
   const schedules:ScheduleBattle[]=[];
+  const occurrences:OccurrenceBattle[]=[];
   const battles:PersonalityHistoryBattle[]=[],pending:Array<{battleId:string;gameId:string|null;reason:string}>=[];
   const seenSources=new Set<string>(),seenGuids=new Set<string>();let count=0;
   const gamesToken=(docs:any[])=>bindingDigest(docs.map(d=>[d.id,d.data()]));
@@ -91,14 +93,19 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
     if(input.includeScheduleOrder){
       const planId=validId(event?.approvedMatchPlanId)?event!.approvedMatchPlanId:null;
       const plan=planId&&validId(m.eventId)?(await checkpoint(db.doc('events/'+m.eventId+'/matchPlans/'+planId))).data()??null:null;
+      const occurrence=(await checkpoint(matchDoc.ref.collection('occurrence').doc('current'))).data()??null;
       schedules.push({battleId:matchDoc.id,match:m,event,planId,plan,games:requiredGames.map((d:any)=>({gameId:d.id,game:d.data()}))});
+      occurrences.push({battleId:matchDoc.id,match:m,event,planId,plan,occurrence,
+        games:requiredGames.map((d:any)=>({gameId:d.id,game:d.data(),source:null}))});
     }
+    const sourcePublications=new Map<string,number|null>();
     const battle:PersonalityHistoryBattle={battleId:matchDoc.id,gameIds:manifest.knownGameIds,
       unusedGameIds:manifest.unusedGameIds,gameManifestComplete:manifest.gameManifestComplete,sources:[]};
     for(const gameDoc of requiredGames){
       const g=gameDoc.data();
       if(/^[a-f0-9]{64}$/.test(g.activeReplayStatisticsId??'')){
         const s=await checkpoint(gameDoc.ref.collection('replaySources').doc(g.activeReplayStatisticsId));
+        sourcePublications.set(gameDoc.id,sourceBoundReadyReceiptMillis(s.data(),matchDoc.id,gameDoc.id,g.activeReplayStatisticsId));
         const guid=s.data()?.matchFacts?.game?.guid;
         if(typeof guid==='string'&&guid&&guid.length<=200)await checkpoint(db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')));
       }
@@ -117,6 +124,17 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
       }
     }
     battle.sources.sort((a,b)=>a.game.gameNumber-b.game.gameNumber||a.source.gameId.localeCompare(b.source.gameId));
+    if(input.includeScheduleOrder){
+      const occurrence=occurrences.at(-1)!;
+      for(const row of occurrence.games){
+        const source=battle.sources.find(s=>s.source.gameId===row.gameId)?.source;
+        if(source)row.source={sourceHash:source.sourceHash,gameGuid:source.gameGuid!,
+          mappingDigest:source.mappingDigest,
+          provenanceDigest:bindingDigest([source.sourceHash,source.statisticsRevision,
+            source.artifactRefs,loaded.find(s=>s.source.battleId===matchDoc.id&&s.source.gameId===row.gameId)!.producerRevision]),
+          publicationAtMs:sourcePublications.get(row.gameId)??null};
+      }
+    }
     battles.push(battle);
   }
   const inputDigest=bindingDigest([actor.playerId,accessToken,initialToken,gameSets.map(q=>q.token),
@@ -132,7 +150,8 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
     budget();
   });};
   await revalidate();
-  return {battles,loaded,pending,inputDigest,scheduleOrders:input.includeScheduleOrder?deriveSocialScheduleOrders(schedules):[],coverage:{completeEnumeration:true as const,scannedLeagueBattles:initialMatches.length,ownBattles:battles.length,ownGames:count,currentSources:loaded.length,measuredIndependentBattles:0 as const},revalidate};
+  return {battles,loaded,pending,inputDigest,occurrenceBattles:input.includeScheduleOrder?occurrences:[],
+    scheduleOrders:input.includeScheduleOrder?deriveSocialScheduleOrders(schedules):[],coverage:{completeEnumeration:true as const,scannedLeagueBattles:initialMatches.length,ownBattles:battles.length,ownGames:count,currentSources:loaded.length,measuredIndependentBattles:0 as const},revalidate};
 }
 /** Existing INT-B wire contract; C1 reuses collection/fencing, not profile values. */
 export async function readMyPersonalityHistory(input:Parameters<typeof collectMyCurrentBattleHistory>[0] & {

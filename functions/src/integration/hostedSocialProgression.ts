@@ -9,6 +9,8 @@ import {projectSharedSocialSourceEvidence} from './socialEvidenceV1.js';
 import {projectReputationEvidence} from './reputationEvidenceV1.js';
 import {projectRelationshipsEvidence} from './relationshipsEvidenceV1.js';
 import {HOSTED_POLICY_VERSION,HOSTED_POLICY_SPEC} from './hostedSocialPolicy.js';
+import {deriveScopedOccurrenceOrders} from './socialScheduleOrder.js';
+import type {OccurrenceBattle} from './battleOccurrence.js';
 
 type Bound=ReturnType<typeof bindSourceGrades>;
 type Bag=Record<string,any>;
@@ -64,7 +66,8 @@ export function fixedHostedOpportunity(bound:Bound,statistics:Bag,subject:Subjec
 }
 export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[];chapters:HistoricalChapter[];
   calibration:CalibratedSocialHistoryRules;pendingSources:HostedPendingSource[];coverage:Bag;inputRevision:string;policyRevision:string;
-  opportunity:(bound:Bound,subject:Subject,claimId:string)=>boolean}){
+  opportunity:(bound:Bound,subject:Subject,claimId:string)=>boolean;
+  occurrenceBattles?:OccurrenceBattle[];actualOccurrenceEnabled?:boolean}){
   const {owner,inputs,chapters,calibration}=input;
   if(calibration.policy.status!=='PROPOSED'||calibration.policy.approvalRef!==null||
     bindingDigest(calibration)!==bindingDigest(HOSTED_POLICY_SPEC.calibration))throw new Error('HOSTED_SOCIAL_PRIVATE_CALIBRATION_REQUIRED');
@@ -88,16 +91,45 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
   }));
   const effectIds=new Set(effects.map(e=>e.claim.claimId));
   const actorWitnesses=inputs.flatMap(b=>b.actorWitnesses).filter(w=>effectIds.has(w.claimId));
-  const evaluate=(selected:HistoricalChapter[])=>{
-    const keys=new Set(selected.map(c=>c.battleId+'\u0000'+c.gameId));
-    return publicEffectsBlocked(evaluateHistory({chapters:selected,
-      effects:effects.filter(e=>keys.has(e.battleId+'\u0000'+e.gameId)),actorWitnesses,
-      calibration,trustedApprovals:[],treachery:[],acknowledgments:[]}));
+  // #139 is the sole allocator. Run it independently for each factual
+  // Reputation subject or unordered directed pair+track dependency. An
+  // unrelated unorderable Battle must not veto a different subject's proof,
+  // whereas BOTH directions and the whole Event cap remain one pair scope.
+  const group=(s:Subject)=>s.system==='REPUTATION'?
+    bindingDigest(['REP',s.track,s.playerId]):
+    bindingDigest(['PAIR',s.track,[s.fromPlayerId,s.toPlayerId].sort()]);
+  const cache=new Map<string,ReturnType<typeof evaluateHistory>>();
+  const evaluateFor=(subject:Subject,seasonId?:string)=>{
+    const cacheKey=group(subject)+'|'+(seasonId??'ALL');
+    const cached=cache.get(cacheKey);if(cached)return cached;
+    const selected=effects.filter(e=>group(e.claim.subject)===group(subject));
+    const eligible=selected.filter(e=>!seasonId||chapters.some(c=>
+      c.seasonId===seasonId&&c.battleId===e.battleId&&c.gameId===e.gameId));
+    const ids=[...new Set(eligible.map(e=>e.battleId))];
+    const relevantChapters=chapters.filter(c=>ids.includes(c.battleId)&&(!seasonId||c.seasonId===seasonId));
+    const resolved=input.actualOccurrenceEnabled===true&&input.occurrenceBattles?
+      deriveScopedOccurrenceOrders(input.occurrenceBattles,ids):[];
+    const order=new Map(resolved.map(r=>[r.battleId+'\\u0000'+r.gameId,r]));
+    const actualChapters=relevantChapters.map(c=>{
+      const row=order.get(c.battleId+'\\u0000'+c.gameId);
+      return {...c,order:row?row.order:c.order};
+    });
+    const allocated=eligible.map(e=>{
+      const row=order.get(e.battleId+'\\u0000'+e.gameId);
+      if(!row)return e;
+      return {...e,claim:{...e.claim,historicalPosition:{...e.claim.historicalPosition,
+        leagueOrderKey:row.order?.key??null,
+        order:row.status==='ORDERED'?'ORDERED' as const:'UNKNOWN' as const}}};
+    });
+    const qualified=new Set(allocated.map(e=>e.claim.claimId));
+    const history=publicEffectsBlocked(evaluateHistory({chapters:actualChapters,effects:allocated,
+      actorWitnesses:actorWitnesses.filter(w=>qualified.has(w.claimId)),calibration,
+      trustedApprovals:[],treachery:[],acknowledgments:[]}));
+    cache.set(cacheKey,history);return history;
   };
-  const career=evaluate(chapters),seasonHistories=new Map([...new Set(chapters.map(c=>c.seasonId))].sort()
-    .map(season=>[season,evaluate(chapters.filter(c=>c.seasonId===season))]));
-  const find=(history:typeof career,subject:Subject)=>history.projections.find(p=>subjectKey(p.subject)===subjectKey(subject));
-  const summary=(subject:Subject,deeds:typeof evidence.deeds,history:typeof career,seasonId?:string):HostedTrack=>{
+  const find=(history:ReturnType<typeof evaluateHistory>,subject:Subject)=>
+    history.projections.find(p=>subjectKey(p.subject)===subjectKey(subject));
+  const summary=(subject:Subject,deeds:typeof evidence.deeds,history:ReturnType<typeof evaluateHistory>,seasonId?:string):HostedTrack=>{
     const accepted=deeds.filter(d=>d.decision==='SOURCE_ADMITTED'),unsupported=['CRUELTY','HOSTILITY'].includes(subject.track);
     const affectedSeasons=withheldSubjects.get(subjectKey(subject));
     const affectedSources=input.pendingSources.filter(s=>
@@ -128,14 +160,15 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
       row.reasonCodes=['INDEPENDENT_ACTIVITY_REQUIRED'];
     return row;
   };
+  const seasonIds=[...new Set(chapters.map(c=>c.seasonId))].sort();
   const repDto=Object.fromEntries(rep.map(track=>{
     const subject:Subject={system:'REPUTATION',track,playerId:owner};
     const deeds=evidence.deeds.filter(d=>d.system==='REPUTATION'&&d.track===track&&d.actorPlayerId===owner);
     // Reuse merged readiness projection; counts never become a numerical award.
     if(reputation.tracks[track].career.sourceQualifiedBattles!==new Set(deeds.filter(d=>d.decision==='SOURCE_ADMITTED').map(d=>d.battleId)).size)
       throw new Error('HOSTED_SOCIAL_REPUTATION_COUNT_MISMATCH');
-    return [track,{career:summary(subject,deeds,career),bySeason:Object.fromEntries([...seasonHistories].map(([season,h])=>
-      [season,summary(subject,deeds.filter(d=>d.seasonId===season),h,season)]))}];
+    return [track,{career:summary(subject,deeds,evaluateFor(subject)),bySeason:Object.fromEntries(seasonIds.map(season=>
+      [season,summary(subject,deeds.filter(d=>d.seasonId===season),evaluateFor(subject,season),season)]))}];
   }));
   const pairDto=relationships.pairs.map(pair=>({otherPlayerId:pair.otherPlayerId,
     factualCurrentSourceBattles:pair.factualCurrentSourceBattles,factualCurrentSourceGames:pair.factualCurrentSourceGames,
@@ -143,10 +176,10 @@ export function projectHostedSocialProgression(input:{owner:string;inputs:Bound[
       const from=direction==='outgoing'?owner:pair.otherPlayerId,to=direction==='outgoing'?pair.otherPlayerId:owner;
       const subject:Subject={system:'RELATIONSHIP',track,fromPlayerId:from,toPlayerId:to};
       return [direction,summary(subject,evidence.deeds.filter(d=>d.system==='RELATIONSHIP'&&d.track===track&&
-        d.actorPlayerId===from&&d.counterpartPlayerId===to),career)];
+        d.actorPlayerId===from&&d.counterpartPlayerId===to),evaluateFor(subject))];
     }))]))}));
   const response={version:'AOF_SOC_V1A_HOSTED_OWNER_READ_1' as const,ownerPlayerId:owner,
-    revision:bindingDigest([input.inputRevision,input.policyRevision,evidence.evidenceRevision,career.projectionRevision,input.pendingSources]),
+    revision:bindingDigest([input.inputRevision,input.policyRevision,evidence.evidenceRevision,[...cache].map(([k,v])=>[k,v.projectionRevision]).sort(),input.pendingSources]),
     policyVersion:HOSTED_POLICY_VERSION,approvalScope:'PRIVATE_NUMERICAL_PREVIEW' as const,
     coverage:{complete:input.pendingSources.length===0,ownBattles:input.coverage.ownBattles,ownGames:input.coverage.ownGames,
       currentSources:input.coverage.currentSources,pendingSources:input.coverage.pendingSources},

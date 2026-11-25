@@ -18,6 +18,9 @@ import {readSeasonCompetitionRecords} from '../lib/queries/seasonCompetitionReco
 import {readActiveNativeBattleDetail} from '../lib/queries/getActiveNativeBattleDetail.js';
 import {collectStatistics,rebuildStatisticsReadModels} from '../lib/services/statisticsExperienceProjection.js';
 import {resolveRecordingResult} from '../lib/services/recordingResult.js';
+import {readMyBattleOccurrence,attestBattleOccurrence} from '../lib/commands/results/battleOccurrence.js';
+import {verifiedOccurrence} from '../lib/integration/battleOccurrence.js';
+import {collectMyCurrentBattleHistory} from '../lib/queries/getMyPersonalityHistory.js';
 import {deriveRecordingOutcome} from '../lib/engines/recordingOutcome.js';
 import {currentOfficialGameOutcome} from '../lib/engines/recordingMatchFacts.js';
 import {digest} from '../lib/engines/nativeRecordingIntegration.js';
@@ -208,6 +211,56 @@ async function runCase([name,format,expected]){
     for(const p of roster)assert.equal((await db.doc('players/'+p.playerId).get()).data().goldBalance,winners.includes(p.playerId)?3:1);
   }else{
     assert.equal(game.canonicalResult,undefined);assert.equal((await db.collection('processingJobs').where('matchId','==',matchId).get()).size,0);
+  }
+  // Actual AUTO original through participant occurrence: this is the same
+  // worker-uploaded, officially resolved, source-current Game above. Only
+  // AoF identities and independently attested bounds are controlled fixtures.
+  if(name==='1v1_t90-deak'&&expected==='ACCEPTED'&&concurrency===1&&!witnessMode){
+    const beforeGame=(await gr.get()).data(),beforeMatch=(await mr.get()).data();
+    assert.equal(beforeGame.status,'COMPLETED');
+    assert.equal(beforeMatch.status,'COMPLETED');
+    assert.equal(currentOfficialGameOutcome(beforeGame,beforeMatch).qualification,'OFFICIAL');
+    const originalResult=JSON.stringify(beforeGame.canonicalResult);
+    const originalPoints=(await db.collection('leaguePointLedger').where('matchId','==',matchId).get()).size;
+    // The real upload flow has already created source/result. A controlled
+    // approved plan supplies the preexisting MAIN admission requirement;
+    // it does not fabricate a winner, READY source, receipt or Game.
+    const planId='controlled-occurrence-main-plan';
+    await db.doc('events/'+eventId).update({approvedMatchPlanId:planId,matchPlanStatus:'APPROVED'});
+    await db.doc('events/'+eventId+'/matchPlans/'+planId).set({
+      status:'APPROVED',officialMatchIds:[matchId],matches:[{}]});
+    await mr.update({sourceMatchPlanId:planId,matchNumber:1});
+    const status=await readMyBattleOccurrence({actor,request:{battleId:matchId}});
+    assert.equal(status.status,'PENDING');
+    assert.deepEqual(status.gameIds,[gameId]);
+    assert.equal(status.games[0].receiptUpperBoundAtMs,source.uploadedAt.toMillis(),
+      'the normal AUTO READY receipt must be present in the authenticated getter');
+    const upper=status.games[0].receiptUpperBoundAtMs;
+    const window=[{gameId,notBeforeMs:upper-600000,notAfterMs:upper-120000}];
+    const record={battleId:matchId,expectedSourceBinding:status.expectedSourceBinding,bounds:window};
+    await assert.rejects(attestBattleOccurrence({actor,request:{...record,bounds:[
+      {gameId,notBeforeMs:upper-600000,notAfterMs:upper+1000}]}}),
+      e=>e.code==='invalid-argument','a post-receipt Game finish is impossible');
+    assert.equal((await mr.collection('occurrence').doc('current').get()).exists,false);
+    assert.equal((await attestBattleOccurrence({actor,request:record})).status,'PENDING');
+    const otherActor={playerId:roster[1].playerId,authUid:roster[1].playerId,role:'PLAYER'};
+    const opposite=await readMyBattleOccurrence({actor:otherActor,request:{battleId:matchId}});
+    assert.deepEqual(opposite.opponentProposalBounds,window,
+      'the other authenticated opponent can accept the exact first proposal');
+    assert.equal(opposite.expectedSourceBinding,status.expectedSourceBinding);
+    assert.equal((await attestBattleOccurrence({actor:otherActor,request:record})).status,'APPROVED');
+    const historyEnv={...process.env,AOF_INT_V1_PRIVATE_READS:'source-v1',
+      AOF_INT_V1_PRIVATE_HISTORY:'battle-v1'};
+    const history=await collectMyCurrentBattleHistory({db,bucket,actor,
+      request:{},env:historyEnv,includeScheduleOrder:true});
+    const occurrence=history.occurrenceBattles.find(b=>b.battleId===matchId);
+    assert.ok(occurrence);
+    assert.ok(verifiedOccurrence(occurrence),
+      'authenticated collector must bind the same current original+official Game to approved actual play');
+    await history.revalidate();
+    assert.equal(JSON.stringify((await gr.get()).data().canonicalResult),originalResult);
+    assert.equal((await db.collection('leaguePointLedger').where('matchId','==',matchId).get()).size,originalPoints,
+      'optional historical ordering never mutates existing official points');
   }
   // Actual retained original/ordinary upload and current canonical authority;
   // the AoF roster remains the existing controlled mapping. Do not seed a
