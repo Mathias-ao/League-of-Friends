@@ -42,10 +42,15 @@ async function currentBattle(tx:any,battleId:string):Promise<OccurrenceBattle>{
    if(doc?.state!=='READY'||doc?.matchId!==battleId||doc?.gameId!==row.id||
      doc?.sourceHash!==game.activeReplayStatisticsId||doc?.originalRecording?.sha256!==doc.sourceHash||
      !hash(doc?.statistics?.sha256)||!hash(doc?.recordedEvents?.sha256)||
+     !hash(doc?.processorRevision)||
+     ![doc?.originalRecording?.generation,doc?.statistics?.generation,
+       doc?.recordedEvents?.generation].every(v=>/^[0-9]+$/.test(String(v??'')))||
+     !Number.isSafeInteger(game.replayStatisticsRevision)||game.replayStatisticsRevision<1||
      !id(guid)||!Array.isArray(mapping)||!Array.isArray(roster)||
      mapping.length!==roster.length||
      new Set(mapping.map((p:Bag)=>p.playerId)).size!==mapping.length||
      new Set(mapping.map((p:Bag)=>p.replaySlot)).size!==mapping.length||
+     mapping.some((p:Bag)=>!Number.isSafeInteger(p.replaySlot)||p.replaySlot<1||p.replaySlot>8)||
      !same([...mapping.map((p:Bag)=>p.playerId)].sort(),[...roster].sort()))
        throw wrong();
    const claim=(await tx.get(db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')))).data();
