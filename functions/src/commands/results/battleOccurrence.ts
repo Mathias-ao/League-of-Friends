@@ -7,6 +7,7 @@ import {Timestamp} from 'firebase-admin/firestore';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {db} from '../../config/firebase.js';
 import {callableOptions} from '../../config/runtime.js';
+import {isolatedStagingProject} from '../../config/stagingProject.js';
 import {requireLeaguePlayer,requireAdmin} from '../../auth/authorization.js';
 import {bindingDigest} from '../../engines/nativeRecordingIntegration.js';
 import {BATTLE_OCCURRENCE_VERSION,canonicalOccurrenceGames,occurrenceSourceBinding,
@@ -19,6 +20,11 @@ const wrong=()=>new HttpsError('failed-precondition','Battle, source, result or 
 type Actor={playerId:string;authUid:string;role:string};
 type Request={battleId:string;expectedSourceBinding:string;bounds:GameBounds[];reason?:string;precedes?:ReviewedPrecedence[]};
 const same=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
+/** No new cloud selector/runtime is authorized by this source change. */
+export function assertBattleOccurrenceEnabled(env:NodeJS.ProcessEnv){
+ if(env.AOF_BATTLE_OCCURRENCE_V1!=='source-v1'||!isolatedStagingProject(env,false))
+  throw new HttpsError('failed-precondition','Battle occurrence confirmation is not enabled.');
+}
 
 /** Transaction-only source check. Reading the current GUID claim prevents an
  * otherwise plausible but remapped or withdrawn original from authorizing time. */
@@ -248,14 +254,17 @@ export async function readMyBattleOccurrence(input:{actor:Actor;request:{battleI
  });
 }
 export const getMyBattleOccurrence=onCall(callableOptions,async request=>{
+ assertBattleOccurrenceEnabled(process.env);
  const actor=await requireLeaguePlayer(request);
  return readMyBattleOccurrence({actor,request:request.data});
 });
 export const confirmBattleOccurrence=onCall(callableOptions,async request=>{
+ assertBattleOccurrenceEnabled(process.env);
  const actor=await requireLeaguePlayer(request);
  return attestBattleOccurrence({actor,request:request.data});
 });
 export const adminReviewBattleOccurrence=onCall(callableOptions,async request=>{
+ assertBattleOccurrenceEnabled(process.env);
  const actor=await requireAdmin(request);
  return reviewBattleOccurrence({actor,request:request.data});
 });
