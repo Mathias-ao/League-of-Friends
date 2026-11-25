@@ -108,7 +108,7 @@ export {getMyHostedSocialProgression} from './queries/getMyHostedSocialProgressi
 
 // Source-only #277: exact-EU, separately default-OFF Battle chronology
 // reader/confirmation. No Function is selected for D by this export.
-export {getMyBattleOccurrence,confirmBattleOccurrence,adminReviewBattleOccurrence}
+export {getMyBattleOccurrence,confirmBattleOccurrence,adminReviewBattleOccurrence,adminGetBattleOccurrenceReview}
   from './commands/results/battleOccurrence.js';
 
 // #169: emulator-only authenticated optional Chronicle interactions; production disabled.
