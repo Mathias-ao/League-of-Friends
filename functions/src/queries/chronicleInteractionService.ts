@@ -39,6 +39,10 @@ const CHOICES:Record<JudgmentFamily,readonly string[]>={
 type Bag=Record<string,any>;
 type Actor={playerId:string;authUid:string;role?:string};
 type Input={db:any;bucket:any;actor:Actor;env:NodeJS.ProcessEnv};
+type ChronicleItem={battleId:string;battle:CurrentChronicleBattle;candidates:ReviewedTurningPoint[];
+  match:Bag;orderTuple:[number,number]|null;scheduleRevisions:Array<{gameId:string;revision:string}>;
+  occurrenceToken:string|null;hostedLossRevision:string|null;
+  ref:any;reviewSnapshots:any[];sources:any[]};
 const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(v);
 const fail=(message:string)=>new HttpsError('failed-precondition',message);
 const stale=()=>new HttpsError('aborted','Chronicle source, authority, membership or invitation revision changed.');
@@ -134,10 +138,7 @@ async function cohort(input:Input,mode:ChronicleMode='emulator'){
   const hostedPending=mode==='hosted'?
     collected.pending.filter(p=>seasonBattleIds.has(p.battleId)):[];
   const hostedLosses=mode==='hosted'?qualifyThreeBattleLosses(seasonBattles,input.actor.playerId):[];
-  const items:Array<{battleId:string;battle:CurrentChronicleBattle;candidates:ReviewedTurningPoint[];
-    match:Bag;orderTuple:[number,number]|null;scheduleRevisions:Array<{gameId:string;revision:string}>;
-    occurrenceToken:string|null;hostedLossRevision:string|null;
-    ref:any;reviewSnapshots:any[];sources:any[]}> = [];
+  const items:ChronicleItem[]=[];
   for(const b of collected.battles){
     if(mode==='hosted'&&!seasonBattleIds.has(b.battleId))continue;
     const ref=input.db.doc('matches/'+b.battleId),snapshot=await ref.get(),match=snapshot.data();
@@ -184,9 +185,9 @@ async function cohort(input:Input,mode:ChronicleMode='emulator'){
       hostedLossRevision,ref,reviewSnapshots:reviews.docs,
       candidates,sources:b.sources});
   }
-  const hostedCandidateIds=mode==='hosted'?
+  const hostedCandidateIds:string[]=mode==='hosted'?
     items.filter(x=>!!select(x,input.actor.playerId,mode,hostedPolicy)).map(x=>x.battleId):[];
-  const hostedEligible=mode==='hosted'?
+  const hostedEligible:string[]|null=mode==='hosted'?
     orderedHostedSkillBattles(seasonBattles,input.actor.playerId,hostedCandidateIds):null;
   if(mode==='hosted'&&hostedEligible)for(const item of items){
     const index=hostedEligible.indexOf(item.battleId);
@@ -204,7 +205,7 @@ const testPolicy=():ApprovedRareSelectionPolicy=>({
   qualifiedMethods:TEST_METHODS,familyOrder:FAMILY_ORDER,
   fatiguedPlayerIds:[],blockedPairKeys:[],
 });
-const select=(item:Awaited<ReturnType<typeof cohort>>['items'][number],actorId:string,
+const select=(item:ChronicleItem,actorId:string,
  mode:ChronicleMode='emulator',hostedPolicy:HostedSkillPolicy|null=null)=>
  !item.battle.chronologyQualified?null:selectRareChronicleProposals({battle:item.battle,candidates:item.candidates,
    policy:mode==='hosted'?hostedPolicy?.selection??null:testPolicy(),existingSlots:[]})
