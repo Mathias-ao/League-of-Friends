@@ -49,15 +49,27 @@ function setup(){
  }});
  return records;
 }
+const currentBinding=records=>{
+ const b={battleId:id,match:records.get('matches/'+id),event:records.get('events/event'),
+  planId:null,plan:null,games:[{gameId,game:records.get('matches/'+id+'/games/'+gameId),
+   source:{sourceHash,gameGuid:guid,mappingDigest:bindingDigest(source.playerMapping),
+    provenanceDigest:bindingDigest([sourceHash,1,
+      [{kind:'STATISTICS',digest:source.statistics.sha256,generation:'7'},
+       {kind:'RECORDED_EVENTS',digest:source.recordedEvents.sha256,generation:'7'},
+       {kind:'ORIGINAL',digest:sourceHash,generation:'7'}],source.processorRevision]),
+    publicationAtMs:100000}}]};
+ return occurrenceSourceBinding(b);
+};
 test('opposing ACTIVE confirmations approve once; stale source correction retracts without affecting result',async()=>{
  const records=setup();
- const first=await attestBattleOccurrence({actor:A,request:{battleId:id,bounds}});
+ const expectedSourceBinding=currentBinding(records);
+ const first=await attestBattleOccurrence({actor:A,request:{battleId:id,bounds,expectedSourceBinding}});
  assert.equal(first.status,'PENDING');
- const second=await attestBattleOccurrence({actor:B,request:{battleId:id,bounds}});
+ const second=await attestBattleOccurrence({actor:B,request:{battleId:id,bounds,expectedSourceBinding}});
  assert.equal(second.status,'APPROVED');
  const current=records.get('matches/'+id+'/occurrence/current');
  assert.equal(current.proof.kind,'MUTUAL_PARTICIPANTS');
- const idempotent=await attestBattleOccurrence({actor:B,request:{battleId:id,bounds}});
+ const idempotent=await attestBattleOccurrence({actor:B,request:{battleId:id,bounds,expectedSourceBinding}});
  assert.equal(idempotent.idempotent,true);
  assert.equal(records.get('matches/'+id+'/occurrenceRevisions/R2').status,'APPROVED');
  assert.equal(records.has('matches/'+id+'/occurrenceRevisions/R3'),false);
@@ -77,11 +89,12 @@ test('opposing ACTIVE confirmations approve once; stale source correction retrac
 });
 test('foreign, inactive and raw source-injection attestations fail without occurrence writes',async()=>{
  const records=setup();
- await assert.rejects(attestBattleOccurrence({actor:actor('outsider','uid-outside'),request:{battleId:id,bounds}}));
+ const expectedSourceBinding=currentBinding(records);
+ await assert.rejects(attestBattleOccurrence({actor:actor('outsider','uid-outside'),request:{battleId:id,bounds,expectedSourceBinding}}));
  await assert.rejects(attestBattleOccurrence({actor:A,request:{
-  battleId:id,bounds,expectedSourceBinding:'0'.repeat(64)}}),e=>e.code==='invalid-argument');
+  battleId:id,bounds,expectedSourceBinding:'0'.repeat(64)}}),e=>e.code==='failed-precondition');
  records.get('players/B').membershipStatus='SUSPENDED';
- await assert.rejects(attestBattleOccurrence({actor:B,request:{battleId:id,bounds}}),e=>e.code==='permission-denied');
+ await assert.rejects(attestBattleOccurrence({actor:B,request:{battleId:id,bounds,expectedSourceBinding}}),e=>e.code==='permission-denied');
  assert.equal(records.has('matches/'+id+'/occurrence/current'),false);
 });
 test('source-current independent admin evidence approval/revoke uses explicit revision and blocks player override',async()=>{
@@ -96,7 +109,7 @@ test('source-current independent admin evidence approval/revoke uses explicit re
   evidenceRefs:['review-evidence-claim-A','review-evidence-claim-B'],expectedRevision:null};
  const first=await reviewBattleOccurrence({actor:ADMIN,request:{...base,action:'APPROVE'}});
  assert.equal(first.status,'APPROVED');assert.equal(first.revision,1);
- await assert.rejects(attestBattleOccurrence({actor:A,request:{battleId:id,bounds}}));
+ await assert.rejects(attestBattleOccurrence({actor:A,request:{battleId:id,bounds,expectedSourceBinding:sourceBinding}}));
  await assert.rejects(reviewBattleOccurrence({actor:ADMIN,request:{...base,action:'REVOKE'}}));
  const revoked=await reviewBattleOccurrence({actor:ADMIN,request:{...base,expectedRevision:1,action:'REVOKE'}});
  assert.equal(revoked.status,'REVOKED');
