@@ -17,7 +17,7 @@ const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.
 const hash=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const wrong=()=>new HttpsError('failed-precondition','Battle, source, result or chronology authority changed.');
 type Actor={playerId:string;authUid:string;role:string};
-type Request={battleId:string;expectedSourceBinding?:string;bounds:GameBounds[];reason?:string;precedes?:ReviewedPrecedence[]};
+type Request={battleId:string;expectedSourceBinding:string;bounds:GameBounds[];reason?:string;precedes?:ReviewedPrecedence[]};
 const millis=(value:any)=>{try{const n=value?.toMillis?.();return Number.isSafeInteger(n)&&n>0?n:null;}catch{return null;}};
 const same=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
 
@@ -73,6 +73,7 @@ function validatedBounds(b:OccurrenceBattle,raw:unknown):GameBounds[]{
   if(x.gameId!==games[i].gameId||!Number.isSafeInteger(x.notBeforeMs)||
     !Number.isSafeInteger(x.notAfterMs)||x.notBeforeMs<1||x.notAfterMs<=x.notBeforeMs||
     x.notAfterMs-x.notBeforeMs>14*86400000||
+    x.notAfterMs>Date.now()||
     source.publicationAtMs!==null&&x.notAfterMs>source.publicationAtMs||
     i>0&&found[i-1].notAfterMs>=x.notBeforeMs)
       throw new HttpsError('invalid-argument','Proposed Game windows are not source-bound, ordered and bounded.');
@@ -99,15 +100,17 @@ async function verifyActor(tx:any,actor:Actor){
 }
 export async function attestBattleOccurrence(input:{actor:Actor;request:Request}){
  const {actor,request:r}=input;
- if(!id(r?.battleId)||r.expectedSourceBinding!==undefined||r.precedes!==undefined||r.reason!==undefined)
-  throw new HttpsError('invalid-argument','Only a canonical Battle and bounded Game windows may be submitted.');
+ if(!id(r?.battleId)||!hash(r.expectedSourceBinding)||r.precedes!==undefined||r.reason!==undefined)
+  throw new HttpsError('invalid-argument','Only a canonical Battle, opaque current binding and bounded Game windows may be submitted.');
  return db.runTransaction(async tx=>{
   await verifyActor(tx,actor);
   const b=await currentBattle(tx,r.battleId),mr=db.doc('matches/'+r.battleId);
   if(!b.match.participants.some((p:Bag)=>p.playerId===actor.playerId))throw new HttpsError('permission-denied','Only a Battle participant may attest its occurrence.');
-  // Source identity is selected and bound INSIDE the transaction, not by
-  // a client's replay hash or a raw source pointer sent to the browser.
+  // Client echoes only an opaque, owner-authorized current revision digest,
+  // never a raw replay hash/path. This rejects an old participant play-window
+  // assertion after the authoritative Game/source/result was replaced.
   const binding=occurrenceSourceBinding(b)!;
+  if(binding!==r.expectedSourceBinding)throw wrong();
   const bounds=validatedBounds(b,r.bounds);
   const attestationsRef=mr.collection('occurrenceAttestations');
   const attestations=await tx.get(attestationsRef);
