@@ -199,3 +199,44 @@ test('source-current independent admin evidence approval/revoke uses explicit re
   request:{battleId:id,bounds,expectedSourceBinding:sourceBinding}}),
   e=>e.code==='failed-precondition','participant agreement cannot defeat admin revocation');
 });
+
+
+test('Sol 6060246964: identical Pending retries recover after opponent AuthLink restoration',async()=>{
+ const records=setup(),expectedSourceBinding=currentBinding(records);
+ assert.equal((await attestBattleOccurrence({actor:A,request:{battleId:id,bounds,expectedSourceBinding}})).status,'PENDING');
+ records.delete('authLinks/uid-a');
+ assert.equal((await attestBattleOccurrence({actor:B,request:{battleId:id,bounds,expectedSourceBinding}})).status,'PENDING');
+ records.set('authLinks/uid-a',{playerId:'A'});
+ const recovered=await attestBattleOccurrence({actor:A,request:{battleId:id,bounds,expectedSourceBinding}});
+ assert.equal(recovered.status,'APPROVED','an identical replayed window must revalidate both witnesses');
+ assert.equal(records.get('matches/'+id+'/occurrence/current').proof.kind,'MUTUAL_PARTICIPANTS');
+ const revision=records.get('matches/'+id+'/occurrence/current').revision;
+ const unchanged=await attestBattleOccurrence({actor:B,request:{battleId:id,bounds,expectedSourceBinding}});
+ assert.equal(unchanged.idempotent,true,'an unchanged approved window remains a true no-op');
+ assert.equal(records.get('matches/'+id+'/occurrence/current').revision,revision);
+});
+test('Sol 6060246964: a new valid UID for same canonical player can reconfirm identical source windows',async()=>{
+ const records=setup(),expectedSourceBinding=currentBinding(records);
+ assert.equal((await attestBattleOccurrence({actor:A,request:{battleId:id,bounds,expectedSourceBinding}})).status,'PENDING');
+ records.delete('authLinks/uid-a');records.set('authLinks/uid-a-new',{playerId:'A'});
+ assert.equal((await attestBattleOccurrence({actor:B,request:{battleId:id,bounds,expectedSourceBinding}})).status,'PENDING');
+ const changed=await attestBattleOccurrence({actor:actor('A','uid-a-new'),request:{battleId:id,bounds,expectedSourceBinding}});
+ assert.equal(changed.status,'APPROVED');
+ assert.deepEqual(records.get('matches/'+id+'/occurrence/current').proof.witnessUids,
+  ['uid-a-new','uid-b']);
+});
+test('Sol 6060246964: uninvolved ACTIVE ADMIN obtains current CAS binding without a player relay',async()=>{
+ const records=setup();
+ const read=await import('../lib/commands/results/battleOccurrence.js');
+ const current=await read.readBattleOccurrenceForAdminReview({actor:ADMIN,request:{battleId:id}});
+ assert.equal(current.expectedSourceBinding,currentBinding(records));
+ assert.equal(current.revision,null);
+ assert.deepEqual(current.gameIds,[gameId]);
+ await assert.rejects(read.readBattleOccurrenceForAdminReview({actor:A,request:{battleId:id}}),
+  e=>e.code==='permission-denied');
+ records.get('matches/'+id+'/games/'+gameId).canonicalResult.revision++;
+ await assert.rejects(reviewBattleOccurrence({actor:ADMIN,request:{
+  battleId:id,expectedSourceBinding:current.expectedSourceBinding,expectedRevision:current.revision,
+  bounds,action:'APPROVE',reason:' independently reviewed dated play evidence from original sources',
+  evidenceRefs:['recording-source-proof-A']}}),e=>e.code==='failed-precondition');
+});
