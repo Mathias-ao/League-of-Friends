@@ -100,7 +100,8 @@ export function occurrenceSourceBinding(b:OccurrenceBattle):string|null{
   sorted(b.match.participants.map((p:Bag)=>p.playerId)),b.match.canonicalResult??null,
   b.planId,b.event?.approvedMatchPlanId??null,
   needed.map(g=>[g.gameId,g.game.gameNumber,g.game.canonicalResult,g.game.players,
-    g.source!.sourceHash,g.source!.gameGuid,g.source!.mappingDigest,g.source!.provenanceDigest])]);
+    g.source!.sourceHash,g.source!.gameGuid,g.source!.mappingDigest,g.source!.provenanceDigest,
+    g.source!.publicationAtMs])]);
 }
 /** Presence, approval and binding all fail closed. A receipt is only an upper bound;
  * the stored lower bound must have been independently attested/reviewed. */
