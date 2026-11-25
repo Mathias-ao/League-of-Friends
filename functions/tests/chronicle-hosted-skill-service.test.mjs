@@ -15,7 +15,7 @@ import {occurrenceSourceBinding,qualifyThreeBattleLosses,BATTLE_OCCURRENCE_VERSI
   sourceBoundReadyReceiptMillis} from '../lib/integration/battleOccurrence.js';
 import {HOSTED_SKILL_METHOD,HOSTED_SKILL_POLICY_VERSION} from '../lib/engines/chronicleHostedSkill.js';
 import {offerChronicleInvitation,actOnChronicleInvitation,
- getMyChronicleInvitations} from '../lib/queries/chronicleInteractionService.js';
+ getMyChronicleInvitations,adminReviewChronicleCorrection} from '../lib/queries/chronicleInteractionService.js';
 
 const policy={version:HOSTED_SKILL_POLICY_VERSION,projectId:'age-of-friends-staging-eu',
   region:'europe-west1',status:'APPROVED',ownerApproved:true,approvalRef:'approved-skill-v1',
@@ -32,7 +32,7 @@ const plainClone=v=>Array.isArray(v)?v.map(plainClone):v&&typeof v==='object'?
     Object.fromEntries(Object.entries(v).map(([k,x])=>[k,plainClone(x)])):v;
 const auth=(uid,data)=>({auth:{uid},data});
 
-async function setup(){
+async function setup({earlySecond=false}={}){
  const initial=fixture();await initial.run();
  const base=initial.rows.get(initial.sourcePath);
  assert.equal(base.state,'READY');
@@ -54,9 +54,9 @@ async function setup(){
  records.set('events/e',event);
  const battles=[];
  for(let i=1;i<=7;i++){
-  const battleId='b'+i,opponent=i<=4?'p1':'p3';
+  const battleId='b'+i,opponent=i<=3?'p1':i===4&&!earlySecond?'p1':'p3';
   const roster=[{playerId:opponent,team:1},{playerId:'p2',team:2}];
-  const win=i===4?'p2':opponent;
+  const win=i===4&&!earlySecond?'p2':opponent;
   const match={status:'COMPLETED',format:'ONE_V_ONE',opponentKind:'HUMAN',
     participants:roster,seasonId:'s',eventId:'e',matchNumber:0,
     scoringSnapshot:{rules:{act:'WARMUP'}},seriesRule:{maxGames:1,gamesRequiredToWin:1}};
@@ -114,7 +114,7 @@ async function setup(){
   battles.push(occurrenceBattle);
  }
  const proofs=qualifyThreeBattleLosses(battles,'p2');
- assert.deepEqual(proofs.map(p=>p.anchorBattleId),['b3','b7']);
+ assert.deepEqual(proofs.map(p=>p.anchorBattleId),['b3',earlySecond?'b6':'b7']);
  for(const proof of proofs){
   const b=battles.find(x=>x.battleId===proof.anchorBattleId),incidentId='review-'+b.battleId;
   records.set('matches/'+b.battleId+'/chronicleRareReviewedMoments/'+incidentId,{
@@ -171,7 +171,7 @@ async function setup(){
   restore:()=>{for(const [k,v] of Object.entries(prior))if(v===undefined)delete process.env[k];else process.env[k]=v;}};
 }
 
-test('SERVICE RED: after b3, routine b4/b5/b6 advance eligible fatigue and b7 is offerable',async()=>{
+test('SERVICE: after b3, routine b4/b5/b6 advance eligible fatigue and b7 is offerable',async()=>{
  const f=await setup();
  try{
   const first=await f.offer();assert.equal(first.offered,true);
@@ -181,7 +181,7 @@ test('SERVICE RED: after b3, routine b4/b5/b6 advance eligible fatigue and b7 is
   assert.equal(second.invitation.battleId,'b7');
  }finally{f.restore();}
 });
-test('SERVICE RED: policy revoked after approval before guard capture aborts offer and marker',async()=>{
+test('SERVICE: policy revoked after approval before guard capture aborts offer and marker',async()=>{
  const f=await setup();
  try{
   f.trigger('runtimePolicies/chroniclePrivateSkillV1',2,rows=>{
@@ -192,7 +192,7 @@ test('SERVICE RED: policy revoked after approval before guard capture aborts off
   assert.equal(f.rows.has('players/p2/chronicleRareControls/v1'),false);
  }finally{f.restore();}
 });
-test('SERVICE RED: policy revoked between response qualification and capture aborts confirmation',async()=>{
+test('SERVICE: policy revoked between response qualification and capture aborts confirmation',async()=>{
  const f=await setup();
  try{
   const offer=await f.offer();assert.equal(offer.offered,true);
@@ -200,10 +200,12 @@ test('SERVICE RED: policy revoked between response qualification and capture abo
     rows.set('runtimePolicies/chroniclePrivateSkillV1',{...policy,status:'REVOKED'});
   });
   await assert.rejects(f.submit(offer.invitation));
-  assert.equal((await getMyChronicleInvitations.run(auth('owner',{}))).invitations.length>=0,true);
+  const slot=[...f.rows.entries()].find(([key])=>
+    key.startsWith('matches/b3/socialV1InvitationSlots/')&&key.split('/').length===4);
+  assert.ok(slot);assert.equal(slot[1].state,'OFFERED','rejected response never consumes a private statement');
  }finally{f.restore();}
 });
-test('SERVICE RED: active Season changes between guard reads and aborts old-Season offer',async()=>{
+test('SERVICE: active Season changes between guard reads and aborts old-Season offer',async()=>{
  const f=await setup();
  try{
   f.trigger('leagueState/singleton',3,rows=>{
@@ -213,7 +215,7 @@ test('SERVICE RED: active Season changes between guard reads and aborts old-Seas
   assert.equal(f.rows.has('players/p2/chronicleRareControls/v1'),false);
  }finally{f.restore();}
 });
-test('SERVICE RED: active Season changes between response guard reads and aborts confirmation',async()=>{
+test('SERVICE: active Season changes between response guard reads and aborts confirmation',async()=>{
  const f=await setup();
  try{
   const offer=await f.offer();assert.equal(offer.offered,true);
@@ -221,5 +223,77 @@ test('SERVICE RED: active Season changes between response guard reads and aborts
     rows.set('leagueState/singleton',{activeSeasonId:'new-season'});
   });
   await assert.rejects(f.submit(offer.invitation));
+  const slot=[...f.rows.entries()].find(([key])=>
+    key.startsWith('matches/b3/socialV1InvitationSlots/')&&key.split('/').length===4);
+  assert.ok(slot);assert.equal(slot[1].state,'OFFERED');
+ }finally{f.restore();}
+});
+
+test('SERVICE: third eligible Battle after prior offer cannot pass rarity even when independently reviewed',async()=>{
+ const f=await setup({earlySecond:true});
+ try{
+  const first=await f.offer();assert.equal(first.offered,true);
+  assert.equal(first.invitation.battleId,'b3');
+  const second=await f.offer();
+  assert.equal(second.offered,false,'b6 is only third independent Battle after b3');
+  assert.equal(f.rows.get('players/p2/chronicleRareControls/v1').lastOfferedBattleId,'b3');
+ }finally{f.restore();}
+});
+test('SERVICE: incomplete historical occurrence and unresolved prior-Season fatigue do not create new slots',async()=>{
+ const f=await setup();
+ try{
+  f.rows.delete('matches/b4/occurrence/current');
+  const uncertain=await f.offer();
+  assert.equal(uncertain.offered,false);
+  assert.equal(f.rows.has('players/p2/chronicleRareControls/v1'),false);
+ }finally{f.restore();}
+ const g=await setup();
+ try{
+  g.rows.set('players/p2/chronicleRareControls/v1',{lastOfferedBattleId:'old-season-battle'});
+  const stopped=await g.offer();
+  assert.equal(stopped.offered,false);
+  assert.equal(stopped.reason,'COOLDOWN_HISTORY_CHANGED');
+  assert.equal([...g.rows.keys()].some(k=>k.includes('socialV1InvitationSlots')),false);
+ }finally{g.restore();}
+});
+test('SERVICE: replaced still-APPROVED policy cannot supplant the original policy pin',async()=>{
+ const f=await setup();
+ try{
+  f.trigger('runtimePolicies/chroniclePrivateSkillV1',2,rows=>{
+   rows.set('runtimePolicies/chroniclePrivateSkillV1',{...policy,approvalRef:'new-approval'});
+  });
+  await assert.rejects(f.offer());
+  assert.equal(f.rows.has('players/p2/chronicleRareControls/v1'),false);
+ }finally{f.restore();}
+});
+test('SERVICE: unchanged policy and Season allow explicit owner submission, private reading and impartial correction',async()=>{
+ const f=await setup();
+ try{
+  const offer=await f.offer();assert.equal(offer.offered,true);
+  await assert.rejects(actOnChronicleInvitation.run(auth('owner',{
+    battleId:'b3',requestId:'no-confirm',expectedRevision:1,
+    opportunityRevision:offer.invitation.opportunityRevision,
+    action:'SUBMIT',choiceId:'ACKNOWLEDGED_SKILL'})));
+  const saved=await f.submit(offer.invitation);
+  assert.equal(saved.state,'SUBMITTED');assert.equal(saved.revision,2);
+  const owner=await getMyChronicleInvitations.run(auth('owner',{}));
+  assert.equal(owner.invitations.length,1);assert.equal(owner.invitations[0].speaker.authorPlayerId,'p2');
+  assert.equal((await getMyChronicleInvitations.run(auth('other',{}))).invitations.length,0);
+  assert.deepEqual(owner.officialEffects,[]);
+  const requested=await actOnChronicleInvitation.run(auth('owner',{
+    battleId:'b3',requestId:'request-correction',expectedRevision:2,
+    opportunityRevision:offer.invitation.opportunityRevision,action:'CORRECTION_REQUEST',
+    reason:'I want to correct my earlier private answer.'}));
+  assert.equal(requested.revision,3);
+  const review=await adminReviewChronicleCorrection.run(auth('admin-uid',{
+    battleId:'b3',respondentPlayerId:'p2',requestId:'admin-correction',
+    expectedRevision:3,decision:'APPROVE',reason:'Author private correction approved.'}));
+  assert.equal(review.revision,4);
+  const rebound=await actOnChronicleInvitation.run(auth('owner',{
+    battleId:'b3',requestId:'confirmed-correction',expectedRevision:4,
+    opportunityRevision:offer.invitation.opportunityRevision,
+    action:'CORRECT',choiceId:'DO_NOT_ACKNOWLEDGE',confirmed:true}));
+  assert.equal(rebound.state,'SUBMITTED');assert.equal(rebound.revision,5);
+  assert.equal((await f.offer()).offered,false,'used first-third slot never becomes available again');
  }finally{f.restore();}
 });
