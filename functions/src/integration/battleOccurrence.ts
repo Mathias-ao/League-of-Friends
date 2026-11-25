@@ -23,6 +23,28 @@ const id=(v:any):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test
 const ms=(v:any)=>Number.isSafeInteger(v)&&v>0;
 const sorted=(a:string[])=>[...a].sort();
 const equal=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
+/** Only a trusted immutable READY source's own server-created receipt
+ * qualifies as an upper bound for play. Ordinary AUTO writes uploadedAt on
+ * the READY source; reviewed native publication writes publication.publishedAt.
+ * Candidate/journal timestamps, result times and raw replay headers are never
+ * substituted. Missing or unrecognised receipts remain null. */
+export function sourceBoundReadyReceiptMillis(source:Bag|null|undefined,
+ matchId:string,gameId:string,sourceHash:string):number|null{
+ if(source?.state!=='READY'||source.matchId!==matchId||
+    source.gameId!==gameId||source.sourceHash!==sourceHash||
+    !/^[a-f0-9]{64}$/.test(sourceHash))return null;
+ const trusted=(value:any):number|null=>{
+  try{const n=value?.toMillis?.();return Number.isSafeInteger(n)&&n>0?n:null;}
+  catch{return null;}
+ };
+ const ordinary=source.ordinaryUploadVersion==='AOF_NATIVE_PLAYER_UPLOAD_V1'
+   ?trusted(source.uploadedAt):null;
+ const reviewed=source.publication?.version&&source.publication?.publicationId
+   ?trusted(source.publication.publishedAt):null;
+ const known=[ordinary,reviewed].filter((n):n is number=>n!==null);
+ return known.length?Math.min(...known):null;
+}
+
 const list=(v:any)=>Array.isArray(v)&&v.every(id)&&new Set(v).size===v.length;
 export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|null{
  const m=b.match,e=b.event;
@@ -93,6 +115,7 @@ export function verifiedOccurrence(b:OccurrenceBattle):VerifiedOccurrence|null{
  for(let i=0;i<needed.length;i++){
   const g=needed[i],p=o.bounds[i];
   if(p?.gameId!==g.gameId||!ms(p.notBeforeMs)||!ms(p.notAfterMs)||p.notBeforeMs>=p.notAfterMs||
+    (o.proof.kind==='MUTUAL_PARTICIPANTS'&&g.source!.publicationAtMs===null)||
     g.source!.publicationAtMs!==null&&ms(g.source!.publicationAtMs)&&p.notAfterMs>g.source!.publicationAtMs!)return null;
   if(i&&bounds[i-1].notAfterMs>=p.notBeforeMs)return null;
   bounds.push({gameId:g.gameId,notBeforeMs:p.notBeforeMs,notAfterMs:p.notAfterMs});
@@ -123,7 +146,6 @@ export function compareOccurrence(a:string,b:string,all:OccurrenceBattle[]):Occu
   const y=edge.battleId,target=proven.get(y);
   // A predecessor proof is never carried across a corrected/reapproved target.
   if(!target||target.binding!==edge.sourceBinding||target.revision!==edge.revision)continue;
-  if(target.endMs<proven.get(x)!.startMs)return 'CONFLICT';
   edges.get(x)!.add(y);
  }
  const reach=(from:string,to:string)=>{
