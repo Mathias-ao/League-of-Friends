@@ -240,3 +240,25 @@ test('Sol 6060246964: uninvolved ACTIVE ADMIN obtains current CAS binding withou
   bounds,action:'APPROVE',reason:' independently reviewed dated play evidence from original sources',
   evidenceRefs:['recording-source-proof-A']}}),e=>e.code==='failed-precondition');
 });
+
+
+test('opponent proposal is owner-private, current-authenticated, and reports actionable mismatches',async()=>{
+ const records=setup(),expectedSourceBinding=currentBinding(records);
+ const status=await readMyBattleOccurrence({actor:B,request:{battleId:id}});
+ assert.equal(status.opponentProposalBounds,null);
+ assert.equal(status.proposalMismatch,false);
+ await attestBattleOccurrence({actor:A,request:{battleId:id,bounds,expectedSourceBinding}});
+ const toB=await readMyBattleOccurrence({actor:B,request:{battleId:id}});
+ assert.deepEqual(toB.opponentProposalBounds,bounds);
+ assert.equal(JSON.stringify(toB).includes('uid-a'),false);
+ const changed=[{...bounds[0],notAfterMs:bounds[0].notAfterMs+1000}];
+ assert.equal((await attestBattleOccurrence({actor:B,request:{
+  battleId:id,bounds:changed,expectedSourceBinding}})).status,'PENDING');
+ const toA=await readMyBattleOccurrence({actor:A,request:{battleId:id}});
+ assert.deepEqual(toA.opponentProposalBounds,changed);
+ assert.equal(toA.proposalMismatch,true);
+ records.delete('authLinks/uid-b');
+ const invalid=await readMyBattleOccurrence({actor:A,request:{battleId:id}});
+ assert.equal(invalid.opponentProposalBounds,null,
+  'a revoked opposing account cannot disclose or propose stale play evidence');
+});
