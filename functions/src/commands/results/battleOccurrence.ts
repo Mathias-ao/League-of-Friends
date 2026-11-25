@@ -123,8 +123,8 @@ export async function attestBattleOccurrence(input:{actor:Actor;request:Request}
   checkedRevision(current);
   // A source-reviewed independent admin judgment is amended by admin review,
   // never invalidated through a participant's unilateral replacement window.
-  if(current?.status==='APPROVED'&&current.proof?.kind==='ADMIN_REVIEWED')
-    throw new HttpsError('failed-precondition','Reviewed occurrence needs independent correction review.');
+  if(current?.status==='REVOKED'||current?.status==='APPROVED'&&current.proof?.kind==='ADMIN_REVIEWED')
+    throw new HttpsError('failed-precondition','Reviewed or revoked occurrence needs independent correction review.');
   const my=attestations.docs.find((d:any)=>d.id===actor.playerId)?.data();
   if(my?.sourceBinding===binding&&same(my.bounds,bounds))return {status:current?.status??'PENDING',idempotent:true};
   const byId=new Map(attestations.docs.map((d:any)=>[d.id,d.data()]));
