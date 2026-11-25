@@ -301,6 +301,12 @@ test('hosted evaluator orders warmup + MAIN from one subject scope, not unrelate
  assert.equal(x.relationships[0].tracks.RIVALRY.outgoing.stage,1);
  assert.equal(x.relationships[0].tracks.RIVALRY.outgoing.sourceQualifiedBattles,2);
  assert.equal(x.relationships[0].tracks.RIVALRY.incoming.stage,null);
+ // Sol 6060246964 red repro: approved sidecars must not be consumed after
+ // occurrence capture/consumption is OFF; the legacy warmup stays Pending.
+ rows[0].chapter.order=null;
+ const off=project(rows,{occurrenceBattles:occurrences,actualOccurrenceEnabled:false});
+ assert.equal(off.relationships[0].tracks.RIVALRY.outgoing.stage,null,
+   'default-OFF must ignore retained actual-order sidecars');
  occurrences[1].occurrence.bounds[0]={...occurrences[1].occurrence.bounds[0],
    notBeforeMs:3500,notAfterMs:4800}; // overlapping first interval
  const blocked=project(rows,{occurrenceBattles:occurrences});
