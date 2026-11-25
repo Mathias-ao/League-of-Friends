@@ -3,6 +3,11 @@
  * Approval records are written only through the separate authenticated command.
  */
 import {bindingDigest} from '../engines/nativeRecordingIntegration.js';
+import {isolatedStagingProject} from '../config/stagingProject.js';
+/** One exact-EU, default-OFF authority for writing AND reading actual order. */
+export function battleOccurrenceEvidenceEnabled(env:NodeJS.ProcessEnv):boolean{
+ return env.AOF_BATTLE_OCCURRENCE_V1==='source-v1'&&!!isolatedStagingProject(env,false);
+}
 import {currentOfficialGameOutcome} from '../engines/recordingMatchFacts.js';
 import {battleGameManifest} from '../engines/battleGameManifest.js';
 import {resolveSeriesResult} from '../engines/seriesResult.js';
