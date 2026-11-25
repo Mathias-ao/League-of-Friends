@@ -7,11 +7,10 @@ import {Timestamp} from 'firebase-admin/firestore';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {db} from '../../config/firebase.js';
 import {callableOptions} from '../../config/runtime.js';
-import {isolatedStagingProject} from '../../config/stagingProject.js';
 import {requireLeaguePlayer,requireAdmin} from '../../auth/authorization.js';
 import {bindingDigest} from '../../engines/nativeRecordingIntegration.js';
 import {BATTLE_OCCURRENCE_VERSION,canonicalOccurrenceGames,occurrenceSourceBinding,
- verifiedOccurrence,sourceBoundReadyReceiptMillis,type OccurrenceBattle,type GameBounds,type ReviewedPrecedence} from '../../integration/battleOccurrence.js';
+ verifiedOccurrence,sourceBoundReadyReceiptMillis,battleOccurrenceEvidenceEnabled,type OccurrenceBattle,type GameBounds,type ReviewedPrecedence} from '../../integration/battleOccurrence.js';
 
 type Bag=Record<string,any>;
 const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(v);
@@ -22,7 +21,7 @@ type Request={battleId:string;expectedSourceBinding:string;bounds:GameBounds[];r
 const same=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
 /** No new cloud selector/runtime is authorized by this source change. */
 export function assertBattleOccurrenceEnabled(env:NodeJS.ProcessEnv){
- if(env.AOF_BATTLE_OCCURRENCE_V1!=='source-v1'||!isolatedStagingProject(env,false))
+ if(!battleOccurrenceEvidenceEnabled(env))
   throw new HttpsError('failed-precondition','Battle occurrence confirmation is not enabled.');
 }
 
