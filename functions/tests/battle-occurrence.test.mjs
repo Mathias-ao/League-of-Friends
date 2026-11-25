@@ -150,6 +150,9 @@ test('source revision, corrected result, replacement and raw headers never autho
  a.games[0].game.canonicalResult.revision++;
  assert.equal(verifiedOccurrence(a),null);
  approve(a,1000,2000);
+ a.games[0].source.publicationAtMs++;
+ assert.equal(verifiedOccurrence(a),null,'receipt correction retracts approval even with unchanged replay SHA');
+ approve(a,1000,2000);
  a.match.replacementMatchId='other';
  assert.equal(verifiedOccurrence(a),null);
  a.match.replacementMatchId=null;
