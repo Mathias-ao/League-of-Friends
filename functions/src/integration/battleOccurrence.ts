@@ -138,7 +138,7 @@ export function compareOccurrence(a:string,b:string,all:OccurrenceBattle[]):Occu
 /** First third distinct *official* canonical 1v1 Battle loss only, never an offer.
  * Missing source/result/relative order is not evidence of a non-loss. */
 export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPlayerId:string){
- type Loss={battleId:string;opponentPlayerId:string;sourceBinding:string;gameKeys:string[]};
+ type Loss={battleId:string;opponentPlayerId:string;sourceBinding:string;gameKeys:string[];occurrenceDigest:string};
  const losses:Loss[]=[],possible=new Map<string,Set<string>>();
  // Caller should supply a complete authenticated enumeration. Duplicate
  // Battle/GUID sources can never be counted as independent losses.
@@ -167,7 +167,8 @@ export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPl
   const occ=verifiedOccurrence(b);
   if(!occ){uncertain();continue;}
   if(winners[0]===opponent)losses.push({battleId:b.battleId,opponentPlayerId:opponent,
-    sourceBinding:binding,gameKeys:needed.map(g=>g.gameId+':'+g.source!.sourceHash+':'+g.source!.gameGuid)});
+    sourceBinding:binding,gameKeys:needed.map(g=>g.gameId+':'+g.source!.sourceHash+':'+g.source!.gameGuid),
+    occurrenceDigest:bindingDigest([occ.binding,occ.revision,occ.bounds,occ.precedes])});
  }
  const results:Array<{respondentPlayerId:string;opponentPlayerId:string;anchorBattleId:string;
   witnessBattleIds:string[];qualification:'THIRD_LOSS_SOURCE_QUALIFIED';revision:string}>=[];
@@ -188,7 +189,7 @@ export function qualifyThreeBattleLosses(battles:OccurrenceBattle[],respondentPl
   results.push({respondentPlayerId,opponentPlayerId:opponent,anchorBattleId:anchor.battleId,
     witnessBattleIds:trio.map(l=>l.battleId),qualification:'THIRD_LOSS_SOURCE_QUALIFIED',
     revision:bindingDigest([BATTLE_OCCURRENCE_VERSION,respondentPlayerId,opponent,
-      trio.map(l=>[l.battleId,l.sourceBinding,l.gameKeys])])});
+      trio.map(l=>[l.battleId,l.sourceBinding,l.gameKeys,l.occurrenceDigest])])});
  }
  return results.sort((a,b)=>a.anchorBattleId.localeCompare(b.anchorBattleId));
 }
