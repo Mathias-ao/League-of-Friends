@@ -229,6 +229,22 @@ test('three completed Games in one verified BO3 still count as only one Battle',
  a.games[1].game.activeReplayStatisticsId=sha(8);
  assert.equal(verifiedOccurrence(a),null);
 });
+test('the authenticated real READY loader and writer canonicalize the same producer/artifact proof',async()=>{
+ const f=await ready(),current=await collectMyCurrentBattleHistory({...f.input,includeScheduleOrder:true});
+ assert.equal(current.loaded.length,1);
+ const loaded=current.loaded[0];
+ const row=current.occurrenceBattles[0].games[0];
+ const source=f.rows.get('matches/m/games/g/replaySources/'+loaded.source.sourceHash);
+ const game=f.rows.get('matches/m/games/g');
+ assert.equal(loaded.producerRevision,source.processorRevision);
+ assert.equal(row.source.provenanceDigest,bindingDigest([
+  loaded.source.sourceHash,loaded.source.statisticsRevision,loaded.source.artifactRefs,loaded.producerRevision]));
+ assert.equal(row.source.provenanceDigest,bindingDigest([source.sourceHash,game.replayStatisticsRevision,
+  [{kind:'STATISTICS',digest:source.statistics.sha256,generation:String(source.statistics.generation)},
+   {kind:'RECORDED_EVENTS',digest:source.recordedEvents.sha256,generation:String(source.recordedEvents.generation)},
+   {kind:'ORIGINAL',digest:source.originalRecording.sha256,generation:String(source.originalRecording.generation)}],
+  source.processorRevision]));
+});
 test('collector fences both existing and absent occurrence records after current source read',async()=>{
  const f=await ready(),input={...f.input,includeScheduleOrder:true};
  const current=await collectMyCurrentBattleHistory(input);
