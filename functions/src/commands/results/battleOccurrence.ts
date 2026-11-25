@@ -51,6 +51,11 @@ async function currentBattle(tx:any,battleId:string):Promise<OccurrenceBattle>{
    const claim=(await tx.get(db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')))).data();
    if(claim?.matchId!==battleId||claim?.gameId!==row.id||claim?.sourceHash!==doc.sourceHash)throw wrong();
    source={sourceHash:doc.sourceHash,gameGuid:guid,mappingDigest:bindingDigest(doc.playerMapping),
+     provenanceDigest:bindingDigest([doc.sourceHash,game.replayStatisticsRevision,
+       [{kind:'STATISTICS',digest:doc.statistics.sha256,generation:String(doc.statistics.generation)},
+        {kind:'RECORDED_EVENTS',digest:doc.recordedEvents.sha256,generation:String(doc.recordedEvents.generation)},
+        {kind:'ORIGINAL',digest:doc.originalRecording.sha256,generation:String(doc.originalRecording.generation)}],
+       doc.processorRevision]),
      publicationAtMs:millis(doc.publication?.publishedAt)};
   }
   games.push({gameId:row.id,game,source});
