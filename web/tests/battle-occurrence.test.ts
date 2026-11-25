@@ -91,7 +91,7 @@ test('an in-flight private occurrence submission cannot leave the next AuthUID b
  const repo={mode:'live',currentAuthUid:()=>uid,onAuthChange:(cb:()=>void)=>{onAuth=cb;return()=>{};},
   canConfirmBattleOccurrence:()=>true,
   getMyBattleOccurrence:async()=>({...read,opponentProposalBounds:bounds}),
-  confirmBattleOccurrence:async()=>new Promise<void>(done=>{resolve=done;})} as unknown as LeagueRepository;
+  confirmBattleOccurrence:async()=>new Promise<void>(done=>{resolve=()=>done();})} as unknown as LeagueRepository;
  await act(async()=>{root.render(React.createElement(BattleOccurrenceConfirm,{repository:repo,battleId:'b1'}));});
  const find=(s:string)=>[...document.querySelectorAll('button')].find(v=>v.textContent?.includes(s));
  await act(async()=>{find("Use opponent's exact proposed window")?.click();});
