@@ -199,6 +199,32 @@ export async function reviewBattleOccurrence(input:{actor:Actor;request:Request&
   return {status:saved.status,revision:saved.revision};
  });
 }
+/** Read-only owner-specific revision needed to bind optional player testimony.
+ * Never returns source/artifact hashes, proof refs, notes or another player’s
+ * assertions. 'APPROVED' here means occurrence evidence, not global chronology. */
+export async function readMyBattleOccurrence(input:{actor:Actor;request:{battleId:string}}){
+ const {actor,request:r}=input;
+ if(!r||!id(r.battleId)||Object.keys(r).length!==1)
+  throw new HttpsError('invalid-argument','Only one canonical Battle identifier is accepted.');
+ return db.runTransaction(async tx=>{
+  await verifyActor(tx,actor);
+  const b=await currentBattle(tx,r.battleId);
+  if(!b.match.participants.some((p:Bag)=>p.playerId===actor.playerId))
+   throw new HttpsError('permission-denied','This Battle belongs to another player.');
+  const current=(await tx.get(db.doc('matches/'+r.battleId+'/occurrence/current'))).data();
+  const binding=occurrenceSourceBinding(b)!;
+  return {version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,
+   expectedSourceBinding:binding,gameIds:canonicalOccurrenceGames(b)!.map(g=>g.gameId),
+   status:current?.sourceBinding===binding&&
+     current.status==='APPROVED'&&verifiedOccurrence({...b,occurrence:current})?
+       'APPROVED' as const:'PENDING' as const,
+   revision:current?.revision??null};
+ });
+}
+export const getMyBattleOccurrence=onCall(callableOptions,async request=>{
+ const actor=await requireLeaguePlayer(request);
+ return readMyBattleOccurrence({actor,request:request.data});
+});
 export const confirmBattleOccurrence=onCall(callableOptions,async request=>{
  const actor=await requireLeaguePlayer(request);
  return attestBattleOccurrence({actor,request:request.data});
