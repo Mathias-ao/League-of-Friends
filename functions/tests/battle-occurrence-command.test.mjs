@@ -151,6 +151,36 @@ test('the second participant must still be ACTIVE and linked with a different UI
   assert.equal(records.get('matches/'+id+'/occurrence/current').status,'PENDING');
  }
 });
+test('BO3 attestation uses every canonically required Game, never the first document only',async()=>{
+ for(const sameSide of [true,false]){
+  const records=setup(),m=records.get('matches/'+id);
+  m.seriesRule={maxGames:3,gamesRequiredToWin:2};
+  m.canonicalResult={revision:1,sourceGameId:'G2',seriesGameRevisions:{G1:1,G2:1},
+    winningPlayerIds:['A']};
+  const g2Hash='f'.repeat(64),g2Guid='controlled-second-original';
+  const g2={...structuredClone(game),gameNumber:2,activeReplayStatisticsId:g2Hash,
+    players:[{playerId:'A',team:1},{playerId:'B',team:sameSide?1:2}]};
+  records.set('matches/'+id+'/games/G2',g2);
+  const second={...source,sourceHash:g2Hash,gameId:'G2',
+    originalRecording:{...source.originalRecording,sha256:g2Hash},
+    matchFacts:{game:{guid:g2Guid}}};
+  records.set('matches/'+id+'/games/G2/replaySources/'+g2Hash,second);
+  records.set('recordingGameClaims/'+Buffer.from(g2Guid).toString('hex'),
+    {matchId:id,gameId:'G2',sourceHash:g2Hash});
+  records.set('matches/'+id+'/games/G3',{gameNumber:3,status:'NO_CONTEST',
+    resolutionReason:'Series decided by G2',players:roster,
+    activeReplayStatisticsId:null,canonicalResult:null});
+  const status=await readMyBattleOccurrence({actor:A,request:{battleId:id}});
+  assert.deepEqual(status.gameIds,['G1','G2']);
+  const twoBounds=[bounds[0],{gameId:'G2',notBeforeMs:3000,notAfterMs:4000}];
+  assert.equal((await attestBattleOccurrence({actor:A,request:{battleId:id,
+    expectedSourceBinding:status.expectedSourceBinding,bounds:twoBounds}})).status,'PENDING');
+  const secondActor=await attestBattleOccurrence({actor:B,request:{battleId:id,
+    expectedSourceBinding:status.expectedSourceBinding,bounds:twoBounds}});
+  assert.equal(secondActor.status,sameSide?'PENDING':'APPROVED',
+    'a terminal unused slot is excluded; each required Game must prove opponents');
+ }
+});
 test('source-current independent admin evidence approval/revoke uses explicit revision and blocks player override',async()=>{
  const records=setup();
  const sourceBinding=currentBinding(records);assert.ok(sourceBinding);
