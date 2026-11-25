@@ -185,10 +185,11 @@ async function cohort(input:Input,mode:ChronicleMode='emulator'){
       hostedLossRevision,ref,reviewSnapshots:reviews.docs,
       candidates,sources:b.sources});
   }
-  const hostedCandidateIds:string[]=mode==='hosted'?
-    items.filter(x=>!!select(x,input.actor.playerId,mode,hostedPolicy)).map(x=>x.battleId):[];
+  // Fatigue eligibility derives from source-current canonical Battle
+  // participation BEFORE rarity selection. Ordinary wins/losses and
+  // independently eligible Battles across opponents advance cooldown.
   const hostedEligible:string[]|null=mode==='hosted'?
-    orderedHostedSkillBattles(seasonBattles,input.actor.playerId,hostedCandidateIds):null;
+    orderedHostedSkillBattles(seasonBattles,input.actor.playerId):null;
   if(mode==='hosted'&&hostedEligible)for(const item of items){
     const index=hostedEligible.indexOf(item.battleId);
     item.orderTuple=index>=0?[0,index]:null;
@@ -259,14 +260,18 @@ async function captureHostedHistoryGuard(input:Input,current:Awaited<ReturnType<
  const queries:Array<{ref:any;token:string}>=[{
    ref:matchQuery,token:currentToken(matchRows.docs.map((d:any)=>[d.id,d.data()]))}];
  const refs=new Map<string,{ref:any;token:string}>();
- const add=async(ref:any)=>{
+ const add=async(ref:any,decisionToken?:string)=>{
    if(refs.has(ref.path))return;
-   const snap=await ref.get();refs.set(ref.path,{ref,token:currentToken(snap.data()??null)});
+   const snap=await ref.get(),observedToken=currentToken(snap.data()??null);
+   // A later guard read may verify the cohort's decision-authorizing
+   // authority; it must never replace that original policy/Season token.
+   if(decisionToken!==undefined&&observedToken!==decisionToken)throw stale();
+   refs.set(ref.path,{ref,token:decisionToken??observedToken});
  };
  if(current.activeSeasonRef){
    const fresh=await current.activeSeasonRef.get();
    if(currentToken(fresh.data()??null)!==current.activeSeasonToken)throw stale();
-   await add(current.activeSeasonRef);
+   await add(current.activeSeasonRef,current.activeSeasonToken);
  }
  for(const b of current.collected.occurrenceBattles){
    const mr=input.db.doc('matches/'+b.battleId);
@@ -292,7 +297,7 @@ async function captureHostedHistoryGuard(input:Input,current:Awaited<ReturnType<
      if(id(guid))await add(input.db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')));
    }
  }
- await add(hostedPolicyRef(input));
+ await add(hostedPolicyRef(input),currentToken(current.policySnap?.data()??null));
  return {queries,refs:[...refs.values()]};
 }
 async function verifyHostedHistoryGuard(tx:any,guard:Awaited<ReturnType<typeof captureHostedHistoryGuard>>){
@@ -357,12 +362,9 @@ export async function offerMyChronicleInvitation(input:Input,r:Bag){
  if(mode==='hosted'){
    if(current.hostedPending.length||!current.hostedEligible)
      return {offered:false,reason:'SOURCE_CURRENT_TOTAL_ORDER_PENDING'};
-   // Keep the existing cooldown contract: count only independently
-   // eligible invitation-Battles, not ordinary Battles or sibling Games.
-   eligible=current.hostedEligible.filter(battleId=>{
-     const candidate=current.items.find(x=>x.battleId===battleId);
-     return !!candidate&&!!select(candidate,input.actor.playerId,mode,current.hostedPolicy);
-   });
+   // The respondent-wide eligible Battle order precedes rare review.
+   // A routine Battle consumes one cooldown position, not zero or per-Game.
+   eligible=current.hostedEligible;
    const last=markerBefore?.data()?.lastOfferedBattleId??null;
    if(last!==null&&!eligible.includes(last))
      return {offered:false,reason:'COOLDOWN_HISTORY_CHANGED'};
