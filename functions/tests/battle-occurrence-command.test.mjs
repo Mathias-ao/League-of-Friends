@@ -23,7 +23,7 @@ const source={state:'READY',matchId:id,gameId,sourceHash,originalRecording:{sha2
  recordedEvents:{sha256:'c'.repeat(64),generation:'7'},
  statistics:{sha256:'d'.repeat(64),generation:'7'},processorRevision:'e'.repeat(64),
  playerMapping:[{playerId:'A',replaySlot:1},{playerId:'B',replaySlot:2}],
- matchFacts:{game:{guid}},publication:{publishedAt:published()}};
+ matchFacts:{game:{guid}},ordinaryUploadVersion:'AOF_NATIVE_PLAYER_UPLOAD_V1',uploadedAt:published()};
 const actor=(playerId,authUid,role='PLAYER')=>({playerId,authUid,role});
 const A=actor('A','uid-a'),B=actor('B','uid-b'),ADMIN=actor('admin','uid-admin','ADMIN');
 const bounds=[{gameId,notBeforeMs:1000,notAfterMs:2000}];
@@ -66,6 +66,7 @@ test('owner-private Battle status supplies opaque current revision but no native
  assert.equal(status.status,'PENDING');
  assert.equal(status.expectedSourceBinding,currentBinding(records));
  assert.deepEqual(status.gameIds,['G1']);
+ assert.deepEqual(status.games,[{gameId:'G1',receiptUpperBoundAtMs:100000}]);
  for(const forbidden of ['sourceHash','processorRevision','artifactRefs','sourcePath','privateNote'])
   assert.equal(JSON.stringify(status).includes(forbidden),false);
  await assert.rejects(readMyBattleOccurrence({actor:actor('outsider','nobody'),
@@ -110,13 +111,36 @@ test('foreign, inactive and raw source-injection attestations fail without occur
  await assert.rejects(attestBattleOccurrence({actor:B,request:{battleId:id,bounds,expectedSourceBinding}}),e=>e.code==='permission-denied');
  assert.equal(records.has('matches/'+id+'/occurrence/current'),false);
 });
+test('ordinary AUTO receipt rejects impossible post-upload Game end without altering result',async()=>{
+ const records=setup(),expectedSourceBinding=currentBinding(records);
+ const gameBefore=structuredClone(records.get('matches/'+id+'/games/'+gameId));
+ await assert.rejects(attestBattleOccurrence({actor:A,request:{battleId:id,
+  expectedSourceBinding,bounds:[{gameId,notBeforeMs:1000,notAfterMs:100001}]}}),
+  e=>e.code==='invalid-argument');
+ assert.equal(records.has('matches/'+id+'/occurrence/current'),false);
+ assert.deepEqual(records.get('matches/'+id+'/games/'+gameId),gameBefore);
+});
+test('the second participant must still be ACTIVE and linked with a different UID',async()=>{
+ for(const scenario of ['REVOKED_LINK','SUSPENDED','REUSED_UID']){
+  const records=setup(),expectedSourceBinding=currentBinding(records);
+  assert.equal((await attestBattleOccurrence({actor:A,request:{battleId:id,bounds,
+    expectedSourceBinding}})).status,'PENDING');
+  let second=B;
+  if(scenario==='REVOKED_LINK')records.delete('authLinks/uid-a');
+  if(scenario==='SUSPENDED')records.get('players/A').membershipStatus='SUSPENDED';
+  if(scenario==='REUSED_UID'){
+   records.set('authLinks/uid-a',{playerId:'B'});
+   second=actor('B','uid-a');
+  }
+  const result=await attestBattleOccurrence({actor:second,request:{battleId:id,bounds,
+   expectedSourceBinding}});
+  assert.equal(result.status,'PENDING',scenario);
+  assert.equal(records.get('matches/'+id+'/occurrence/current').status,'PENDING');
+ }
+});
 test('source-current independent admin evidence approval/revoke uses explicit revision and blocks player override',async()=>{
  const records=setup();
- const b={battleId:id,match:records.get('matches/'+id),event:records.get('events/event'),
-  planId:null,plan:null,games:[{gameId,game:records.get('matches/'+id+'/games/'+gameId),
-   source:{sourceHash,gameGuid:guid,mappingDigest:bindingDigest(source.playerMapping),
-    publicationAtMs:100000}}]};
- const sourceBinding=occurrenceSourceBinding(b);assert.ok(sourceBinding);
+ const sourceBinding=currentBinding(records);assert.ok(sourceBinding);
  const base={battleId:id,expectedSourceBinding:sourceBinding,bounds,
   reason:'Independently reviewed actual play window with original source records.',
   evidenceRefs:['review-evidence-claim-A','review-evidence-claim-B'],expectedRevision:null};
