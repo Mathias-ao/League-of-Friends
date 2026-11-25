@@ -134,7 +134,11 @@ async function setup({earlySecond=false}={}){
  const wrap=(path,ref)=>{
   const normal=ref.get;
   ref.get=async()=>{
-   if(path==='runtimePolicies/chroniclePrivateSkillV1'||path==='leagueState/singleton'||race?.path===path){
+   // This injected Battle read must occur AFTER cohort chose the Season,
+   // not during the earlier complete native-original source collection.
+   const afterSeason=path!=='matches/b1'||(counts.get('leagueState/singleton')??0)>0;
+   if(afterSeason&&(path==='runtimePolicies/chroniclePrivateSkillV1'||
+      path==='leagueState/singleton'||race?.path===path)){
     const count=(counts.get(path)??0)+1;counts.set(path,count);
     if(race?.path===path&&race.count===count){
      race.fire(rows);race=null;injections++;
