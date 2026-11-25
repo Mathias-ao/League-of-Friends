@@ -72,6 +72,50 @@ test('missing, uncertain, conflicting or equal actual order remains Pending; unr
  assert.equal(compareOccurrence('A','B',[a,b,c]),'BEFORE',
   'a reviewed edge never survives the target approval revision');
 });
+test('contradictory later unrelated peers cannot veto a proven earlier Battle pair',()=>{
+ const a=make('A',{warmup:true,seed:20,interval:[1000,2000]});
+ const b=make('B',{seed:21,interval:[3000,4000]});
+ const c=make('C',{warmup:true,seed:22,interval:[6000,7000]});
+ const d=make('D',{seed:23,interval:[9000,10000]});
+ approve(d,9000,10000,[{battleId:'C',
+   sourceBinding:verifiedOccurrence(c).binding,revision:verifiedOccurrence(c).revision}]);
+ assert.equal(compareOccurrence('C','D',[a,b,c,d]),'CONFLICT');
+ assert.equal(compareOccurrence('A','B',[a,b,c,d]),'BEFORE',
+  'contradiction in later unrelated history does not contaminate A vs B');
+ assert.ok(deriveScopedOccurrenceOrders([a,b,c,d],['A','B']).every(o=>o.status==='ORDERED'));
+});
+test('first-third loss survives void and replaced peers and two unordered later defeats',()=>{
+ const a=make('first',{warmup:true,seed:30,interval:[1000,2000]});
+ const b=make('second',{seed:31,interval:[3000,4000]});
+ const c=make('third',{warmup:true,seed:32,interval:[5000,6000]});
+ const later1=make('later-one',{seed:33,interval:[7500,9500]});
+ const later2=make('later-two',{warmup:true,seed:34,interval:[8000,9900]});
+ const voided=make('voided',{seed:35});
+ voided.match.status='VOID';
+ const replaced=make('replaced',{warmup:true,seed:36});
+ replaced.match.replacementMatchId='replacement-battle';
+ const cohort=[a,b,c,later1,later2,voided,replaced];
+ assert.equal(compareOccurrence('later-one','later-two',cohort),'UNKNOWN');
+ const qualified=qualifyThreeBattleLosses(cohort,'B');
+ assert.equal(qualified.length,1);
+ assert.equal(qualified[0].anchorBattleId,'third');
+ const unplaced=make('possible-earlier',{warmup:true,seed:37});
+ assert.equal(qualifyThreeBattleLosses([...cohort,unplaced],'B').length,0,
+  'possibly earlier same-opponent unresolved loss cannot be silently skipped');
+});
+test('correcting a material intermediary precedence witness retracts a third-loss chain',()=>{
+ const a=make('first',{warmup:true,seed:40,interval:[1000,3000]});
+ const b=make('second',{seed:41,interval:[2000,4000]});
+ const c=make('third',{warmup:true,seed:42,interval:[3500,5500]});
+ approve(a,1000,3000,[{battleId:'second',
+   sourceBinding:verifiedOccurrence(b).binding,revision:verifiedOccurrence(b).revision}]);
+ approve(b,2000,4000,[{battleId:'third',
+   sourceBinding:verifiedOccurrence(c).binding,revision:verifiedOccurrence(c).revision}]);
+ assert.equal(qualifyThreeBattleLosses([a,b,c],'B').length,1);
+ c.occurrence.revision++;
+ assert.equal(qualifyThreeBattleLosses([a,b,c],'B').length,0,
+  'updating target approval revision invalidates the intermediary edge');
+});
 test('warmup is eligible before a MAIN plan exists; absent other-class list is not a missing play witness',()=>{
  const early=make('warmup-before-plan',{warmup:true,seed:9});
  delete early.event.officialMatchIds;
