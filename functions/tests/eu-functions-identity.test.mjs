@@ -23,7 +23,7 @@ function manifest(overrides={}){
   }
   const output=execFileSync(process.execPath,['--input-type=module','-e',manifestScript],
     {cwd:new URL('..',import.meta.url),env,encoding:'utf8',timeout:30000});
-  const line=output.split(/\\r?\\n/).find(s=>s.startsWith('AOF_FUNCTION_ENDPOINTS='));
+  const line=output.split(String.fromCharCode(10)).find(s=>s.startsWith('AOF_FUNCTION_ENDPOINTS='));
   assert.ok(line,'Firebase SDK entry point must expose function endpoint metadata');
   return JSON.parse(line.slice('AOF_FUNCTION_ENDPOINTS='.length));
 }
