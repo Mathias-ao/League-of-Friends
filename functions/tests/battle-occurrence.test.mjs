@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {bindingDigest} from '../lib/engines/nativeRecordingIntegration.js';
 import {BATTLE_OCCURRENCE_VERSION,occurrenceSourceBinding,verifiedOccurrence,
- compareOccurrence,qualifyThreeBattleLosses} from '../lib/integration/battleOccurrence.js';
+ compareOccurrence,qualifyThreeBattleLosses,sourceBoundReadyReceiptMillis} from '../lib/integration/battleOccurrence.js';
 import {deriveScopedOccurrenceOrders,deriveSocialScheduleOrders} from '../lib/integration/socialScheduleOrder.js';
 import {ready} from './support/private-history-fixture.mjs';
 import {collectMyCurrentBattleHistory} from '../lib/queries/getMyPersonalityHistory.js';
@@ -41,6 +41,19 @@ const approve=(b,begin,end,precedes=[])=>{
   proof:{kind:'MUTUAL_PARTICIPANTS',participants:['A','B']}};
  return b;
 };
+test('one READY server receipt extractor covers ordinary AUTO and reviewed native publication only',()=>{
+ const base={state:'READY',matchId:'m',gameId:'g',sourceHash:'a'.repeat(64)};
+ const normal={...base,ordinaryUploadVersion:'AOF_NATIVE_PLAYER_UPLOAD_V1',
+  uploadedAt:t(9000),publication:{publishedAt:t(20000)}};
+ assert.equal(sourceBoundReadyReceiptMillis(normal,'m','g','a'.repeat(64)),9000);
+ const reviewed={...base,publication:{version:'AOF_NATIVE_READY_PUBLICATION_1',
+  publicationId:'trusted-publication',publishedAt:t(7000)}};
+ assert.equal(sourceBoundReadyReceiptMillis(reviewed,'m','g','a'.repeat(64)),7000);
+ assert.equal(sourceBoundReadyReceiptMillis({...base,publishedAt:t(1000)},'m','g','a'.repeat(64)),null);
+ assert.equal(sourceBoundReadyReceiptMillis({...normal,sourceHash:'b'.repeat(64)},'m','g','a'.repeat(64)),null);
+ assert.equal(sourceBoundReadyReceiptMillis({...base,ordinaryUploadVersion:'AOF_NATIVE_PLAYER_UPLOAD_V1',
+  uploadedAt:null},'m','g','a'.repeat(64)),null);
+});
 test('warmup before MAIN, late guest after MAIN and cross-Event are proven by play, not registration',()=>{
  const a=make('z-late-registration',{warmup:true,seed:1,interval:[1000,2000]});
  const b=make('a-main',{seed:2,interval:[4000,5000]});
