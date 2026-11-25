@@ -9,6 +9,7 @@ import {hostedSocialEnabled} from '../domain/hostedSocialProgression';
 import {isolatedStagingProject} from '../domain/stagingProject';
 import {gameplayPreviewEnabled,gameplayCandidatesEnabled} from '../domain/gameplayPreview';
 import {privateHistoryEnabled} from '../domain/privateHistory';
+import {battleOccurrenceEnabled,type BattleOccurrenceBound,type BattleOccurrenceRead} from '../domain/battleOccurrence';
 export class FirebaseLeagueRepository implements LeagueRepository {
   readonly mode='live' as const;
   private app=initializeApp({apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID});
@@ -160,6 +161,16 @@ export class FirebaseLeagueRepository implements LeagueRepository {
     if(import.meta.env.VITE_AOF_INT_V1_PRIVATE_READS!=='source-v1'||!isolatedStagingProject(import.meta.env))
       throw new Error('Private source reads are disabled for this Firebase project.');
     return this.call<import('../domain/intV1Experience').IntV1PrivateExperience>('getMySocialExperience',request);
+  }
+  canConfirmBattleOccurrence(){return battleOccurrenceEnabled(import.meta.env);}
+  getMyBattleOccurrence(battleId:string){
+    if(!this.canConfirmBattleOccurrence())throw new Error('Battle occurrence confirmation is disabled.');
+    return this.call<BattleOccurrenceRead>('getMyBattleOccurrence',{battleId});
+  }
+  confirmBattleOccurrence(battleId:string,expectedSourceBinding:string,bounds:BattleOccurrenceBound[]){
+    if(!this.canConfirmBattleOccurrence())throw new Error('Battle occurrence confirmation is disabled.');
+    return this.call<{status:'PENDING'|'APPROVED';revision:number;idempotent?:boolean}>(
+      'confirmBattleOccurrence',{battleId,expectedSourceBinding,bounds});
   }
   myPrivateChronicle(){return this.call<PlayerChronicleResponse>('getMyPrivateChronicle');}
   myChronicleInvitations(){return this.call<import('../domain/privateChronicleInteractions').PrivateChronicleInvitations>('getMyChronicleInvitations',{});}
