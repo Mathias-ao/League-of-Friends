@@ -106,6 +106,11 @@ export {getMySocialProgression} from './queries/getMySocialProgression.js';
 // Default-off owner-private pilot; requires separately authorized runtime policy.
 export {getMyHostedSocialProgression} from './queries/getMyHostedSocialProgression.js';
 
+// Source-only #277: exact-EU, separately default-OFF Battle chronology
+// reader/confirmation. No Function is selected for D by this export.
+export {getMyBattleOccurrence,confirmBattleOccurrence,adminReviewBattleOccurrence}
+  from './commands/results/battleOccurrence.js';
+
 // #169: emulator-only authenticated optional Chronicle interactions; production disabled.
 export {offerChronicleInvitation,actOnChronicleInvitation,getMyChronicleInvitations,
   getMyChronicleSubmission,adminReviewChronicleCorrection} from './queries/chronicleInteractionService.js';
