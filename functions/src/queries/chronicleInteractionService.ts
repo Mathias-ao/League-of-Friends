@@ -123,13 +123,19 @@ export function reviewedChronicleMomentCurrent(mode:ChronicleMode,raw:unknown,
  * league read fences. Reviewer records stay server-only. */
 async function cohort(input:Input,mode:ChronicleMode='emulator'){
  const policySnap=mode==='hosted'?await hostedPolicyRef(input).get():null;
- const hostedPolicy=mode==='hosted'?readHostedSkillPolicy(input.env,policySnap?.data()):null;
+ // Freeze the exact contents which authorize this decision at the FIRST
+ // read, not by re-reading a snapshot object during a later guard phase.
+ const policyData=policySnap?.data()??null;
+ const policyToken=currentToken(policyData);
+ const hostedPolicy=mode==='hosted'?readHostedSkillPolicy(input.env,policyData):null;
  if(mode==='hosted'&&!hostedPolicy)throw fail('Approved and SHA-pinned private Chronicle skill policy is unavailable.');
 
   const collected=await collectMyCurrentBattleHistory({...input,request:{},maxOwnGames:64,includeScheduleOrder:true});
   const activeSeasonRef=mode==='hosted'?input.db.collection(collections.leagueState).doc(leagueStateDocumentId):null;
   const activeSeasonSnap=activeSeasonRef?await activeSeasonRef.get():null;
-  const currentSeasonId=activeSeasonSnap?.data()?.activeSeasonId;
+  const activeSeasonData=activeSeasonSnap?.data()??null;
+  const activeSeasonToken=currentToken(activeSeasonData);
+  const currentSeasonId=activeSeasonData?.activeSeasonId;
   if(mode==='hosted'&&!id(currentSeasonId))
     throw fail('The current Chronicle Season authority is unavailable.');
   const seasonBattles=mode==='hosted'?
@@ -198,8 +204,8 @@ async function cohort(input:Input,mode:ChronicleMode='emulator'){
     (a.orderTuple?-1:b.orderTuple?1:a.battleId.localeCompare(b.battleId)):
     a.orderTuple[0]-b.orderTuple[0]||a.orderTuple[1]-b.orderTuple[1]);
   await collected.revalidate();
-  return {items,collected,mode,hostedPolicy,hostedEligible,hostedPending,policySnap,
-    activeSeasonRef,activeSeasonToken:currentToken(activeSeasonSnap?.data()??null)};
+  return {items,collected,mode,hostedPolicy,hostedEligible,hostedPending,policyToken,
+    activeSeasonRef,activeSeasonToken};
 }
 const testPolicy=():ApprovedRareSelectionPolicy=>({
   approved:true,approvalRef:TEST_POLICY.approvalRef,
@@ -297,7 +303,7 @@ async function captureHostedHistoryGuard(input:Input,current:Awaited<ReturnType<
      if(id(guid))await add(input.db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')));
    }
  }
- await add(hostedPolicyRef(input),currentToken(current.policySnap?.data()??null));
+ await add(hostedPolicyRef(input),current.policyToken);
  return {queries,refs:[...refs.values()]};
 }
 async function verifyHostedHistoryGuard(tx:any,guard:Awaited<ReturnType<typeof captureHostedHistoryGuard>>){
