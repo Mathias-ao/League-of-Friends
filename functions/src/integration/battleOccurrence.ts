@@ -32,8 +32,12 @@ export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|nu
   m.participants.some((p:Bag)=>!id(p?.playerId))||
   new Set(m.participants.map((p:Bag)=>p.playerId)).size!==m.participants.length)return null;
  const isWarmup=m.scoringSnapshot?.rules?.act==='WARMUP';
- if(!list(e.officialMatchIds)||!list(e.warmupMatchIds))return null;
- const membership=[e.officialMatchIds,e.warmupMatchIds].filter((a:any)=>a.includes(b.battleId));
+ // An Event may legitimately have warmups before any MAIN plan has been
+ // approved, or MAINs before optional warmups exist. Missing *other-class*
+ // registration is an empty list, not a fabricated plan requirement.
+ if(!list(e.officialMatchIds??[])||!list(e.warmupMatchIds??[]))return null;
+ const membership=[e.officialMatchIds??[],e.warmupMatchIds??[]]
+  .filter((a:any)=>a.includes(b.battleId));
  if(membership.length!==1||Boolean(e.warmupMatchIds?.includes(b.battleId))!==isWarmup)return null;
  if(!isWarmup&&(m.sourceMatchPlanId!==b.planId||e.approvedMatchPlanId!==b.planId||
   e.matchPlanStatus!=='APPROVED'||b.plan?.status!=='APPROVED'||
