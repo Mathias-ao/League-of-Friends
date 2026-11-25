@@ -264,6 +264,35 @@ export async function readMyBattleOccurrence(input:{actor:Actor;request:{battleI
    revision:current?.revision??null};
  });
 }
+/** An uninvolved reviewer needs their OWN authorized source-current CAS.
+ * The player-private read never shares another person's identity or audit. */
+export async function readBattleOccurrenceForAdminReview(input:{actor:Actor;request:{battleId:string}}){
+ const {actor,request:r}=input;
+ if(actor.role!=='ADMIN')throw new HttpsError('permission-denied','Administrator permission required.');
+ if(!r||!id(r.battleId)||Object.keys(r).length!==1)
+  throw new HttpsError('invalid-argument','Only a canonical Battle identifier is accepted.');
+ return db.runTransaction(async tx=>{
+  await verifyActor(tx,actor);
+  const b=await currentBattle(tx,r.battleId);
+  if(b.match.participants.some((p:Bag)=>p.playerId===actor.playerId))
+   throw new HttpsError('permission-denied','A Battle participant cannot review their own occurrence.');
+  const current=(await tx.get(db.doc('matches/'+r.battleId+'/occurrence/current'))).data();
+  checkedRevision(current);
+  const sourceBinding=occurrenceSourceBinding(b)!;
+  return {version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,
+    expectedSourceBinding:sourceBinding,revision:current?.revision??null,
+    status:current?.sourceBinding===sourceBinding?current.status:'PENDING',
+    currentBounds:current?.sourceBinding===sourceBinding?current.bounds??null:null,
+    gameIds:canonicalOccurrenceGames(b)!.map(g=>g.gameId),
+    receiptUpperBounds:canonicalOccurrenceGames(b)!.map(g=>({
+     gameId:g.gameId,notAfterMs:g.source!.publicationAtMs}))};
+ });
+}
+export const adminGetBattleOccurrenceReview=onCall(callableOptions,async request=>{
+ assertBattleOccurrenceEnabled(process.env);
+ const actor=await requireAdmin(request);
+ return readBattleOccurrenceForAdminReview({actor,request:request.data});
+});
 export const getMyBattleOccurrence=onCall(callableOptions,async request=>{
  assertBattleOccurrenceEnabled(process.env);
  const actor=await requireLeaguePlayer(request);
