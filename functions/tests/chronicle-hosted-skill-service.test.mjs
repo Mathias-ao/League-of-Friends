@@ -129,21 +129,32 @@ async function setup({earlySecond=false}={}){
  }
  const rows=memoryFirestore([...records]);
  const baseCollection=db.collection.bind(db);
- let race=null;
+ let race=null,injections=0;
  const counts=new Map();
- const doc=path=>{
-  const pieces=path.split('/'),ref=baseCollection(pieces.slice(0,-1).join('/')).doc(pieces.at(-1));
+ const wrap=(path,ref)=>{
   const normal=ref.get;
   ref.get=async()=>{
    if(path==='runtimePolicies/chroniclePrivateSkillV1'||path==='leagueState/singleton'){
     const count=(counts.get(path)??0)+1;counts.set(path,count);
     if(race?.path===path&&race.count===count){
-     race.fire(rows);race=null;
+     race.fire(rows);race=null;injections++;
     }
    }
    return normal();
   };
   return ref;
+ };
+ // Actual service reads the Season through db.collection(...).doc(...),
+ // whereas policy is reached through db.doc(...). Trap both surfaces.
+ const collection=path=>{
+  const parent=baseCollection(path),originalDoc=parent.doc;
+  parent.doc=id=>wrap(path+'/'+id,originalDoc(id));
+  return parent;
+ };
+ Object.defineProperty(db,'collection',{configurable:true,value:collection});
+ const doc=path=>{
+  const pieces=path.split('/');
+  return collection(pieces.slice(0,-1).join('/')).doc(pieces.at(-1));
  };
  Object.defineProperty(db,'doc',{configurable:true,value:doc});
  const storage=getStorage();
@@ -167,6 +178,7 @@ async function setup({earlySecond=false}={}){
    expectedRevision:inv.revision,opportunityRevision:inv.opportunityRevision,
    action:'SUBMIT',choiceId:'ACKNOWLEDGED_SKILL',confirmed:true}));
  return {rows,ids,proofs,offer,submit,trigger,prior,
+  injected:()=>injections,
   slot:id=>'matches/'+id+'/socialV1InvitationSlots/'+id+'_p2',
   restore:()=>{for(const [k,v] of Object.entries(prior))if(v===undefined)delete process.env[k];else process.env[k]=v;}};
 }
@@ -212,6 +224,7 @@ test('SERVICE: active Season changes between guard reads and aborts old-Season o
     rows.set('leagueState/singleton',{activeSeasonId:'new-season'});
   });
   await assert.rejects(f.offer());
+  assert.equal(f.injected(),1,'the Season pointer must actually switch mid-service call');
   assert.equal(f.rows.has('players/p2/chronicleRareControls/v1'),false);
  }finally{f.restore();}
 });
@@ -223,6 +236,7 @@ test('SERVICE: active Season changes between response guard reads and aborts con
     rows.set('leagueState/singleton',{activeSeasonId:'new-season'});
   });
   await assert.rejects(f.submit(offer.invitation));
+  assert.equal(f.injected(),1,'the active Season must actually switch during confirmation');
   const slot=[...f.rows.entries()].find(([key])=>
     key.startsWith('matches/b3/socialV1InvitationSlots/')&&key.split('/').length===4);
   assert.ok(slot);assert.equal(slot[1].state,'OFFERED');
