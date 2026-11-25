@@ -10,14 +10,14 @@ import {callableOptions} from '../../config/runtime.js';
 import {requireLeaguePlayer,requireAdmin} from '../../auth/authorization.js';
 import {bindingDigest} from '../../engines/nativeRecordingIntegration.js';
 import {BATTLE_OCCURRENCE_VERSION,canonicalOccurrenceGames,occurrenceSourceBinding,
- type OccurrenceBattle,type GameBounds} from '../../integration/battleOccurrence.js';
+ verifiedOccurrence,type OccurrenceBattle,type GameBounds,type ReviewedPrecedence} from '../../integration/battleOccurrence.js';
 
 type Bag=Record<string,any>;
 const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(v);
 const hash=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const wrong=()=>new HttpsError('failed-precondition','Battle, source, result or chronology authority changed.');
 type Actor={playerId:string;authUid:string;role:string};
-type Request={battleId:string;expectedSourceBinding:string;bounds:GameBounds[];reason?:string;precedes?:string[]};
+type Request={battleId:string;expectedSourceBinding:string;bounds:GameBounds[];reason?:string;precedes?:ReviewedPrecedence[]};
 const millis=(value:any)=>{try{const n=value?.toMillis?.();return Number.isSafeInteger(n)&&n>0?n:null;}catch{return null;}};
 const same=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
 
@@ -99,6 +99,10 @@ export async function attestBattleOccurrence(input:{actor:Actor;request:Request}
   const attestations=await tx.get(attestationsRef);
   const current=(await tx.get(mr.collection('occurrence').doc('current'))).data();
   checkedRevision(current);
+  // A source-reviewed independent admin judgment is amended by admin review,
+  // never invalidated through a participant's unilateral replacement window.
+  if(current?.status==='APPROVED'&&current.proof?.kind==='ADMIN_REVIEWED')
+    throw new HttpsError('failed-precondition','Reviewed occurrence needs independent correction review.');
   const my=attestations.docs.find((d:any)=>d.id===actor.playerId)?.data();
   if(my?.sourceBinding===binding&&same(my.bounds,bounds))return {status:current?.status??'PENDING',idempotent:true};
   const byId=new Map(attestations.docs.map((d:any)=>[d.id,d.data()]));
@@ -140,13 +144,29 @@ export async function reviewBattleOccurrence(input:{actor:Actor;request:Request&
   const b=await currentBattle(tx,r.battleId),mr=db.doc('matches/'+r.battleId);
   const binding=occurrenceSourceBinding(b)!;
   if(binding!==r.expectedSourceBinding)throw wrong();
+  if(b.match.participants.some((p:Bag)=>p.playerId===actor.playerId))
+    throw new HttpsError('permission-denied','An involved player cannot independently review this Battle.');
   const current=(await tx.get(mr.collection('occurrence').doc('current'))).data();
   checkedRevision(current);
   if((current?.revision??null)!==r.expectedRevision)throw wrong();
   const bounds=r.action==='APPROVE'?validatedBounds(b,r.bounds):[];
   const edges=r.action==='APPROVE'?(r.precedes??[]):[];
-  if(!Array.isArray(edges)||edges.some(v=>!id(v)||v===r.battleId)||
-     new Set(edges).size!==edges.length)throw new HttpsError('invalid-argument','Invalid reviewed precedence witness.');
+  if(!Array.isArray(edges)||edges.length>12||
+     edges.some(v=>!v||!id(v.battleId)||v.battleId===r.battleId||
+       !hash(v.sourceBinding)||!Number.isSafeInteger(v.revision)||v.revision<1)||
+     new Set(edges.map(v=>v.battleId)).size!==edges.length)
+      throw new HttpsError('invalid-argument','Invalid reviewed precedence witness.');
+  // Every explicit precedence binds a separately current, source-verified and
+  // approved TARGET, including its approval revision. Never trust a name-only
+  // edge or keep using an edge through correction of either Battle.
+  for(const edge of edges){
+    const target=await currentBattle(tx,edge.battleId);
+    target.occurrence=(await tx.get(db.doc('matches/'+edge.battleId+'/occurrence/current'))).data();
+    const proof=verifiedOccurrence(target);
+    if(!proof||proof.binding!==edge.sourceBinding||proof.revision!==edge.revision||
+      bounds.at(-1)!.notAfterMs<proof.startMs===false&&proof.endMs<bounds[0].notBeforeMs)
+      throw wrong();
+  }
   const now=Timestamp.now();
   const next={version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,sourceBinding:binding,
     status:r.action==='APPROVE'?'APPROVED':'REVOKED',bounds,precedes:edges,
