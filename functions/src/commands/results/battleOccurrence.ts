@@ -254,8 +254,37 @@ export async function readMyBattleOccurrence(input:{actor:Actor;request:{battleI
    throw new HttpsError('permission-denied','This Battle belongs to another player.');
   const current=(await tx.get(db.doc('matches/'+r.battleId+'/occurrence/current'))).data();
   const binding=occurrenceSourceBinding(b)!;
+  // Only a current, independently linked, opposing participant may provide
+  // a proposed interval. Never reveal the other account UID, note or native
+  // source. Source mismatches and revoked AuthLinks cannot prime the form.
+  const witnesses=await tx.get(db.doc('matches/'+r.battleId).collection('occurrenceAttestations'));
+  const required=canonicalOccurrenceGames(b)!;
+  const own=witnesses.docs.find((d:any)=>d.id===actor.playerId)?.data();
+  let opponentProposalBounds:GameBounds[]|null=null,proposalMismatch=false;
+  for(const row of witnesses.docs){
+   const person=row.id,proof=row.data();
+   if(person===actor.playerId||!id(person)||!id(proof?.actorUid)||
+      proof.actorUid===actor.authUid||proof.actorPlayerId!==person||
+      proof.sourceBinding!==binding||!b.match.participants.some((p:Bag)=>p.playerId===person)||
+      !required.every(g=>{
+       const a=g.game.players.find((p:Bag)=>p.playerId===actor.playerId);
+       const other=g.game.players.find((p:Bag)=>p.playerId===person);
+       return a&&other&&a.team!=null&&other.team!=null&&a.team!==other.team;
+      }))continue;
+   let window:GameBounds[];
+   try{window=validatedBounds(b,proof.bounds);}catch{continue;}
+   const [member,link]=await Promise.all([
+    tx.get(db.doc('players/'+person)),tx.get(db.doc('authLinks/'+proof.actorUid))]);
+   if(member.data()?.membershipStatus!=='ACTIVE'||link.data()?.playerId!==person)continue;
+   if(opponentProposalBounds&&!same(opponentProposalBounds,window)){
+    proposalMismatch=true;opponentProposalBounds=null;break;
+   }
+   opponentProposalBounds=window;
+  }
+  if(opponentProposalBounds&&own?.sourceBinding===binding&&
+    !same(own.bounds,opponentProposalBounds))proposalMismatch=true;
   return {version:BATTLE_OCCURRENCE_VERSION,battleId:r.battleId,
-   expectedSourceBinding:binding,
+   expectedSourceBinding:binding,opponentProposalBounds,proposalMismatch,
    games:canonicalOccurrenceGames(b)!.map(g=>({gameId:g.gameId,receiptUpperBoundAtMs:g.source!.publicationAtMs})),
    gameIds:canonicalOccurrenceGames(b)!.map(g=>g.gameId),
    status:current?.sourceBinding===binding&&
