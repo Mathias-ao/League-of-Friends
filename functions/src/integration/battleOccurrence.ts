@@ -10,7 +10,7 @@ import {resolveSeriesResult} from '../engines/seriesResult.js';
 type Bag=Record<string,any>;
 export const BATTLE_OCCURRENCE_VERSION='AOF_CANONICAL_BATTLE_OCCURRENCE_1' as const;
 export type OccurrenceGame={gameId:string;game:Bag;source?:{
-  sourceHash:string;gameGuid:string;mappingDigest:string;publicationAtMs:number|null}|null};
+  sourceHash:string;gameGuid:string;mappingDigest:string;provenanceDigest:string;publicationAtMs:number|null}|null};
 export interface OccurrenceBattle {
  battleId:string;match:Bag;event:Bag|null;plan:Bag|null;planId:string|null;
  games:OccurrenceGame[];occurrence?:Bag|null;
@@ -46,6 +46,7 @@ export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|nu
   !/^[a-f0-9]{64}$/.test(g.source.sourceHash)||g.game.activeReplayStatisticsId!==g.source.sourceHash||
   typeof g.source.gameGuid!=='string'||!g.source.gameGuid||
   typeof g.source.mappingDigest!=='string'||!g.source.mappingDigest||
+  !/^[a-f0-9]{64}$/.test(g.source.provenanceDigest??'')||
   !Array.isArray(g.game.players)||!equal(sorted(g.game.players.map((p:Bag)=>p.playerId)),sorted(m.participants.map((p:Bag)=>p.playerId)))))return null;
  if(m.seriesRule?.maxGames===1&&m.canonicalResult?.winningPlayerIds&&
   !equal(sorted(m.canonicalResult.winningPlayerIds),
@@ -68,7 +69,7 @@ export function occurrenceSourceBinding(b:OccurrenceBattle):string|null{
   sorted(b.match.participants.map((p:Bag)=>p.playerId)),b.match.canonicalResult??null,
   b.planId,b.event?.approvedMatchPlanId??null,
   needed.map(g=>[g.gameId,g.game.gameNumber,g.game.canonicalResult,g.game.players,
-    g.source!.sourceHash,g.source!.gameGuid,g.source!.mappingDigest])]);
+    g.source!.sourceHash,g.source!.gameGuid,g.source!.mappingDigest,g.source!.provenanceDigest])]);
 }
 /** Presence, approval and binding all fail closed. A receipt is only an upper bound;
  * the stored lower bound must have been independently attested/reviewed. */
