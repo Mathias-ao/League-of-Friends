@@ -17,7 +17,7 @@ const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.
 const hash=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const wrong=()=>new HttpsError('failed-precondition','Battle, source, result or chronology authority changed.');
 type Actor={playerId:string;authUid:string;role:string};
-type Request={battleId:string;expectedSourceBinding:string;bounds:GameBounds[];reason?:string;precedes?:ReviewedPrecedence[]};
+type Request={battleId:string;expectedSourceBinding?:string;bounds:GameBounds[];reason?:string;precedes?:ReviewedPrecedence[]};
 const millis=(value:any)=>{try{const n=value?.toMillis?.();return Number.isSafeInteger(n)&&n>0?n:null;}catch{return null;}};
 const same=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
 
@@ -94,14 +94,15 @@ async function verifyActor(tx:any,actor:Actor){
 }
 export async function attestBattleOccurrence(input:{actor:Actor;request:Request}){
  const {actor,request:r}=input;
- if(!id(r?.battleId)||!hash(r.expectedSourceBinding)||r.precedes!==undefined||r.reason!==undefined)
-  throw new HttpsError('invalid-argument','Only the canonical Battle, expected source and Game windows are accepted.');
+ if(!id(r?.battleId)||r.expectedSourceBinding!==undefined||r.precedes!==undefined||r.reason!==undefined)
+  throw new HttpsError('invalid-argument','Only a canonical Battle and bounded Game windows may be submitted.');
  return db.runTransaction(async tx=>{
   await verifyActor(tx,actor);
   const b=await currentBattle(tx,r.battleId),mr=db.doc('matches/'+r.battleId);
   if(!b.match.participants.some((p:Bag)=>p.playerId===actor.playerId))throw new HttpsError('permission-denied','Only a Battle participant may attest its occurrence.');
+  // Source identity is selected and bound INSIDE the transaction, not by
+  // a client's replay hash or a raw source pointer sent to the browser.
   const binding=occurrenceSourceBinding(b)!;
-  if(binding!==r.expectedSourceBinding)throw wrong();
   const bounds=validatedBounds(b,r.bounds);
   const attestationsRef=mr.collection('occurrenceAttestations');
   const attestations=await tx.get(attestationsRef);
