@@ -23,6 +23,7 @@ const id=(v:any):v is string=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test
 const ms=(v:any)=>Number.isSafeInteger(v)&&v>0;
 const sorted=(a:string[])=>[...a].sort();
 const equal=(a:any,b:any)=>bindingDigest(a)===bindingDigest(b);
+const list=(v:any)=>Array.isArray(v)&&v.every(id)&&new Set(v).size===v.length;
 export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|null{
  const m=b.match,e=b.event;
  if(!id(b.battleId)||!m||!e||!id(m.eventId)||!id(m.seasonId)||e.seasonId!==m.seasonId||
@@ -31,11 +32,15 @@ export function canonicalOccurrenceGames(b:OccurrenceBattle):OccurrenceGame[]|nu
   m.participants.some((p:Bag)=>!id(p?.playerId))||
   new Set(m.participants.map((p:Bag)=>p.playerId)).size!==m.participants.length)return null;
  const isWarmup=m.scoringSnapshot?.rules?.act==='WARMUP';
- const membership=[e.officialMatchIds,e.warmupMatchIds].filter((a:any)=>Array.isArray(a)&&a.includes(b.battleId));
+ if(!list(e.officialMatchIds)||!list(e.warmupMatchIds))return null;
+ const membership=[e.officialMatchIds,e.warmupMatchIds].filter((a:any)=>a.includes(b.battleId));
  if(membership.length!==1||Boolean(e.warmupMatchIds?.includes(b.battleId))!==isWarmup)return null;
  if(!isWarmup&&(m.sourceMatchPlanId!==b.planId||e.approvedMatchPlanId!==b.planId||
   e.matchPlanStatus!=='APPROVED'||b.plan?.status!=='APPROVED'||
-  !Array.isArray(b.plan?.officialMatchIds)||b.plan.officialMatchIds[m.matchNumber-1]!==b.battleId))return null;
+  !list(b.plan?.officialMatchIds)||!equal(e.officialMatchIds,b.plan.officialMatchIds)||
+  !Array.isArray(b.plan?.matches)||b.plan.matches.length!==b.plan.officialMatchIds.length||
+  !Number.isSafeInteger(m.matchNumber)||m.matchNumber<1||
+  b.plan.officialMatchIds[m.matchNumber-1]!==b.battleId))return null;
  if(!Array.isArray(b.games)||!b.games.length||new Set(b.games.map(g=>g.gameId)).size!==b.games.length)return null;
  const manifest=battleGameManifest(m,b.games.map(g=>({...g.game,gameId:g.gameId} as any)));
  if(!manifest.gameManifestComplete)return null;
