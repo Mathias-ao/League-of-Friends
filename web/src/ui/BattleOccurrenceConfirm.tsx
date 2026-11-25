@@ -17,11 +17,11 @@ export function BattleOccurrenceConfirm({repository,battleId}:{repository:League
  useEffect(()=>{
   let alive=true;
   const ownerUid=repository.currentAuthUid?.();
-  setRead(null);setError('');setWindows({});
+  setRead(null);setError('');setWindows({});setBusy(false);
   if(!ownerUid||!repository.canConfirmBattleOccurrence?.()||!repository.getMyBattleOccurrence)return;
   const current=()=>alive&&repository.currentAuthUid?.()===ownerUid;
   const unsubscribe=repository.onAuthChange(()=>{
-   if(!current()){alive=false;setRead(null);setWindows({});setError('');}
+   if(!current()){alive=false;setRead(null);setWindows({});setError('');setBusy(false);}
   });
   void repository.getMyBattleOccurrence(battleId).then(value=>{
    if(current()&&value.battleId===battleId)setRead(value);
