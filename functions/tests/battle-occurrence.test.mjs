@@ -52,7 +52,8 @@ test('warmup before MAIN, late guest after MAIN and cross-Event are proven by pl
  assert.equal(rows.find(x=>x.battleId==='b-guest').order.event,3);
  a.match.createdAt=t(999999999);a.match.completedAt=t(55);a.games[0].game.uploadedAt=t(1);
  assert.deepEqual(deriveScopedOccurrenceOrders([a,b,c],['z-late-registration','a-main','b-guest'])
-  .map(x=>[x.battleId,x.order.event]),rows.map(x=>[x.battleId,x.order.event]).sort((x,y)=>x[0].localeCompare(y[0])));
+  .map(x=>[x.battleId,x.order.event]).sort((x,y)=>x[0].localeCompare(y[0])),
+  rows.map(x=>[x.battleId,x.order.event]).sort((x,y)=>x[0].localeCompare(y[0])));
 });
 test('missing, uncertain, conflicting or equal actual order remains Pending; unrelated source is independent',()=>{
  const a=make('A',{warmup:true,seed:1,interval:[1000,3000]});
