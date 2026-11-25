@@ -3,6 +3,7 @@ import type {LeagueRepository} from '../domain/league';
 import type {BattleOccurrenceRead,BattleOccurrenceBound} from '../domain/battleOccurrence';
 
 type Window={start:string;end:string};
+const localInput=(ms:number)=>new Date(ms-new Date(ms).getTimezoneOffset()*60000).toISOString().slice(0,23);
 /** An optional Battle-owned post-result step, never a guessed play timestamp.
  * Two independent opponents must confirm identical windows on the backend.
  * Disabled in every environment without separate EU source-v1 approval. */
@@ -60,6 +61,14 @@ export function BattleOccurrenceConfirm({repository,battleId}:{repository:League
    {read?.status==='APPROVED'?<p>Play-window evidence is approved. Other Battles may still have uncertain historical order.</p>:null}
    {read?.status==='PENDING'?<>
     <p>Official results and recordings remain unchanged. To establish when this Battle was played, both opposing players must independently confirm the same approximate start and finish for every required Game. No time is inferred from the upload.</p>
+
+    {read.proposalMismatch?<p role="status">Your saved window differs from the current opposing confirmation. Adopt their exact window or edit yours and resubmit.</p>:null}
+    {read.opponentProposalBounds?.length===read.games.length?
+      <button type="button" disabled={busy} onClick={()=>{
+       setWindows(Object.fromEntries(read.opponentProposalBounds!.map(w=>[w.gameId,{
+        start:localInput(w.notBeforeMs),end:localInput(w.notAfterMs)}])));
+       setError('');
+      }}>Use opponent's exact proposed window</button>:null}
     {read.games.some(game=>game.receiptUpperBoundAtMs===null)?
      <p>At least one Game has no trusted receipt. This needs separate reviewed evidence; no time can be claimed from upload order.</p>:
      <>
@@ -67,7 +76,7 @@ export function BattleOccurrenceConfirm({repository,battleId}:{repository:League
        <legend>Game {index+1}</legend>
        <p><small>Recording received by {new Date(game.receiptUpperBoundAtMs!).toLocaleString()} (upper bound only)</small></p>
        <label>Approximate play began <input aria-label={'Game '+(index+1)+' play began'}
-        type="datetime-local" value={windows[game.gameId]?.start??''}
+        type="datetime-local" step="0.001" value={windows[game.gameId]?.start??''}
         onChange={e=>setWindows(old=>({...old,[game.gameId]:{start:e.target.value,end:old[game.gameId]?.end??''}}))}/></label>
        <label>Approximate play ended <input aria-label={'Game '+(index+1)+' play ended'}
         type="datetime-local" value={windows[game.gameId]?.end??''}
