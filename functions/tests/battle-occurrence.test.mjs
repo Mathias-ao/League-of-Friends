@@ -64,9 +64,13 @@ test('missing, uncertain, conflicting or equal actual order remains Pending; unr
  b.occurrence=null;
  assert.ok(deriveScopedOccurrenceOrders([a,b,c],['A','B']).every(x=>x.order===null));
  assert.ok(deriveScopedOccurrenceOrders([a,b,c],['A','C']).every(x=>x.order!==null));
- approve(b,7000,8000,['A']);
+ approve(b,7000,8000,[{battleId:'A',sourceBinding:verifiedOccurrence(a).binding,
+  revision:verifiedOccurrence(a).revision}]);
  assert.equal(compareOccurrence('A','B',[a,b,c]),'CONFLICT');
  assert.ok(deriveScopedOccurrenceOrders([a,b,c],['A','B']).every(x=>x.order===null));
+ a.occurrence.revision++;
+ assert.equal(compareOccurrence('A','B',[a,b,c]),'BEFORE',
+  'a reviewed edge never survives the target approval revision');
 });
 test('source revision, corrected result, replacement and raw headers never authorize a stale order',()=>{
  const a=make('warmup',{warmup:true,seed:4,interval:[1000,2000]});
@@ -113,6 +117,15 @@ test('a missing possibly earlier loss prevents third-loss claims; unrelated play
  different.match.participants=[{playerId:'B',team:1},{playerId:'C',team:2}];
  different.games[0].game.players=[{playerId:'B',team:1},{playerId:'C',team:2}];
  assert.equal(qualifyThreeBattleLosses([a,b,c,different],'B').length,1);
+ // Official source-verified win with no placement cannot be a previous loss.
+ const nonLoss=make('won-unplaced',{warmup:true,seed:7,win:'B'});
+ assert.equal(qualifyThreeBattleLosses([a,b,c,nonLoss],'B').length,1);
+ assert.equal(qualifyThreeBattleLosses([a,b,c,a],'B').length,0,
+  'same canonical Battle cannot count as independent evidence');
+ const duplicate=make('dup-guid',{warmup:true,seed:8,interval:[9000,10000]});
+ duplicate.games[0].source.gameGuid=a.games[0].source.gameGuid;
+ assert.equal(qualifyThreeBattleLosses([a,b,c,duplicate],'B').length,0,
+  'one native original cannot count as two Battle losses');
 });
 test('three completed Games in one verified BO3 still count as only one Battle',()=>{
  const a=make('bo3',{warmup:true,seed:1,interval:[1000,2000]});
