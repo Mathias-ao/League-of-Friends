@@ -1,7 +1,7 @@
 import {loadPracticalPersonalityRuntime} from '../engines/personalityV1/practicalPolicy.js';
 import {PRACTICAL_POLICY,PRACTICAL_POLICY_SHA256} from '../engines/personalityV1/practicalPolicyResource.js';
 import {deriveSocialScheduleOrders,scheduleTimestampMillis,type ScheduleBattle} from '../integration/socialScheduleOrder.js';
-import type {OccurrenceBattle} from '../integration/battleOccurrence.js';
+import {sourceBoundReadyReceiptMillis,type OccurrenceBattle} from '../integration/battleOccurrence.js';
 import {getStorage} from 'firebase-admin/storage';
 import {HttpsError,onCall} from 'firebase-functions/v2/https';
 import {requireLeaguePlayer} from '../auth/authorization.js';
@@ -105,7 +105,7 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
       const g=gameDoc.data();
       if(/^[a-f0-9]{64}$/.test(g.activeReplayStatisticsId??'')){
         const s=await checkpoint(gameDoc.ref.collection('replaySources').doc(g.activeReplayStatisticsId));
-        sourcePublications.set(gameDoc.id,scheduleTimestampMillis(s.data()?.publication?.publishedAt));
+        sourcePublications.set(gameDoc.id,sourceBoundReadyReceiptMillis(s.data(),matchDoc.id,gameDoc.id,g.activeReplayStatisticsId));
         const guid=s.data()?.matchFacts?.game?.guid;
         if(typeof guid==='string'&&guid&&guid.length<=200)await checkpoint(db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')));
       }
@@ -131,7 +131,7 @@ export async function collectMyCurrentBattleHistory(input:{db:any;bucket:any;act
         if(source)row.source={sourceHash:source.sourceHash,gameGuid:source.gameGuid!,
           mappingDigest:source.mappingDigest,
           provenanceDigest:bindingDigest([source.sourceHash,source.statisticsRevision,
-            source.artifactRefs,battle.sources.find(s=>s.source.gameId===row.gameId)!.producerRevision]),
+            source.artifactRefs,loaded.find(s=>s.source.battleId===matchDoc.id&&s.source.gameId===row.gameId)!.producerRevision]),
           publicationAtMs:sourcePublications.get(row.gameId)??null};
       }
     }
