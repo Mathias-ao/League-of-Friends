@@ -149,9 +149,31 @@ export function compareOccurrence(a:string,b:string,all:OccurrenceBattle[]):Occu
   if(!target||target.binding!==edge.sourceBinding||target.revision!==edge.revision)continue;
   edges.get(x)!.add(y);
  }
+ // A transitive path through a contradictory SCC is not an
+ // independent play-order proof. Remove only contaminated components:
+ // unrelated conflicts must never veto a separately sound comparison.
+ let serial=0;
+ const discovered=new Map<string,number>(),low=new Map<string,number>();
+ const stack:string[]=[],live=new Set<string>(),contaminated=new Set<string>();
+ const visit=(id:string)=>{
+  discovered.set(id,serial);low.set(id,serial);serial++;stack.push(id);live.add(id);
+  for(const next of edges.get(id)??[]){
+   if(!discovered.has(next)){visit(next);low.set(id,Math.min(low.get(id)!,low.get(next)!));}
+   else if(live.has(next))low.set(id,Math.min(low.get(id)!,discovered.get(next)!));
+  }
+  if(low.get(id)===discovered.get(id)){
+   const component:string[]=[];let node:string;
+   do{node=stack.pop()!;live.delete(node);component.push(node);}while(node!==id);
+   if(component.length>1||edges.get(id)?.has(id))
+    for(const member of component)contaminated.add(member);
+  }
+ };
+ for(const id of ids)if(!discovered.has(id))visit(id);
+ if(contaminated.has(a)||contaminated.has(b))return 'CONFLICT';
  const reach=(from:string,to:string)=>{
   const seen=new Set<string>(),queue=[from];
   while(queue.length){const head=queue.shift()!;for(const next of edges.get(head)??[]){
+    if(contaminated.has(next))continue;
     if(next===to)return true;if(!seen.has(next)){seen.add(next);queue.push(next);}
   }}return false;
  };
