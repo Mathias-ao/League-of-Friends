@@ -38,8 +38,16 @@ async function currentBattle(tx:any,battleId:string):Promise<OccurrenceBattle>{
   if(hash(game.activeReplayStatisticsId)){
    const doc=(await tx.get(row.ref.collection('replaySources').doc(game.activeReplayStatisticsId))).data();
    const guid=doc?.matchFacts?.game?.guid;
-   if(doc?.state!=='READY'||doc?.sourceHash!==game.activeReplayStatisticsId||
-     !id(guid)||!Array.isArray(doc.playerMapping)||!doc.playerMapping.length)throw wrong();
+   const mapping=doc?.playerMapping,roster=game.players?.map((p:Bag)=>p.playerId);
+   if(doc?.state!=='READY'||doc?.matchId!==battleId||doc?.gameId!==row.id||
+     doc?.sourceHash!==game.activeReplayStatisticsId||doc?.originalRecording?.sha256!==doc.sourceHash||
+     !hash(doc?.statistics?.sha256)||!hash(doc?.recordedEvents?.sha256)||
+     !id(guid)||!Array.isArray(mapping)||!Array.isArray(roster)||
+     mapping.length!==roster.length||
+     new Set(mapping.map((p:Bag)=>p.playerId)).size!==mapping.length||
+     new Set(mapping.map((p:Bag)=>p.replaySlot)).size!==mapping.length||
+     !same([...mapping.map((p:Bag)=>p.playerId)].sort(),[...roster].sort()))
+       throw wrong();
    const claim=(await tx.get(db.doc('recordingGameClaims/'+Buffer.from(guid).toString('hex')))).data();
    if(claim?.matchId!==battleId||claim?.gameId!==row.id||claim?.sourceHash!==doc.sourceHash)throw wrong();
    source={sourceHash:doc.sourceHash,gameGuid:guid,mappingDigest:bindingDigest(doc.playerMapping),
