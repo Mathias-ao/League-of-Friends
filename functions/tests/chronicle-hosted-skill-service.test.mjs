@@ -134,7 +134,7 @@ async function setup({earlySecond=false}={}){
  const wrap=(path,ref)=>{
   const normal=ref.get;
   ref.get=async()=>{
-   if(path==='runtimePolicies/chroniclePrivateSkillV1'||path==='leagueState/singleton'){
+   if(path==='runtimePolicies/chroniclePrivateSkillV1'||path==='leagueState/singleton'||race?.path===path){
     const count=(counts.get(path)??0)+1;counts.set(path,count);
     if(race?.path===path&&race.count===count){
      race.fire(rows);race=null;injections++;
@@ -316,5 +316,28 @@ test('SERVICE: unchanged policy and Season allow explicit owner submission, priv
   const originalSlot=[...f.rows.entries()].find(([key])=>
     key.startsWith('matches/b3/socialV1InvitationSlots/')&&key.split('/').length===4);
   assert.equal(originalSlot?.[1].state,'SUBMITTED');
+ }finally{f.restore();}
+});
+
+test('SERVICE: policy revoked during cohort Battle iteration cannot become a replacement baseline',async()=>{
+ const f=await setup();
+ try{
+  f.trigger('matches/b1',1,rows=>{
+   rows.set('runtimePolicies/chroniclePrivateSkillV1',{...policy,status:'REVOKED'});
+  });
+  await assert.rejects(f.offer());
+  assert.equal(f.injected(),1,'mutation must happen after policy approval, before guard capture');
+  assert.equal(f.rows.has('players/p2/chronicleRareControls/v1'),false);
+ }finally{f.restore();}
+});
+test('SERVICE: active Season changes during cohort Battle iteration cannot replace original pointer',async()=>{
+ const f=await setup();
+ try{
+  f.trigger('matches/b1',1,rows=>{
+   rows.set('leagueState/singleton',{activeSeasonId:'new-season'});
+  });
+  await assert.rejects(f.offer());
+  assert.equal(f.injected(),1,'mutation must happen after Season selection, before guard capture');
+  assert.equal(f.rows.has('players/p2/chronicleRareControls/v1'),false);
  }finally{f.restore();}
 });
