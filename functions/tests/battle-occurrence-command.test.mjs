@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {db} from '../lib/config/firebase.js';
 import {memoryFirestore} from './support/memory-firestore.mjs';
 import {bindingDigest} from '../lib/engines/nativeRecordingIntegration.js';
-import {attestBattleOccurrence,reviewBattleOccurrence,readMyBattleOccurrence}
+import {attestBattleOccurrence,reviewBattleOccurrence,readMyBattleOccurrence,assertBattleOccurrenceEnabled}
   from '../lib/commands/results/battleOccurrence.js';
 import {BATTLE_OCCURRENCE_VERSION,occurrenceSourceBinding,verifiedOccurrence}
   from '../lib/integration/battleOccurrence.js';
@@ -60,6 +60,19 @@ const currentBinding=records=>{
     publicationAtMs:100000}}]};
  return occurrenceSourceBinding(b);
 };
+test('hosted occurrence callable gate is exact EU/default-OFF and refuses emulator and wrong region',()=>{
+ const allowed={GCLOUD_PROJECT:'age-of-friends-staging-eu',GOOGLE_CLOUD_PROJECT:'age-of-friends-staging-eu',
+  FUNCTION_REGION:'europe-west1',FUNCTIONS_EMULATOR:'false',AOF_BATTLE_OCCURRENCE_V1:'source-v1'};
+ assert.doesNotThrow(()=>assertBattleOccurrenceEnabled(allowed));
+ for(const env of [
+  {...allowed,AOF_BATTLE_OCCURRENCE_V1:undefined},
+  {...allowed,GCLOUD_PROJECT:'production'},
+  {...allowed,GOOGLE_CLOUD_PROJECT:'old-staging'},
+  {...allowed,FUNCTION_REGION:'us-central1'},
+  {...allowed,FUNCTIONS_EMULATOR:'true'},
+  {...allowed,FIRESTORE_EMULATOR_HOST:'127.0.0.1:8080'}
+ ])assert.throws(()=>assertBattleOccurrenceEnabled(env),e=>e.code==='failed-precondition');
+});
 test('owner-private Battle status supplies opaque current revision but no native source refs',async()=>{
  const records=setup();
  const status=await readMyBattleOccurrence({actor:A,request:{battleId:id}});
