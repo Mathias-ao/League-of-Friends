@@ -19,7 +19,7 @@ const choices:Record<string,Record<string,string>>={
 type Draft={slotId:string;battleId:string;revision:number;opportunityRevision:string;choiceId:string};
 /** Author-owned response leaf. Choosing drafts a perspective; only a distinct
  * confirmation binds it to the exact invitation/opportunity revision. */
-export function PrivateChronicleInteractions({repository,ownerId,counterpartNames={}}:{repository:LeagueRepository;ownerId:string;counterpartNames?:Record<string,string>}){
+export function PrivateChronicleInteractions({repository,ownerId,counterpartNames={},hosted=false}:{repository:LeagueRepository;ownerId:string;counterpartNames?:Record<string,string>;hosted?:boolean}){
   const attempt=useRef(0);
   const [read,setRead]=useState<{owner:string;repository:LeagueRepository;value:PrivateChronicleInvitations}|null>(null);
   const [error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false);
@@ -30,7 +30,8 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
   },[repository,ownerId]);
   if(!repository.myChronicleInvitations||!repository.actOnChronicleInvitation)return null;
   const valid=(v:PrivateChronicleInvitations)=>v.version==='AOF_CHRONICLE_INTERACTIONS_V1E'&&
-    v.visibility==='OWNER_ONLY'&&v.ownerPlayerId===ownerId&&v.testOnly===true&&
+    v.visibility==='OWNER_ONLY'&&v.ownerPlayerId===ownerId&&v.testOnly===!hosted&&
+    (!hosted||v.invitations.every(i=>i.family==='SKILL_ACKNOWLEDGMENT'))&&
     v.narratorAuthority==='FACTUAL_SOURCE_ONLY'&&Array.isArray(v.officialEffects)&&!v.officialEffects.length&&
     v.invitations.every(i=>i.respondentPlayerId===ownerId&&i.effects.officialWrites===false&&
       i.effects.relationshipDelta===null&&i.effects.negativeForSilence===false&&
@@ -51,6 +52,15 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
   async function open(){
     const token=++attempt.current;setRead(null);setDraft(null);setNotes({});setError(null);setBusy(true);
     try{await load(token);}catch(e){if(token===attempt.current)setError(e instanceof Error?e.message:'Private Chronicle unavailable.');}
+    finally{if(token===attempt.current)setBusy(false);}
+  }
+  async function checkForMoments(){
+    if(!hosted||!repository.checkMyChronicleMoments)return;
+    const token=++attempt.current;setRead(null);setDraft(null);setNotes({});setError(null);setBusy(true);
+    try{
+      await repository.checkMyChronicleMoments();
+      if(token===attempt.current)await load(token);
+    }catch(e){if(token===attempt.current)setError(e instanceof Error?e.message:'Private Chronicle unavailable.');}
     finally{if(token===attempt.current)setBusy(false);}
   }
   async function answer(i:PrivateChronicleInvitation,action:ChronicleInvitationAction['action'],choiceId?:string){
@@ -76,6 +86,8 @@ export function PrivateChronicleInteractions({repository,ownerId,counterpartName
     <h3>A moment you may remember</h3>
     <p>These questions are optional and uncommon. Your answer is your own perspective, not a factual claim or public Reputation score. Ignoring or declining never counts against you.</p>
     <button type="button" disabled={busy} onClick={()=>void open()}>{value?'Refresh my invitations':'Review my invitations'}</button>
+    {hosted&&repository.checkMyChronicleMoments&&
+      <button type="button" disabled={busy} onClick={()=>void checkForMoments()}>Check for a rare moment</button>}
     {busy&&<p role="status">Checking current Battle evidence…</p>}{error&&<p role="alert">{error}</p>}
     {value&&<div data-aof-chronicle-invitations-owner={ownerId}>
       {value.invitations.length===0&&<p>No rare moments are awaiting your perspective.</p>}

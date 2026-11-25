@@ -174,6 +174,14 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   }
   myPrivateChronicle(){return this.call<PlayerChronicleResponse>('getMyPrivateChronicle');}
   myChronicleInvitations(){return this.call<import('../domain/privateChronicleInteractions').PrivateChronicleInvitations>('getMyChronicleInvitations',{});}
+  checkMyChronicleMoments(){
+    if(!import.meta.env.VITE_AOF_CHRONICLE_PRIVATE_INTERACTIONS||
+       import.meta.env.VITE_AOF_CHRONICLE_PRIVATE_INTERACTIONS!=='source-v1'||
+       import.meta.env.VITE_FIREBASE_PROJECT_ID!=='age-of-friends-staging-eu'||
+       import.meta.env.VITE_FIREBASE_REGION!=='europe-west1'||import.meta.env.VITE_USE_EMULATORS==='true')
+      throw new Error('Hosted private Chronicle invitation checks are disabled.');
+    return this.call<{offered:boolean;reason?:string}>('offerChronicleInvitation',{});
+  }
   actOnChronicleInvitation(input:import('../domain/privateChronicleInteractions').ChronicleInvitationAction){
     return this.call<{success:true;revision:number;state:string;idempotent:boolean}>('actOnChronicleInvitation',input);
   }
