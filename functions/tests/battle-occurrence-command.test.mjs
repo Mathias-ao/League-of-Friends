@@ -128,4 +128,7 @@ test('source-current independent admin evidence approval/revoke uses explicit re
  assert.equal(revoked.status,'REVOKED');
  assert.equal(records.get('matches/'+id+'/occurrenceRevisions/R1').status,'APPROVED');
  assert.equal(records.get('matches/'+id+'/occurrenceRevisions/R2').status,'REVOKED');
+ await assert.rejects(attestBattleOccurrence({actor:B,
+  request:{battleId:id,bounds,expectedSourceBinding:sourceBinding}}),
+  e=>e.code==='failed-precondition','participant agreement cannot defeat admin revocation');
 });
