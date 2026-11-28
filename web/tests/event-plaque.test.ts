@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import React,{act} from 'react';
 import {JSDOM} from 'jsdom';
-import {currentEventAssignments,eventParticipation,publishedGameRules,type PlaqueEvent} from '../src/domain/eventPlaque';
+import {currentEventAssignments,eventParticipation,publishedGameRules,publishedEventTime,type PlaqueEvent} from '../src/domain/eventPlaque';
 import {emptySnapshot,type MatchRecord} from '../src/domain/league';
 import {PreviewLeagueRepository} from '../src/data/PreviewLeagueRepository';
 import {SeasonView} from '../src/ui/Views';
@@ -35,7 +35,7 @@ test('plaque actions target every current assignment and keep warm-ups independe
   Object.assign(globalThis,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
   const {createRoot}=await import('react-dom/client');const root=createRoot(document.getElementById('app')!);
   const repository=new PreviewLeagueRepository(),opened:string[]=[];
-  const snapshot={...emptySnapshot(),membership:'ACTIVE' as const,viewer:player,enteredSeason:true,season:{seasonId:'s',name:'Season I',status:'ACTIVE'},events:[{...event,gameConfig:config,warmupGameConfig:config}],matches:[{...match('stale'),replacementMatchId:'new'},match('new'),match('guest'),match('completed','COMPLETED'),match('main','READY','MAIN')]};
+  const snapshot={...emptySnapshot(),membership:'ACTIVE' as const,viewer:player,enteredSeason:true,season:{seasonId:'s',name:'Season I',status:'ACTIVE'},events:[{...event,gameConfig:config,warmupGameConfig:config}],matches:[{...match('stale'),replacementMatchId:'new'},{...match('new'),playOpensAt:'2099-10-01T18:00:00Z',playClosesAt:'2099-10-02T18:00:00Z'},match('guest'),match('completed','COMPLETED'),match('main','READY','MAIN')]};
   const props={snapshot,repository,preview:true,busy:false,openEvent:(id:string)=>opened.push(id),openMatch:(id:string)=>opened.push(id),openPlayer:()=>{},act:async()=>true,enter:()=>{},navigate:()=>{},onRules:()=>{}};
   try{
     await act(async()=>root.render(React.createElement(SeasonView,props)));
@@ -43,7 +43,11 @@ test('plaque actions target every current assignment and keep warm-ups independe
     assert.doesNotMatch(plaque().textContent??'',/stale|Approximately 30 minutes|Standard Victory|4v4/);
     assert.match(plaque().textContent??'',/Main event · Not checked in/);
     assert.match(plaque().textContent??'',/Completed/);
-    assert.match(plaque().textContent??'',/Arena · Conquest/);
+    assert.match(plaque().textContent??'',/Latest Event announcement · Arena · Conquest/);
+    const assigned=plaque().querySelector('.event-assignments li')!;
+    assert.ok(assigned.textContent!.includes(publishedEventTime('2099-10-01T18:00:00Z','Europe/Copenhagen')));assert.ok(assigned.textContent!.includes(publishedEventTime('2099-10-02T18:00:00Z','Europe/Copenhagen')));
+    assert.match(assigned.textContent!,/Original rules · open Battle details/);
+    assert.match(plaque().textContent!,/See Battle details/);
     for(const label of ['new','guest','completed']){
       const button=[...plaque().querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent?.startsWith(label));assert.ok(button);
       await act(async()=>button.click());

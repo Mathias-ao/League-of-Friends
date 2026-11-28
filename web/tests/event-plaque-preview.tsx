@@ -43,7 +43,7 @@ import '../src/battle-details.css';
 import '../src/war-room.css';
 
 const repository=new PreviewLeagueRepository();
-await repository.signIn();await repository.requestMembership('Visual witness','','K7M4Q9');await repository.enterSeason('S001');
+await repository.signIn();await repository.requestMembership('Visual witness','','K7M4Q9');if(new URLSearchParams(location.search).get('state')!=='gate')await repository.enterSeason('S001');
 const snapshot=await repository.load();
 const state=new URLSearchParams(location.search).get('state');
 const event=snapshot.events[0] as typeof snapshot.events[0]&Record<string,unknown>;
@@ -54,6 +54,6 @@ event.viewer={rsvp:'YES',signupState:state==='waiting'?'WAITING_LIST':'CONFIRMED
 const gameConfig={maps:{pool:['Arena'],selectionMode:'ADMIN'},civilizations:{mode:'RANDOM',allowed:[],banned:[],customRuleCode:null},victory:{conquest:true,wonder:false,relic:false,customRuleCode:null},diplomacyEnabled:false,additionalSettings:{}};
 event.gameConfig=gameConfig;event.warmupGameConfig=gameConfig;
 const assignment=(id:string,name:string,status:string)=>({matchId:id,eventId:event.eventId,format:'ONE_V_ONE',scoringAct:'WARMUP',status,participants:[snapshot.viewer!,{playerId:id,steamName:name}]});
-snapshot.matches=[assignment('w-current','Your current opponent','READY'),assignment('w-guest','Your guest opponent','READY'),assignment('w-complete','Your completed opponent','COMPLETED'),{...assignment('w-replaced','Replaced opponent','CANCELLED'),replacementMatchId:'w-current'}];
+snapshot.matches=[{...assignment('w-current','Your current opponent','READY'),playOpensAt:'2099-10-01T18:00:00Z',playClosesAt:'2099-10-02T18:00:00Z'},assignment('w-guest','Your guest opponent','READY'),assignment('w-complete','Your completed opponent','COMPLETED'),{...assignment('w-replaced','Replaced opponent','CANCELLED'),replacementMatchId:'w-current'}];
 repository.load=async()=>structuredClone(snapshot);
 createRoot(document.getElementById('root')!).render(<App repository={repository}/>);
