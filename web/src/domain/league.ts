@@ -201,6 +201,9 @@ export function currentLeagueEvent(snapshot:Pick<LeagueSnapshot,'viewer'|'events
 }
 export function canBrowseLeague(snapshot:Pick<LeagueSnapshot,'membership'|'enteredSeason'|'hasLeagueHistory'>){return snapshot.membership==='ACTIVE'&&(snapshot.enteredSeason||snapshot.hasLeagueHistory);}
 export interface LeagueRepository {
+  seasonSetup?():Promise<import('./seasonAdministration').SeasonAdministrationData>;
+  createSeason?(input:import('./seasonAdministration').SeasonCreationInput):Promise<{success?:boolean;seasonId:string;status:'DRAFT'}>;
+  activateSeason?(seasonId:string,requestId:string):Promise<void>;
   createEvent?(input:Record<string,unknown>):Promise<{eventId:string}>;
   publishEvent?(eventId:string):Promise<void>;
   markEventAttendance?(eventId:string,playerId:string,status:"LATE_ADDED"|"NO_SHOW",reason:string):Promise<void>;

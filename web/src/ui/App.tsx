@@ -10,6 +10,7 @@ import {SeasonStatisticsView} from './StatisticsExperience';
 import {DetailDialog} from './DetailDialog';
 import {accessCurrent,detailRequests,detailRevision,type DetailSelection,type EventReturnContext,type EventTab} from './detailNavigation';
 import {startSeasonStandingsRefresh} from './seasonStandingsRefresh';
+import {SeasonAdministration} from './SeasonAdministration';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
   {id:'events',label:'Events',icon:Flag},
@@ -24,7 +25,7 @@ export interface ViewProps {
   act:(action:()=>Promise<void>,message:string)=>Promise<boolean>;enter:()=>void;navigate:(page:Page)=>void;
   refreshStandings?:()=>void;
 }
-type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'favors';data:EmperorsFavorBatch}|DetailSelection|null;
+type DialogState={type:'rules'}|{type:'story'}|{type:'account'}|{type:'favor-admin'}|{type:'season-admin'}|{type:'favors';data:EmperorsFavorBatch}|DetailSelection|null;
 function pageFromHash():Page|null{return pages.find(p=>!p.disabled&&'#'+p.id===location.hash)?.id??null;}
 function clearHash(){history.replaceState(null,'',location.pathname+location.search);}
 export const BOOTSTRAP_ABORT_RETRY_DELAYS_MS=[1000,2000] as const;
@@ -68,7 +69,19 @@ export function App({repository}:{repository:LeagueRepository}){
         for(let attempt=0;current();attempt++){
           try{
             const data=await repository.load();if(!current())return false;
-            if(!canBrowseLeague(data)){detailRequest.current++;detailReads.current.clear();setDialog(null);}
+            setDialog(previous=>previous?.type==='season-admin'&&
+              (snapshotUid.current!==uid||currentSnapshot.current.viewer?.playerId!==data.viewer?.playerId||
+               data.membership!=='ACTIVE'||data.viewer?.role!=='ADMIN')?null:previous);
+            if(!canBrowseLeague(data)){
+              detailRequest.current++;detailReads.current.clear();
+              // Administration is available before a Season exists or the
+              // administrator enrolls. This exception never preserves details
+              // or an administrative window after access/identity loss.
+              setDialog(previous=>previous?.type==='season-admin'&&snapshotUid.current===uid&&
+                currentSnapshot.current.viewer?.playerId===data.viewer?.playerId&&
+                data.membership==='ACTIVE'&&data.viewer?.role==='ADMIN'?
+                previous:null);
+            }
             snapshotUid.current=uid;
             setSnapshot(data);setBootstrapAborted(false);setError('');setDetailActionError(null);return true;
           }catch(e){
@@ -79,6 +92,7 @@ export function App({repository}:{repository:LeagueRepository}){
               if(attempt<BOOTSTRAP_ABORT_RETRY_DELAYS_MS.length){
                 await waitForRetry(BOOTSTRAP_ABORT_RETRY_DELAYS_MS[attempt]);continue;
               }
+              setDialog(previous=>previous?.type==='season-admin'?null:previous);
               setBootstrapAborted(true);reportError('The league changed while loading. Retry to load the latest standings.');
             }else{
               detailRequest.current++;setSnapshot(emptySnapshot());setDialog(null);
@@ -144,6 +158,10 @@ export function App({repository}:{repository:LeagueRepository}){
     previousCanBrowse.current=true;accessResolved.current=true;
   },[canBrowse,loading,snapshot.membership]);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),6000);return ()=>clearTimeout(timer);},[notice]);
+  useEffect(()=>{
+    if(snapshot.membership!=='ACTIVE'||snapshot.viewer?.role!=='ADMIN')
+      setDialog(previous=>previous?.type==='season-admin'?null:previous);
+  },[snapshot.membership,snapshot.viewer?.role]);
   const openSection=(next:Page)=>{
     const target=pages.find(p=>p.id===next);
     if(!target||target.disabled)return;
@@ -227,7 +245,7 @@ export function App({repository}:{repository:LeagueRepository}){
   // Dialog state must not rebuild a hundreds-row archive beneath the modal.
   // Captured handlers depend on these same public/auth inputs and mutable refs.
   const pageContent=useMemo(()=>page==='events'?<EventsView {...props}/>:page==='battles'?<BattlesView {...props}/>:page==='players'?<PlayersView {...props}/>:page==='statistics'?<SeasonStatisticsView snapshot={snapshot} preview={preview} repository={repository} openPlayer={openPlayer} openMatch={openMatch}/>:page==='war-room'?<WarRoomView {...props}/>:<SeasonView {...props} onRules={()=>setDialog({type:'rules'})}/>,[snapshot,page,preview,busy,repository]);
-  const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='favors'?dialog.data.batchName:'';
+  const title=dialog?.type==='rules'?'The rules of the campaign':dialog?.type==='story'?'The War for Lombardia':dialog?.type==='account'?'Your league identity':dialog?.type==='favor-admin'?"Issue Emperor's Favors":dialog?.type==='season-admin'?'Season administration':dialog?.type==='favors'?dialog.data.batchName:'';
   const showContent=sectionOpen||showSeasonGate||(!leagueEntryVisible&&!!error);
   const visibleDetailActionError=dialog&&'id' in dialog&&detailActionError?.request===dialog.request&&
     detailActionError.epoch===authEpoch.current&&accessCurrent(repository,detailActionError.uid)&&
@@ -262,11 +280,12 @@ export function App({repository}:{repository:LeagueRepository}){
     {leagueEntryVisible&&<LeagueEntryGate snapshot={snapshot} loading={loading} preview={preview} busy={busy} repository={repository} act={act} error={error} bootstrapAborted={bootstrapAborted} retry={()=>void refresh()}/>}
     {notice&&<div className="toast" role="status"><Check size={17}/>{notice}</div>}
     {busy&&<div className="working" role="status"><LoaderCircle size={16} className="spin"/>Working…</div>}
-    {dialog&&'id' in dialog?<DetailDialog key={dialog.type+':'+dialog.id} {...props} actionError={visibleDetailActionError} authUid={snapshotUid.current} selection={dialog} requests={detailReads.current} openMatchFromEvent={dialog.type==='event'?(id,tab)=>openMatchFromEvent(dialog,id,tab):undefined} onClose={()=>closeDetail(dialog)}/>:dialog&&<Modal key={dialog.type} title={title} wide={['favor-admin','favors'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}>
+    {dialog&&'id' in dialog?<DetailDialog key={dialog.type+':'+dialog.id} {...props} actionError={visibleDetailActionError} authUid={snapshotUid.current} selection={dialog} requests={detailReads.current} openMatchFromEvent={dialog.type==='event'?(id,tab)=>openMatchFromEvent(dialog,id,tab):undefined} onClose={()=>closeDetail(dialog)}/>:dialog&&<Modal key={dialog.type} title={title} wide={['favor-admin','favors','season-admin'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}>
       {error&&<div className="alert" role="alert">{error}</div>}
       {dialog.type==='rules'?<Rules/>:dialog.type==='story'?<article className="story"><span className="eyebrow">EVENT I · LOMBARDIA</span>{lombardia.story.brief.map(p=><p key={p}>{p}</p>)}<div className="story-facts"><span>4v4</span><span>Lombardia</span><span>Standard Victory</span></div></article>:
-       dialog.type==='account'?<><div className="account-heading">{snapshot.viewer&&<Avatar player={snapshot.viewer} large/>}<div><h3>{snapshot.viewer?.steamName}</h3><p>{snapshot.membership==='ACTIVE'?'League member':snapshot.membership.toLowerCase()}</p></div></div><p>Your league identity persists between seasons.</p><div className="stack">{snapshot.membership==='ACTIVE'&&<button className="primary" onClick={()=>snapshot.viewer&&openPlayer(snapshot.viewer.playerId)}>View profile</button>}{snapshot.viewer?.role==='ADMIN'&&<button className="primary" onClick={()=>setDialog({type:'favor-admin'})}>Issue Emperor's Favors</button>}<button className="text-button" onClick={()=>void act(()=>repository.signOut(),'Signed out.')}><LogOut size={16}/>Sign out</button></div></>:
+       dialog.type==='account'?<><div className="account-heading">{snapshot.viewer&&<Avatar player={snapshot.viewer} large/>}<div><h3>{snapshot.viewer?.steamName}</h3><p>{snapshot.membership==='ACTIVE'?'League member':snapshot.membership.toLowerCase()}</p></div></div><p>Your league identity persists between seasons.</p><div className="stack">{snapshot.membership==='ACTIVE'&&<button className="primary" onClick={()=>snapshot.viewer&&openPlayer(snapshot.viewer.playerId)}>View profile</button>}{snapshot.viewer?.role==='ADMIN'&&<button className="primary" onClick={()=>setDialog({type:'favor-admin'})}>Issue Emperor's Favors</button>}{snapshot.membership==='ACTIVE'&&snapshot.viewer?.role==='ADMIN'&&!preview&&<button className="primary" onClick={()=>setDialog({type:'season-admin'})}>Season administration</button>}<button className="text-button" onClick={()=>void act(()=>repository.signOut(),'Signed out.')}><LogOut size={16}/>Sign out</button></div></>:
        dialog.type==='favor-admin'?<FavorGeneratorForm busy={busy} onGenerate={generateFavors}/>:
+       dialog.type==='season-admin'?<SeasonAdministration {...props} authUid={snapshotUid.current}/>:
        dialog.type==='favors'?<FavorBatchSheet batch={dialog.data}/>:
        null}
     </Modal>}

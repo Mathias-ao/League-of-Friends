@@ -96,6 +96,9 @@ export class FirebaseLeagueRepository implements LeagueRepository {
   async enterSeason(seasonId:string){await this.call('enterSeason',{seasonId});}
   async rsvp(eventId:string,rsvp:'YES'|'NO'){await this.call('setEventRsvp',{eventId,rsvp});}
   async checkIn(eventId:string){await this.call('checkInToEvent',{eventId});}
+  async seasonSetup(){return this.call<import('../domain/seasonAdministration').SeasonAdministrationData>('adminGetSeasonSetup',{});}
+  async createSeason(input:import('../domain/seasonAdministration').SeasonCreationInput){return this.call<{success?:boolean;seasonId:string;status:'DRAFT'}>('adminCreateSeason',input);}
+  async activateSeason(seasonId:string,requestId:string){await this.call('adminActivateSeason',{seasonId,requestId});}
   async createEvent(input:Record<string,unknown>){return this.call<{eventId:string}>('adminCreateEvent',{...input,requestId:crypto.randomUUID()});}
   async publishEvent(eventId:string){await this.call('adminPublishEvent',{eventId,requestId:crypto.randomUUID()});}
   async formEventMatches(eventId:string,options?:{pairingMode:'RANDOM'|'ELO_BALANCED';force:boolean;reason:string}){await this.call('adminGenerateMatchPlan',{requestId:crypto.randomUUID(),eventId,...options});}
