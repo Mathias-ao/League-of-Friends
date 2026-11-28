@@ -37,8 +37,8 @@ def verify_social(server, native, call):
         assert call(server, route, '{}', 'local-test-only')[0] == 400
         status, result = call(server, route, json.dumps(packet), 'local-test-only')
         assert status == 200, (status, result)
-        assert result['compatibility']['sourceHash'] == native['sourceHash']
-        assert result['compatibility']['processorRevision'] == native['processorRevision']
+        assert result['compatibility']['legacy']['sourceHash'] == native['sourceHash']
+        assert result['compatibility']['legacy']['processorRevision'] == native['processorRevision']
         tracks = {g['track'] for e in result['admission']['episodes'] for g in e['perTrackGrades']}
         assert tracks & {'GALLANTRY', 'CHIVALRY', 'CRUELTY'}, tracks
         assert tracks & {'RIVALRY', 'BOND', 'HOSTILITY'}, tracks
