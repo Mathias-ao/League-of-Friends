@@ -20,6 +20,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -27,8 +30,55 @@ jobs:
         run: |
           python -m pip install -r replay-tools/requirements.txt
           python -m unittest discover -s replay-tools/tests -p 'test_hosted_worker_auth.py' -v
-      - name: Build the proposed staging worker image (NEVER deploy)
-        run: docker build -f replay-tools/Dockerfile.staging -t aof-staging-native-worker:ci replay-tools
+      - name: Build base and proposed Linux images (NEVER deploy or push)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          git show "$BASE_SHA:replay-tools/Dockerfile.staging" > "$RUNNER_TEMP/Dockerfile.worker-base"
+          docker build -f "$RUNNER_TEMP/Dockerfile.worker-base" -t aof-worker-base:ci replay-tools
+          docker build -f replay-tools/Dockerfile.staging -t aof-staging-native-worker:ci replay-tools
+          expected="$(docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev \
+            aof-worker-base:ci python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')"
+          [[ "$expected" =~ ^[a-f0-9]{64}$ ]]
+          echo "AOF_EXPECTED_PROCESSOR_REVISION=$expected" >> "$GITHUB_ENV"
+          python - <<'PY'
+          import json, subprocess
+          names = ['aof-worker-base:ci', 'aof-staging-native-worker:ci']
+          images = json.loads(subprocess.check_output(['docker', 'image', 'inspect', *names]))
+          summary = {}
+          for name, image in zip(names, images):
+              assert image['Os'] == 'linux' and image['Architecture'] == 'amd64'
+              assert image['Config']['User'] == '10001:10001'
+              summary[name] = {key: image[key] for key in ('Id', 'Os', 'Architecture')}
+              summary[name]['user'] = image['Config']['User']
+          print(json.dumps(summary, indent=2))
+          PY
+      - name: Verify actual image layout, unchanged fingerprint and replay integrity
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev \
+            -e AOF_TEST_BUILT_WORKER_IMAGE=1 -e AOF_EXPECTED_PROCESSOR_REVISION \
+            aof-staging-native-worker:ci python -c \
+            'import sys, unittest; sys.path.insert(0, "tests"); suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(n) for n in ("test_worker_image_layout", "test_native_ingestion", "test_conformance")); result=unittest.TextTestRunner(verbosity=2).run(suite); sys.exit(not result.wasSuccessful())'
+      - name: Fetch only the owner-authorized exact original regression recording
+        uses: actions/checkout@v4
+        with:
+          ref: d15efaf41d0ce6a587f283061da38c9d8bd8b4a0
+          path: .worker-regression-fixture
+          persist-credentials: false
+      - name: Reprocess exact T90 original through authenticated native and full legacy HTTP paths
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/.worker-regression-fixture/T90Official_CC.aoe2record,dst=/recording/T90Official_CC.aoe2record,readonly" \
+            aof-staging-native-worker:ci python tests/verify_worker_image_recording.py \
+            /recording/T90Official_CC.aoe2record > "$RUNNER_TEMP/worker-image-t90.json"
+          cat "$RUNNER_TEMP/worker-image-t90.json"
+      - name: Retain only small image verification summaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-image-t90-verification
+          path: ${{ runner.temp }}/worker-image-t90.json
+          retention-days: 14
+          if-no-files-found: error
       - name: Verify pinned native processor revision inside the minimal image
         run: |
           revision="$(docker run --rm --read-only --tmpfs /tmp:rw,nosuid,nodev \
