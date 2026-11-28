@@ -4,20 +4,20 @@ import {Avatar,DateLabel,Modal} from './Primitives';
 import {MatchDialogWithStatistics,ProfileDialogWithIdentity} from './StatisticsExperience';
 import {EventDetails} from './EventDetails';
 import {DetailLoadState} from './DetailSection';
-import {accessCurrent,detailRevision,summaryPlayer,type DetailRequests,type DetailSelection} from './detailNavigation';
+import {accessCurrent,detailRevision,summaryPlayer,type DetailRequests,type DetailSelection,type EventTab} from './detailNavigation';
 import type {ViewProps} from './App';
 
 const authorityError=(error:unknown)=>['functions/permission-denied','functions/unauthenticated','functions/not-found']
   .includes((error as {code?:string})?.code??'')||(error as {accessChanged?:boolean})?.accessChanged===true||
   ((error as {code?:string})?.code==='functions/failed-precondition'&&/membership|linked/i.test((error as Error)?.message??''));
 type Loaded={type:'event';data:EventDetail}|{type:'match';data:MatchDetail}|{type:'player';data:PlayerProfile};
-export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string|null|undefined;selection:DetailSelection;requests:DetailRequests;onClose:()=>void}){
+export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string|null|undefined;selection:DetailSelection;requests:DetailRequests;onClose:()=>void;openMatchFromEvent?:(id:string,tab:EventTab)=>void}){
   const {selection,repository,snapshot,requests}=props;
   const uid=props.authUid;
   const choiceIdentity=JSON.stringify([uid,snapshot.viewer?.playerId,selection.type,selection.id]);
-  const [choiceState,setChoice]=useState<{identity:string;gameId?:string;tab?:'briefing'|'battles'|'roundoff'}>({identity:choiceIdentity});
+  const [choiceState,setChoice]=useState<{identity:string;gameId?:string;tab?:'briefing'|'battles'|'roundoff'}>({identity:choiceIdentity,tab:selection.eventTab});
   const choice=choiceState.identity===choiceIdentity?choiceState:null;
-  useEffect(()=>{setChoice(previous=>previous.identity===choiceIdentity?previous:{identity:choiceIdentity});},[choiceIdentity]);
+  useEffect(()=>{setChoice(previous=>previous.identity===choiceIdentity?previous:{identity:choiceIdentity,tab:selection.eventTab});},[choiceIdentity,selection.eventTab]);
   const selectGame=useCallback((gameId:string|undefined)=>setChoice(previous=>({
     ...(previous.identity===choiceIdentity?previous:{identity:choiceIdentity}),gameId})),[choiceIdentity]);
   const selectTab=useCallback((tab:'briefing'|'battles'|'roundoff')=>setChoice(previous=>({
@@ -74,6 +74,10 @@ export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string
   const hidden=!allowed||current?.denied||section?.denied;
   const title=hidden?'League details':selection.type==='event'?(loaded?.type==='event'?loaded.data.event.title:event?.title)??'Event details':
     selection.type==='player'?(loaded?.type==='player'?loaded.data.player.steamName:player?.steamName)??'Player profile':'Field of Battle';
+  const openMatch=(id:string)=>{
+    if(selection.type==='event'&&props.openMatchFromEvent)props.openMatchFromEvent(id,choice?.tab??'briefing');
+    else props.openMatch(id);
+  };
   const retryRead=()=>setRetry(n=>n+1);
   const updated=()=>setRetry(n=>n+1);
   return <Modal title={title} wide className={selection.type==='event'?'event-modal':selection.type==='match'?'battle-modal':''} onClose={props.onClose}>
@@ -85,7 +89,7 @@ export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string
         data={loaded?.type==='player'?loaded.data:undefined} summaryPlayer={player??undefined}
         recordsState={{status:loaded?'ready':current?.error?'error':'loading',error:current?.error,retry:retryRead}}
         openChronicleOnLoad={selection.openChronicle}/>:
-      loaded?.type==='event'?<EventDetails {...props} data={split?{...loaded.data,roundoff:section?.data}:loaded.data} onUpdated={updated}
+      loaded?.type==='event'?<EventDetails {...props} openMatch={openMatch} data={split?{...loaded.data,roundoff:section?.data}:loaded.data} onUpdated={updated}
         selectedTab={choice?.tab??'briefing'} onSelectTab={selectTab}
         roundoffState={split?{status:section?.data?'ready':section?.error?'error':'loading',error:section?.error,
           request:()=>setRequestedRoundoff(key),retry:()=>setRoundoffRetry(n=>n+1)}:undefined}/>:
@@ -94,7 +98,7 @@ export function DetailDialog(props:ViewProps&{actionError?:string;authUid:string
       <div className="detail-selection-summary" data-detail-shell={selection.type}>
         {selection.type==='event'&&event&&<header><h3>{event.title}</h3><p><DateLabel value={event.startsAt}/></p><span>{event.status.replaceAll('_',' ')}</span></header>}
         {selection.type==='event'&&snapshot.matches.filter(match=>match.eventId===selection.id).slice(0,8).map(match=>
-          <button key={match.matchId} onClick={()=>props.openMatch(match.matchId)}>Open {formatName(match.format)} Battle · {match.matchId}</button>)}
+          <button key={match.matchId} onClick={()=>openMatch(match.matchId)}>Open {formatName(match.format)} Battle · {match.matchId}</button>)}
         {selection.type==='match'&&match&&<header><h3>{formatName(match.format)}</h3><p>{match.status.replaceAll('_',' ')}</p>
           {match.participants.map(player=><button key={player.playerId} onClick={()=>props.openPlayer(player.playerId)}>{player.steamName}</button>)}</header>}
         {selection.type==='player'&&player&&<header><Avatar player={player} large/><h3>{player.steamName}</h3></header>}

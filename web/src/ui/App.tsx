@@ -8,7 +8,7 @@ import {FrontPageNotifications} from './FrontPageNotifications';
 import {SeasonView,EventsView,BattlesView,PlayersView,WarRoomView} from './Views';
 import {SeasonStatisticsView} from './StatisticsExperience';
 import {DetailDialog} from './DetailDialog';
-import {accessCurrent,detailRequests,detailRevision,type DetailSelection} from './detailNavigation';
+import {accessCurrent,detailRequests,detailRevision,type DetailSelection,type EventReturnContext,type EventTab} from './detailNavigation';
 import {startSeasonStandingsRefresh} from './seasonStandingsRefresh';
 const pages:{id:Page;label:string;icon:typeof Shield;disabled?:boolean}[]=[
   {id:'season',label:'Season',icon:Shield},
@@ -190,12 +190,30 @@ export function App({repository}:{repository:LeagueRepository}){
     }catch(e){setError(errorMessage(e));}
     finally{working.current=false;setBusy(false);}
   };
-  const detail=async(type:'event'|'match'|'player',id:string,openChronicle=false)=>{
+  const detail=async(type:'event'|'match'|'player',id:string,openChronicle=false,returnEvent?:EventReturnContext)=>{
     if(!canBrowse||repository.currentAuthUid?.()!==snapshotUid.current){
       if(snapshot.membership==='ACTIVE')requestAnimationFrame(()=>gateRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
       return;
     }
-    setError('');setDialog({type,id,request:++detailRequest.current,openChronicle});
+    setError('');setDialog({type,id,request:++detailRequest.current,openChronicle,returnEvent});
+  };
+  // Only an explicit Event-dialog link carries return context. Front-page and
+  // Ledger entry points remain ordinary, independent Battle selections.
+  const openMatchFromEvent=(origin:DetailSelection,id:string,tab:EventTab)=>{
+    if(currentDialog.current!==origin||origin.type!=='event')return;
+    void detail('match',id,false,{id:origin.id,tab,uid:snapshotUid.current,
+      playerId:snapshot.viewer?.playerId,seasonId:snapshot.season?.seasonId,epoch:authEpoch.current});
+  };
+  const closeDetail=(selection:DetailSelection)=>{
+    if(currentDialog.current!==selection)return;
+    const origin=selection.type==='match'?selection.returnEvent:undefined;
+    const request=++detailRequest.current;
+    const current=currentSnapshot.current;
+    const valid=origin&&origin.epoch===authEpoch.current&&origin.uid===snapshotUid.current&&
+      accessCurrent(repository,origin.uid)&&canBrowseLeague(current)&&origin.playerId===current.viewer?.playerId&&
+      origin.seasonId===current.season?.seasonId&&current.events.some(event=>event.eventId===origin.id);
+    setDialog(valid&&origin?{type:'event',id:origin.id,request,eventTab:origin.tab}:null);
+    setError('');setDetailActionError(null);
   };
   const enter=()=>{
     if(snapshot.membership!=='ACTIVE')return;
@@ -244,7 +262,7 @@ export function App({repository}:{repository:LeagueRepository}){
     {leagueEntryVisible&&<LeagueEntryGate snapshot={snapshot} loading={loading} preview={preview} busy={busy} repository={repository} act={act} error={error} bootstrapAborted={bootstrapAborted} retry={()=>void refresh()}/>}
     {notice&&<div className="toast" role="status"><Check size={17}/>{notice}</div>}
     {busy&&<div className="working" role="status"><LoaderCircle size={16} className="spin"/>Working…</div>}
-    {dialog&&'id' in dialog?<DetailDialog key={dialog.type+':'+dialog.id} {...props} actionError={visibleDetailActionError} authUid={snapshotUid.current} selection={dialog} requests={detailReads.current} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}/>:dialog&&<Modal key={dialog.type} title={title} wide={['favor-admin','favors'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}>
+    {dialog&&'id' in dialog?<DetailDialog key={dialog.type+':'+dialog.id} {...props} actionError={visibleDetailActionError} authUid={snapshotUid.current} selection={dialog} requests={detailReads.current} openMatchFromEvent={dialog.type==='event'?(id,tab)=>openMatchFromEvent(dialog,id,tab):undefined} onClose={()=>closeDetail(dialog)}/>:dialog&&<Modal key={dialog.type} title={title} wide={['favor-admin','favors'].includes(dialog.type)} onClose={()=>{detailRequest.current++;setDialog(null);setError('');}}>
       {error&&<div className="alert" role="alert">{error}</div>}
       {dialog.type==='rules'?<Rules/>:dialog.type==='story'?<article className="story"><span className="eyebrow">EVENT I · LOMBARDIA</span>{lombardia.story.brief.map(p=><p key={p}>{p}</p>)}<div className="story-facts"><span>4v4</span><span>Lombardia</span><span>Standard Victory</span></div></article>:
        dialog.type==='account'?<><div className="account-heading">{snapshot.viewer&&<Avatar player={snapshot.viewer} large/>}<div><h3>{snapshot.viewer?.steamName}</h3><p>{snapshot.membership==='ACTIVE'?'League member':snapshot.membership.toLowerCase()}</p></div></div><p>Your league identity persists between seasons.</p><div className="stack">{snapshot.membership==='ACTIVE'&&<button className="primary" onClick={()=>snapshot.viewer&&openPlayer(snapshot.viewer.playerId)}>View profile</button>}{snapshot.viewer?.role==='ADMIN'&&<button className="primary" onClick={()=>setDialog({type:'favor-admin'})}>Issue Emperor's Favors</button>}<button className="text-button" onClick={()=>void act(()=>repository.signOut(),'Signed out.')}><LogOut size={16}/>Sign out</button></div></>:
