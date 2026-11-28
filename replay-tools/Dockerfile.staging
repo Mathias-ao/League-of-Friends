@@ -7,6 +7,7 @@ COPY requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 COPY processor-data/townbell-capability-matrix.csv /docs/replay-foundation/townbell-capability-matrix.csv
+COPY processor-data/social-v1-shared.schema.json /contracts/social-v1/shared.schema.json
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     AOF_REPLAY_WORKER_BIND=0.0.0.0 \

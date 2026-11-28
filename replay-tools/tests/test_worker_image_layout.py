@@ -15,6 +15,20 @@ MATRIX_SHA256 = "2506011e77cf17a5f4c6bd2d36aae6bcf1b6f85fde62462c44fe5982e4d1d4c
 @unittest.skipUnless(os.environ.get("AOF_TEST_BUILT_WORKER_IMAGE") == "1",
                      "Requires the built Linux image; source-tree tests are not layout proof")
 class WorkerImageLayoutTests(unittest.TestCase):
+    def test_social_schema_and_selected_endpoint_asset_completeness(self):
+        expected = '095f21544f1f3ab5265965c998ef32c1dc33ae1adad8d37eee2f5e73f16185a7'
+        schema = Path('/contracts/social-v1/shared.schema.json').read_bytes()
+        self.assertEqual(schema, Path('/app/processor-data/social-v1-shared.schema.json').read_bytes())
+        self.assertEqual(hashlib.sha256(schema).hexdigest(), expected)
+        # Bounded inventory: health, legacy/native recording, social evidence and
+        # EU hosted grade routes. Preview imports are also checked by auth tests.
+        import upload_worker, native_worker_transport, social_evidence_v1a, int_c2b_progression
+        for name in ('int_c1_wiring_test.json', 'compatibility.json',
+                     'canonical-replay-v1.schema.json', 'extraction-manifest-v1.schema.json'):
+            self.assertTrue((Path('/app') / name).is_file(), name)
+        self.assertTrue(list(Path('/app/entity-catalog').glob('*.json')))
+        self.assertTrue(list(Path('/app/schemas').glob('*.json')))
+
     def test_runtime_matrix_matches_exact_pinned_bytes(self):
         from statistics_registry import MATRIX_PATH, build_registry
         self.assertEqual(MATRIX_PATH, Path("/docs/replay-foundation/townbell-capability-matrix.csv"))
