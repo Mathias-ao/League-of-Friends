@@ -121,6 +121,10 @@ def main():
                 seconds = time.perf_counter() - started
                 assert status == 200, (route, status, response.get("error"))
                 assert response["sourceHash"] == SOURCE_SHA256
+                if route == "/process-native-v1":
+                    from worker_social_image_acceptance import verify_social
+                    with redirect_stdout(io.StringIO()):
+                        results['hostedSocial'] = verify_social(server, response, call)
                 verified = (verify_native(response, Path(temporary)) if route == "/process-native-v1"
                             else verify_legacy(response))
                 records = [json.loads(line) for line in trace.getvalue().splitlines() if line.startswith("{")]

@@ -30,13 +30,24 @@ jobs:
         run: |
           python -m pip install -r replay-tools/requirements.txt
           python -m unittest discover -s replay-tools/tests -p 'test_hosted_worker_auth.py' -v
+      - name: Check canonical schema integrity and export exact Git bytes
+        run: |
+          python - <<'PY'
+          import hashlib, subprocess
+          from pathlib import Path
+          canonical = subprocess.check_output(['git', 'cat-file', 'blob', 'HEAD:contracts/social-v1/shared.schema.json'])
+          assert canonical == Path('replay-tools/processor-data/social-v1-shared.schema.json').read_bytes()
+          assert hashlib.sha256(canonical).hexdigest() == '095f21544f1f3ab5265965c998ef32c1dc33ae1adad8d37eee2f5e73f16185a7'
+          PY
+          mkdir -p "$RUNNER_TEMP/worker-git-context"
+          git -c core.autocrlf=false archive HEAD replay-tools | tar -x -C "$RUNNER_TEMP/worker-git-context"
       - name: Build base and proposed Linux images (NEVER deploy or push)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           git show "$BASE_SHA:replay-tools/Dockerfile.staging" > "$RUNNER_TEMP/Dockerfile.worker-base"
-          docker build -f "$RUNNER_TEMP/Dockerfile.worker-base" -t aof-worker-base:ci replay-tools
-          docker build -f replay-tools/Dockerfile.staging -t aof-staging-native-worker:ci replay-tools
+          docker build -f "$RUNNER_TEMP/Dockerfile.worker-base" -t aof-worker-base:ci "$RUNNER_TEMP/worker-git-context/replay-tools"
+          docker build -f "$RUNNER_TEMP/worker-git-context/replay-tools/Dockerfile.staging" -t aof-staging-native-worker:ci "$RUNNER_TEMP/worker-git-context/replay-tools"
           expected="$(docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev \
             aof-worker-base:ci python -c 'from native_worker_transport import native_processor_revision; print(native_processor_revision())')"
           [[ "$expected" =~ ^[a-f0-9]{64}$ ]]
@@ -58,7 +69,7 @@ jobs:
           docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev \
             -e AOF_TEST_BUILT_WORKER_IMAGE=1 -e AOF_EXPECTED_PROCESSOR_REVISION \
             aof-staging-native-worker:ci python -c \
-            'import sys, unittest; sys.path.insert(0, "tests"); suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(n) for n in ("test_worker_image_layout", "test_native_ingestion", "test_conformance")); result=unittest.TextTestRunner(verbosity=2).run(suite); sys.exit(not result.wasSuccessful())'
+            'import sys, unittest; sys.path.insert(0, "tests"); suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(n) for n in ("test_worker_image_layout", "test_native_ingestion", "test_conformance", "test_hosted_worker_auth")); result=unittest.TextTestRunner(verbosity=2).run(suite); sys.exit(not result.wasSuccessful())'
       - name: Fetch only the owner-authorized exact original regression recording
         uses: actions/checkout@v4
         with:
