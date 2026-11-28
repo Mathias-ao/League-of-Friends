@@ -280,3 +280,35 @@ test('closing the window and account replacement reset retained tab choices',asy
   assert.equal(document.querySelector('[role="tab"][aria-selected="true"]')!.textContent,'Briefing','returning account starts with a new choice scope');
  }finally{await account.close();}
 });
+
+
+test('actual App returns from an Event Battle to the original Event and selected tab, revalidating authority',async()=>{
+ const ui=await navigationFixture({summaryStatus:'READY'});try{
+  const event={...ui.event,matches:[{...ui.match.match,eventId:ui.eventId,scoringAct:'WARMUP',status:'READY'}]};
+  await ui.open();await ui.complete('essential',event);
+  await ui.click('[role="tab"]:nth-child(2)');
+  await ui.click('.event-battle-board .event-pairing');
+  assert.equal(document.querySelector('#dialog-title')?.textContent,'Field of Battle');
+  assert.equal(ui.calls.filter(c=>c.kind==='match').at(-1)?.id,ui.matchId);
+  await ui.click('button[aria-label="Close dialog"]');
+  assert.equal(document.querySelector('#dialog-title')?.textContent,event.event.title);
+  assert.ok(document.querySelector('dialog[open]'),'return opens the shell immediately');
+  assert.equal(ui.calls.filter(c=>c.kind==='essential').length,2,'return revalidates authority');
+  await ui.complete('match',ui.match);
+  assert.equal(document.querySelector('#dialog-title')?.textContent,event.event.title,'late Battle response cannot replace Event');
+  await ui.complete('essential',event,1);
+  assert.ok(document.querySelector('.event-battle-board'));
+  assert.equal(document.querySelector('[role="tab"]:nth-child(2)')?.getAttribute('aria-selected'),'true');
+  await ui.click('button[aria-label="Close dialog"]');assert.equal(document.querySelector('dialog'),null);
+ }finally{await ui.close();}
+});
+
+test('actual App Event-origin Battle does not restore a dialog after account replacement',async()=>{
+ const ui=await navigationFixture({summaryStatus:'READY'});try{
+  const event={...ui.event,matches:[{...ui.match.match,eventId:ui.eventId,scoringAct:'WARMUP',status:'READY'}]};
+  await ui.open();await ui.complete('essential',event);
+  await ui.click('[role="tab"]:nth-child(2)');await ui.click('.event-battle-board .event-pairing');
+  await ui.auth('new-account');await ui.complete('match',ui.match);
+  assert.equal(document.querySelector('dialog'),null);
+ }finally{await ui.close();}
+});

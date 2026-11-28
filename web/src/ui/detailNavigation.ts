@@ -1,6 +1,8 @@
 import type {LeagueRepository,LeagueSnapshot,PlayerRecord} from '../domain/league';
 
-export type DetailSelection={type:'event'|'match'|'player';id:string;request:number;openChronicle?:boolean};
+export type EventTab='briefing'|'battles'|'roundoff';
+export type EventReturnContext={id:string;tab:EventTab;uid:string|null|undefined;playerId:string|undefined;seasonId:string|undefined;epoch:number};
+export type DetailSelection={type:'event'|'match'|'player';id:string;request:number;openChronicle?:boolean;eventTab?:EventTab;returnEvent?:EventReturnContext};
 export function summaryPlayer(snapshot:LeagueSnapshot,id:string):PlayerRecord|null {
   return [snapshot.viewer,...snapshot.players,...snapshot.standings,
     ...snapshot.matches.flatMap(match=>match.participants)].find(player=>player?.playerId===id)??null;
