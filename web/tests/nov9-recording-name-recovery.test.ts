@@ -67,6 +67,10 @@ test('Emperor identity review explains Game-only binding and submits exact appro
     const button=[...document.querySelectorAll('button')].find(row=>row.textContent==='Record verified identity bindings')!;
     assert.equal(button.disabled,false);
     await act(async()=>button.click());
+    assert.equal(calls.length,0,'review is required before the consequential operation');
+    const confirmation=[...document.querySelectorAll('button')].find(row=>row.textContent==='Confirm reviewed operation')!;
+    assert.ok(confirmation);
+    await act(async()=>confirmation.click());
     assert.deepEqual(calls,[[data.match.matchId,data.games[0].gameId,data.games[0].players.map((player,i)=>({playerId:player.playerId,sourceName:names[i]})),reason.value]]);
   }finally{await ctx.close();}
 });

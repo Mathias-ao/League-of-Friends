@@ -16,6 +16,7 @@ export { adminSetPowerRatingConfig } from "./commands/admin/setPowerRatingConfig
 export { adminSetReplayAnalysisConfig } from "./commands/admin/setReplayAnalysisConfig.js";
 export { adminUpsertAchievementDefinition } from "./commands/admin/upsertAchievementDefinition.js";
 export { adminCreateSeason } from "./commands/seasons/createSeason.js";
+export {adminGetSeasonSetup} from './queries/adminGetSeasonSetup.js';
 export { adminActivateSeason } from "./commands/seasons/activateSeason.js";
 export {adminCreateEventWarmups} from "./commands/events/createEventWarmups.js";
 export { adminCreateEvent } from "./commands/events/createEvent.js";

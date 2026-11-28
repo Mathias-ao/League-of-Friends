@@ -1,0 +1,57 @@
+/* Coordinated administration only. Player plaques/status colours are separate. */
+.admin-workspace{--admin-ink:#e8d9b8;--admin-muted:#c0b395;--admin-rule:#8e704b66;color:var(--admin-ink);border:1px solid var(--admin-rule);background:linear-gradient(125deg,#292822,#1d2224 75%);padding:24px;box-shadow:inset 0 0 0 4px #100e0b22}
+.admin-workspace-heading{margin-bottom:22px;padding-bottom:17px;border-bottom:1px solid var(--admin-rule)}
+.admin-workspace-heading h3{font-family:var(--serif);font-size:1.2rem;margin:6px 0 9px;color:#f1dfb6}
+.admin-workspace p,.admin-workspace li{color:var(--admin-muted);font-size:.9rem;line-height:1.65}
+.admin-section{padding:19px 0;border-top:1px solid var(--admin-rule)}
+.admin-section:first-of-type{border-top:0;padding-top:0}
+.admin-section h4,.admin-confirmation h4{font-family:var(--serif);font-size:.95rem;margin:0 0 13px;color:#e8d6aa}
+.admin-section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.admin-section-heading h4{margin:0}
+.admin-form,.admin-workspace fieldset{display:flex;flex-direction:column;gap:14px;min-width:0}
+.admin-workspace label{display:flex;flex-direction:column;gap:7px;min-width:0;color:#e3d8bf;font-size:.875rem}
+.admin-workspace label:has(input[type=checkbox]){flex-direction:row;align-items:flex-start;gap:10px;line-height:1.55}
+.admin-workspace input[type=checkbox]{width:18px;height:18px;min-height:18px;flex:0 0 18px;margin:3px 0 0;accent-color:#b78539}
+.admin-workspace input,.admin-workspace select,.admin-workspace textarea{width:100%;min-width:0;background:#161a1b;border:1px solid #7a6b5066;color:#f0e5d0}
+.admin-workspace fieldset{padding:16px;border:1px solid var(--admin-rule);margin:0 0 14px;background:#12151333}
+.admin-workspace legend{padding:0 7px;color:#d9bd86;font-size:.85rem;font-weight:600}
+.admin-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.admin-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px}
+.admin-workspace button,.admin-confirmation button{min-height:42px;padding:10px 14px;border:1px solid #9a7d5355;background:#3a362b66;font-size:.875rem;text-align:center;color:#e8dabd}
+.admin-workspace button.primary,.admin-confirmation button.primary{background:#aa7b2f;color:#16140f;border-color:#c69647;font-weight:600}
+.admin-workspace button.admin-danger{border-color:#b66d5277;color:#f0c4b2;background:#693c3033}
+.admin-workspace button:hover:not(:disabled){border-color:#d5ae6b;color:#fff1d4;background:#6c573d66}
+.admin-workspace button.primary:hover:not(:disabled){color:#17130c;background:#c7984d}
+.admin-help{margin:0!important;font-size:.8rem!important;color:#b8ad95!important}
+.admin-season-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.admin-season-record{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px;background:#10171a44;border:1px solid var(--admin-rule)}
+.admin-season-record>div{min-width:0}.admin-season-record strong{display:block;font-family:var(--serif);font-size:.95rem;color:#ead8b0;overflow-wrap:anywhere}
+.admin-season-record p{font-size:.8rem;margin:7px 0 0}.admin-state{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:#d2b77f;margin-top:7px}
+.admin-confirmation{padding:20px;border:1px solid #b58f4c;background:#8d693c18;margin-top:19px}
+.admin-consequential{border-left:3px solid #bc9261}
+.admin-confirmation dl{display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px 14px;font-size:.875rem}
+.admin-confirmation dt{color:#bcae91}.admin-confirmation dd{margin:0;color:#eee1c4;overflow-wrap:anywhere}
+.admin-error{border:1px solid #b7796377;background:#7f3d2b22;padding:13px;color:#f2c6b5!important}
+.admin-success{border:1px solid #8c9c6977;background:#4c5e2922;padding:13px;color:#d9e3ba!important}
+details.admin-workspace>summary{font-family:var(--serif);font-size:1rem;color:#ecd9ad;cursor:pointer;list-style-position:outside;margin-left:16px;padding:3px 0}
+details.admin-workspace[open]>summary{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--admin-rule)}
+/* C owns Event functionality. These styles group existing administrative forms
+ * without changing their lifecycle, eligibility or player-side actions. */
+.event-lifecycle>details,.event-lifecycle>.admin-workspace,.event-lifecycle>.event-administration{margin-top:18px}
+.event-lifecycle>details{border:1px solid #8e704b66;padding:16px;background:#1b211e55}
+.event-lifecycle>details>summary{font-family:var(--serif);font-size:.9rem;color:#e3c98f;cursor:pointer}
+.event-lifecycle>details[open]>summary{margin-bottom:18px}
+.event-lifecycle>details label{display:flex;flex-direction:column;gap:7px;margin:12px 0;font-size:.875rem}
+.event-lifecycle>details label:has(input[type=checkbox]){flex-direction:row;align-items:flex-start;gap:10px}
+.event-lifecycle>details input[type=checkbox]{width:18px;min-height:18px;height:18px;flex-shrink:0}
+.event-lifecycle>details button{border:1px solid #997a4d66;padding:11px 14px;margin:5px 10px 5px 0;min-height:42px}
+.event-editor,.event-administration{--admin-ink:#e8d9b8;--admin-muted:#c0b395;--admin-rule:#8e704b66}
+.event-editor .admin-act-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.event-editor .admin-act-column{border:1px solid var(--admin-rule);padding:18px;min-width:0;background:#141a1833}
+@media(max-width:650px){
+ .admin-workspace{padding:17px}.admin-field-grid,.event-editor .admin-act-columns{grid-template-columns:1fr}
+ .admin-season-record,.admin-section-heading{align-items:stretch;flex-direction:column;gap:12px}
+ .admin-actions>*{flex:1 1 170px}.admin-confirmation{padding:16px}.admin-confirmation dl{grid-template-columns:1fr;gap:4px}
+ .admin-confirmation dd{margin-bottom:7px}.event-editor .admin-act-column{padding:15px}
+}
+@media(forced-colors:active){.admin-workspace,.admin-section,.admin-season-record,.admin-confirmation{background:Canvas;color:CanvasText;border-color:CanvasText}.admin-workspace button{color:ButtonText;background:ButtonFace;border-color:ButtonText}}
