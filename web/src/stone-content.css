@@ -1047,17 +1047,13 @@ textarea:focus{border-color:#92734d}
 
 
 /* =========================================================
-   Campaign papers
+   Campaign plaque
    ========================================================= */
 
 .next-event.panel{
   position:relative;
 
-  /*
-   * Important: don't clip the simulated papers beneath
-   * the main sheet.
-   */
-  overflow:visible;
+  overflow:hidden;
 
   margin-top:10px;
   margin-bottom:72px;
@@ -1095,13 +1091,8 @@ textarea:focus{border-color:#92734d}
       #cdb184 100%
     );
 
-  /*
-   * Hard offset shadows create the impression of
-   * two sheets underneath; soft shadow grounds the stack.
-   */
+  /* One framed surface, with only a soft cast shadow. */
   box-shadow:
-    5px 6px 0 #b89a70,
-    -3px 11px 0 #a98b64,
     0 22px 46px rgba(0,0,0,.34),
     inset 0 1px rgba(255,251,233,.72),
     inset 0 -2px rgba(91,61,34,.16);
@@ -1259,6 +1250,18 @@ textarea:focus{border-color:#92734d}
   color:#443122;
 }
 
+.next-event .participation{display:inline-flex;align-items:center;gap:4px;font-weight:600}
+.next-event .confirmed{color:#254b32}
+.next-event .waiting{color:#634016}
+.next-event .declined,.next-event .unanswered{color:#50382a}
+.next-event .acts.main-only{grid-template-columns:1fr}
+.next-event .event-assignments{list-style:none;margin:0;padding:0}
+.next-event .event-assignments li+li{margin-top:18px;padding-top:14px;border-top:1px solid rgba(92,65,40,.22)}
+.next-event .act>div{min-width:0}
+.next-event .act .text-button{text-align:left;white-space:normal;overflow-wrap:anywhere}
+.next-event .event-window,.next-event .event-attendance{font-size:.8rem;line-height:1.6}
+.next-event .event-attendance{font-weight:600}
+
 
 /* Keep CTA part of the paper family. */
 .next-event .primary{
@@ -1281,7 +1284,7 @@ textarea:focus{border-color:#92734d}
   .schedule-section>.section-heading{  margin-bottom:20px;}
   .schedule-section>.section-heading h2{  font-size:.95rem;}
   .schedule-section{  margin-bottom:42px;}
-  .next-event.panel{  margin-bottom:52px;  box-shadow:    3px 4px 0 #b89a70,    -2px 7px 0 #a98b64,    0 15px 30px rgba(0,0,0,.30);}
+  .next-event.panel{  margin-bottom:52px;  box-shadow:0 15px 30px rgba(0,0,0,.30),inset 0 1px rgba(255,251,233,.72),inset 0 -2px rgba(91,61,34,.16);}
   .next-event .event-intro{  padding:23px 19px;}
   .next-event .act{  padding:23px 19px;}
   .next-event .event-footer{  padding:18px 17px;}
